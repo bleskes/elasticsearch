@@ -35,6 +35,8 @@ import com.prelert.job.JobDetails;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.persistence.BucketQueryBuilder;
+import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.persistence.RecordsQueryBuilder;
@@ -97,13 +99,13 @@ public class JobDataReader implements Feature
      * @throws NativeProcessRunException
      * @throws UnknownJobException
      */
-    public Optional<Bucket> bucket(String jobId, long timestampMillis, boolean expand,
-                                    boolean includeInterim)
+    public Optional<Bucket> bucket(String jobId,
+                                    BucketQueryBuilder.BucketQuery query)
             throws NativeProcessRunException, UnknownJobException
     {
-        Optional<Bucket> result = m_JobProvider.bucket(jobId, timestampMillis, expand, includeInterim);
+        Optional<Bucket> result = m_JobProvider.bucket(jobId, query);
 
-        if (result.isPresent() && !expand)
+        if (result.isPresent() && !query.isExpand())
         {
             result.get().setRecords(null);
         }
@@ -112,135 +114,17 @@ public class JobDataReader implements Feature
     }
 
     /**
-     * Get result buckets
-     *
+     * Get buckets according to the bucket query build parameters
      * @param jobId
-     * @param expand Include anomaly records. If false the bucket's records
-     *  are set to <code>null</code> so they aren't serialised
-     * @param includeInterim Include interim results
-     * @param skip
-     * @param take
-     * @param anomalyScoreThreshold
-     * @param normalizedProbabilityThreshold
+     * @param query
      * @return
      * @throws UnknownJobException
      */
-    public QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim,
-                              int skip, int take,
-                              double anomalyScoreThreshold, double normalizedProbabilityThreshold)
+    public QueryPage<Bucket> buckets(String jobId, BucketsQueryBuilder.BucketsQuery query)
     throws UnknownJobException
     {
-        QueryPage<Bucket> buckets = m_JobProvider.buckets(jobId, expand,
-                includeInterim, skip, take, anomalyScoreThreshold, normalizedProbabilityThreshold);
-
-        if (!expand)
-        {
-            for (Bucket bucket : buckets.queryResults())
-            {
-                bucket.setRecords(null);
-            }
-        }
-
-        return buckets;
+        return m_JobProvider.buckets(jobId, query);
     }
-
-    /**
-     * Get result buckets between 2 dates
-     * @param jobId
-     * @param expand Include anomaly records. If false the bucket's records
-     *  are set to <code>null</code> so they aren't serialised
-     * @param includeInterim Include interim results
-     * @param skip
-     * @param take
-     * @param startEpochMs Return buckets starting at this time
-     * @param endBucketMs Include buckets up to this time
-     * @param anomalyScoreThreshold
-     * @param normalizedProbabilityThreshold
-     * @return
-     * @throws UnknownJobException
-     */
-    public QueryPage<Bucket> buckets(String jobId, boolean expand, boolean includeInterim,
-                            int skip, int take, long startEpochMs, long endBucketMs,
-                            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        QueryPage<Bucket> buckets =  m_JobProvider.buckets(jobId, expand,
-                includeInterim, skip, take, startEpochMs, endBucketMs,
-                anomalyScoreThreshold, normalizedProbabilityThreshold);
-
-        if (!expand)
-        {
-            for (Bucket bucket : buckets.queryResults())
-            {
-                bucket.setRecords(null);
-            }
-        }
-
-        return buckets;
-    }
-
-
-    /**
-     * Get a page of anomaly records from all buckets.
-     *
-     * @param jobId
-     * @param skip Skip the first N records. This parameter is for paging
-     * results if not required set to 0.
-     * @param take Take only this number of records
-     * @param includeInterim Include interim results
-     * @param sortField The field to sort by
-     * @param sortDescending
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return
-     * @throws UnknownJobException
-     */
-    public QueryPage<AnomalyRecord> records(String jobId, int skip, int take,
-                    boolean includeInterim, String sortField, boolean sortDescending,
-                    double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws UnknownJobException
-    {
-        return m_JobProvider.records(jobId, skip, take, includeInterim, sortField,
-                                            sortDescending, anomalyScoreThreshold,
-                                            normalizedProbabilityThreshold);
-    }
-
-
-    /**
-     * Get a page of anomaly records from the buckets between
-     * epochStart and epochEnd.
-     *
-     * @param jobId
-     * @param skip
-     * @param take
-     * @param epochStartMs
-     * @param epochEndMs
-     * @param includeInterim Include interim results
-     * @param sortField
-     * @param sortDescending
-     * @param anomalyScoreThreshold Return only buckets with an anomalyScore >=
-     * this value
-     * @param normalizedProbabilityThreshold Return only buckets with a maxNormalizedProbability >=
-     * this value
-     *
-     * @return
-     * @throws NativeProcessRunException
-     * @throws UnknownJobException
-     */
-    public QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, long epochStartMs, long epochEndMs,
-            boolean includeInterim, String sortField, boolean sortDescending,
-            double anomalyScoreThreshold, double normalizedProbabilityThreshold)
-    throws NativeProcessRunException, UnknownJobException
-    {
-        return m_JobProvider.records(jobId, skip, take,
-                            epochStartMs, epochEndMs, includeInterim, sortField, sortDescending,
-                            anomalyScoreThreshold, normalizedProbabilityThreshold);
-    }
-
 
     /**
      * Get a page of anomaly records based on the query

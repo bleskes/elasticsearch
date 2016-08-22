@@ -140,6 +140,9 @@ public final class ReservedFieldNames
 
         BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS,
 
+        PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS,
+        PartitionNormalisedProb.TYPE,
+
         CategoryDefinition.CATEGORY_ID,
         CategoryDefinition.TERMS,
         CategoryDefinition.REGEX,

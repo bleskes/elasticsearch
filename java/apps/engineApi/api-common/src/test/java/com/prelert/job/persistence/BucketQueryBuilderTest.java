@@ -26,50 +26,36 @@
  ***********************************************************/
 package com.prelert.job.persistence;
 
-import org.junit.Test;
-
 import static org.junit.Assert.*;
 
-public class BucketsQueryBuilderTest {
+import org.junit.Test;
 
+public class BucketQueryBuilderTest
+{
     @Test
     public void testDefaultBuild() throws Exception
     {
-        BucketsQueryBuilder.BucketsQuery query = new BucketsQueryBuilder().build();
+        BucketQueryBuilder.BucketQuery query = new BucketQueryBuilder(1000l).build();
 
-        assertEquals(0, query.getSkip());
-        assertEquals(BucketsQueryBuilder.DEFAULT_TAKE_SIZE, query.getTake());
+        assertEquals(1000l, query.getTimestamp());
         assertEquals(false, query.isIncludeInterim());
         assertEquals(false, query.isExpand());
-        assertEquals(0.0, query.getAnomalyScoreFilter(), 0.0001);
-        assertEquals(0.0, query.getNormalizedProbability(), 0.0001);
-        assertEquals(-1l, query.getEpochStart());
-        assertEquals(-1l, query.getEpochEnd());
+        assertEquals(null, query.getPartitionValue());
     }
 
     @Test
-    public void testAll()
+    public void testDefaultAll() throws Exception
     {
-        BucketsQueryBuilder.BucketsQuery query = new BucketsQueryBuilder()
-                .skip(20)
-                .take(40)
-                .includeInterim(true)
-                .expand(true)
-                .anomalyScoreThreshold(50.0d)
-                .normalizedProbabilityThreshold(70.0d)
-                .epochStart(1000l)
-                .epochEnd(2000l)
-                .partitionValue("foo")
-                .build();
+        BucketQueryBuilder.BucketQuery query =
+                new BucketQueryBuilder(1000l)
+                    .expand(true)
+                    .includeInterim(true)
+                    .partitionValue("p")
+                    .build();
 
-        assertEquals(20, query.getSkip());
-        assertEquals(40, query.getTake());
+        assertEquals(1000l, query.getTimestamp());
         assertEquals(true, query.isIncludeInterim());
         assertEquals(true, query.isExpand());
-        assertEquals(50.0d, query.getAnomalyScoreFilter(), 0.00001);
-        assertEquals(70.0d, query.getNormalizedProbability(), 0.00001);
-        assertEquals(1000l, query.getEpochStart());
-        assertEquals(2000l, query.getEpochEnd());
-        assertEquals("foo", query.getPartitionValue());
+        assertEquals("p", query.getPartitionValue());
     }
 }

@@ -28,10 +28,12 @@ package com.prelert.rs.client.integrationtests;
 
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.results.AnomalyRecord;
+import com.prelert.job.results.Bucket;
 import com.prelert.rs.data.Pagination;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Run a job with per partition normalization enabled then query
@@ -65,11 +67,14 @@ public class PerPartitionNormalizationTest extends BaseIntegrationTest
 
     private void verifyGetResultsByPartition(String jobId) throws IOException
     {
-        checkQueryWithPartitionFieldValueResults(jobId, "AAL");
-        checkQueryWithPartitionFieldValueResults(jobId, "SWA");
+        checkQueryRecordsWithPartitionFieldValueResults(jobId, "AAL");
+        checkQueryRecordsWithPartitionFieldValueResults(jobId, "SWA");
+        checkQueryBucketsWithPartitionFieldValueResults(jobId, "JAL");
+        checkQueryBucketsWithPartitionFieldValueResults(jobId, "AAL");
+        checkQueryBucketsWithUnknownPartitionValue(jobId);
     }
 
-    private void checkQueryWithPartitionFieldValueResults(String jobId,
+    private void checkQueryRecordsWithPartitionFieldValueResults(String jobId,
                                             String partitionFieldValue)
             throws IOException
     {
@@ -82,6 +87,49 @@ public class PerPartitionNormalizationTest extends BaseIntegrationTest
             test("airline", record.getPartitionFieldName());
             test(partitionFieldValue, record.getPartitionFieldValue());
             test(record.getNormalizedProbability() < 80);
+        }
+    }
+
+    private void checkQueryBucketsWithPartitionFieldValueResults(String jobId,
+            String partitionFieldValue)
+    throws UnsupportedEncodingException, IOException
+    {
+        Pagination<Bucket> buckets = m_EngineApiClient.prepareGetBuckets(jobId)
+                            .partitionFieldValue(partitionFieldValue)
+                            .expand(true)
+                            .take(1000l).get();
+
+        boolean atLeastOneRecordFound = false;
+        for (Bucket b : buckets.getDocuments())
+        {
+            if (b.getRecords().isEmpty())
+            {
+//                test(0.0, b.getAnomalyScore());
+                test(0.0, b.getMaxNormalizedProbability());
+            }
+            for (AnomalyRecord r : b.getRecords())
+            {
+                atLeastOneRecordFound = true;
+                test(r.getPartitionFieldValue().equals(partitionFieldValue));
+            }
+        }
+
+        test(atLeastOneRecordFound);
+    }
+
+    private void checkQueryBucketsWithUnknownPartitionValue(String jobId)
+    throws UnsupportedEncodingException, IOException
+    {
+        Pagination<Bucket> buckets = m_EngineApiClient.prepareGetBuckets(jobId)
+                            .partitionFieldValue("NO SUCH FIELD")
+                            .expand(true)
+                            .take(1000l).get();
+
+        for (Bucket b : buckets.getDocuments())
+        {
+            test(0, b.getRecords().size());
+//            test(0.0, b.getAnomalyScore());
+            test(0.0, b.getMaxNormalizedProbability());
         }
     }
 

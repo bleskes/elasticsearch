@@ -142,13 +142,26 @@ public class BlockingQueueRenormaliser implements Renormaliser
     @Override
     public synchronized void renormalise(Quantiles quantiles, Logger logger)
     {
+        renormalise(quantiles, logger, QuantileInfo.InfoType.RENORMALISATION);
+    }
+
+    @Override
+    public synchronized void renormaliseWithPartition(Quantiles quantiles, Logger logger)
+    {
+        renormalise(quantiles, logger, QuantileInfo.InfoType.PPN_RENORMALISATION);
+    }
+
+
+    private synchronized void renormalise(Quantiles quantiles, Logger logger,
+                                    QuantileInfo.InfoType type)
+    {
         if (m_QuantileUpdateThread.isAlive())
         {
             Date timestamp = quantiles.getTimestamp();
             long endBucketEpochMS = (timestamp == null ? new Date() : timestamp).getTime();
             try
             {
-                m_UpdatedQuantileQueue.put(new QuantileInfo(QuantileInfo.InfoType.RENORMALISATION,
+                m_UpdatedQuantileQueue.put(new QuantileInfo(type,
                     quantiles.getQuantileState(), endBucketEpochMS, logger));
             }
             catch (InterruptedException e)
@@ -209,7 +222,8 @@ public class BlockingQueueRenormaliser implements Renormaliser
      */
     private static class QuantileInfo
     {
-        public enum InfoType { END, RENORMALISATION }
+        // PPN - Per Partition Normalisation
+        public enum InfoType { END, RENORMALISATION, PPN_RENORMALISATION }
 
         public final InfoType m_Type;
         public final String m_State;
@@ -265,6 +279,7 @@ public class BlockingQueueRenormaliser implements Renormaliser
                                 lastLogger.info("Normaliser thread received end instruction");
                                 break;
                             case RENORMALISATION:
+                            case PPN_RENORMALISATION:
                                 if (earliestInfo == null)
                                 {
                                     earliestInfo = info;
@@ -287,6 +302,7 @@ public class BlockingQueueRenormaliser implements Renormaliser
                         m_ScoresUpdater.update(latestInfo.m_State, latestInfo.m_EndBucketEpochMs,
                                 // The Math.abs() shouldn't be necessary - just being defensive
                                 Math.abs(latestInfo.m_EndBucketEpochMs - earliestInfo.m_EndBucketEpochMs),
+                                latestInfo.m_Type == QuantileInfo.InfoType.PPN_RENORMALISATION,
                                 latestInfo.m_Logger);
                     }
 

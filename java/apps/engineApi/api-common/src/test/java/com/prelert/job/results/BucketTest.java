@@ -32,9 +32,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -405,5 +408,32 @@ public class BucketTest
                 + "}";
 
         assertEquals(expected, serialiser.toJson());
+    }
+
+    @Test
+    public void testSetMaxNormalizedProbabilityPerPartition()
+    {
+        List<AnomalyRecord> records = new ArrayList<>();
+        records.add(createAnomalyRecord("A", 20.0));
+        records.add(createAnomalyRecord("A", 40.0));
+        records.add(createAnomalyRecord("B", 90.0));
+        records.add(createAnomalyRecord("B", 15.0));
+        records.add(createAnomalyRecord("B", 45.0));
+
+        Bucket bucket = new Bucket();
+        bucket.setRecords(records);
+
+        Map<String, Double> ppProb = bucket.calcMaxNormalizedProbabilityPerPartition();
+        assertEquals(40.0, ppProb.get("A"), 0.0001);
+        assertEquals(90.0, ppProb.get("B"), 0.0001);
+    }
+
+    private AnomalyRecord createAnomalyRecord(String partitionFieldValue,
+                                        double normalizedProbability)
+    {
+        AnomalyRecord record = new AnomalyRecord();
+        record.setPartitionFieldValue(partitionFieldValue);
+        record.setNormalizedProbability(normalizedProbability);
+        return record;
     }
 }

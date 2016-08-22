@@ -43,10 +43,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.BucketQueryBuilder;
+import com.prelert.job.persistence.BucketQueryBuilder.BucketQuery;
+import com.prelert.job.persistence.BucketsQueryBuilder;
+import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.results.Bucket;
@@ -75,7 +80,7 @@ public class BucketsTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'skip' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_SKIP_PARAM));
 
-        m_Buckets.buckets("foo", false, false, -1, 100, "", "", 0, 0);
+        m_Buckets.buckets("foo", false, false, -1, 100, "", "", 0, 0, "");
     }
 
     @Test
@@ -85,7 +90,7 @@ public class BucketsTest extends ServiceTest
         m_ExpectedException.expectMessage("Parameter 'take' cannot be < 0");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_TAKE_PARAM));
 
-        m_Buckets.buckets("foo", false, false, 0, -1, "", "", 0, 0);
+        m_Buckets.buckets("foo", false, false, 0, -1, "", "", 0, 0, "");
     }
 
     @Test
@@ -93,9 +98,10 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 1);
 
-        when(jobReader().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
+        BucketsQuery query = new BucketsQueryBuilder().take(100).build();
+        when(jobReader().buckets(Mockito.eq("foo"), Mockito.eq(query))).thenReturn(queryResult);
 
-        Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0);
+        Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0, "");
         assertEquals(1, results.getHitCount());
         assertEquals(100, results.getTake());
     }
@@ -105,9 +111,10 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobReader().buckets("foo", false, false, 0, 100, 0.0, 0.0)).thenReturn(queryResult);
+        BucketsQuery query = new BucketsQueryBuilder().take(100).build();
+        when(jobReader().buckets(Mockito.eq("foo"), Mockito.eq(query))).thenReturn(queryResult);
 
-        Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0);
+        Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0, "");
         assertEquals(300, results.getHitCount());
         assertEquals(100, results.getTake());
 
@@ -119,14 +126,30 @@ public class BucketsTest extends ServiceTest
     }
 
     @Test
+    public void testBuckets_WithPartitionValue() throws UnknownJobException, NativeProcessRunException, URISyntaxException
+    {
+        QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
+
+        BucketsQuery query = new BucketsQueryBuilder()
+                                    .take(100).partitionValue("pValue").build();
+        when(jobReader().buckets(Mockito.eq("foo"), Mockito.eq(query))).thenReturn(queryResult);
+
+        Pagination<Bucket> results = m_Buckets.buckets("foo", false, false, 0, 100, "", "", 0.0, 0.0, "pValue");
+        assertEquals(300, results.getHitCount());
+        assertEquals(100, results.getTake());
+    }
+
+    @Test
     public void testBuckets_GivenEpochStartAndEpochEndParams() throws UnknownJobException,
             NativeProcessRunException
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobReader().buckets("foo", false, false, 0, 100, 1000, 2000, 0.0, 0.0)).thenReturn(queryResult);
+        BucketsQuery query = new BucketsQueryBuilder().take(100)
+                                .epochStart(1000).epochEnd(2000).build();
+        when(jobReader().buckets(Mockito.eq("foo"), Mockito.eq(query))).thenReturn(queryResult);
 
-        Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100, "1", "2", 0.0, 0.0);
+        Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100, "1", "2", 0.0, 0.0, "");
 
         assertEquals(300l, buckets.getHitCount());
         assertEquals(100l, buckets.getTake());
@@ -145,11 +168,13 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobReader().buckets("foo", false, false, 0, 100, 1420113600000L, 1420117200000L, 0.0, 0.0))
-                .thenReturn(queryResult);
+
+        BucketsQuery query = new BucketsQueryBuilder().take(100)
+                            .epochStart(1420113600000L).epochEnd(1420117200000L).build();
+        when(jobReader().buckets(Mockito.eq("foo"), Mockito.eq(query))).thenReturn(queryResult);
 
         Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
-                "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", 0.0, 0.0);
+                "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", 0.0, 0.0, "");
 
         assertEquals(300l, buckets.getHitCount());
         assertEquals(100l, buckets.getTake());
@@ -168,11 +193,12 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobReader().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
-                .thenReturn(queryResult);
+        BucketsQuery query = new BucketsQueryBuilder().take(100)
+                .epochStart(1420113600042L).epochEnd(1420117200142L).build();
+        when(jobReader().buckets(Mockito.eq("foo"), Mockito.eq(query))).thenReturn(queryResult);
 
         Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
-                "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", 0.0, 0.0);
+                "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", 0.0, 0.0, "");
 
         assertEquals(300l, buckets.getHitCount());
         assertEquals(100l, buckets.getTake());
@@ -191,11 +217,12 @@ public class BucketsTest extends ServiceTest
     {
         QueryPage<Bucket> queryResult = new QueryPage<>(Arrays.asList(new Bucket()), 300);
 
-        when(jobReader().buckets("foo", false, false, 0, 100, 1420113600042L, 1420117200142L, 0.0, 0.0))
-                .thenReturn(queryResult);
+        BucketsQuery query = new BucketsQueryBuilder().take(100)
+                .epochStart(1420113600042L).epochEnd(1420117200142L).build();
+        when(jobReader().buckets(Mockito.eq("foo"), Mockito.eq(query))).thenReturn(queryResult);
 
         Pagination<Bucket> buckets = m_Buckets.buckets("foo", false, false, 0, 100,
-                "2015-01-01T12:00:00.042+0000", "2015-01-01T15:00:00.142+0200", 0.0, 0.0);
+                "2015-01-01T12:00:00.042+0000", "2015-01-01T15:00:00.142+0200", 0.0, 0.0, "");
 
         assertEquals(300l, buckets.getHitCount());
         assertEquals(100l, buckets.getTake());
@@ -216,7 +243,7 @@ public class BucketsTest extends ServiceTest
         m_ExpectedException.expectMessage("Query param 'start' with value 'invalid' cannot be parsed as a date or converted to a number (epoch)");
         m_ExpectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.UNPARSEABLE_DATE_ARGUMENT));
 
-        m_Buckets.buckets("foo", false, false, 0, 100, "invalid", "also invalid", 0.0, 0.0);
+        m_Buckets.buckets("foo", false, false, 0, 100, "invalid", "also invalid", 0.0, 0.0, "");
     }
 
     @Test
@@ -224,9 +251,12 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.of(new Bucket());
 
-        when(jobReader().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
+        BucketQuery query = new BucketQueryBuilder(42000L)
+                                .includeInterim(true)
+                                .build();
+        when(jobReader().bucket(Mockito.eq("bar"), Mockito.eq(query))).thenReturn(queryResult);
 
-        Response response = m_Buckets.bucket("bar", "42", false, true);
+        Response response = m_Buckets.bucket("bar", "42", false, true, "");
 
         @SuppressWarnings("unchecked")
         SingleDocument<Bucket> result = (SingleDocument<Bucket>)response.getEntity();
@@ -241,9 +271,12 @@ public class BucketsTest extends ServiceTest
     {
         Optional<Bucket> queryResult = Optional.empty();
 
-        when(jobReader().bucket("bar", 42000L, false, true)).thenReturn(queryResult);
+        BucketQuery query = new BucketQueryBuilder(42000L)
+                            .includeInterim(true).build();
 
-        Response response = m_Buckets.bucket("bar", "42", false, true);
+        when(jobReader().bucket(Mockito.eq("bar"), Mockito.eq(query))).thenReturn(queryResult);
+
+        Response response = m_Buckets.bucket("bar", "42", false, true, "");
         @SuppressWarnings("unchecked")
         SingleDocument<Bucket> result = (SingleDocument<Bucket>)response.getEntity();
 

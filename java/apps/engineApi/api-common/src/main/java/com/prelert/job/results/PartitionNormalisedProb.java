@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -23,41 +23,12 @@
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
- ************************************************************/
+ ***********************************************************/
+package com.prelert.job.results;
 
-package com.prelert.job.process.output.parsing;
-
-import org.apache.log4j.Logger;
-
-import com.prelert.job.quantiles.Quantiles;
-
-public interface Renormaliser
+public class PartitionNormalisedProb
 {
-    /**
-     * Update the anomaly score field on all previously persisted buckets
-     * and all contained records
-     * @param quantiles
-     * @param logger
-     */
-    void renormalise(Quantiles quantiles, Logger logger);
+    public static final String TYPE = "partitionNormalizedProb";
+    public static final String PARTITION_NORMALIZED_PROBS = "partitionNormalizedProbs";
 
-    /**
-     * Update the anomaly score field on all previously persisted buckets
-     * and all contained records and aggregate records to the partition
-     * level
-     * @param quantiles
-     * @param logger
-     */
-    void renormaliseWithPartition(Quantiles quantiles, Logger logger);
-
-
-    /**
-     * Blocks until the renormaliser is idle and no further normalisation tasks are pending.
-     */
-    void waitUntilIdle();
-
-    /**
-     * Shut down the renormaliser
-     */
-    boolean shutdown(Logger logger);
 }

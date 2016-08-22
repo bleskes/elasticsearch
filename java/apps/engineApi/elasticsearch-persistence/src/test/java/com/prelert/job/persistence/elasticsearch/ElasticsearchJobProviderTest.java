@@ -79,6 +79,7 @@ import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
+import com.prelert.job.persistence.BucketQueryBuilder;
 import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.QueryPage;
@@ -780,7 +781,14 @@ public class ElasticsearchJobProviderTest
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
-        QueryPage<Bucket> buckets = provider.buckets(jobId, false, false, skip, take, 0.0, 1.0);
+
+        BucketsQueryBuilder bq = new BucketsQueryBuilder()
+                .skip(skip)
+                .take(take)
+                .anomalyScoreThreshold(0.0)
+                .normalizedProbabilityThreshold(1.0);
+
+        QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
         assertEquals(1l, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
@@ -809,7 +817,16 @@ public class ElasticsearchJobProviderTest
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
-        QueryPage<Bucket> buckets = provider.buckets(jobId, false, true, skip, take, 5.1, 10.9);
+
+        BucketsQueryBuilder bq = new BucketsQueryBuilder()
+                                .skip(skip)
+                                .take(take)
+                                .anomalyScoreThreshold(5.1)
+                                .normalizedProbabilityThreshold(10.9)
+                                .includeInterim(true);
+
+
+        QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
         assertEquals(1l, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
@@ -879,7 +896,9 @@ public class ElasticsearchJobProviderTest
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        Optional<Bucket>  bucket = provider.bucket(jobId, timestamp, false, false);
+        BucketQueryBuilder bq = new BucketQueryBuilder(timestamp);
+
+        Optional<Bucket>  bucket = provider.bucket(jobId, bq.build());
         assertFalse(bucket.isPresent());
     }
 
@@ -904,7 +923,10 @@ public class ElasticsearchJobProviderTest
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        Optional<Bucket>  bucketHolder = provider.bucket(jobId, now.getTime(), false, false);
+
+        BucketQueryBuilder bq = new BucketQueryBuilder(now.getTime());
+
+        Optional<Bucket>  bucketHolder = provider.bucket(jobId, bq.build());
         assertTrue(bucketHolder.isPresent());
         Bucket b = bucketHolder.get();
         assertEquals(now, b.getTimestamp());
@@ -932,7 +954,9 @@ public class ElasticsearchJobProviderTest
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        Optional<Bucket>  bucketHolder = provider.bucket(jobId, now.getTime(), false, false);
+        BucketQueryBuilder bq = new BucketQueryBuilder(now.getTime());
+
+        Optional<Bucket>  bucketHolder = provider.bucket(jobId, bq.build());
         assertFalse(bucketHolder.isPresent());
     }
 
@@ -973,8 +997,17 @@ public class ElasticsearchJobProviderTest
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<AnomalyRecord> recordPage = provider.records(jobId, skip, take, now.getTime(), now.getTime(),
-                true, sortfield, true, 11.1, 2.2);
+        RecordsQueryBuilder rqb = new RecordsQueryBuilder()
+                                    .skip(skip)
+                                    .take(take)
+                                    .epochStart(now.getTime())
+                                    .epochEnd(now.getTime())
+                                    .includeInterim(true)
+                                    .sortField(sortfield)
+                                    .anomalyScoreFilter(11.1)
+                                    .normalizedProbability(2.2);
+
+        QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
         assertEquals(2L, recordPage.hitCount());
         List<AnomalyRecord> records = recordPage.queryResults();
         assertEquals(22.4, records.get(0).getTypical()[0], 0.000001);
@@ -1083,7 +1116,7 @@ public class ElasticsearchJobProviderTest
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<AnomalyRecord> recordPage = provider.bucketRecords(jobId, bucket, skip, take, true, sortfield, true);
+        QueryPage<AnomalyRecord> recordPage = provider.bucketRecords(jobId, bucket, skip, take, true, sortfield, true, "");
 
         assertEquals(2L, recordPage.hitCount());
         List<AnomalyRecord> records = recordPage.queryResults();
@@ -1475,6 +1508,70 @@ public class ElasticsearchJobProviderTest
 
         String queryString = queryBuilder.getValue().toString();
         assertTrue(queryString.matches("(?s).*snapshotId. : .snappyId.*description. : .description1.*"));
+    }
+
+    public void testMergePartitionScoresIntoBucket()
+            throws InterruptedException, ExecutionException
+    {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                                        .addClusterStatusYellowResponse();
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        List<ElasticsearchJobProvider.ScoreTimestamp> scores = new ArrayList<>();
+        scores.add(provider.new ScoreTimestamp(new Date(2), 1.0));
+        scores.add(provider.new ScoreTimestamp(new Date(3), 2.0));
+        scores.add(provider.new ScoreTimestamp(new Date(5), 3.0));
+
+        List<Bucket> buckets = new ArrayList<>();
+        buckets.add(createBucketAtEpochTime(1));
+        buckets.add(createBucketAtEpochTime(2));
+        buckets.add(createBucketAtEpochTime(3));
+        buckets.add(createBucketAtEpochTime(4));
+        buckets.add(createBucketAtEpochTime(5));
+        buckets.add(createBucketAtEpochTime(6));
+
+        provider.mergePartitionScoresIntoBucket(scores, buckets);
+        assertEquals(0.0, buckets.get(0).getMaxNormalizedProbability(), 0.001);
+        assertEquals(1.0, buckets.get(1).getMaxNormalizedProbability(), 0.001);
+        assertEquals(2.0, buckets.get(2).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(3).getMaxNormalizedProbability(), 0.001);
+        assertEquals(3.0, buckets.get(4).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(5).getMaxNormalizedProbability(), 0.001);
+    }
+
+    @Test
+    public void testMergePartitionScoresIntoBucket_WithEmptyScoresList()
+            throws InterruptedException, ExecutionException
+    {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                                        .addClusterStatusYellowResponse();
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        List<ElasticsearchJobProvider.ScoreTimestamp> scores = new ArrayList<>();
+
+        List<Bucket> buckets = new ArrayList<>();
+        buckets.add(createBucketAtEpochTime(1));
+        buckets.add(createBucketAtEpochTime(2));
+        buckets.add(createBucketAtEpochTime(3));
+        buckets.add(createBucketAtEpochTime(4));
+
+        provider.mergePartitionScoresIntoBucket(scores, buckets);
+        assertEquals(0.0, buckets.get(0).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(1).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(2).getMaxNormalizedProbability(), 0.001);
+        assertEquals(0.0, buckets.get(3).getMaxNormalizedProbability(), 0.001);
+    }
+
+    private Bucket createBucketAtEpochTime(long epoch)
+    {
+        Bucket b = new Bucket();
+        b.setTimestamp(new Date(epoch));
+        b.setMaxNormalizedProbability(10.0);
+        return b;
     }
 
     private ElasticsearchJobProvider createProvider(Client client)

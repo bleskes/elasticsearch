@@ -51,9 +51,10 @@ public class ResultsReaderFactory
     }
 
     public ResultsReader newResultsParser(String jobId, InputStream autoDetectOutputStream,
-            Logger logger)
+            Logger logger, boolean isPerPartitionNormalization)
     {
         return new ResultsReader(m_RenormaliserFactory.create(jobId),
-                m_PersisterFactory.jobResultsPersister(jobId), autoDetectOutputStream, logger);
+                m_PersisterFactory.jobResultsPersister(jobId),
+                autoDetectOutputStream, logger, isPerPartitionNormalization);
     }
 }
