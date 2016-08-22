@@ -70,7 +70,6 @@ public class ApiBaseTest {
         api.setApplication(application);
 
         String ver = api.version();
-        System.out.println(ver);
 
         Pattern p = Pattern.compile(".*\\b999999\\b.*", Pattern.DOTALL);
         Matcher m = p.matcher(ver);
