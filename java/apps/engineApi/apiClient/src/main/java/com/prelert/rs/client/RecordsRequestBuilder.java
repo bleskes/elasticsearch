@@ -185,9 +185,8 @@ public class RecordsRequestBuilder extends BaseJobRequestBuilder<AnomalyRecord>
      * {@linkplain AnomalyRecord#getPartitionFieldValue()} equal to
      * <code>partitionValue</code> are returned.<br>
      *
-     * @param partitionValue
-     * @return
-     * @throws UnsupportedEncodingException
+     * @param partitionValue Partition field value
+     * @return this {@code Builder} object
      */
     public RecordsRequestBuilder partitionFieldValue(String partitionValue)
     {
