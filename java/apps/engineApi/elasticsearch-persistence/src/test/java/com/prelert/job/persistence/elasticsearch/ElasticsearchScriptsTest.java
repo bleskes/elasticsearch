@@ -28,7 +28,9 @@
 package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.junit.Before;
@@ -47,6 +50,7 @@ import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
 
 import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 
 public class ElasticsearchScriptsTest
 {
@@ -164,4 +168,61 @@ public class ElasticsearchScriptsTest
         Map<String, Object> updatedParams = m_MapCaptor.getValue();
         assertEquals(map, updatedParams);
     }
+
+    @Test
+    public void testUpdateUpsertViaScript_InvalidIndex() throws JobException
+    {
+        String index = "idx";
+        String docId = "docId";
+        String type = "type";
+
+        IndexNotFoundException e = new IndexNotFoundException("INF");
+
+        Script script = mock(Script.class);
+        ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
+                .prepareUpdateScript(index, type, docId, captor, m_MapCaptor, e);
+        Client client = clientBuilder.build();
+
+        try
+        {
+            ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
+            assertFalse(true);
+        }
+        catch (UnknownJobException ex)
+        {
+            assertEquals(index, ex.getJobId());
+        }
+    }
+
+    @Test
+    public void testUpdateUpsertViaScript_IllegalArgument() throws JobException
+    {
+        String index = "idx";
+        String docId = "docId";
+        String type = "type";
+        Map<String, Object> map = new HashMap<>();
+        map.put("testKey",  "testValue");
+
+        IllegalArgumentException ex = new IllegalArgumentException("IAE");
+
+        Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
+        ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
+                .prepareUpdateScript(index, type, docId, captor, m_MapCaptor, ex);
+        Client client = clientBuilder.build();
+
+        try
+        {
+            ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
+        }
+        catch (JobException e)
+        {
+            String msg = e.toString();
+            assertTrue(msg.matches(".*test-script-here.*inline.*params.*testKey.*testValue.*"));
+        }
+    }
+
 }
