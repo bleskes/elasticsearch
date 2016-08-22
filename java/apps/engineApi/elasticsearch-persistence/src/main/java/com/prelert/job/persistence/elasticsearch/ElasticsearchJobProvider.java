@@ -80,6 +80,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
@@ -101,7 +102,6 @@ import com.prelert.job.audit.Auditor;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
-import com.prelert.job.persistence.BucketsQueryBuilder;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.ListProvider;
@@ -922,7 +922,8 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         return bucket.getRecords().size();
     }
 
-    private QueryPage<AnomalyRecord> bucketRecords(String jobId,
+    @VisibleForTesting
+    QueryPage<AnomalyRecord> bucketRecords(String jobId,
             Bucket bucket, int skip, int take, boolean includeInterim,
             String sortField, boolean descending, String partitionFieldValue)
     throws UnknownJobException
