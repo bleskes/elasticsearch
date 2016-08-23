@@ -1,8 +1,8 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
- * __________________
+ *  __________________
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ * [2014] Elasticsearch Incorporated. All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains
  * the property of Elasticsearch Incorporated and its suppliers,
@@ -15,20 +15,12 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.user;
+package org.elasticsearch.xpack.security.action.user;
 
-import org.elasticsearch.xpack.security.authz.permission.KibanaRole;
-import org.elasticsearch.xpack.security.support.MetadataUtils;
+import org.elasticsearch.action.ActionResponse;
 
 /**
- * Built in user for the kibana server
+ * Empty response for a {@link SetEnabledRequest}
  */
-public class KibanaUser extends User {
-
-    public static final String NAME = "kibana";
-    public static final String ROLE_NAME = KibanaRole.NAME;
-
-    public KibanaUser(boolean enabled) {
-        super(NAME, new String[]{ ROLE_NAME }, null, null, MetadataUtils.DEFAULT_RESERVED_METADATA, enabled);
-    }
+public class SetEnabledResponse extends ActionResponse {
 }

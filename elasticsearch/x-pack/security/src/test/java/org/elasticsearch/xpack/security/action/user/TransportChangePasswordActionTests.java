@@ -33,7 +33,7 @@ import org.elasticsearch.xpack.security.user.User;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.junit.After;
+import org.elasticsearch.xpack.security.user.XPackUser;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -55,20 +55,15 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class TransportChangePasswordActionTests extends ESTestCase {
 
-    @After
-    public void resetAnonymous() {
-        AnonymousUser.initialize(Settings.EMPTY);
-    }
-
     public void testAnonymousUser() {
         Settings settings = Settings.builder().put(AnonymousUser.ROLES_SETTING.getKey(), "superuser").build();
-        AnonymousUser.initialize(settings);
+        AnonymousUser anonymousUser = new AnonymousUser(settings);
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
-        TransportChangePasswordAction action = new TransportChangePasswordAction(Settings.EMPTY, mock(ThreadPool.class),
+        TransportChangePasswordAction action = new TransportChangePasswordAction(settings, mock(ThreadPool.class),
                 mock(TransportService.class), mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore);
 
         ChangePasswordRequest request = new ChangePasswordRequest();
-        request.username(AnonymousUser.INSTANCE.principal());
+        request.username(anonymousUser.principal());
         request.passwordHash(Hasher.BCRYPT.hash(new SecuredString("changeme".toCharArray())));
 
         final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -91,13 +86,13 @@ public class TransportChangePasswordActionTests extends ESTestCase {
         verifyZeroInteractions(usersStore);
     }
 
-    public void testSystemUser() {
+    public void testInternalUsers() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportChangePasswordAction action = new TransportChangePasswordAction(Settings.EMPTY, mock(ThreadPool.class),
                 mock(TransportService.class), mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore);
 
         ChangePasswordRequest request = new ChangePasswordRequest();
-        request.username(SystemUser.INSTANCE.principal());
+        request.username(randomFrom(SystemUser.INSTANCE.principal(), XPackUser.INSTANCE.principal()));
         request.passwordHash(Hasher.BCRYPT.hash(new SecuredString("changeme".toCharArray())));
 
         final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -121,7 +116,7 @@ public class TransportChangePasswordActionTests extends ESTestCase {
     }
 
     public void testValidUser() {
-        final User user = randomFrom(ElasticUser.INSTANCE, KibanaUser.INSTANCE, new User("joe"));
+        final User user = randomFrom(new ElasticUser(true), new KibanaUser(true), new User("joe"));
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         ChangePasswordRequest request = new ChangePasswordRequest();
         request.username(user.principal());
@@ -159,7 +154,7 @@ public class TransportChangePasswordActionTests extends ESTestCase {
     }
 
     public void testException() {
-        final User user = randomFrom(ElasticUser.INSTANCE, KibanaUser.INSTANCE, new User("joe"));
+        final User user = randomFrom(new ElasticUser(true), new KibanaUser(true), new User("joe"));
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         ChangePasswordRequest request = new ChangePasswordRequest();
         request.username(user.principal());

@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.security.user;
 
 import org.elasticsearch.xpack.security.authz.permission.SuperuserRole;
-import org.elasticsearch.xpack.security.user.User.ReservedUser;
 
 /**
  * XPack internal user that manages xpack. Has all cluster/indices permissions for x-pack to operate.
@@ -29,7 +28,7 @@ public class XPackUser extends User {
     public static final String ROLE_NAME = SuperuserRole.NAME;
     public static final XPackUser INSTANCE = new XPackUser();
 
-    XPackUser() {
+    private XPackUser() {
         super(NAME, ROLE_NAME);
     }
 
