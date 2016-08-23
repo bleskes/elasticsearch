@@ -1,0 +1,89 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+package org.elasticsearch.xpack.monitoring.exporter.http;
+
+import org.apache.http.HttpHost;
+import org.apache.lucene.util.SetOnce.AlreadySetException;
+import org.elasticsearch.client.sniff.Sniffer;
+import org.elasticsearch.test.ESTestCase;
+
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+/**
+ * Tests {@link NodeFailureListener}.
+ */
+public class NodeFailureListenerTests extends ESTestCase {
+
+    private final Sniffer sniffer = mock(Sniffer.class);
+    private final HttpResource resource = new MockHttpResource(getTestName(), false);
+    private final HttpHost host = new HttpHost("localhost", 9200);
+
+    private final NodeFailureListener listener = new NodeFailureListener();
+
+    public void testSetSnifferTwiceFails() {
+        listener.setSniffer(sniffer);
+
+        assertThat(listener.getSniffer(), is(sniffer));
+
+        expectThrows(AlreadySetException.class, () -> listener.setSniffer(randomFrom(sniffer, null)));
+    }
+
+    public void testSetResourceTwiceFails() {
+        listener.setResource(resource);
+
+        assertThat(listener.getResource(), is(resource));
+
+        expectThrows(AlreadySetException.class, () -> listener.setResource(randomFrom(resource, null)));
+    }
+
+    public void testSnifferNotifiedOnFailure() {
+        listener.setSniffer(sniffer);
+
+        listener.onFailure(host);
+
+        verify(sniffer).sniffOnFailure(host);
+    }
+
+    public void testResourceNotifiedOnFailure() {
+        listener.setResource(resource);
+
+        listener.onFailure(host);
+
+        assertTrue(resource.isDirty());
+    }
+
+    public void testResourceAndSnifferNotifiedOnFailure() {
+        final HttpResource optionalResource = randomFrom(resource, null);
+        final Sniffer optionalSniffer = randomFrom(sniffer, null);
+
+        listener.setResource(optionalResource);
+        listener.setSniffer(optionalSniffer);
+
+        listener.onFailure(host);
+
+        if (optionalResource != null) {
+            assertTrue(resource.isDirty());
+        }
+
+        if (optionalSniffer != null) {
+            verify(sniffer).sniffOnFailure(host);
+        }
+    }
+
+}
