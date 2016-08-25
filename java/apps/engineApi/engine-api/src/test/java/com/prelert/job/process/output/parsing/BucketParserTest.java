@@ -42,6 +42,7 @@ import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
+import com.prelert.job.results.Bucket.PartitionScore;
 
 public class BucketParserTest
 {
@@ -69,7 +70,8 @@ public class BucketParserTest
                 + "\"records\" : ["
                 +     "{\"detectorIndex\":0,\"probability\":0.03,\"typical\":[42.0],\"actual\":[0.2]},"
                 +     "{\"detectorIndex\":1,\"probability\":0.01,\"typical\":[60.0],\"actual\":[0.01]}"
-                + "]"
+                + "],"
+                + "\"partitionScores\" : [{\"pField1\" : 0.2}, {\"pField2\" : 0.3}, {\"pField3\" : 0.4}]"
                 + "}";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
@@ -125,6 +127,15 @@ public class BucketParserTest
         assertEquals(12.1948, inf.getInitialAnomalyScore(), 0.0001);
         assertEquals("dst_ip", inf.getInfluencerFieldName());
         assertEquals("23.28.243.1", inf.getInfluencerFieldValue());
+
+        List<PartitionScore> partitionScores = b.getPartitionScores();
+        assertEquals(3, partitionScores.size());
+        assertEquals("pField1", partitionScores.get(0).m_PartitionFieldValue);
+        assertEquals(0.2, partitionScores.get(0).m_AnomalyScore, 0.0001);
+        assertEquals("pField2", partitionScores.get(1).m_PartitionFieldValue);
+        assertEquals(0.3, partitionScores.get(1).m_AnomalyScore, 0.0001);
+        assertEquals("pField3", partitionScores.get(2).m_PartitionFieldValue);
+        assertEquals(0.4, partitionScores.get(2).m_AnomalyScore, 0.0001);
     }
 
 }

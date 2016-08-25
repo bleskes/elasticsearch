@@ -58,6 +58,13 @@ public class Bucket implements StorageSerialisable
     public static final String INFLUENCERS = "influencers";
     public static final String BUCKET_SPAN = "bucketSpan";
     public static final String PROCESSING_TIME_MS = "processingTimeMs";
+    public static final String PARTITION_SCORES = "partitionScores";
+
+    public static class PartitionScore
+    {
+        public String m_PartitionFieldValue;
+        public double m_AnomalyScore;
+    }
 
     /**
      * Elasticsearch type
@@ -81,6 +88,7 @@ public class Bucket implements StorageSerialisable
     private List<Influencer> m_Influencers;
     private long m_ProcessingTimeMs;
     private Map<String, Double> m_PerPartitionMaxProbability;
+    private List<PartitionScore> m_PartitionScores;
 
     public Bucket()
     {
@@ -253,6 +261,17 @@ public class Bucket implements StorageSerialisable
             m_BucketInfluencers = new ArrayList<>();
         }
         m_BucketInfluencers.add(bucketInfluencer);
+    }
+
+
+    public List<PartitionScore> getPartitionScores()
+    {
+        return m_PartitionScores;
+    }
+
+    public void setPartitionScores(List<PartitionScore> scores)
+    {
+        m_PartitionScores = scores;
     }
 
     /**
