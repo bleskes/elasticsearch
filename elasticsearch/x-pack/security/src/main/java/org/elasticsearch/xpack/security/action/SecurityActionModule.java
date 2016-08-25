@@ -23,7 +23,6 @@ import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.action.filter.SecurityActionFilter;
 import org.elasticsearch.xpack.security.action.interceptor.BulkRequestInterceptor;
 import org.elasticsearch.xpack.security.action.interceptor.FieldStatsRequestInterceptor;
-import org.elasticsearch.xpack.security.action.interceptor.RealtimeRequestInterceptor;
 import org.elasticsearch.xpack.security.action.interceptor.RequestInterceptor;
 import org.elasticsearch.xpack.security.action.interceptor.SearchRequestInterceptor;
 import org.elasticsearch.xpack.security.action.interceptor.UpdateRequestInterceptor;
@@ -44,7 +43,6 @@ public class SecurityActionModule extends AbstractSecurityModule.Node {
         Multibinder<RequestInterceptor> multibinder
                 = Multibinder.newSetBinder(binder(), RequestInterceptor.class);
         if (XPackSettings.DLS_FLS_ENABLED.get(settings)) {
-            multibinder.addBinding().to(RealtimeRequestInterceptor.class);
             multibinder.addBinding().to(SearchRequestInterceptor.class);
             multibinder.addBinding().to(UpdateRequestInterceptor.class);
             multibinder.addBinding().to(BulkRequestInterceptor.class);
