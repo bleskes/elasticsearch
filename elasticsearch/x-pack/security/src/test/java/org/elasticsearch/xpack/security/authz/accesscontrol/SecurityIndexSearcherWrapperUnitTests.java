@@ -363,7 +363,6 @@ public class SecurityIndexSearcherWrapperUnitTests extends ESTestCase {
         Weight weight = searcher.createNormalizedWeight(new TermQuery(new Term("field2", "value1")), false);
 
         LeafReaderContext leaf = directoryReader.leaves().get(0);
-        Scorer scorer = weight.scorer(leaf);
 
         SparseFixedBitSet sparseFixedBitSet = query(leaf, "field1", "value1");
         LeafCollector leafCollector = new LeafBucketCollector() {
@@ -372,7 +371,7 @@ public class SecurityIndexSearcherWrapperUnitTests extends ESTestCase {
                 assertThat(doc, equalTo(0));
             }
         };
-        intersectScorerAndRoleBits(scorer, sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
+        intersectScorerAndRoleBits(weight.scorer(leaf), sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
 
         sparseFixedBitSet = query(leaf, "field1", "value2");
         leafCollector = new LeafBucketCollector() {
@@ -381,7 +380,7 @@ public class SecurityIndexSearcherWrapperUnitTests extends ESTestCase {
                 assertThat(doc, equalTo(1));
             }
         };
-        intersectScorerAndRoleBits(scorer, sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
+        intersectScorerAndRoleBits(weight.scorer(leaf), sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
 
 
         sparseFixedBitSet = query(leaf, "field1", "value3");
@@ -391,7 +390,7 @@ public class SecurityIndexSearcherWrapperUnitTests extends ESTestCase {
                 fail("docId [" + doc + "] should have been deleted");
             }
         };
-        intersectScorerAndRoleBits(scorer, sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
+        intersectScorerAndRoleBits(weight.scorer(leaf), sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
 
         sparseFixedBitSet = query(leaf, "field1", "value4");
         leafCollector = new LeafBucketCollector() {
@@ -400,7 +399,7 @@ public class SecurityIndexSearcherWrapperUnitTests extends ESTestCase {
                 assertThat(doc, equalTo(3));
             }
         };
-        intersectScorerAndRoleBits(scorer, sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
+        intersectScorerAndRoleBits(weight.scorer(leaf), sparseFixedBitSet, leafCollector, leaf.reader().getLiveDocs());
 
         directoryReader.close();
         directory.close();
