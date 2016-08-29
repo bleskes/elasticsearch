@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.monitoring.agent.resolver.indices;
 
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.monitoring.MonitoredSystem;
@@ -26,12 +27,16 @@ import org.elasticsearch.xpack.monitoring.agent.collector.indices.IndexStatsMoni
 import org.elasticsearch.xpack.monitoring.agent.resolver.MonitoringIndexNameResolver;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 
 public class IndexStatsResolver extends MonitoringIndexNameResolver.Timestamped<IndexStatsMonitoringDoc> {
 
     public static final String TYPE = "index_stats";
 
-    static final String[] FILTERS = {
+    static final Set<String> FILTERS;
+    static {
+        Set<String> filters = Sets.newHashSet(
             "cluster_uuid",
             "timestamp",
             "source_node",
@@ -97,8 +102,9 @@ public class IndexStatsResolver extends MonitoringIndexNameResolver.Timestamped<
             "index_stats.total.segments.fixed_bit_set_memory_in_bytes",
             "index_stats.total.store.size_in_bytes",
             "index_stats.total.store.throttle_time_in_millis",
-            "index_stats.total.refresh.total_time_in_millis",
-    };
+            "index_stats.total.refresh.total_time_in_millis");
+        FILTERS = Collections.unmodifiableSet(filters);
+    }
 
     public IndexStatsResolver(MonitoredSystem id, Settings settings) {
         super(id, settings);
@@ -110,7 +116,7 @@ public class IndexStatsResolver extends MonitoringIndexNameResolver.Timestamped<
     }
 
     @Override
-    public String[] filters() {
+    public Set<String> filters() {
         return FILTERS;
     }
 

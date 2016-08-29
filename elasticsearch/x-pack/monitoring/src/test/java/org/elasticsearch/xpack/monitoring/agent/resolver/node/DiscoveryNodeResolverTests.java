@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.monitoring.agent.resolver.node;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.transport.LocalTransportAddress;
+import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.VersionUtils;
 import org.elasticsearch.xpack.monitoring.agent.collector.cluster.DiscoveryNodeMonitoringDoc;
@@ -62,12 +63,13 @@ public class DiscoveryNodeResolverTests extends MonitoringIndexNameResolverTestC
         assertThat(resolver.id(doc), equalTo(doc.getNode().getId()));
 
         assertSource(resolver.source(doc, XContentType.JSON),
-                "cluster_uuid",
-                "timestamp",
-                "source_node",
-                "node.id",
-                "node.name",
-                "node.transport_address",
-                "node.attributes");
+                Sets.newHashSet(
+                        "cluster_uuid",
+                        "timestamp",
+                        "source_node",
+                        "node.id",
+                        "node.name",
+                        "node.transport_address",
+                        "node.attributes"));
     }
 }
