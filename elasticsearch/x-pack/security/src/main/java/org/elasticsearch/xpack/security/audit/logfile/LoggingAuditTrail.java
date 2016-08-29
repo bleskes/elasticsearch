@@ -20,10 +20,6 @@ package org.elasticsearch.xpack.security.audit.logfile;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractComponent;
-import org.elasticsearch.common.component.AbstractLifecycleComponent;
-import org.elasticsearch.common.component.Lifecycle;
-import org.elasticsearch.common.component.LifecycleListener;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.network.NetworkAddress;
@@ -43,15 +39,15 @@ import org.elasticsearch.xpack.security.authz.privilege.SystemPrivilege;
 import org.elasticsearch.xpack.security.rest.RemoteHostHeader;
 import org.elasticsearch.xpack.security.transport.filter.SecurityIpFilterRule;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportMessage;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.List;
+import java.util.Set;
 
-import static org.elasticsearch.common.Strings.arrayToCommaDelimitedString;
+import static org.elasticsearch.common.Strings.collectionToCommaDelimitedString;
 import static org.elasticsearch.xpack.security.audit.AuditUtil.indices;
 import static org.elasticsearch.xpack.security.audit.AuditUtil.restRequestContent;
 import static org.elasticsearch.xpack.security.Security.setting;
@@ -465,8 +461,8 @@ public class LoggingAuditTrail extends AbstractComponent implements AuditTrail {
     }
 
     static String indicesString(TransportMessage message) {
-        String[] indices = indices(message);
-        return indices == null ? null : arrayToCommaDelimitedString(indices);
+        Set<String> indices = indices(message);
+        return indices == null ? null : collectionToCommaDelimitedString(indices);
     }
 
     static String principal(User user) {
