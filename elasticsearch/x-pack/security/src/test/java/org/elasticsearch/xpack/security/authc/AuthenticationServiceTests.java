@@ -178,7 +178,8 @@ public class AuthenticationServiceTests extends ESTestCase {
         Authentication result = service.authenticate("_action", message, null);
         assertThat(result, notNullValue());
         assertThat(result.getUser(), is(user));
-        verifyZeroInteractions(auditTrail);
+        verify(auditTrail).authenticationSuccess(secondRealm.name(), user, "_action", message);
+        verifyNoMoreInteractions(auditTrail);
         verify(firstRealm, never()).authenticate(token);
         assertThreadContextContainsAuthentication(result);
     }
@@ -312,6 +313,8 @@ public class AuthenticationServiceTests extends ESTestCase {
         assertThat(result, notNullValue());
         assertThat(result.getUser(), sameInstance(user));
         assertThreadContextContainsAuthentication(result);
+        verify(auditTrail).authenticationSuccess(firstRealm.name(), user, "_action", message);
+        verifyNoMoreInteractions(auditTrail);
     }
 
     public void testAuthenticateRestSuccess() throws Exception {
@@ -323,6 +326,8 @@ public class AuthenticationServiceTests extends ESTestCase {
         assertThat(result, notNullValue());
         assertThat(result.getUser(), sameInstance(user1));
         assertThreadContextContainsAuthentication(result);
+        verify(auditTrail).authenticationSuccess(firstRealm.name(), user1, restRequest);
+        verifyNoMoreInteractions(auditTrail);
     }
 
     public void testAutheticateTransportContextAndHeader() throws Exception {
@@ -484,6 +489,8 @@ public class AuthenticationServiceTests extends ESTestCase {
         assertThat(result, notNullValue());
         assertThat(result.getUser(), sameInstance((Object) anonymousUser));
         assertThreadContextContainsAuthentication(result);
+        verify(auditTrail).authenticationSuccess("__anonymous", new AnonymousUser(settings), request);
+        verifyNoMoreInteractions(auditTrail);
     }
 
     public void testAnonymousUserTransportNoDefaultUser() throws Exception {

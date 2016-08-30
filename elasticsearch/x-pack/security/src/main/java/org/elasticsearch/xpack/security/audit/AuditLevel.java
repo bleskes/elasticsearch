@@ -24,6 +24,7 @@ import java.util.Locale;
 
 public enum AuditLevel {
 
+    
     ANONYMOUS_ACCESS_DENIED,
     AUTHENTICATION_FAILED,
     REALM_AUTHENTICATION_FAILED,
@@ -33,6 +34,7 @@ public enum AuditLevel {
     CONNECTION_GRANTED,
     CONNECTION_DENIED,
     SYSTEM_ACCESS_GRANTED,
+    AUTHENTICATION_SUCCESS,
     RUN_AS_GRANTED,
     RUN_AS_DENIED;
 
@@ -70,6 +72,9 @@ public enum AuditLevel {
                     break;
                 case "system_access_granted":
                     enumSet.add(SYSTEM_ACCESS_GRANTED);
+                    break;
+                case "authentication_success":
+                    enumSet.add(AUTHENTICATION_SUCCESS);
                     break;
                 case "run_as_granted":
                     enumSet.add(RUN_AS_GRANTED);

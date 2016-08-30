@@ -165,7 +165,9 @@ public class AuthenticationService extends AbstractComponent {
 
             AuthenticationToken token = extractToken();
             if (token == null) {
-                return handleNullToken();
+                Authentication authentication = handleNullToken();
+                request.authenticationSuccess(authentication.getAuthenticatedBy().getName(), authentication.getUser());
+                return authentication;
             }
 
             User user = authenticateToken(token);
@@ -177,6 +179,7 @@ public class AuthenticationService extends AbstractComponent {
 
             final Authentication authentication = new Authentication(user, authenticatedBy, lookedupBy);
             authentication.writeToContext(threadContext, cryptoService, signUserHeader);
+            request.authenticationSuccess(authentication.getAuthenticatedBy().getName(), user);
             return authentication;
         }
 
@@ -334,6 +337,8 @@ public class AuthenticationService extends AbstractComponent {
             abstract ElasticsearchSecurityException anonymousAccessDenied();
 
             abstract ElasticsearchSecurityException runAsDenied(User user, AuthenticationToken token);
+
+            abstract void authenticationSuccess(String realm, User user);
         }
 
         class Transport extends AuditableRequest {
@@ -344,6 +349,11 @@ public class AuthenticationService extends AbstractComponent {
             Transport(String action, TransportMessage message) {
                 this.action = action;
                 this.message = message;
+            }
+
+            @Override
+            void authenticationSuccess(String realm, User user) {
+                auditTrail.authenticationSuccess(realm, user, action, message);
             }
 
             @Override
@@ -385,6 +395,7 @@ public class AuthenticationService extends AbstractComponent {
                 return failureHandler.failedAuthentication(message, token, action, threadContext);
             }
 
+            @Override
             public String toString() {
                 return "transport request action [" + action + "]";
             }
@@ -396,6 +407,11 @@ public class AuthenticationService extends AbstractComponent {
 
             Rest(RestRequest request) {
                 this.request = request;
+            }
+
+            @Override
+            void authenticationSuccess(String realm, User user) {
+                auditTrail.authenticationSuccess(realm, user, request);
             }
 
             @Override
@@ -437,6 +453,7 @@ public class AuthenticationService extends AbstractComponent {
                 return failureHandler.failedAuthentication(request, token, threadContext);
             }
 
+            @Override
             public String toString() {
                 return "rest request uri [" + request.uri() + "]";
             }

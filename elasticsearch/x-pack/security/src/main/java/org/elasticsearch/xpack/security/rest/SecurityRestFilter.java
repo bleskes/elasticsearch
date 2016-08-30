@@ -59,7 +59,7 @@ public class SecurityRestFilter extends RestFilter {
 
     @Inject
     public SecurityRestFilter(AuthenticationService service, RestController controller, Settings settings,
-                              ThreadPool threadPool, XPackLicenseState licenseState, SSLService sslService) {
+            ThreadPool threadPool, XPackLicenseState licenseState, SSLService sslService) {
         this.service = service;
         this.licenseState = licenseState;
         this.threadContext = threadPool.getThreadContext();
@@ -84,7 +84,7 @@ public class SecurityRestFilter extends RestFilter {
                 if (extractClientCertificate) {
                     putClientCertificateInContext(request, threadContext, logger);
                 }
-                service.authenticate(request);
+                service.authenticate(request).getUser();
             }
 
             RemoteHostHeader.process(request, threadContext);
