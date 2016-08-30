@@ -88,7 +88,7 @@ public class LoggingActionTests extends ESTestCase {
         Map<String, Object> expectedModel = singletonMap("ctx", ctxModel);
 
         String text = randomAsciiOfLength(10);
-        TextTemplate template = TextTemplate.inline(text).build();
+        TextTemplate template = new TextTemplate(text);
         LoggingAction action = new LoggingAction(template, level, "_category");
         ExecutableLoggingAction executable = new ExecutableLoggingAction(action, logger, actionLogger, engine);
         when(engine.render(template, expectedModel)).thenReturn(text);
@@ -109,7 +109,7 @@ public class LoggingActionTests extends ESTestCase {
         LoggingActionFactory parser = new LoggingActionFactory(settings, engine);
 
         String text = randomAsciiOfLength(10);
-        TextTemplate template = TextTemplate.inline(text).build();
+        TextTemplate template = new TextTemplate(text);
 
         XContentBuilder builder = jsonBuilder().startObject();
         builder.field("text", template);
@@ -143,7 +143,7 @@ public class LoggingActionTests extends ESTestCase {
         LoggingActionFactory parser = new LoggingActionFactory(settings, engine);
 
         String text = randomAsciiOfLength(10);
-        TextTemplate template = TextTemplate.inline(text).build();
+        TextTemplate template = new TextTemplate(text);
         String category = randomAsciiOfLength(10);
         LoggingAction action = new LoggingAction(template, level, category);
         ExecutableLoggingAction executable = new ExecutableLoggingAction(action, logger, settings, engine);
@@ -163,7 +163,7 @@ public class LoggingActionTests extends ESTestCase {
         LoggingActionFactory parser = new LoggingActionFactory(settings, engine);
 
         String text = randomAsciiOfLength(10);
-        TextTemplate template = TextTemplate.inline(text).build();
+        TextTemplate template = new TextTemplate(text);
         LoggingAction.Builder actionBuilder = loggingAction(template);
         if (randomBoolean()) {
             actionBuilder.setCategory(randomAsciiOfLength(10));

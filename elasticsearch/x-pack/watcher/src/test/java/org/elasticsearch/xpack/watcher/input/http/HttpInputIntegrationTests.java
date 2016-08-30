@@ -83,7 +83,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                         .trigger(schedule(interval("5s")))
                         .input(httpInput(HttpRequestTemplate.builder(address.getHostString(), address.getPort())
                                 .path("/index/_search")
-                                .body(jsonBuilder().startObject().field("size", 1).endObject())
+                                .body(jsonBuilder().startObject().field("size", 1).endObject().string())
                                 .auth(securityEnabled() ? new BasicAuth("test", "changeme".toCharArray()) : null)))
                         .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L))
                         .addAction("_id", loggingAction("watch [{{ctx.watch_id}}] matched")))
@@ -129,8 +129,8 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                     .field("query").value(termQuery("field", "value"))
                 .endObject();
         HttpRequestTemplate.Builder requestBuilder = HttpRequestTemplate.builder(address.getHostString(), address.getPort())
-                .path(TextTemplate.inline("/idx/_search"))
-                .body(body);
+                .path(new TextTemplate("/idx/_search"))
+                .body(body.string());
         if (securityEnabled()) {
             requestBuilder.auth(new BasicAuth("test", "changeme".toCharArray()));
         }
