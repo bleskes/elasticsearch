@@ -26,7 +26,8 @@
  ***********************************************************/
 package com.prelert.job.persistence;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
@@ -57,5 +58,36 @@ public class BucketQueryBuilderTest
         assertEquals(true, query.isIncludeInterim());
         assertEquals(true, query.isExpand());
         assertEquals("p", query.getPartitionValue());
+    }
+
+    @Test
+    public void testEqualsHash() throws Exception
+    {
+        BucketQueryBuilder.BucketQuery query =
+                new BucketQueryBuilder(1000l)
+                    .expand(true)
+                    .includeInterim(true)
+                    .partitionValue("p")
+                    .build();
+
+        BucketQueryBuilder.BucketQuery query2 =
+                new BucketQueryBuilder(1000l)
+                    .expand(true)
+                    .includeInterim(true)
+                    .partitionValue("p")
+                    .build();
+
+        assertEquals(query2, query);
+        assertEquals(query2.hashCode(), query.hashCode());
+
+        query2 =
+                new BucketQueryBuilder(1000l)
+                    .expand(true)
+                    .includeInterim(true)
+                    .partitionValue("q")
+                    .build();
+
+        assertFalse(query2.equals(query));
+        assertFalse(query2.hashCode() == query.hashCode());
     }
 }

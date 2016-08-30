@@ -26,9 +26,10 @@
  ***********************************************************/
 package com.prelert.job.persistence;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class BucketsQueryBuilderTest {
 
@@ -71,5 +72,59 @@ public class BucketsQueryBuilderTest {
         assertEquals(1000l, query.getEpochStart());
         assertEquals(2000l, query.getEpochEnd());
         assertEquals("foo", query.getPartitionValue());
+    }
+
+    @Test
+    public void testEqualsHash()
+    {
+        BucketsQueryBuilder query = new BucketsQueryBuilder()
+                .skip(20)
+                .take(40)
+                .includeInterim(true)
+                .expand(true)
+                .anomalyScoreThreshold(50.0d)
+                .normalizedProbabilityThreshold(70.0d)
+                .epochStart(1000l)
+                .epochEnd(2000l)
+                .partitionValue("foo");
+
+        BucketsQueryBuilder query2 = new BucketsQueryBuilder()
+                .skip(20)
+                .take(40)
+                .includeInterim(true)
+                .expand(true)
+                .anomalyScoreThreshold(50.0d)
+                .normalizedProbabilityThreshold(70.0d)
+                .epochStart(1000l)
+                .epochEnd(2000l)
+                .partitionValue("foo");
+
+        assertEquals(query.build(), query2.build());
+        assertEquals(query.build().hashCode(), query2.build().hashCode());
+        query2.clear();
+        assertFalse(query.build().equals(query2.build()));
+
+        query2.skip(20)
+        .take(40)
+        .includeInterim(true)
+        .expand(true)
+        .anomalyScoreThreshold(50.0d)
+        .normalizedProbabilityThreshold(70.0d)
+        .epochStart(1000l)
+        .epochEnd(2000l)
+        .partitionValue("foo");
+        assertEquals(query.build(), query2.build());
+
+        query2.clear();
+        query2.skip(20)
+        .take(40)
+        .includeInterim(true)
+        .expand(true)
+        .anomalyScoreThreshold(50.1d)
+        .normalizedProbabilityThreshold(70.0d)
+        .epochStart(1000l)
+        .epochEnd(2000l)
+        .partitionValue("foo");
+        assertFalse(query.build().equals(query2.build()));
     }
 }
