@@ -21,6 +21,7 @@ import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Settings;
@@ -107,9 +108,8 @@ public class DnRoleMapper {
             return parseFile(path, logger, realmType, realmName);
         } catch (Exception e) {
             logger.error(
-                    new ParameterizedMessage("failed to parse role mappings file [{}]. skipping/removing all mappings...",
-                            path.toAbsolutePath()),
-                    e);
+                    (Supplier<?>) () -> new ParameterizedMessage(
+                            "failed to parse role mappings file [{}]. skipping/removing all mappings...", path.toAbsolutePath()), e);
             return emptyMap();
         }
     }
@@ -141,7 +141,7 @@ public class DnRoleMapper {
                         dnRoles.add(role);
                     } catch (LDAPException e) {
                         logger.error(
-                                new ParameterizedMessage(
+                                (Supplier<?>) () -> new ParameterizedMessage(
                                         "invalid DN [{}] found in [{}] role mappings [{}] for realm [{}/{}]. skipping... ",
                                         providedDn,
                                         realmType,

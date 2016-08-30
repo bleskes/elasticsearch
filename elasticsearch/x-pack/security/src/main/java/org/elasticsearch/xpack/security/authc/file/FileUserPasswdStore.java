@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.security.authc.file;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.internal.Nullable;
 import org.elasticsearch.env.Environment;
@@ -115,7 +116,8 @@ public class FileUserPasswdStore {
             return parseFile(path, logger);
         } catch (Exception e) {
             logger.error(
-                    new ParameterizedMessage("failed to parse users file [{}]. skipping/removing all users...", path.toAbsolutePath()), e);
+                    (Supplier<?>) () -> new ParameterizedMessage(
+                            "failed to parse users file [{}]. skipping/removing all users...", path.toAbsolutePath()), e);
             return emptyMap();
         }
     }

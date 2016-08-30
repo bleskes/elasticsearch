@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.security.transport.netty3;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Setting;
@@ -87,7 +88,7 @@ public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport
         if (isNotSslRecordException(t)) {
             if (logger.isTraceEnabled()) {
                 logger.trace(
-                        new ParameterizedMessage(
+                        (Supplier<?>) () -> new ParameterizedMessage(
                                 "received plaintext http traffic on a https channel, closing connection {}",
                                 ctx.getChannel()),
                         t);
@@ -97,7 +98,7 @@ public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport
             ctx.getChannel().close();
         } else if (isCloseDuringHandshakeException(t)) {
             if (logger.isTraceEnabled()) {
-                logger.trace(new ParameterizedMessage("connection {} closed during handshake", ctx.getChannel()), t);
+                logger.trace((Supplier<?>) () -> new ParameterizedMessage("connection {} closed during handshake", ctx.getChannel()), t);
             } else {
                 logger.warn("connection {} closed during handshake", ctx.getChannel());
             }

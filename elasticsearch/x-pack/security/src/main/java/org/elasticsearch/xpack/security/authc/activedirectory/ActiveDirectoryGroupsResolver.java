@@ -27,6 +27,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
@@ -69,7 +70,7 @@ public class ActiveDirectoryGroupsResolver implements GroupsResolver {
         try {
             results = search(connection, searchRequest, logger);
         } catch (LDAPException e) {
-            logger.error(new ParameterizedMessage("failed to fetch AD groups for DN [{}]", userDn), e);
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to fetch AD groups for DN [{}]", userDn), e);
             return Collections.emptyList();
         }
 
@@ -105,7 +106,7 @@ public class ActiveDirectoryGroupsResolver implements GroupsResolver {
             }
             return Filter.createORFilter(orFilters);
         } catch (LDAPException e) {
-            logger.error(new ParameterizedMessage("failed to fetch AD groups for DN [{}]", userDn), e);
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to fetch AD groups for DN [{}]", userDn), e);
             return null;
         }
     }

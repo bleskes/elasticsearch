@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.monitoring.agent;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.lease.Releasable;
@@ -170,7 +171,7 @@ public class AgentService extends AbstractLifecycleComponent {
             try {
                 exporter.close();
             } catch (Exception e) {
-                logger.error(new ParameterizedMessage("failed to close exporter [{}]", exporter.name()), e);
+                logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to close exporter [{}]", exporter.name()), e);
             }
         }
     }

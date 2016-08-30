@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.security.action.user;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
@@ -93,7 +94,7 @@ public class TransportGetUsersAction extends HandledTransportAction<GetUsersRequ
 
                 @Override
                 public void onFailure(Exception e) {
-                    logger.error(new ParameterizedMessage("failed to retrieve user [{}]", username), e);
+                    logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to retrieve user [{}]", username), e);
                     listener.onFailure(e);
                 }
             });
@@ -110,7 +111,8 @@ public class TransportGetUsersAction extends HandledTransportAction<GetUsersRequ
                 @Override
                 public void onFailure(Exception e) {
                     logger.error(
-                            new ParameterizedMessage("failed to retrieve user [{}]", arrayToDelimitedString(request.usernames(), ",")), e);
+                            (Supplier<?>) () -> new ParameterizedMessage(
+                                    "failed to retrieve user [{}]", arrayToDelimitedString(request.usernames(), ",")), e);
                     listener.onFailure(e);
                 }
             });

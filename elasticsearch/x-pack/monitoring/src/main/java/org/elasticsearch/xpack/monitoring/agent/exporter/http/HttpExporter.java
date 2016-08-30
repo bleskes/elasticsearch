@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.monitoring.agent.exporter.http;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ExceptionsHelper;
@@ -349,7 +350,7 @@ public class HttpExporter extends Exporter {
                         doc.getClass().getName(), doc.getMonitoringId(), doc.getMonitoringVersion());
             }
         } catch (Exception e) {
-            logger.warn(new ParameterizedMessage("failed to render document [{}], skipping it", doc), e);
+            logger.warn((Supplier<?>) () -> new ParameterizedMessage("failed to render document [{}], skipping it", doc), e);
         }
     }
 
@@ -412,7 +413,9 @@ public class HttpExporter extends Exporter {
                             continue;
                         }
                     } catch (ElasticsearchException e) {
-                        logger.error(new ParameterizedMessage("exception when checking remote cluster version on host [{}]", host), e);
+                        logger.error(
+                                (Supplier<?>) () -> new ParameterizedMessage(
+                                        "exception when checking remote cluster version on host [{}]", host), e);
                         continue;
                     }
                 }
@@ -510,9 +513,9 @@ public class HttpExporter extends Exporter {
 
             return conn;
         } catch (URISyntaxException e) {
-            logger.error(new ParameterizedMessage("error parsing host [{}]", host), e);
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("error parsing host [{}]", host), e);
         } catch (IOException e) {
-            logger.error(new ParameterizedMessage("error connecting to [{}]", host), e);
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("error connecting to [{}]", host), e);
         }
         return null;
     }
@@ -581,7 +584,9 @@ public class HttpExporter extends Exporter {
                 return true;
             }
         } catch (Exception e) {
-            logger.error(new ParameterizedMessage("failed to verify the monitoring pipeline [{}] on [{}]", EXPORT_PIPELINE_NAME, host), e);
+            logger.error(
+                    (Supplier<?>) () -> new ParameterizedMessage(
+                            "failed to verify the monitoring pipeline [{}] on [{}]", EXPORT_PIPELINE_NAME, host), e);
             return false;
         } finally {
             if (connection != null) {
@@ -617,7 +622,9 @@ public class HttpExporter extends Exporter {
             logger.info("monitoring pipeline [{}] set", EXPORT_PIPELINE_NAME);
             return true;
         } catch (IOException e) {
-            logger.error(new ParameterizedMessage("failed to update monitoring pipeline [{}] on host [{}]", EXPORT_PIPELINE_NAME, host), e);
+            logger.error(
+                    (Supplier<?>) () -> new ParameterizedMessage(
+                            "failed to update monitoring pipeline [{}] on host [{}]", EXPORT_PIPELINE_NAME, host), e);
             return false;
         } finally {
             if (connection != null) {
@@ -671,7 +678,9 @@ public class HttpExporter extends Exporter {
                 return true;
             }
         } catch (Exception e) {
-            logger.error(new ParameterizedMessage("failed to verify the monitoring template [{}] on [{}]", templateName, host), e);
+            logger.error(
+                    (Supplier<?>) () -> new ParameterizedMessage(
+                            "failed to verify the monitoring template [{}] on [{}]", templateName, host), e);
             return false;
         } finally {
             if (connection != null) {
@@ -705,7 +714,9 @@ public class HttpExporter extends Exporter {
             logger.info("monitoring template [{}] updated ", template);
             return true;
         } catch (IOException e) {
-            logger.error(new ParameterizedMessage("failed to update monitoring template [{}] on host [{}]", template, host), e);
+            logger.error(
+                    (Supplier<?>) () -> new ParameterizedMessage(
+                            "failed to update monitoring template [{}] on host [{}]", template, host), e);
             return false;
         } finally {
             if (connection != null) {

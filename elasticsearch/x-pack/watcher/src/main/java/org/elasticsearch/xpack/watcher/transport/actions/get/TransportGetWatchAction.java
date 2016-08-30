@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.watcher.transport.actions.get;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
@@ -100,7 +101,7 @@ public class TransportGetWatchAction extends WatcherTransportAction<GetWatchRequ
             }
 
         } catch (Exception e) {
-            logger.error(new ParameterizedMessage("failed to get watch [{}]", request.getId()), e);
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to get watch [{}]", request.getId()), e);
             throw e;
         }
     }

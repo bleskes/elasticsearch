@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.monitoring.agent.collector;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -93,7 +94,7 @@ public abstract class AbstractCollector extends AbstractLifecycleComponent imple
         } catch (ElasticsearchTimeoutException e) {
             logger.error("collector [{}] timed out when collecting data", name());
         } catch (Exception e) {
-            logger.error(new ParameterizedMessage("collector [{}] - failed collecting data", name()), e);
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("collector [{}] - failed collecting data", name()), e);
         }
         return null;
     }
