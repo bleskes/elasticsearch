@@ -60,12 +60,6 @@ public class Bucket implements StorageSerialisable
     public static final String PROCESSING_TIME_MS = "processingTimeMs";
     public static final String PARTITION_SCORES = "partitionScores";
 
-    public static class PartitionScore
-    {
-        public String m_PartitionFieldValue;
-        public double m_AnomalyScore;
-    }
-
     /**
      * Elasticsearch type
      */
@@ -428,6 +422,11 @@ public class Bucket implements StorageSerialisable
         if (m_BucketInfluencers != null)
         {
             serialiser.add(BUCKET_INFLUENCERS, m_BucketInfluencers);
+        }
+
+        if (m_PartitionScores != null && m_PartitionScores.isEmpty() == false)
+        {
+            serialiser.add(PARTITION_SCORES, m_PartitionScores);
         }
     }
 }

@@ -130,6 +130,7 @@ public final class ReservedFieldNames
         Bucket.INFLUENCERS,
         Bucket.INITIAL_ANOMALY_SCORE,
         Bucket.PROCESSING_TIME_MS,
+        Bucket.PARTITION_SCORES,
 
         BucketInfluencer.BUCKET_TIME,
         BucketInfluencer.INFLUENCER_FIELD_NAME,

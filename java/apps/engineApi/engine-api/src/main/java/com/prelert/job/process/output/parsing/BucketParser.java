@@ -37,7 +37,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
-import com.prelert.job.results.Bucket.PartitionScore;
+import com.prelert.job.results.PartitionScore;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.FieldNameParser;

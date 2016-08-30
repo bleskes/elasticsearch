@@ -36,7 +36,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
-import com.prelert.job.results.Bucket.PartitionScore;
+import com.prelert.job.results.PartitionScore;
 
 public class PartitionScoreParserTest {
 
@@ -49,8 +49,8 @@ public class PartitionScoreParserTest {
         parser.nextToken();
         PartitionScore score = new PartitionScoreParser(parser).parseJson();
 
-        assertEquals("partitionField", score.m_PartitionFieldValue);
-        assertEquals(0.2, score.m_AnomalyScore, 0.0001);
+        assertEquals("partitionField", score.getPartitionFieldValue());
+        assertEquals(0.2, score.getAnomalyScore(), 0.0001);
     }
 
     private static final JsonParser createJsonParser(String input) throws IOException
