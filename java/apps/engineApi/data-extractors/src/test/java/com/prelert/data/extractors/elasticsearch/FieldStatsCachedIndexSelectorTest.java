@@ -111,7 +111,7 @@ public class FieldStatsCachedIndexSelectorTest
 
         // Verify second call does not log twice
         assertEquals(Arrays.asList("foo", "bar-*"), indexSelector.selectByTime(0L, 50L, m_Logger));
-        verify(m_Logger).warn("Failed to select indices using the field stats API; "
+        verify(m_Logger).warn("Unable to select indices using the field stats API; "
                 + "falling back to using configured indices. Reason was: "
                 + "Request to 'http://myes:9200/foo,bar-*/_field_stats?level=indices' "
                 + "failed with status code 400. Response was:\nOups...");
@@ -431,7 +431,7 @@ public class FieldStatsCachedIndexSelectorTest
 
         // Verify second call does not log twice
         assertEquals(Arrays.asList("index-*"), indexSelector.selectByTime(0L, 5L, m_Logger));
-        verify(m_Logger).warn("Failed to select indices using the field stats API; "
+        verify(m_Logger).warn("Unable to select indices using the field stats API; "
                 + "falling back to using configured indices. Reason was: "
                 + "Expected field 'indices' was missing from field stats response");
     }
@@ -470,7 +470,7 @@ public class FieldStatsCachedIndexSelectorTest
         verify(m_HttpRequester, times(1)).get(m_UrlCaptor.capture(), m_RequestBodyCaptor.capture());
         assertEquals("http://myes:9200/myIndex-*/_field_stats?level=indices", m_UrlCaptor.getValue());
 
-        verify(m_Logger).warn("Failed to select indices using the field stats API; "
+        verify(m_Logger).warn("Unable to select indices using the field stats API; "
                 + "falling back to using configured indices. Reason was: "
                 + "Expected field 'min_value' was missing from field stats response");
     }
@@ -503,7 +503,7 @@ public class FieldStatsCachedIndexSelectorTest
         verify(m_HttpRequester, times(1)).get(m_UrlCaptor.capture(), m_RequestBodyCaptor.capture());
         assertEquals("http://myes:9200/myIndex-*/_field_stats?level=indices", m_UrlCaptor.getValue());
 
-        verify(m_Logger).warn("Failed to select indices using the field stats API; "
+        verify(m_Logger).warn("Unable to select indices using the field stats API; "
                 + "falling back to using configured indices. Reason was: "
                 + "Field 'min_value' was expected to be a long; actual type was: STRING");
     }

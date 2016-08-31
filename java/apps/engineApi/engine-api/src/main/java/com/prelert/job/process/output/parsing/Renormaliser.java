@@ -42,6 +42,16 @@ public interface Renormaliser
     void renormalise(Quantiles quantiles, Logger logger);
 
     /**
+     * Update the anomaly score field on all previously persisted buckets
+     * and all contained records and aggregate records to the partition
+     * level
+     * @param quantiles
+     * @param logger
+     */
+    void renormaliseWithPartition(Quantiles quantiles, Logger logger);
+
+
+    /**
      * Blocks until the renormaliser is idle and no further normalisation tasks are pending.
      */
     void waitUntilIdle();

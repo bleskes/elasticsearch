@@ -31,6 +31,8 @@ import com.prelert.job.ModelDebugConfig;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.SchedulerConfig;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
 import com.prelert.job.quantiles.Quantiles;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.usage.Usage;
@@ -138,6 +140,9 @@ public final class ReservedFieldNames
 
         BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS,
 
+        PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS,
+        PartitionNormalisedProb.TYPE,
+
         CategoryDefinition.CATEGORY_ID,
         CategoryDefinition.TERMS,
         CategoryDefinition.REGEX,
@@ -163,6 +168,12 @@ public final class ReservedFieldNames
         DataDescription.FIELD_DELIMITER,
         DataDescription.QUOTE_CHARACTER,
 
+        DetectionRule.RULE_ACTION,
+        DetectionRule.TARGET_FIELD_NAME,
+        DetectionRule.TARGET_FIELD_VALUE,
+        DetectionRule.CONDITIONS_CONNECTIVE,
+        DetectionRule.RULE_CONDITIONS,
+
         Detector.DETECTOR_DESCRIPTION,
         Detector.FUNCTION,
         Detector.FIELD_NAME,
@@ -170,6 +181,12 @@ public final class ReservedFieldNames
         Detector.OVER_FIELD_NAME,
         Detector.PARTITION_FIELD_NAME,
         Detector.USE_NULL,
+        Detector.DETECTOR_RULES,
+
+        RuleCondition.CONDITION_TYPE,
+        RuleCondition.FIELD_NAME,
+        RuleCondition.FIELD_VALUE,
+        RuleCondition.VALUE_LIST,
 
         Influence.INFLUENCER_FIELD_NAME,
         Influence.INFLUENCER_FIELD_VALUES,

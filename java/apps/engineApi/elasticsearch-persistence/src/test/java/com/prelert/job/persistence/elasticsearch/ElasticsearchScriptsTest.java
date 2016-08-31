@@ -28,17 +28,40 @@
 package com.prelert.job.persistence.elasticsearch;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService.ScriptType;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.MockitoAnnotations;
+
+import com.prelert.job.JobException;
+import com.prelert.job.UnknownJobException;
 
 public class ElasticsearchScriptsTest
 {
+    @Captor private ArgumentCaptor<Map<String, Object>> m_MapCaptor;
+
+    @Before
+    public void setUp() throws InterruptedException, ExecutionException
+    {
+        MockitoAnnotations.initMocks(this);
+    }
+
     @Test
     public void testNewUpdateBucketCount()
     {
@@ -82,6 +105,17 @@ public class ElasticsearchScriptsTest
     }
 
     @Test
+    public void testNewUpdateDetectorRules()
+    {
+        List<Map<String, Object>> newRules = new ArrayList<>();
+        Script script = ElasticsearchScripts.newUpdateDetectorRules(1, newRules);
+        assertEquals("update-detector-rules", script.getScript());
+        assertEquals(2, script.getParams().size());
+        assertEquals(1, script.getParams().get("detectorIndex"));
+        assertEquals(newRules, script.getParams().get("newDetectorRules"));
+    }
+
+    @Test
     public void testNewUpdateSchedulerConfig()
     {
         Map<String, Object> newSchedulerConfig = new HashMap<>();
@@ -93,4 +127,102 @@ public class ElasticsearchScriptsTest
         assertEquals(1, script.getParams().size());
         assertEquals(newSchedulerConfig, script.getParams().get("newSchedulerConfig"));
     }
+
+    @Test
+    public void testUpdateProcessingTime()
+    {
+        Long time = 135790L;
+        Script script = ElasticsearchScripts.updateProcessingTime(time);
+        System.out.println(script.getScript());
+        assertEquals("update-average-processing-time", script.getScript());
+        assertEquals(time, script.getParams().get("timeMs"));
+    }
+
+    @Test
+    public void testUpdateUpsertViaScript() throws JobException
+    {
+        String index = "idx";
+        String docId = "docId";
+        String type = "type";
+        Map<String, Object> map = new HashMap<>();
+        map.put("testKey",  "testValue");
+
+        Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
+        ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
+                .prepareUpdateScript(index, type, docId, captor, m_MapCaptor);
+        Client client = clientBuilder.build();
+
+        assertTrue(ElasticsearchScripts.updateViaScript(client, index, type, docId, script));
+
+        Script response = captor.getValue();
+        assertEquals(script, response);
+        assertEquals(map, response.getParams());
+
+        map.clear();
+        map.put("secondKey",  "secondValue");
+        map.put("thirdKey",  "thirdValue");
+        assertTrue(ElasticsearchScripts.upsertViaScript(client, index, type, docId, script, map));
+
+        Map<String, Object> updatedParams = m_MapCaptor.getValue();
+        assertEquals(map, updatedParams);
+    }
+
+    @Test
+    public void testUpdateUpsertViaScript_InvalidIndex() throws JobException
+    {
+        String index = "idx";
+        String docId = "docId";
+        String type = "type";
+
+        IndexNotFoundException e = new IndexNotFoundException("INF");
+
+        Script script = mock(Script.class);
+        ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
+                .prepareUpdateScript(index, type, docId, captor, m_MapCaptor, e);
+        Client client = clientBuilder.build();
+
+        try
+        {
+            ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
+            assertFalse(true);
+        }
+        catch (UnknownJobException ex)
+        {
+            assertEquals(index, ex.getJobId());
+        }
+    }
+
+    @Test
+    public void testUpdateUpsertViaScript_IllegalArgument() throws JobException
+    {
+        String index = "idx";
+        String docId = "docId";
+        String type = "type";
+        Map<String, Object> map = new HashMap<>();
+        map.put("testKey",  "testValue");
+
+        IllegalArgumentException ex = new IllegalArgumentException("IAE");
+
+        Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
+        ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
+                .prepareUpdateScript(index, type, docId, captor, m_MapCaptor, ex);
+        Client client = clientBuilder.build();
+
+        try
+        {
+            ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
+        }
+        catch (JobException e)
+        {
+            String msg = e.toString();
+            assertTrue(msg.matches(".*test-script-here.*inline.*params.*testKey.*testValue.*"));
+        }
+    }
+
 }

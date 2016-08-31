@@ -136,6 +136,9 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 long shards = readNumberOfShards(index);
                 m_Chunk = Math.max(MIN_CHUNK_SIZE_MS,
                         (shards * m_ScrollSize * dataTimeSpread) / totalHits);
+                m_Logger.debug("Chunked search configured:  totalHits = " + totalHits
+                        + ", dataTimeSpread = " + dataTimeSpread + " ms, chunk size = " + m_Chunk
+                        + " ms");
             }
         }
     }

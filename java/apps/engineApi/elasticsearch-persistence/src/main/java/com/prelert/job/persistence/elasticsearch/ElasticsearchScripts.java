@@ -55,6 +55,7 @@ public final class ElasticsearchScripts
     private static final String UPDATE_USAGE = "update-usage";
     private static final String UPDATE_CATEGORIZATION_FILTERS = "update-categorization-filters";
     private static final String UPDATE_DETECTOR_DESCRIPTION = "update-detector-description";
+    private static final String UPDATE_DETECTOR_RULES = "update-detector-rules";
     private static final String UPDATE_SCHEDULER_CONFIG = "update-scheduler-config";
 
     // Script parameters
@@ -65,6 +66,7 @@ public final class ElasticsearchScripts
     private static final String NEW_CATEGORIZATION_FILTERS_PARAM = "newFilters";
     private static final String DETECTOR_INDEX_PARAM = "detectorIndex";
     private static final String NEW_DESCRIPTION_PARAM = "newDescription";
+    private static final String NEW_DETECTOR_RULES_PARAM = "newDetectorRules";
     private static final String NEW_SCHEDULER_CONFIG_PARAM = "newSchedulerConfig";
     private static final String PROCESSING_TIME_PARAM = "timeMs";
 
@@ -108,6 +110,15 @@ public final class ElasticsearchScripts
         scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
         scriptParams.put(NEW_DESCRIPTION_PARAM, newDescription);
         return new Script(UPDATE_DETECTOR_DESCRIPTION, ScriptService.ScriptType.FILE,
+                ScriptService.DEFAULT_LANG, scriptParams);
+    }
+
+    public static Script newUpdateDetectorRules(int detectorIndex, List<Map<String, Object>> newRules)
+    {
+        Map<String, Object> scriptParams = new HashMap<>();
+        scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
+        scriptParams.put(NEW_DETECTOR_RULES_PARAM, newRules);
+        return new Script(UPDATE_DETECTOR_RULES, ScriptService.ScriptType.FILE,
                 ScriptService.DEFAULT_LANG, scriptParams);
     }
 

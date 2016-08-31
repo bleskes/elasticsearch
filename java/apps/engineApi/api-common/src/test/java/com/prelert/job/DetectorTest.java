@@ -31,7 +31,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+
 import org.junit.Test;
+
+import com.prelert.job.detectionrules.Connective;
+import com.prelert.job.detectionrules.DetectionRule;
 
 public class DetectorTest
 {
@@ -83,6 +88,30 @@ public class DetectorTest
         assertFalse(detector1.equals(detector2));
     }
 
+    @Test
+    public void testEquals_GivenDifferentRules()
+    {
+        Detector detector1 = createDetector();
+        Detector detector2 = createDetector();
+        detector2.getDetectorRules().get(0).setConditionsConnective(Connective.AND);
+
+        assertFalse(detector1.equals(detector2));
+        assertFalse(detector2.equals(detector1));
+    }
+
+    @Test
+    public void testExtractAnalysisFields()
+    {
+        Detector detector = createDetector();
+        assertEquals(Arrays.asList("by", "over", "partition"), detector.extractAnalysisFields());
+        detector.setPartitionFieldName(null);
+        assertEquals(Arrays.asList("by", "over"), detector.extractAnalysisFields());
+        detector.setByFieldName(null);
+        assertEquals(Arrays.asList("over"), detector.extractAnalysisFields());
+        detector.setOverFieldName(null);
+        assertTrue(detector.extractAnalysisFields().isEmpty());
+    }
+
     private Detector createDetector()
     {
         Detector detector = new Detector();
@@ -92,6 +121,9 @@ public class DetectorTest
         detector.setOverFieldName("over");
         detector.setPartitionFieldName("partition");
         detector.setUseNull(true);
+
+        DetectionRule rule = new DetectionRule();
+        detector.setDetectorRules(Arrays.asList(rule));
 
         return detector;
     }

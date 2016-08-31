@@ -59,6 +59,7 @@ public class BucketsQueryBuilderTest {
                 .normalizedProbabilityThreshold(70.0d)
                 .epochStart(1000l)
                 .epochEnd(2000l)
+                .partitionValue("foo")
                 .build();
 
         assertEquals(20, query.getSkip());
@@ -69,5 +70,6 @@ public class BucketsQueryBuilderTest {
         assertEquals(70.0d, query.getNormalizedProbability(), 0.00001);
         assertEquals(1000l, query.getEpochStart());
         assertEquals(2000l, query.getEpochEnd());
+        assertEquals("foo", query.getPartitionValue());
     }
 }

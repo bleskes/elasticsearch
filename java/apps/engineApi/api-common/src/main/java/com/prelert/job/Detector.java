@@ -19,13 +19,16 @@
 package com.prelert.job;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.prelert.job.detectionrules.DetectionRule;
 
 
 /**
@@ -44,6 +47,7 @@ public class Detector
     public static final String PARTITION_FIELD_NAME = "partitionFieldName";
     public static final String USE_NULL = "useNull";
     public static final String EXCLUDE_FREQUENT = "excludeFrequent";
+    public static final String DETECTOR_RULES = "detectorRules";
 
 
     public static final String COUNT = "count";
@@ -251,10 +255,11 @@ public class Detector
     private String m_PartitionFieldName;
     private Boolean m_UseNull;
     private String m_ExcludeFrequent;
+    private List<DetectionRule> m_DetectorRules;
 
     public Detector()
     {
-
+        // Default constructor
     }
 
     public String getDetectorDescription()
@@ -372,6 +377,33 @@ public class Detector
         m_ExcludeFrequent = v;
     }
 
+    public List<DetectionRule> getDetectorRules()
+    {
+        return m_DetectorRules;
+    }
+
+    public void setDetectorRules(List<DetectionRule> detectorRules)
+    {
+        m_DetectorRules = detectorRules;
+    }
+
+    /**
+     * Returns a list with the byFieldName, overFieldName and partitionFieldName that are not null
+     * @return a list with the byFieldName, overFieldName and partitionFieldName that are not null
+     */
+    public List<String> extractAnalysisFields()
+    {
+        List<String> analysisFields = Arrays.asList(getByFieldName(),
+                getOverFieldName(), getPartitionFieldName());
+        return analysisFields.stream().filter(item -> item != null).collect(Collectors.toList());
+    }
+
+    public Set<String> extractReferencedLists()
+    {
+        return m_DetectorRules == null ? Collections.emptySet()
+                : m_DetectorRules.stream().map(DetectionRule::extractReferencedLists)
+                        .flatMap(Set::stream).collect(Collectors.toSet());
+    }
 
     @Override
     public boolean equals(Object other)
@@ -395,13 +427,15 @@ public class Detector
                Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
                Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
                Objects.equals(this.m_UseNull, that.m_UseNull) &&
-               Objects.equals(this.m_ExcludeFrequent, that.m_ExcludeFrequent);
+               Objects.equals(this.m_ExcludeFrequent, that.m_ExcludeFrequent) &&
+               Objects.equals(this.m_DetectorRules, that.m_DetectorRules);
     }
 
     @Override
     public int hashCode()
     {
         return Objects.hash(m_DetectorDescription, m_Function, m_FieldName, m_ByFieldName,
-                m_OverFieldName, m_PartitionFieldName, m_UseNull, m_ExcludeFrequent);
+                m_OverFieldName, m_PartitionFieldName, m_UseNull, m_ExcludeFrequent,
+                m_DetectorRules);
     }
 }

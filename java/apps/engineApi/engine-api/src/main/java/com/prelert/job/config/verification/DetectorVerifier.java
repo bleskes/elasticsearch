@@ -27,6 +27,8 @@
 package com.prelert.job.config.verification;
 
 import com.prelert.job.Detector;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.verification.DetectionRuleVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
@@ -62,7 +64,7 @@ public final class DetectorVerifier
      * then overFieldName must not be set</li>
      * </ol>
      *
-     *@param detector The detector configuration
+     * @param detector The detector configuration
      * @param isSummarised Is this detector in a pre-summarised job?
      * @return true
      * @throws JobConfigurationException
@@ -157,13 +159,14 @@ public final class DetectorVerifier
         }
 
         // field names cannot contain certain characters
-        String [] fields = {detector.getFieldName(), detector.getByFieldName(), detector.getOverFieldName(), detector.getPartitionFieldName()};
+        String[] fields = {detector.getFieldName(), detector.getByFieldName(), detector.getOverFieldName(), detector.getPartitionFieldName()};
         for (String field : fields)
         {
             verifyFieldName(field);
         }
 
         verifyExcludeFrequent(detector.getExcludeFrequent());
+        verifyDetectorRules(detector);
 
         return true;
     }
@@ -237,5 +240,16 @@ public final class DetectorVerifier
             }
         }
         return field.chars().anyMatch(ch -> Character.isISOControl(ch));
+    }
+
+    private static void verifyDetectorRules(Detector detector) throws JobConfigurationException
+    {
+        if (detector.getDetectorRules() != null)
+        {
+            for (DetectionRule rule : detector.getDetectorRules())
+            {
+                DetectionRuleVerifier.verify(rule, detector);
+            }
+        }
     }
 }

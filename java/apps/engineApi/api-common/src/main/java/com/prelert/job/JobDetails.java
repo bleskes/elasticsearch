@@ -452,7 +452,6 @@ public class JobDetails
         m_Transforms = transforms;
     }
 
-
     /**
      * Processed records count
      * @return the processed records counts

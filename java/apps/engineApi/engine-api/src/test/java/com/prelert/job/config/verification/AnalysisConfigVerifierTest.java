@@ -482,6 +482,51 @@ public class AnalysisConfigVerifierTest
     }
 
     @Test
+    public void testCheckDetectorsHavePartitionFields()
+            throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(
+                        ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD));
+        m_ExpectedException.expectMessage("If the job is configured with Per-Partition Normalization enabled a detector must have a partition field");
+
+        AnalysisConfig config = createValidConfig();
+        config.setUsePerPartitionNormalization(true);
+
+        AnalysisConfigVerifier.verify(config);
+    }
+
+    @Test
+    public void testCheckDetectorsHavePartitionFields_doesntThrowWhenValid()
+            throws JobConfigurationException
+    {
+        AnalysisConfig config = createValidConfig();
+        config.getDetectors().get(0).setPartitionFieldName("pField");
+        config.setUsePerPartitionNormalization(true);
+
+        AnalysisConfigVerifier.verify(config);
+    }
+
+    @Test
+    public void testCheckNoInfluencersAreSet()
+            throws JobConfigurationException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(
+                        ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS));
+        m_ExpectedException.expectMessage("A job configured with Per-Partition Normalization cannot use influencers");
+
+        AnalysisConfig config = createValidConfig();
+        config.getDetectors().get(0).setPartitionFieldName("pField");
+        config.setInfluencers(Arrays.asList("inf1", "inf2"));
+        config.setUsePerPartitionNormalization(true);
+
+        AnalysisConfigVerifier.verify(config);
+    }
+
+    @Test
     public void testVerify_GivenCategorizationFiltersContainInvalidRegex() throws JobConfigurationException
     {
         m_ExpectedException.expect(JobConfigurationException.class);

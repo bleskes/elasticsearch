@@ -65,6 +65,17 @@ public class AutoDetectResultsParser
     private final Set<String> m_AcknowledgedFlushes = new HashSet<>();
     private volatile boolean m_ParsingStarted;
     private volatile boolean m_ParsingInProgress;
+    private boolean m_IsPerPartitionNormalization;
+
+    public AutoDetectResultsParser()
+    {
+        this(false);
+    }
+
+    public AutoDetectResultsParser(boolean isPerPartition)
+    {
+        m_IsPerPartitionNormalization = isPerPartition;
+    }
 
     public void addObserver(AlertObserver obs)
     {
@@ -232,6 +243,10 @@ public class AutoDetectResultsParser
                             deleteInterimRequired = false;
                         }
                         Bucket bucket = new BucketParser(parser).parseJsonAfterStartObject();
+                        if (m_IsPerPartitionNormalization)
+                        {
+                            bucket.calcMaxNormalizedProbabilityPerPartition();
+                        }
                         persister.persistBucket(bucket);
                         tryUpdatingBucket(persister, bucket, logger);
                         notifyObservers(bucket);
@@ -244,7 +259,14 @@ public class AutoDetectResultsParser
 
                         logger.debug("Quantiles parsed from output - will " +
                                     "trigger renormalisation of scores");
-                        renormaliser.renormalise(quantiles, logger);
+                        if (m_IsPerPartitionNormalization)
+                        {
+                            renormaliser.renormaliseWithPartition(quantiles, logger);
+                        }
+                        else
+                        {
+                            renormaliser.renormalise(quantiles, logger);
+                        }
                         break;
                     case ModelSnapshot.SNAPSHOT_ID:
                         ModelSnapshot modelSnapshot = new ModelSnapshotParser(parser).parseJsonAfterStartObject();

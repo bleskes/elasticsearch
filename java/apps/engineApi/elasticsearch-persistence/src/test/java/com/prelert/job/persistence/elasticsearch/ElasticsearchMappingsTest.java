@@ -51,6 +51,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
+import com.prelert.job.ListDocument;
 import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
@@ -135,6 +136,7 @@ public class ElasticsearchMappingsTest
         overridden.add(ElasticsearchJobDataPersister.TYPE);
         overridden.add(Influencer.TYPE);
         overridden.add(JobDetails.TYPE);
+        overridden.add(ListDocument.TYPE);
         overridden.add(ModelDebugOutput.TYPE);
         overridden.add(ModelState.TYPE);
         overridden.add(ModelSnapshot.TYPE);
@@ -147,6 +149,10 @@ public class ElasticsearchMappingsTest
         overridden.add(ElasticsearchJobDataPersister.BY_FIELDS);
         overridden.add(ElasticsearchJobDataPersister.OVER_FIELDS);
         overridden.add(ElasticsearchJobDataPersister.PARTITION_FIELDS);
+
+        // These are not reserved because they're in the prelert-int index, not prelertresults-*
+        overridden.add(ListDocument.ID);
+        overridden.add(ListDocument.ITEMS);
 
         // These are not reserved because they're analyzed strings, i.e. the same type as user-specified fields
         overridden.add(JobDetails.DESCRIPTION);
@@ -355,6 +361,48 @@ public class ElasticsearchMappingsTest
                         "              }," +
                         "              \"useNull\": {" +
                         "                \"type\": \"boolean\"" +
+                        "              }," +
+                        "              \"detectorRules\": {" +
+                        "                \"type\": \"object\"," +
+                        "                \"properties\": {" +
+                        "                  \"ruleAction\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"targetFieldName\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"targetFieldValue\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"conditionsConnective\": {" +
+                        "                    \"type\":\"string\"," +
+                        "                    \"index\":\"not_analyzed\"" +
+                        "                  }," +
+                        "                  \"ruleConditions\": {" +
+                        "                    \"type\":\"object\"," +
+                        "                    \"properties\": {" +
+                        "                      \"conditionType\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }," +
+                        "                      \"fieldName\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }," +
+                        "                      \"fieldValue\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }," +
+                        "                      \"valueList\": {" +
+                        "                        \"type\":\"string\"," +
+                        "                        \"index\":\"not_analyzed\"" +
+                        "                      }" +
+                        "                    }" +
+                        "                  }" +
+                        "                }" +
                         "              }" +
                         "            }" +
                         "          }," +

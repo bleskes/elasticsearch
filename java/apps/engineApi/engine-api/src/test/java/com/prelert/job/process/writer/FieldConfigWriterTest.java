@@ -28,6 +28,7 @@
 package com.prelert.job.process.writer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -40,21 +41,45 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.ini4j.Config;
 import org.ini4j.Ini;
 import org.ini4j.Profile.Section;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
+import com.prelert.job.ListDocument;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
+import com.prelert.job.detectionrules.RuleConditionType;
 
 
 public class FieldConfigWriterTest
 {
+    private AnalysisConfig m_AnalysisConfig;
+    private Set<ListDocument> m_Lists;
+    private OutputStreamWriter m_Writer;
+    private Logger m_Logger;
+
+    @Before
+    public void setUp()
+    {
+        m_AnalysisConfig = new AnalysisConfig();
+        m_Lists = new LinkedHashSet<>();
+    }
+
     @Test
     public void testMultipleDetectorsToConfFile()
     throws IOException
@@ -89,17 +114,15 @@ public class FieldConfigWriterTest
         d6.setOverFieldName("ts\\hash");
         detectors.add(d6);
 
-        AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(detectors);
+        m_AnalysisConfig.setDetectors(detectors);
 
         ByteArrayOutputStream ba = new ByteArrayOutputStream();
-        try (OutputStreamWriter osw = new OutputStreamWriter(ba, StandardCharsets.UTF_8))
-        {
-            BasicConfigurator.configure();
-            Logger logger = Logger.getLogger(FieldConfigWriterTest.class);
+        m_Writer = new OutputStreamWriter(ba, StandardCharsets.UTF_8);
+        BasicConfigurator.configure();
+        m_Logger = Logger.getLogger(FieldConfigWriterTest.class);
 
-            new FieldConfigWriter(config, osw, logger).write();
-        }
+        createFieldConfigWriter().write();
+        m_Writer.close();
 
         // read the ini file - all the settings are in the global section
         StringReader reader = new StringReader(ba.toString("UTF-8"));
@@ -140,17 +163,15 @@ public class FieldConfigWriterTest
         d.setFieldName("Integer_Value");
         d.setByFieldName("ts_hash");
 
-        AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Arrays.asList(d));
-        config.setCategorizationFieldName("foo");
-        OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        Logger logger = mock(Logger.class);
-        FieldConfigWriter fieldConfigWriter = new FieldConfigWriter(config, writer, logger);
+        m_AnalysisConfig.setDetectors(Arrays.asList(d));
+        m_AnalysisConfig.setCategorizationFieldName("foo");
+        m_Writer = mock(OutputStreamWriter.class);
+        m_Logger = mock(Logger.class);
 
-        fieldConfigWriter.write();
+        createFieldConfigWriter().write();
 
-        verify(writer).write("detector.0.clause = Integer_Value by ts_hash categorizationfield=foo\n");
-        verifyNoMoreInteractions(writer);
+        verify(m_Writer).write("detector.0.clause = Integer_Value by ts_hash categorizationfield=foo\n");
+        verifyNoMoreInteractions(m_Writer);
     }
 
     @Test
@@ -160,21 +181,19 @@ public class FieldConfigWriterTest
         d.setFieldName("Integer_Value");
         d.setByFieldName("ts_hash");
 
-        AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Arrays.asList(d));
-        config.setInfluencers(Arrays.asList("sun", "moon", "earth"));
+        m_AnalysisConfig.setDetectors(Arrays.asList(d));
+        m_AnalysisConfig.setInfluencers(Arrays.asList("sun", "moon", "earth"));
 
-        OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        Logger logger = mock(Logger.class);
-        FieldConfigWriter fieldConfigWriter = new FieldConfigWriter(config, writer, logger);
+        m_Writer = mock(OutputStreamWriter.class);
+        m_Logger = mock(Logger.class);
 
-        fieldConfigWriter.write();
+        createFieldConfigWriter().write();
 
-        verify(writer).write("detector.0.clause = Integer_Value by ts_hash\n" +
+        verify(m_Writer).write("detector.0.clause = Integer_Value by ts_hash\n" +
                 "influencer.0 = sun\n" +
                 "influencer.1 = moon\n" +
                 "influencer.2 = earth\n");
-        verifyNoMoreInteractions(writer);
+        verifyNoMoreInteractions(m_Writer);
     }
 
     @Test
@@ -184,23 +203,85 @@ public class FieldConfigWriterTest
         d.setFieldName("Integer_Value");
         d.setByFieldName("ts_hash");
 
-        AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Arrays.asList(d));
-        config.setInfluencers(Arrays.asList("sun"));
-        config.setCategorizationFieldName("myCategory");
-        config.setCategorizationFilters(Arrays.asList("foo", " ", "abc,def"));
+        m_AnalysisConfig.setDetectors(Arrays.asList(d));
+        m_AnalysisConfig.setInfluencers(Arrays.asList("sun"));
+        m_AnalysisConfig.setCategorizationFieldName("myCategory");
+        m_AnalysisConfig.setCategorizationFilters(Arrays.asList("foo", " ", "abc,def"));
 
-        OutputStreamWriter writer = mock(OutputStreamWriter.class);
-        Logger logger = mock(Logger.class);
-        FieldConfigWriter fieldConfigWriter = new FieldConfigWriter(config, writer, logger);
+        m_Writer = mock(OutputStreamWriter.class);
+        m_Logger = mock(Logger.class);
 
-        fieldConfigWriter.write();
+        createFieldConfigWriter().write();
 
-        verify(writer).write("detector.0.clause = Integer_Value by ts_hash categorizationfield=myCategory\n" +
+        verify(m_Writer).write("detector.0.clause = Integer_Value by ts_hash categorizationfield=myCategory\n" +
                 "categorizationfilter.0 = foo\n" +
                 "categorizationfilter.1 = \" \"\n" +
                 "categorizationfilter.2 = \"abc,def\"\n" +
                 "influencer.0 = sun\n");
-        verifyNoMoreInteractions(writer);
+        verifyNoMoreInteractions(m_Writer);
+    }
+
+    @Test
+    public void testWrite_GivenDetectorWithRules() throws IOException
+    {
+        Detector detector = new Detector();
+        detector.setFunction("mean");
+        detector.setFieldName("metricValue");
+        detector.setByFieldName("metricName");
+        detector.setPartitionFieldName("instance");
+        RuleCondition ruleCondition = new RuleCondition();
+        ruleCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        ruleCondition.setFieldName("metricName");
+        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        DetectionRule rule = new DetectionRule();
+        rule.setTargetFieldName("instance");
+        rule.setRuleConditions(Arrays.asList(ruleCondition));
+        detector.setDetectorRules(Arrays.asList(rule));
+
+        m_AnalysisConfig.setDetectors(Arrays.asList(detector));
+
+        m_Writer = mock(OutputStreamWriter.class);
+        m_Logger = mock(Logger.class);
+
+        createFieldConfigWriter().write();
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(m_Writer).write(captor.capture());
+        String actual = captor.getValue();
+        String expectedFirstLine = "detector.0.clause = mean(metricValue) by metricName partitionfield=instance\n";
+        assertTrue(actual.startsWith(expectedFirstLine));
+        String secondLine = actual.substring(expectedFirstLine.length());
+        String expectedSecondLineStart = "detector.0.rules = ";
+        assertTrue(secondLine.startsWith(expectedSecondLineStart));
+        String rulesJson = secondLine.substring(expectedSecondLineStart.length());
+        List<DetectionRule> writtenRules = new ObjectMapper().readValue(rulesJson,
+                new TypeReference<List<DetectionRule>>() {});
+        assertEquals(1, writtenRules.size());
+        assertEquals(rule, writtenRules.get(0));
+    }
+
+    @Test
+    public void testWrite_GivenLists() throws IOException
+    {
+        Detector d = new Detector();
+        d.setFunction("count");
+
+        m_AnalysisConfig.setDetectors(Arrays.asList(d));
+        m_Lists.add(new ListDocument("list_1", Arrays.asList("a", "b")));
+        m_Lists.add(new ListDocument("list_2", Arrays.asList("c", "d")));
+        m_Writer = mock(OutputStreamWriter.class);
+        m_Logger = mock(Logger.class);
+
+        createFieldConfigWriter().write();
+
+        verify(m_Writer).write("detector.0.clause = count\n" +
+                "list.list_1 = [\"a\",\"b\"]\n" +
+                "list.list_2 = [\"c\",\"d\"]\n");
+        verifyNoMoreInteractions(m_Writer);
+    }
+
+    private FieldConfigWriter createFieldConfigWriter()
+    {
+        return new FieldConfigWriter(m_AnalysisConfig, m_Lists, m_Writer, m_Logger);
     }
 }

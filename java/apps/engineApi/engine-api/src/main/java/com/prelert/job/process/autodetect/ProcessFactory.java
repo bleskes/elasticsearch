@@ -30,13 +30,17 @@ package com.prelert.job.process.autodetect;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobStatus;
+import com.prelert.job.ListDocument;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.UnknownJobException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -44,7 +48,7 @@ import com.prelert.job.logging.JobLoggerFactory;
 import com.prelert.job.persistence.JobDataCountsPersisterFactory;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.UsagePersisterFactory;
-import com.prelert.job.process.ProcessCtrl;
+import com.prelert.job.process.AutodetectBuilder;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.output.parsing.ResultsReaderFactory;
 import com.prelert.job.quantiles.Quantiles;
@@ -92,16 +96,27 @@ public class ProcessFactory
         Logger logger = m_JobLoggerFactory.newLogger(job.getId());
         Quantiles quantiles = m_JobProvider.getQuantiles(jobId);
         List<ModelSnapshot> modelSnapshots = m_JobProvider.modelSnapshots(jobId, 0, 1).queryResults();
-        ModelSnapshot modelSnapshot = (modelSnapshots == null || modelSnapshots.isEmpty()) ? null : modelSnapshots.get(0);
 
         Process nativeProcess = null;
         List<File> filesToDelete = new ArrayList<>();
         try
         {
+            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, logger)
+                    .ignoreDowntime(ignoreDowntime)
+                    .referencedLists(resolveLists(job.getAnalysisConfig().extractReferencedLists()));
+
             // if state is null or empty it will be ignored
             // else it is used to restore the quantiles
-            nativeProcess = ProcessCtrl.buildAutoDetect(job, quantiles, logger,
-                    filesToDelete, modelSnapshot, ignoreDowntime);
+            if (quantiles != null)
+            {
+                autodetectBuilder.quantiles(quantiles);
+            }
+
+            if (modelSnapshots != null && !modelSnapshots.isEmpty())
+            {
+                autodetectBuilder.modelSnapshot(modelSnapshots.get(0));
+            }
+            nativeProcess = autodetectBuilder.build();
         }
         catch (IOException e)
         {
@@ -125,7 +140,8 @@ public class ProcessFactory
                 job.getSchedulerConfig(), new TransformConfigs(job.getTransforms()), logger,
                 sr,
                 m_ResultsReaderFactory.newResultsParser(jobId,
-                                        nativeProcess.getInputStream(), logger),
+                                        nativeProcess.getInputStream(), logger,
+                                        job.getAnalysisConfig().getUsePerPartitionNormalization()),
                 filesToDelete
                 );
 
@@ -134,5 +150,23 @@ public class ProcessFactory
         logger.debug("Created process for job " + jobId);
 
         return procAndDD;
+    }
+
+    private Set<ListDocument> resolveLists(Set<String> listIds)
+    {
+        Set<ListDocument> resolved = new HashSet<>();
+        for (String listId : listIds)
+        {
+            Optional<ListDocument> list = m_JobProvider.getList(listId);
+            if (list.isPresent())
+            {
+                resolved.add(list.get());
+            }
+            else
+            {
+                LOGGER.warn("List '" + listId + "' could not be retrieved.");
+            }
+        }
+        return resolved;
     }
 }

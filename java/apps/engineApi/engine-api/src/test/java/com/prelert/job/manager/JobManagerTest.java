@@ -106,6 +106,7 @@ import com.prelert.job.UnknownJobException;
 import com.prelert.job.audit.Auditor;
 import com.prelert.job.data.extraction.DataExtractor;
 import com.prelert.job.data.extraction.DataExtractorFactory;
+import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
@@ -1599,6 +1600,19 @@ public class JobManagerTest
         jobManager.updateDetectorDescription("foo", 1, "bar");
 
         verify(m_JobProvider).updateDetectorDescription("foo", 1, "bar");
+    }
+
+    @Test
+    public void testUpdateDetectorRules() throws JobException
+    {
+        givenProcessInfo(2);
+        List<DetectionRule> detectorRules = new ArrayList<>();
+        detectorRules.add(new DetectionRule());
+        JobManager jobManager = createJobManager();
+
+        jobManager.updateDetectorRules("foobar", 2, detectorRules);
+
+        verify(m_JobProvider).updateDetectorRules("foobar", 2, detectorRules);
     }
 
     @Test

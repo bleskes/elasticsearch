@@ -89,6 +89,18 @@ public final class Messages
     public static final String JOB_CONFIG_CONDITION_INVALID_VALUE_REGEX = "job.config.condition.invalid.value.regex";
     public static final String JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR = "job.config.condition.unknown.operator";
     public static final String JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM = "job.config.dataformat.requires.transform";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_INVALID_OPTION = "job.config.detectionrule.condition.categorical.invalid.option";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_MISSING_OPTION = "job.config.detectionrule.condition.categorical.missing.option";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME = "job.config.detectionrule.condition.invalid.fieldname";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_MISSING_FIELD_NAME = "job.config.detectionrule.condition.missing.fieldname";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_INVALID_OPERATOR = "job.config.detectionrule.condition.numerical.invalid.operator";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_INVALID_OPTION = "job.config.detectionrule.condition.numerical.invalid.option";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_MISSING_OPTION = "job.config.detectionrule.condition.numerical.missing.option";
+    public static final String JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE = "job.config.detectionrule.condition.numerical.with.fieldname.requires.fieldvalue";
+    public static final String JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD_NAME = "job.config.detectionrule.invalid.targetfieldname";
+    public static final String JOB_CONFIG_DETECTION_RULE_MISSING_TARGET_FIELD_NAME = "job.config.detectionrule.missing.targetfieldname";
+    public static final String JOB_CONFIG_DETECTION_RULE_NOT_SUPPORTED_BY_FUNCTION = "job.config.detectionrule.not.supported.by.function";
+    public static final String JOB_CONFIG_DETECTION_RULE_REQUIRES_AT_LEAST_ONE_CONDITION = "job.config.detectionrule.requires.at.least.one.condition";
     public static final String JOB_CONFIG_FIELDNAME_INCOMPATIBLE_FUNCTION = "job.config.fieldname.incompatible.function";
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD = "job.config.function.requires.byfield";
     public static final String JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME = "job.config.function.requires.fieldname";
@@ -110,6 +122,8 @@ public final class Messages
     public static final String JOB_CONFIG_OVERFIELD_NEEDS_ANOTHER = "job.config.overField.needs.another";
     public static final String JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN = "job.config.multiple.bucketspans.require.bucketspan";
     public static final String JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE = "job.config.multiple.bucketspans.must.be.multiple";
+    public static final String JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD = "job.config.per.partition.normalisation.requires.partition.field";
+    public static final String JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS = "job.config.per.partition.normalisation.cannot.use.influencers";
 
 
     public static final String JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_PARSE_ERROR = "job.config.update.analysis.limits.parse.error";
@@ -118,11 +132,12 @@ public final class Messages
     public static final String JOB_CONFIG_UPDATE_CATEGORIZATION_FILTERS_INVALID = "job.config.update.categorization.filters.invalid";
     public static final String JOB_CONFIG_UPDATE_CUSTOM_SETTINGS_INVALID = "job.config.update.custom.settings.invalid";
     public static final String JOB_CONFIG_UPDATE_DESCRIPTION_INVALID = "job.config.update.description.invalid";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID = "job.config.update.detector.description.invalid";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_INVALID_DETECTOR_INDEX = "job.config.update.detector.description.invalid.detector.index";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detector.description.detector.index.should.be.integer";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_MISSING_PARAMS = "job.config.update.detector.description.missing.params";
-    public static final String JOB_CONFIG_UPDATE_DETECTOR_DESCRIPTION_SHOULD_BE_STRING = "job.config.update.detector.description.should.be.string";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_INVALID = "job.config.update.detectors.invalid";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_INVALID_DETECTOR_INDEX = "job.config.update.detectors.invalid.detector.index";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_DETECTOR_INDEX_SHOULD_BE_INTEGER = "job.config.update.detectors.detector.index.should.be.integer";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_MISSING_PARAMS = "job.config.update.detectors.missing.params";
+    public static final String JOB_CONFIG_UPDATE_DETECTORS_DESCRIPTION_SHOULD_BE_STRING = "job.config.update.detectors.description.should.be.string";
+    public static final String JOB_CONFIG_UPDATE_DETECTOR_RULES_PARSE_ERROR = "job.config.update.detectors.rules.parse.error";
     public static final String JOB_CONFIG_UPDATE_FAILED = "job.config.update.failed";
     public static final String JOB_CONFIG_UPDATE_INVALID_KEY = "job.config.update.invalid.key";
     public static final String JOB_CONFIG_UPDATE_IGNORE_DOWNTIME_PARSE_ERROR = "job.config.update.ignore.downtime.parse.error";

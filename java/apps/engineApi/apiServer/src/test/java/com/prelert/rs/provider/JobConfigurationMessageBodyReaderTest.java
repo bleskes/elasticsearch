@@ -31,7 +31,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayInputStream;
@@ -200,7 +199,6 @@ public class JobConfigurationMessageBodyReaderTest
                 + "\"analysisLimits\": {\"modelMemoryLimit\":2000}"
                 + "}";
 
-
         JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
 
         JobConfiguration config = reader.readFrom(JobConfiguration.class, mock(Type.class),
@@ -287,6 +285,69 @@ public class JobConfigurationMessageBodyReaderTest
 
         assertEquals(1, config.getTransforms().size());
         assertEquals(Arrays.asList(tr), config.getTransforms());
+    }
+
+
+    @Test
+    public void testReadConfigNoTransforms_ParseException() throws IOException
+    {
+        final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
+                + "\"description\":\"Flight Centre Job\","
+                + "\"analysisConfig\" : {"
+                + "\"bucketSpan\":3600,"
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
+                + "},"
+                + "\"\"\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
+                + "\"analysisLimits\": {\"modelMemoryLimit\":2000, \"categorizationExamplesLimit\":3}"
+                + "}";
+
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
+
+        try
+        {
+            reader.readFrom(JobConfiguration.class, mock(Type.class),
+                                                new Annotation [] {},
+                                                MediaType.APPLICATION_JSON_TYPE,
+                                                new MultivaluedHashMap<String, String>(),
+                                        new ByteArrayInputStream(FLIGHT_CENTRE_JOB_CONFIG.getBytes(StandardCharsets.UTF_8)));
+            assertTrue(false);
+        }
+        catch (JobConfigurationParseException ex)
+        {
+            System.out.println(ex.toString());
+            assertTrue(ex.toString().matches(".*JSON parse error.*"));
+        }
+    }
+
+    @Test
+    public void testReadConfigNoTransforms_MappingException() throws IOException
+    {
+        final String FLIGHT_CENTRE_JOB_CONFIG = "{\"id\":\"flightcentre-csv\","
+                + "\"description\":\"Flight Centre Job\","
+                + "\"analysisConfig\" : {"
+                + "\"bucketSpan\":3600,"
+                + "\"detectors\":[{\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}] "
+                + "},"
+                + "\"dataDescription\":{\"fieldDelimiter\":\",\", \"timeField\":\"_time\", \"timeFormat\" : \"epoch\"},"
+                + "\"baboon\": {\"modelMemoryLimit\":2000, \"categorizationExamplesLimit\":3}"
+                + "}";
+
+        JobConfigurationMessageBodyReader reader = new JobConfigurationMessageBodyReader();
+
+        try
+        {
+            reader.readFrom(JobConfiguration.class, mock(Type.class),
+                                                new Annotation [] {},
+                                                MediaType.APPLICATION_JSON_TYPE,
+                                                new MultivaluedHashMap<String, String>(),
+                                        new ByteArrayInputStream(FLIGHT_CENTRE_JOB_CONFIG.getBytes(StandardCharsets.UTF_8)));
+            assertTrue(false);
+        }
+        catch (JobConfigurationParseException ex)
+        {
+            System.out.println(ex.toString());
+            assertTrue(ex.toString().matches(".*JSON mapping error.*"));
+        }
     }
 
 }

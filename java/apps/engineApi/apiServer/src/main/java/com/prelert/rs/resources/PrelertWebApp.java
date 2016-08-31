@@ -83,6 +83,7 @@ import com.prelert.rs.provider.ElasticsearchExceptionMapper;
 import com.prelert.rs.provider.EngineStatusWriter;
 import com.prelert.rs.provider.JobConfigurationMessageBodyReader;
 import com.prelert.rs.provider.JobExceptionMapper;
+import com.prelert.rs.provider.ListDocumentMessageBodyReader;
 import com.prelert.rs.provider.MultiDataPostResultWriter;
 import com.prelert.rs.provider.NativeProcessRunExceptionMapper;
 import com.prelert.rs.provider.PaginationWriter;
@@ -372,6 +373,7 @@ public final class PrelertWebApp extends Application
         m_ResourceClasses.add(DataLoad.class);
         m_ResourceClasses.add(Jobs.class);
         m_ResourceClasses.add(Influencers.class);
+        m_ResourceClasses.add(Lists.class);
         m_ResourceClasses.add(Logs.class);
         m_ResourceClasses.add(ModelSnapshots.class);
         m_ResourceClasses.add(Preview.class);
@@ -385,6 +387,7 @@ public final class PrelertWebApp extends Application
     {
         m_ResourceClasses.add(DetectorMessageBodyReader.class);
         m_ResourceClasses.add(JobConfigurationMessageBodyReader.class);
+        m_ResourceClasses.add(ListDocumentMessageBodyReader.class);
         m_ResourceClasses.add(TransformConfigMessageBodyReader.class);
         m_ResourceClasses.add(TransformConfigArrayMessageBodyReader.class);
     }

@@ -40,33 +40,30 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 
 /**
- * <p>
- * This class implements {@link TimestampConverter} using the {@link DateTimeFormatter}
+ * <p> This class implements {@link TimestampConverter} using the {@link DateTimeFormatter}
  * of the Java 8 time API for parsing timestamps and other classes of that API for converting
  * timestamps to epoch times.
- * </p>
  *
- * <p>
- * Objects of this class are <b>immutable</b> and <b>thread-safe</b>
- * </p>
+ * <p> Objects of this class are <b>immutable</b> and <b>thread-safe</b>
  *
  */
 public class DateTimeFormatterTimestampConverter implements TimestampConverter
 {
     private final DateTimeFormatter m_Formatter;
     private final boolean m_HasTimeZone;
-    private final ZoneId m_SystemDefaultZoneId;
+    private final ZoneId m_DefaultZoneId;
 
     private DateTimeFormatterTimestampConverter(DateTimeFormatter dateTimeFormatter,
-            boolean hasTimeZone)
+            boolean hasTimeZone, ZoneId defaultTimezone)
     {
         m_Formatter = dateTimeFormatter;
         m_HasTimeZone = hasTimeZone;
-        m_SystemDefaultZoneId = ZoneOffset.systemDefault();
+        m_DefaultZoneId = defaultTimezone;
     }
 
     /**
-     * Creates a formatter according to the given pattern
+     * Creates a formatter according to the given pattern. The system's default timezone
+     * is used for dates without timezone information.
      * @param pattern the pattern to be used by the formatter, not null.
      * See {@link java.time.format.DateTimeFormatter} for the syntax of the accepted patterns
      * @return a {@code TimestampConverter}
@@ -74,6 +71,20 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
      * (e.g. contains a date but not a time)
      */
     public static TimestampConverter ofPattern(String pattern)
+    {
+        return ofPattern(pattern, ZoneOffset.systemDefault());
+    }
+
+    /**
+     * Creates a formatter according to the given pattern
+     * @param pattern the pattern to be used by the formatter, not null.
+     * See {@link java.time.format.DateTimeFormatter} for the syntax of the accepted patterns
+     * @param defaultTimezone the timezone to be used for dates without timezone information.
+     * @return a {@code TimestampConverter}
+     * @throws IllegalArgumentException if the pattern is invalid or cannot produce a full timestamp
+     * (e.g. contains a date but not a time)
+     */
+    public static TimestampConverter ofPattern(String pattern, ZoneId defaultTimezone)
     {
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .parseLenient()
@@ -94,7 +105,7 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
             {
                 LocalDateTime.from(parsed);
             }
-            return new DateTimeFormatterTimestampConverter(formatter, hasTimeZone);
+            return new DateTimeFormatterTimestampConverter(formatter, hasTimeZone, defaultTimezone);
         }
         catch (DateTimeException e)
         {
@@ -121,6 +132,6 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
         {
             return Instant.from(parsed);
         }
-        return LocalDateTime.from(parsed).atZone(m_SystemDefaultZoneId).toInstant();
+        return LocalDateTime.from(parsed).atZone(m_DefaultZoneId).toInstant();
     }
 }

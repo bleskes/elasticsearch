@@ -27,12 +27,16 @@
 
 package com.prelert.rs.job.update;
 
+import static org.junit.Assert.assertEquals;
+
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
@@ -49,18 +53,25 @@ import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.UnknownJobException;
+import com.prelert.job.condition.Condition;
+import com.prelert.job.condition.Operator;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
+import com.prelert.job.detectionrules.RuleConditionType;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.manager.JobManager;
+import com.prelert.rs.provider.JobConfigurationParseException;
 
-public class DetectorDescriptionUpdaterTest
+public class DetectorsUpdaterTest
 {
     private static final String JOB_ID = "foo";
 
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private JobManager m_JobManager;
+    private StringWriter m_ConfigWriter;
     private JobDetails m_Job;
 
     @Before
@@ -70,6 +81,7 @@ public class DetectorDescriptionUpdaterTest
         m_Job = new JobDetails();
         m_Job.setId(JOB_ID);
         when(m_JobManager.getJobOrThrowIfUnknown(JOB_ID)).thenReturn(m_Job);
+        m_ConfigWriter = new StringWriter();
     }
 
     @Test
@@ -89,7 +101,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenParamIsNotJsonObject() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description, detectorRules]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -102,7 +114,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenMissingDescriptionParam() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description, detectorRules]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -112,14 +124,40 @@ public class DetectorDescriptionUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenMissingIndexParam() throws JobException, IOException
+    public void testPrepareUpdate_GivenIndexOnly() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description, detectorRules]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
-        JsonNode node = new ObjectMapper().readTree("[{\"name\":\"bar\"}]");
+        JsonNode node = new ObjectMapper().readTree("[{\"index\":0}]");
+
+        createUpdater().prepareUpdate(node);
+    }
+
+    @Test
+    public void testPrepareUpdate_GivenMissingIndexParam() throws JobException, IOException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description, detectorRules]");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+
+        JsonNode node = new ObjectMapper().readTree("[{\"description\":\"bar\",\"detectorRules\":[]}]");
+
+        createUpdater().prepareUpdate(node);
+    }
+
+    @Test
+    public void testPrepareUpdate_GivenUnknownParam() throws JobException, IOException
+    {
+        m_ExpectedException.expect(JobConfigurationException.class);
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description, detectorRules]");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+
+        JsonNode node = new ObjectMapper().readTree("[{\"index\":\"1\",\"unknown\":[]}]");
 
         createUpdater().prepareUpdate(node);
     }
@@ -128,7 +166,7 @@ public class DetectorDescriptionUpdaterTest
     public void testPrepareUpdate_GivenEmptyObject() throws JobException, IOException
     {
         m_ExpectedException.expect(JobConfigurationException.class);
-        m_ExpectedException.expectMessage("Invalid parameters: expected [index, description]");
+        m_ExpectedException.expectMessage("Invalid update value for detectors: requires [index] and at least one of [description, detectorRules]");
         m_ExpectedException.expect(
                 ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
 
@@ -221,16 +259,31 @@ public class DetectorDescriptionUpdaterTest
     }
 
     @Test
-    public void testPrepareUpdate_GivenValidParams() throws JobException, IOException
+    public void testPrepareUpdate_GivenValidDescription() throws JobException, IOException
     {
         JsonNode node = new ObjectMapper().readTree("[{\"index\":1, \"description\":\"Ipanema\"}]");
         givenJobHasNDetectors(3);
-        givenUpdateSucceeds(1, "Ipanema");
+        givenDescriptionUpdateSucceeds(1, "Ipanema");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
 
         verify(m_JobManager, never()).updateDetectorDescription(JOB_ID, 1, "Ipanema");
+    }
+
+    @Test
+    public void testPrepareUpdate_GivenRulesCannotBeParsed() throws JobException, IOException
+    {
+        m_ExpectedException.expect(JobConfigurationParseException.class);
+        m_ExpectedException.expectMessage("JSON parse error reading the update value for detectorRules");
+        m_ExpectedException.expect(
+                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+
+        JsonNode node = new ObjectMapper().readTree(
+                "[{\"index\":1, \"detectorRules\":[{\"actionRule\":\"invalid\"}]}]");
+        givenJobHasNDetectors(3);
+
+        createUpdater().prepareUpdate(node);
     }
 
     @Test
@@ -245,19 +298,19 @@ public class DetectorDescriptionUpdaterTest
 
         JsonNode node = new ObjectMapper().readTree("[{\"index\":0, \"description\":\"bar\"}]");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
     }
 
     @Test
-    public void testCommit_GivenValidParams() throws JobException, IOException
+    public void testCommit_GivenValidDescriptionUpdate() throws JobException, IOException
     {
         JsonNode node = new ObjectMapper().readTree("[{\"index\":1, \"description\":\"Ipanema\"}]");
         givenJobHasNDetectors(3);
-        givenUpdateSucceeds(1, "Ipanema");
+        givenDescriptionUpdateSucceeds(1, "Ipanema");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -272,9 +325,9 @@ public class DetectorDescriptionUpdaterTest
         m_Job.getAnalysisConfig().getDetectors().get(1).setFunction("mean");
         m_Job.getAnalysisConfig().getDetectors().get(1).setFieldName("responsetime");
         m_Job.getAnalysisConfig().getDetectors().get(1).setByFieldName("airline");
-        givenUpdateSucceeds(1, "mean(responsetime) by airline");
+        givenDescriptionUpdateSucceeds(1, "mean(responsetime) by airline");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -287,10 +340,10 @@ public class DetectorDescriptionUpdaterTest
         JsonNode node = new ObjectMapper().readTree(
                 "[{\"index\":1, \"description\":\"Ipanema\"}, {\"index\":0, \"description\":\"A Train\"}]");
         givenJobHasNDetectors(3);
-        givenUpdateSucceeds(1, "Ipanema");
-        givenUpdateSucceeds(0, "A Train");
+        givenDescriptionUpdateSucceeds(1, "Ipanema");
+        givenDescriptionUpdateSucceeds(0, "A Train");
 
-        DetectorDescriptionUpdater updater = createUpdater();
+        DetectorsUpdater updater = createUpdater();
         updater.prepareUpdate(node);
         updater.commit();
 
@@ -298,9 +351,73 @@ public class DetectorDescriptionUpdaterTest
         verify(m_JobManager).updateDetectorDescription(JOB_ID, 0, "A Train");
     }
 
-    private DetectorDescriptionUpdater createUpdater()
+    @Test
+    public void testCommit_GivenValidRules() throws JobException, IOException
     {
-        return new DetectorDescriptionUpdater(m_JobManager, m_Job, "detectors");
+        JsonNode node = new ObjectMapper().readTree(
+                "[{\"index\":0, \"detectorRules\":[{\"ruleConditions\":["
+                + "{\"conditionType\":\"numerical_actual\","
+                + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"}}]}]}]");
+        givenJobHasNDetectors(1);
+        m_Job.getAnalysisConfig().getDetectors().get(0).setFunction("count");
+
+        List<DetectionRule> rules = new ArrayList<>();
+        DetectionRule rule = new DetectionRule();
+        RuleCondition condition = new RuleCondition();
+        condition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        condition.setCondition(new Condition(Operator.LT, "3"));
+        rule.setRuleConditions(Arrays.asList(condition));
+        rules.add(rule);
+        givenRulesUpdateSucceeds(0, rules);
+
+        DetectorsUpdater updater = createUpdater();
+        updater.prepareUpdate(node);
+        updater.commit();
+
+        verify(m_JobManager).updateDetectorRules(JOB_ID, 0, rules);
+        String expectedRulesJson = new ObjectMapper().writeValueAsString(rules);
+        String expectedConfig = "[detectorRules]\ndetectorIndex = 0\nrulesJson = "
+                + expectedRulesJson + "\n";
+        assertEquals(expectedConfig, m_ConfigWriter.toString());
+    }
+
+    @Test
+    public void testCommit_GivenValidDescriptionAndRules() throws JobException, IOException
+    {
+        JsonNode node = new ObjectMapper().readTree(
+                "[{\"index\":0, \"description\":\"Ipanema\","
+                + "\"detectorRules\":[{\"ruleConditions\":["
+                + "{\"conditionType\":\"numerical_actual\","
+                + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"}}]}]}]");
+        givenJobHasNDetectors(1);
+        m_Job.getAnalysisConfig().getDetectors().get(0).setFunction("count");
+
+        List<DetectionRule> rules = new ArrayList<>();
+        DetectionRule rule = new DetectionRule();
+        RuleCondition condition = new RuleCondition();
+        condition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        condition.setCondition(new Condition(Operator.LT, "3"));
+        rule.setRuleConditions(Arrays.asList(condition));
+        rules.add(rule);
+
+        givenDescriptionUpdateSucceeds(0, "Ipanema");
+        givenRulesUpdateSucceeds(0, rules);
+
+        DetectorsUpdater updater = createUpdater();
+        updater.prepareUpdate(node);
+        updater.commit();
+
+        verify(m_JobManager).updateDetectorDescription(JOB_ID, 0, "Ipanema");
+        verify(m_JobManager).updateDetectorRules(JOB_ID, 0, rules);
+        String expectedRulesJson = new ObjectMapper().writeValueAsString(rules);
+        String expectedConfig = "[detectorRules]\ndetectorIndex = 0\nrulesJson = "
+                + expectedRulesJson + "\n";
+        assertEquals(expectedConfig, m_ConfigWriter.toString());
+    }
+
+    private DetectorsUpdater createUpdater()
+    {
+        return new DetectorsUpdater(m_JobManager, m_Job, "detectors", m_ConfigWriter);
     }
 
     private void givenJobHasNDetectors(int n)
@@ -315,9 +432,15 @@ public class DetectorDescriptionUpdaterTest
         m_Job.setAnalysisConfig(analysisConfig);
     }
 
-    private void givenUpdateSucceeds(int detectorIndex, String newName)
+    private void givenDescriptionUpdateSucceeds(int detectorIndex, String newName)
             throws UnknownJobException, JobException
     {
         when(m_JobManager.updateDetectorDescription(JOB_ID, detectorIndex, newName)).thenReturn(true);
+    }
+
+    private void givenRulesUpdateSucceeds(int detectorIndex, List<DetectionRule> rules)
+            throws UnknownJobException, JobException
+    {
+        when(m_JobManager.updateDetectorRules(JOB_ID, detectorIndex, rules)).thenReturn(true);
     }
 }

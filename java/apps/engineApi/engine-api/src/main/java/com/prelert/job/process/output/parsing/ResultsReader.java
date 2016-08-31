@@ -53,11 +53,11 @@ public class ResultsReader implements Runnable
     private final JobResultsPersister m_ResultsPersister;
 
     public ResultsReader(Renormaliser renormaliser, JobResultsPersister persister,
-            InputStream stream, Logger logger)
+            InputStream stream, Logger logger, boolean isPerPartitionNormalisation)
     {
         m_Stream = stream;
         m_Logger = logger;
-        m_Parser = new AutoDetectResultsParser();
+        m_Parser = new AutoDetectResultsParser(isPerPartitionNormalisation);
         m_Renormaliser = renormaliser;
         m_ResultsPersister = persister;
     }

@@ -136,6 +136,15 @@ public abstract class BaseIntegrationTest implements AutoCloseable
         }
     }
 
+    public void test(Object expected, Object actual, String message)
+    {
+        if (!expected.equals(actual))
+        {
+            throw new IllegalStateException(
+                    String.format("Expected %s, got %s. %s", expected, actual, message));
+        }
+    }
+
     @Override
     public void close() throws IOException
     {
