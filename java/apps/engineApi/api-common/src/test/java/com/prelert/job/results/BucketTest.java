@@ -436,4 +436,26 @@ public class BucketTest
         record.setNormalizedProbability(normalizedProbability);
         return record;
     }
+
+    @Test
+    public void testPartitionAnomalyScore()
+    {
+        List<PartitionScore> pScore = new ArrayList<>();
+        pScore.add(new PartitionScore("pf", "pv1", 10, 0.1));
+        pScore.add(new PartitionScore("pf", "pv3", 50, 0.1));
+        pScore.add(new PartitionScore("pf", "pv4", 60, 0.1));
+        pScore.add(new PartitionScore("pf", "pv2", 40, 0.1));
+
+        Bucket bucket = new Bucket();
+        bucket.setPartitionScores(pScore);
+
+        double anomalyScore = bucket.partitionAnomalyScore("pv1");
+        assertEquals(10.0, anomalyScore, 0.001);
+        anomalyScore = bucket.partitionAnomalyScore("pv2");
+        assertEquals(40.0, anomalyScore, 0.001);
+        anomalyScore = bucket.partitionAnomalyScore("pv3");
+        assertEquals(50.0, anomalyScore, 0.001);
+        anomalyScore = bucket.partitionAnomalyScore("pv4");
+        assertEquals(60.0, anomalyScore, 0.001);
+    }
 }

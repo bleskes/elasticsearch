@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -318,6 +319,15 @@ public class Bucket implements StorageSerialisable
     public void setPerPartitionMaxProbability(
             Map<String, Double> m_PerPartitionMaxProbability) {
         this.m_PerPartitionMaxProbability = m_PerPartitionMaxProbability;
+    }
+
+    public double partitionAnomalyScore(String partitionValue)
+    {
+        Optional<PartitionScore> first = m_PartitionScores.stream()
+                .filter(s -> partitionValue.equals(s.getPartitionFieldValue()))
+                .findFirst();
+
+        return first.isPresent() ? first.get().getAnomalyScore() : 0.0;
     }
 
     @Override
