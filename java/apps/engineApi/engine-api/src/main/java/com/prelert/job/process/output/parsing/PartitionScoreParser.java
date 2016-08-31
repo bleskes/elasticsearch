@@ -31,6 +31,8 @@ import java.io.IOException;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.PartitionScore;
 import com.prelert.utils.json.FieldNameParser;
@@ -53,8 +55,25 @@ public class PartitionScoreParser extends FieldNameParser<PartitionScore>
     @Override
     protected void handleFieldName(String fieldName, PartitionScore score) throws IOException
     {
-        score.setPartitionFieldValue(fieldName);
-        m_Parser.nextToken();
-        score.setAnomalyScore(parseAsDoubleOrZero(fieldName));
+        JsonToken token = m_Parser.nextToken();
+        switch (fieldName)
+        {
+        case AnomalyRecord.PROBABILITY:
+            score.setProbability(parseAsDoubleOrZero( fieldName));
+            break;
+        case AnomalyRecord.NORMALIZED_PROBABILITY:
+            score.setAnomalyScore(parseAsDoubleOrZero(fieldName));
+            break;
+        case AnomalyRecord.PARTITION_FIELD_NAME:
+            score.setPartitionFieldName(parseAsStringOrNull(fieldName));
+            break;
+        case AnomalyRecord.PARTITION_FIELD_VALUE:
+            score.setPartitionFieldValue(parseAsStringOrNull(fieldName));
+            break;
+        default:
+            LOGGER.warn(String.format("Parse error unknown field in PartitionScore %s:%s",
+                    fieldName, token.asString()));
+            break;
+        }
     }
 }

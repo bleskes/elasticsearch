@@ -35,7 +35,24 @@ import com.prelert.job.persistence.serialisation.StorageSerialiser;
 public class PartitionScore implements StorageSerialisable
 {
     private String m_PartitionFieldValue;
+    private String m_PartitionFieldName;
     private double m_AnomalyScore;
+    private double m_Probability;
+    private boolean m_HadBigNormalisedUpdate;
+
+
+    public PartitionScore()
+    {
+        m_HadBigNormalisedUpdate = false;
+    }
+
+    public PartitionScore(String fieldValue, double anomalyScore, double probability)
+    {
+        this();
+        m_PartitionFieldValue = fieldValue;
+        m_AnomalyScore = anomalyScore;
+        m_Probability = probability;
+    }
 
     public double getAnomalyScore()
     {
@@ -47,6 +64,16 @@ public class PartitionScore implements StorageSerialisable
         m_AnomalyScore = anomalyScore;
     }
 
+    public String getPartitionFieldName()
+    {
+        return m_PartitionFieldName;
+    }
+
+    public void setPartitionFieldName(String partitionFieldName)
+    {
+        m_PartitionFieldName = partitionFieldName;
+    }
+
     public String getPartitionFieldValue()
     {
         return m_PartitionFieldValue;
@@ -55,6 +82,16 @@ public class PartitionScore implements StorageSerialisable
     public void setPartitionFieldValue(String partitionFieldValue)
     {
         m_PartitionFieldValue = partitionFieldValue;
+    }
+
+    public double getProbability()
+    {
+        return m_Probability;
+    }
+
+    public void setProbability(double probability)
+    {
+        this.m_Probability = probability;
     }
 
     @Override
@@ -90,5 +127,20 @@ public class PartitionScore implements StorageSerialisable
     {
         serialiser.add(AnomalyRecord.PARTITION_FIELD_VALUE, m_PartitionFieldValue);
         serialiser.add(AnomalyRecord.ANOMALY_SCORE, m_AnomalyScore);
+    }
+
+    public boolean hadBigNormalisedUpdate()
+    {
+        return m_HadBigNormalisedUpdate;
+    }
+
+    public void resetBigNormalisedUpdateFlag()
+    {
+        m_HadBigNormalisedUpdate = false;
+    }
+
+    public void raiseBigNormalisedUpdateFlag()
+    {
+        m_HadBigNormalisedUpdate = true;
     }
 }
