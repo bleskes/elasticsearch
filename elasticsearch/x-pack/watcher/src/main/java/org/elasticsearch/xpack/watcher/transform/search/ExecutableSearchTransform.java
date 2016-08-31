@@ -35,9 +35,6 @@ import org.elasticsearch.xpack.watcher.watch.Payload;
 
 import static org.elasticsearch.xpack.watcher.transform.search.SearchTransform.TYPE;
 
-/**
- *
- */
 public class ExecutableSearchTransform extends ExecutableTransform<SearchTransform, SearchTransform.Result> {
 
     public static final SearchType DEFAULT_SEARCH_TYPE = SearchType.QUERY_THEN_FETCH;
