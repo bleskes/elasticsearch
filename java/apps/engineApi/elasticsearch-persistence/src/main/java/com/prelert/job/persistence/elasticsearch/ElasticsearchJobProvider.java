@@ -653,7 +653,11 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                                                     query.isIncludeInterim(),
                                                     b, query.getPartitionValue());
                 }
+
+                b.setAnomalyScore(
+                        b.partitionAnomalyScore(query.getPartitionValue()));
             }
+
         }
 
         return buckets;
@@ -798,6 +802,9 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                     this.expandBucketForPartitionValue(jobId, query.isIncludeInterim(),
                             bucket, query.getPartitionValue());
                 }
+
+                bucket.setAnomalyScore(
+                            bucket.partitionAnomalyScore(query.getPartitionValue()));
             }
 
             doc = Optional.of(bucket);

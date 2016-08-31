@@ -32,6 +32,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,12 +42,14 @@ import org.junit.Test;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 import com.prelert.job.results.BucketInfluencer;
+import com.prelert.job.results.PartitionScore;
 
 public class BucketNormalisableTest
 {
     private static final double ERROR = 0.0001;
     private Bucket m_Bucket;
     private List<AnomalyRecord> m_Records;
+    private List<PartitionScore> m_PartitionScores;
 
     @Before
     public void setUp()
@@ -66,12 +69,18 @@ public class BucketNormalisableTest
 
         m_Bucket.setAnomalyScore(88.0);
         m_Bucket.setMaxNormalizedProbability(2.0);
+
         AnomalyRecord record1 = new AnomalyRecord();
         record1.setNormalizedProbability(1.0);
         AnomalyRecord record2 = new AnomalyRecord();
         record2.setNormalizedProbability(2.0);
         m_Records = Arrays.asList(record1, record2);
         m_Bucket.setRecords(m_Records);
+
+        m_PartitionScores = new ArrayList<>();
+        m_PartitionScores.add(new PartitionScore("pf1", "pv1", 0.2, 0.1));
+        m_PartitionScores.add(new PartitionScore("pf1", "pv2", 0.4, 0.01));
+        m_Bucket.setPartitionScores(m_PartitionScores);
     }
 
     @Test
@@ -144,7 +153,7 @@ public class BucketNormalisableTest
     {
         List<Normalisable> children = new BucketNormalisable(m_Bucket).getChildren();
 
-        assertEquals(4, children.size());
+        assertEquals(6, children.size());
         assertTrue(children.get(0) instanceof BucketInfluencerNormalisable);
         assertEquals(42.0, children.get(0).getNormalisedScore(), ERROR);
         assertTrue(children.get(1) instanceof BucketInfluencerNormalisable);
@@ -153,6 +162,10 @@ public class BucketNormalisableTest
         assertEquals(1.0, children.get(2).getNormalisedScore(), ERROR);
         assertTrue(children.get(3) instanceof RecordNormalisable);
         assertEquals(2.0, children.get(3).getNormalisedScore(), ERROR);
+        assertTrue(children.get(4) instanceof PartitionScoreNormalisable);
+        assertEquals(0.2, children.get(4).getNormalisedScore(), ERROR);
+        assertTrue(children.get(5) instanceof PartitionScoreNormalisable);
+        assertEquals(0.4, children.get(5).getNormalisedScore(), ERROR);
     }
 
     @Test
@@ -182,7 +195,7 @@ public class BucketNormalisableTest
     @Test (expected = IllegalArgumentException.class)
     public void testGetChildren_GivenInvalidType()
     {
-        new BucketNormalisable(m_Bucket).getChildren(2);
+        new BucketNormalisable(m_Bucket).getChildren(3);
     }
 
     @Test

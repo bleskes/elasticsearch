@@ -225,12 +225,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
             LOGGER.trace("ES API CALL: index type " + PartitionNormalisedProb.TYPE +
                     " to index " + m_JobId.getIndex() + " at epoch " + bucket.getEpoch());
-            IndexResponse response = m_Client.prepareIndex(m_JobId.getIndex(), PartitionNormalisedProb.TYPE)
-            .setSource(builder)
-            .setId(bucket.getId())
-            .execute().actionGet();
-
-            LOGGER.info(response.getId());
+            m_Client.prepareIndex(m_JobId.getIndex(), PartitionNormalisedProb.TYPE)
+                                                .setSource(builder)
+                                                .setId(bucket.getId())
+                                                .execute().actionGet();
         }
         catch (IOException e)
         {
