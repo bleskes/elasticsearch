@@ -225,7 +225,7 @@ public class BucketNormalisableTest
     @Test (expected = IllegalArgumentException.class)
     public void testSetMaxChildrenScore_GivenInvalidType()
     {
-        new BucketNormalisable(m_Bucket).setMaxChildrenScore(2, 95.0);
+        new BucketNormalisable(m_Bucket).setMaxChildrenScore(3, 95.0);
     }
 
     @Test(expected = IllegalStateException.class)
