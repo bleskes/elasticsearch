@@ -39,7 +39,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Bucket Result POJO
  */
-@JsonIgnoreProperties({"epoch", "normalisable", "id", "perPartitionMaxProbability"})
+@JsonIgnoreProperties({"epoch", "normalisable", "id", "perPartitionMaxProbability"
+                    /*, "partitionScores"*/})
 @JsonInclude(Include.NON_NULL)
 public class Bucket implements StorageSerialisable
 {
@@ -88,6 +89,7 @@ public class Bucket implements StorageSerialisable
     {
         m_Records = Collections.emptyList();
         m_Influencers = Collections.emptyList();
+        m_PartitionScores = Collections.emptyList();
         m_BucketInfluencers = new ArrayList<>();
         setPerPartitionMaxProbability(Collections.emptyMap());
     }

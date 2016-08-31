@@ -24,42 +24,90 @@
  *                                                          *
  *                                                          *
  ***********************************************************/
-package com.prelert.job.process.output.parsing;
+package com.prelert.job.process.normaliser;
 
-import static org.junit.Assert.*;
+import java.util.Objects;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-import org.junit.Test;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 import com.prelert.job.results.PartitionScore;
 
-public class PartitionScoreParserTest {
+public class PartitionScoreNormalisable extends AbstractLeafNormalisable
+{
+    private final PartitionScore m_Score;
 
-    @Test
-    public void testParse() throws IOException
+    public PartitionScoreNormalisable(PartitionScore score)
     {
-        String json = "{\"probability\":0.1,\"partitionFieldName\":\"part1\"," +
-                    "\"partitionFieldValue\":\"p0\",\"normalizedProbability\":0.2}";
-
-        JsonParser parser = createJsonParser(json);
-        parser.nextToken();
-        PartitionScore score = new PartitionScoreParser(parser).parseJson();
-
-        assertEquals("part1", score.getPartitionFieldName());
-        assertEquals("p0", score.getPartitionFieldValue());
-        assertEquals(0.2, score.getAnomalyScore(), 0.0001);
-        assertEquals(0.1, score.getProbability(), 0.0001);
+        m_Score = Objects.requireNonNull(score);
     }
 
-    private static final JsonParser createJsonParser(String input) throws IOException
+    @Override
+    public Level getLevel()
     {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        return new JsonFactory().createParser(inputStream);
+        return Level.PARTITION;
     }
 
+    @Override
+    public String getPartitionFieldName()
+    {
+        return m_Score.getPartitionFieldName();
+    }
+
+    @Override
+    public String getPartitionFieldValue()
+    {
+        return m_Score.getPartitionFieldValue();
+    }
+
+    @Override
+    public String getPersonFieldName()
+    {
+        return null;
+    }
+
+    @Override
+    public String getFunctionName()
+    {
+        return null;
+    }
+
+    @Override
+    public String getValueFieldName()
+    {
+        return null;
+    }
+
+    @Override
+    public double getProbability()
+    {
+        return m_Score.getProbability();
+    }
+
+    @Override
+    public double getNormalisedScore()
+    {
+        return m_Score.getAnomalyScore();
+    }
+
+    @Override
+    public void setNormalisedScore(double normalisedScore)
+    {
+        m_Score.setAnomalyScore(normalisedScore);
+    }
+
+    @Override
+    public void setParentScore(double parentScore)
+    {
+        // Do nothing as it is not holding the parent score.
+    }
+
+    @Override
+    public void resetBigChangeFlag()
+    {
+        m_Score.resetBigNormalisedUpdateFlag();
+    }
+
+    @Override
+    public void raiseBigChangeFlag()
+    {
+        m_Score.raiseBigNormalisedUpdateFlag();
+    }
 }

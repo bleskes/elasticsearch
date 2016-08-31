@@ -38,7 +38,9 @@ class BucketNormalisable implements Normalisable
 {
     private static final int BUCKET_INFLUENCER = 0;
     private static final int RECORD = 1;
-    private static final List<Integer> CHILDREN_TYPES = Arrays.asList(BUCKET_INFLUENCER, RECORD);
+    private static final int PARTITION_SCORE = 2;
+    private static final List<Integer> CHILDREN_TYPES =
+                Arrays.asList(BUCKET_INFLUENCER, RECORD, PARTITION_SCORE);
 
     private final Bucket m_Bucket;
 
@@ -138,6 +140,10 @@ class BucketNormalisable implements Normalisable
                 m_Bucket.getRecords().stream().forEach(
                         record -> children.add(new RecordNormalisable(record)));
                 break;
+            case PARTITION_SCORE:
+                m_Bucket.getPartitionScores().stream().forEach(
+                        partitionScore -> children.add(new PartitionScoreNormalisable(partitionScore)));
+                break;
             default:
                 throw new IllegalArgumentException("Invalid type: " + type);
         }
@@ -157,6 +163,8 @@ class BucketNormalisable implements Normalisable
             case RECORD:
                 oldScore = m_Bucket.getMaxNormalizedProbability();
                 m_Bucket.setMaxNormalizedProbability(maxScore);
+                break;
+            case PARTITION_SCORE:
                 break;
             default:
                 throw new IllegalArgumentException("Invalid type: " + childrenType);

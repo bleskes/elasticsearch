@@ -37,7 +37,8 @@ enum Level
     ROOT("root"),
     LEAF("leaf"),
     BUCKET_INFLUENCER("inflb"),
-    INFLUENCER("infl");
+    INFLUENCER("infl"),
+    PARTITION("part");
 
     private final String m_Key;
 

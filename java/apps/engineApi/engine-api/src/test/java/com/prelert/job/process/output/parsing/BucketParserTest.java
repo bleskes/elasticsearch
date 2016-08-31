@@ -71,7 +71,7 @@ public class BucketParserTest
                 +     "{\"detectorIndex\":0,\"probability\":0.03,\"typical\":[42.0],\"actual\":[0.2]},"
                 +     "{\"detectorIndex\":1,\"probability\":0.01,\"typical\":[60.0],\"actual\":[0.01]}"
                 + "],"
-                + "\"partitionScores\" : [{\"pField1\" : 0.2}, {\"pField2\" : 0.3}, {\"pField3\" : 0.4}]"
+                + "\"partitionScores\" : [{\"partitionFieldValue\": \"pField1\", \"probability\": 0.2}, {\"partitionFieldValue\":\"pField2\", \"probability\": 0.3}, {\"partitionFieldValue\":\"pField3\", \"probability\": 0.4}]"
                 + "}";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
@@ -131,11 +131,11 @@ public class BucketParserTest
         List<PartitionScore> partitionScores = b.getPartitionScores();
         assertEquals(3, partitionScores.size());
         assertEquals("pField1", partitionScores.get(0).getPartitionFieldValue());
-        assertEquals(0.2, partitionScores.get(0).getAnomalyScore(), 0.0001);
+        assertEquals(0.2, partitionScores.get(0).getProbability(), 0.0001);
         assertEquals("pField2", partitionScores.get(1).getPartitionFieldValue());
-        assertEquals(0.3, partitionScores.get(1).getAnomalyScore(), 0.0001);
+        assertEquals(0.3, partitionScores.get(1).getProbability(), 0.0001);
         assertEquals("pField3", partitionScores.get(2).getPartitionFieldValue());
-        assertEquals(0.4, partitionScores.get(2).getAnomalyScore(), 0.0001);
+        assertEquals(0.4, partitionScores.get(2).getProbability(), 0.0001);
     }
 
 }
