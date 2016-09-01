@@ -37,7 +37,7 @@ import org.elasticsearch.xpack.ssl.SSLClientAuth;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.transport.Transport;
-import org.elasticsearch.xpack.XPackTransportClient;
+import org.elasticsearch.xpack.TestXPackTransportClient;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -167,7 +167,7 @@ public class PkiAuthenticationTests extends SecurityIntegTestCase {
                 .put("cluster.name", internalCluster().getClusterName());
         builder.remove(Security.USER_SETTING.getKey());
         builder.remove("request.headers.Authorization");
-        return new XPackTransportClient(builder.build());
+        return new TestXPackTransportClient(builder.build());
     }
 
     private String getNodeUrl() {

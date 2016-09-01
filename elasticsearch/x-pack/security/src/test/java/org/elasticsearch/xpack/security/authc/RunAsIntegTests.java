@@ -34,7 +34,7 @@ import org.elasticsearch.xpack.security.authc.support.SecuredStringTests;
 import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.test.SecuritySettingsSource;
-import org.elasticsearch.xpack.XPackTransportClient;
+import org.elasticsearch.xpack.TestXPackTransportClient;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,8 +51,6 @@ public class RunAsIntegTests extends SecurityIntegTestCase {
     static final String RUN_AS_USER = "run_as_user";
     static final String TRANSPORT_CLIENT_USER = "transport_user";
     static final String ROLES =
-            "transport_client:\n" +
-            "  cluster: [ 'cluster:monitor/nodes/liveness' ]\n" +
             "run_as_role:\n" +
             "  run_as: [ '" + SecuritySettingsSource.DEFAULT_USER_NAME + "', 'idontexist' ]\n";
 
@@ -243,7 +241,7 @@ public class RunAsIntegTests extends SecurityIntegTestCase {
                 .put("xpack.security.transport.ssl.enabled", false)
                 .build();
 
-        return new XPackTransportClient(settings)
+        return new TestXPackTransportClient(settings)
                 .addTransportAddress(publishAddress);
     }
 }

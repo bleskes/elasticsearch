@@ -1,0 +1,47 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+import org.elasticsearch.gradle.precommit.PrecommitTasks
+
+apply plugin: 'elasticsearch.build'
+apply plugin: 'nebula.maven-base-publish'
+apply plugin: 'nebula.maven-scm'
+
+group = 'org.elasticsearch.client'
+
+dependencies {
+    compile "org.elasticsearch.plugin:x-pack-client:${version}"
+    compile "org.elasticsearch.client:transport:${version}"
+    testCompile "com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedrunner}"
+    testCompile "junit:junit:${versions.junit}"
+    testCompile "org.hamcrest:hamcrest-all:${versions.hamcrest}"
+}
+
+dependencyLicenses.enabled = false
+
+forbiddenApisTest {
+    // we don't use the core test-framework, no lucene classes present so we don't want the es-test-signatures to
+    // be pulled in
+    signaturesURLs = [PrecommitTasks.getResource('/forbidden/jdk-signatures.txt'),
+                      PrecommitTasks.getResource('/forbidden/es-all-signatures.txt')]
+}
+
+namingConventions {
+    testClass = 'com.carrotsearch.randomizedtesting.RandomizedTest'
+    //we don't have integration tests
+    skipIntegTestInDisguise = true
+}
