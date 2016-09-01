@@ -78,7 +78,7 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
     //UnicastZen requires the number of nodes in a cluster to generate the unicast configuration.
     //The number of nodes is randomized though, but we can predict what the maximum number of nodes will be
     //and configure them all in unicast.hosts
-    private static int maxNumberOfNodes() {
+    protected static int defaultMaxNumberOfNodes() {
         ClusterScope clusterScope = SecurityIntegTestCase.class.getAnnotation(ClusterScope.class);
         if (clusterScope == null) {
             return InternalTestCluster.DEFAULT_HIGH_NUM_MASTER_NODES +
@@ -94,7 +94,17 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
                 masterNodes = InternalTestCluster.DEFAULT_HIGH_NUM_MASTER_NODES;
             }
 
-            return masterNodes + clusterScope.maxNumDataNodes() + clientNodes;
+            int dataNodes = 0;
+            if (clusterScope.numDataNodes() < 0) {
+                if (clusterScope.maxNumDataNodes() < 0) {
+                    dataNodes = InternalTestCluster.DEFAULT_MAX_NUM_DATA_NODES;
+                } else {
+                    dataNodes = clusterScope.maxNumDataNodes();
+                }
+            } else {
+                dataNodes = clusterScope.numDataNodes();
+            }
+            return masterNodes + dataNodes + clientNodes;
         }
     }
 
@@ -121,7 +131,7 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
     @BeforeClass
     public static void initDefaultSettings() {
         if (SECURITY_DEFAULT_SETTINGS == null) {
-            SECURITY_DEFAULT_SETTINGS = new SecuritySettingsSource(maxNumberOfNodes(), randomBoolean(), createTempDir(), Scope.SUITE);
+            SECURITY_DEFAULT_SETTINGS = new SecuritySettingsSource(defaultMaxNumberOfNodes(), randomBoolean(), createTempDir(), Scope.SUITE);
         }
     }
 
@@ -284,6 +294,10 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
      */
     protected boolean sslTransportEnabled() {
         return randomBoolean();
+    }
+
+    protected int maxNumberOfNodes() {
+        return defaultMaxNumberOfNodes();
     }
 
     protected Class<? extends XPackPlugin> xpackPluginClass() {
