@@ -17,7 +17,7 @@
 
 package org.elasticsearch.xpack.watcher.condition;
 
-import org.elasticsearch.common.logging.ESLogger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 import java.io.IOException;
@@ -27,9 +27,9 @@ import java.io.IOException;
  */
 public abstract class ConditionFactory<C extends Condition, R extends Condition.Result, E extends ExecutableCondition<C, R>> {
 
-    protected final ESLogger conditionLogger;
+    protected final Logger conditionLogger;
 
-    public ConditionFactory(ESLogger conditionLogger) {
+    public ConditionFactory(Logger conditionLogger) {
         this.conditionLogger = conditionLogger;
     }
 

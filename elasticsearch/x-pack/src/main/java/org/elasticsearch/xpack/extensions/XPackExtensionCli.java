@@ -17,8 +17,6 @@
 
 package org.elasticsearch.xpack.extensions;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.varia.NullAppender;
 import org.elasticsearch.cli.MultiCommand;
 import org.elasticsearch.cli.Terminal;
 
@@ -27,7 +25,7 @@ import org.elasticsearch.cli.Terminal;
  */
 public class XPackExtensionCli extends MultiCommand {
 
-    public XPackExtensionCli() {
+    private XPackExtensionCli() {
         super("A tool for managing installed x-pack extensions");
         subcommands.put("list", new ListXPackExtensionCommand());
         subcommands.put("install", new InstallXPackExtensionCommand());
@@ -35,7 +33,6 @@ public class XPackExtensionCli extends MultiCommand {
     }
 
     public static void main(String[] args) throws Exception {
-        BasicConfigurator.configure(new NullAppender());
         exit(new XPackExtensionCli().main(args, Terminal.DEFAULT));
     }
 

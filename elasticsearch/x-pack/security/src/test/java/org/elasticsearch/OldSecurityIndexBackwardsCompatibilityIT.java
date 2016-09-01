@@ -28,6 +28,7 @@ import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.test.ESIntegTestCase;
+import org.elasticsearch.test.InternalTestCluster;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.test.VersionUtils;
 import org.elasticsearch.xpack.security.action.role.GetRolesResponse;
@@ -43,6 +44,7 @@ import org.elasticsearch.xpack.security.user.User;
 import org.junit.AfterClass;
 import org.junit.Before;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -117,6 +119,15 @@ public class OldSecurityIndexBackwardsCompatibilityIT extends SecurityIntegTestC
                 .put(ThrottlingAllocationDecider
                         .CLUSTER_ROUTING_ALLOCATION_NODE_CONCURRENT_OUTGOING_RECOVERIES_SETTING.getKey(), 30)
                 .put(settings).build();
+    }
+
+    @Override
+    protected int maxNumberOfNodes() {
+        try {
+            return SecurityIntegTestCase.defaultMaxNumberOfNodes() + loadIndexesList("x-pack", getBwcIndicesPath()).size();
+        } catch (IOException e) {
+            throw new RuntimeException("couldn't enumerate bwc indices", e);
+        }
     }
 
     void setupCluster(String pathToZipFile) throws Exception {

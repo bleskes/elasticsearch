@@ -24,7 +24,7 @@ import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
-import org.elasticsearch.common.logging.ESLogger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
@@ -66,7 +66,7 @@ class SearchGroupsResolver implements GroupsResolver {
     }
 
     @Override
-    public List<String> resolve(LDAPInterface connection, String userDn, TimeValue timeout, ESLogger logger,
+    public List<String> resolve(LDAPInterface connection, String userDn, TimeValue timeout, Logger logger,
                                 Collection<Attribute> attributes) throws LDAPException {
         String userId = getUserId(userDn, attributes, connection, timeout, logger);
         if (userId == null) {
@@ -93,7 +93,7 @@ class SearchGroupsResolver implements GroupsResolver {
     }
 
     private String getUserId(String dn, Collection<Attribute> attributes, LDAPInterface connection, TimeValue
-            timeout, ESLogger logger) throws LDAPException {
+            timeout, Logger logger) throws LDAPException {
         if (userAttribute == null) {
             return dn;
         }
@@ -109,7 +109,7 @@ class SearchGroupsResolver implements GroupsResolver {
         return readUserAttribute(connection, dn, timeout, logger);
     }
 
-    String readUserAttribute(LDAPInterface connection, String userDn, TimeValue timeout, ESLogger logger) throws LDAPException {
+    String readUserAttribute(LDAPInterface connection, String userDn, TimeValue timeout, Logger logger) throws LDAPException {
         SearchRequest request = new SearchRequest(userDn, SearchScope.BASE, OBJECT_CLASS_PRESENCE_FILTER, userAttribute);
         request.setTimeLimitSeconds(Math.toIntExact(timeout.seconds()));
         SearchResultEntry results = searchForEntry(connection, request, logger);

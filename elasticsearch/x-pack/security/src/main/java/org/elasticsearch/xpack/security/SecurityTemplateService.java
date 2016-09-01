@@ -17,6 +17,9 @@
 
 package org.elasticsearch.xpack.security;
 
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
@@ -34,7 +37,6 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.compress.CompressedXContent;
-import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -158,7 +160,7 @@ public class SecurityTemplateService extends AbstractComponent implements Cluste
             @Override
             public void onFailure(Exception e) {
                 updateMappingPending.set(false);
-                logger.warn("failed to update mapping for [{}] on security index", e, type);
+                logger.warn((Supplier<?>) () -> new ParameterizedMessage("failed to update mapping for [{}] on security index", type), e);
             }
         });
     }
@@ -187,7 +189,7 @@ public class SecurityTemplateService extends AbstractComponent implements Cluste
         });
     }
 
-    static boolean securityIndexMappingUpToDate(ClusterState clusterState, ESLogger logger) {
+    static boolean securityIndexMappingUpToDate(ClusterState clusterState, Logger logger) {
         IndexMetaData indexMetaData = clusterState.metaData().getIndices().get(SECURITY_INDEX_NAME);
         if (indexMetaData != null) {
             for (Object object : indexMetaData.getMappings().values().toArray()) {
@@ -211,7 +213,7 @@ public class SecurityTemplateService extends AbstractComponent implements Cluste
         }
     }
 
-    static boolean securityTemplateExistsAndIsUpToDate(ClusterState state, ESLogger logger) {
+    static boolean securityTemplateExistsAndIsUpToDate(ClusterState state, Logger logger) {
         IndexTemplateMetaData templateMeta = state.metaData().templates().get(SECURITY_TEMPLATE_NAME);
         if (templateMeta == null) {
             return false;
@@ -255,7 +257,7 @@ public class SecurityTemplateService extends AbstractComponent implements Cluste
         return true;
     }
 
-    public static boolean securityIndexMappingAndTemplateUpToDate(ClusterState clusterState, ESLogger logger) {
+    public static boolean securityIndexMappingAndTemplateUpToDate(ClusterState clusterState, Logger logger) {
         if (SecurityTemplateService.securityTemplateExistsAndIsUpToDate(clusterState, logger) == false) {
             logger.debug("security template [{}] does not exist or is not up to date, so service cannot start",
                     SecurityTemplateService.SECURITY_TEMPLATE_NAME);
