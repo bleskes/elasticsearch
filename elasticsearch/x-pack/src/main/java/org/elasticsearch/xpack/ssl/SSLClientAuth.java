@@ -15,14 +15,17 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.transport;
+package org.elasticsearch.xpack.ssl;
 
 import javax.net.ssl.SSLEngine;
 import java.util.Locale;
 
+/**
+ * The client authentication mode that is used for SSL servers
+ */
 public enum SSLClientAuth {
 
-    NO() {
+    NONE() {
         public boolean enabled() {
             return false;
         }
@@ -52,25 +55,27 @@ public enum SSLClientAuth {
         }
     };
 
+    /**
+     * @return true if client authentication is enabled
+     */
     public abstract boolean enabled();
 
+    /**
+     * Configure client authentication of the provided {@link SSLEngine}
+     */
     public abstract void configure(SSLEngine engine);
 
     public static SSLClientAuth parse(String value) {
         assert value != null;
         switch (value.toLowerCase(Locale.ROOT)) {
-            case "no":
-            case "false":
-                return NO;
-
+            case "none":
+                return NONE;
             case "optional":
                 return OPTIONAL;
-
             case "required":
-            case "true":
                 return REQUIRED;
             default:
-                throw new IllegalArgumentException("could not resolve ssl client auth. unknown ssl client auth value [" + value + "]");
+                throw new IllegalArgumentException("could not resolve ssl client auth. unknown value [" + value + "]");
         }
     }
 }

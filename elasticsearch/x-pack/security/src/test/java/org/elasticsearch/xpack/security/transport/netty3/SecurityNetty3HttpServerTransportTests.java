@@ -23,8 +23,8 @@ import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.http.HttpTransportSettings;
 import org.elasticsearch.http.netty3.Netty3HttpMockUtil;
-import org.elasticsearch.xpack.security.ssl.SSLService;
-import org.elasticsearch.xpack.security.transport.SSLClientAuth;
+import org.elasticsearch.xpack.ssl.SSLService;
+import org.elasticsearch.xpack.ssl.SSLClientAuth;
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -52,8 +52,8 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
     public void createSSLService() throws Exception {
         Path testnodeStore = getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks");
         Settings settings = Settings.builder()
-                .put("xpack.security.ssl.keystore.path", testnodeStore)
-                .put("xpack.security.ssl.keystore.password", "testnode")
+                .put("xpack.ssl.keystore.path", testnodeStore)
+                .put("xpack.ssl.keystore.password", "testnode")
                 .put("path.home", createTempDir())
                 .build();
         env = new Environment(settings);
@@ -61,7 +61,10 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
     }
 
     public void testDefaultClientAuth() throws Exception {
-        Settings settings = Settings.builder().put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true).build();
+        Settings settings = Settings.builder()
+                .put(env.settings())
+                .put("xpack.security.http.ssl.enabled", true).build();
+        sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class));
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
@@ -73,8 +76,10 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
     public void testOptionalClientAuth() throws Exception {
         String value = randomFrom(SSLClientAuth.OPTIONAL.name(), SSLClientAuth.OPTIONAL.name().toLowerCase(Locale.ROOT));
         Settings settings = Settings.builder()
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty3HttpServerTransport.CLIENT_AUTH_SETTING.getKey(), value).build();
+                .put(env.settings())
+                .put("xpack.security.http.ssl.enabled", true)
+                .put("xpack.security.http.ssl.client_authentication", value).build();
+        sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class));
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
@@ -84,10 +89,11 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
     }
 
     public void testRequiredClientAuth() throws Exception {
-        String value = randomFrom(SSLClientAuth.REQUIRED.name(), SSLClientAuth.REQUIRED.name().toLowerCase(Locale.ROOT), "true", "TRUE");
         Settings settings = Settings.builder()
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty3HttpServerTransport.CLIENT_AUTH_SETTING.getKey(), value).build();
+                .put(env.settings())
+                .put("xpack.security.http.ssl.enabled", true)
+                .put("xpack.security.http.ssl.client_authentication", SSLClientAuth.REQUIRED).build();
+        sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class));
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
@@ -97,10 +103,11 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
     }
 
     public void testNoClientAuth() throws Exception {
-        String value = randomFrom(SSLClientAuth.NO.name(), SSLClientAuth.NO.name().toLowerCase(Locale.ROOT), "false", "FALSE");
         Settings settings = Settings.builder()
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty3HttpServerTransport.CLIENT_AUTH_SETTING.getKey(), value).build();
+                .put(env.settings())
+                .put("xpack.security.http.ssl.enabled", true)
+                .put("xpack.security.http.ssl.client_authentication", SSLClientAuth.NONE).build();
+        sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class));
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
@@ -111,7 +118,9 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
 
     public void testCustomSSLConfiguration() throws Exception {
         Settings settings = Settings.builder()
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true).build();
+                .put(env.settings())
+                .put("xpack.security.http.ssl.enabled", true).build();
+        sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class));
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
@@ -120,7 +129,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
 
         settings = Settings.builder()
                 .put(env.settings())
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true)
+                .put("xpack.security.http.ssl.enabled", true)
                 .put("xpack.security.http.ssl.supported_protocols", "TLSv1.2")
                 .build();
         sslService = new SSLService(settings, new Environment(settings));
@@ -135,7 +144,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
 
     public void testDisablesCompressionByDefaultForSsl() throws Exception {
         Settings settings = Settings.builder()
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true).build();
+                .put("xpack.security.http.ssl.enabled", true).build();
 
         Settings.Builder pluginSettingsBuilder = Settings.builder();
         SecurityNetty3HttpServerTransport.overrideSettings(pluginSettingsBuilder, settings);
@@ -144,7 +153,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
 
     public void testLeavesCompressionOnIfNotSsl() throws Exception {
         Settings settings = Settings.builder()
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), false).build();
+                .put("xpack.security.http.ssl.enabled", false).build();
         Settings.Builder pluginSettingsBuilder = Settings.builder();
         SecurityNetty3HttpServerTransport.overrideSettings(pluginSettingsBuilder, settings);
         assertThat(pluginSettingsBuilder.build().isEmpty(), is(true));
@@ -152,7 +161,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
 
     public void testDoesNotChangeExplicitlySetCompression() throws Exception {
         Settings settings = Settings.builder()
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true)
+                .put("xpack.security.http.ssl.enabled", true)
                 .put(HttpTransportSettings.SETTING_HTTP_COMPRESSION.getKey(), true)
                 .build();
 
@@ -163,10 +172,10 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
 
     public void testThatExceptionIsThrownWhenConfiguredWithoutSslKey() throws Exception {
         Settings settings = Settings.builder()
-                .put("xpack.security.ssl.truststore.path",
+                .put("xpack.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks"))
-                .put("xpack.security.ssl.truststore.password", "testnode")
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true)
+                .put("xpack.ssl.truststore.password", "testnode")
+                .put("xpack.security.http.ssl.enabled", true)
                 .put("path.home", createTempDir())
                 .build();
         env = new Environment(settings);
@@ -179,9 +188,9 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
 
     public void testNoExceptionWhenConfiguredWithoutSslKeySSLDisabled() throws Exception {
         Settings settings = Settings.builder()
-                .put("xpack.security.ssl.truststore.path",
+                .put("xpack.ssl.truststore.path",
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks"))
-                .put("xpack.security.ssl.truststore.password", "testnode")
+                .put("xpack.ssl.truststore.password", "testnode")
                 .put("path.home", createTempDir())
                 .build();
         env = new Environment(settings);

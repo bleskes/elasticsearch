@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.ssl;
+package org.elasticsearch.xpack.ssl;
 
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;

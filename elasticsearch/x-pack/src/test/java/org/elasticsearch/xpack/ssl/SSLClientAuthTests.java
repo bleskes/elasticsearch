@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.transport.ssl;
+package org.elasticsearch.xpack.ssl;
 
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.message.BasicHeader;
@@ -34,8 +34,6 @@ import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.xpack.XPackTransportClient;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3HttpServerTransport;
-import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3Transport;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -54,16 +52,16 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 
-public class SslClientAuthTests extends SecurityIntegTestCase {
+public class SSLClientAuthTests extends SecurityIntegTestCase {
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 // invert the require auth settings
-                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty3HttpServerTransport.SSL_SETTING.getKey(), true)
-                .put(SecurityNetty3HttpServerTransport.CLIENT_AUTH_SETTING.getKey(), true)
-                .put("transport.profiles.default.xpack.security.ssl.client.auth", false)
+                .put("xpack.ssl.client_authentication", SSLClientAuth.REQUIRED)
+                .put("xpack.security.http.ssl.enabled", true)
+                .put("xpack.security.http.ssl.client_authentication", SSLClientAuth.REQUIRED)
+                .put("transport.profiles.default.xpack.security.ssl.client_authentication", SSLClientAuth.NONE)
                 .put(NetworkModule.HTTP_ENABLED.getKey(), true)
                 .build();
     }
@@ -104,9 +102,10 @@ public class SslClientAuthTests extends SecurityIntegTestCase {
         }
 
         Settings settings = Settings.builder()
-                .put(SecurityNetty3Transport.SSL_SETTING.getKey(), true)
-                .put("xpack.security.ssl.keystore.path", store)
-                .put("xpack.security.ssl.keystore.password", "testclient-client-profile")
+                .put("xpack.security.transport.ssl.enabled", true)
+                .put("xpack.ssl.client_authentication", SSLClientAuth.NONE)
+                .put("xpack.ssl.keystore.path", store)
+                .put("xpack.ssl.keystore.password", "testclient-client-profile")
                 .put("cluster.name", internalCluster().getClusterName())
                 .put(Security.USER_SETTING.getKey(),
                         transportClientUsername() + ":" + new String(transportClientPassword().internalChars()))

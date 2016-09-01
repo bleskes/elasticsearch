@@ -23,10 +23,8 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.junit.annotations.Network;
-import org.elasticsearch.xpack.common.http.HttpClient;
-import org.elasticsearch.xpack.common.http.HttpMethod;
-import org.elasticsearch.xpack.common.http.HttpRequest;
 import org.elasticsearch.xpack.common.http.auth.HttpAuthRegistry;
+import org.elasticsearch.xpack.ssl.SSLService;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
@@ -41,8 +39,8 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
     @Network
     public void testDefaultTimeout() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
-        HttpClient httpClient = new HttpClient(Settings.EMPTY, mock(HttpAuthRegistry.class), environment);
-        httpClient.start();
+        HttpClient httpClient = new HttpClient(Settings.EMPTY, mock(HttpAuthRegistry.class), environment,
+                new SSLService(environment.settings(), environment));
 
         HttpRequest request = HttpRequest.builder(UNROUTABLE_IP, 12345)
                 .method(HttpMethod.POST)
@@ -68,8 +66,7 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         HttpClient httpClient = new HttpClient(Settings.builder()
                 .put("xpack.http.default_connection_timeout", "5s").build()
-                , mock(HttpAuthRegistry.class), environment);
-        httpClient.start();
+                , mock(HttpAuthRegistry.class), environment, new SSLService(environment.settings(), environment));
 
         HttpRequest request = HttpRequest.builder(UNROUTABLE_IP, 12345)
                 .method(HttpMethod.POST)
@@ -95,8 +92,7 @@ public class HttpConnectionTimeoutTests extends ESTestCase {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         HttpClient httpClient = new HttpClient(Settings.builder()
                 .put("xpack.http.default_connection_timeout", "10s").build()
-                , mock(HttpAuthRegistry.class), environment);
-        httpClient.start();
+                , mock(HttpAuthRegistry.class), environment, new SSLService(environment.settings(), environment));
 
         HttpRequest request = HttpRequest.builder(UNROUTABLE_IP, 12345)
                 .connectionTimeout(TimeValue.timeValueSeconds(5))

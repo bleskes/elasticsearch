@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.ssl;
+package org.elasticsearch.xpack.ssl;
 
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;

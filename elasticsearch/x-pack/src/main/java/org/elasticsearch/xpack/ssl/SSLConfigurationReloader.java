@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.ssl;
+package org.elasticsearch.xpack.ssl;
 
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
@@ -24,7 +24,7 @@ import org.elasticsearch.watcher.FileChangesListener;
 import org.elasticsearch.watcher.FileWatcher;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.watcher.ResourceWatcherService.Frequency;
-import org.elasticsearch.xpack.security.ssl.SSLService.SSLContextHolder;
+import org.elasticsearch.xpack.ssl.SSLService.SSLContextHolder;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
