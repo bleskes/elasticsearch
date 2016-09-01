@@ -21,6 +21,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandler;
+import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Setting;
@@ -34,7 +36,6 @@ import org.elasticsearch.xpack.security.transport.SSLClientAuth;
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
 
 import javax.net.ssl.SSLEngine;
-
 import java.util.List;
 
 import static org.elasticsearch.http.HttpTransportSettings.SETTING_HTTP_COMPRESSION;
@@ -81,14 +82,18 @@ public class SecurityNetty4HttpServerTransport extends Netty4HttpServerTransport
 
         if (isNotSslRecordException(cause)) {
             if (logger.isTraceEnabled()) {
-                logger.trace("received plaintext http traffic on a https channel, closing connection {}", cause, ctx.channel());
+                logger.trace(
+                        (Supplier<?>) () -> new ParameterizedMessage(
+                                "received plaintext http traffic on a https channel, closing connection {}",
+                                ctx.channel()),
+                        cause);
             } else {
                 logger.warn("received plaintext http traffic on a https channel, closing connection {}", ctx.channel());
             }
             ctx.channel().close();
         } else if (isCloseDuringHandshakeException(cause)) {
             if (logger.isTraceEnabled()) {
-                logger.trace("connection {} closed during handshake", cause, ctx.channel());
+                logger.trace((Supplier<?>) () -> new ParameterizedMessage("connection {} closed during handshake", ctx.channel()), cause);
             } else {
                 logger.warn("connection {} closed during handshake", ctx.channel());
             }

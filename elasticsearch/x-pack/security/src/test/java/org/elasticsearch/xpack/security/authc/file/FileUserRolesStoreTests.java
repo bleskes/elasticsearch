@@ -17,19 +17,21 @@
 
 package org.elasticsearch.xpack.security.authc.file;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LogEvent;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.xpack.XPackPlugin;
-import org.elasticsearch.xpack.XPackSettings;
-import org.elasticsearch.xpack.security.audit.logfile.CapturingLogger;
-import org.elasticsearch.xpack.security.audit.logfile.CapturingLogger.Level;
-import org.elasticsearch.xpack.security.authc.RealmConfig;
-import org.elasticsearch.xpack.security.authc.support.RefreshListener;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
+import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.security.audit.logfile.CapturingLogger;
+import org.elasticsearch.xpack.security.authc.RealmConfig;
+import org.elasticsearch.xpack.security.authc.support.RefreshListener;
 import org.junit.After;
 import org.junit.Before;
 
@@ -56,6 +58,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class FileUserRolesStoreTests extends ESTestCase {
+
     private Settings settings;
     private Environment env;
     private ThreadPool threadPool;
@@ -194,16 +197,16 @@ public class FileUserRolesStoreTests extends ESTestCase {
 
     public void testParseFileEmpty() throws Exception {
         Path empty = createTempFile();
-        CapturingLogger log = new CapturingLogger(Level.DEBUG);
+        Logger log = CapturingLogger.newCapturingLogger(Level.DEBUG);
         FileUserRolesStore.parseFile(empty, log);
-        List<CapturingLogger.Msg> msgs = log.output(CapturingLogger.Level.DEBUG);
-        assertThat(msgs.size(), is(1));
-        assertThat(msgs.get(0).text, containsString("parsed [0] user to role mappings"));
+        List<String> events = CapturingLogger.output(log.getName(), Level.DEBUG);
+        assertThat(events.size(), is(1));
+        assertThat(events.get(0), containsString("parsed [0] user to role mappings"));
     }
 
     public void testParseFileWhenFileDoesNotExist() throws Exception {
         Path file = createTempDir().resolve(randomAsciiOfLength(10));
-        CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
+        Logger logger = CapturingLogger.newCapturingLogger(Level.INFO);
         Map<String, String[]> usersRoles = FileUserRolesStore.parseFile(file, logger);
         assertThat(usersRoles, notNullValue());
         assertThat(usersRoles.isEmpty(), is(true));
@@ -216,7 +219,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
 
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
         Files.write(file, lines, StandardCharsets.UTF_16);
-        CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
+        Logger logger = CapturingLogger.newCapturingLogger(Level.DEBUG);
         try {
             FileUserRolesStore.parseFile(file, logger);
             fail("expected a parse failure");
@@ -273,13 +276,13 @@ public class FileUserRolesStoreTests extends ESTestCase {
 
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
         Files.write(file, lines, StandardCharsets.UTF_16);
-        CapturingLogger logger = new CapturingLogger(CapturingLogger.Level.INFO);
+        Logger logger = CapturingLogger.newCapturingLogger(Level.DEBUG);
         Map<String, String[]> usersRoles = FileUserRolesStore.parseFileLenient(file, logger);
         assertThat(usersRoles, notNullValue());
         assertThat(usersRoles.isEmpty(), is(true));
-        List<CapturingLogger.Msg> msgs = logger.output(CapturingLogger.Level.ERROR);
-        assertThat(msgs.size(), is(1));
-        assertThat(msgs.get(0).text, containsString("failed to parse users_roles file"));
+        List<String> events = CapturingLogger.output(logger.getName(), Level.ERROR);
+        assertThat(events.size(), is(1));
+        assertThat(events.get(0), containsString("failed to parse users_roles file"));
     }
 
     private Path writeUsersRoles(String input) throws Exception {
@@ -301,4 +304,5 @@ public class FileUserRolesStoreTests extends ESTestCase {
         String reason = String.format(Locale.ROOT, "Expected userRoles to be empty, but was %s", usersRoles.keySet());
         assertThat(reason, usersRoles.keySet(), hasSize(0));
     }
+
 }

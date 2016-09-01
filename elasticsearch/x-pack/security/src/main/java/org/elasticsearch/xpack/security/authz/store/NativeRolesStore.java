@@ -17,19 +17,8 @@
 
 package org.elasticsearch.xpack.security.authz.store;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
+import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse;
@@ -78,6 +67,19 @@ import org.elasticsearch.xpack.security.authz.RoleDescriptor;
 import org.elasticsearch.xpack.security.authz.permission.IndicesPermission.Group;
 import org.elasticsearch.xpack.security.authz.permission.Role;
 import org.elasticsearch.xpack.security.client.SecurityClient;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.xpack.security.Security.setting;
@@ -252,7 +254,7 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
                 }
             });
         } catch (Exception e) {
-            logger.error("unable to retrieve roles {}", e, Arrays.toString(names));
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("unable to retrieve roles {}", Arrays.toString(names)), e);
             listener.onFailure(e);
         }
     }
@@ -318,12 +320,12 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
 
                         @Override
                         public void onFailure(Exception e) {
-                            logger.error("failed to put role [{}]", e, request.name());
+                            logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to put role [{}]", request.name()), e);
                             listener.onFailure(e);
                         }
                     });
         } catch (Exception e) {
-            logger.error("unable to put role [{}]", e, request.name());
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("unable to put role [{}]", request.name()), e);
             listener.onFailure(e);
         }
 
@@ -431,9 +433,11 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
                     @Override
                     public void onFailure(Exception t) {
                         if (t instanceof IndexNotFoundException) {
-                            logger.trace("failed to retrieve role [{}] since security index does not exist", t, roleId);
+                            logger.trace(
+                                    (Supplier<?>) () -> new ParameterizedMessage(
+                                            "failed to retrieve role [{}] since security index does not exist", roleId), t);
                         } else {
-                            logger.error("failed to retrieve role [{}]", t, roleId);
+                            logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to retrieve role [{}]", roleId), t);
                         }
                     }
                 }, latch));
@@ -460,9 +464,9 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
             });
         } catch (ExecutionException e) {
             if (e.getCause() instanceof NullPointerException) {
-                logger.trace("role [{}] was not found", e, roleId);
+                logger.trace((Supplier<?>) () -> new ParameterizedMessage("role [{}] was not found", roleId), e);
             } else {
-                logger.error("failed to load role [{}]", e, roleId);
+                logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to load role [{}]", roleId), e);
             }
         }
 
@@ -474,7 +478,9 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
             GetRequest request = client.prepareGet(SecurityTemplateService.SECURITY_INDEX_NAME, ROLE_DOC_TYPE, role).request();
             client.get(request, listener);
         } catch (IndexNotFoundException e) {
-            logger.trace("unable to retrieve role [{}] since security index does not exist", e, role);
+            logger.trace(
+                    (Supplier<?>) () -> new ParameterizedMessage(
+                            "unable to retrieve role [{}] since security index does not exist", role), e);
             listener.onResponse(new GetResponse(
                     new GetResult(SecurityTemplateService.SECURITY_INDEX_NAME, ROLE_DOC_TYPE, role, -1, false, null, null)));
         } catch (Exception e) {
@@ -494,7 +500,8 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
             @Override
             public void onFailure(Exception t) {
                 // Not really much to do here except for warn about it...
-                logger.warn("failed to clear scroll [{}] after retrieving roles", t, scrollId);
+                logger.warn(
+                        (Supplier<?>) () -> new ParameterizedMessage("failed to clear scroll [{}] after retrieving roles", scrollId), t);
             }
         });
     }
@@ -534,7 +541,7 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
 
             @Override
             public void onFailure(Exception e) {
-                logger.error("unable to clear cache for role [{}]", e, role);
+                logger.error((Supplier<?>) () -> new ParameterizedMessage("unable to clear cache for role [{}]", role), e);
                 ElasticsearchException exception = new ElasticsearchException("clearing the cache for [" + role
                         + "] failed. please clear the role cache manually", e);
                 listener.onFailure(exception);
@@ -548,8 +555,8 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
         final boolean exists = event.state().metaData().indices().get(SecurityTemplateService.SECURITY_INDEX_NAME) != null;
         // make sure all the primaries are active
         if (exists && event.state().routingTable().index(SecurityTemplateService.SECURITY_INDEX_NAME).allPrimaryShardsActive()) {
-            logger.debug("security index [{}] all primary shards started, so polling can start",
-                    SecurityTemplateService.SECURITY_INDEX_NAME);
+            logger.debug(
+                    "security index [{}] all primary shards started, so polling can start", SecurityTemplateService.SECURITY_INDEX_NAME);
             securityIndexExists = true;
         } else {
             // always set the value - it may have changed...
@@ -574,7 +581,7 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
         try {
             return RoleDescriptor.parse(name, sourceBytes);
         } catch (Exception e) {
-            logger.error("error in the format of data for role [{}]", e, name);
+            logger.error((Supplier<?>) () -> new ParameterizedMessage("error in the format of data for role [{}]", name), e);
             return null;
         }
     }
