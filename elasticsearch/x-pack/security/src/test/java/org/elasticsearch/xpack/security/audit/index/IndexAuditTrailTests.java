@@ -108,6 +108,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
     private int numShards;
     private int numReplicas;
     private ThreadPool threadPool;
+    private boolean includeRequestBody;
 
     @BeforeClass
     public static void configureBeforeClass() {
@@ -253,6 +254,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         Settings.Builder builder = Settings.builder();
         builder.put(levelSettings(includes, excludes));
         builder.put(commonSettings(rollover));
+        builder.put("xpack.security.audit.index.events.emit_request_body", includeRequestBody);
         return builder.build();
     }
 
@@ -268,6 +270,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         rollover = randomFrom(HOURLY, DAILY, WEEKLY, MONTHLY);
         numReplicas = numberOfReplicas();
         numShards = numberOfShards();
+        includeRequestBody = randomBoolean();
         Settings.Builder builder = Settings.builder();
         if (remoteIndexing) {
             builder.put(remoteSettings);
@@ -326,7 +329,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         assertThat(NetworkAddress.format(InetAddress.getLoopbackAddress()), equalTo(sourceMap.get("origin_address")));
         assertThat("_uri", equalTo(sourceMap.get("uri")));
         assertThat(sourceMap.get("origin_type"), is("rest"));
-        assertThat(sourceMap.get("request_body"), notNullValue());
+        assertRequestBody(sourceMap);
     }
 
     public void testAuthenticationFailedTransport() throws Exception {
@@ -385,7 +388,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         assertThat("127.0.0.1", equalTo(sourceMap.get("origin_address")));
         assertThat("_uri", equalTo(sourceMap.get("uri")));
         assertThat(sourceMap.get("origin_type"), is("rest"));
-        assertThat(sourceMap.get("request_body"), notNullValue());
+        assertRequestBody(sourceMap);
     }
 
     public void testAuthenticationFailedRestNoToken() throws Exception {
@@ -400,7 +403,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         assertThat("127.0.0.1", equalTo(sourceMap.get("origin_address")));
         assertThat("_uri", equalTo(sourceMap.get("uri")));
         assertThat(sourceMap.get("origin_type"), is("rest"));
-        assertThat(sourceMap.get("request_body"), notNullValue());
+        assertRequestBody(sourceMap);
     }
 
     public void testAuthenticationFailedTransportRealm() throws Exception {
@@ -441,7 +444,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         assertThat("_uri", equalTo(sourceMap.get("uri")));
         assertEquals("_realm", sourceMap.get("realm"));
         assertThat(sourceMap.get("origin_type"), is("rest"));
-        assertThat(sourceMap.get("request_body"), notNullValue());
+        assertRequestBody(sourceMap);
     }
 
     public void testAccessGranted() throws Exception {
@@ -532,7 +535,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         assertThat("127.0.0.1", equalTo(sourceMap.get("origin_address")));
         assertThat("_uri", equalTo(sourceMap.get("uri")));
         assertThat(sourceMap.get("origin_type"), is("rest"));
-        assertThat(sourceMap.get("request_body"), notNullValue());
+        assertRequestBody(sourceMap);
     }
 
     public void testTamperedRequest() throws Exception {
@@ -650,6 +653,13 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
         assertEquals(type, sourceMap.get("event_type"));
     }
 
+    private void assertRequestBody(Map<String, Object> sourceMap) {
+        if (includeRequestBody) {
+            assertThat(sourceMap.get("request_body"), notNullValue());
+        } else {
+            assertThat(sourceMap.get("request_body"), nullValue());
+        }
+    }
     private static class LocalHostMockMessage extends TransportMessage {
         LocalHostMockMessage() {
             remoteAddress(new LocalTransportAddress("local_host"));
