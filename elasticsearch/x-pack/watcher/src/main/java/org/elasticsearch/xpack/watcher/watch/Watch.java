@@ -248,11 +248,15 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         }
 
         public Watch parse(String name, boolean includeStatus, BytesReference source) throws IOException {
-            return parse(name, includeStatus, false, source, clock.nowUTC());
+            return parse(name, includeStatus, false, source, clock.nowUTC(), false);
+        }
+
+        public Watch parse(String name, boolean includeStatus, BytesReference source, boolean upgradeSource) throws IOException {
+            return parse(name, includeStatus, false, source, clock.nowUTC(), upgradeSource);
         }
 
         public Watch parse(String name, boolean includeStatus, BytesReference source, DateTime now) throws IOException {
-            return parse(name, includeStatus, false, source, now);
+            return parse(name, includeStatus, false, source, now, false);
         }
 
         /**
@@ -268,10 +272,11 @@ public class Watch implements TriggerEngine.Job, ToXContent {
          * @see org.elasticsearch.xpack.watcher.WatcherService#putWatch(String, BytesReference, TimeValue, boolean)
          */
         public Watch parseWithSecrets(String id, boolean includeStatus, BytesReference source, DateTime now) throws IOException {
-            return parse(id, includeStatus, true, source, now);
+            return parse(id, includeStatus, true, source, now, false);
         }
 
-        private Watch parse(String id, boolean includeStatus, boolean withSecrets, BytesReference source, DateTime now) throws IOException {
+        private Watch parse(String id, boolean includeStatus, boolean withSecrets, BytesReference source, DateTime now,
+                            boolean upgradeSource) throws IOException {
             if (logger.isTraceEnabled()) {
                 logger.trace("parsing watch [{}] ", source.utf8ToString());
             }
@@ -279,7 +284,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
             try {
                 parser = new WatcherXContentParser(createParser(source), new HaltedClock(now), withSecrets ? cryptoService : null);
                 parser.nextToken();
-                return parse(id, includeStatus, parser);
+                return parse(id, includeStatus, parser, upgradeSource);
             } catch (IOException ioe) {
                 throw ioException("could not parse watch [{}]", ioe, id);
             } finally {
@@ -289,7 +294,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
             }
         }
 
-        public Watch parse(String id, boolean includeStatus, XContentParser parser) throws IOException {
+        public Watch parse(String id, boolean includeStatus, XContentParser parser, boolean upgradeWatchSource) throws IOException {
             Trigger trigger = null;
             ExecutableInput input = defaultInput;
             ExecutableCondition condition = defaultCondition;
@@ -311,11 +316,11 @@ public class Watch implements TriggerEngine.Job, ToXContent {
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.TRIGGER)) {
                     trigger = triggerService.parseTrigger(id, parser);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.INPUT)) {
-                    input = inputRegistry.parse(id, parser);
+                    input = inputRegistry.parse(id, parser, upgradeWatchSource);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.CONDITION)) {
-                    condition = conditionRegistry.parseExecutable(id, parser);
+                    condition = conditionRegistry.parseExecutable(id, parser, upgradeWatchSource);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.TRANSFORM)) {
-                    transform = transformRegistry.parse(id, parser);
+                    transform = transformRegistry.parse(id, parser, upgradeWatchSource);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.THROTTLE_PERIOD)) {
                     throttlePeriod = timeValueMillis(parser.longValue());
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.THROTTLE_PERIOD_HUMAN)) {
@@ -327,7 +332,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
                                 pe, id, currentFieldName);
                     }
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.ACTIONS)) {
-                    actions = actionRegistry.parseActions(id, parser);
+                    actions = actionRegistry.parseActions(id, parser, upgradeWatchSource);
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.METADATA)) {
                     metatdata = parser.map();
                 } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.STATUS)) {

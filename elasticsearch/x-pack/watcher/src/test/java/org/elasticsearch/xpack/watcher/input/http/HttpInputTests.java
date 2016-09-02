@@ -200,7 +200,7 @@ public class HttpInputTests extends ESTestCase {
         BytesReference source = jsonBuilder().value(inputBuilder.build()).bytes();
         XContentParser parser = XContentHelper.createParser(source);
         parser.nextToken();
-        HttpInput result = httpParser.parseInput("_id", parser);
+        HttpInput result = httpParser.parseInput("_id", parser, false);
 
         assertThat(result.type(), equalTo(HttpInput.TYPE));
         assertThat(result.getRequest().scheme(), equalTo(scheme != null ? scheme : Scheme.HTTP)); // http is the default
@@ -238,7 +238,7 @@ public class HttpInputTests extends ESTestCase {
         XContentParser parser = XContentHelper.createParser(builder.bytes());
         parser.nextToken();
         try {
-            httpParser.parseInput("_id", parser);
+            httpParser.parseInput("_id", parser, false);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("unsupported http method [_METHOD]"));

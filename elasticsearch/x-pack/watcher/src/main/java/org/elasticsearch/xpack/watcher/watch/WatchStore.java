@@ -62,8 +62,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalState;
 
-/**
- */
 public class WatchStore extends AbstractComponent {
 
     public static final String INDEX = ".watches";
@@ -322,7 +320,7 @@ public class WatchStore extends AbstractComponent {
                 for (SearchHit hit : response.getHits()) {
                     String id = hit.getId();
                     try {
-                        Watch watch = watchParser.parse(id, true, hit.getSourceRef());
+                        Watch watch = watchParser.parse(id, true, hit.getSourceRef(), true);
                         watch.status().version(hit.version());
                         watch.version(hit.version());
                         watches.put(id, watch);

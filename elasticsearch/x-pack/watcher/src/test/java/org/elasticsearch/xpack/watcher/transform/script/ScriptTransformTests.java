@@ -164,7 +164,7 @@ public class ScriptTransformTests extends ESTestCase {
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-        ExecutableScriptTransform transform = new ScriptTransformFactory(Settings.EMPTY, service).parseExecutable("_id", parser);
+        ExecutableScriptTransform transform = new ScriptTransformFactory(Settings.EMPTY, service).parseExecutable("_id", parser, false);
         Script script = new Script("_script", type, "_lang", singletonMap("key", "value"));
         assertThat(transform.transform().getScript(), equalTo(script));
     }
@@ -175,7 +175,7 @@ public class ScriptTransformTests extends ESTestCase {
 
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
-        ExecutableScriptTransform transform = new ScriptTransformFactory(Settings.EMPTY, service).parseExecutable("_id", parser);
+        ExecutableScriptTransform transform = new ScriptTransformFactory(Settings.EMPTY, service).parseExecutable("_id", parser, false);
         assertThat(transform.transform().getScript(), equalTo(new Script("_script")));
     }
 
@@ -201,7 +201,7 @@ public class ScriptTransformTests extends ESTestCase {
 
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
         parser.nextToken();
-        ScriptTransform scriptTransform = transformFactory.parseTransform("_watch", parser);
+        ScriptTransform scriptTransform = transformFactory.parseTransform("_watch", parser, false);
         try {
             transformFactory.createExecutable(scriptTransform);
             fail("expected a transform validation exception trying to create an executable with a bad or missing script");
@@ -224,7 +224,7 @@ public class ScriptTransformTests extends ESTestCase {
 
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
         parser.nextToken();
-        ScriptTransform scriptCondition = transformFactory.parseTransform("_watch", parser);
+        ScriptTransform scriptCondition = transformFactory.parseTransform("_watch", parser, false);
         try {
             transformFactory.createExecutable(scriptCondition);
             fail("expected a transform validation exception trying to create an executable with an invalid language");

@@ -43,7 +43,7 @@ public class ArrayCompareConditionFactory extends ConditionFactory<ArrayCompareC
     }
 
     @Override
-    public ArrayCompareCondition parseCondition(String watchId, XContentParser parser) throws IOException {
+    public ArrayCompareCondition parseCondition(String watchId, XContentParser parser, boolean upgradeConditionSource) throws IOException {
         return ArrayCompareCondition.parse(watchId, parser);
     }
 
