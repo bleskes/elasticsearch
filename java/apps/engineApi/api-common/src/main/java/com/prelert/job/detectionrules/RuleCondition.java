@@ -135,4 +135,13 @@ public class RuleCondition
     {
         return Objects.hash(m_ConditionType, m_FieldName, m_FieldValue, m_Condition, m_ValueList);
     }
+
+    public static RuleCondition createCategorical(String fieldName, String valueList)
+    {
+        RuleCondition condition = new RuleCondition();
+        condition.setConditionType(RuleConditionType.CATEGORICAL);
+        condition.setFieldName(fieldName);
+        condition.setValueList(valueList);
+        return condition;
+    }
 }

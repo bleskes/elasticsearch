@@ -35,8 +35,10 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import com.google.common.collect.Sets;
 import com.prelert.job.detectionrules.Connective;
 import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
 
 public class DetectorTest
 {
@@ -110,6 +112,19 @@ public class DetectorTest
         assertEquals(Arrays.asList("over"), detector.extractAnalysisFields());
         detector.setOverFieldName(null);
         assertTrue(detector.extractAnalysisFields().isEmpty());
+    }
+
+    @Test
+    public void testExtractReferencedLists()
+    {
+        Detector detector = createDetector();
+        detector.setDetectorRules(Arrays.asList(new DetectionRule(), new DetectionRule()));
+        detector.getDetectorRules().get(0).setRuleConditions(Arrays.asList(
+                RuleCondition.createCategorical("foo", "list1")));
+        detector.getDetectorRules().get(1).setRuleConditions(Arrays.asList(
+                RuleCondition.createCategorical("bar", "list2")));
+
+        assertEquals(Sets.newHashSet("list1", "list2"), detector.extractReferencedLists());
     }
 
     private Detector createDetector()
