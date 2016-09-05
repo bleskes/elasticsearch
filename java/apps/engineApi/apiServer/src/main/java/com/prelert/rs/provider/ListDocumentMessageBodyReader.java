@@ -33,13 +33,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.prelert.job.ListDocument;
 import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
 
 /**
- * Detector entity provider.
- * Reads the http message body and converts it to a Detector
- * bean. Only conversion from JSON is supported.
+ * ListDocument entity provider.
+ * Reads the http message body and converts it to a ListDocument bean.
+ * Only conversion from JSON is supported.
  */
 public class ListDocumentMessageBodyReader extends AbstractMessageBodyReader<ListDocument>
 {
@@ -64,25 +63,15 @@ public class ListDocumentMessageBodyReader extends AbstractMessageBodyReader<Lis
     protected JobConfigurationParseException handle(JsonParseException e)
     {
         return new JobConfigurationParseException(
-                Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_PARSE), e,
-                ErrorCodes.DETECTOR_PARSE_ERROR);
+                Messages.getMessage(Messages.JSON_LIST_DOCUMENT_PARSE_ERROR), e,
+                ErrorCodes.LIST_PARSE_ERROR);
     }
 
     @Override
     protected JobConfigurationParseException handle(JsonMappingException e)
     {
-        if (e.getCause() != null)
-        {
-            Throwable cause = e.getCause();
-            if (cause instanceof JobConfigurationException)
-            {
-                JobConfigurationException jce = (JobConfigurationException) cause;
-                throw new JobConfigurationParseException(jce.getMessage(), e, jce.getErrorCode());
-            }
-        }
-
         throw new JobConfigurationParseException(
-                Messages.getMessage(Messages.JSON_DETECTOR_CONFIG_MAPPING), e,
-                ErrorCodes.DETECTOR_UNKNOWN_FIELD_ERROR);
+                Messages.getMessage(Messages.JSON_LIST_DOCUMENT_MAPPING_ERROR), e,
+                ErrorCodes.LIST_UNKNOWN_FIELD_ERROR);
     }
 }
