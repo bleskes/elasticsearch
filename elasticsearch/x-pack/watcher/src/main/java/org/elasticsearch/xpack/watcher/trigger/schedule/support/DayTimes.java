@@ -150,8 +150,8 @@ public class DayTimes implements Times {
             return builder.value(time);
         }
         return builder.startObject()
-                .field(HOUR_FIELD.getPreferredName(), hour)
-                .field(MINUTE_FIELD.getPreferredName(), minute)
+                .array(HOUR_FIELD.getPreferredName(), hour)
+                .array(MINUTE_FIELD.getPreferredName(), minute)
                 .endObject();
     }
 
