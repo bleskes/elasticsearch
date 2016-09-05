@@ -72,10 +72,6 @@ public class PartitionScore implements StorageSerialisable
 
     public void setPartitionFieldName(String partitionFieldName)
     {
-        if (partitionFieldName == null)
-        {
-            System.out.println("sasaa");
-        }
         m_PartitionFieldName = partitionFieldName;
     }
 
