@@ -63,11 +63,13 @@ import org.elasticsearch.xpack.security.action.user.ChangePasswordAction;
 import org.elasticsearch.xpack.security.action.user.DeleteUserAction;
 import org.elasticsearch.xpack.security.action.user.GetUsersAction;
 import org.elasticsearch.xpack.security.action.user.PutUserAction;
+import org.elasticsearch.xpack.security.action.user.SetEnabledAction;
 import org.elasticsearch.xpack.security.action.user.TransportAuthenticateAction;
 import org.elasticsearch.xpack.security.action.user.TransportChangePasswordAction;
 import org.elasticsearch.xpack.security.action.user.TransportDeleteUserAction;
 import org.elasticsearch.xpack.security.action.user.TransportGetUsersAction;
 import org.elasticsearch.xpack.security.action.user.TransportPutUserAction;
+import org.elasticsearch.xpack.security.action.user.TransportSetEnabledAction;
 import org.elasticsearch.xpack.security.audit.AuditTrail;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
@@ -108,6 +110,7 @@ import org.elasticsearch.xpack.security.rest.action.user.RestChangePasswordActio
 import org.elasticsearch.xpack.security.rest.action.user.RestDeleteUserAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestGetUsersAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestPutUserAction;
+import org.elasticsearch.xpack.security.rest.action.user.RestSetEnabledAction;
 import org.elasticsearch.xpack.security.transport.SecurityServerTransportService;
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
 import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3HttpServerTransport;
@@ -231,15 +234,15 @@ public class Security implements ActionPlugin, IngestPlugin {
         if (enabled == false) {
             return Collections.emptyList();
         }
-        AnonymousUser.initialize(settings); // TODO: this is sketchy...testing is difficult b/c it is static....
 
         List<Object> components = new ArrayList<>();
         final SecurityContext securityContext = new SecurityContext(settings, threadPool, cryptoService);
         components.add(securityContext);
 
         // realms construction
-        final NativeUsersStore nativeUsersStore = new NativeUsersStore(settings, client, threadPool);
-        final ReservedRealm reservedRealm = new ReservedRealm(env, settings, nativeUsersStore);
+        final NativeUsersStore nativeUsersStore = new NativeUsersStore(settings, client);
+        final AnonymousUser anonymousUser = new AnonymousUser(settings);
+        final ReservedRealm reservedRealm = new ReservedRealm(env, settings, nativeUsersStore, anonymousUser);
         Map<String, Realm.Factory> realmFactories = new HashMap<>();
         realmFactories.put(FileRealm.TYPE, config -> new FileRealm(config, resourceWatcherService));
         realmFactories.put(NativeRealm.TYPE, config -> new NativeRealm(config, nativeUsersStore));
@@ -258,6 +261,7 @@ public class Security implements ActionPlugin, IngestPlugin {
         final Realms realms = new Realms(settings, env, realmFactories, licenseState, reservedRealm);
         components.add(nativeUsersStore);
         components.add(realms);
+        components.add(reservedRealm);
 
         // audit trails construction
         IndexAuditTrail indexAuditTrail = null;
@@ -306,7 +310,7 @@ public class Security implements ActionPlugin, IngestPlugin {
         }
 
         final AuthenticationService authcService = new AuthenticationService(settings, realms, auditTrailService,
-            cryptoService, failureHandler, threadPool);
+            cryptoService, failureHandler, threadPool, anonymousUser);
         components.add(authcService);
 
         final FileRolesStore fileRolesStore = new FileRolesStore(settings, env, resourceWatcherService);
@@ -314,7 +318,7 @@ public class Security implements ActionPlugin, IngestPlugin {
         final ReservedRolesStore reservedRolesStore = new ReservedRolesStore(securityContext);
         final CompositeRolesStore allRolesStore = new CompositeRolesStore(settings, fileRolesStore, nativeRolesStore, reservedRolesStore);
         final AuthorizationService authzService = new AuthorizationService(settings, allRolesStore, clusterService,
-            auditTrailService, failureHandler, threadPool);
+            auditTrailService, failureHandler, threadPool, anonymousUser);
         components.add(fileRolesStore); // has lifecycle
         components.add(nativeRolesStore); // used by roles actions
         components.add(reservedRolesStore); // used by roles actions
@@ -470,7 +474,8 @@ public class Security implements ActionPlugin, IngestPlugin {
                 new ActionHandler<>(PutRoleAction.INSTANCE, TransportPutRoleAction.class),
                 new ActionHandler<>(DeleteRoleAction.INSTANCE, TransportDeleteRoleAction.class),
                 new ActionHandler<>(ChangePasswordAction.INSTANCE, TransportChangePasswordAction.class),
-                new ActionHandler<>(AuthenticateAction.INSTANCE, TransportAuthenticateAction.class));
+                new ActionHandler<>(AuthenticateAction.INSTANCE, TransportAuthenticateAction.class),
+                new ActionHandler<>(SetEnabledAction.INSTANCE, TransportSetEnabledAction.class));
     }
 
     @Override
@@ -499,7 +504,8 @@ public class Security implements ActionPlugin, IngestPlugin {
                 RestGetRolesAction.class,
                 RestPutRoleAction.class,
                 RestDeleteRoleAction.class,
-                RestChangePasswordAction.class);
+                RestChangePasswordAction.class,
+                RestSetEnabledAction.class);
     }
 
     @Override

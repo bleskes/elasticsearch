@@ -28,6 +28,7 @@ import org.elasticsearch.xpack.security.authz.RoleDescriptor;
 import org.elasticsearch.xpack.security.authz.permission.KibanaRole;
 import org.elasticsearch.xpack.security.authz.store.NativeRolesStore;
 import org.elasticsearch.xpack.security.authz.store.ReservedRolesStore;
+import org.elasticsearch.xpack.security.user.ElasticUser;
 import org.elasticsearch.xpack.security.user.KibanaUser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -68,7 +69,9 @@ public class TransportGetRolesActionTests extends ESTestCase {
 
         final boolean isKibanaUser = randomBoolean();
         if (isKibanaUser) {
-            when(context.getUser()).thenReturn(KibanaUser.INSTANCE);
+            when(context.getUser()).thenReturn(new KibanaUser(true));
+        } else {
+            when(context.getUser()).thenReturn(new ElasticUser(true));
         }
         final int size = randomIntBetween(1, ReservedRolesStore.names().size());
         final List<String> names = randomSubsetOf(size, ReservedRolesStore.names());
@@ -128,7 +131,9 @@ public class TransportGetRolesActionTests extends ESTestCase {
 
         final boolean isKibanaUser = randomBoolean();
         if (isKibanaUser) {
-            when(context.getUser()).thenReturn(KibanaUser.INSTANCE);
+            when(context.getUser()).thenReturn(new KibanaUser(true));
+        } else {
+            when(context.getUser()).thenReturn(new ElasticUser(true));
         }
 
         GetRolesRequest request = new GetRolesRequest();
@@ -211,9 +216,10 @@ public class TransportGetRolesActionTests extends ESTestCase {
         }
 
         if (isKibanaUser) {
-            when(context.getUser()).thenReturn(KibanaUser.INSTANCE);
+            when(context.getUser()).thenReturn(new KibanaUser(true));
         } else {
             expectedNames.remove(KibanaRole.NAME);
+            when(context.getUser()).thenReturn(new ElasticUser(true));
         }
 
         GetRolesRequest request = new GetRolesRequest();

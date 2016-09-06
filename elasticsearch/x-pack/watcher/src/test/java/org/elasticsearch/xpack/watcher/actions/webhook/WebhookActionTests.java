@@ -79,9 +79,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
-/**
- */
 public class WebhookActionTests extends ESTestCase {
 
     static final String TEST_HOST = "test.com";
@@ -99,8 +96,8 @@ public class WebhookActionTests extends ESTestCase {
     @Before
     public void init() throws Exception {
         templateEngine = new MockTextTemplateEngine();
-        testBody = TextTemplate.inline(TEST_BODY_STRING).build();
-        testPath = TextTemplate.inline(TEST_PATH_STRING).build();
+        testBody = new TextTemplate(TEST_BODY_STRING);
+        testPath = new TextTemplate(TEST_PATH_STRING);
         authRegistry = new HttpAuthRegistry(singletonMap("basic", new BasicAuthFactory(null)));
     }
 
@@ -140,8 +137,8 @@ public class WebhookActionTests extends ESTestCase {
     }
 
     public void testParser() throws Exception {
-        TextTemplate body = randomBoolean() ? TextTemplate.inline("_subject").build() : null;
-        TextTemplate path = TextTemplate.inline("_url").build();
+        TextTemplate body = randomBoolean() ? new TextTemplate("_subject") : null;
+        TextTemplate path = new TextTemplate("_url");
         String host = "test.host";
         HttpMethod method = randomFrom(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, null);
         HttpRequestTemplate request = getHttpRequestTemplate(method, host, TEST_PORT, path, body, null);
@@ -160,8 +157,8 @@ public class WebhookActionTests extends ESTestCase {
     }
 
     public void testParserSelfGenerated() throws Exception {
-        TextTemplate body = randomBoolean() ? TextTemplate.inline("_body").build() : null;
-        TextTemplate path = TextTemplate.inline("_url").build();
+        TextTemplate body = randomBoolean() ? new TextTemplate("_body") : null;
+        TextTemplate path = new TextTemplate("_url");
         String host = "test.host";
         String watchId = "_watch";
         String actionId = randomAsciiOfLength(5);
@@ -186,8 +183,8 @@ public class WebhookActionTests extends ESTestCase {
     }
 
     public void testParserBuilder() throws Exception {
-        TextTemplate body = randomBoolean() ? TextTemplate.inline("_body").build() : null;
-        TextTemplate path = TextTemplate.inline("_url").build();
+        TextTemplate body = randomBoolean() ? new TextTemplate("_body") : null;
+        TextTemplate path = new TextTemplate("_url");
         String host = "test.host";
 
         String watchId = "_watch";
@@ -269,9 +266,9 @@ public class WebhookActionTests extends ESTestCase {
         String watchId = "test_url_encode" + randomAsciiOfLength(10);
 
         HttpMethod method = HttpMethod.POST;
-        TextTemplate path = TextTemplate.defaultType("/test_" + watchId).build();
+        TextTemplate path = new TextTemplate("/test_" + watchId);
         String host = "test.host";
-        TextTemplate testBody = TextTemplate.inline("ERROR HAPPENED").build();
+        TextTemplate testBody = new TextTemplate("ERROR HAPPENED");
         HttpRequestTemplate requestTemplate = getHttpRequestTemplate(method, host, TEST_PORT, path, testBody, null);
         WebhookAction action = new WebhookAction(requestTemplate);
 
