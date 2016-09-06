@@ -15,9 +15,10 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.audit.index;
+package org.elasticsearch.xpack.security.audit;
 
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.security.audit.AuditLevel;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -26,26 +27,26 @@ import java.util.Locale;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
-public class IndexAuditLevelTests extends ESTestCase {
+public class AuditLevelTests extends ESTestCase {
     public void testAllIndexAuditLevel() {
-        EnumSet<IndexAuditLevel> enumSet = IndexAuditLevel.parse(Collections.singletonList("_all"));
-        IndexAuditLevel[] levels = IndexAuditLevel.values();
+        EnumSet<AuditLevel> enumSet = AuditLevel.parse(Collections.singletonList("_all"));
+        AuditLevel[] levels = AuditLevel.values();
         assertThat(enumSet.size(), is(levels.length));
-        for (IndexAuditLevel level : levels) {
+        for (AuditLevel level : levels) {
             assertThat(enumSet.contains(level), is(true));
         }
     }
 
     public void testExcludeHasPreference() {
-        EnumSet<IndexAuditLevel> enumSet = IndexAuditLevel.parse(Collections.singletonList("_all"), Collections.singletonList("_all"));
+        EnumSet<AuditLevel> enumSet = AuditLevel.parse(Collections.singletonList("_all"), Collections.singletonList("_all"));
         assertThat(enumSet.size(), is(0));
     }
 
     public void testExcludeHasPreferenceSingle() {
-        String excluded = randomFrom(IndexAuditLevel.values()).toString().toLowerCase(Locale.ROOT);
-        EnumSet<IndexAuditLevel> enumSet = IndexAuditLevel.parse(Collections.singletonList("_all"), Collections.singletonList(excluded));
-        EnumSet<IndexAuditLevel> expected = EnumSet.allOf(IndexAuditLevel.class);
-        expected.remove(IndexAuditLevel.valueOf(excluded.toUpperCase(Locale.ROOT)));
+        String excluded = randomFrom(AuditLevel.values()).toString().toLowerCase(Locale.ROOT);
+        EnumSet<AuditLevel> enumSet = AuditLevel.parse(Collections.singletonList("_all"), Collections.singletonList(excluded));
+        EnumSet<AuditLevel> expected = EnumSet.allOf(AuditLevel.class);
+        expected.remove(AuditLevel.valueOf(excluded.toUpperCase(Locale.ROOT)));
         assertThat(enumSet, equalTo(expected));
     }
 }

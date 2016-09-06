@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.monitoring.exporter;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -30,11 +31,15 @@ public abstract class ExportBulk {
     private final AtomicReference<State> state = new AtomicReference<>(State.INITIALIZING);
 
     public ExportBulk(String name) {
-        this.name = name;
+        this.name = Objects.requireNonNull(name);
     }
 
-    @Override
-    public String toString() {
+    /**
+     * Get the name used for any logging messages.
+     *
+     * @return Never {@code null}.
+     */
+    public String getName() {
         return name;
     }
 

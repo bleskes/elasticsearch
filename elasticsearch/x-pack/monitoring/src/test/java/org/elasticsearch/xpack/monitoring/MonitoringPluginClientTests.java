@@ -20,7 +20,6 @@ package org.elasticsearch.xpack.monitoring;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 
 import static org.hamcrest.Matchers.is;
@@ -33,7 +32,7 @@ public class MonitoringPluginClientTests extends ESTestCase {
                 .put(Client.CLIENT_TYPE_SETTING_S.getKey(), TransportClient.CLIENT_TYPE)
                 .build();
 
-        Monitoring plugin = new Monitoring(settings, new Environment(settings), null);
+        Monitoring plugin = new Monitoring(settings, null);
         assertThat(plugin.isEnabled(), is(true));
         assertThat(plugin.isTransportClient(), is(true));
     }
@@ -44,7 +43,7 @@ public class MonitoringPluginClientTests extends ESTestCase {
                 .put("path.home", createTempDir())
                 .put(Client.CLIENT_TYPE_SETTING_S.getKey(), "node")
                 .build();
-        Monitoring plugin = new Monitoring(settings, new Environment(settings), null);
+        Monitoring plugin = new Monitoring(settings, null);
         assertThat(plugin.isEnabled(), is(true));
         assertThat(plugin.isTransportClient(), is(false));
     }

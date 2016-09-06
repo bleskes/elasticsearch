@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.security.authc.file;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LogEvent;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
@@ -166,7 +165,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
 
     public void testParseFile() throws Exception {
         Path path = getDataPath("users");
-        Map<String, char[]> users = FileUserPasswdStore.parseFile(path, null);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(path, null, Settings.EMPTY);
         assertThat(users, notNullValue());
         assertThat(users.size(), is(6));
         assertThat(users.get("bcrypt"), notNullValue());
@@ -186,7 +185,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     public void testParseFile_Empty() throws Exception {
         Path empty = createTempFile();
         Logger logger = CapturingLogger.newCapturingLogger(Level.DEBUG);
-        Map<String, char[]> users = FileUserPasswdStore.parseFile(empty, logger);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(empty, logger, Settings.EMPTY);
         assertThat(users.isEmpty(), is(true));
         List<String> events = CapturingLogger.output(logger.getName(), Level.DEBUG);
         assertThat(events.size(), is(1));
@@ -196,7 +195,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     public void testParseFile_WhenFileDoesNotExist() throws Exception {
         Path file = createTempDir().resolve(randomAsciiOfLength(10));
         Logger logger = CapturingLogger.newCapturingLogger(Level.INFO);
-        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, logger);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, logger, Settings.EMPTY);
         assertThat(users, notNullValue());
         assertThat(users.isEmpty(), is(true));
     }
@@ -207,7 +206,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), StandardCharsets.UTF_16);
         Logger logger = CapturingLogger.newCapturingLogger(Level.INFO);
         try {
-            FileUserPasswdStore.parseFile(file, logger);
+            FileUserPasswdStore.parseFile(file, logger, Settings.EMPTY);
             fail("expected a parse failure");
         } catch (IllegalStateException se) {
             this.logger.info("expected", se);
@@ -217,7 +216,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     public void testParseFile_InvalidLineDoesNotResultInLoggerNPE() throws Exception {
         Path file = createTempFile();
         Files.write(file, Arrays.asList("NotValidUsername=Password", "user:pass"), StandardCharsets.UTF_8);
-        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, null);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, null, Settings.EMPTY);
         assertThat(users, notNullValue());
         assertThat(users.keySet(), hasSize(1));
     }
@@ -227,7 +226,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
         // writing in utf_16 should cause a parsing error as we try to read the file in utf_8
         Files.write(file, Collections.singletonList("aldlfkjldjdflkjd"), StandardCharsets.UTF_16);
         Logger logger = CapturingLogger.newCapturingLogger(Level.INFO);
-        Map<String, char[]> users = FileUserPasswdStore.parseFileLenient(file, logger);
+        Map<String, char[]> users = FileUserPasswdStore.parseFileLenient(file, logger, Settings.EMPTY);
         assertThat(users, notNullValue());
         assertThat(users.isEmpty(), is(true));
         List<String> events = CapturingLogger.output(logger.getName(), Level.ERROR);
@@ -238,7 +237,7 @@ public class FileUserPasswdStoreTests extends ESTestCase {
     public void testParseFileWithLineWithEmptyPasswordAndWhitespace() throws Exception {
         Path file = createTempFile();
         Files.write(file, Collections.singletonList("user: "), StandardCharsets.UTF_8);
-        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, null);
+        Map<String, char[]> users = FileUserPasswdStore.parseFile(file, null, Settings.EMPTY);
         assertThat(users, notNullValue());
         assertThat(users.keySet(), is(empty()));
     }
