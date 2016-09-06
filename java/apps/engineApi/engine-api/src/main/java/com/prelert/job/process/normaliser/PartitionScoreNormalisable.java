@@ -23,55 +23,91 @@
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
- ************************************************************/
+ ***********************************************************/
+package com.prelert.job.process.normaliser;
 
-package com.prelert.rs.provider;
+import java.util.Objects;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.prelert.job.ListDocument;
-import com.prelert.job.errorcodes.ErrorCodes;
-import com.prelert.job.messages.Messages;
+import com.prelert.job.results.PartitionScore;
 
-/**
- * ListDocument entity provider.
- * Reads the http message body and converts it to a ListDocument bean.
- * Only conversion from JSON is supported.
- */
-public class ListDocumentMessageBodyReader extends AbstractMessageBodyReader<ListDocument>
+public class PartitionScoreNormalisable extends AbstractLeafNormalisable
 {
-    /**
-     * The Object to JSON mapper.
-     */
-    private static final ObjectReader OBJECT_READER = new ObjectMapper().readerFor(ListDocument.class);
+    private final PartitionScore m_Score;
 
-    @Override
-    protected Class<?> getType()
+    public PartitionScoreNormalisable(PartitionScore score)
     {
-        return ListDocument.class;
+        m_Score = Objects.requireNonNull(score);
     }
 
     @Override
-    protected ObjectReader getObjectReader()
+    public Level getLevel()
     {
-        return OBJECT_READER;
+        return Level.PARTITION;
     }
 
     @Override
-    protected JobConfigurationParseException handle(JsonParseException e)
+    public String getPartitionFieldName()
     {
-        return new JobConfigurationParseException(
-                Messages.getMessage(Messages.JSON_LIST_DOCUMENT_PARSE_ERROR), e,
-                ErrorCodes.LIST_PARSE_ERROR);
+        return m_Score.getPartitionFieldName();
     }
 
     @Override
-    protected JobConfigurationParseException handle(JsonMappingException e)
+    public String getPartitionFieldValue()
     {
-        throw new JobConfigurationParseException(
-                Messages.getMessage(Messages.JSON_LIST_DOCUMENT_MAPPING_ERROR), e,
-                ErrorCodes.LIST_UNKNOWN_FIELD_ERROR);
+        return m_Score.getPartitionFieldValue();
+    }
+
+    @Override
+    public String getPersonFieldName()
+    {
+        return null;
+    }
+
+    @Override
+    public String getFunctionName()
+    {
+        return null;
+    }
+
+    @Override
+    public String getValueFieldName()
+    {
+        return null;
+    }
+
+    @Override
+    public double getProbability()
+    {
+        return m_Score.getProbability();
+    }
+
+    @Override
+    public double getNormalisedScore()
+    {
+        return m_Score.getAnomalyScore();
+    }
+
+    @Override
+    public void setNormalisedScore(double normalisedScore)
+    {
+        m_Score.setAnomalyScore(normalisedScore);
+    }
+
+    @Override
+    public void setParentScore(double parentScore)
+    {
+        // Do nothing as it is not holding the parent score.
+    }
+
+    @Override
+    public void resetBigChangeFlag()
+    {
+        m_Score.resetBigNormalisedUpdateFlag();
+    }
+
+    @Override
+    public void raiseBigChangeFlag()
+    {
+        m_Score.raiseBigNormalisedUpdateFlag();
     }
 }

@@ -45,14 +45,6 @@ public class ListDocument
         return m_Id;
     }
 
-    public void addItem(String item)
-    {
-        if (item != null)
-        {
-            m_Items.add(item);
-        }
-    }
-
     public List<String> getItems()
     {
         return ImmutableList.copyOf(m_Items);

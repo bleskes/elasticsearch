@@ -1,6 +1,6 @@
 /************************************************************
  *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2015     *
+ * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
  *                                                          *
  *----------------------------------------------------------*
  *----------------------------------------------------------*
@@ -23,32 +23,43 @@
  *----------------------------------------------------------*
  *                                                          *
  *                                                          *
- ************************************************************/
+ ***********************************************************/
+package com.prelert.job.process.output.parsing;
 
-package com.prelert.job.process.normaliser;
+import static org.junit.Assert.*;
 
-/**
- * An enumeration of the different normalisation levels.
- * The string value of each level has to match the equivalent
- * level names in the normaliser C++ process.
- */
-enum Level
-{
-    ROOT("root"),
-    LEAF("leaf"),
-    BUCKET_INFLUENCER("inflb"),
-    INFLUENCER("infl"),
-    PARTITION("part");
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-    private final String m_Key;
+import org.junit.Test;
 
-    Level(String key)
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.prelert.job.results.PartitionScore;
+
+public class PartitionScoreParserTest {
+
+    @Test
+    public void testParse() throws IOException
     {
-        m_Key = key;
+        String json = "{\"probability\":0.1,\"partitionFieldName\":\"part1\"," +
+                    "\"partitionFieldValue\":\"p0\",\"normalizedProbability\":0.2}";
+
+        JsonParser parser = createJsonParser(json);
+        parser.nextToken();
+        PartitionScore score = new PartitionScoreParser(parser).parseJson();
+
+        assertEquals("part1", score.getPartitionFieldName());
+        assertEquals("p0", score.getPartitionFieldValue());
+        assertEquals(0.2, score.getAnomalyScore(), 0.0001);
+        assertEquals(0.1, score.getProbability(), 0.0001);
     }
 
-    public String asString()
+    private static final JsonParser createJsonParser(String input) throws IOException
     {
-        return m_Key;
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+        return new JsonFactory().createParser(inputStream);
     }
+
 }

@@ -39,6 +39,10 @@ import java.util.TreeSet;
 
 import org.junit.Test;
 
+import com.google.common.collect.Sets;
+import com.prelert.job.detectionrules.DetectionRule;
+import com.prelert.job.detectionrules.RuleCondition;
+
 
 public class AnalysisConfigTest
 {
@@ -373,6 +377,23 @@ public class AnalysisConfigTest
         assertEquals(AnalysisConfig.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
         config1.setBucketSpan(100l);
         assertEquals(100l, config1.getBucketSpanOrDefault());
+    }
+
+    @Test
+    public void testExtractReferencedLists()
+    {
+        DetectionRule rule1 = new DetectionRule();
+        rule1.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list1")));
+        DetectionRule rule2 = new DetectionRule();
+        rule2.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list2")));
+        Detector detector1 = new Detector();
+        detector1.setDetectorRules(Arrays.asList(rule1));
+        Detector detector2 = new Detector();
+        detector2.setDetectorRules(Arrays.asList(rule2));
+        AnalysisConfig config = new AnalysisConfig();
+        config.setDetectors(Arrays.asList(detector1, detector2, new Detector()));
+
+        assertEquals(Sets.newHashSet("list1", "list2"), config.extractReferencedLists());
     }
 
     private static AnalysisConfig createFullyPopulatedConfig()

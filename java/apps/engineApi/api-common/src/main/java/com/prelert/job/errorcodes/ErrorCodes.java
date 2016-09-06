@@ -614,8 +614,18 @@ public enum ErrorCodes
     /**
      * Error running the support bundle script
      */
-    SUPPORT_BUNDLE_EXECUTION_ERROR(70101);
+    SUPPORT_BUNDLE_EXECUTION_ERROR(70101),
 
+    // Lists management errors
+    /**
+     * Error parsing a list from JSON
+     */
+    LIST_PARSE_ERROR(80101),
+
+    /**
+     * JSON describing a list contains unknown fields
+     */
+    LIST_UNKNOWN_FIELD_ERROR(80102);
 
     private long m_ErrorCode;
     private String m_ValueString;

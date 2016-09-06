@@ -28,6 +28,8 @@ import java.util.Collections;
 
 import org.junit.Test;
 
+import com.google.common.collect.Sets;
+
 public class DetectionRuleTest
 {
     @Test
@@ -39,6 +41,20 @@ public class DetectionRuleTest
         assertEquals(Collections.emptyList(), rule.getRuleConditions());
         assertNull(rule.getTargetFieldName());
         assertNull(rule.getTargetFieldValue());
+    }
+
+    @Test
+    public void testExtractReferencedLists()
+    {
+        DetectionRule rule = new DetectionRule();
+        RuleCondition numericalCondition = new RuleCondition();
+        numericalCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        rule.setRuleConditions(Arrays.asList(
+                numericalCondition,
+                RuleCondition.createCategorical("foo", "list1"),
+                RuleCondition.createCategorical("bar", "list2")));
+
+        assertEquals(Sets.newHashSet("list1", "list2"), rule.extractReferencedLists());
     }
 
     @Test

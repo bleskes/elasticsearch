@@ -37,6 +37,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
+import com.prelert.job.results.PartitionScore;
 import com.prelert.job.results.BucketInfluencer;
 import com.prelert.job.results.Influencer;
 import com.prelert.utils.json.FieldNameParser;
@@ -96,6 +97,9 @@ final class BucketParser extends FieldNameParser<Bucket>
         case Bucket.PROCESSING_TIME_MS:
             bucket.setProcessingTimeMs(parseAsLongOrZero(fieldName));
             break;
+        case Bucket.PARTITION_SCORES:
+            bucket.setPartitionScores(parsePartitionScores(fieldName));
+            break;
         default:
             LOGGER.warn(String.format("Parse error: unknown field in Bucket %s:%s",
                     fieldName, token.asString()));
@@ -138,4 +142,14 @@ final class BucketParser extends FieldNameParser<Bucket>
         parseArray(fieldName, () -> new InfluencerParser(m_Parser).parseJson(), influencers);
         return influencers;
     }
+
+    private List<PartitionScore> parsePartitionScores(String fieldName)
+    throws IOException
+    {
+        List<PartitionScore> scores = new ArrayList<>();
+        parseArray(fieldName, () -> new PartitionScoreParser(m_Parser).parseJson(), scores);
+        return scores;
+    }
+
+
 }

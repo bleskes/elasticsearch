@@ -275,6 +275,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
         {
             m_Logger.error("An error ocurred during clearing scroll context", e);
         }
+        m_ScrollState.clearScrollId();
     }
 
     @Override

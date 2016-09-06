@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Bucket Result POJO
  */
-@JsonIgnoreProperties({"epoch", "normalisable", "id", "perPartitionMaxProbability"})
+@JsonIgnoreProperties({"epoch", "normalisable", "id", "perPartitionMaxProbability"
+                    /*, "partitionScores"*/})
 @JsonInclude(Include.NON_NULL)
 public class Bucket implements StorageSerialisable
 {
@@ -58,6 +60,7 @@ public class Bucket implements StorageSerialisable
     public static final String INFLUENCERS = "influencers";
     public static final String BUCKET_SPAN = "bucketSpan";
     public static final String PROCESSING_TIME_MS = "processingTimeMs";
+    public static final String PARTITION_SCORES = "partitionScores";
 
     /**
      * Elasticsearch type
@@ -81,11 +84,13 @@ public class Bucket implements StorageSerialisable
     private List<Influencer> m_Influencers;
     private long m_ProcessingTimeMs;
     private Map<String, Double> m_PerPartitionMaxProbability;
+    private List<PartitionScore> m_PartitionScores;
 
     public Bucket()
     {
         m_Records = Collections.emptyList();
         m_Influencers = Collections.emptyList();
+        m_PartitionScores = Collections.emptyList();
         m_BucketInfluencers = new ArrayList<>();
         setPerPartitionMaxProbability(Collections.emptyMap());
     }
@@ -255,6 +260,17 @@ public class Bucket implements StorageSerialisable
         m_BucketInfluencers.add(bucketInfluencer);
     }
 
+
+    public List<PartitionScore> getPartitionScores()
+    {
+        return m_PartitionScores;
+    }
+
+    public void setPartitionScores(List<PartitionScore> scores)
+    {
+        m_PartitionScores = scores;
+    }
+
     /**
      * Box class for the stream collector function below
      */
@@ -303,6 +319,15 @@ public class Bucket implements StorageSerialisable
     public void setPerPartitionMaxProbability(
             Map<String, Double> m_PerPartitionMaxProbability) {
         this.m_PerPartitionMaxProbability = m_PerPartitionMaxProbability;
+    }
+
+    public double partitionAnomalyScore(String partitionValue)
+    {
+        Optional<PartitionScore> first = m_PartitionScores.stream()
+                .filter(s -> partitionValue.equals(s.getPartitionFieldValue()))
+                .findFirst();
+
+        return first.isPresent() ? first.get().getAnomalyScore() : 0.0;
     }
 
     @Override
@@ -409,6 +434,11 @@ public class Bucket implements StorageSerialisable
         if (m_BucketInfluencers != null)
         {
             serialiser.add(BUCKET_INFLUENCERS, m_BucketInfluencers);
+        }
+
+        if (m_PartitionScores != null && m_PartitionScores.isEmpty() == false)
+        {
+            serialiser.add(PARTITION_SCORES, m_PartitionScores);
         }
     }
 }

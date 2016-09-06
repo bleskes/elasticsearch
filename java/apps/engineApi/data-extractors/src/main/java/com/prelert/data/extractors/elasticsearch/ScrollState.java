@@ -98,6 +98,11 @@ class ScrollState
         m_IsComplete = false;
     }
 
+    public void clearScrollId()
+    {
+        m_ScrollId = null;
+    }
+
     public String getScrollId()
     {
         return m_ScrollId;
