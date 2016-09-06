@@ -58,7 +58,7 @@ public class HttpReadTimeoutTests extends ESTestCase {
 
     public void testDefaultTimeout() throws Exception {
         Environment environment = new Environment(Settings.builder().put("path.home", createTempDir()).build());
-        HttpClient httpClient = new HttpClient(Settings.EMPTY, mock(HttpAuthRegistry.class), environment,
+        HttpClient httpClient = new HttpClient(Settings.EMPTY, mock(HttpAuthRegistry.class),
                 new SSLService(environment.settings(), environment));
 
         // we're not going to enqueue an response... so the server will just hang
@@ -86,7 +86,7 @@ public class HttpReadTimeoutTests extends ESTestCase {
 
         HttpClient httpClient = new HttpClient(Settings.builder()
                 .put("xpack.http.default_read_timeout", "3s").build()
-                , mock(HttpAuthRegistry.class), environment, new SSLService(environment.settings(), environment));
+                , mock(HttpAuthRegistry.class), new SSLService(environment.settings(), environment));
 
         final String path = '/' + randomAsciiOfLength(5);
         final CountDownLatch latch = new CountDownLatch(1);
@@ -118,7 +118,7 @@ public class HttpReadTimeoutTests extends ESTestCase {
 
         HttpClient httpClient = new HttpClient(Settings.builder()
                 .put("xpack.http.default_read_timeout", "10s").build()
-                , mock(HttpAuthRegistry.class), environment, new SSLService(environment.settings(), environment));
+                , mock(HttpAuthRegistry.class), new SSLService(environment.settings(), environment));
 
         final String path = '/' + randomAsciiOfLength(5);
         final CountDownLatch latch = new CountDownLatch(1);
