@@ -17,10 +17,11 @@
 
 package org.elasticsearch.xpack.monitoring.exporter.http;
 
+import okio.Buffer;
+
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import okio.Buffer;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
@@ -36,8 +37,10 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.LocalTransportAddress;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.xpack.monitoring.MonitoredSystem;
@@ -52,7 +55,6 @@ import org.elasticsearch.xpack.monitoring.resolver.ResolversRegistry;
 import org.elasticsearch.xpack.monitoring.resolver.bulk.MonitoringBulkTimestampedResolver;
 import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
 import org.joda.time.format.DateTimeFormat;
-
 import org.junit.After;
 import org.junit.Before;
 
@@ -72,10 +74,12 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.xpack.monitoring.exporter.http.PublishableHttpResource.FILTER_PATH_NONE;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 @ESIntegTestCase.ClusterScope(scope = Scope.TEST, numDataNodes = 0, numClientNodes = 0, transportClientRatio = 0.0)
 public class HttpExporterIT extends MonitoringIntegTestCase {
@@ -102,13 +106,14 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
     public void testExport() throws Exception {
         final boolean templatesExistsAlready = randomBoolean();
         final boolean pipelineExistsAlready = randomBoolean();
+        final boolean bwcIndexesExist = randomBoolean();
+        final boolean bwcAliasesExist = randomBoolean();
 
         enqueueGetClusterVersionResponse(Version.CURRENT);
-        enqueueTemplateAndPipelineResponses(webServer, templatesExistsAlready, pipelineExistsAlready);
+        enqueueSetupResponses(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         enqueueResponse(200, "{\"errors\": false, \"msg\": \"successful bulk request\"}");
 
-        final Settings.Builder builder = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
+        final Settings.Builder builder = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.exporters._http.type", "http")
                 .put("xpack.monitoring.exporters._http.host", webServerContainer.getFormattedAddress());
 
@@ -117,13 +122,15 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         final int nbDocs = randomIntBetween(1, 25);
         export(newRandomMonitoringDocs(nbDocs));
 
-        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready);
+        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         assertBulk(webServer, nbDocs);
     }
 
     public void testExportWithHeaders() throws Exception {
         final boolean templatesExistsAlready = randomBoolean();
         final boolean pipelineExistsAlready = randomBoolean();
+        final boolean bwcIndexesExist = randomBoolean();
+        final boolean bwcAliasesExist = randomBoolean();
 
         final String headerValue = randomAsciiOfLengthBetween(3, 9);
         final String[] array = generateRandomStringArray(2, 4, false);
@@ -135,11 +142,10 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         headers.put("Array-Check", array);
 
         enqueueGetClusterVersionResponse(Version.CURRENT);
-        enqueueTemplateAndPipelineResponses(webServer, templatesExistsAlready, pipelineExistsAlready);
+        enqueueSetupResponses(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         enqueueResponse(200, "{\"errors\": false, \"msg\": \"successful bulk request\"}");
 
-        Settings.Builder builder = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
+        Settings.Builder builder = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.exporters._http.type", "http")
                 .put("xpack.monitoring.exporters._http.host", webServerContainer.getFormattedAddress())
                 .put("xpack.monitoring.exporters._http.headers.X-Cloud-Cluster", headerValue)
@@ -151,7 +157,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         final int nbDocs = randomIntBetween(1, 25);
         export(newRandomMonitoringDocs(nbDocs));
 
-        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready, headers, null);
+        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist, headers, null);
         assertBulk(webServer, nbDocs, headers, null);
     }
 
@@ -159,6 +165,8 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         final boolean useHeaders = randomBoolean();
         final boolean templatesExistsAlready = randomBoolean();
         final boolean pipelineExistsAlready = randomBoolean();
+        final boolean bwcIndexesExist = randomBoolean();
+        final boolean bwcAliasesExist = randomBoolean();
 
         final String headerValue = randomAsciiOfLengthBetween(3, 9);
         final String[] array = generateRandomStringArray(2, 4, false);
@@ -172,7 +180,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         }
 
         enqueueGetClusterVersionResponse(Version.CURRENT);
-        enqueueTemplateAndPipelineResponses(webServer, templatesExistsAlready, pipelineExistsAlready);
+        enqueueSetupResponses(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         enqueueResponse(200, "{\"errors\": false}");
 
         String basePath = "path/to";
@@ -189,17 +197,15 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
             basePath = "/" + basePath;
         }
 
-        final Settings.Builder builder = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
+        final Settings.Builder builder = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.exporters._http.type", "http")
                 .put("xpack.monitoring.exporters._http.host", webServerContainer.getFormattedAddress())
                 .put("xpack.monitoring.exporters._http.proxy.base_path", basePath + (randomBoolean() ? "/" : ""));
 
         if (useHeaders) {
-            builder
-                .put("xpack.monitoring.exporters._http.headers.X-Cloud-Cluster", headerValue)
-                .put("xpack.monitoring.exporters._http.headers.X-Found-Cluster", headerValue)
-                .putArray("xpack.monitoring.exporters._http.headers.Array-Check", array);
+            builder.put("xpack.monitoring.exporters._http.headers.X-Cloud-Cluster", headerValue)
+                    .put("xpack.monitoring.exporters._http.headers.X-Found-Cluster", headerValue)
+                    .putArray("xpack.monitoring.exporters._http.headers.Array-Check", array);
         }
 
         internalCluster().startNode(builder);
@@ -207,28 +213,30 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         final int nbDocs = randomIntBetween(1, 25);
         export(newRandomMonitoringDocs(nbDocs));
 
-        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready, headers, basePath);
+        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist, headers,
+                basePath);
         assertBulk(webServer, nbDocs, headers, basePath);
     }
 
     public void testHostChangeReChecksTemplate() throws Exception {
         final boolean templatesExistsAlready = randomBoolean();
         final boolean pipelineExistsAlready = randomBoolean();
+        final boolean bwcIndexesExist = randomBoolean();
+        final boolean bwcAliasesExist = randomBoolean();
 
-        Settings.Builder builder = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
+        Settings.Builder builder = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.exporters._http.type", "http")
                 .put("xpack.monitoring.exporters._http.host", webServerContainer.getFormattedAddress());
 
         enqueueGetClusterVersionResponse(Version.CURRENT);
-        enqueueTemplateAndPipelineResponses(webServer, templatesExistsAlready, pipelineExistsAlready);
+        enqueueSetupResponses(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         enqueueResponse(200, "{\"errors\": false}");
 
         internalCluster().startNode(builder);
 
         export(Collections.singletonList(newRandomMonitoringDoc()));
 
-        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready);
+        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         assertBulk(webServer);
 
         try (final MockWebServerContainer secondWebServerContainer = new MockWebServerContainer(webServerContainer.getPort() + 1)) {
@@ -249,6 +257,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
             }
             // opposite of if it existed before
             enqueuePipelineResponses(secondWebServer, !pipelineExistsAlready);
+            enqueueBackwardsCompatibilityAliasResponse(secondWebServer, bwcIndexesExist, true);
             enqueueResponse(secondWebServer, 200, "{\"errors\": false}");
 
             logger.info("--> exporting a second event");
@@ -264,24 +273,24 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
                 if (template.v1().contains(MonitoringBulkTimestampedResolver.Data.DATA) == false) {
                     recordedRequest = secondWebServer.takeRequest();
                     assertThat(recordedRequest.getMethod(), equalTo("PUT"));
-                    assertThat(recordedRequest.getPath(), equalTo("/_template/" + template.v1()  + resourceQueryString()));
+                    assertThat(recordedRequest.getPath(), equalTo("/_template/" + template.v1() + resourceQueryString()));
                     assertThat(recordedRequest.getBody().readUtf8(), equalTo(template.v2()));
                 }
             }
             assertMonitorPipelines(secondWebServer, !pipelineExistsAlready, null, null);
+            assertMonitorBackwardsCompatibilityAliases(secondWebServer, false, null, null);
             assertBulk(secondWebServer);
         }
     }
 
     public void testUnsupportedClusterVersion() throws Exception {
-        Settings.Builder builder = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
+        Settings.Builder builder = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.exporters._http.type", "http")
                 .put("xpack.monitoring.exporters._http.host", webServerContainer.getFormattedAddress());
 
         // returning an unsupported cluster version
-        enqueueGetClusterVersionResponse(randomFrom(Version.fromString("0.18.0"), Version.fromString("1.0.0"),
-                Version.fromString("1.4.0"), Version.fromString("2.4.0")));
+        enqueueGetClusterVersionResponse(randomFrom(Version.fromString("0.18.0"), Version.fromString("1.0.0"), Version.fromString("1.4.0"),
+                Version.fromString("2.4.0")));
 
         String agentNode = internalCluster().startNode(builder);
 
@@ -296,22 +305,23 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
     public void testDynamicIndexFormatChange() throws Exception {
         final boolean templatesExistsAlready = randomBoolean();
         final boolean pipelineExistsAlready = randomBoolean();
+        final boolean bwcIndexesExist = randomBoolean();
+        final boolean bwcAliasesExist = randomBoolean();
 
-        Settings.Builder builder = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), "-1")
+        Settings.Builder builder = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), "-1")
                 .put("xpack.monitoring.exporters._http.type", "http")
                 .put("xpack.monitoring.exporters._http.host", webServerContainer.getFormattedAddress());
 
         internalCluster().startNode(builder);
 
         enqueueGetClusterVersionResponse(Version.CURRENT);
-        enqueueTemplateAndPipelineResponses(webServer, templatesExistsAlready, pipelineExistsAlready);
+        enqueueSetupResponses(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         enqueueResponse(200, "{\"errors\": false, \"msg\": \"successful bulk request\"}");
 
         MonitoringDoc doc = newRandomMonitoringDoc();
         export(Collections.singletonList(doc));
 
-        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready);
+        assertMonitorResources(webServer, templatesExistsAlready, pipelineExistsAlready, bwcIndexesExist, bwcAliasesExist);
         RecordedRequest recordedRequest = assertBulk(webServer);
 
         @SuppressWarnings("unchecked")
@@ -324,11 +334,11 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         assertThat(index.get("_index"), equalTo(indexName));
 
         String newTimeFormat = randomFrom("YY", "YYYY", "YYYY.MM", "YYYY-MM", "MM.YYYY", "MM");
-        assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(Settings.builder()
-                .put("xpack.monitoring.exporters._http.index.name.time_format", newTimeFormat)));
+        assertAcked(client().admin().cluster().prepareUpdateSettings()
+                .setTransientSettings(Settings.builder().put("xpack.monitoring.exporters._http.index.name.time_format", newTimeFormat)));
 
         enqueueGetClusterVersionResponse(Version.CURRENT);
-        enqueueTemplateAndPipelineResponses(webServer, true, true);
+        enqueueSetupResponses(webServer, true, true, false, false);
         enqueueResponse(200, "{\"errors\": false, \"msg\": \"successful bulk request\"}");
 
         doc = newRandomMonitoringDoc();
@@ -337,7 +347,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         String expectedMonitoringIndex = ".monitoring-es-" + MonitoringTemplateUtils.TEMPLATE_VERSION + "-"
                 + DateTimeFormat.forPattern(newTimeFormat).withZoneUTC().print(doc.getTimestamp());
 
-        assertMonitorResources(webServer, true, true);
+        assertMonitorResources(webServer, true, true, false, false);
         recordedRequest = assertBulk(webServer);
 
         bytes = recordedRequest.getBody().readByteArray();
@@ -351,9 +361,8 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         assertMonitorVersion(webServer, null, null);
     }
 
-    private void assertMonitorVersion(final MockWebServer webServer,
-                                      @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath)
-            throws Exception {
+    private void assertMonitorVersion(final MockWebServer webServer, @Nullable final Map<String, String[]> customHeaders,
+            @Nullable final String basePath) throws Exception {
         final String pathPrefix = basePathToAssertablePrefix(basePath);
         final RecordedRequest request = webServer.takeRequest();
 
@@ -362,24 +371,22 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         assertHeaders(request, customHeaders);
     }
 
-    private void assertMonitorResources(final MockWebServer webServer,
-                                        final boolean templateAlreadyExists, final boolean pipelineAlreadyExists)
-            throws Exception {
-        assertMonitorResources(webServer, templateAlreadyExists, pipelineAlreadyExists, null, null);
+    private void assertMonitorResources(final MockWebServer webServer, final boolean templateAlreadyExists,
+            final boolean pipelineAlreadyExists, boolean bwcIndexesExist, boolean bwcAliasesExist) throws Exception {
+        assertMonitorResources(webServer, templateAlreadyExists, pipelineAlreadyExists, bwcIndexesExist, bwcAliasesExist, null, null);
     }
 
-    private void assertMonitorResources(final MockWebServer webServer,
-                                        final boolean templateAlreadyExists, final boolean pipelineAlreadyExists,
-                                        @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath)
-            throws Exception {
+    private void assertMonitorResources(final MockWebServer webServer, final boolean templateAlreadyExists,
+            final boolean pipelineAlreadyExists, boolean bwcIndexesExist, boolean bwcAliasesExist,
+            @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath) throws Exception {
         assertMonitorVersion(webServer, customHeaders, basePath);
         assertMonitorTemplates(webServer, templateAlreadyExists, customHeaders, basePath);
         assertMonitorPipelines(webServer, pipelineAlreadyExists, customHeaders, basePath);
+        assertMonitorBackwardsCompatibilityAliases(webServer, bwcIndexesExist && false == bwcAliasesExist, customHeaders, basePath);
     }
 
     private void assertMonitorTemplates(final MockWebServer webServer, final boolean alreadyExists,
-                                        @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath)
-            throws Exception {
+            @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath) throws Exception {
         final String pathPrefix = basePathToAssertablePrefix(basePath);
         RecordedRequest request;
 
@@ -402,8 +409,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
     }
 
     private void assertMonitorPipelines(final MockWebServer webServer, final boolean alreadyExists,
-                                        @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath)
-            throws Exception {
+            @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath) throws Exception {
         final String pathPrefix = basePathToAssertablePrefix(basePath);
         RecordedRequest request = webServer.takeRequest();
 
@@ -416,10 +422,33 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
 
             assertThat(request.getMethod(), equalTo("PUT"));
             assertThat(request.getPath(),
-                       equalTo(pathPrefix + "/_ingest/pipeline/" + Exporter.EXPORT_PIPELINE_NAME + resourceQueryString()));
+                    equalTo(pathPrefix + "/_ingest/pipeline/" + Exporter.EXPORT_PIPELINE_NAME + resourceQueryString()));
             assertThat(request.getBody().readUtf8(), equalTo(Exporter.emptyPipeline(XContentType.JSON).string()));
             assertHeaders(request, customHeaders);
         }
+    }
+
+    private void assertMonitorBackwardsCompatibilityAliases(final MockWebServer webServer, final boolean expectPost,
+            @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath) throws Exception {
+        final String pathPrefix = basePathToAssertablePrefix(basePath);
+        RecordedRequest request = webServer.takeRequest();
+
+        assertThat(request.getMethod(), equalTo("GET"));
+        assertThat(request.getPath(), startsWith(pathPrefix + "/.marvel-es-1-*"));
+        assertThat(request.getPath(), containsString("filter_path=*.aliases"));
+        assertThat(request.getPath(), containsString("master_timeout=30s"));
+        assertHeaders(request, customHeaders);
+
+        if (expectPost) {
+            request = webServer.takeRequest();
+
+            assertThat(request.getMethod(), equalTo("POST"));
+            assertThat(request.getPath(), startsWith(pathPrefix + "/_aliases"));
+            assertThat(request.getPath(), containsString("master_timeout=30s"));
+            assertThat(request.getBody().readUtf8(), containsString("add"));
+            assertHeaders(request, customHeaders);
+        }
+
     }
 
     private RecordedRequest assertBulk(final MockWebServer webServer) throws Exception {
@@ -430,10 +459,8 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         return assertBulk(webServer, docs, null, null);
     }
 
-
-    private RecordedRequest assertBulk(final MockWebServer webServer, final int docs,
-                                       @Nullable final Map<String, String[]> customHeaders, @Nullable final String basePath)
-            throws Exception {
+    private RecordedRequest assertBulk(final MockWebServer webServer, final int docs, @Nullable final Map<String, String[]> customHeaders,
+            @Nullable final String basePath) throws Exception {
         final String pathPrefix = basePathToAssertablePrefix(basePath);
         final RecordedRequest request = webServer.takeRequest();
 
@@ -533,17 +560,15 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
     }
 
     private void enqueueGetClusterVersionResponse(MockWebServer mockWebServer, Version v) throws IOException {
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(
-                jsonBuilder()
-                        .startObject().startObject("version").field("number", v.toString()).endObject().endObject().bytes()
-                    .utf8ToString()));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(jsonBuilder().startObject().startObject("version")
+                .field("number", v.toString()).endObject().endObject().bytes().utf8ToString()));
     }
 
-    private void enqueueTemplateAndPipelineResponses(final MockWebServer webServer,
-                                                     final boolean templatesAlreadyExists, final boolean pipelineAlreadyExists)
-            throws IOException {
+    private void enqueueSetupResponses(MockWebServer webServer, boolean templatesAlreadyExists, boolean pipelineAlreadyExists,
+            boolean bwcIndexesExist, boolean bwcAliasesExist) throws IOException {
         enqueueTemplateResponses(webServer, templatesAlreadyExists);
         enqueuePipelineResponses(webServer, pipelineAlreadyExists);
+        enqueueBackwardsCompatibilityAliasResponse(webServer, bwcIndexesExist, bwcAliasesExist);
     }
 
     private void enqueueTemplateResponses(final MockWebServer webServer, final boolean alreadyExists) throws IOException {
@@ -582,6 +607,38 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
 
     private void enqueuePipelineResponsesExistsAlready(final MockWebServer webServer) throws IOException {
         enqueueResponse(webServer, 200, "pipeline [" + Exporter.EXPORT_PIPELINE_NAME + "] exists");
+    }
+
+    private void enqueueBackwardsCompatibilityAliasResponse(MockWebServer webServer, boolean bwcIndexesExist, boolean bwcAliasesExist)
+            throws IOException {
+        if (false == bwcIndexesExist && randomBoolean()) {
+            enqueueResponse(webServer, 404, "index does not exist");
+            return;
+        }
+        XContentBuilder response = JsonXContent.contentBuilder().prettyPrint().startObject();
+        if (bwcIndexesExist) {
+            int timestampIndexes = between(1, 100);
+            for (int i = 0; i < timestampIndexes; i++) {
+                writeIndex(response, ".marvel-es-1-" + i, bwcAliasesExist ? ".monitoring-es-2-" + i : "ignored");
+            }
+        }
+        response.endObject();
+        enqueueResponse(webServer, 200, response.string());
+        if (bwcIndexesExist && false == bwcAliasesExist) {
+            enqueueResponse(webServer, 200, "{\"acknowledged\": true}");
+        }
+    }
+
+    private void writeIndex(XContentBuilder response, String index, String alias) throws IOException {
+        response.startObject(index);
+        {
+            response.startObject("aliases");
+            {
+                response.startObject(alias).endObject();
+            }
+            response.endObject();
+        }
+        response.endObject();
     }
 
     private void enqueueResponse(int responseCode, String body) throws IOException {

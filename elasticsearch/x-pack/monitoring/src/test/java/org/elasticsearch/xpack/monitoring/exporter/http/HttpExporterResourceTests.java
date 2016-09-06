@@ -233,6 +233,7 @@ public class HttpExporterResourceTests extends AbstractPublishableHttpResourceTe
         whenSuccessfulPutTemplates(unsuccessfulGetTemplates);
         whenGetPipelines(successfulGetPipelines, unsuccessfulGetPipelines);
         whenSuccessfulPutPipelines(1);
+        whenSuccessfulBackwardsCompatibilityAliases();
 
         assertTrue(resources.isDirty());
 
@@ -245,6 +246,7 @@ public class HttpExporterResourceTests extends AbstractPublishableHttpResourceTe
         verifyPutTemplates(unsuccessfulGetTemplates);
         verifyGetPipelines(1);
         verifyPutPipelines(unsuccessfulGetPipelines);
+        verifyBackwardsCompatibilityAliases();
         verifyNoMoreInteractions(client);
     }
 
@@ -365,6 +367,22 @@ public class HttpExporterResourceTests extends AbstractPublishableHttpResourceTe
         }
     }
 
+    private void whenSuccessfulBackwardsCompatibilityAliases() throws IOException {
+        // Just return no indexes so we won't have to mock adding aliases
+
+        final Response response = mock(Response.class);
+        final StatusLine statusLine = mock(StatusLine.class);
+
+        when(response.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(RestStatus.OK.getStatus());
+        when(response.getEntity()).thenReturn(new StringEntity("{}"));
+
+        when(client.performRequest(eq("GET"),
+                    startsWith("/.marvel-es-1-*"),
+                    anyMapOf(String.class, String.class)))
+                .thenReturn(response);
+    }
+
     private void verifyVersionCheck() throws IOException {
         verify(client).performRequest(eq("GET"), eq("/"), anyMapOf(String.class, String.class));
     }
@@ -391,4 +409,7 @@ public class HttpExporterResourceTests extends AbstractPublishableHttpResourceTe
                                                      any(HttpEntity.class));               // raw template
     }
 
+    private void verifyBackwardsCompatibilityAliases() throws IOException {
+        verify(client).performRequest(eq("GET"), startsWith("/.marvel-es-1-*"), anyMapOf(String.class, String.class));
+    }
 }
