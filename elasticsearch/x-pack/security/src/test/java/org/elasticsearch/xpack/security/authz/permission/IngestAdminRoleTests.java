@@ -32,6 +32,7 @@ import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.monitoring.action.MonitoringBulkAction;
 import org.elasticsearch.xpack.security.authc.Authentication;
 
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 
@@ -59,5 +60,9 @@ public class IngestAdminRoleTests extends ESTestCase {
                 is(false));
         assertThat(IngestAdminRole.INSTANCE.indices().allowedIndicesMatcher(GetAction.NAME).test(randomAsciiOfLengthBetween(8, 24)),
                 is(false));
+    }
+
+    public void testHasReservedMetadata() {
+        assertThat(IngestAdminRole.DESCRIPTOR.getMetadata(), hasEntry("_reserved", true));
     }
 }
