@@ -345,6 +345,10 @@ public class WatchStore extends AbstractComponent {
         }
     }
 
+    public void clearWatchesInMemory() {
+        watches.clear();
+    }
+
     public class WatchPut {
 
         private final Watch previous;

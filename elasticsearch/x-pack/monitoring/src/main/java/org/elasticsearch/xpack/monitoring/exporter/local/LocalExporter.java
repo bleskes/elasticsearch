@@ -19,6 +19,8 @@ package org.elasticsearch.xpack.monitoring.exporter.local;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
@@ -35,6 +37,7 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -65,6 +68,8 @@ import static org.elasticsearch.common.Strings.collectionToCommaDelimitedString;
  *
  */
 public class LocalExporter extends Exporter implements ClusterStateListener, CleanerService.Listener {
+
+    private static final Logger logger = Loggers.getLogger(LocalExporter.class);
 
     public static final String TYPE = "local";
 
@@ -116,7 +121,7 @@ public class LocalExporter extends Exporter implements ClusterStateListener, Cle
     @Override
     public void doClose() {
         if (state.getAndSet(State.TERMINATED) != State.TERMINATED) {
-            logger.debug("stopped");
+            logger.trace("stopped");
             clusterService.remove(this);
             cleanerService.remove(this);
         }
