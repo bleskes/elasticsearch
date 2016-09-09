@@ -20,7 +20,6 @@ package org.elasticsearch.xpack.security.action.user;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.WriteRequest;
-import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -45,6 +44,7 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
     private String email;
     private Map<String, Object> metadata;
     private char[] passwordHash;
+    private boolean enabled = true;
     private RefreshPolicy refreshPolicy = RefreshPolicy.IMMEDIATE;
 
     public PutUserRequest() {
@@ -91,6 +91,10 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
         this.passwordHash = passwordHash;
     }
 
+    public boolean enabled() {
+        return enabled;
+    }
+
     /**
      * Should this request trigger a refresh ({@linkplain RefreshPolicy#IMMEDIATE}, the default), wait for a refresh (
      * {@linkplain RefreshPolicy#WAIT_UNTIL}), or proceed ignore refreshes entirely ({@linkplain RefreshPolicy#NONE}).
@@ -131,6 +135,10 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
         return passwordHash;
     }
 
+    public void enabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     @Override
     public String[] usernames() {
         return new String[] { username };
@@ -151,6 +159,7 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
         email = in.readOptionalString();
         metadata = in.readBoolean() ? in.readMap() : null;
         refreshPolicy = RefreshPolicy.readFrom(in);
+        enabled = in.readBoolean();
     }
 
     @Override
@@ -174,5 +183,6 @@ public class PutUserRequest extends ActionRequest<PutUserRequest> implements Use
             out.writeMap(metadata);
         }
         refreshPolicy.writeTo(out);
+        out.writeBoolean(enabled);
     }
 }
