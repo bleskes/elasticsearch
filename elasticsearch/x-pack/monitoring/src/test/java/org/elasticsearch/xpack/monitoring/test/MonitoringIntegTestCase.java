@@ -53,6 +53,7 @@ import org.elasticsearch.xpack.security.authc.file.FileRealm;
 import org.elasticsearch.xpack.security.authc.support.Hasher;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
+import org.elasticsearch.xpack.watcher.WatcherLifeCycleService;
 import org.hamcrest.Matcher;
 import org.jboss.netty.util.internal.SystemPropertyUtil;
 import org.junit.After;
@@ -195,6 +196,9 @@ public abstract class MonitoringIntegTestCase extends ESIntegTestCase {
 
     @After
     public void tearDown() throws Exception {
+        if (watcherEnabled != null && watcherEnabled) {
+            internalCluster().getInstance(WatcherLifeCycleService.class, internalCluster().getMasterName()).stop();
+        }
         stopCollection();
         super.tearDown();
     }
