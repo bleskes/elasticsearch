@@ -28,7 +28,6 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.RegexFilter;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.logging.TestLoggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,7 @@ public class CapturingLogger {
         final String name = caller.getClassName() + "." + caller.getMethodName() + "." + level.toString();
         final Logger logger = ESLoggerFactory.getLogger(name);
         Loggers.setLevel(logger, level);
-        TestLoggers.addAppender(logger, new MockAppender(name));
+        Loggers.addAppender(logger, new MockAppender(name));
         return logger;
     }
 
