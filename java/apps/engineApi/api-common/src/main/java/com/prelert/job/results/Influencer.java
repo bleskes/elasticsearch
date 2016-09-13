@@ -28,7 +28,6 @@ import com.prelert.job.persistence.serialisation.DotNotationReverser;
 import com.prelert.job.persistence.serialisation.StorageSerialisable;
 import com.prelert.job.persistence.serialisation.StorageSerialiser;
 
-@JsonIgnoreProperties(value={"initialAnomalyScore"}, allowSetters=true)
 public class Influencer implements StorageSerialisable
 {
     /**
