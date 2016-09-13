@@ -75,6 +75,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
+      <version>3.10.6.Final</version>
     </dependency>
 
     <!-- ZooKeeper uses slf4j. Including the projects version here stops the
