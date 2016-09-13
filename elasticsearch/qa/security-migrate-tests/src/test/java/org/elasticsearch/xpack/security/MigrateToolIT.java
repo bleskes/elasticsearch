@@ -24,7 +24,6 @@ import org.elasticsearch.cli.MockTerminal;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.Priority;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.security.action.role.GetRolesResponse;
@@ -56,13 +55,6 @@ public class MigrateToolIT extends MigrateToolTestCase {
         // Add an existing user so the tool will skip it
         PutUserResponse pur = c.preparePutUser("existing", "s3kirt".toCharArray(), "role1", "user").get();
         assertTrue(pur.created());
-    }
-
-    private static String[] args(String command) {
-        if (!Strings.hasLength(command)) {
-            return Strings.EMPTY_ARRAY;
-        }
-        return command.split("\\s+");
     }
 
     public void testRunMigrateTool() throws Exception {
@@ -112,13 +104,15 @@ public class MigrateToolIT extends MigrateToolTestCase {
         for (RoleDescriptor.IndicesPrivileges ip : ips) {
             if (Arrays.equals(ip.getIndices(), new String[]{"index1", "index2"})) {
                 assertArrayEquals(ip.getPrivileges(), new String[]{"read", "write", "create_index", "indices:admin/refresh"});
-                assertArrayEquals(ip.getFields(), new String[]{"foo", "bar"});
+                assertTrue(ip.getFieldPermissions().hasFieldLevelSecurity());
+                assertTrue(ip.getFieldPermissions().grantsAccessTo("bar"));
+                assertTrue(ip.getFieldPermissions().grantsAccessTo("foo"));
                 assertNotNull(ip.getQuery());
                 assertThat(ip.getQuery().utf8ToString(), containsString("{\"bool\":{\"must_not\":{\"match\":{\"hidden\":true}}}}"));
             } else {
                 assertArrayEquals(ip.getIndices(), new String[]{"*"});
                 assertArrayEquals(ip.getPrivileges(), new String[]{"read"});
-                assertArrayEquals(ip.getFields(), null);
+                assertFalse(ip.getFieldPermissions().hasFieldLevelSecurity());
                 assertNull(ip.getQuery());
             }
         }

@@ -60,13 +60,16 @@ public class IndicesPermissionsWithAliasesWildcardsAndRegexsTests extends Securi
                 "  indices:\n" +
                 "      - names: 't*'\n" +
                 "        privileges: [ALL]\n" +
-                "        fields: [ field1 ]\n" +
+                "        field_security:\n" +
+                "           grant: [ field1 ]\n" +
                 "      - names: 'my_alias'\n" +
                 "        privileges: [ALL]\n" +
-                "        fields: [field2]\n" +
+                "        field_security:\n" +
+                "           grant: [ field2 ]\n" +
                 "      - names: '/an_.*/'\n" +
                 "        privileges: [ALL]\n" +
-                "        fields: [field3]\n";
+                "        field_security:\n" +
+                "           grant: [ field3 ]\n";
     }
 
     @Override
