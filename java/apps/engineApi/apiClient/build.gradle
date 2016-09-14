@@ -1,0 +1,9 @@
+group = 'com.prelert.client'
+description = 'prelert-engine-api-client'
+dependencies {
+    compile group: 'org.eclipse.jetty', name: 'jetty-client', version:'9.3.7.v20160115'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version:'2.8.1'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:'2.8.1'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.8.1'
+    compile project(':prelert-engine-api-common')
+}

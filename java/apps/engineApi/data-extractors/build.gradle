@@ -1,0 +1,5 @@
+
+description = 'data-extractors'
+dependencies {
+    compile project(':prelert-engine-api-common')
+}

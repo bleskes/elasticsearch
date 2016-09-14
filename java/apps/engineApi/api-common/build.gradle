@@ -1,0 +1,8 @@
+
+description = 'prelert-engine-api-common'
+dependencies {
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version:'2.8.1'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:'2.8.1'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.8.1'
+    compile group: 'com.google.guava', name: 'guava', version:'19.0'
+}

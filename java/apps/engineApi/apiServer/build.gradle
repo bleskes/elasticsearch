@@ -1,0 +1,17 @@
+
+description = 'engine-api-server'
+dependencies {
+    compile group: 'org.eclipse.jetty', name: 'jetty-server', version:'9.3.7.v20160115'
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version:'9.3.7.v20160115'
+    compile group: 'org.eclipse.jetty', name: 'jetty-servlets', version:'9.3.7.v20160115'
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version:'2.22.1'
+    compile group: 'net.java.dev.jna', name: 'jna', version:'4.1.0'
+    compile(group: 'org.elasticsearch', name: 'elasticsearch', version:'2.4.0') {
+exclude(module: 'commons-cli')
+    }
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.5'
+    compile project(':prelert-engine-api-common')
+    compile project(':data-extractors')
+    compile project(':engine-api')
+    compile project(':elasticsearch-persistence')
+}

@@ -1,0 +1,14 @@
+rootProject.name = 'engineAPI'
+include ':prelert-engine-api-common'
+include ':data-extractors'
+include ':engine-api'
+include ':prelert-engine-api-client'
+include ':engine-api-server'
+include ':elasticsearch-persistence'
+
+project(':prelert-engine-api-common').projectDir = "$rootDir/api-common" as File
+project(':data-extractors').projectDir = "$rootDir/data-extractors" as File
+project(':engine-api').projectDir = "$rootDir/engine-api" as File
+project(':prelert-engine-api-client').projectDir = "$rootDir/apiClient" as File
+project(':engine-api-server').projectDir = "$rootDir/apiServer" as File
+project(':elasticsearch-persistence').projectDir = "$rootDir/elasticsearch-persistence" as File
