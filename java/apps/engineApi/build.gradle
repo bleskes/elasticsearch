@@ -27,3 +27,17 @@ subprojects {
         testCompile group: 'org.mockito', name: 'mockito-all', version:'1.10.19'
     }
 }
+
+task copyConfigToStaging(type: Copy) {
+    from "config/"
+    into "$System.env.PRELERT_HOME/config"
+}
+
+task copyReadmeToStaging(type: Copy) {
+    from "README.txt"
+    into "$System.env.PRELERT_HOME"
+}
+
+project.build.dependsOn(copyConfigToStaging)
+project.build.dependsOn(copyReadmeToStaging)
+

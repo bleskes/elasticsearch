@@ -15,3 +15,16 @@ exclude(module: 'commons-cli')
     compile project(':engine-api')
     compile project(':elasticsearch-persistence')
 }
+
+task copyJarToStaging(type: Copy) {
+    from "build/libs/engine-api-server-" + project.version + ".jar"
+    into "$System.env.PRELERT_HOME/libjar"
+}
+
+task copyRuntimeJarsToStaging(type: Copy) {
+    from configurations.runtime
+    into "$System.env.PRELERT_HOME/cots/libjar"
+}
+
+project.build.dependsOn(copyJarToStaging)
+project.build.dependsOn(copyRuntimeJarsToStaging)
