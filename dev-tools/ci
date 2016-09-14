@@ -46,8 +46,8 @@ if [ -z ${USE_EXISTING_ES:+x} ]; then
         echo "Either define 'USE_EXISTING_ES' or remove the existing 'elasticsearch' sibling."
         exit 1
     fi
-    echo "Checking out Elasticsearch 'master' branch..."
-    git clone https://github.com/elastic/elasticsearch.git --depth=1
+    echo "Checking out Elasticsearch '5.x' branch..."
+    git clone https://github.com/elastic/elasticsearch.git --depth=1 --branch=5.x
 else
     if [ -d "./elasticsearch" ]; then
         echo "Using existing 'elasticsearch' checkout"
