@@ -62,7 +62,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.joda.time.DateTimeZone.UTC;
 
-@TestLogging("watcher:TRACE")
+@TestLogging("org.elasticsearch.watcher:TRACE")
 public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
     @Override
     protected boolean timeWarped() {
@@ -251,7 +251,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
         assertThat(response.getWatchesCount(), equalTo((long) numWatches));
     }
 
-    @TestLogging("watcher.actions:DEBUG")
+    @TestLogging("org.elasticsearch.watcher.actions:DEBUG")
     public void testTriggeredWatchLoading() throws Exception {
         createIndex("output");
         WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
