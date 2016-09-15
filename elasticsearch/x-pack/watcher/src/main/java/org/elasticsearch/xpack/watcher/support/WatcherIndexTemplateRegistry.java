@@ -17,6 +17,8 @@
 
 package org.elasticsearch.xpack.watcher.support;
 
+import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
@@ -203,7 +205,8 @@ public class WatcherIndexTemplateRegistry extends AbstractComponent implements C
 
                 @Override
                 public void onFailure(Exception e) {
-                    logger.error("Error adding watcher template [{}]", e, config.getTemplateName());
+                    logger.error((Supplier<?>) () -> new ParameterizedMessage("Error adding watcher template [{}]",
+                            config.getTemplateName()), e);
                 }
             });
         });

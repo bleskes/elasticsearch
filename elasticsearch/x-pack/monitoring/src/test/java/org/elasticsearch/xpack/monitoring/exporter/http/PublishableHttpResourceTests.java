@@ -20,6 +20,7 @@ import org.apache.http.HttpEntity;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
+import org.elasticsearch.common.SuppressLoggerChecks;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xpack.monitoring.exporter.http.PublishableHttpResource.CheckResponse;
 
@@ -141,6 +142,7 @@ public class PublishableHttpResourceTests extends AbstractPublishableHttpResourc
         assertThat(resource.doCheckAndPublish(client), is(exists == CheckResponse.EXISTS || publish));
     }
 
+    @SuppressLoggerChecks(reason = "mock usage")
     private void assertCheckForResource(final RestStatus status, final CheckResponse expected, final String debugLogMessage)
             throws IOException {
         final String endpoint = concatenateEndpoint(resourceBasePath, resourceName);
