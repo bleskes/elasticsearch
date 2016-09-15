@@ -89,7 +89,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
         HipChatAccount account = service.getAccount("v1_account");
         assertThat(account, notNullValue());
-        SentMessages messages = account.send(hipChatMessage);
+        SentMessages messages = account.send(hipChatMessage, null);
         assertSentMessagesAreValid(2, messages);
     }
 
@@ -107,7 +107,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
         HipChatAccount account = service.getAccount("integration_account");
         assertThat(account, notNullValue());
-        SentMessages messages = account.send(hipChatMessage);
+        SentMessages messages = account.send(hipChatMessage, null);
         assertSentMessagesAreValid(1, messages);
     }
 
@@ -125,7 +125,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
         HipChatAccount account = service.getAccount("user_account");
         assertThat(account, notNullValue());
-        SentMessages messages = account.send(hipChatMessage);
+        SentMessages messages = account.send(hipChatMessage, null);
         assertSentMessagesAreValid(3, messages);
     }
 
@@ -203,7 +203,7 @@ public class HipChatServiceTests extends AbstractWatcherIntegrationTestCase {
 
         HipChatAccount account = service.getAccount("user_account");
         assertThat(account, notNullValue());
-        SentMessages messages = account.send(hipChatMessage);
+        SentMessages messages = account.send(hipChatMessage, null);
         assertSentMessagesAreValid(2, messages);
     }
 
