@@ -41,22 +41,25 @@ public class ElasticsearchUrlBuilder
     private static final String SEARCH_SCROLL_END_POINT = "_search?scroll=" + SCROLL_CONTEXT_MINUTES + "m&size=%d";
     private static final String CONTINUE_SCROLL_END_POINT = "_search/scroll?scroll=" + SCROLL_CONTEXT_MINUTES + "m";
     private static final String CLEAR_SCROLL_END_POINT = "_search/scroll";
-    private static final String FIELD_STATS_END_POINT = "_field_stats?level=indices";
 
     private final String m_BaseUrl;
-    private String m_Types;
+    private final String m_Indexes;
+    private final String m_Types;
 
-    private ElasticsearchUrlBuilder(String baseUrl, String types)
+    private ElasticsearchUrlBuilder(String baseUrl, String indexes, String types)
     {
         m_BaseUrl = Objects.requireNonNull(baseUrl);
+        m_Indexes = Objects.requireNonNull(indexes);
         m_Types = Objects.requireNonNull(types);
     }
 
-    public static ElasticsearchUrlBuilder create(String baseUrl, List<String> types)
+    public static ElasticsearchUrlBuilder create(String baseUrl, List<String> indexes,
+            List<String> types)
     {
         String sanitisedBaseUrl = baseUrl.endsWith(SLASH) ? baseUrl : baseUrl + SLASH;
+        String indexesAsString = indexes.stream().collect(Collectors.joining(COMMA));
         String typesAsString = types.stream().collect(Collectors.joining(COMMA));
-        return new ElasticsearchUrlBuilder(sanitisedBaseUrl, typesAsString);
+        return new ElasticsearchUrlBuilder(sanitisedBaseUrl, indexesAsString, typesAsString);
     }
 
     public String buildIndexSettingsUrl(String index)
@@ -64,15 +67,14 @@ public class ElasticsearchUrlBuilder
         return newUrlBuilder().append(String.format(INDEX_SETTINGS_END_POINT, index)).toString();
     }
 
-    public String buildSearchSizeOneUrl(List<String> indices)
+    public String buildSearchSizeOneUrl()
     {
-        return buildUrlWithIndicesAndTypes(indices)
-                .append(SEARCH_SIZE_ONE_END_POINT).toString();
+        return buildUrlWithIndicesAndTypes().append(SEARCH_SIZE_ONE_END_POINT).toString();
     }
 
-    public String buildInitScrollUrl(List<String> indices, int scrollSize)
+    public String buildInitScrollUrl(int scrollSize)
     {
-        return buildUrlWithIndicesAndTypes(indices)
+        return buildUrlWithIndicesAndTypes()
                 .append(String.format(SEARCH_SCROLL_END_POINT, scrollSize))
                 .toString();
     }
@@ -87,19 +89,14 @@ public class ElasticsearchUrlBuilder
         return newUrlBuilder().append(CLEAR_SCROLL_END_POINT).toString();
     }
 
-    public String buildFieldStatsUrl(List<String> indices)
-    {
-        return buildUrlWithIndices(indices).append(FIELD_STATS_END_POINT).toString();
-    }
-
     private StringBuilder newUrlBuilder()
     {
         return new StringBuilder(m_BaseUrl);
     }
 
-    private StringBuilder buildUrlWithIndicesAndTypes(List<String> indices)
+    private StringBuilder buildUrlWithIndicesAndTypes()
     {
-        StringBuilder urlBuilder = buildUrlWithIndices(indices);
+        StringBuilder urlBuilder = buildUrlWithIndices();
         if (!m_Types.isEmpty())
         {
             urlBuilder.append(m_Types).append(SLASH);
@@ -107,10 +104,9 @@ public class ElasticsearchUrlBuilder
         return urlBuilder;
     }
 
-    private StringBuilder buildUrlWithIndices(List<String> indices)
+    private StringBuilder buildUrlWithIndices()
     {
-        return newUrlBuilder()
-                .append(indices.stream().collect(Collectors.joining(COMMA))).append(SLASH);
+        return newUrlBuilder().append(m_Indexes).append(SLASH);
     }
 
     public String getBaseUrl()
