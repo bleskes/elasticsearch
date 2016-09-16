@@ -71,11 +71,6 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
             public void beforeStop() {
                 stop();
             }
-
-            @Override
-            public void beforeClose() {
-                close();
-            }
         });
     }
 
@@ -161,17 +156,6 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
                 indexAuditTrail.stop();
             } catch (Exception e) {
                 logger.error("failed to stop audit trail module", e);
-            }
-        }
-    }
-
-    public void close() {
-        // There is no .close() method for the roles module
-        if (indexAuditTrail != null) {
-            try {
-                indexAuditTrail.close();
-            } catch (Exception e) {
-                logger.error("failed to close audit trail module", e);
             }
         }
     }

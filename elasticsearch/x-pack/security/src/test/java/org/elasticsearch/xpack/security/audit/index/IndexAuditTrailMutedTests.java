@@ -92,7 +92,7 @@ public class IndexAuditTrailMutedTests extends ESTestCase {
     @After
     public void stop() {
         if (auditTrail != null) {
-            auditTrail.close();
+            auditTrail.stop();
         }
         if (transportClient != null) {
             transportClient.close();

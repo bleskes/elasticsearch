@@ -196,7 +196,7 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
             threadPool.shutdown();
         }
         if (auditor != null) {
-            auditor.close();
+            auditor.stop();
         }
 
         if (remoteCluster != null) {
