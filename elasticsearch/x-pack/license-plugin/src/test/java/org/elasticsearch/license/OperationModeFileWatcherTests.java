@@ -29,7 +29,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -38,7 +40,7 @@ public class OperationModeFileWatcherTests extends ESTestCase {
     private TestThreadPool threadPool;
     private Path licenseModePath;
     private OperationModeFileWatcher operationModeFileWatcher;
-    private AtomicInteger onChangeCounter;
+    private AtomicReference<CountDownLatch> onChangeCounter;
 
     @Before
     public void setup() throws Exception {
@@ -50,9 +52,9 @@ public class OperationModeFileWatcherTests extends ESTestCase {
                 threadPool);
         watcherService.start();
         licenseModePath = createTempFile();
-        onChangeCounter = new AtomicInteger();
+        onChangeCounter = new AtomicReference<>(new CountDownLatch(1));
         operationModeFileWatcher = new OperationModeFileWatcher(watcherService, licenseModePath, logger,
-                () -> onChangeCounter.incrementAndGet());
+                () -> onChangeCounter.get().countDown());
     }
 
     @After
@@ -62,10 +64,11 @@ public class OperationModeFileWatcherTests extends ESTestCase {
     }
 
     public void testInit() throws Exception {
+        onChangeCounter.set(new CountDownLatch(2));
         writeMode("gold");
         assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.PLATINUM));
         operationModeFileWatcher.init();
-        assertThat(onChangeCounter.get(), equalTo(2));
+        assertTrue(onChangeCounter.get().await(5, TimeUnit.SECONDS));
         assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.GOLD));
     }
 
@@ -74,20 +77,25 @@ public class OperationModeFileWatcherTests extends ESTestCase {
         operationModeFileWatcher.init();
         assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.PLATINUM));
         writeMode("gold");
-        assertBusy(() -> assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.GOLD)));
+        assertTrue(onChangeCounter.get().await(5, TimeUnit.SECONDS));
+        assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.GOLD));
+        onChangeCounter.set(new CountDownLatch(1));
         writeMode("basic");
-        assertBusy(() -> assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.BASIC)));
-        assertThat(onChangeCounter.get(), equalTo(2));
+        assertTrue(onChangeCounter.get().await(5, TimeUnit.SECONDS));
+        assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.BASIC));
     }
 
     public void testDeleteModeFromFile() throws Exception {
         Files.delete(licenseModePath);
         operationModeFileWatcher.init();
         writeMode("gold");
-        assertBusy(() -> assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.GOLD)));
+        assertTrue(onChangeCounter.get().await(5, TimeUnit.SECONDS));
+        assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.GOLD));
+        onChangeCounter.set(new CountDownLatch(1));
+
         Files.delete(licenseModePath);
-        assertBusy(() -> assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.PLATINUM)));
-        assertThat(onChangeCounter.get(), equalTo(2));
+        assertTrue(onChangeCounter.get().await(5, TimeUnit.SECONDS));
+        assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.PLATINUM));
     }
 
     public void testInvalidModeFromFile() throws Exception {
@@ -110,10 +118,12 @@ public class OperationModeFileWatcherTests extends ESTestCase {
         Files.delete(licenseModePath);
         operationModeFileWatcher.init();
         assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.PLATINUM));
+        onChangeCounter.set(new CountDownLatch(1));
         Path tempFile = createTempFile();
         writeMode("gold", tempFile);
         licenseModePath = tempFile;
-        assertBusy(() -> assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.GOLD)));
+        assertTrue(onChangeCounter.get().await(5, TimeUnit.SECONDS));
+        assertThat(operationModeFileWatcher.getCurrentOperationMode(), equalTo(License.OperationMode.GOLD));
     }
 
     private void writeMode(String mode) throws IOException {
