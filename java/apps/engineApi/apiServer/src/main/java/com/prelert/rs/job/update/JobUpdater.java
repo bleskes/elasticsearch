@@ -30,6 +30,7 @@ package com.prelert.rs.job.update;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -149,20 +149,20 @@ public class JobUpdater
 
     private Map<String, Supplier<AbstractUpdater>> createUpdaterPerKeyMap(JobDetails job)
     {
-        return ImmutableMap.<String, Supplier<AbstractUpdater>>builder()
-                .put(ANALYSIS_LIMITS_KEY, () -> new AnalysisLimitsUpdater(m_JobManager, job, ANALYSIS_LIMITS_KEY))
-                .put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, job, BACKGROUND_PERSIST_INTERVAL_KEY))
-                .put(CATEGORIZATION_FILTERS_KEY, () -> new CategorizationFiltersUpdater(m_JobManager, job, CATEGORIZATION_FILTERS_KEY))
-                .put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, job, CUSTOM_SETTINGS))
-                .put(DETECTORS_KEY, () -> new DetectorsUpdater(m_JobManager, job, DETECTORS_KEY, m_ConfigWriter))
-                .put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, job, JOB_DESCRIPTION_KEY))
-                .put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, job, IGNORE_DOWNTIME_KEY))
-                .put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, job, MODEL_DEBUG_CONFIG_KEY, m_ConfigWriter))
-                .put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, job, RENORMALIZATION_WINDOW_DAYS_KEY))
-                .put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, job, MODEL_SNAPSHOT_RETENTION_DAYS_KEY))
-                .put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, job, RESULTS_RETENTION_DAYS_KEY))
-                .put(SCHEDULER_CONFIG_KEY, () -> new SchedulerConfigUpdater(m_JobManager, job, SCHEDULER_CONFIG_KEY))
-                .build();
+        Map<String, Supplier<AbstractUpdater>> map = new HashMap<>();
+        map.put(ANALYSIS_LIMITS_KEY, () -> new AnalysisLimitsUpdater(m_JobManager, job, ANALYSIS_LIMITS_KEY));
+        map.put(BACKGROUND_PERSIST_INTERVAL_KEY, () -> new BackgroundPersistIntervalUpdater(m_JobManager, job, BACKGROUND_PERSIST_INTERVAL_KEY));
+        map.put(CATEGORIZATION_FILTERS_KEY, () -> new CategorizationFiltersUpdater(m_JobManager, job, CATEGORIZATION_FILTERS_KEY));
+        map.put(CUSTOM_SETTINGS, () -> new CustomSettingsUpdater(m_JobManager, job, CUSTOM_SETTINGS));
+        map.put(DETECTORS_KEY, () -> new DetectorsUpdater(m_JobManager, job, DETECTORS_KEY, m_ConfigWriter));
+        map.put(JOB_DESCRIPTION_KEY, () -> new JobDescriptionUpdater(m_JobManager, job, JOB_DESCRIPTION_KEY));
+        map.put(IGNORE_DOWNTIME_KEY, () -> new IgnoreDowntimeUpdater(m_JobManager, job, IGNORE_DOWNTIME_KEY));
+        map.put(MODEL_DEBUG_CONFIG_KEY, () -> new ModelDebugConfigUpdater(m_JobManager, job, MODEL_DEBUG_CONFIG_KEY, m_ConfigWriter));
+        map.put(RENORMALIZATION_WINDOW_DAYS_KEY, () -> new RenormalizationWindowDaysUpdater(m_JobManager, job, RENORMALIZATION_WINDOW_DAYS_KEY));
+        map.put(MODEL_SNAPSHOT_RETENTION_DAYS_KEY, () -> new ModelSnapshotRetentionDaysUpdater(m_JobManager, job, MODEL_SNAPSHOT_RETENTION_DAYS_KEY));
+        map.put(RESULTS_RETENTION_DAYS_KEY, () -> new ResultsRetentionDaysUpdater(m_JobManager, job, RESULTS_RETENTION_DAYS_KEY));
+        map.put(SCHEDULER_CONFIG_KEY, () -> new SchedulerConfigUpdater(m_JobManager, job, SCHEDULER_CONFIG_KEY));
+        return map;
     }
 
     private static AbstractUpdater createKeyValueUpdater(

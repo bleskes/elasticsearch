@@ -30,6 +30,7 @@ package com.prelert.job.process.autodetect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -54,7 +55,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.google.common.base.Charsets;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
 import com.prelert.job.DataDescription;
@@ -390,7 +390,7 @@ public class ProcessManagerTest
         {
             try
             {
-                return m_Output.toString(Charsets.UTF_8.name());
+                return m_Output.toString(StandardCharsets.UTF_8.name());
             } catch (UnsupportedEncodingException e)
             {
                 return "Could not convert to UTF-8";

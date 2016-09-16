@@ -42,7 +42,6 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.log4j.Logger;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.distributed.EngineApiHosts;
 import com.prelert.job.alert.manager.AlertManager;
 import com.prelert.job.errorcodes.ErrorCodes;
@@ -350,13 +349,11 @@ public abstract class ResourceWithJobManager
         return 0;
     }
 
-    @VisibleForTesting
     protected void setApplication(Application application)
     {
         m_RestApplication = application;
     }
 
-    @VisibleForTesting
     protected void setUriInfo(UriInfo uriInfo)
     {
         m_UriInfo = uriInfo;

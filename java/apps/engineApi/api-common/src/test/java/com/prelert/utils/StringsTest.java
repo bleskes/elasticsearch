@@ -1,6 +1,6 @@
 /****************************************************************************
  *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
+ * Copyright 2016-2016 Prelert Ltd                                          *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -15,61 +15,43 @@
  * limitations under the License.                                           *
  *                                                                          *
  ***************************************************************************/
-package com.prelert.job;
+package com.prelert.utils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.junit.Test;
 
-public class ListDocument
+public class StringsTest
 {
-    public static final String TYPE = "list";
-    public static final String ID = "id";
-    public static final String ITEMS = "items";
-
-    private final String m_Id;
-    private final List<String> m_Items;
-
-    @JsonCreator
-    public ListDocument(@JsonProperty("id") String id, @JsonProperty("items") List<String> items)
+    @Test
+    public void testIsNullOrEmpty_GivenNull()
     {
-        m_Id = Objects.requireNonNull(id);
-        m_Items = items;
+        assertTrue(Strings.isNullOrEmpty(null));
     }
 
-    public String getId()
+    @Test
+    public void testIsNullOrEmpty_GivenEmpty()
     {
-        return m_Id;
+        assertTrue(Strings.isNullOrEmpty(""));
     }
 
-    public List<String> getItems()
+    @Test
+    public void testIsNullOrEmpty_GivenNonEmpty()
     {
-        return new ArrayList<>(m_Items);
+        assertFalse(Strings.isNullOrEmpty(" "));
     }
 
-    @Override
-    public boolean equals(Object obj)
+    @Test
+    public void testNullToEmpty_GivenNull()
     {
-        if (obj == this)
-        {
-            return true;
-        }
-
-        if (!(obj instanceof ListDocument))
-        {
-            return false;
-        }
-
-        ListDocument other = (ListDocument) obj;
-        return m_Id.equals(other.m_Id) && m_Items.equals(other.m_Items);
+        assertEquals("", Strings.nullToEmpty(null));
     }
 
-    @Override
-    public int hashCode()
+    @Test
+    public void testNullToEmpty_GivenNonNull()
     {
-        return Objects.hash(m_Id, m_Items);
+        assertEquals("a", Strings.nullToEmpty("a"));
     }
 }

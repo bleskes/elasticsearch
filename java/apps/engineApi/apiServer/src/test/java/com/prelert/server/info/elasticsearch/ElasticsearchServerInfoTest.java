@@ -31,12 +31,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang.SystemUtils;
@@ -64,12 +67,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 import com.prelert.server.info.ServerInfo;
 import com.prelert.utils.HostnameFinder;
-
-
 
 /**
  * These tests rely on extensive mocking of the elasticsearch client.
@@ -94,10 +93,9 @@ public class ElasticsearchServerInfoTest
     @Test
     public void testClientNodeReturnsNoServerInfo() throws InterruptedException, ExecutionException
     {
-        ImmutableMap<String, String> attributes = ImmutableSortedMap.<String, String>naturalOrder()
-                                                                    .put("client", "true")
-                                                                    .put("data", "false")
-                                                                    .build();
+        Map<String, String> attributes = new TreeMap<>();
+        attributes.put("client", "true");
+        attributes.put("data", "false");
         TransportAddress transportAddress = mock(TransportAddress.class);
         when(transportAddress.getHost()).thenReturn("localhost");
         when(transportAddress.getAddress()).thenReturn("127.0.0.1");

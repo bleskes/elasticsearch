@@ -36,19 +36,19 @@ import java.util.function.Function;
 
 import org.apache.log4j.Logger;
 
-import com.google.common.base.Preconditions;
-
 public class StringTransform extends Transform
 {
     private final Function<String, String> m_ConvertFunction;
 
     private StringTransform(Function<String, String> convertFunction,
-            List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
+            List<TransformIndex> readIndicies, List<TransformIndex> writeIndices, Logger logger)
     {
-        super(readIndicies, writeIndicies, logger);
+        super(readIndicies, writeIndices, logger);
         m_ConvertFunction = convertFunction;
-        Preconditions.checkArgument(readIndicies.size() == 1);
-        Preconditions.checkArgument(writeIndicies.size() == 1);
+        if (readIndicies.size() != 1 || writeIndices.size() != 1)
+        {
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override

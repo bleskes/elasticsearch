@@ -29,8 +29,6 @@ package com.prelert.job.process.params;
 
 import java.util.Objects;
 
-import com.google.common.base.Preconditions;
-
 public class InterimResultsParams
 {
     private final boolean m_CalcInterim;
@@ -66,7 +64,10 @@ public class InterimResultsParams
 
     public long getAdvanceTime()
     {
-        Preconditions.checkState(shouldAdvanceTime());
+        if (!shouldAdvanceTime())
+        {
+            throw new IllegalStateException();
+        }
         return m_AdvanceTimeSeconds;
     }
 

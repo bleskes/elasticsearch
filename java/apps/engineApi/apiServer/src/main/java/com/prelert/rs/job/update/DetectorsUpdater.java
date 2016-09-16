@@ -31,6 +31,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +39,6 @@ import java.util.Set;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.Sets;
 import com.prelert.job.Detector;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
@@ -56,9 +56,9 @@ class DetectorsUpdater extends AbstractUpdater
     private static final String DETECTOR_INDEX = "index";
     private static final String DESCRIPTION = "description";
     private static final String DETECTOR_RULES = "detectorRules";
-    private static final Set<String> REQUIRED_PARAMS = Sets.newLinkedHashSet(
+    private static final Set<String> REQUIRED_PARAMS = new LinkedHashSet<>(
             Arrays.asList(DETECTOR_INDEX));
-    private static final Set<String> OPTIONAL_PARAMS = Sets.newLinkedHashSet(
+    private static final Set<String> OPTIONAL_PARAMS = new LinkedHashSet<>(
             Arrays.asList(DESCRIPTION, DETECTOR_RULES));
 
     private final StringWriter m_ConfigWriter;

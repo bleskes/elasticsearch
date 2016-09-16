@@ -80,7 +80,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
@@ -91,8 +90,6 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.NoSuchModelSnapshotException;
-import com.prelert.job.persistence.*;
-import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
@@ -102,6 +99,8 @@ import com.prelert.job.audit.Auditor;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
+import com.prelert.job.persistence.BucketQueryBuilder;
+import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.ListProvider;
@@ -929,7 +928,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         return bucket.getRecords().size();
     }
 
-    @VisibleForTesting
     QueryPage<AnomalyRecord> bucketRecords(String jobId,
             Bucket bucket, int skip, int take, boolean includeInterim,
             String sortField, boolean descending, String partitionFieldValue)

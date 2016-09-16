@@ -44,7 +44,6 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.server.info.ServerInfo;
 import com.prelert.server.info.ServerInfoFactory;
 
@@ -184,7 +183,6 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
         }
     }
 
-    @VisibleForTesting
     protected NodeInfo[] nodesInfo()
     {
         LOGGER.trace("ES API CALL: node info all nodes");
@@ -193,7 +191,6 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
         return response.getNodes();
     }
 
-    @VisibleForTesting
     protected NodeStats[] nodesStats()
     {
         LOGGER.trace("ES API CALL: node stats all nodes");

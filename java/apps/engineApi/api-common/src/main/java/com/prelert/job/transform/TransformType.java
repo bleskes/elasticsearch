@@ -23,8 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Range;
-
 /**
  * Enum type representing the different transform functions
  * with functions for converting between the enum and its
@@ -33,23 +31,23 @@ import com.google.common.collect.Range;
 public enum TransformType
 {
     // Name, arity, arguments, outputs, default output names, has condition
-    DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, Range.singleton(1), Range.singleton(0),
-            Range.closed(1, 2), Arrays.asList("subDomain", "hrd")),
-    CONCAT(Names.CONCAT_NAME, Range.atLeast(2), Range.closed(0, 1), Range.singleton(1),
+    DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, IntRange.singleton(1), IntRange.singleton(0),
+            IntRange.closed(1, 2), Arrays.asList("subDomain", "hrd")),
+    CONCAT(Names.CONCAT_NAME, IntRange.atLeast(2), IntRange.closed(0, 1), IntRange.singleton(1),
             Arrays.asList("concat")),
-    REGEX_EXTRACT(Names.EXTRACT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
+    REGEX_EXTRACT(Names.EXTRACT_NAME, IntRange.singleton(1), IntRange.singleton(1), IntRange.atLeast(1),
             Arrays.asList("extract"), false),
-    REGEX_SPLIT(Names.SPLIT_NAME, Range.singleton(1), Range.singleton(1), Range.atLeast(1),
+    REGEX_SPLIT(Names.SPLIT_NAME, IntRange.singleton(1), IntRange.singleton(1), IntRange.atLeast(1),
             Arrays.asList("split"), false),
-    EXCLUDE(Names.EXCLUDE_NAME, Range.atLeast(1), Range.singleton(0), Range.singleton(0),
+    EXCLUDE(Names.EXCLUDE_NAME, IntRange.atLeast(1), IntRange.singleton(0), IntRange.singleton(0),
             Arrays.asList(), true),
-    LOWERCASE(Names.LOWERCASE_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+    LOWERCASE(Names.LOWERCASE_NAME, IntRange.singleton(1), IntRange.singleton(0), IntRange.singleton(1),
             Arrays.asList("lowercase")),
-    UPPERCASE(Names.UPPERCASE_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+    UPPERCASE(Names.UPPERCASE_NAME, IntRange.singleton(1), IntRange.singleton(0), IntRange.singleton(1),
             Arrays.asList("uppercase")),
-    TRIM(Names.TRIM_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+    TRIM(Names.TRIM_NAME, IntRange.singleton(1), IntRange.singleton(0), IntRange.singleton(1),
             Arrays.asList("trim")),
-    GEO_UNHASH(Names.GEO_UNHASH_NAME, Range.singleton(1), Range.singleton(0), Range.singleton(1),
+    GEO_UNHASH(Names.GEO_UNHASH_NAME, IntRange.singleton(1), IntRange.singleton(0), IntRange.singleton(1),
             Arrays.asList("latLong"));
 
     /**
@@ -77,23 +75,21 @@ public enum TransformType
         }
     }
 
-    private final Range<Integer> m_ArityRange;
-    private final Range<Integer> m_ArgumentsRange;
-    private final Range<Integer> m_OutputsRange;
+    private final IntRange m_ArityRange;
+    private final IntRange m_ArgumentsRange;
+    private final IntRange m_OutputsRange;
     private final String m_PrettyName;
     private final List<String> m_DefaultOutputNames;
     private final boolean m_HasCondition;
 
-    private TransformType(String prettyName, Range<Integer> arityRange,
-            Range<Integer> argumentsRange, Range<Integer> outputsRange,
-            List<String> defaultOutputNames)
+    private TransformType(String prettyName, IntRange arityRange, IntRange argumentsRange,
+            IntRange outputsRange, List<String> defaultOutputNames)
     {
         this(prettyName, arityRange, argumentsRange, outputsRange, defaultOutputNames, false);
     }
 
-    private TransformType(String prettyName, Range<Integer> arityRange,
-            Range<Integer> argumentsRange, Range<Integer> outputsRange,
-            List<String> defaultOutputNames, boolean hasCondition)
+    private TransformType(String prettyName, IntRange arityRange, IntRange argumentsRange,
+            IntRange outputsRange, List<String> defaultOutputNames, boolean hasCondition)
     {
         m_ArityRange = arityRange;
         m_ArgumentsRange = argumentsRange;
@@ -107,7 +103,7 @@ public enum TransformType
      * The count range of inputs the transform expects.
      * @return
      */
-    public Range<Integer> arityRange()
+    public IntRange arityRange()
     {
         return m_ArityRange;
     }
@@ -116,7 +112,7 @@ public enum TransformType
      * The count range of arguments the transform expects.
      * @return
      */
-    public Range<Integer> argumentsRange()
+    public IntRange argumentsRange()
     {
         return m_ArgumentsRange;
     }
@@ -125,7 +121,7 @@ public enum TransformType
      * The count range of outputs the transform expects.
      * @return
      */
-    public Range<Integer> outputsRange()
+    public IntRange outputsRange()
     {
         return m_OutputsRange;
     }

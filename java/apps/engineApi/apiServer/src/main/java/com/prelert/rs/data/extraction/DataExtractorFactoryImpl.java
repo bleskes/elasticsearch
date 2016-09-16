@@ -37,7 +37,6 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchQueryBuilder;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchUrlBuilder;
@@ -96,7 +95,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 schedulerConfig.getScrollSize());
     }
 
-    @VisibleForTesting
     String createBasicAuthHeader(String username, String encryptedPassword)
     {
         if (username == null)
@@ -124,7 +122,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         return "Basic " + Base64.getMimeEncoder().encodeToString(toEncode.getBytes(StandardCharsets.ISO_8859_1));
     }
 
-    @VisibleForTesting
     String stringifyElasticsearchQuery(Map<String, Object> queryMap)
     {
         String queryStr = writeObjectAsJson(queryMap);
@@ -135,7 +132,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         return queryStr;
     }
 
-    @VisibleForTesting
     String stringifyElasticsearchAggregations(Map<String, Object> aggregationsMap,
             Map<String, Object> aggsMap)
     {
@@ -150,7 +146,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         return null;
     }
 
-    @VisibleForTesting
     String stringifyElasticsearchScriptFields(Map<String, Object> scriptFieldsMap)
     {
         if (scriptFieldsMap != null)
