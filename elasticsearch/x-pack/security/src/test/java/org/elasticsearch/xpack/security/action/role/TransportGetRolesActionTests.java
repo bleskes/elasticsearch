@@ -65,7 +65,9 @@ public class TransportGetRolesActionTests extends ESTestCase {
         NativeRolesStore rolesStore = mock(NativeRolesStore.class);
         SecurityContext context = mock(SecurityContext.class);
         TransportGetRolesAction action = new TransportGetRolesAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
-                mock(IndexNameExpressionResolver.class), rolesStore, mock(TransportService.class), new ReservedRolesStore(context));
+                mock(IndexNameExpressionResolver.class), rolesStore,
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR),
+                new ReservedRolesStore(context));
 
         final boolean isKibanaUser = randomBoolean();
         if (isKibanaUser) {
@@ -127,7 +129,9 @@ public class TransportGetRolesActionTests extends ESTestCase {
         NativeRolesStore rolesStore = mock(NativeRolesStore.class);
         SecurityContext context = mock(SecurityContext.class);
         TransportGetRolesAction action = new TransportGetRolesAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
-                mock(IndexNameExpressionResolver.class), rolesStore, mock(TransportService.class), new ReservedRolesStore(context));
+                mock(IndexNameExpressionResolver.class), rolesStore,
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR),
+                new ReservedRolesStore(context));
 
         final boolean isKibanaUser = randomBoolean();
         if (isKibanaUser) {
@@ -204,7 +208,9 @@ public class TransportGetRolesActionTests extends ESTestCase {
         NativeRolesStore rolesStore = mock(NativeRolesStore.class);
         SecurityContext context = mock(SecurityContext.class);
         TransportGetRolesAction action = new TransportGetRolesAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
-                mock(IndexNameExpressionResolver.class), rolesStore, mock(TransportService.class), new ReservedRolesStore(context));
+                mock(IndexNameExpressionResolver.class), rolesStore,
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR),
+                new ReservedRolesStore(context));
 
         final boolean isKibanaUser = randomBoolean();
         final List<String> expectedNames = new ArrayList<>();
@@ -296,7 +302,9 @@ public class TransportGetRolesActionTests extends ESTestCase {
         NativeRolesStore rolesStore = mock(NativeRolesStore.class);
         SecurityContext context = mock(SecurityContext.class);
         TransportGetRolesAction action = new TransportGetRolesAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
-                mock(IndexNameExpressionResolver.class), rolesStore, mock(TransportService.class), new ReservedRolesStore(context));
+                mock(IndexNameExpressionResolver.class), rolesStore,
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR),
+                new ReservedRolesStore(context));
 
         GetRolesRequest request = new GetRolesRequest();
         request.names(storeRoleDescriptors.stream().map(RoleDescriptor::getName).collect(Collectors.toList()).toArray(Strings.EMPTY_ARRAY));

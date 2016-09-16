@@ -57,7 +57,8 @@ public class TransportDeleteUserActionTests extends ESTestCase {
         Settings settings = Settings.builder().put(AnonymousUser.ROLES_SETTING.getKey(), "superuser").build();
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportDeleteUserAction action = new TransportDeleteUserAction(settings, mock(ThreadPool.class),
-                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore, mock(TransportService.class));
+                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore, 
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR));
 
         DeleteUserRequest request = new DeleteUserRequest(new AnonymousUser(settings).principal());
 
@@ -84,7 +85,8 @@ public class TransportDeleteUserActionTests extends ESTestCase {
     public void testInternalUser() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportDeleteUserAction action = new TransportDeleteUserAction(Settings.EMPTY, mock(ThreadPool.class),
-                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore, mock(TransportService.class));
+                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore, 
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR));
 
         DeleteUserRequest request = new DeleteUserRequest(randomFrom(SystemUser.INSTANCE.principal(), XPackUser.INSTANCE.principal()));
 
@@ -112,7 +114,8 @@ public class TransportDeleteUserActionTests extends ESTestCase {
         final User reserved = randomFrom(new ElasticUser(true), new KibanaUser(true));
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportDeleteUserAction action = new TransportDeleteUserAction(Settings.EMPTY, mock(ThreadPool.class),
-                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore, mock(TransportService.class));
+                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore,
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR));
 
         DeleteUserRequest request = new DeleteUserRequest(reserved.principal());
 
@@ -140,7 +143,8 @@ public class TransportDeleteUserActionTests extends ESTestCase {
         final User user = new User("joe");
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportDeleteUserAction action = new TransportDeleteUserAction(Settings.EMPTY, mock(ThreadPool.class),
-                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore, mock(TransportService.class));
+                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore,
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR));
 
         final boolean found = randomBoolean();
         final DeleteUserRequest request = new DeleteUserRequest(user.principal());
@@ -179,7 +183,8 @@ public class TransportDeleteUserActionTests extends ESTestCase {
         final User user = new User("joe");
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportDeleteUserAction action = new TransportDeleteUserAction(Settings.EMPTY, mock(ThreadPool.class),
-                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore, mock(TransportService.class));
+                mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore,
+                new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR));
 
         final DeleteUserRequest request = new DeleteUserRequest(user.principal());
         doAnswer(new Answer() {

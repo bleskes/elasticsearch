@@ -66,15 +66,14 @@ public interface ServerTransportFilter {
 
         private final AuthenticationService authcService;
         private final AuthorizationService authzService;
-        private final SecurityActionMapper actionMapper;
+        private final SecurityActionMapper actionMapper = new SecurityActionMapper();
         private final ThreadContext threadContext;
         private final boolean extractClientCert;
 
         public NodeProfile(AuthenticationService authcService, AuthorizationService authzService,
-                           SecurityActionMapper actionMapper, ThreadContext threadContext, boolean extractClientCert) {
+                           ThreadContext threadContext, boolean extractClientCert) {
             this.authcService = authcService;
             this.authzService = authzService;
-            this.actionMapper = actionMapper;
             this.threadContext = threadContext;
             this.extractClientCert = extractClientCert;
         }
@@ -146,8 +145,8 @@ public interface ServerTransportFilter {
     class ClientProfile extends NodeProfile {
 
         public ClientProfile(AuthenticationService authcService, AuthorizationService authzService,
-                             SecurityActionMapper actionMapper, ThreadContext threadContext, boolean extractClientCert) {
-            super(authcService, authzService, actionMapper, threadContext, extractClientCert);
+                             ThreadContext threadContext, boolean extractClientCert) {
+            super(authcService, authzService, threadContext, extractClientCert);
         }
 
         @Override
