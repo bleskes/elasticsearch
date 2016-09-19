@@ -72,7 +72,6 @@ import com.prelert.job.process.autodetect.ProcessManager;
 import com.prelert.job.reader.JobDataReader;
 import com.prelert.rs.data.extraction.DataExtractorFactoryImpl;
 import com.prelert.rs.persistence.ElasticsearchFactory;
-import com.prelert.rs.persistence.ElasticsearchNodeClientFactory;
 import com.prelert.rs.persistence.ElasticsearchTransportClientFactory;
 import com.prelert.rs.provider.AcknowledgementWriter;
 import com.prelert.rs.provider.AlertMessageBodyWriter;
@@ -246,20 +245,13 @@ public final class PrelertWebApp extends Application
                     ProcessCtrl.ES_HOST_PROP + " is set to " + esHost);
         }
 
-        if (resultsStorageClient.equals(ES_TRANSPORT))
+        if (!resultsStorageClient.equals(ES_TRANSPORT))
         {
-            String esHostAndPort = esHost + ":" + portRange.split("-", 2)[0];
-            LOGGER.info("Connecting to Elasticsearch via transport client to " + esHostAndPort);
-            return ElasticsearchTransportClientFactory.create(esHostAndPort, clusterName);
+            LOGGER.warn("Node client not supported any more - falling back to transport client");
         }
-
-        LOGGER.info("Connecting to Elasticsearch via node client");
-        // The number of processors affects the size of ES thread pools, so it
-        // can sometimes be desirable to frig it
-        String numProcessors = PrelertSettings.getSettingOrDefault(ES_PROCESSORS_PROP, "");
-        String networkPublishHost = PrelertSettings.getSettingOrDefault(
-                ES_NETWORK_PUBLISH_HOST_PROP, DEFAULT_NETWORK_PUBLISH_HOST);
-        return ElasticsearchNodeClientFactory.create(esHost, networkPublishHost, clusterName, portRange, numProcessors);
+        String esHostAndPort = esHost + ":" + portRange.split("-", 2)[0];
+        LOGGER.info("Connecting to Elasticsearch via transport client to " + esHostAndPort);
+        return ElasticsearchTransportClientFactory.create(esHostAndPort, clusterName);
     }
 
     /**

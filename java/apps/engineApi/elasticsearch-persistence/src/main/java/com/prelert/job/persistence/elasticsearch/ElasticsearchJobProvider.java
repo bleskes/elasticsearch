@@ -55,6 +55,7 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -234,8 +235,15 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         LOGGER.info("Elasticsearch client shut down");
         if (m_Node != null)
         {
-            m_Node.close();
-            LOGGER.info("Elasticsearch node shut down");
+            try
+            {
+                m_Node.close();
+                LOGGER.info("Elasticsearch node shut down");
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Failed to shut down elasticsearch node", e);
+            }
         }
     }
 
@@ -367,7 +375,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
      */
     private Settings.Builder prelertIndexSettings()
     {
-        return Settings.settingsBuilder()
+        return Settings.builder()
                 // Our indexes are small and one shard puts the
                 // least possible burden on Elasticsearch
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
@@ -517,7 +525,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                     " to index " + elasticJobId.getIndex() + " with ID " + elasticJobId.getId());
             m_Client.prepareIndex(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                     .setSource(json)
-                    .setRefresh(true)
+                    .setRefreshPolicy(RefreshPolicy.IMMEDIATE)
                     .get();
 
             return true;
@@ -747,7 +755,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             LOGGER.trace("ES API CALL: get Bucket with timestamp " + query.getTimestamp() +
                     " from index " + elasticJobId.getIndex());
             QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP,
-                    new Date(query.getTimestamp()));
+                    query.getTimestamp());
 
             SearchResponse searchResponse = m_Client.prepareSearch(elasticJobId.getIndex())
                     .setTypes(Bucket.TYPE)
@@ -1058,7 +1066,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                 .setPostFilter(recordFilter)
                 .setFrom(skip).setSize(take)
                 .addSort(sb == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC) : sb)
-                .addField(ElasticsearchMappings.PARENT)   // include the parent id
+                .addDocValueField(ElasticsearchMappings.PARENT)   // include the parent id
                 .setFetchSource(true);  // the field option turns off source so request it explicitly
 
         for (String sortField : secondarySort)

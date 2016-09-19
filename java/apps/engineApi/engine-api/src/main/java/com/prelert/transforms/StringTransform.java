@@ -27,10 +27,6 @@
 
 package com.prelert.transforms;
 
-import static org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLat;
-import static org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLon;
-import static org.apache.lucene.spatial.util.GeoHashUtils.mortonEncode;
-
 import java.util.List;
 import java.util.function.Function;
 
@@ -77,23 +73,5 @@ public class StringTransform extends Transform
             List<TransformIndex> writeIndicies, Logger logger)
     {
         return new StringTransform(s -> s.trim(), readIndicies, writeIndicies, logger);
-    }
-
-    public static StringTransform createGeoUnhash(List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        return new StringTransform(s -> geoUnhash(s), readIndicies, writeIndicies, logger);
-    }
-
-    /**
-     * Convert a Geohash (https://en.wikipedia.org/wiki/Geohash) value to a
-     * string of the form "latitude,longitude".
-     */
-    private static String geoUnhash(String geoHash)
-    {
-        long hash = mortonEncode(geoHash);
-        StringBuilder strBuilder = new StringBuilder();
-        return strBuilder.append(mortonUnhashLat(hash))
-                .append(',').append(mortonUnhashLon(hash)).toString();
     }
 }

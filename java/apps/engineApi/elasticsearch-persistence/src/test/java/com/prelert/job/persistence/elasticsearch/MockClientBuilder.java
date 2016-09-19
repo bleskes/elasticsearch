@@ -59,6 +59,7 @@ import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.AdminClient;
@@ -302,7 +303,7 @@ public class MockClientBuilder
         when(builder.setFrom(eq(skip))).thenReturn(builder);
         when(builder.setSize(eq(take))).thenReturn(builder);
         when(builder.setFetchSource(eq(true))).thenReturn(builder);
-        when(builder.addField(any(String.class))).thenReturn(builder);
+        when(builder.addDocValueField(any(String.class))).thenReturn(builder);
         when(builder.addSort(any(String.class), any(SortOrder.class))).thenReturn(builder);
         when(builder.get()).thenReturn(response);
         when(m_Client.prepareSearch(eq(index))).thenReturn(builder);
@@ -320,7 +321,7 @@ public class MockClientBuilder
         when(builder.setFrom(any(Integer.class))).thenReturn(builder);
         when(builder.setSize(any(Integer.class))).thenReturn(builder);
         when(builder.setFetchSource(eq(true))).thenReturn(builder);
-        when(builder.addField(any(String.class))).thenReturn(builder);
+        when(builder.addDocValueField(any(String.class))).thenReturn(builder);
         when(builder.addSort(any(String.class), any(SortOrder.class))).thenReturn(builder);
         when(builder.get()).thenReturn(response);
         when(m_Client.prepareSearch(eq(index))).thenReturn(builder);
@@ -336,7 +337,7 @@ public class MockClientBuilder
         when(m_Client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
         when(builder.setSource(eq(source))).thenReturn(builder);
         when(builder.setParent(any(String.class))).thenReturn(builder);
-        when(builder.setRefresh(eq(true))).thenReturn(builder);
+        when(builder.setRefreshPolicy(eq(RefreshPolicy.IMMEDIATE))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
         return this;
@@ -350,7 +351,7 @@ public class MockClientBuilder
 
         when(m_Client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
         when(builder.setSource(getSource.capture())).thenReturn(builder);
-        when(builder.setRefresh(eq(true))).thenReturn(builder);
+        when(builder.setRefreshPolicy(eq(RefreshPolicy.IMMEDIATE))).thenReturn(builder);
         when(builder.setParent(any(String.class))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
@@ -369,7 +370,7 @@ public class MockClientBuilder
         when(m_Client.prepareIndex(eq(index), eq(type), any(String.class))).thenReturn(builder);
         when(builder.setSource(getSource.capture())).thenReturn(builder);
         when(builder.setParent(any(String.class))).thenReturn(builder);
-        when(builder.setRefresh(eq(true))).thenReturn(builder);
+        when(builder.setRefreshPolicy(eq(RefreshPolicy.IMMEDIATE))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(response);
         return this;
