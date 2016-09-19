@@ -1,3 +1,6 @@
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
 task copyConfigToStaging(type: Copy) {
     from "config/"
     into "$System.env.PRELERT_HOME/config"

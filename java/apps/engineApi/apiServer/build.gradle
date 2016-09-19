@@ -1,5 +1,9 @@
 
 description = 'engine-api-server'
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
 dependencies {
     compile group: 'org.eclipse.jetty', name: 'jetty-server', version:'9.3.7.v20160115'
     compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version:'9.3.7.v20160115'

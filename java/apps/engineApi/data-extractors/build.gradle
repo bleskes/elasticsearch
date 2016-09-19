@@ -1,5 +1,9 @@
 
 description = 'data-extractors'
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
 dependencies {
     compile project(':prelert-engine-api-common')
 }
