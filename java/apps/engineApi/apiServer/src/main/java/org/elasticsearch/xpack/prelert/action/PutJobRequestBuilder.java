@@ -1,4 +1,4 @@
-package org.elasticsearch.prelert.action;
+package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
 import org.elasticsearch.client.ElasticsearchClient;

@@ -1,8 +1,8 @@
-package org.elasticsearch.prelert.rest;
+package org.elasticsearch.xpack.prelert.rest;
 
-import org.elasticsearch.prelert.action.PutJobRequest;
-import org.elasticsearch.prelert.action.PutJobResponse;
-import org.elasticsearch.prelert.action.TransportPutJobAction;
+import org.elasticsearch.xpack.prelert.action.PutJobRequest;
+import org.elasticsearch.xpack.prelert.action.PutJobResponse;
+import org.elasticsearch.xpack.prelert.action.TransportPutJobAction;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;

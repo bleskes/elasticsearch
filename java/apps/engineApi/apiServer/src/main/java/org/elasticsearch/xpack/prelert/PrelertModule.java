@@ -1,4 +1,4 @@
-package org.elasticsearch.prelert;
+package org.elasticsearch.xpack.prelert;
 
 import org.elasticsearch.common.inject.AbstractModule;
 

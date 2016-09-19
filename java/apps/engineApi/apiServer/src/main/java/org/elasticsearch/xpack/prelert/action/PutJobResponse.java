@@ -1,4 +1,4 @@
-package org.elasticsearch.prelert.action;
+package org.elasticsearch.xpack.prelert.action;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package org.elasticsearch.prelert;
+package org.elasticsearch.xpack.prelert;
 
 import com.prelert.job.logging.DefaultJobLoggerFactory;
 import com.prelert.job.logging.JobLoggerFactory;

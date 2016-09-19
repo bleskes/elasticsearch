@@ -1,4 +1,4 @@
-package org.elasticsearch.prelert;
+package org.elasticsearch.xpack.prelert;
 
 
 import com.prelert.settings.PrelertSettings;
@@ -10,9 +10,9 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.prelert.action.PutJobAction;
-import org.elasticsearch.prelert.action.TransportPutJobAction;
-import org.elasticsearch.prelert.rest.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.TransportPutJobAction;
+import org.elasticsearch.xpack.prelert.rest.RestPutJobsAction;
 import org.elasticsearch.rest.RestModule;
 
 import java.util.Collection;
