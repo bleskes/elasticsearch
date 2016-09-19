@@ -20,11 +20,11 @@ package org.elasticsearch.xpack.watcher.transport.actions.ack;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.XPackLicenseState;
@@ -66,7 +66,7 @@ public class TransportAckWatchAction extends WatcherTransportAction<AckWatchRequ
     protected void masterOperation(AckWatchRequest request, ClusterState state, ActionListener<AckWatchResponse> listener) throws
             ElasticsearchException {
         try {
-            WatchStatus watchStatus = watcherService.ackWatch(request.getWatchId(), request.getActionIds(), request.masterNodeTimeout());
+            WatchStatus watchStatus = watcherService.ackWatch(request.getWatchId(), request.getActionIds());
             AckWatchResponse response = new AckWatchResponse(watchStatus);
             listener.onResponse(response);
         } catch (Exception e) {
