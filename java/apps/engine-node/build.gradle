@@ -7,14 +7,13 @@ group = 'org.elasticsearch.prelert'
 version = '0.1'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
 
 
 repositories {
     mavenLocal()
     maven { url "http://repo.maven.apache.org/maven2" }
-}
-
-configurations.all {
 }
 
 dependencies {
