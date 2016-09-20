@@ -1,5 +1,6 @@
 package org.elasticsearch.xpack.prelert.rest;
 
+import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.xpack.prelert.action.PutJobRequest;
 import org.elasticsearch.xpack.prelert.action.PutJobResponse;
 import org.elasticsearch.xpack.prelert.action.TransportPutJobAction;
@@ -24,14 +25,14 @@ public class RestPutJobsAction extends BaseRestHandler {
     private final TransportPutJobAction transportPutJobAction;
 
     @Inject
-    public RestPutJobsAction(Settings settings, RestController controller, Client client, TransportPutJobAction transportPutJobAction) {
-        super(settings, controller, client);
+    public RestPutJobsAction(Settings settings, RestController controller, TransportPutJobAction transportPutJobAction) {
+        super(settings);
         this.transportPutJobAction = transportPutJobAction;
         controller.registerHandler(RestRequest.Method.POST, "/v2/engine/jobs", this);
     }
 
     @Override
-    protected void handleRequest(RestRequest request, RestChannel channel, Client client) throws Exception {
+    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         PutJobRequest putJobRequest = new PutJobRequest();
         putJobRequest.setJobConfiguration(RestActions.getRestContent(request));
         boolean overwrite = request.paramAsBoolean("overwrite", false);
@@ -40,8 +41,9 @@ public class RestPutJobsAction extends BaseRestHandler {
 
             @Override
             public RestResponse buildResponse(PutJobResponse response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.restContentType(), response.getResponse());
+                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
             }
         });
     }
+
 }

@@ -17,13 +17,13 @@
 package org.elasticsearch.xpack.prelert.action;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
-import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
@@ -43,7 +43,7 @@ public class TransportPutJobAction extends TransportMasterNodeAction<PutJobReque
                                  ThreadPool threadPool, ActionFilters actionFilters,
                                  IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
         super(settings, PutJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
-                indexNameExpressionResolver, PutJobRequest.class);
+                indexNameExpressionResolver, PutJobRequest::new);
         this.prelertServices = prelertServices;
     }
 
@@ -59,7 +59,7 @@ public class TransportPutJobAction extends TransportMasterNodeAction<PutJobReque
 
     @Override
     protected void masterOperation(PutJobRequest request, ClusterState state, ActionListener<PutJobResponse> listener) throws Exception {
-        JobConfiguration jobConfiguration = objectMapper.readValue(request.getJobConfiguration().toBytes(), JobConfiguration.class);
+        JobConfiguration jobConfiguration = objectMapper.readValue(request.getJobConfiguration().toBytesRef().bytes, JobConfiguration.class);
 //        JobDetails jobDetails = prelertServices.getJobManager().createJob(jobConfiguration, request.isOverwrite());
         listener.onResponse(new PutJobResponse(new JobDetails(), objectMapper));
     }

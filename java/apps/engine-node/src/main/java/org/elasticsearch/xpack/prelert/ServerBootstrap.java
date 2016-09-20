@@ -17,23 +17,26 @@
 
 package org.elasticsearch.xpack.prelert;
 
-
-import org.elasticsearch.Version;
-import org.elasticsearch.action.ActionModule;
-import org.elasticsearch.common.cli.Terminal;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
+import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 
+import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.TransportPutJobAction;
 import org.elasticsearch.xpack.prelert.rest.RestPutJobsAction;
-import org.elasticsearch.rest.RestModule;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class ServerBootstrap {
@@ -53,7 +56,6 @@ public class ServerBootstrap {
         settings.put("name", "node");
         settings.put("cluster.name", "prelert");
         settings.put("security.manager.enabled", "false");
-        settings.put(InternalSettingsPreparer.IGNORE_SYSTEM_PROPERTIES_SETTING, true);
 
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -63,7 +65,10 @@ public class ServerBootstrap {
 
                 @Override
                 public void run() {
-                    node.close();
+                    try {
+                        node.close();
+                    } catch (IOException e) {
+                    }
                     latch.countDown();
                 }
             });
@@ -77,34 +82,28 @@ public class ServerBootstrap {
     static class PrelertNode extends Node {
 
         public PrelertNode(Settings settings) {
-            super(InternalSettingsPreparer.prepareEnvironment(settings, Terminal.DEFAULT), Version.CURRENT,
-                    Collections.singleton(PrelertPlugin.class));
+            super(
+                    InternalSettingsPreparer.prepareEnvironment(settings, Terminal.DEFAULT),
+                    Collections.singleton(PrelertPlugin.class)
+            );
         }
     }
 
-    public static class PrelertPlugin extends Plugin {
+    public static class PrelertPlugin extends Plugin implements ActionPlugin {
 
         @Override
-        public String name() {
-            return "prelert";
-        }
-
-        @Override
-        public String description() {
-            return "prelert plugin";
-        }
-
-        @Override
-        public Collection<Module> nodeModules() {
+        public Collection<Module> createGuiceModules() {
             return Collections.singleton(new PrelertModule());
         }
 
-        public void onModule(RestModule module) {
-            module.addRestAction(RestPutJobsAction.class);
+        @Override
+        public List<Class<? extends RestHandler>> getRestHandlers() {
+            return Arrays.asList(RestPutJobsAction.class);
         }
 
-        public void onModule(ActionModule module) {
-            module.registerAction(PutJobAction.INSTANCE, TransportPutJobAction.class);
+        @Override
+        public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
+            return Arrays.asList(new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class));
         }
     }
 
