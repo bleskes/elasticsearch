@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 

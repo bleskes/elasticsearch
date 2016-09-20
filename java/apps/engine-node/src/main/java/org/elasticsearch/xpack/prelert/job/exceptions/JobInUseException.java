@@ -26,7 +26,6 @@
  ************************************************************/
 package org.elasticsearch.xpack.prelert.job.exceptions;
 
-import org.elasticsearch.xpack.prelert.job.JobException;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 
 /**

@@ -17,8 +17,8 @@
  ***************************************************************************/
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import org.elasticsearch.xpack.prelert.job.JobException;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 
 public class DataStoreException extends JobException
 {

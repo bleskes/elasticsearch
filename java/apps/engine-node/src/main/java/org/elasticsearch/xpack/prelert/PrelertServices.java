@@ -10,6 +10,7 @@ import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchFactory;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 
 public class PrelertServices {
@@ -70,7 +71,7 @@ public class PrelertServices {
     public void setClient(Client client) {
         this.client = client;
     }
-/*
+
     public JobManager getJobManager() {
         initializeIfNeeded();
         return jobManager;
@@ -101,6 +102,8 @@ public class PrelertServices {
             }
         };
     }
-    */
 
+    private static int numberOfReplicas() {
+        return 0;
+    }
 }
