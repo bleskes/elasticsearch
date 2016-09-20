@@ -73,7 +73,6 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -423,7 +422,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     @Override
     public QueryPage<JobDetails> getJobs(int skip, int take)
     {
-        SortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
+        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
                                 .unmappedType("string")
                                 .order(SortOrder.ASC);
 
@@ -699,7 +698,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean includeInterim,
             int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
+        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
                     .order(SortOrder.ASC);
 
         SearchResponse searchResponse;
@@ -840,7 +839,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, epochStart, epochEnd)
                 .build();
 
-        SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
+        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
                 .order(SortOrder.ASC);
 
         SearchRequestBuilder searchBuilder = m_Client
@@ -954,7 +953,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                     .term(AnomalyRecord.PARTITION_FIELD_VALUE, partitionFieldValue)
                     .build();
 
-        SortBuilder sb = null;
+        FieldSortBuilder sb = null;
         if (sortField != null)
         {
             sb = new FieldSortBuilder(esSortField(sortField))
@@ -1041,7 +1040,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             String sortField, boolean descending)
     throws UnknownJobException
     {
-        SortBuilder sb = null;
+        FieldSortBuilder sb = null;
         if (sortField != null)
         {
             sb = new FieldSortBuilder(esSortField(sortField))
@@ -1057,7 +1056,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
      * The returned records have the parent bucket id set.
      */
     private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId, int skip, int take,
-            QueryBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
+            QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
             boolean descending)
     throws UnknownJobException
     {
@@ -1153,7 +1152,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                 .setPostFilter(filterBuilder)
                 .setFrom(skip).setSize(take);
 
-        SortBuilder sb = sortField == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)
+        FieldSortBuilder sb = sortField == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)
                 : new FieldSortBuilder(esSortField(sortField))
                         .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
         searchRequestBuilder.addSort(sb);
@@ -1301,7 +1300,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId, int skip, int take,
             String sortField, boolean sortDescending, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(esSortField(sortField))
+        FieldSortBuilder sb = new FieldSortBuilder(esSortField(sortField))
                 .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
 
         SearchResponse searchResponse;

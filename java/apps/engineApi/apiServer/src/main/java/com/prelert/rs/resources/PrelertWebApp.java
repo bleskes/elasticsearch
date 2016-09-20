@@ -110,9 +110,6 @@ public final class PrelertWebApp extends Application
     public static final String DEFAULT_ES_TRANSPORT_PORT_RANGE = "9300-9400";
 
     public static final String ES_NETWORK_PUBLISH_HOST_PROP = "es.network.publish_host";
-    private static final String DEFAULT_NETWORK_PUBLISH_HOST = "127.0.0.1";
-
-    private static final String ES_PROCESSORS_PROP = "es.processors";
 
     private static final String IGNORE_DOWNTIME_ON_STARTUP_PROP = "ignore.downtime.on.startup";
     private static final boolean DEFAULT_IGNORE_DOWNTIME_ON_STARTUP = true;
