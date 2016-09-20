@@ -1,7 +1,6 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import com.google.common.collect.Sets;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.junit.Test;
@@ -330,7 +329,8 @@ public class AnalysisConfigTest {
         AnalysisConfig config = new AnalysisConfig();
         config.setDetectors(Arrays.asList(detector1, detector2, new Detector()));
 
-        assertEquals(Sets.newHashSet("list1", "list2"), config.extractReferencedLists());
+        Set<String> lists = new HashSet<>(Arrays.asList("list1", "list2"));
+        assertEquals(lists, config.extractReferencedLists());
     }
 
     private static AnalysisConfig createFullyPopulatedConfig() {

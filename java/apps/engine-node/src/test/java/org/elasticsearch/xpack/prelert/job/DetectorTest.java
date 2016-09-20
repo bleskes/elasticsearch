@@ -1,13 +1,13 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import com.google.common.collect.Sets;
 import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashSet;
 
 import static org.junit.Assert.*;
 
@@ -88,7 +88,7 @@ public class DetectorTest {
         detector.getDetectorRules().get(1).setRuleConditions(Arrays.asList(
                 RuleCondition.createCategorical("bar", "list2")));
 
-        assertEquals(Sets.newHashSet("list1", "list2"), detector.extractReferencedLists());
+        assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), detector.extractReferencedLists());
     }
 
     private Detector createDetector() {

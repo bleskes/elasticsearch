@@ -1,11 +1,12 @@
 
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import com.google.common.collect.Sets;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 
 import static org.junit.Assert.*;
 
@@ -30,7 +31,7 @@ public class DetectionRuleTest {
                 RuleCondition.createCategorical("foo", "list1"),
                 RuleCondition.createCategorical("bar", "list2")));
 
-        assertEquals(Sets.newHashSet("list1", "list2"), rule.extractReferencedLists());
+        assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), rule.extractReferencedLists());
     }
 
     @Test
