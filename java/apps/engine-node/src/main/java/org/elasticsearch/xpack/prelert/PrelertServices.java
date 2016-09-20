@@ -3,29 +3,8 @@
 package org.elasticsearch.xpack.prelert;
 
 
-        import com.prelert.job.logging.DefaultJobLoggerFactory;
-        import com.prelert.job.logging.JobLoggerFactory;
-        import com.prelert.job.manager.JobManager;
-        import com.prelert.job.manager.actions.Action;
-        import com.prelert.job.manager.actions.ActionGuardian;
-        import com.prelert.job.manager.actions.LocalActionGuardian;
-        import com.prelert.job.manager.actions.ScheduledAction;
-        import com.prelert.job.password.PasswordManager;
-        import com.prelert.job.persistence.JobProvider;
-        import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
-        import com.prelert.job.process.ProcessCtrl;
-        import com.prelert.job.process.autodetect.ProcessFactory;
-        import com.prelert.job.process.autodetect.ProcessManager;
-        import com.prelert.rs.data.extraction.DataExtractorFactoryImpl;
-        import com.prelert.rs.persistence.ElasticsearchFactory;
-        import com.prelert.rs.persistence.ElasticsearchTransportClientFactory;
-        import com.prelert.settings.PrelertSettings;
-        import org.elasticsearch.client.Client;
-        import org.elasticsearch.common.inject.Inject;
-
-        import java.io.File;
-        import java.io.IOException;
-        import java.security.NoSuchAlgorithmException;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.inject.Inject;
 
 public class PrelertServices {
 
@@ -78,7 +57,7 @@ public class PrelertServices {
     private static final long OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES = 30L;
 
     private Client client;
-    private volatile JobManager jobManager;
+//    private volatile JobManager jobManager;
 
     //This isn't set in the ctor because doing so creates a guice circular
     @Inject(optional=true)
@@ -86,7 +65,7 @@ public class PrelertServices {
         this.client = client;
     }
 
-    public JobManager getJobManager() {
+    /*public JobManager getJobManager() {
         initializeIfNeeded();
         return jobManager;
     }
@@ -155,6 +134,6 @@ public class PrelertServices {
                 jobLoggerFactory);
         return new ProcessManager(jobProvider, processFactory, esFactory.newDataPersisterFactory(),
                 jobLoggerFactory);
-    }
+    }*/
 
 }
