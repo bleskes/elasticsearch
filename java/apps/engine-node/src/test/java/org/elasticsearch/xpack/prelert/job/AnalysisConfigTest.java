@@ -329,8 +329,7 @@ public class AnalysisConfigTest {
         AnalysisConfig config = new AnalysisConfig();
         config.setDetectors(Arrays.asList(detector1, detector2, new Detector()));
 
-        Set<String> lists = new HashSet<>(Arrays.asList("list1", "list2"));
-        assertEquals(lists, config.extractReferencedLists());
+        assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), config.extractReferencedLists());
     }
 
     private static AnalysisConfig createFullyPopulatedConfig() {

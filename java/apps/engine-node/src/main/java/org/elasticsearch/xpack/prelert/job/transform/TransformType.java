@@ -1,21 +1,3 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
-
 package org.elasticsearch.xpack.prelert.job.transform;
 
 import java.util.Arrays;
@@ -72,70 +54,70 @@ public enum TransformType
         }
     }
 
-    private final IntRange m_ArityRange;
-    private final IntRange m_ArgumentsRange;
-    private final IntRange m_OutputsRange;
-    private final String m_PrettyName;
-    private final List<String> m_DefaultOutputNames;
-    private final boolean m_HasCondition;
+    private final IntRange arityRange;
+    private final IntRange argumentsRange;
+    private final IntRange outputsRange;
+    private final String prettyName;
+    private final List<String> defaultOutputNames;
+    private final boolean hasCondition;
 
-    private TransformType(String prettyName, IntRange arityRange, IntRange argumentsRange,
-                          IntRange outputsRange, List<String> defaultOutputNames)
-    {
-        this(prettyName, arityRange, argumentsRange, outputsRange, defaultOutputNames, false);
+    private TransformType(String prettyName, IntRange arityIntRange,
+                          IntRange argumentsIntRange, IntRange outputsIntRange,
+                          List<String> defaultOutputNames) {
+        this(prettyName, arityIntRange, argumentsIntRange, outputsIntRange, defaultOutputNames, false);
     }
 
-    private TransformType(String prettyName, IntRange arityRange, IntRange argumentsRange,
-                          IntRange outputsRange, List<String> defaultOutputNames, boolean hasCondition)
-    {
-        m_ArityRange = arityRange;
-        m_ArgumentsRange = argumentsRange;
-        m_OutputsRange = outputsRange;
-        m_PrettyName = prettyName;
-        m_DefaultOutputNames = defaultOutputNames;
-        m_HasCondition = hasCondition;
-    }
-
-    /**
-     * The count range of inputs the transform expects.
-     * @return
-     */
-    public IntRange arityRange()
-    {
-        return m_ArityRange;
+    private TransformType(String prettyName, IntRange arityIntRange,
+                          IntRange argumentsIntRange, IntRange outputsIntRange,
+                          List<String> defaultOutputNames, boolean hasCondition) {
+        this.arityRange = arityIntRange;
+        this.argumentsRange = argumentsIntRange;
+        this.outputsRange = outputsIntRange;
+        this.prettyName = prettyName;
+        this.defaultOutputNames = defaultOutputNames;
+        this.hasCondition = hasCondition;
     }
 
     /**
-     * The count range of arguments the transform expects.
+     * The count IntRange of inputs the transform expects.
+     *
      * @return
      */
-    public IntRange argumentsRange()
-    {
-        return m_ArgumentsRange;
+    public IntRange arityRange() {
+        return this.arityRange;
     }
 
     /**
-     * The count range of outputs the transform expects.
+     * The count IntRange of arguments the transform expects.
+     *
      * @return
      */
-    public IntRange outputsRange()
-    {
-        return m_OutputsRange;
+    public IntRange argumentsRange() {
+        return this.argumentsRange;
+    }
+
+    /**
+     * The count IntRange of outputs the transform expects.
+     *
+     * @return
+     */
+    public IntRange outputsRange() {
+        return this.outputsRange;
     }
 
     public String prettyName()
     {
-        return m_PrettyName;
+        return prettyName;
     }
 
     public List<String> defaultOutputNames()
     {
-        return m_DefaultOutputNames;
+        return defaultOutputNames;
     }
 
     public boolean hasCondition()
     {
-        return m_HasCondition;
+        return hasCondition;
     }
 
     @Override

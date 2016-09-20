@@ -337,6 +337,14 @@ public class SchedulerConfig
         this.scrollSize = scrollSize;
     }
 
+    public String getEncryptedPassword() {
+        return encryptedPassword;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
     /**
      * For the ELASTICSEARCH data source only, optional Elasticsearch
      * script_fields to add to the search to be submitted to Elasticsearch to

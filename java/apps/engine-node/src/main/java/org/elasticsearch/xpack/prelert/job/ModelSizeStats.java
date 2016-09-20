@@ -18,7 +18,10 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
+import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
@@ -27,7 +30,7 @@ import java.util.Objects;
  * for the Java process.
  */
 @JsonIgnoreProperties({"modelSizeStatsId"})
-public class ModelSizeStats
+public class ModelSizeStats implements StorageSerialisable
 {
     /**
      * Field Names
@@ -171,6 +174,19 @@ public class ModelSizeStats
     public void setLogTime(Date d)
     {
         this.logTime = d;
+    }
+
+    @Override
+    public void serialise(StorageSerialiser serialiser) throws IOException
+    {
+        serialiser.addTimestamp(timestamp)
+                .add(MODEL_BYTES, modelBytes)
+                .add(TOTAL_BY_FIELD_COUNT, totalByFieldCount)
+                .add(TOTAL_OVER_FIELD_COUNT, totalOverFieldCount)
+                .add(TOTAL_PARTITION_FIELD_COUNT, totalPartitionFieldCount)
+                .add(BUCKET_ALLOCATION_FAILURES_COUNT, bucketAllocationFailuresCount)
+                .add(MEMORY_STATUS, memoryStatus)
+                .add(LOG_TIME, logTime);
     }
 
     @Override

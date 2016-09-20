@@ -2,9 +2,15 @@
 
 package org.elasticsearch.xpack.prelert;
 
-
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.xpack.prelert.job.manager.JobManager;
+import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
+import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
+import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
+import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchFactory;
+import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 
 public class PrelertServices {
 
@@ -57,15 +63,15 @@ public class PrelertServices {
     private static final long OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES = 30L;
 
     private Client client;
-//    private volatile JobManager jobManager;
+    private volatile JobManager jobManager;
 
     //This isn't set in the ctor because doing so creates a guice circular
     @Inject(optional=true)
     public void setClient(Client client) {
         this.client = client;
     }
-
-    /*public JobManager getJobManager() {
+/*
+    public JobManager getJobManager() {
         initializeIfNeeded();
         return jobManager;
     }
@@ -79,40 +85,13 @@ public class PrelertServices {
                         new LocalActionGuardian<>(Action.startingState());
                 ActionGuardian<ScheduledAction> schedulerActionGuardian =
                         new LocalActionGuardian<>(ScheduledAction.STOPPED);
-                JobLoggerFactory jobLoggerFactory = new DefaultJobLoggerFactory(ProcessCtrl.LOG_DIR);
-                PasswordManager passwordManager = createPasswordManager();
                 this.jobManager = new JobManager(jobProvider,
-                        createProcessManager(jobProvider, esFactory, jobLoggerFactory),
-                        new DataExtractorFactoryImpl(passwordManager), jobLoggerFactory,
-                        passwordManager, esFactory.newJobDataDeleterFactory(),
-                        processActionGuardian, schedulerActionGuardian, false);
+                        processActionGuardian, schedulerActionGuardian);
             }
         }
     }
 
     private static ElasticsearchFactory createPersistenceFactory(Client client) {
-        String esHost = PrelertSettings.getSettingOrDefault(ProcessCtrl.ES_HOST_PROP, ProcessCtrl.DEFAULT_ES_HOST);
-        String clusterName = PrelertSettings.getSettingOrDefault(ES_CLUSTER_NAME_PROP, DEFAULT_CLUSTER_NAME);
-        String portRange = PrelertSettings.getSettingOrDefault(ES_TRANSPORT_PORT_RANGE, DEFAULT_ES_TRANSPORT_PORT_RANGE);
-
-        String resultsStorageClient = PrelertSettings.getSettingOrDefault(RESULTS_STORAGE_CLIENT_PROP, ES_AUTO);
-        // Treat any unknown values as though they were es-auto
-        if (!(resultsStorageClient.equals(ES_TRANSPORT) || resultsStorageClient.equals(ES_NODE))) {
-            // We deliberately DON'T try to detect when es.host is set to the
-            // hostname of the current machine, as this scenario is taken to
-            // mean that Elasticsearch is running on the current host but is
-            // being managed independently of the Engine API
-            if ("localhost".equals(esHost) || "localhost6".equals(esHost)) {
-                resultsStorageClient = ES_NODE;
-            } else {
-                resultsStorageClient = ES_TRANSPORT;
-            }
-        }
-
-        if (resultsStorageClient.equals(ES_TRANSPORT)) {
-            String esHostAndPort = esHost + ":" + portRange.split("-", 2)[0];
-            return ElasticsearchTransportClientFactory.create(esHostAndPort, clusterName);
-        }
 
         return new ElasticsearchFactory(client) {
 
@@ -122,18 +101,6 @@ public class PrelertServices {
             }
         };
     }
-
-    private static ProcessManager createProcessManager(JobProvider jobProvider,
-                                                       ElasticsearchFactory esFactory,
-                                                       JobLoggerFactory jobLoggerFactory) {
-        ProcessFactory processFactory = new ProcessFactory(
-                jobProvider,
-                esFactory.newResultsReaderFactory(jobProvider),
-                esFactory.newJobDataCountsPersisterFactory(),
-                esFactory.newUsagePersisterFactory(),
-                jobLoggerFactory);
-        return new ProcessManager(jobProvider, processFactory, esFactory.newDataPersisterFactory(),
-                jobLoggerFactory);
-    }*/
+    */
 
 }
