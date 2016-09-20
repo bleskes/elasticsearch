@@ -31,7 +31,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -105,7 +104,6 @@ class JobFactory
      *
      * @return The new unique job Id
      */
-    @VisibleForTesting
     String generateJobId()
     {
         String dateStr = m_JobIdDateFormat.format(LocalDateTime.now());

@@ -25,10 +25,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 
 import org.junit.Test;
-
-import com.google.common.collect.Sets;
 
 public class DetectionRuleTest
 {
@@ -54,7 +53,7 @@ public class DetectionRuleTest
                 RuleCondition.createCategorical("foo", "list1"),
                 RuleCondition.createCategorical("bar", "list2")));
 
-        assertEquals(Sets.newHashSet("list1", "list2"), rule.extractReferencedLists());
+        assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), rule.extractReferencedLists());
     }
 
     @Test

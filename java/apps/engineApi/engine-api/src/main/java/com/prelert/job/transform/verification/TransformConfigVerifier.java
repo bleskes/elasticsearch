@@ -28,11 +28,11 @@ package com.prelert.job.transform.verification;
 
 import java.util.List;
 
-import com.google.common.collect.Range;
 import com.prelert.job.condition.verification.ConditionVerifier;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
+import com.prelert.job.transform.IntRange;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 
@@ -214,12 +214,11 @@ public final class TransformConfigVerifier
         }
     }
 
-    private static String rangeAsString(Range<Integer> range)
+    private static String rangeAsString(IntRange range)
     {
-        if (range.hasLowerBound() && range.hasUpperBound()
-                && range.lowerEndpoint() == range.upperEndpoint())
+        if (range.hasLowerBound() && range.hasUpperBound() && range.lower() == range.upper())
         {
-            return String.valueOf(range.lowerEndpoint());
+            return String.valueOf(range.lower());
         }
         return range.toString();
     }

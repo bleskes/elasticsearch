@@ -27,28 +27,24 @@
 
 package com.prelert.transforms;
 
-import static org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLat;
-import static org.apache.lucene.spatial.util.GeoEncodingUtils.mortonUnhashLon;
-import static org.apache.lucene.spatial.util.GeoHashUtils.mortonEncode;
-
 import java.util.List;
 import java.util.function.Function;
 
 import org.apache.log4j.Logger;
-
-import com.google.common.base.Preconditions;
 
 public class StringTransform extends Transform
 {
     private final Function<String, String> m_ConvertFunction;
 
     private StringTransform(Function<String, String> convertFunction,
-            List<TransformIndex> readIndicies, List<TransformIndex> writeIndicies, Logger logger)
+            List<TransformIndex> readIndicies, List<TransformIndex> writeIndices, Logger logger)
     {
-        super(readIndicies, writeIndicies, logger);
+        super(readIndicies, writeIndices, logger);
         m_ConvertFunction = convertFunction;
-        Preconditions.checkArgument(readIndicies.size() == 1);
-        Preconditions.checkArgument(writeIndicies.size() == 1);
+        if (readIndicies.size() != 1 || writeIndices.size() != 1)
+        {
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override
@@ -77,23 +73,5 @@ public class StringTransform extends Transform
             List<TransformIndex> writeIndicies, Logger logger)
     {
         return new StringTransform(s -> s.trim(), readIndicies, writeIndicies, logger);
-    }
-
-    public static StringTransform createGeoUnhash(List<TransformIndex> readIndicies,
-            List<TransformIndex> writeIndicies, Logger logger)
-    {
-        return new StringTransform(s -> geoUnhash(s), readIndicies, writeIndicies, logger);
-    }
-
-    /**
-     * Convert a Geohash (https://en.wikipedia.org/wiki/Geohash) value to a
-     * string of the form "latitude,longitude".
-     */
-    private static String geoUnhash(String geoHash)
-    {
-        long hash = mortonEncode(geoHash);
-        StringBuilder strBuilder = new StringBuilder();
-        return strBuilder.append(mortonUnhashLat(hash))
-                .append(',').append(mortonUnhashLon(hash)).toString();
     }
 }

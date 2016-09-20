@@ -27,9 +27,9 @@
 
 package com.prelert.job.password;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -45,8 +45,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.log4j.Logger;
-
-import com.google.common.primitives.Bytes;
 
 import com.prelert.job.PasswordStorage;
 
@@ -168,8 +166,16 @@ public class PasswordManager
         IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
         cipher.init(Cipher.ENCRYPT_MODE, m_EncryptionKey, ivSpec, sr);
 
-        return Base64.getEncoder().encodeToString(Bytes.concat(ivBytes,
-                cipher.doFinal(password.getBytes(StandardCharsets.UTF_8))));
+        byte[] encryptedBytes = cipher.doFinal(password.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(concatByteArrays(ivBytes, encryptedBytes));
+    }
+
+    private static byte[] concatByteArrays(byte[] first, byte[] second)
+    {
+        byte[] result = new byte[first.length + second.length];
+        System.arraycopy(first, 0 , result, 0, first.length);
+        System.arraycopy(second, 0 , result, first.length, second.length);
+        return result;
     }
 
     /**

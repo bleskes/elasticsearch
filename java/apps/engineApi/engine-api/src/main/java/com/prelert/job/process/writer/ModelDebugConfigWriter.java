@@ -34,8 +34,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
 
-import com.google.common.base.Strings;
 import com.prelert.job.ModelDebugConfig;
+import com.prelert.utils.Strings;
 
 public class ModelDebugConfigWriter
 {

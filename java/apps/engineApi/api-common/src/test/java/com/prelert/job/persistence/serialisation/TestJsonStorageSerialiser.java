@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 
 /**
  * An implementation of StorageSerialiser to facilitate
@@ -79,8 +78,7 @@ public class TestJsonStorageSerialiser implements StorageSerialiser
     public StorageSerialiser endObject() throws IOException
     {
         Object object = m_ObjectStack.pop();
-        Preconditions.checkState(object instanceof ObjectHolder,
-                "endObject() was called while object was not started");
+        checkState(object instanceof ObjectHolder, "endObject() was called while object was not started");
         ObjectHolder objectHolder = (ObjectHolder) object;
         if (m_ObjectStack.isEmpty())
         {
@@ -94,13 +92,13 @@ public class TestJsonStorageSerialiser implements StorageSerialiser
             Object parent = m_ObjectStack.peek();
             if (parent instanceof ObjectHolder)
             {
-                Preconditions.checkState(objectHolder.name != null);
+                checkState(objectHolder.name != null);
                 ObjectHolder parentObjectHolder = (ObjectHolder) parent;
                 parentObjectHolder.map.put(objectHolder.name, objectHolder.map);
             }
             else if (parent instanceof ListHolder)
             {
-                Preconditions.checkState(objectHolder.name == null);
+                checkState(objectHolder.name == null);
                 ListHolder parentListHolder = (ListHolder) parent;
                 parentListHolder.list.add(objectHolder.map);
             }
@@ -124,8 +122,7 @@ public class TestJsonStorageSerialiser implements StorageSerialiser
     public StorageSerialiser endList() throws IOException
     {
         Object object = m_ObjectStack.pop();
-        Preconditions.checkState(object instanceof ListHolder,
-                "endList() was called while list was not started");
+        checkState(object instanceof ListHolder, "endList() was called while list was not started");
         ListHolder listHolder = (ListHolder) object;
         peekObjectHolder().map.put(listHolder.name, listHolder.list);
         return this;
@@ -244,7 +241,7 @@ public class TestJsonStorageSerialiser implements StorageSerialiser
 
     public String toJson() throws IOException
     {
-        Preconditions.checkState(m_Json != null,
+        checkState(m_Json != null,
                 "JSON is not available; check that the objects have been ended correctly.");
         return m_Json;
     }
@@ -313,5 +310,21 @@ public class TestJsonStorageSerialiser implements StorageSerialiser
             add(entry.getKey(), entry.getValue());
         }
         return this;
+    }
+
+    private static void checkState(boolean isValidState)
+    {
+        if (!isValidState)
+        {
+            throw new IllegalStateException();
+        }
+    }
+
+    private static void checkState(boolean isValidState, String msg)
+    {
+        if (!isValidState)
+        {
+            throw new IllegalStateException(msg);
+        }
     }
 }

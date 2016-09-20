@@ -39,13 +39,13 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.ListDocument;
 import com.prelert.job.config.DefaultDetectorDescription;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.utils.PrelertStrings;
+import com.prelert.utils.Strings;
 
 public class FieldConfigWriter
 {

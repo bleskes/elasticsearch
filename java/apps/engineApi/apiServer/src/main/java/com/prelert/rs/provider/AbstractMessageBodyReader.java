@@ -75,7 +75,8 @@ abstract class AbstractMessageBodyReader<T> implements MessageBodyReader<T>
                   T ret = getObjectReader().readValue(parser);
                   if (parser.nextToken() != null)
                   {
-                      throw new JsonMappingException("Unexpected token after end of expected JSON: " + parser.getText());
+                      throw new JsonMappingException(parser,
+                              "Unexpected token after end of expected JSON: " + parser.getText());
                   }
                   return ret;
               }

@@ -42,12 +42,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.google.common.collect.Range;
 import com.prelert.job.condition.Condition;
 import com.prelert.job.condition.Operator;
 import com.prelert.job.errorcodes.ErrorCodeMatcher;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
+import com.prelert.job.transform.IntRange;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.TransformTestUtils;
@@ -103,8 +103,8 @@ public class TransformConfigVerifierTest
         {
             TransformConfig tr = TransformTestUtils.createValidTransform(type);
 
-            Range<Integer> arityRange = type.arityRange();
-            int invalidArity = arityRange.hasLowerBound() ? arityRange.lowerEndpoint() - 1 : 0;
+            IntRange arityRange = type.arityRange();
+            int invalidArity = arityRange.hasLowerBound() ? arityRange.lower() - 1 : 0;
             List<String> inputs = new ArrayList<>();
             for (int arg = 0; arg < invalidArity; ++arg)
             {
@@ -133,9 +133,9 @@ public class TransformConfigVerifierTest
         {
             TransformConfig tr = TransformTestUtils.createValidTransform(type);
 
-            Range<Integer> argsRange = type.argumentsRange();
-            int invalidArgsCount = argsRange.hasUpperBound() ? argsRange.upperEndpoint() + 1
-                    : argsRange.lowerEndpoint() - 1;
+            IntRange argsRange = type.argumentsRange();
+            int invalidArgsCount = argsRange.hasUpperBound() ? argsRange.upper() + 1
+                    : argsRange.lower() - 1;
             List<String> args = new ArrayList<>();
             for (int arg = 0; arg < invalidArgsCount; ++arg)
             {
@@ -164,18 +164,18 @@ public class TransformConfigVerifierTest
         {
             TransformConfig tr = TransformTestUtils.createValidTransform(type);
 
-            Range<Integer> outputsRange = type.outputsRange();
+            IntRange outputsRange = type.outputsRange();
 
             // If there is no upper bound and the lower bound is 0 or 1 then we cannot invalidate
             // outputs due to the default output names.
             if (!outputsRange.hasUpperBound()
-                    && (outputsRange.hasLowerBound() && outputsRange.lowerEndpoint() <= 1))
+                    && (outputsRange.hasLowerBound() && outputsRange.lower() <= 1))
             {
                 continue;
             }
 
-            int invalidOutputCount = outputsRange.hasUpperBound() ? outputsRange.upperEndpoint() + 1
-                    : outputsRange.lowerEndpoint() - 1;
+            int invalidOutputCount = outputsRange.hasUpperBound() ? outputsRange.upper() + 1
+                    : outputsRange.lower() - 1;
             List<String> outputs = new ArrayList<>();
             for (int output = 0; output < invalidOutputCount; ++output)
             {

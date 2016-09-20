@@ -29,8 +29,6 @@ package com.prelert.job.config;
 
 import java.time.Duration;
 
-import com.google.common.base.Preconditions;
-
 /**
  * Factory methods for a sensible default for the scheduler frequency
  */
@@ -64,7 +62,10 @@ public final class DefaultFrequency
      */
     public static Duration ofBucketSpan(long bucketSpanSeconds)
     {
-        Preconditions.checkArgument(bucketSpanSeconds > 0);
+        if (bucketSpanSeconds <= 0)
+        {
+            throw new IllegalArgumentException("Bucket span has to be > 0");
+        }
 
         if (bucketSpanSeconds <= TWO_MINS_SECONDS)
         {

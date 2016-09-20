@@ -1,6 +1,6 @@
 /****************************************************************************
  *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
+ * Copyright 2016-2016 Prelert Ltd                                          *
  *                                                                          *
  * Licensed under the Apache License, Version 2.0 (the "License");          *
  * you may not use this file except in compliance with the License.         *
@@ -15,61 +15,25 @@
  * limitations under the License.                                           *
  *                                                                          *
  ***************************************************************************/
-package com.prelert.job;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+package com.prelert.utils;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public class ListDocument
+public final class Strings
 {
-    public static final String TYPE = "list";
-    public static final String ID = "id";
-    public static final String ITEMS = "items";
+    private static final String EMPTY_STRING = "";
 
-    private final String m_Id;
-    private final List<String> m_Items;
-
-    @JsonCreator
-    public ListDocument(@JsonProperty("id") String id, @JsonProperty("items") List<String> items)
+    private Strings()
     {
-        m_Id = Objects.requireNonNull(id);
-        m_Items = items;
+        // Hide default constructor
     }
 
-    public String getId()
+    public static boolean isNullOrEmpty(String s)
     {
-        return m_Id;
+        return s == null || s.isEmpty();
     }
 
-    public List<String> getItems()
+    public static String nullToEmpty(String s)
     {
-        return new ArrayList<>(m_Items);
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (obj == this)
-        {
-            return true;
-        }
-
-        if (!(obj instanceof ListDocument))
-        {
-            return false;
-        }
-
-        ListDocument other = (ListDocument) obj;
-        return m_Id.equals(other.m_Id) && m_Items.equals(other.m_Items);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(m_Id, m_Items);
+        return s == null ? EMPTY_STRING : s;
     }
 }

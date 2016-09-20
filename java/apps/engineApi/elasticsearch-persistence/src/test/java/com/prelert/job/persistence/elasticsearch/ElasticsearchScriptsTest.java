@@ -30,7 +30,6 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,7 +65,7 @@ public class ElasticsearchScriptsTest
     public void testNewUpdateBucketCount()
     {
         Script script = ElasticsearchScripts.newUpdateBucketCount(42L);
-        assertEquals("update-bucket-count", script.getScript());
+        assertEquals("ctx._source.counts.bucketCount += params.count", script.getScript());
         assertEquals(1, script.getParams().size());
         assertEquals(42L, script.getParams().get("count"));
     }
@@ -75,7 +74,7 @@ public class ElasticsearchScriptsTest
     public void testNewUpdateUsage()
     {
         Script script = ElasticsearchScripts.newUpdateUsage(1L, 2L, 3L);
-        assertEquals("update-usage", script.getScript());
+        assertEquals("ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount += params.recordCount;", script.getScript());
         assertEquals(3, script.getParams().size());
         assertEquals(1L, script.getParams().get("bytes"));
         assertEquals(2L, script.getParams().get("fieldCount"));
@@ -89,7 +88,7 @@ public class ElasticsearchScriptsTest
 
         Script script = ElasticsearchScripts.newUpdateCategorizationFilters(newFilters);
 
-        assertEquals("update-categorization-filters", script.getScript());
+        assertEquals("ctx._source.analysisConfig.categorizationFilters = params.newFilters;", script.getScript());
         assertEquals(1, script.getParams().size());
         assertEquals(newFilters, script.getParams().get("newFilters"));
     }
@@ -98,7 +97,7 @@ public class ElasticsearchScriptsTest
     public void testNewUpdateDetectorDescription()
     {
         Script script = ElasticsearchScripts.newUpdateDetectorDescription(2, "Almost Blue");
-        assertEquals("update-detector-description", script.getScript());
+        assertEquals("ctx._source.analysisConfig.detectors[params.detectorIndex].detectorDescription = params.newDescription;", script.getScript());
         assertEquals(2, script.getParams().size());
         assertEquals(2, script.getParams().get("detectorIndex"));
         assertEquals("Almost Blue", script.getParams().get("newDescription"));
@@ -109,7 +108,7 @@ public class ElasticsearchScriptsTest
     {
         List<Map<String, Object>> newRules = new ArrayList<>();
         Script script = ElasticsearchScripts.newUpdateDetectorRules(1, newRules);
-        assertEquals("update-detector-rules", script.getScript());
+        assertEquals("ctx._source.analysisConfig.detectors[params.detectorIndex].detectorRules = params.newDetectorRules;", script.getScript());
         assertEquals(2, script.getParams().size());
         assertEquals(1, script.getParams().get("detectorIndex"));
         assertEquals(newRules, script.getParams().get("newDetectorRules"));
@@ -123,7 +122,7 @@ public class ElasticsearchScriptsTest
 
         Script script = ElasticsearchScripts.newUpdateSchedulerConfig(newSchedulerConfig);
 
-        assertEquals("update-scheduler-config", script.getScript());
+        assertEquals("ctx._source.schedulerConfig = params.newSchedulerConfig;", script.getScript());
         assertEquals(1, script.getParams().size());
         assertEquals(newSchedulerConfig, script.getParams().get("newSchedulerConfig"));
     }
@@ -133,8 +132,7 @@ public class ElasticsearchScriptsTest
     {
         Long time = 135790L;
         Script script = ElasticsearchScripts.updateProcessingTime(time);
-        System.out.println(script.getScript());
-        assertEquals("update-average-processing-time", script.getScript());
+        assertEquals("ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + params.timeMs * 0.1", script.getScript());
         assertEquals(time, script.getParams().get("timeMs"));
     }
 
@@ -178,7 +176,7 @@ public class ElasticsearchScriptsTest
 
         IndexNotFoundException e = new IndexNotFoundException("INF");
 
-        Script script = mock(Script.class);
+        Script script = new Script("foo");
         ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
 
         MockClientBuilder clientBuilder = new MockClientBuilder("cluster")

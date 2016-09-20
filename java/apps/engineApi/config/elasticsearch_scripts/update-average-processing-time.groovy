@@ -1,1 +1,0 @@
-ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + timeMs * 0.1

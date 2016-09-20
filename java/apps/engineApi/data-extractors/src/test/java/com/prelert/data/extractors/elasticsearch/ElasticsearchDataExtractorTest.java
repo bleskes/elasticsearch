@@ -32,11 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -62,6 +57,7 @@ import com.prelert.job.ElasticsearchDataSourceCompatibility;
 public class ElasticsearchDataExtractorTest
 {
     private static final String BASE_URL = "http://localhost:9200";
+    private static final List<String> INDEXES = Arrays.asList("index-*");
     private static final List<String> TYPES = Arrays.asList("dataType");
     private static final String SEARCH = "\"match_all\":{}";
     private static final String TIME_FIELD = "time";
@@ -70,7 +66,6 @@ public class ElasticsearchDataExtractorTest
     @Rule public ExpectedException m_ExpectedException = ExpectedException.none();
 
     @Mock private Logger m_Logger;
-    @Mock private IndexSelector m_IndexSelector;
 
     private String m_Aggregations;
     private String m_ScriptFields;
@@ -78,15 +73,10 @@ public class ElasticsearchDataExtractorTest
 
     private ElasticsearchDataExtractor m_Extractor;
 
-    @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws IOException
     {
         MockitoAnnotations.initMocks(this);
-        List<String> initialIndices = Arrays.asList("index_1");
-        List<String> subsequentIndices = Arrays.asList("index_2");
-        when(m_IndexSelector.selectByTime(anyLong(), anyLong(), eq(m_Logger))).thenReturn(
-                initialIndices, subsequentIndices);
     }
 
     @Test
@@ -166,7 +156,6 @@ public class ElasticsearchDataExtractorTest
 
         m_Extractor.newSearch(1400000000L, 1403600000L, m_Logger);
 
-        verify(m_IndexSelector).clearCache();
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse, streamToString(m_Extractor.next().get()));
         assertTrue(m_Extractor.hasNext());
@@ -179,7 +168,7 @@ public class ElasticsearchDataExtractorTest
         requester.assertResponsesHaveBeenConsumed();
 
         RequestParams firstRequestParams = requester.getGetRequestParams(0);
-        assertEquals("http://localhost:9200/index_1/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
                 + "    {\"time\": {\"order\": \"asc\"}}"
@@ -398,7 +387,7 @@ public class ElasticsearchDataExtractorTest
     {
         m_ExpectedException.expect(IOException.class);
         m_ExpectedException.expectMessage(
-                "Request 'http://localhost:9200/index_1/dataType/_search?scroll=60m&size=1000' failed with status code: 500. Response was:\n{}");
+                "Request 'http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000' failed with status code: 500. Response was:\n{}");
 
         String initialResponse = "{}";
         List<HttpResponse> responses = Arrays.asList(new HttpResponse(
@@ -551,7 +540,7 @@ public class ElasticsearchDataExtractorTest
         requester.assertResponsesHaveBeenConsumed();
 
         RequestParams firstRequestParams = requester.getGetRequestParams(0);
-        assertEquals("http://localhost:9200/index_1/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000", firstRequestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
                 + "    {\"time\": {\"order\": \"asc\"}}"
@@ -637,7 +626,7 @@ public class ElasticsearchDataExtractorTest
 
         assertEquals(1, requester.m_GetRequestParams.size());
         RequestParams requestParams = requester.getGetRequestParams(0);
-        assertEquals("http://localhost:9200/index_1/dataType/_search?scroll=60m&size=0", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=0", requestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
                 + "    {\"time\": {\"order\": \"asc\"}}"
@@ -710,7 +699,7 @@ public class ElasticsearchDataExtractorTest
 
         assertEquals(1, requester.m_GetRequestParams.size());
         RequestParams requestParams = requester.getGetRequestParams(0);
-        assertEquals("http://localhost:9200/index_1/dataType/_search?scroll=60m&size=0", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=0", requestParams.url);
     }
 
     @Test
@@ -926,7 +915,7 @@ public class ElasticsearchDataExtractorTest
 
         int requestCount = 0;
         RequestParams requestParams = requester.getGetRequestParams(requestCount++);
-        assertEquals("http://localhost:9200/index_1/dataType/_search?size=1", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?size=1", requestParams.url);
         String expectedDataSummaryBody = "{"
                 + "  \"sort\": [{\"_doc\":{\"order\":\"asc\"}}],"
                 + "  \"query\": {"
@@ -963,7 +952,7 @@ public class ElasticsearchDataExtractorTest
         assertNull(requestParams.requestBody);
 
         requestParams = requester.getGetRequestParams(requestCount++);
-        assertEquals("http://localhost:9200/index_2/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000", requestParams.url);
         String expectedSearchBody = "{"
                 + "  \"sort\": ["
                 + "    {\"time\": {\"order\": \"asc\"}}"
@@ -1025,7 +1014,7 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals("http://localhost:9200/index_2/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000", requestParams.url);
         assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
@@ -1058,11 +1047,11 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals("http://localhost:9200/index_2/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000", requestParams.url);
         assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
-        assertEquals("http://localhost:9200/index_2/dataType/_search?size=1", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?size=1", requestParams.url);
         expectedDataSummaryBody = "{"
                 + "  \"sort\": [{\"_doc\":{\"order\":\"asc\"}}],"
                 + "  \"query\": {"
@@ -1120,7 +1109,7 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals("http://localhost:9200/index_2/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000", requestParams.url);
         assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
@@ -1198,7 +1187,7 @@ public class ElasticsearchDataExtractorTest
         String dataSummaryResponse = "{}";
 
         m_ExpectedException.expect(IOException.class);
-        m_ExpectedException.expectMessage("Request 'http://localhost:9200/index_1/dataType/_search?size=1' "
+        m_ExpectedException.expectMessage("Request 'http://localhost:9200/index-*/dataType/_search?size=1' "
                 + "failed with status code: 400. Response was:\n" + dataSummaryResponse);
 
         List<HttpResponse> responses = Arrays.asList(
@@ -1428,9 +1417,8 @@ public class ElasticsearchDataExtractorTest
         ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder(
                 ElasticsearchDataSourceCompatibility.V_1_7_X, SEARCH, m_Aggregations,
                 m_ScriptFields, m_Fields, TIME_FIELD);
-        ElasticsearchUrlBuilder urlBuilder = ElasticsearchUrlBuilder.create(BASE_URL, TYPES);
-        m_Extractor = new ElasticsearchDataExtractor(httpRequester, urlBuilder, queryBuilder,
-                m_IndexSelector, 1000);
+        ElasticsearchUrlBuilder urlBuilder = ElasticsearchUrlBuilder.create(BASE_URL, INDEXES, TYPES);
+        m_Extractor = new ElasticsearchDataExtractor(httpRequester, urlBuilder, queryBuilder, 1000);
     }
 
     private static class MockHttpRequester extends HttpRequester

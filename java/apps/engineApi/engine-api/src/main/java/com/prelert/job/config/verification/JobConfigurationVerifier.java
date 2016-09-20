@@ -29,7 +29,6 @@ package com.prelert.job.config.verification;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.DataDescription.DataFormat;
@@ -43,6 +42,7 @@ import com.prelert.job.messages.Messages;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.transform.verification.TransformConfigsVerifier;
+import com.prelert.utils.Strings;
 
 public final class JobConfigurationVerifier
 {

@@ -26,13 +26,11 @@
  ************************************************************/
 package com.prelert.job.status;
 
-import java.math.RoundingMode;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 
-import com.google.common.math.LongMath;
 import com.prelert.job.DataCounts;
 import com.prelert.job.persistence.JobDataCountsPersister;
 import com.prelert.job.usage.UsageReporter;
@@ -386,11 +384,11 @@ public class StatusReporter
 
         m_Logger.info(status);
 
-        int log10TotalRecords = LongMath.log10(totalRecords, RoundingMode.DOWN);
+        int log10TotalRecords = (int) Math.floor(Math.log10(totalRecords));
         // Start reducing the logging rate after 10 million records have been seen
         if (log10TotalRecords > 6)
         {
-            m_LogEvery = LongMath.pow(10L, log10TotalRecords - 6);
+            m_LogEvery = (int) Math.pow(10.0, log10TotalRecords - 6);
             m_LogCount = 0;
         }
     }
