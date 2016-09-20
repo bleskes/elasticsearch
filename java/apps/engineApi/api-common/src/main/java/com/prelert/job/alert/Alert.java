@@ -22,8 +22,8 @@ import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.prelert.job.results.AnomalyRecord;
 import com.prelert.job.results.Bucket;
 
@@ -49,35 +49,35 @@ public class Alert
     public static final String URI = "uri";
 
 
-    private String this.jobId;
-    private Date this.timestamp;
-    private URI this.uri;
-    private double this.anomalyScore;
-    private double this.maxNormalizedProb;
-    private boolean this.isTimeout;
-    private AlertType this.alertType;
-    private Bucket this.bucket;
-    private List<AnomalyRecord> this.records;
-    private boolean this.isInterim;
+    private String jobId;
+    private Date timestamp;
+    private URI uri;
+    private double anomalyScore;
+    private double maxNormalizedProb;
+    private boolean isTimeout;
+    private AlertType alertType;
+    private Bucket bucket;
+    private List<AnomalyRecord> records;
+    private boolean isInterim;
 
     public Alert()
     {
-        this.alertType = AlertType.BUCKET;
+        alertType = AlertType.BUCKET;
     }
 
     public String getJobId()
     {
-        return this.jobId;
+        return jobId;
     }
 
     public void setJobId(String jobId)
     {
-        this.this.jobId = jobId;
+        this.jobId = jobId;
     }
 
     public Date getTimestamp()
     {
-        return this.timestamp;
+        return timestamp;
     }
 
     public void setTimestamp(Date timestamp)
@@ -87,7 +87,7 @@ public class Alert
 
     public double getAnomalyScore()
     {
-        return this.anomalyScore;
+        return anomalyScore;
     }
 
     public void setAnomalyScore(double anomalyScore)
@@ -97,7 +97,7 @@ public class Alert
 
     public double getMaxNormalizedProbability()
     {
-        return this.maxNormalizedProb;
+        return maxNormalizedProb;
     }
 
     public void setMaxNormalizedProbability(double prob)
@@ -107,7 +107,7 @@ public class Alert
 
     public URI getUri()
     {
-        return this.uri;
+        return uri;
     }
 
     public void setUri(URI uri)
@@ -117,7 +117,7 @@ public class Alert
 
     public boolean isTimeout()
     {
-        return this.isTimeout;
+        return isTimeout;
     }
 
     public void setTimeout(boolean timeout)
@@ -127,7 +127,7 @@ public class Alert
 
     public Bucket getBucket()
     {
-        return this.bucket;
+        return bucket;
     }
 
     public void setBucket(Bucket bucket)
@@ -137,7 +137,7 @@ public class Alert
 
     public List<AnomalyRecord> getRecords()
     {
-        return this.records;
+        return records;
     }
 
     public void setRecords(List<AnomalyRecord> records)
@@ -147,7 +147,7 @@ public class Alert
 
     public AlertType getAlertType()
     {
-        return this.alertType;
+        return alertType;
     }
 
     public void setAlertType(AlertType value)
@@ -158,7 +158,7 @@ public class Alert
     @JsonProperty("isInterim")
     public boolean isInterim()
     {
-        return this.isInterim;
+        return isInterim;
     }
 
     @JsonProperty("isInterim")
