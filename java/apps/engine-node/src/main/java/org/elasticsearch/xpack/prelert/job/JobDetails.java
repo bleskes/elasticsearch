@@ -443,7 +443,7 @@ public class JobDetails {
      * @param backgroundPersistInterval the persistence interval in seconds
      */
     public void setBackgroundPersistInterval(Long backgroundPersistInterval) {
-        backgroundPersistInterval = backgroundPersistInterval;
+        this.backgroundPersistInterval = backgroundPersistInterval;
     }
 
     public Long getModelSnapshotRetentionDays() {

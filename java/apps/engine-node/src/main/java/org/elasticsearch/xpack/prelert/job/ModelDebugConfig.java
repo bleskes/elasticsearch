@@ -56,63 +56,63 @@ public class ModelDebugConfig
     public static final String BOUNDS_PERCENTILE = "boundsPercentile";
     public static final String TERMS = "terms";
 
-    private DebugDestination m_WriteTo;
-    private Double m_BoundsPercentile;
-    private String m_Terms;
+    private DebugDestination writeTo;
+    private Double boundsPercentile;
+    private String terms;
 
     public ModelDebugConfig()
     {
-        // NB: m_WriteTo defaults to null in this case, otherwise an update to
+        // NB: this.writeTo defaults to null in this case, otherwise an update to
         // the bounds percentile could switch where the debug is written to
     }
 
     public ModelDebugConfig(Double boundsPercentile, String terms)
     {
-        m_WriteTo = DebugDestination.FILE;
-        m_BoundsPercentile = boundsPercentile;
-        m_Terms = terms;
+        this.writeTo = DebugDestination.FILE;
+        this.boundsPercentile = boundsPercentile;
+        this.terms = terms;
     }
 
     public ModelDebugConfig(DebugDestination writeTo, Double boundsPercentile, String terms)
     {
-        m_WriteTo = writeTo;
-        m_BoundsPercentile = boundsPercentile;
-        m_Terms = terms;
+        this.writeTo = writeTo;
+        this.boundsPercentile = boundsPercentile;
+        this.terms = terms;
     }
 
     public DebugDestination getWriteTo()
     {
-        return m_WriteTo;
+        return this.writeTo;
     }
 
     public void setWriteTo(DebugDestination writeTo)
     {
-        m_WriteTo = writeTo;
+        this.writeTo = writeTo;
     }
 
     public boolean isEnabled()
     {
-        return m_BoundsPercentile != null;
+        return this.boundsPercentile != null;
     }
 
     public Double getBoundsPercentile()
     {
-        return m_BoundsPercentile;
+        return this.boundsPercentile;
     }
 
     public void setBoundsPercentile(Double boundsPercentile)
     {
-        m_BoundsPercentile = boundsPercentile;
+        this.boundsPercentile = boundsPercentile;
     }
 
     public String getTerms()
     {
-        return m_Terms;
+        return this.terms;
     }
 
     public void setTerms(String terms)
     {
-        m_Terms = terms;
+        this.terms = terms;
     }
 
     @Override
@@ -129,14 +129,14 @@ public class ModelDebugConfig
         }
 
         ModelDebugConfig that = (ModelDebugConfig) other;
-        return Objects.equals(this.m_WriteTo, that.m_WriteTo)
-                && Objects.equals(this.m_BoundsPercentile, that.m_BoundsPercentile)
-                && Objects.equals(this.m_Terms, that.m_Terms);
+        return Objects.equals(this.writeTo, that.writeTo)
+                && Objects.equals(this.boundsPercentile, that.boundsPercentile)
+                && Objects.equals(this.terms, that.terms);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_WriteTo, m_BoundsPercentile, m_Terms);
+        return Objects.hash(this.writeTo, boundsPercentile, terms);
     }
 }

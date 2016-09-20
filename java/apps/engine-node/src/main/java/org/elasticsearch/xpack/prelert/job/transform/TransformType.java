@@ -74,12 +74,12 @@ public enum TransformType {
         }
     }
 
-    private final Range<Integer> m_ArityRange;
-    private final Range<Integer> m_ArgumentsRange;
-    private final Range<Integer> m_OutputsRange;
-    private final String m_PrettyName;
-    private final List<String> m_DefaultOutputNames;
-    private final boolean m_HasCondition;
+    private final Range<Integer> arityRange;
+    private final Range<Integer> argumentsRange;
+    private final Range<Integer> outputsRange;
+    private final String prettyName;
+    private final List<String> defaultOutputNames;
+    private final boolean hasCondition;
 
     private TransformType(String prettyName, Range<Integer> arityRange,
                           Range<Integer> argumentsRange, Range<Integer> outputsRange,
@@ -90,12 +90,12 @@ public enum TransformType {
     private TransformType(String prettyName, Range<Integer> arityRange,
                           Range<Integer> argumentsRange, Range<Integer> outputsRange,
                           List<String> defaultOutputNames, boolean hasCondition) {
-        m_ArityRange = arityRange;
-        m_ArgumentsRange = argumentsRange;
-        m_OutputsRange = outputsRange;
-        m_PrettyName = prettyName;
-        m_DefaultOutputNames = defaultOutputNames;
-        m_HasCondition = hasCondition;
+        this.arityRange = arityRange;
+        this.argumentsRange = argumentsRange;
+        this.outputsRange = outputsRange;
+        this.prettyName = prettyName;
+        this.defaultOutputNames = defaultOutputNames;
+        this.hasCondition = hasCondition;
     }
 
     /**
@@ -104,7 +104,7 @@ public enum TransformType {
      * @return
      */
     public Range<Integer> arityRange() {
-        return m_ArityRange;
+        return this.arityRange;
     }
 
     /**
@@ -113,7 +113,7 @@ public enum TransformType {
      * @return
      */
     public Range<Integer> argumentsRange() {
-        return m_ArgumentsRange;
+        return this.argumentsRange;
     }
 
     /**
@@ -122,24 +122,24 @@ public enum TransformType {
      * @return
      */
     public Range<Integer> outputsRange() {
-        return m_OutputsRange;
+        return this.outputsRange;
     }
 
     public String prettyName() {
-        return m_PrettyName;
+        return this.prettyName;
     }
 
     public List<String> defaultOutputNames() {
-        return m_DefaultOutputNames;
+        return this.defaultOutputNames;
     }
 
     public boolean hasCondition() {
-        return m_HasCondition;
+        return this.hasCondition;
     }
 
     @Override
     public String toString() {
-        return prettyName();
+        return this.prettyName();
     }
 
     /**

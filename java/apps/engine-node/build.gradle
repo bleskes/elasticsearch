@@ -2,6 +2,7 @@ description = 'Prelert Engine-Elastic integration'
 
 apply plugin: 'maven'
 apply plugin: 'java'
+apply plugin: 'findbugs'
 
 group = 'org.elasticsearch.prelert'
 version = '0.1'
@@ -27,4 +28,11 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version:'4.11'
     testCompile group: 'org.ini4j', name: 'ini4j', version:'0.5.2'
     testCompile group: 'org.mockito', name: 'mockito-all', version:'1.10.19'
+}
+
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
 }

@@ -49,122 +49,122 @@ public class Alert
     public static final String URI = "uri";
 
 
-    private String m_JobId;
-    private Date m_Timestamp;
-    private URI m_Uri;
-    private double m_AnomalyScore;
-    private double m_MaxNormalizedProb;
-    private boolean m_IsTimeout;
-    private AlertType m_AlertType;
-    private Bucket m_Bucket;
-    private List<AnomalyRecord> m_Records;
-    private boolean m_IsInterim;
+    private String this.jobId;
+    private Date this.timestamp;
+    private URI this.uri;
+    private double this.anomalyScore;
+    private double this.maxNormalizedProb;
+    private boolean this.isTimeout;
+    private AlertType this.alertType;
+    private Bucket this.bucket;
+    private List<AnomalyRecord> this.records;
+    private boolean this.isInterim;
 
     public Alert()
     {
-        m_AlertType = AlertType.BUCKET;
+        this.alertType = AlertType.BUCKET;
     }
 
     public String getJobId()
     {
-        return m_JobId;
+        return this.jobId;
     }
 
     public void setJobId(String jobId)
     {
-        this.m_JobId = jobId;
+        this.this.jobId = jobId;
     }
 
     public Date getTimestamp()
     {
-        return m_Timestamp;
+        return this.timestamp;
     }
 
     public void setTimestamp(Date timestamp)
     {
-        m_Timestamp = timestamp;
+        this.timestamp = timestamp;
     }
 
     public double getAnomalyScore()
     {
-        return m_AnomalyScore;
+        return this.anomalyScore;
     }
 
     public void setAnomalyScore(double anomalyScore)
     {
-        m_AnomalyScore = anomalyScore;
+        this.anomalyScore = anomalyScore;
     }
 
     public double getMaxNormalizedProbability()
     {
-        return m_MaxNormalizedProb;
+        return this.maxNormalizedProb;
     }
 
     public void setMaxNormalizedProbability(double prob)
     {
-        m_MaxNormalizedProb = prob;
+        this.maxNormalizedProb = prob;
     }
 
     public URI getUri()
     {
-        return m_Uri;
+        return this.uri;
     }
 
     public void setUri(URI uri)
     {
-        m_Uri = uri;
+        this.uri = uri;
     }
 
     public boolean isTimeout()
     {
-        return m_IsTimeout;
+        return this.isTimeout;
     }
 
     public void setTimeout(boolean timeout)
     {
-        m_IsTimeout = timeout;
+        this.isTimeout = timeout;
     }
 
     public Bucket getBucket()
     {
-        return m_Bucket;
+        return this.bucket;
     }
 
     public void setBucket(Bucket bucket)
     {
-        m_Bucket = bucket;
+        this.bucket = bucket;
     }
 
     public List<AnomalyRecord> getRecords()
     {
-        return m_Records;
+        return this.records;
     }
 
     public void setRecords(List<AnomalyRecord> records)
     {
-        m_Records = records;
+        this.records = records;
     }
 
     public AlertType getAlertType()
     {
-        return m_AlertType;
+        return this.alertType;
     }
 
     public void setAlertType(AlertType value)
     {
-        m_AlertType = value;
+        this.alertType = value;
     }
 
     @JsonProperty("isInterim")
     public boolean isInterim()
     {
-        return m_IsInterim;
+        return this.isInterim;
     }
 
     @JsonProperty("isInterim")
     public void setInterim(boolean value)
     {
-        m_IsInterim = value;
+        this.isInterim = value;
     }
 
 }

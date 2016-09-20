@@ -39,24 +39,24 @@ public class TransformConfig {
     public static final String OUTPUTS = "outputs";
 
 
-    private List<String> m_Inputs;
-    private String m_Name;
-    private List<String> m_Arguments;
-    private List<String> m_Outputs;
-    private TransformType m_Type;
-    private Condition m_Condition;
+    private List<String> inputs;
+    private String name;
+    private List<String> arguments;
+    private List<String> outputs;
+    private TransformType type;
+    private Condition condition;
 
 
     public TransformConfig() {
-        m_Arguments = Collections.emptyList();
+        arguments = Collections.emptyList();
     }
 
     public List<String> getInputs() {
-        return m_Inputs;
+        return inputs;
     }
 
     public void setInputs(List<String> fields) {
-        m_Inputs = fields;
+        inputs = fields;
     }
 
     /**
@@ -65,35 +65,35 @@ public class TransformConfig {
      * @return
      */
     public String getTransform() {
-        return m_Name;
+        return name;
     }
 
     public void setTransform(String type) {
-        m_Name = type;
+        name = type;
     }
 
     public List<String> getArguments() {
-        return m_Arguments;
+        return arguments;
     }
 
     public void setArguments(List<String> args) {
-        m_Arguments = args;
+        arguments = args;
     }
 
     public List<String> getOutputs() {
-        if (m_Outputs == null || m_Outputs.isEmpty()) {
+        if (outputs == null || outputs.isEmpty()) {
             try {
-                m_Outputs = type().defaultOutputNames();
+                outputs = type().defaultOutputNames();
             } catch (IllegalArgumentException e) {
-                m_Outputs = Collections.emptyList();
+                outputs = Collections.emptyList();
             }
         }
 
-        return m_Outputs;
+        return outputs;
     }
 
     public void setOutputs(List<String> outputs) {
-        m_Outputs = outputs;
+        this.outputs = outputs;
     }
 
     /**
@@ -103,11 +103,11 @@ public class TransformConfig {
      * @return May be <code>null</code>
      */
     public Condition getCondition() {
-        return m_Condition;
+        return condition;
     }
 
     public void setCondition(Condition condition) {
-        m_Condition = condition;
+        this.condition = condition;
     }
 
     /**
@@ -117,21 +117,21 @@ public class TransformConfig {
      * @return
      */
     public TransformType type() throws IllegalArgumentException {
-        if (m_Type == null) {
-            m_Type = TransformType.fromString(m_Name);
+        if (type == null) {
+            type = TransformType.fromString(name);
         }
 
-        return m_Type;
+        return type;
     }
 
     @Override
     public String toString() {
-        return m_Name;
+        return name;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(m_Inputs, m_Name, m_Outputs, m_Type, m_Arguments, m_Condition);
+        return Objects.hash(inputs, name, outputs, type, arguments, condition);
     }
 
     @Override
@@ -149,11 +149,11 @@ public class TransformConfig {
 
         TransformConfig other = (TransformConfig) obj;
 
-        return Objects.equals(this.m_Type, other.m_Type)
-                && Objects.equals(this.m_Name, other.m_Name)
-                && Objects.equals(this.m_Inputs, other.m_Inputs)
-                && Objects.equals(this.m_Outputs, other.m_Outputs)
-                && Objects.equals(this.m_Arguments, other.m_Arguments)
-                && Objects.equals(this.m_Condition, other.m_Condition);
+        return Objects.equals(this.type, other.type)
+                && Objects.equals(this.name, other.name)
+                && Objects.equals(this.inputs, other.inputs)
+                && Objects.equals(this.outputs, other.outputs)
+                && Objects.equals(this.arguments, other.arguments)
+                && Objects.equals(this.condition, other.condition);
     }
 }

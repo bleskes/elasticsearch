@@ -105,52 +105,52 @@ public class SchedulerConfig
     private static final int DEFAULT_SCROLL_SIZE = 1000;
     private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
 
-    private DataSource m_DataSource;
-    private String m_DataSourceCompatibility;
+    private DataSource dataSource;
+    private String dataSourceCompatibility;
 
     /**
      * The delay in seconds before starting to query a period of time
      */
-    private Long m_QueryDelay;
+    private Long queryDelay;
 
     /**
      * The frequency in seconds with which queries are executed
      */
-    private Long m_Frequency;
+    private Long frequency;
 
     /**
      * These values apply to the FILE data source
      */
-    private String m_FilePath;
-    private Boolean m_TailFile;
+    private String filePath;
+    private Boolean tailFile;
 
     /**
      * Used for data sources that require credentials.  May be null in the case
      * where credentials are sometimes needed and sometimes not (e.g. Elasticsearch).
      */
-    private String m_Username;
-    private String m_Password;
-    private String m_EncryptedPassword;
+    private String username;
+    private String password;
+    private String encryptedPassword;
 
     /**
      * These values apply to the ELASTICSEARCH data source
      */
-    private String m_BaseUrl;
-    private List<String> m_Indexes;
-    private List<String> m_Types;
-    private Map<String, Object> m_Query;
-    private Map<String, Object> m_Aggregations;
-    private Map<String, Object> m_Aggs;
-    private Map<String, Object> m_ScriptFields;
-    private Boolean m_RetrieveWholeSource;
-    private Integer m_ScrollSize;
+    private String baseUrl;
+    private List<String> indexes;
+    private List<String> types;
+    private Map<String, Object> query;
+    private Map<String, Object> aggregations;
+    private Map<String, Object> aggs;
+    private Map<String, Object> scriptFields;
+    private Boolean retrieveWholeSource;
+    private Integer scrollSize;
 
     /**
      * Default constructor
      */
     public SchedulerConfig()
     {
-        m_DataSource = DataSource.FILE;
+        this.dataSource = DataSource.FILE;
     }
 
     /**
@@ -159,12 +159,12 @@ public class SchedulerConfig
      */
     public DataSource getDataSource()
     {
-        return m_DataSource;
+        return this.dataSource;
     }
 
     public void setDataSource(DataSource dataSource)
     {
-        m_DataSource = dataSource;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -173,32 +173,32 @@ public class SchedulerConfig
      */
     public String getDataSourceCompatibility()
     {
-        return m_DataSourceCompatibility;
+        return this.dataSourceCompatibility;
     }
 
     public void setDataSourceCompatibility(String dataSourceCompatibility)
     {
-        m_DataSourceCompatibility = dataSourceCompatibility;
+        this.dataSourceCompatibility = dataSourceCompatibility;
     }
 
     public Long getQueryDelay()
     {
-        return m_QueryDelay;
+        return this.queryDelay;
     }
 
     public void setQueryDelay(Long delay)
     {
-        m_QueryDelay = delay;
+        this.queryDelay = delay;
     }
 
     public Long getFrequency()
     {
-        return m_Frequency;
+        return this.frequency;
     }
 
     public void setFrequency(Long frequency)
     {
-        m_Frequency = frequency;
+        this.frequency = frequency;
     }
 
     /**
@@ -207,12 +207,12 @@ public class SchedulerConfig
      */
     public String getFilePath()
     {
-        return m_FilePath;
+        return this.filePath;
     }
 
     public void setFilePath(String filePath)
     {
-        m_FilePath = filePath;
+        this.filePath = filePath;
     }
 
     /**
@@ -222,12 +222,12 @@ public class SchedulerConfig
      */
     public Boolean getTailFile()
     {
-        return m_TailFile;
+        return this.tailFile;
     }
 
     public void setTailFile(Boolean tailFile)
     {
-        m_TailFile = tailFile;
+        this.tailFile = tailFile;
     }
 
     /**
@@ -237,12 +237,12 @@ public class SchedulerConfig
      */
     public String getBaseUrl()
     {
-        return m_BaseUrl;
+        return this.baseUrl;
     }
 
     public void setBaseUrl(String baseUrl)
     {
-        m_BaseUrl = baseUrl;
+        this.baseUrl = baseUrl;
     }
 
     /**
@@ -251,12 +251,12 @@ public class SchedulerConfig
      */
     public String getUsername()
     {
-        return m_Username;
+        return this.username;
     }
 
     public void setUsername(String username)
     {
-        m_Username = username;
+        this.username = username;
     }
 
     /**
@@ -266,12 +266,12 @@ public class SchedulerConfig
      */
     public List<String> getIndexes()
     {
-        return m_Indexes;
+        return this.indexes;
     }
 
     public void setIndexes(List<String> indexes)
     {
-        m_Indexes = indexes;
+        this.indexes = indexes;
     }
 
     /**
@@ -281,12 +281,12 @@ public class SchedulerConfig
      */
     public List<String> getTypes()
     {
-        return m_Types;
+        return this.types;
     }
 
     public void setTypes(List<String> types)
     {
-        m_Types = types;
+        this.types = types;
     }
 
     /**
@@ -299,12 +299,12 @@ public class SchedulerConfig
      */
     public Map<String, Object> getQuery()
     {
-        return m_Query;
+        return this.query;
     }
 
     public void setQuery(Map<String, Object> query)
     {
-        m_Query = query;
+        this.query = query;
     }
 
     /**
@@ -314,12 +314,12 @@ public class SchedulerConfig
      */
     public Boolean getRetrieveWholeSource()
     {
-        return m_RetrieveWholeSource;
+        return this.retrieveWholeSource;
     }
 
     public void setRetrieveWholeSource(Boolean retrieveWholeSource)
     {
-        m_RetrieveWholeSource = retrieveWholeSource;
+        this.retrieveWholeSource = retrieveWholeSource;
     }
 
     /**
@@ -329,12 +329,12 @@ public class SchedulerConfig
      */
     public Integer getScrollSize()
     {
-        return m_ScrollSize;
+        return this.scrollSize;
     }
 
     public void setScrollSize(Integer scrollSize)
     {
-        m_ScrollSize = scrollSize;
+        this.scrollSize = scrollSize;
     }
 
     /**
@@ -347,13 +347,13 @@ public class SchedulerConfig
     @JsonProperty("script_fields")
     public Map<String, Object> getScriptFields()
     {
-        return m_ScriptFields;
+        return this.scriptFields;
     }
 
     @JsonProperty("script_fields")
     public void setScriptFields(Map<String, Object> scriptFields)
     {
-        m_ScriptFields = scriptFields;
+        this.scriptFields = scriptFields;
     }
 
     /**
@@ -361,12 +361,12 @@ public class SchedulerConfig
      * aggregations to apply to the search to be submitted to Elasticsearch to
      * get the input data.  This class does not attempt to interpret the
      * aggregations.  The map will be converted back to an arbitrary JSON object.
-     * Synonym for {@link getAggs()} (like Elasticsearch).
+     * Synonym for {@link #getAggs()} (like Elasticsearch).
      * @return The aggregations, or <code>null</code> if not set.
      */
     public Map<String, Object> getAggregations()
     {
-        return m_Aggregations;
+        return this.aggregations;
     }
 
     public void setAggregations(Map<String, Object> aggregations)
@@ -374,7 +374,7 @@ public class SchedulerConfig
         // It's only expected that one of aggregations or aggs will be set,
         // having two member variables makes it easier to remember which the
         // user used so their input can be recreated
-        m_Aggregations = aggregations;
+        this.aggregations = aggregations;
     }
 
     /**
@@ -382,12 +382,12 @@ public class SchedulerConfig
      * aggregations to apply to the search to be submitted to Elasticsearch to
      * get the input data.  This class does not attempt to interpret the
      * aggregations.  The map will be converted back to an arbitrary JSON object.
-     * Synonym for {@link getAggregations()} (like Elasticsearch).
+     * Synonym for {@link #getAggregations()} (like Elasticsearch).
      * @return The aggregations, or <code>null</code> if not set.
      */
     public Map<String, Object> getAggs()
     {
-        return m_Aggs;
+        return this.aggs;
     }
 
     public void setAggs(Map<String, Object> aggs)
@@ -395,7 +395,7 @@ public class SchedulerConfig
         // It's only expected that one of aggregations or aggs will be set,
         // having two member variables makes it easier to remember which the
         // user used so their input can be recreated
-        m_Aggs = aggs;
+        this.aggs = aggs;
     }
 
     /**
@@ -406,7 +406,7 @@ public class SchedulerConfig
     @JsonIgnore
     public Map<String, Object> getAggregationsOrAggs()
     {
-        return (m_Aggregations != null) ? m_Aggregations : m_Aggs;
+        return (this.aggregations != null) ? this.aggregations : this.aggs;
     }
 
     /**
@@ -449,7 +449,7 @@ public class SchedulerConfig
 
     public void fillDefaults()
     {
-        switch (m_DataSource)
+        switch (this.dataSource)
         {
             case ELASTICSEARCH:
                 fillElasticsearchDefaults();
@@ -464,30 +464,30 @@ public class SchedulerConfig
 
     private void fillElasticsearchDefaults()
     {
-        if (m_Query == null)
+        if (this.query == null)
         {
-            m_Query = new HashMap<>();
-            m_Query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
+            this.query = new HashMap<>();
+            this.query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
         }
-        if (m_QueryDelay == null)
+        if (this.queryDelay == null)
         {
-            m_QueryDelay = DEFAULT_ELASTICSEARCH_QUERY_DELAY;
+            this.queryDelay = DEFAULT_ELASTICSEARCH_QUERY_DELAY;
         }
-        if (m_RetrieveWholeSource == null)
+        if (this.retrieveWholeSource == null)
         {
-            m_RetrieveWholeSource = false;
+            this.retrieveWholeSource = false;
         }
-        if (m_ScrollSize == null)
+        if (this.scrollSize == null)
         {
-            m_ScrollSize = DEFAULT_SCROLL_SIZE;
+            this.scrollSize = DEFAULT_SCROLL_SIZE;
         }
     }
 
     private void fillFileDefaults()
     {
-        if (m_TailFile == null)
+        if (this.tailFile == null)
         {
-            m_TailFile = false;
+            this.tailFile = false;
         }
     }
 
@@ -511,31 +511,31 @@ public class SchedulerConfig
 
         SchedulerConfig that = (SchedulerConfig)other;
 
-        return Objects.equals(this.m_DataSource, that.m_DataSource) &&
-                Objects.equals(this.m_DataSourceCompatibility, that.m_DataSourceCompatibility) &&
-                Objects.equals(this.m_Frequency, that.m_Frequency) &&
-                Objects.equals(this.m_QueryDelay, that.m_QueryDelay) &&
-                Objects.equals(this.m_FilePath, that.m_FilePath) &&
-                Objects.equals(this.m_TailFile, that.m_TailFile) &&
-                Objects.equals(this.m_BaseUrl, that.m_BaseUrl) &&
-                Objects.equals(this.m_Username, that.m_Username) &&
-                Objects.equals(this.m_Password, that.m_Password) &&
-                Objects.equals(this.m_EncryptedPassword, that.m_EncryptedPassword) &&
-                Objects.equals(this.m_Indexes, that.m_Indexes) &&
-                Objects.equals(this.m_Types, that.m_Types) &&
-                Objects.equals(this.m_Query, that.m_Query) &&
-                Objects.equals(this.m_RetrieveWholeSource, that.m_RetrieveWholeSource) &&
-                Objects.equals(this.m_ScrollSize, that.m_ScrollSize) &&
+        return Objects.equals(this.dataSource, that.dataSource) &&
+                Objects.equals(this.dataSourceCompatibility, that.dataSourceCompatibility) &&
+                Objects.equals(this.frequency, that.frequency) &&
+                Objects.equals(this.queryDelay, that.queryDelay) &&
+                Objects.equals(this.filePath, that.filePath) &&
+                Objects.equals(this.tailFile, that.tailFile) &&
+                Objects.equals(this.baseUrl, that.baseUrl) &&
+                Objects.equals(this.username, that.username) &&
+                Objects.equals(this.password, that.password) &&
+                Objects.equals(this.encryptedPassword, that.encryptedPassword) &&
+                Objects.equals(this.indexes, that.indexes) &&
+                Objects.equals(this.types, that.types) &&
+                Objects.equals(this.query, that.query) &&
+                Objects.equals(this.retrieveWholeSource, that.retrieveWholeSource) &&
+                Objects.equals(this.scrollSize, that.scrollSize) &&
                 Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs()) &&
-                Objects.equals(this.m_ScriptFields, that.m_ScriptFields);
+                Objects.equals(this.scriptFields, that.scriptFields);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_DataSource, m_DataSourceCompatibility, m_Frequency, m_QueryDelay,
-                m_FilePath, m_TailFile, m_BaseUrl, m_Username, m_Password, m_EncryptedPassword,
-                m_Indexes, m_Types, m_Query, m_RetrieveWholeSource, m_ScrollSize,
-                getAggregationsOrAggs(), m_ScriptFields);
+        return Objects.hash(this.dataSource, dataSourceCompatibility, frequency, queryDelay,
+                this.filePath, tailFile, baseUrl, username, password, encryptedPassword,
+                this.indexes, types, query, retrieveWholeSource, scrollSize,
+                getAggregationsOrAggs(), this.scriptFields);
     }
 }

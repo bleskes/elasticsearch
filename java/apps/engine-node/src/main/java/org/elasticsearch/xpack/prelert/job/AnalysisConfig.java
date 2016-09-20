@@ -103,8 +103,8 @@ public class AnalysisConfig {
         return bucketSpan;
     }
 
-    public void setBucketSpan(Long span) {
-        bucketSpan = span;
+    public void setBucketSpan(Long bucketSpan) {
+        this.bucketSpan = bucketSpan;
     }
 
     @JsonIgnore
