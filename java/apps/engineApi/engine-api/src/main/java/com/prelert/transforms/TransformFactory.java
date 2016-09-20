@@ -152,8 +152,6 @@ public class TransformFactory
                 return StringTransform.createUpperCase(readIndicies, writeIndicies, logger);
             case TRIM:
                 return StringTransform.createTrim(readIndicies, writeIndicies, logger);
-            case GEO_UNHASH:
-                return StringTransform.createGeoUnhash(readIndicies, writeIndicies, logger);
             default:
                 // This code will never be hit - it's to
                 // keep the compiler happy.

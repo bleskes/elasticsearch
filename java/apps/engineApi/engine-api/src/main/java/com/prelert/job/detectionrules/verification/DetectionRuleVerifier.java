@@ -28,11 +28,12 @@
 package com.prelert.job.detectionrules.verification;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Sets;
 import com.prelert.job.Detector;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.detectionrules.RuleCondition;
@@ -50,8 +51,8 @@ public final class DetectionRuleVerifier
      *   <li> metric - because having the same conditions on min,max,mean is error-prone
      * </ul>
      */
-    private static final Set<String> FUNCTIONS_WITHOUT_RULE_SUPPORT = Sets.newHashSet(
-            Detector.LAT_LONG, Detector.METRIC);
+    private static final Set<String> FUNCTIONS_WITHOUT_RULE_SUPPORT = new HashSet<>(
+            Arrays.asList(Detector.LAT_LONG, Detector.METRIC));
 
     private DetectionRuleVerifier()
     {

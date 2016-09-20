@@ -118,7 +118,6 @@ public class ElasticsearchMappingsTest
         overridden.add(ElasticsearchMappings.INDEX);
         overridden.add(ElasticsearchMappings.NESTED);
         overridden.add(ElasticsearchMappings.NO);
-        overridden.add(ElasticsearchMappings.NOT_ANALYZED);
         overridden.add(ElasticsearchMappings.PARENT);
         overridden.add(ElasticsearchMappings.PROPERTIES);
         overridden.add(ElasticsearchMappings.TYPE);
@@ -215,18 +214,16 @@ public class ElasticsearchMappingsTest
                         "    }," +
                         "    \"properties\": {" +
                         "      \"jobId\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
+                        "        \"type\": \"keyword\"" +
                         "      }," +
                         "      \"description\": {" +
-                        "        \"type\": \"string\"" +
+                        "        \"type\": \"text\"" +
                         "      }," +
                         "      \"status\": {" +
-                        "        \"type\": \"string\"" +
+                        "        \"type\": \"text\"" +
                         "      }," +
                         "      \"schedulerStatus\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
+                        "        \"type\": \"keyword\"" +
                         "      }," +
                         "      \"@timestamp\": {" +
                         "        \"type\": \"date\"" +
@@ -279,8 +276,7 @@ public class ElasticsearchMappingsTest
                         "        }" +
                         "      }," +
                         "      \"ignoreDowntime\": {" +
-                        "        \"type\": \"string\"," +
-                        "        \"index\": \"not_analyzed\"" +
+                        "        \"type\": \"keyword\"" +
                         "      }," +
                         "      \"timeout\": {" +
                         "        \"type\": \"long\"," +
@@ -322,42 +318,33 @@ public class ElasticsearchMappingsTest
                         "            \"index\": \"no\"" +
                         "          }," +
                         "          \"summaryCountFieldName\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"categorizationFieldName\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"categorizationFilters\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"detectors\": {" +
                         "            \"properties\": {" +
                         "              \"detectorDescription\": {" +
-                        "                \"type\": \"string\"," +
-                        "                \"index\": \"not_analyzed\"" +
+                        "                \"type\": \"keyword\"" +
                         "              }," +
                         "              \"function\": {" +
-                        "                \"type\": \"string\"," +
-                        "                \"index\": \"not_analyzed\"" +
+                        "                \"type\": \"keyword\"" +
                         "              }," +
                         "              \"fieldName\": {" +
-                        "                \"type\": \"string\"," +
-                        "                \"index\": \"not_analyzed\"" +
+                        "                \"type\": \"keyword\"" +
                         "              }," +
                         "              \"byFieldName\": {" +
-                        "                \"type\": \"string\"," +
-                        "                \"index\": \"not_analyzed\"" +
+                        "                \"type\": \"keyword\"" +
                         "              }," +
                         "              \"overFieldName\": {" +
-                        "                \"type\": \"string\"," +
-                        "                \"index\": \"not_analyzed\"" +
+                        "                \"type\": \"keyword\"" +
                         "              }," +
                         "              \"partitionFieldName\": {" +
-                        "                \"type\": \"string\"," +
-                        "                \"index\": \"not_analyzed\"" +
+                        "                \"type\": \"keyword\"" +
                         "              }," +
                         "              \"useNull\": {" +
                         "                \"type\": \"boolean\"" +
@@ -366,39 +353,31 @@ public class ElasticsearchMappingsTest
                         "                \"type\": \"object\"," +
                         "                \"properties\": {" +
                         "                  \"ruleAction\": {" +
-                        "                    \"type\":\"string\"," +
-                        "                    \"index\":\"not_analyzed\"" +
+                        "                    \"type\":\"keyword\"" +
                         "                  }," +
                         "                  \"targetFieldName\": {" +
-                        "                    \"type\":\"string\"," +
-                        "                    \"index\":\"not_analyzed\"" +
+                        "                    \"type\":\"keyword\"" +
                         "                  }," +
                         "                  \"targetFieldValue\": {" +
-                        "                    \"type\":\"string\"," +
-                        "                    \"index\":\"not_analyzed\"" +
+                        "                    \"type\":\"keyword\"" +
                         "                  }," +
                         "                  \"conditionsConnective\": {" +
-                        "                    \"type\":\"string\"," +
-                        "                    \"index\":\"not_analyzed\"" +
+                        "                    \"type\":\"keyword\"" +
                         "                  }," +
                         "                  \"ruleConditions\": {" +
                         "                    \"type\":\"object\"," +
                         "                    \"properties\": {" +
                         "                      \"conditionType\": {" +
-                        "                        \"type\":\"string\"," +
-                        "                        \"index\":\"not_analyzed\"" +
+                        "                        \"type\":\"keyword\"" +
                         "                      }," +
                         "                      \"fieldName\": {" +
-                        "                        \"type\":\"string\"," +
-                        "                        \"index\":\"not_analyzed\"" +
+                        "                        \"type\":\"keyword\"" +
                         "                      }," +
                         "                      \"fieldValue\": {" +
-                        "                        \"type\":\"string\"," +
-                        "                        \"index\":\"not_analyzed\"" +
+                        "                        \"type\":\"keyword\"" +
                         "                      }," +
                         "                      \"valueList\": {" +
-                        "                        \"type\":\"string\"," +
-                        "                        \"index\":\"not_analyzed\"" +
+                        "                        \"type\":\"keyword\"" +
                         "                      }" +
                         "                    }" +
                         "                  }" +
@@ -437,24 +416,19 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
                         "          \"format\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"timeField\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"timeFormat\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"fieldDelimiter\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"quoteCharacter\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }" +
                         "        }" +
                         "      }," +
@@ -462,20 +436,16 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
                         "          \"transform\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"arguments\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"inputs\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"outputs\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }" +
                         "        }" +
                         "      }," +
@@ -483,12 +453,10 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
                         "          \"dataSource\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"dataSourceCompatibility\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"queryDelay\": {" +
                         "            \"type\": \"long\"" +
@@ -497,30 +465,25 @@ public class ElasticsearchMappingsTest
                         "            \"type\": \"long\"" +
                         "          }," +
                         "          \"filePath\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"tailFile\": {" +
                         "            \"type\": \"boolean\"" +
                         "          }," +
                         "          \"baseUrl\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"username\": {" +
-                        "            \"type\": \"string\"" +
+                        "            \"type\": \"text\"" +
                         "          }," +
                         "          \"encryptedPassword\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"indexes\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"types\": {" +
-                        "            \"type\": \"string\"," +
-                        "            \"index\": \"not_analyzed\"" +
+                        "            \"type\": \"keyword\"" +
                         "          }," +
                         "          \"retrieveWholeSource\": {" +
                         "            \"type\": \"boolean\"" +
@@ -550,7 +513,7 @@ public class ElasticsearchMappingsTest
                         "        \"type\": \"object\"," +
                         "        \"properties\": {" +
                         "          \"writeTo\": {" +
-                        "            \"type\": \"string\"," +
+                        "            \"type\": \"text\"," +
                         "            \"index\": \"no\"" +
                         "          }," +
                         "          \"boundsPercentile\": {" +
@@ -558,7 +521,7 @@ public class ElasticsearchMappingsTest
                         "            \"index\": \"no\"" +
                         "          }," +
                         "          \"terms\": {" +
-                        "            \"type\": \"string\"," +
+                        "            \"type\": \"text\"," +
                         "            \"index\": \"no\"" +
                         "          }" +
                         "        }" +

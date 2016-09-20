@@ -33,13 +33,13 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.junit.Test;
 
-import com.google.common.collect.Sets;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.detectionrules.RuleCondition;
 
@@ -393,7 +393,7 @@ public class AnalysisConfigTest
         AnalysisConfig config = new AnalysisConfig();
         config.setDetectors(Arrays.asList(detector1, detector2, new Detector()));
 
-        assertEquals(Sets.newHashSet("list1", "list2"), config.extractReferencedLists());
+        assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), config.extractReferencedLists());
     }
 
     private static AnalysisConfig createFullyPopulatedConfig()

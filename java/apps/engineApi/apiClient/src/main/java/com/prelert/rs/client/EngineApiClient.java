@@ -65,7 +65,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import com.prelert.job.Detector;
 import com.prelert.job.JobConfiguration;
 import com.prelert.job.JobDetails;
@@ -79,6 +78,7 @@ import com.prelert.rs.data.EngineStatus;
 import com.prelert.rs.data.MultiDataPostResult;
 import com.prelert.rs.data.Pagination;
 import com.prelert.rs.data.SingleDocument;
+import com.prelert.utils.Strings;
 
 /**
  * A HTTP Client for the Prelert Engine RESTful API.

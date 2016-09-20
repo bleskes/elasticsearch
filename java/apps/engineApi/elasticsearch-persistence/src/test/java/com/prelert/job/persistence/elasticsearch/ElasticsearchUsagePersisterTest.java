@@ -95,9 +95,9 @@ public class ElasticsearchUsagePersisterTest
         assertEquals("prelertresults-job1", indexCaptor.getAllValues().get(1));
 
         Script script = updateScriptCaptor.getValue();
-        assertEquals("update-usage", script.getScript());
-        assertEquals(ScriptService.ScriptType.FILE, script.getType());
-        assertEquals("groovy", script.getLang());
+        assertEquals("ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount += params.recordCount;", script.getScript());
+        assertEquals(ScriptService.ScriptType.INLINE, script.getType());
+        assertEquals("painless", script.getLang());
         Map<String, Object> scriptParams = script.getParams();
         assertEquals(3, scriptParams.size());
         assertEquals(10L, scriptParams.get("bytes"));

@@ -29,7 +29,6 @@ package com.prelert.data.extractors.elasticsearch;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -38,7 +37,6 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import com.google.common.base.Preconditions;
 import com.prelert.job.data.extraction.DataExtractor;
 
 public class ElasticsearchDataExtractor implements DataExtractor
@@ -55,7 +53,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private final HttpRequester m_HttpRequester;
     private final ElasticsearchUrlBuilder m_UrlBuilder;
     private final ElasticsearchQueryBuilder m_QueryBuilder;
-    private final IndexSelector m_IndexSelector;
     private final int m_ScrollSize;
     private final ScrollState m_ScrollState;
     private volatile long m_CurrentStartTime;
@@ -72,11 +69,10 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private volatile Logger m_Logger;
 
     public ElasticsearchDataExtractor(HttpRequester httpRequester, ElasticsearchUrlBuilder urlBuilder,
-            ElasticsearchQueryBuilder queryBuilder, IndexSelector indexSelector, int scrollSize)
+            ElasticsearchQueryBuilder queryBuilder, int scrollSize)
     {
         m_HttpRequester = Objects.requireNonNull(httpRequester);
         m_UrlBuilder = Objects.requireNonNull(urlBuilder);
-        m_IndexSelector = Objects.requireNonNull(indexSelector);
         m_ScrollSize = scrollSize;
         m_QueryBuilder = Objects.requireNonNull(queryBuilder);
         m_ScrollState =  queryBuilder.isAggregated() ? ScrollState.createAggregated()
@@ -88,7 +84,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
     public void newSearch(long startEpochMs, long endEpochMs, Logger logger) throws IOException
     {
         m_ScrollState.reset();
-        m_IndexSelector.clearCache();
         m_CurrentStartTime = startEpochMs;
         m_CurrentEndTime = startEpochMs;
         m_EndTime = endEpochMs;
@@ -113,13 +108,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     {
         m_CurrentEndTime = m_EndTime;
         m_Chunk = null;
-        List<String> indices = m_IndexSelector.selectByTime(m_CurrentStartTime, m_EndTime, m_Logger);
-        if (indices.isEmpty())
-        {
-            return;
-        }
-
-        String url = m_UrlBuilder.buildSearchSizeOneUrl(indices);
+        String url = m_UrlBuilder.buildSearchSizeOneUrl();
         String response = requestAndGetStringResponse(url,
                 m_QueryBuilder.createDataSummaryQuery(m_CurrentStartTime, m_EndTime));
         long totalHits = matchLong(response, TOTAL_HITS_PATTERN);
@@ -203,7 +192,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
     public void clear()
     {
         m_ScrollState.reset();
-        m_IndexSelector.clearCache();
     }
 
     @Override
@@ -287,14 +275,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private InputStream initScroll() throws IOException
     {
         advanceTime();
-        List<String> indices = m_IndexSelector.selectByTime(m_CurrentStartTime, m_CurrentEndTime,
-                m_Logger);
-        if (indices.isEmpty())
-        {
-            // No indices contain data for the current time range, thus abort the search
-            return null;
-        }
-        String url = buildInitScrollUrl(indices);
+        String url = buildInitScrollUrl();
         String searchBody = m_QueryBuilder.createSearchBody(m_CurrentStartTime, m_CurrentEndTime);
         m_Logger.trace("About to submit body " + searchBody + " to URL " + url);
         HttpResponse response = m_HttpRequester.get(url, searchBody);
@@ -313,13 +294,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
                 : Math.min(m_CurrentStartTime + m_Chunk, m_EndTime);
     }
 
-    private String buildInitScrollUrl(List<String> indices) throws IOException
+    private String buildInitScrollUrl() throws IOException
     {
-        Preconditions.checkArgument(!indices.isEmpty());
         // With aggregations we don't want any hits returned for the raw data,
         // just the aggregations
         int size = m_QueryBuilder.isAggregated() ? 0 : m_ScrollSize;
-        return m_UrlBuilder.buildInitScrollUrl(indices, size);
+        return m_UrlBuilder.buildInitScrollUrl(size);
     }
 
     private InputStream continueScroll() throws IOException

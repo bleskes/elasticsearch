@@ -30,6 +30,7 @@ package com.prelert.job.persistence.elasticsearch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -792,7 +793,7 @@ public class ElasticsearchJobProviderTest
         assertEquals(1l, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
-        assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*isInterim. : .true.*"));
+        assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
     }
 
     @Test
@@ -1295,7 +1296,8 @@ public class ElasticsearchJobProviderTest
         assertEquals(2L, page.hitCount());
 
         String queryString = queryBuilder.getValue().toString();
-        assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*isInterim. : .true.*"));
+        System.out.println(queryString);
+        assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
 
         List<Influencer> records = page.queryResults();
         assertEquals("Bob", records.get(0).getInfluencerFieldValue());
@@ -1507,7 +1509,8 @@ public class ElasticsearchJobProviderTest
         assertEquals(6, snapshots.get(1).getSnapshotDocCount());
 
         String queryString = queryBuilder.getValue().toString();
-        assertTrue(queryString.matches("(?s).*snapshotId. : .snappyId.*description. : .description1.*"));
+        System.out.println(queryString);
+        assertTrue(queryString.matches("(?s).*snapshotId.*value. : .snappyId.*description.*value. : .description1.*"));
     }
 
     public void testMergePartitionScoresIntoBucket()

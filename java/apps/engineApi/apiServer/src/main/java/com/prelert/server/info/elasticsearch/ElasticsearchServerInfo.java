@@ -28,6 +28,7 @@ package com.prelert.server.info.elasticsearch;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -44,7 +45,6 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.server.info.ServerInfo;
 import com.prelert.server.info.ServerInfoFactory;
 
@@ -73,9 +73,9 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
     {
         ServerInfo serverInfo = new ServerInfo();
 
-        NodeStats[] nodesStats = this.nodesStats();
+        List<NodeStats> nodesStats = this.nodesStats();
 
-        if (nodesStats.length == 0)
+        if (nodesStats.isEmpty())
         {
             LOGGER.error("No NodeStats returned");
         }
@@ -131,7 +131,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
 
         for (NodeInfo nodeInfo : nodesInfo())
         {
-            if (nodeInfo.getNode().isClientNode() && nodeInfo.getNode().isDataNode() == false)
+            if (!nodeInfo.getNode().isMasterNode() && !nodeInfo.getNode().isDataNode())
             {
                 apiNodeInfo = nodeInfo;
             }
@@ -148,7 +148,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
 
         for (NodeStats nodeStats : nodesStats())
         {
-            if (nodeStats.getNode().isClientNode() && nodeStats.getNode().isDataNode() == false)
+            if (!nodeStats.getNode().isMasterNode() && !nodeStats.getNode().isDataNode())
             {
                 apiNodeStats = nodeStats;
             }
@@ -175,7 +175,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
 
             builder.endObject();
 
-            return builder.bytes().toUtf8();
+            return builder.bytes().utf8ToString();
         }
         catch (IOException e)
         {
@@ -184,8 +184,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
         }
     }
 
-    @VisibleForTesting
-    protected NodeInfo[] nodesInfo()
+    protected List<NodeInfo> nodesInfo()
     {
         LOGGER.trace("ES API CALL: node info all nodes");
         NodesInfoResponse response = NodesInfoAction.INSTANCE
@@ -193,8 +192,7 @@ public class ElasticsearchServerInfo implements ServerInfoFactory, Feature
         return response.getNodes();
     }
 
-    @VisibleForTesting
-    protected NodeStats[] nodesStats()
+    protected List<NodeStats> nodesStats()
     {
         LOGGER.trace("ES API CALL: node stats all nodes");
         NodesStatsResponse response = NodesStatsAction.INSTANCE

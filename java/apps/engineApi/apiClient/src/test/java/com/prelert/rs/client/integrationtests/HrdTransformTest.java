@@ -56,6 +56,8 @@ import com.prelert.rs.data.SingleDocument;
  * </ol>
  * The test asserts that there are anomalies and the over field values
  * are the actual highest registered domain
+ *
+ * TODO Re-enable through the script once domain split transform is reimplemented (after guava removal).
  */
 public class HrdTransformTest implements Closeable
 {

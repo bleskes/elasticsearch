@@ -31,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import com.google.common.collect.Range;
 import com.prelert.job.condition.Condition;
 import com.prelert.job.condition.Operator;
+import com.prelert.job.transform.IntRange;
 import com.prelert.job.transform.TransformConfig;
 import com.prelert.job.transform.TransformType;
 import com.prelert.transforms.Transform.TransformIndex;
@@ -79,7 +79,7 @@ public final class TransformTestUtils
         return tr;
     }
 
-    private static List<String> createValidArgs(Range<Integer> range, TransformType type,
+    private static List<String> createValidArgs(IntRange range, TransformType type,
             BiFunction<Integer, TransformType, String> argumentCreator)
     {
         List<String> args = new ArrayList<>();
@@ -110,8 +110,8 @@ public final class TransformTestUtils
         }
     }
 
-    private static int getValidCount(Range<Integer> range)
+    private static int getValidCount(IntRange range)
     {
-        return range.hasUpperBound() ? range.upperEndpoint() : range.lowerEndpoint();
+        return range.hasUpperBound() ? range.upper() : range.lower();
     }
 }
