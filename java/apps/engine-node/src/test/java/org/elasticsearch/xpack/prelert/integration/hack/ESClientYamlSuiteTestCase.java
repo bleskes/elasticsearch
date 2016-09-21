@@ -56,6 +56,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// FORKED so that we can run tests in prelert hybride node mode while bootstrap checks are disabled,
+// to be removed when we ready to be a plugin
+
 /**
  * Runs a suite of yaml tests shared with all the official Elasticsearch clients against against an elasticsearch cluster.
  */

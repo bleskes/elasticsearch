@@ -58,6 +58,9 @@ import java.util.Set;
 import static java.util.Collections.sort;
 import static java.util.Collections.unmodifiableList;
 
+// FORKED so that we can run tests in prelert hybride node mode while bootstrap checks are disabled,
+// to be removed when we ready to be a plugin
+
 /**
  * Superclass for tests that interact with an external test cluster using Elasticsearch's {@link RestClient}.
  */

@@ -107,6 +107,9 @@ import static java.util.Collections.singletonList;
 import static org.elasticsearch.common.util.CollectionUtils.arrayAsArrayList;
 import static org.hamcrest.Matchers.equalTo;
 
+// FORKED so that we can run tests in prelert hybride node mode while bootstrap checks are disabled,
+// to be removed when we ready to be a plugin
+
 /**
  * Base testcase for randomized unit testing with Elasticsearch
  */
