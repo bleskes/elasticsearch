@@ -2,7 +2,7 @@
   "xpack.prelert.put_job": {
     "methods": [ "PUT", "POST" ],
     "url": {
-      "path": "/v2/engine/jobs",
+      "path": "/engine/v2/jobs",
       "paths": [ "/_xpack/watcher/watch/{id}" ],
       "parts": {
         "id": {

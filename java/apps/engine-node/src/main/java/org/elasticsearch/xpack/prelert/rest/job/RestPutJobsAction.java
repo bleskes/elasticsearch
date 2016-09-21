@@ -27,7 +27,7 @@ public class RestPutJobsAction extends BaseRestHandler {
     public RestPutJobsAction(Settings settings, RestController controller, TransportPutJobAction transportPutJobAction) {
         super(settings);
         this.transportPutJobAction = transportPutJobAction;
-        controller.registerHandler(RestRequest.Method.POST, "/v2/engine/jobs", this);
+        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/jobs", this);
     }
 
     @Override

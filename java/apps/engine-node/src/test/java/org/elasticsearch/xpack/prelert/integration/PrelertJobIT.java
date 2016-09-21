@@ -29,7 +29,7 @@ public class PrelertJobIT extends ESRestTestCase {
                 "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"\n" +
                 "    }\n" +
                 "}";
-        Response response = client().performRequest("post", "v2/engine/jobs", Collections.emptyMap(), new StringEntity(job));
+        Response response = client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 
