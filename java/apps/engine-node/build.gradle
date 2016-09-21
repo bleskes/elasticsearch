@@ -28,6 +28,7 @@ dependencies {
         exclude group: 'org.hamcrest', module: 'hamcrest-core'
     }
     testCompile group: 'org.elasticsearch.test', name: 'framework', version: '5.0.0-alpha5'
+    testCompile group: 'org.elasticsearch', name: 'rest-api-spec', version: '5.0.0-alpha5'
     testCompile group: 'org.ini4j', name: 'ini4j', version:'0.5.2'
     testCompile group: 'org.mockito', name: 'mockito-all', version:'1.10.19'
 }
@@ -55,7 +56,8 @@ task integTest(type: Test,
     testClassesDir = project.test.testClassesDir
     include '**/*IT.class'
     systemProperties = [
-            'tests.rest.cluster': 'localhost:8080'
+            'tests.rest.cluster': 'localhost:8080',
+            'tests.rest.load_packaged' : 'false'
     ]
 }
 integTest.dependsOn startPrelertInBackground

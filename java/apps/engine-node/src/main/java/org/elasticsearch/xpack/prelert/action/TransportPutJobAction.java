@@ -60,8 +60,8 @@ public class TransportPutJobAction extends TransportMasterNodeAction<PutJobReque
     @Override
     protected void masterOperation(PutJobRequest request, ClusterState state, ActionListener<PutJobResponse> listener) throws Exception {
         JobConfiguration jobConfiguration = objectMapper.readValue(request.getJobConfiguration().toBytesRef().bytes, JobConfiguration.class);
-//        JobDetails jobDetails = prelertServices.getJobManager().createJob(jobConfiguration, request.isOverwrite());
-        listener.onResponse(new PutJobResponse(new JobDetails(), objectMapper));
+        JobDetails jobDetails = prelertServices.getJobManager().createJob(jobConfiguration, request.isOverwrite());
+        listener.onResponse(new PutJobResponse(jobDetails, objectMapper));
     }
 
     @Override

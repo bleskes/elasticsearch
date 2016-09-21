@@ -25,7 +25,6 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.lucene.util.IOUtils;
-import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.action.admin.cluster.node.tasks.list.ListTasksAction;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
@@ -38,9 +37,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.test.ESTestCase;
 import org.junit.After;
-import org.junit.Assert;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
@@ -64,7 +61,7 @@ import static java.util.Collections.unmodifiableList;
 /**
  * Superclass for tests that interact with an external test cluster using Elasticsearch's {@link RestClient}.
  */
-public class ESRestTestCase extends Assert {
+public class ESRestTestCase extends ESTestCase {
     public static final String TRUSTSTORE_PATH = "truststore.path";
     public static final String TRUSTSTORE_PASSWORD = "truststore.password";
 

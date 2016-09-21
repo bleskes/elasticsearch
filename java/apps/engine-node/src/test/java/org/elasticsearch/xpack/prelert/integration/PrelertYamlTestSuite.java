@@ -21,14 +21,14 @@ package org.elasticsearch.xpack.prelert.integration;
 
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
-import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 import org.elasticsearch.test.rest.yaml.parser.ClientYamlTestParseException;
-import org.junit.Test;
+import org.elasticsearch.xpack.prelert.integration.hack.ESClientYamlSuiteTestCase;
 
 import java.io.IOException;
 
 /** Rest integration test. Runs against a cluster started by {@code gradle integTest} */
 public class PrelertYamlTestSuite extends ESClientYamlSuiteTestCase {
+
     public PrelertYamlTestSuite(ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
@@ -37,6 +37,5 @@ public class PrelertYamlTestSuite extends ESClientYamlSuiteTestCase {
     public static Iterable<Object[]> parameters() throws IOException, ClientYamlTestParseException {
         return createParameters(0, 1);
     }
-
 
 }
