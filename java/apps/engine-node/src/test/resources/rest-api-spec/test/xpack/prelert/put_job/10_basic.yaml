@@ -1,0 +1,9 @@
+---
+"Test put job api":
+  - do:
+      xpack.prelert.put_job:
+        id: "my_job"
+        body:  >
+          {
+          }
+  - match: { _id: "my_job" }
