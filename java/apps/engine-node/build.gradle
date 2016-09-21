@@ -38,6 +38,12 @@ test {
     include '**/*Test.class'
 }
 
+task copyRestSpec(type: Copy) {
+    from { zipTree(configurations.testCompile.files.find { it.name.contains('rest-api-spec')}) }
+    include 'rest-api-spec/api/**'
+    into project.sourceSets.test.output.resourcesDir
+}
+
 task startPrelert(type:JavaExec) {
     main = 'org.elasticsearch.xpack.prelert.ServerBootstrap'
     classpath = sourceSets.main.runtimeClasspath
@@ -61,5 +67,6 @@ task integTest(type: Test,
     ]
 }
 integTest.dependsOn startPrelertInBackground
+startPrelertInBackground.dependsOn copyRestSpec
 check.dependsOn integTest
 integTest.mustRunAfter test

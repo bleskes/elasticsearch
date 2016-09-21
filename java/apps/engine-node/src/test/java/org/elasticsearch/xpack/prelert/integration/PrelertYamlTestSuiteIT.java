@@ -27,9 +27,9 @@ import org.elasticsearch.xpack.prelert.integration.hack.ESClientYamlSuiteTestCas
 import java.io.IOException;
 
 /** Rest integration test. Runs against a cluster started by {@code gradle integTest} */
-public class PrelertYamlTestSuite extends ESClientYamlSuiteTestCase {
+public class PrelertYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
 
-    public PrelertYamlTestSuite(ClientYamlTestCandidate testCandidate) {
+    public PrelertYamlTestSuiteIT(ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
 

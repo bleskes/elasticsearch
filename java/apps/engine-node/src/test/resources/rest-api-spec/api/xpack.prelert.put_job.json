@@ -1,16 +1,9 @@
 {
   "xpack.prelert.put_job": {
-    "methods": [ "PUT", "POST" ],
+    "methods": [ "POST" ],
     "url": {
       "path": "/engine/v2/jobs",
-      "paths": [ "/_xpack/watcher/watch/{id}" ],
-      "parts": {
-        "id": {
-          "type" : "string",
-          "description" : "Job ID",
-          "required" : false
-        }
-      },
+      "paths": [ "/engine/v2/jobs" ],
       "params": {
         "overwrite": {
           "type": "boolean",

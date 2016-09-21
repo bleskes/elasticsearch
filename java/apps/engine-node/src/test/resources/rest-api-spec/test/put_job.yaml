@@ -2,8 +2,18 @@
 "Test put job api":
   - do:
       xpack.prelert.put_job:
-        id: "my_job"
         body:  >
           {
+            "id":"farequote",
+            "description":"Analysis of response time by airline",
+            "analysisConfig" : {
+                "bucketSpan":3600,
+                "detectors" :[{"function":"metric","fieldName":"responsetime","byFieldName":"airline"}]
+            },
+            "dataDescription" : {
+                "fieldDelimiter":",",
+                "timeField":"time",
+                "timeFormat":"yyyy-MM-dd HH:mm:ssX"
+            }
           }
-  - match: { _id: "my_job" }
+  - match: { status: "CLOSED" }
