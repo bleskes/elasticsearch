@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TransformTypeTest {
     @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void testFromString() {

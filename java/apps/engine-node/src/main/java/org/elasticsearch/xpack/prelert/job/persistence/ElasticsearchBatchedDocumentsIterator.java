@@ -14,7 +14,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.xpack.prelert.job.persistence.BatchedDocumentsIterator;
 
 abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
 {
@@ -23,44 +22,44 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     private static final String CONTEXT_ALIVE_DURATION = "5m";
     private static final int BATCH_SIZE = 10000;
 
-    private final Client m_Client;
-    private final String m_Index;
-    private final ObjectMapper m_ObjectMapper;
-    private final ResultsFilterBuilder m_FilterBuilder;
-    private volatile long m_Count;
-    private volatile long m_TotalHits;
-    private volatile String m_ScrollId;
-    private volatile boolean m_IsScrollInitialised;
+    private final Client client;
+    private final String index;
+    private final ObjectMapper objectMapper;
+    private final ResultsFilterBuilder filterBuilder;
+    private volatile long count;
+    private volatile long totalHits;
+    private volatile String scrollId;
+    private volatile boolean isScrollInitialised;
 
     public ElasticsearchBatchedDocumentsIterator(Client client, String index, ObjectMapper objectMapper)
     {
-        m_Client = Objects.requireNonNull(client);
-        m_Index = Objects.requireNonNull(index);
-        m_ObjectMapper = Objects.requireNonNull(objectMapper);
-        m_TotalHits = 0;
-        m_Count = 0;
-        m_FilterBuilder = new ResultsFilterBuilder();
-        m_IsScrollInitialised = false;
+        this.client = Objects.requireNonNull(client);
+        this.index = Objects.requireNonNull(index);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
+        totalHits = 0;
+        count = 0;
+        filterBuilder = new ResultsFilterBuilder();
+        isScrollInitialised = false;
     }
 
     @Override
     public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs)
     {
-        m_FilterBuilder.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs);
+        filterBuilder.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs);
         return this;
     }
 
     @Override
     public BatchedDocumentsIterator<T> includeInterim(String interimFieldName)
     {
-        m_FilterBuilder.interim(interimFieldName, true);
+        filterBuilder.interim(interimFieldName, true);
         return this;
     }
 
     @Override
     public boolean hasNext()
     {
-        return !m_IsScrollInitialised || m_Count != m_TotalHits;
+        return !isScrollInitialised || count != totalHits;
     }
 
     @Override
@@ -70,27 +69,27 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
         {
             throw new NoSuchElementException();
         }
-        SearchResponse searchResponse = (m_ScrollId == null) ? initScroll() :
-                m_Client.prepareSearchScroll(m_ScrollId).setScroll(CONTEXT_ALIVE_DURATION).get();
-        m_ScrollId = searchResponse.getScrollId();
+        SearchResponse searchResponse = (scrollId == null) ? initScroll() :
+                client.prepareSearchScroll(scrollId).setScroll(CONTEXT_ALIVE_DURATION).get();
+        scrollId = searchResponse.getScrollId();
         return mapHits(searchResponse);
     }
 
     private SearchResponse initScroll()
     {
-        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + m_Index);
+        LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + index);
 
-        m_IsScrollInitialised = true;
+        isScrollInitialised = true;
 
-        SearchResponse searchResponse = m_Client.prepareSearch(m_Index)
+        SearchResponse searchResponse = client.prepareSearch(index)
                 .setScroll(CONTEXT_ALIVE_DURATION)
                 .setSize(BATCH_SIZE)
                 .setTypes(getType())
-                .setQuery(m_FilterBuilder.build())
+                .setQuery(filterBuilder.build())
                 .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                 .get();
-        m_TotalHits = searchResponse.getHits().getTotalHits();
-        m_ScrollId = searchResponse.getScrollId();
+        totalHits = searchResponse.getHits().getTotalHits();
+        scrollId = searchResponse.getScrollId();
         return searchResponse;
     }
 
@@ -101,17 +100,17 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
         SearchHit[] hits = searchResponse.getHits().getHits();
         for (SearchHit hit : hits)
         {
-            T mapped = map(m_ObjectMapper, hit);
+            T mapped = map(objectMapper, hit);
             if (mapped != null)
             {
                 results.add(mapped);
             }
         }
-        m_Count += hits.length;
+        count += hits.length;
 
-        if (!hasNext() && m_ScrollId != null)
+        if (!hasNext() && scrollId != null)
         {
-            m_Client.prepareClearScroll().setScrollIds(Arrays.asList(m_ScrollId)).get();
+            client.prepareClearScroll().setScrollIds(Arrays.asList(scrollId)).get();
         }
         return results;
     }

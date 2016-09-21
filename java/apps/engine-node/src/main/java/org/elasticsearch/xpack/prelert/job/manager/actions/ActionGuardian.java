@@ -18,9 +18,9 @@ import java.util.Optional;
  */
 public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
 {
-    protected Optional<ActionGuardian<T>> m_NextGuardian;
+    protected Optional<ActionGuardian<T>> nextGuardian;
 
-    protected final T m_NoneAction;
+    protected final T noneAction;
 
     /**
      * noneAction is the enum value representing the state where
@@ -31,8 +31,8 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
      */
     public ActionGuardian(T noneAction)
     {
-        m_NoneAction = noneAction;
-        m_NextGuardian = Optional.empty();
+        this.noneAction = noneAction;
+        nextGuardian = Optional.empty();
     }
 
     /**
@@ -46,8 +46,8 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
      */
     public ActionGuardian(T noneAction, ActionGuardian<T> guardian)
     {
-        m_NoneAction = noneAction;
-        m_NextGuardian = Optional.of(guardian);
+        this.noneAction = noneAction;
+        nextGuardian = Optional.of(guardian);
     }
 
     /**
@@ -56,7 +56,7 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
      */
     public void setNextGuardian(ActionGuardian<T> guardian)
     {
-        m_NextGuardian = Optional.of(guardian);
+        nextGuardian = Optional.of(guardian);
     }
 
     /**
@@ -83,19 +83,19 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
      */
     public class ActionTicket implements AutoCloseable
     {
-        private final String m_JobId;
-        private final T m_NextState;
+        private final String jobId;
+        private final T nextState;
 
         private ActionTicket(String jobId, T nextState)
         {
-            m_JobId = jobId;
-            m_NextState = nextState;
+            this.jobId = jobId;
+            this.nextState = nextState;
         }
 
         @Override
         public void close()
         {
-            ActionGuardian.this.releaseAction(m_JobId, m_NextState);
+            ActionGuardian.this.releaseAction(jobId, nextState);
         }
     }
 

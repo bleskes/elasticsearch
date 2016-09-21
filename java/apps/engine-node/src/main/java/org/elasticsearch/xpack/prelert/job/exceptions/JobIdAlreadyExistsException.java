@@ -11,7 +11,7 @@ public class JobIdAlreadyExistsException extends JobException
 {
     private static final long serialVersionUID = 8656604180755905746L;
 
-    private final String m_JobId;
+    private final String jobId;
 
     /**
      * Create a new JobIdAlreadyExistsException with the error code
@@ -23,11 +23,11 @@ public class JobIdAlreadyExistsException extends JobException
     {
         super(Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId),
                 ErrorCodes.JOB_ID_TAKEN);
-        m_JobId = jobId;
+        this.jobId = jobId;
     }
 
     public String getAlias()
     {
-        return m_JobId;
+        return jobId;
     }
 }

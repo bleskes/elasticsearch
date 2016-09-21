@@ -19,17 +19,17 @@ import org.elasticsearch.xpack.prelert.utils.Strings;
  */
 class ResultsFilterBuilder
 {
-    private final List<QueryBuilder> m_Filters;
+    private final List<QueryBuilder> filters;
 
     public ResultsFilterBuilder()
     {
-        m_Filters = new ArrayList<>();
+        filters = new ArrayList<>();
     }
 
     public ResultsFilterBuilder(QueryBuilder filterBuilder)
     {
         this();
-        m_Filters.add(filterBuilder);
+        filters.add(filterBuilder);
     }
 
     public ResultsFilterBuilder timeRange(String field, long startEpochMs, long endEpochMs)
@@ -97,21 +97,21 @@ class ResultsFilterBuilder
 
     private void addFilter(QueryBuilder fb)
     {
-        m_Filters.add(fb);
+        filters.add(fb);
     }
 
     public QueryBuilder build()
     {
-        if (m_Filters.isEmpty())
+        if (filters.isEmpty())
         {
             return QueryBuilders.matchAllQuery();
         }
-        if (m_Filters.size() == 1)
+        if (filters.size() == 1)
         {
-            return m_Filters.get(0);
+            return filters.get(0);
         }
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        for (QueryBuilder query : m_Filters)
+        for (QueryBuilder query : filters)
         {
             boolQueryBuilder.must(query);
         }

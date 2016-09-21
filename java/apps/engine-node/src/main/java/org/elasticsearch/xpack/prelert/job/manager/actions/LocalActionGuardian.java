@@ -1,29 +1,4 @@
-/************************************************************
- *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
- *                                                          *
- *----------------------------------------------------------*
- *----------------------------------------------------------*
- * WARNING:                                                 *
- * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
- * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
- * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
- *                                                          *
- * This source code is confidential and any person who      *
- * receives a copy of it, or believes that they are viewing *
- * it without permission is asked to notify Prelert Ltd     *
- * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
- * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
- * may be reproduced, adapted or transmitted in any form or *
- * by any means, electronic, mechanical, photocopying,      *
- * recording or otherwise.                                  *
- *                                                          *
- *----------------------------------------------------------*
- *                                                          *
- *                                                          *
- ************************************************************/
+
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
@@ -44,7 +19,7 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
 {
     private static final Logger LOGGER = Logger.getLogger(LocalActionGuardian.class);
 
-    private final Map<String, T> m_ActionsByJob = new HashMap<>();
+    private final Map<String, T> actionsByJob = new HashMap<>();
 
     public LocalActionGuardian(T defaultAction)
     {
@@ -67,7 +42,7 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         synchronized (this)
         {
-            return m_ActionsByJob.getOrDefault(jobId, m_NoneAction);
+            return actionsByJob.getOrDefault(jobId, noneAction);
         }
     }
 
@@ -85,16 +60,16 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         synchronized (this)
         {
-            T currentAction = m_ActionsByJob.getOrDefault(jobId, m_NoneAction);
+            T currentAction = actionsByJob.getOrDefault(jobId, noneAction);
 
             if (currentAction.isValidTransition(action))
             {
-                if (m_NextGuardian.isPresent())
+                if (nextGuardian.isPresent())
                 {
-                    m_NextGuardian.get().tryAcquiringAction(jobId, action);
+                    nextGuardian.get().tryAcquiringAction(jobId, action);
                 }
 
-                m_ActionsByJob.put(jobId, action);
+                actionsByJob.put(jobId, action);
 
                 return newActionTicket(jobId, action.nextState(currentAction));
             }
@@ -113,11 +88,11 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
     {
         synchronized (this)
         {
-            m_ActionsByJob.put(jobId, nextState);
+            actionsByJob.put(jobId, nextState);
 
-            if (m_NextGuardian.isPresent())
+            if (nextGuardian.isPresent())
             {
-                m_NextGuardian.get().releaseAction(jobId, nextState);
+                nextGuardian.get().releaseAction(jobId, nextState);
             }
         }
     }

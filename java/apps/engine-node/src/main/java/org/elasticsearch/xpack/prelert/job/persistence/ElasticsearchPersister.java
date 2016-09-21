@@ -486,26 +486,26 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
     private class Persistable
     {
-        private final Object m_Object;
-        private final Supplier<String> m_TypeSupplier;
-        private final Supplier<String> m_IdSupplier;
-        private final Serialiser m_Serialiser;
+        private final Object object;
+        private final Supplier<String> typeSupplier;
+        private final Supplier<String> idSupplier;
+        private final Serialiser serialiser;
 
         Persistable(Object object, Supplier<String> typeSupplier, Supplier<String> idSupplier,
                 Serialiser serialiser)
         {
-            m_Object = object;
-            m_TypeSupplier = typeSupplier;
-            m_IdSupplier = idSupplier;
-            m_Serialiser = serialiser;
+            this.object = object;
+            this.typeSupplier = typeSupplier;
+            this.idSupplier = idSupplier;
+            this.serialiser = serialiser;
         }
 
         boolean persist()
         {
-            String type = m_TypeSupplier.get();
-            String id = m_IdSupplier.get();
+            String type = typeSupplier.get();
+            String id = idSupplier.get();
 
-            if (m_Object == null)
+            if (object == null)
             {
                 LOGGER.warn("No " + type + " to persist for job " + jobId.getId());
                 return false;
@@ -515,14 +515,14 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
             try
             {
-                client.prepareIndex(jobId.getIndex(), type, m_IdSupplier.get())
-                        .setSource(m_Serialiser.serialise())
+                client.prepareIndex(jobId.getIndex(), type, idSupplier.get())
+                        .setSource(serialiser.serialise())
                         .execute().actionGet();
                 return true;
             }
             catch (IOException e)
             {
-                LOGGER.error("Error writing " + m_TypeSupplier.get(), e);
+                LOGGER.error("Error writing " + typeSupplier.get(), e);
                 return false;
             }
         }
@@ -532,7 +532,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             String msg = "ES API CALL: index type " + type + " to index " + jobId.getIndex();
             if (id != null)
             {
-                msg += " with ID " + m_IdSupplier.get();
+                msg += " with ID " + idSupplier.get();
             }
             else
             {

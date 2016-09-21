@@ -66,39 +66,39 @@ public class AnomalyRecord implements StorageSerialisable
     public static final String NORMALIZED_PROBABILITY = "normalizedProbability";
     public static final String INITIAL_NORMALIZED_PROBABILITY = "initialNormalizedProbability";
 
-    private String m_Id;
-    private int m_DetectorIndex;
-    private double m_Probability;
-    private String m_ByFieldName;
-    private String m_ByFieldValue;
-    private String m_CorrelatedByFieldValue;
-    private String m_PartitionFieldName;
-    private String m_PartitionFieldValue;
-    private String m_Function;
-    private String m_FunctionDescription;
-    private double[] m_Typical;
-    private double[] m_Actual;
-    private boolean m_IsInterim;
+    private String id;
+    private int detectorIndex;
+    private double probability;
+    private String byFieldName;
+    private String byFieldValue;
+    private String correlatedByFieldValue;
+    private String partitionFieldName;
+    private String partitionFieldValue;
+    private String function;
+    private String functionDescription;
+    private double[] typical;
+    private double[] actual;
+    private boolean isInterim;
 
-    private String m_FieldName;
+    private String fieldName;
 
-    private String m_OverFieldName;
-    private String m_OverFieldValue;
-    private List<AnomalyCause> m_Causes;
+    private String overFieldName;
+    private String overFieldValue;
+    private List<AnomalyCause> causes;
 
-    private double m_AnomalyScore;
-    private double m_NormalizedProbability;
+    private double anomalyScore;
+    private double normalizedProbability;
 
-    private double m_InitialNormalizedProbability;
+    private double initialNormalizedProbability;
 
-    private Date m_Timestamp;
-    private long m_BucketSpan;
+    private Date timestamp;
+    private long bucketSpan;
 
-    private List<Influence> m_Influencers;
+    private List<Influence> influencers;
 
-    private boolean m_HadBigNormalisedUpdate;
+    private boolean hadBigNormalisedUpdate;
 
-    private String m_Parent;
+    private String parent;
 
     /**
      * Data store ID of this record.  May be null for records that have not been
@@ -106,62 +106,62 @@ public class AnomalyRecord implements StorageSerialisable
      */
     public String getId()
     {
-        return m_Id;
+        return id;
     }
 
     public void setId(String id)
     {
-        m_Id = id;
+        this.id = id;
     }
 
     public int getDetectorIndex()
     {
-        return m_DetectorIndex;
+        return detectorIndex;
     }
 
     public void setDetectorIndex(int detectorIndex)
     {
-        m_DetectorIndex = detectorIndex;
+        this.detectorIndex = detectorIndex;
     }
 
     public double getAnomalyScore()
     {
-        return m_AnomalyScore;
+        return anomalyScore;
     }
 
     public void setAnomalyScore(double anomalyScore)
     {
-        m_AnomalyScore = anomalyScore;
+        this.anomalyScore = anomalyScore;
     }
 
     public double getNormalizedProbability()
     {
-        return m_NormalizedProbability;
+        return normalizedProbability;
     }
 
     public void setNormalizedProbability(double normalizedProbability)
     {
-        m_NormalizedProbability = normalizedProbability;
+        this.normalizedProbability = normalizedProbability;
     }
 
     public double getInitialNormalizedProbability()
     {
-        return m_InitialNormalizedProbability;
+        return initialNormalizedProbability;
     }
 
     public void setInitialNormalizedProbability(double initialNormalizedProbability)
     {
-        m_InitialNormalizedProbability = initialNormalizedProbability;
+        this.initialNormalizedProbability = initialNormalizedProbability;
     }
 
     public Date getTimestamp()
     {
-        return m_Timestamp;
+        return timestamp;
     }
 
     public void setTimestamp(Date timestamp)
     {
-        m_Timestamp = timestamp;
+        this.timestamp = timestamp;
     }
 
     /**
@@ -169,7 +169,7 @@ public class AnomalyRecord implements StorageSerialisable
      */
     public long getBucketSpan()
     {
-        return m_BucketSpan;
+        return bucketSpan;
     }
 
     /**
@@ -177,191 +177,191 @@ public class AnomalyRecord implements StorageSerialisable
      */
     public void setBucketSpan(long bucketSpan)
     {
-        m_BucketSpan = bucketSpan;
+        this.bucketSpan = bucketSpan;
     }
 
     public double getProbability()
     {
-        return m_Probability;
+        return probability;
     }
 
     public void setProbability(double value)
     {
-        m_Probability = value;
+        probability = value;
     }
 
 
     public String getByFieldName()
     {
-        return m_ByFieldName;
+        return byFieldName;
     }
 
     public void setByFieldName(String value)
     {
-        m_ByFieldName = value.intern();
+        byFieldName = value.intern();
     }
 
     public String getByFieldValue()
     {
-        return m_ByFieldValue;
+        return byFieldValue;
     }
 
     public void setByFieldValue(String value)
     {
-        m_ByFieldValue = value.intern();
+        byFieldValue = value.intern();
     }
 
     public String getCorrelatedByFieldValue()
     {
-        return m_CorrelatedByFieldValue;
+        return correlatedByFieldValue;
     }
 
     public void setCorrelatedByFieldValue(String value)
     {
-        m_CorrelatedByFieldValue = value.intern();
+        correlatedByFieldValue = value.intern();
     }
 
     public String getPartitionFieldName()
     {
-        return m_PartitionFieldName;
+        return partitionFieldName;
     }
 
     public void setPartitionFieldName(String field)
     {
-        m_PartitionFieldName = field.intern();
+        partitionFieldName = field.intern();
     }
 
     public String getPartitionFieldValue()
     {
-        return m_PartitionFieldValue;
+        return partitionFieldValue;
     }
 
     public void setPartitionFieldValue(String value)
     {
-        m_PartitionFieldValue = value.intern();
+        partitionFieldValue = value.intern();
     }
 
     public String getFunction()
     {
-        return m_Function;
+        return function;
     }
 
     public void setFunction(String name)
     {
-        m_Function = name.intern();
+        function = name.intern();
     }
 
     public String getFunctionDescription()
     {
-        return m_FunctionDescription;
+        return functionDescription;
     }
 
     public void setFunctionDescription(String functionDescription)
     {
-        m_FunctionDescription = functionDescription.intern();
+        this.functionDescription = functionDescription.intern();
     }
 
     @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public double[] getTypical()
     {
-        return m_Typical;
+        return typical;
     }
 
     public void setTypical(double[] typical)
     {
-        m_Typical = typical;
+        this.typical = typical;
     }
 
     @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public double[] getActual()
     {
-        return m_Actual;
+        return actual;
     }
 
     public void setActual(double[] actual)
     {
-        m_Actual = actual;
+        this.actual = actual;
     }
 
     @JsonProperty("isInterim")
     public boolean isInterim()
     {
-        return m_IsInterim;
+        return isInterim;
     }
 
     @JsonProperty("isInterim")
     public void setInterim(boolean isInterim)
     {
-        m_IsInterim = isInterim;
+        this.isInterim = isInterim;
     }
 
     public String getFieldName()
     {
-        return m_FieldName;
+        return fieldName;
     }
 
     public void setFieldName(String field)
     {
-        m_FieldName = field.intern();
+        fieldName = field.intern();
     }
 
     public String getOverFieldName()
     {
-        return m_OverFieldName;
+        return overFieldName;
     }
 
     public void setOverFieldName(String name)
     {
-        m_OverFieldName = name.intern();
+        overFieldName = name.intern();
     }
 
     public String getOverFieldValue()
     {
-        return m_OverFieldValue;
+        return overFieldValue;
     }
 
     public void setOverFieldValue(String value)
     {
-        m_OverFieldValue = value.intern();
+        overFieldValue = value.intern();
     }
 
     public List<AnomalyCause> getCauses()
     {
-        return m_Causes;
+        return causes;
     }
 
     public void setCauses(List<AnomalyCause> causes)
     {
-        m_Causes = causes;
+        this.causes = causes;
     }
 
     public void addCause(AnomalyCause cause)
     {
-        if (m_Causes == null)
+        if (causes == null)
         {
-            m_Causes = new ArrayList<>();
+            causes = new ArrayList<>();
         }
-        m_Causes.add(cause);
+        causes.add(cause);
     }
 
     public String getParent()
     {
-        return m_Parent;
+        return parent;
     }
 
     public void setParent(String parent)
     {
-        m_Parent = parent.intern();
+        this.parent = parent.intern();
     }
 
     public List<Influence> getInfluencers()
     {
-        return m_Influencers;
+        return influencers;
     }
 
     public void setInfluencers(List<Influence> influencers)
     {
-        m_Influencers = influencers;
+        this.influencers = influencers;
     }
 
 
@@ -374,11 +374,11 @@ public class AnomalyRecord implements StorageSerialisable
 
         // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
 
-        return Objects.hash(m_DetectorIndex, m_Probability, m_AnomalyScore, m_InitialNormalizedProbability,
-                m_NormalizedProbability, Arrays.hashCode(m_Typical), Arrays.hashCode(m_Actual),
-                m_Function, m_FunctionDescription, m_FieldName, m_ByFieldName, m_ByFieldValue, m_CorrelatedByFieldValue,
-                m_PartitionFieldName, m_PartitionFieldValue, m_OverFieldName, m_OverFieldValue,
-                m_Timestamp, m_Parent, m_IsInterim, m_Causes, m_Influencers);
+        return Objects.hash(detectorIndex, probability, anomalyScore, initialNormalizedProbability,
+                normalizedProbability, Arrays.hashCode(typical), Arrays.hashCode(actual),
+                function, functionDescription, fieldName, byFieldName, byFieldValue, correlatedByFieldValue,
+                partitionFieldName, partitionFieldValue, overFieldName, overFieldValue,
+                timestamp, parent, isInterim, causes, influencers);
     }
 
 
@@ -402,152 +402,152 @@ public class AnomalyRecord implements StorageSerialisable
         // from the data store
 
         // m_HadBigNormalisedUpdate is also deliberately excluded from the test
-        return this.m_DetectorIndex == that.m_DetectorIndex
-                && this.m_Probability == that.m_Probability
-                && this.m_AnomalyScore == that.m_AnomalyScore
-                && this.m_NormalizedProbability == that.m_NormalizedProbability
-                && this.m_InitialNormalizedProbability == that.m_InitialNormalizedProbability
-                && Objects.deepEquals(this.m_Typical, that.m_Typical)
-                && Objects.deepEquals(this.m_Actual, that.m_Actual)
-                && Objects.equals(this.m_Function, that.m_Function)
-                && Objects.equals(this.m_FunctionDescription, that.m_FunctionDescription)
-                && Objects.equals(this.m_FieldName, that.m_FieldName)
-                && Objects.equals(this.m_ByFieldName, that.m_ByFieldName)
-                && Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue)
-                && Objects.equals(this.m_CorrelatedByFieldValue, that.m_CorrelatedByFieldValue)
-                && Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName)
-                && Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue)
-                && Objects.equals(this.m_OverFieldName, that.m_OverFieldName)
-                && Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue)
-                && Objects.equals(this.m_Timestamp, that.m_Timestamp)
-                && Objects.equals(this.m_Parent, that.m_Parent)
-                && Objects.equals(this.m_IsInterim, that.m_IsInterim)
-                && Objects.equals(this.m_Causes, that.m_Causes)
-                && Objects.equals(this.m_Influencers, that.m_Influencers);
+        return this.detectorIndex == that.detectorIndex
+                && this.probability == that.probability
+                && this.anomalyScore == that.anomalyScore
+                && this.normalizedProbability == that.normalizedProbability
+                && this.initialNormalizedProbability == that.initialNormalizedProbability
+                && Objects.deepEquals(this.typical, that.typical)
+                && Objects.deepEquals(this.actual, that.actual)
+                && Objects.equals(this.function, that.function)
+                && Objects.equals(this.functionDescription, that.functionDescription)
+                && Objects.equals(this.fieldName, that.fieldName)
+                && Objects.equals(this.byFieldName, that.byFieldName)
+                && Objects.equals(this.byFieldValue, that.byFieldValue)
+                && Objects.equals(this.correlatedByFieldValue, that.correlatedByFieldValue)
+                && Objects.equals(this.partitionFieldName, that.partitionFieldName)
+                && Objects.equals(this.partitionFieldValue, that.partitionFieldValue)
+                && Objects.equals(this.overFieldName, that.overFieldName)
+                && Objects.equals(this.overFieldValue, that.overFieldValue)
+                && Objects.equals(this.timestamp, that.timestamp)
+                && Objects.equals(this.parent, that.parent)
+                && Objects.equals(this.isInterim, that.isInterim)
+                && Objects.equals(this.causes, that.causes)
+                && Objects.equals(this.influencers, that.influencers);
     }
 
     public boolean hadBigNormalisedUpdate()
     {
-        return m_HadBigNormalisedUpdate;
+        return this.hadBigNormalisedUpdate;
     }
 
     public void resetBigNormalisedUpdateFlag()
     {
-        m_HadBigNormalisedUpdate = false;
+        hadBigNormalisedUpdate = false;
     }
 
     public void raiseBigNormalisedUpdateFlag()
     {
-        m_HadBigNormalisedUpdate = true;
+        hadBigNormalisedUpdate = true;
     }
 
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.addTimestamp(m_Timestamp)
-                .add(DETECTOR_INDEX, m_DetectorIndex)
-                .add(PROBABILITY, m_Probability)
-                .add(ANOMALY_SCORE, m_AnomalyScore)
-                .add(NORMALIZED_PROBABILITY, m_NormalizedProbability)
-                .add(INITIAL_NORMALIZED_PROBABILITY, m_InitialNormalizedProbability)
-                .add(BUCKET_SPAN, m_BucketSpan);
+        serialiser.addTimestamp(timestamp)
+                .add(DETECTOR_INDEX, detectorIndex)
+                .add(PROBABILITY, probability)
+                .add(ANOMALY_SCORE, anomalyScore)
+                .add(NORMALIZED_PROBABILITY, normalizedProbability)
+                .add(INITIAL_NORMALIZED_PROBABILITY, initialNormalizedProbability)
+                .add(BUCKET_SPAN, bucketSpan);
 
         DotNotationReverser reverser = serialiser.newDotNotationReverser();
         List<String> topLevelExcludes = new ArrayList<>();
 
-        if (m_ByFieldName != null)
+        if (byFieldName != null)
         {
-            serialiser.add(BY_FIELD_NAME, m_ByFieldName);
-            if (m_ByFieldValue != null)
+            serialiser.add(BY_FIELD_NAME, byFieldName);
+            if (byFieldValue != null)
             {
-                reverser.add(m_ByFieldName, m_ByFieldValue);
-                topLevelExcludes.add(m_ByFieldName);
+                reverser.add(byFieldName, byFieldValue);
+                topLevelExcludes.add(byFieldName);
             }
         }
-        if (m_ByFieldValue != null)
+        if (byFieldValue != null)
         {
-            serialiser.add(BY_FIELD_VALUE, m_ByFieldValue);
+            serialiser.add(BY_FIELD_VALUE, byFieldValue);
         }
-        if (m_CorrelatedByFieldValue != null)
+        if (correlatedByFieldValue != null)
         {
-            serialiser.add(CORRELATED_BY_FIELD_VALUE, m_CorrelatedByFieldValue);
+            serialiser.add(CORRELATED_BY_FIELD_VALUE, correlatedByFieldValue);
         }
-        if (m_Typical != null)
+        if (typical != null)
         {
-            if (m_Typical.length == 1)
+            if (typical.length == 1)
             {
-                serialiser.add(TYPICAL, m_Typical[0]);
-            }
-            else
-            {
-                serialiser.add(TYPICAL, m_Typical);
-            }
-        }
-        if (m_Actual != null)
-        {
-            if (m_Actual.length == 1)
-            {
-                serialiser.add(ACTUAL, m_Actual[0]);
+                serialiser.add(TYPICAL, typical[0]);
             }
             else
             {
-                serialiser.add(ACTUAL, m_Actual);
+                serialiser.add(TYPICAL, typical);
             }
         }
-        if (m_IsInterim)
+        if (actual != null)
         {
-            serialiser.add(IS_INTERIM, m_IsInterim);
-        }
-        if (m_FieldName != null)
-        {
-            serialiser.add(FIELD_NAME, m_FieldName);
-        }
-        if (m_Function != null)
-        {
-            serialiser.add(FUNCTION, m_Function);
-        }
-        if (m_FunctionDescription != null)
-        {
-            serialiser.add(FUNCTION_DESCRIPTION, m_FunctionDescription);
-        }
-        if (m_PartitionFieldName != null)
-        {
-            serialiser.add(PARTITION_FIELD_NAME, m_PartitionFieldName);
-            if (m_PartitionFieldValue != null)
+            if (actual.length == 1)
             {
-                reverser.add(m_PartitionFieldName, m_PartitionFieldValue);
-                topLevelExcludes.add(m_PartitionFieldName);
+                serialiser.add(ACTUAL, actual[0]);
             }
-        }
-        if (m_PartitionFieldValue != null)
-        {
-            serialiser.add(PARTITION_FIELD_VALUE, m_PartitionFieldValue);
-        }
-        if (m_OverFieldName != null)
-        {
-            serialiser.add(AnomalyRecord.OVER_FIELD_NAME, m_OverFieldName);
-            if (m_OverFieldValue != null)
+            else
             {
-                reverser.add(m_OverFieldName, m_OverFieldValue);
-                topLevelExcludes.add(m_OverFieldName);
+                serialiser.add(ACTUAL, actual);
             }
         }
-        if (m_OverFieldValue != null)
+        if (isInterim)
         {
-            serialiser.add(OVER_FIELD_VALUE, m_OverFieldValue);
+            serialiser.add(IS_INTERIM, isInterim);
         }
-        if (m_Causes != null)
+        if (fieldName != null)
         {
-            serialiser.add(CAUSES, m_Causes);
+            serialiser.add(FIELD_NAME, fieldName);
         }
-        if (m_Influencers != null && m_Influencers.isEmpty() == false)
+        if (function != null)
+        {
+            serialiser.add(FUNCTION, function);
+        }
+        if (functionDescription != null)
+        {
+            serialiser.add(FUNCTION_DESCRIPTION, functionDescription);
+        }
+        if (partitionFieldName != null)
+        {
+            serialiser.add(PARTITION_FIELD_NAME, partitionFieldName);
+            if (partitionFieldValue != null)
+            {
+                reverser.add(partitionFieldName, partitionFieldValue);
+                topLevelExcludes.add(partitionFieldName);
+            }
+        }
+        if (partitionFieldValue != null)
+        {
+            serialiser.add(PARTITION_FIELD_VALUE, partitionFieldValue);
+        }
+        if (overFieldName != null)
+        {
+            serialiser.add(AnomalyRecord.OVER_FIELD_NAME, overFieldName);
+            if (overFieldValue != null)
+            {
+                reverser.add(overFieldName, overFieldValue);
+                topLevelExcludes.add(overFieldName);
+            }
+        }
+        if (overFieldValue != null)
+        {
+            serialiser.add(OVER_FIELD_VALUE, overFieldValue);
+        }
+        if (causes != null)
+        {
+            serialiser.add(CAUSES, causes);
+        }
+        if (influencers != null && influencers.isEmpty() == false)
         {
             // First add the influencers array
-            serialiser.add(INFLUENCERS, m_Influencers);
+            serialiser.add(INFLUENCERS, influencers);
 
             // Then, where possible without creating duplicates, add top level
             // raw data fields
-            for (Influence influence: m_Influencers)
+            for (Influence influence: influencers)
             {
                 if (influence.getInfluencerFieldName() != null &&
                     !influence.getInfluencerFieldValues().isEmpty() &&

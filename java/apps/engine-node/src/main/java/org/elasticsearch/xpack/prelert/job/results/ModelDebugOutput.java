@@ -1,20 +1,3 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
 
 package org.elasticsearch.xpack.prelert.job.results;
 
@@ -53,148 +36,148 @@ public class ModelDebugOutput implements StorageSerialisable
     public static final String DEBUG_MEDIAN = "debugMedian";
     public static final String ACTUAL = "actual";
 
-    private Date m_Timestamp;
-    private String m_Id;
-    private String m_PartitionFieldName;
-    private String m_PartitionFieldValue;
-    private String m_OverFieldName;
-    private String m_OverFieldValue;
-    private String m_ByFieldName;
-    private String m_ByFieldValue;
-    private String m_DebugFeature;
-    private double m_DebugLower;
-    private double m_DebugUpper;
-    private double m_DebugMedian;
-    private double m_Actual;
+    private Date timestamp;
+    private String id;
+    private String partitionFieldName;
+    private String partitionFieldValue;
+    private String overFieldName;
+    private String overFieldValue;
+    private String byFieldName;
+    private String byFieldValue;
+    private String debugFeature;
+    private double debugLower;
+    private double debugUpper;
+    private double debugMedian;
+    private double actual;
 
     public String getId()
     {
-        return m_Id;
+        return id;
     }
 
     public void setId(String id)
     {
-        m_Id = id;
+        this.id = id;
     }
 
     public Date getTimestamp()
     {
-        return m_Timestamp;
+        return timestamp;
     }
 
     public void setTimestamp(Date timestamp)
     {
-        m_Timestamp = timestamp;
+        this.timestamp = timestamp;
     }
 
     public String getPartitionFieldName()
     {
-        return m_PartitionFieldName;
+        return partitionFieldName;
     }
 
     public void setPartitionFieldName(String partitionFieldName)
     {
-        m_PartitionFieldName = partitionFieldName;
+        this.partitionFieldName = partitionFieldName;
     }
 
     public String getPartitionFieldValue()
     {
-        return m_PartitionFieldValue;
+        return partitionFieldValue;
     }
 
     public void setPartitionFieldValue(String partitionFieldValue)
     {
-        m_PartitionFieldValue = partitionFieldValue;
+        this.partitionFieldValue = partitionFieldValue;
     }
 
     public String getOverFieldName()
     {
-        return m_OverFieldName;
+        return overFieldName;
     }
 
     public void setOverFieldName(String overFieldName)
     {
-        m_OverFieldName = overFieldName;
+        this.overFieldName = overFieldName;
     }
 
     public String getOverFieldValue()
     {
-        return m_OverFieldValue;
+        return overFieldValue;
     }
 
     public void setOverFieldValue(String overFieldValue)
     {
-        m_OverFieldValue = overFieldValue;
+        this.overFieldValue = overFieldValue;
     }
 
     public String getByFieldName()
     {
-        return m_ByFieldName;
+        return byFieldName;
     }
 
     public void setByFieldName(String byFieldName)
     {
-        m_ByFieldName = byFieldName;
+        this.byFieldName = byFieldName;
     }
 
     public String getByFieldValue()
     {
-        return m_ByFieldValue;
+        return byFieldValue;
     }
 
     public void setByFieldValue(String byFieldValue)
     {
-        m_ByFieldValue = byFieldValue;
+        this.byFieldValue = byFieldValue;
     }
 
     public String getDebugFeature()
     {
-        return m_DebugFeature;
+        return debugFeature;
     }
 
     public void setDebugFeature(String debugFeature)
     {
-        m_DebugFeature = debugFeature;
+        this.debugFeature = debugFeature;
     }
 
     public double getDebugLower()
     {
-        return m_DebugLower;
+        return debugLower;
     }
 
     public void setDebugLower(double debugLower)
     {
-        m_DebugLower = debugLower;
+        this.debugLower = debugLower;
     }
 
     public double getDebugUpper()
     {
-        return m_DebugUpper;
+        return debugUpper;
     }
 
     public void setDebugUpper(double debugUpper)
     {
-        m_DebugUpper = debugUpper;
+        this.debugUpper = debugUpper;
     }
 
     public double getDebugMedian()
     {
-        return m_DebugMedian;
+        return debugMedian;
     }
 
     public void setDebugMedian(double debugMedian)
     {
-        m_DebugMedian = debugMedian;
+        this.debugMedian = debugMedian;
     }
 
     public double getActual()
     {
-        return m_Actual;
+        return actual;
     }
 
     public void setActual(double actual)
     {
-        m_Actual = actual;
+        this.actual = actual;
     }
 
     @Override
@@ -208,78 +191,78 @@ public class ModelDebugOutput implements StorageSerialisable
         {
             return false;
         }
-        // m_Id excluded here as it is generated by the datastore
+        // id excluded here as it is generated by the datastore
         ModelDebugOutput that = (ModelDebugOutput) other;
-        return Objects.equals(this.m_Timestamp, that.m_Timestamp) &&
-                Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
-                Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
-                Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue) &&
-                Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
-                Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue) &&
-                Objects.equals(this.m_ByFieldName, that.m_ByFieldName) &&
-                Objects.equals(this.m_DebugFeature, that.m_DebugFeature) &&
-                this.m_DebugLower == that.m_DebugLower &&
-                this.m_DebugUpper == that.m_DebugUpper &&
-                this.m_DebugMedian == that.m_DebugMedian &&
-                this.m_Actual == that.m_Actual;
+        return Objects.equals(this.timestamp, that.timestamp) &&
+                Objects.equals(this.partitionFieldValue, that.partitionFieldValue) &&
+                Objects.equals(this.partitionFieldName, that.partitionFieldName) &&
+                Objects.equals(this.overFieldValue, that.overFieldValue) &&
+                Objects.equals(this.overFieldName, that.overFieldName) &&
+                Objects.equals(this.byFieldValue, that.byFieldValue) &&
+                Objects.equals(this.byFieldName, that.byFieldName) &&
+                Objects.equals(this.debugFeature, that.debugFeature) &&
+                this.debugLower == that.debugLower &&
+                this.debugUpper == that.debugUpper &&
+                this.debugMedian == that.debugMedian &&
+                this.actual == that.actual;
     }
 
     @Override
     public int hashCode()
     {
-        // m_Id excluded here as it is generated by the datastore
-        return Objects.hash(m_Timestamp, m_PartitionFieldName, m_PartitionFieldValue,
-                m_OverFieldName, m_OverFieldValue, m_ByFieldName, m_ByFieldValue,
-                m_DebugFeature, m_DebugLower, m_DebugUpper, m_DebugMedian, m_Actual);
+        // id excluded here as it is generated by the datastore
+        return Objects.hash(timestamp, partitionFieldName, partitionFieldValue,
+                overFieldName, overFieldValue, byFieldName, byFieldValue,
+                debugFeature, debugLower, debugUpper, debugMedian, actual);
     }
 
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.addTimestamp(m_Timestamp)
-                  .add(DEBUG_FEATURE, m_DebugFeature)
-                  .add(DEBUG_LOWER, m_DebugLower)
-                  .add(DEBUG_UPPER, m_DebugUpper)
-                  .add(DEBUG_MEDIAN, m_DebugMedian)
-                  .add(ACTUAL, m_Actual);
+        serialiser.addTimestamp(timestamp)
+                  .add(DEBUG_FEATURE, debugFeature)
+                  .add(DEBUG_LOWER, debugLower)
+                  .add(DEBUG_UPPER, debugUpper)
+                  .add(DEBUG_MEDIAN, debugMedian)
+                  .add(ACTUAL, actual);
 
         DotNotationReverser reverser = serialiser.newDotNotationReverser();
 
-        if (m_ByFieldName != null)
+        if (byFieldName != null)
         {
-            serialiser.add(BY_FIELD_NAME, m_ByFieldName);
-            if (m_ByFieldValue != null)
+            serialiser.add(BY_FIELD_NAME, byFieldName);
+            if (byFieldValue != null)
             {
-                reverser.add(m_ByFieldName, m_ByFieldValue);
+                reverser.add(byFieldName, byFieldValue);
             }
         }
-        if (m_ByFieldValue != null)
+        if (byFieldValue != null)
         {
-            serialiser.add(BY_FIELD_VALUE, m_ByFieldValue);
+            serialiser.add(BY_FIELD_VALUE, byFieldValue);
         }
-        if (m_OverFieldName != null)
+        if (overFieldName != null)
         {
-            serialiser.add(OVER_FIELD_NAME, m_OverFieldName);
-            if (m_OverFieldValue != null)
+            serialiser.add(OVER_FIELD_NAME, overFieldName);
+            if (overFieldValue != null)
             {
-                reverser.add(m_OverFieldName, m_OverFieldValue);
+                reverser.add(overFieldName, overFieldValue);
             }
         }
-        if (m_OverFieldValue != null)
+        if (overFieldValue != null)
         {
-            serialiser.add(OVER_FIELD_VALUE, m_OverFieldValue);
+            serialiser.add(OVER_FIELD_VALUE, overFieldValue);
         }
-        if (m_PartitionFieldName != null)
+        if (partitionFieldName != null)
         {
-            serialiser.add(PARTITION_FIELD_NAME, m_PartitionFieldName);
-            if (m_PartitionFieldValue != null)
+            serialiser.add(PARTITION_FIELD_NAME, partitionFieldName);
+            if (partitionFieldValue != null)
             {
-                reverser.add(m_PartitionFieldName, m_PartitionFieldValue);
+                reverser.add(partitionFieldName, partitionFieldValue);
             }
         }
-        if (m_PartitionFieldValue != null)
+        if (partitionFieldValue != null)
         {
-            serialiser.add(PARTITION_FIELD_VALUE, m_PartitionFieldValue);
+            serialiser.add(PARTITION_FIELD_VALUE, partitionFieldValue);
         }
 
         serialiser.addReverserResults(reverser);

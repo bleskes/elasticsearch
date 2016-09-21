@@ -10,13 +10,13 @@ import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
 
 class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIterator<JobDetails>
 {
-    private final ElasticsearchJobDetailsMapper m_JobMapper;
+    private final ElasticsearchJobDetailsMapper jobMapper;
 
     public ElasticsearchBatchedJobsIterator(Client client, String index,
             ObjectMapper objectMapper)
     {
         super(client, index, objectMapper);
-        m_JobMapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
+        jobMapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
     }
 
     @Override
@@ -30,7 +30,7 @@ class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIter
     {
         try
         {
-            return m_JobMapper.map(hit.getSource());
+            return jobMapper.map(hit.getSource());
         }
         catch (CannotMapJobFromJson e)
         {

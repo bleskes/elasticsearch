@@ -16,11 +16,6 @@ import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.*;
 
 /**
@@ -51,11 +46,10 @@ public class JobManager {
     private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
     private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
 
-    private final ActionGuardian<Action> m_ProcessActionGuardian;
-    private final ActionGuardian<ScheduledAction> m_SchedulerActionGuardian;
-    private final JobProvider m_JobProvider;
-
-    private final JobFactory m_JobFactory;
+    private final ActionGuardian<Action> processActionGuardian;
+    private final ActionGuardian<ScheduledAction> schedulerActionGuardian;
+    private final JobProvider jobProvider;
+    private final JobFactory jobFactory;
 
     /**
      * Create a JobManager
@@ -63,11 +57,11 @@ public class JobManager {
     public JobManager(JobProvider jobProvider,
                       ActionGuardian<Action> processActionGuardian,
                       ActionGuardian<ScheduledAction> schedulerActionGuardian) {
-        m_JobProvider = Objects.requireNonNull(jobProvider);
-        m_ProcessActionGuardian = Objects.requireNonNull(processActionGuardian);
-        m_SchedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
+        this.jobProvider = Objects.requireNonNull(jobProvider);
+        this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
+        this.schedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
 
-        m_JobFactory = new JobFactory();
+        jobFactory = new JobFactory();
     }
 
 
@@ -80,7 +74,7 @@ public class JobManager {
      * @throws UnknownJobException if there is no job with matching the given {@code jobId}
      */
     public JobDetails getJobOrThrowIfUnknown(String jobId) throws UnknownJobException {
-        Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
+        Optional<JobDetails> job = jobProvider.getJobDetails(jobId);
         if (!job.isPresent()) {
             throw new UnknownJobException(jobId);
         }
@@ -104,9 +98,9 @@ public class JobManager {
             throws LicenseViolationException, JobConfigurationException, JobIdAlreadyExistsException,
             DataStoreException, JobInUseException {
 
-        JobDetails jobDetails = m_JobFactory.create(jobConfig);
+        JobDetails jobDetails = jobFactory.create(jobConfig);
         String jobId = jobDetails.getId();
-        if (!m_JobProvider.jobIdIsUnique(jobId)) {
+        if (!jobProvider.jobIdIsUnique(jobId)) {
             try {
                 // A job with the desired ID already exists - try to delete it
                 // if we've been told to overwrite
@@ -125,7 +119,7 @@ public class JobManager {
             }
         }
 
-        m_JobProvider.createJob(jobDetails);
+        jobProvider.createJob(jobDetails);
         audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
         return jobDetails;
     }
@@ -140,7 +134,7 @@ public class JobManager {
             throws UnknownJobException {
         Map<String, Object> update = new HashMap<>();
         update.put(key, value);
-        m_JobProvider.updateJob(jobId, update);
+        jobProvider.updateJob(jobId, update);
     }
 
     /**
@@ -153,7 +147,7 @@ public class JobManager {
     public void setAnalysisLimits(String jobId, AnalysisLimits newLimits) throws UnknownJobException {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.ANALYSIS_LIMITS, newLimits.toMap());
-        m_JobProvider.updateJob(jobId, update);
+        jobProvider.updateJob(jobId, update);
     }
 
     /**
@@ -181,7 +175,7 @@ public class JobManager {
         } else {
             update.put(JobDetails.MODEL_DEBUG_CONFIG, null);
         }
-        m_JobProvider.updateJob(jobId, update);
+        jobProvider.updateJob(jobId, update);
     }
 
     public void setRenormalizationWindowDays(String jobId, Long renormalizationWindowDays) throws UnknownJobException {
@@ -217,7 +211,7 @@ public class JobManager {
     public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException {
         LOGGER.debug("Deleting job '" + jobId + "'");
 
-        boolean success = m_JobProvider.deleteJob(jobId);
+        boolean success = jobProvider.deleteJob(jobId);
         if (success) {
             audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
         }
@@ -226,10 +220,10 @@ public class JobManager {
 
 
     public Auditor audit(String jobId) {
-        return m_JobProvider.audit(jobId);
+        return jobProvider.audit(jobId);
     }
 
     public Auditor systemAudit() {
-        return m_JobProvider.audit("");
+        return jobProvider.audit("");
     }
 }

@@ -12,13 +12,13 @@ public class IntRange
 
     public static class Bound
     {
-        private final int m_Value;
-        private final BoundType m_BoundType;
+        private final int value;
+        private final BoundType boundType;
 
         public Bound(int value, BoundType boundType)
         {
-            m_Value = value;
-            m_BoundType = Objects.requireNonNull(boundType);
+            this.value = value;
+            this.boundType = Objects.requireNonNull(boundType);
         }
     }
 
@@ -30,51 +30,51 @@ public class IntRange
     private static char RIGHT_SQUARE_BRACKET = ']';
     private static char BOUNDS_SEPARATOR = '\u2025';
 
-    private final Bound m_Lower;
-    private final Bound m_Upper;
+    private final Bound lower;
+    private final Bound upper;
 
     private IntRange(Bound lower, Bound upper)
     {
-        m_Lower = Objects.requireNonNull(lower);
-        m_Upper = Objects.requireNonNull(upper);
+        this.lower = Objects.requireNonNull(lower);
+        this.upper = Objects.requireNonNull(upper);
     }
 
     public boolean contains(int value)
     {
-        int lowerIncludedValue = m_Lower.m_BoundType == BoundType.CLOSED ? m_Lower.m_Value : m_Lower.m_Value + 1;
-        int upperIncludedValue = m_Upper.m_BoundType == BoundType.CLOSED ? m_Upper.m_Value : m_Upper.m_Value - 1;
+        int lowerIncludedValue = lower.boundType == BoundType.CLOSED ? lower.value : lower.value + 1;
+        int upperIncludedValue = upper.boundType == BoundType.CLOSED ? upper.value : upper.value - 1;
         return value >= lowerIncludedValue && value <= upperIncludedValue;
     }
 
     public boolean hasLowerBound()
     {
-        return m_Lower.m_Value != Integer.MIN_VALUE;
+        return lower.value != Integer.MIN_VALUE;
     }
 
     public boolean hasUpperBound()
     {
-        return m_Upper.m_Value != Integer.MAX_VALUE;
+        return upper.value != Integer.MAX_VALUE;
     }
 
     public int lower()
     {
-        return m_Lower.m_Value;
+        return lower.value;
     }
 
     public int upper()
     {
-        return m_Upper.m_Value;
+        return upper.value;
     }
 
     @Override
     public String toString()
     {
         StringBuilder builder = new StringBuilder();
-        builder.append(hasLowerBound() && m_Lower.m_BoundType == BoundType.CLOSED ? LEFT_SQUARE_BRACKET : LEFT_BRACKET);
-        builder.append(hasLowerBound() ? m_Lower.m_Value : MINUS_INFINITY);
+        builder.append(hasLowerBound() && lower.boundType == BoundType.CLOSED ? LEFT_SQUARE_BRACKET : LEFT_BRACKET);
+        builder.append(hasLowerBound() ? lower.value : MINUS_INFINITY);
         builder.append(BOUNDS_SEPARATOR);
-        builder.append(hasUpperBound() ? m_Upper.m_Value : PLUS_INFINITY);
-        builder.append(hasUpperBound() && m_Upper.m_BoundType == BoundType.CLOSED ? RIGHT_SQUARE_BRACKET : RIGHT_BRACKET);
+        builder.append(hasUpperBound() ? upper.value : PLUS_INFINITY);
+        builder.append(hasUpperBound() && upper.boundType == BoundType.CLOSED ? RIGHT_SQUARE_BRACKET : RIGHT_BRACKET);
         return builder.toString();
     }
 

@@ -1,20 +1,3 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
@@ -38,21 +21,21 @@ public abstract class JobDataPersister
     public static final String PARTITION_FIELDS = "partitionFields";
 
 
-    protected String [] m_FieldNames;
-    protected int [] m_FieldMappings;
-    protected int [] m_ByFieldMappings;
-    protected int [] m_OverFieldMappings;
-    protected int [] m_PartitionFieldMappings;
+    protected String [] fieldNames;
+    protected int [] fieldMappings;
+    protected int [] byFieldMappings;
+    protected int [] overFieldMappings;
+    protected int [] partitionFieldMappings;
 
     public void setFieldMappings(List<String> fields,
             List<String> byFields, List<String> overFields,
             List<String> partitionFields, Map<String, Integer> fieldMap)
     {
-        m_FieldNames = fields.toArray(new String[fields.size()]);
-        m_FieldMappings = extractMappings(fields, fieldMap);
-        m_ByFieldMappings = extractMappings(byFields, fieldMap);
-        m_OverFieldMappings = extractMappings(overFields, fieldMap);
-        m_PartitionFieldMappings = extractMappings(partitionFields, fieldMap);
+        fieldNames = fields.toArray(new String[fields.size()]);
+        fieldMappings = extractMappings(fields, fieldMap);
+        byFieldMappings = extractMappings(byFields, fieldMap);
+        overFieldMappings = extractMappings(overFields, fieldMap);
+        partitionFieldMappings = extractMappings(partitionFields, fieldMap);
     }
 
     private static int[] extractMappings(List<String> fields, Map<String, Integer> fieldMap)

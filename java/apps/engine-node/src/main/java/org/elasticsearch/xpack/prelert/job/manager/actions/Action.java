@@ -1,29 +1,3 @@
-/************************************************************
- *                                                          *
- * Contents of file Copyright (c) Prelert Ltd 2006-2016     *
- *                                                          *
- *----------------------------------------------------------*
- *----------------------------------------------------------*
- * WARNING:                                                 *
- * THIS FILE CONTAINS UNPUBLISHED PROPRIETARY               *
- * SOURCE CODE WHICH IS THE PROPERTY OF PRELERT LTD AND     *
- * PARENT OR SUBSIDIARY COMPANIES.                          *
- * PLEASE READ THE FOLLOWING AND TAKE CAREFUL NOTE:         *
- *                                                          *
- * This source code is confidential and any person who      *
- * receives a copy of it, or believes that they are viewing *
- * it without permission is asked to notify Prelert Ltd     *
- * on +44 (0)20 3567 1249 or email to legal@prelert.com.    *
- * All intellectual property rights in this source code     *
- * are owned by Prelert Ltd.  No part of this source code   *
- * may be reproduced, adapted or transmitted in any form or *
- * by any means, electronic, mechanical, photocopying,      *
- * recording or otherwise.                                  *
- *                                                          *
- *----------------------------------------------------------*
- *                                                          *
- *                                                          *
- ************************************************************/
 
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
@@ -49,10 +23,10 @@ public enum Action implements ActionState<Action>
     UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
     WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB);
 
-    private final String m_MessageKey;
-    private final String m_VerbKey;
-    private final boolean m_KeepDistributedLock;
-    private final ErrorCodes m_ErrorCode;
+    private final String messageKey;
+    private final String verbKey;
+    private final boolean keepDistributedLock;
+    private final ErrorCodes errorCode;
 
     /**
      * The set of valid transitions from SLEEPING
@@ -91,21 +65,21 @@ public enum Action implements ActionState<Action>
     private Action(String messageKey, String verbKey, ErrorCodes errorCode,
                 boolean keepDistributedLock)
     {
-        m_MessageKey = messageKey;
-        m_VerbKey = verbKey;
-        m_KeepDistributedLock = keepDistributedLock;
-        m_ErrorCode = errorCode;
+        this.messageKey = messageKey;
+        this.verbKey = verbKey;
+        this.keepDistributedLock = keepDistributedLock;
+        this.errorCode = errorCode;
     }
 
     @Override
     public String getActionVerb()
     {
-        return m_VerbKey;
+        return verbKey;
     }
 
     public String getMessageKey()
     {
-        return m_MessageKey;
+        return messageKey;
     }
 
     @Override
@@ -129,7 +103,7 @@ public enum Action implements ActionState<Action>
     @Override
     public ErrorCodes getErrorCode()
     {
-        return m_ErrorCode;
+        return errorCode;
     }
 
     /**
@@ -177,7 +151,7 @@ public enum Action implements ActionState<Action>
     @Override
     public boolean holdDistributedLock()
     {
-        return m_KeepDistributedLock;
+        return keepDistributedLock;
     }
 
     @Override

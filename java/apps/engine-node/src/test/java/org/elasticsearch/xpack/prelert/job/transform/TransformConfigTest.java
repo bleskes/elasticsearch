@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 
 public class TransformConfigTest {
     @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void testGetOutputs_GivenEmptyTransformConfig() {
@@ -49,7 +49,7 @@ public class TransformConfigTest {
 
     @Test
     public void testVerify_GivenUnknownTransform() {
-        m_ExpectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalArgumentException.class);
 
         TransformConfig tr = new TransformConfig();
         tr.setInputs(Arrays.asList("f1", "f2"));

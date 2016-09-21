@@ -610,24 +610,24 @@ public enum ErrorCodes
      */
     LIST_UNKNOWN_FIELD_ERROR(80102);
 
-    private long m_ErrorCode;
-    private String m_ValueString;
+    private long errorCode;
+    private String valueString;
 
     private ErrorCodes(long code)
     {
-        m_ErrorCode = code;
-        m_ValueString = Long.toString(code);
+        errorCode = code;
+        valueString = Long.toString(code);
     }
 
     @JsonValue
     public long getValue()
     {
-        return m_ErrorCode;
+        return errorCode;
     }
 
     public String getValueString()
     {
-        return m_ValueString;
+        return valueString;
     }
 
     @JsonCreator
