@@ -14,14 +14,27 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.xpack.prelert.action;
+package org.elasticsearch.xpack.prelert.action.job;
 
-import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
+import org.elasticsearch.action.Action;
 import org.elasticsearch.client.ElasticsearchClient;
 
-public class PutJobRequestBuilder extends MasterNodeOperationRequestBuilder<PutJobRequest, PutJobResponse, PutJobRequestBuilder> {
+public class PutJobAction extends Action<PutJobRequest, PutJobResponse, PutJobRequestBuilder> {
 
-    public PutJobRequestBuilder(ElasticsearchClient client, PutJobAction action) {
-        super(client, action, new PutJobRequest());
+    public static final PutJobAction INSTANCE = new PutJobAction();
+    public static final String NAME = "cluster:admin/prelert/job/put";
+
+    public PutJobAction() {
+        super(NAME);
+    }
+
+    @Override
+    public PutJobRequestBuilder newRequestBuilder(ElasticsearchClient client) {
+        return new PutJobRequestBuilder(client, this);
+    }
+
+    @Override
+    public PutJobResponse newResponse() {
+        return new PutJobResponse();
     }
 }

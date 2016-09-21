@@ -14,44 +14,54 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
-import org.elasticsearch.common.bytes.BytesArray;
+package org.elasticsearch.xpack.prelert.action.job;
+
+import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.support.master.MasterNodeRequest;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
 
-public class PutJobResponse extends AcknowledgedResponse {
+public class PutJobRequest extends MasterNodeRequest<PutJobRequest> {
 
-    private BytesReference response;
+    private BytesReference jobConfiguration;
+    private boolean overwrite;
 
-    public PutJobResponse(JobDetails jobDetails, ObjectMapper objectMapper) throws JsonProcessingException {
-        super(true);
-        this.response = new BytesArray(objectMapper.writeValueAsString(jobDetails));
+    public BytesReference getJobConfiguration() {
+        return jobConfiguration;
     }
 
-    public PutJobResponse() {
+    public void setJobConfiguration(BytesReference jobConfiguration) {
+        this.jobConfiguration = jobConfiguration;
     }
 
-    public BytesReference getResponse() {
-        return response;
+    public boolean isOverwrite() {
+        return overwrite;
+    }
+
+    public void setOverwrite(boolean overwrite) {
+        this.overwrite = overwrite;
+    }
+
+    @Override
+    public ActionRequestValidationException validate() {
+        return null;
     }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        response = in.readBytesReference();
+        jobConfiguration = in.readBytesReference();
+        overwrite = in.readBoolean();
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeBytesReference(response);
+        out.writeBytesReference(jobConfiguration);
+        out.writeBoolean(overwrite);
     }
 }

@@ -1,10 +1,9 @@
-package org.elasticsearch.xpack.prelert.rest;
+package org.elasticsearch.xpack.prelert.rest.job;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.xpack.prelert.action.PutJobRequest;
-import org.elasticsearch.xpack.prelert.action.PutJobResponse;
-import org.elasticsearch.xpack.prelert.action.TransportPutJobAction;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.xpack.prelert.action.job.PutJobRequest;
+import org.elasticsearch.xpack.prelert.action.job.PutJobResponse;
+import org.elasticsearch.xpack.prelert.action.job.TransportPutJobAction;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;

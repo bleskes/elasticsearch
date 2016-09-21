@@ -14,7 +14,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.xpack.prelert.action;
+package org.elasticsearch.xpack.prelert.action.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.cluster.service.ClusterService;

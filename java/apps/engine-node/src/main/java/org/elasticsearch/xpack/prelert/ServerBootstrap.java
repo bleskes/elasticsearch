@@ -29,9 +29,9 @@ import org.elasticsearch.plugins.Plugin;
 
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.transport.Netty3Plugin;
-import org.elasticsearch.xpack.prelert.action.PutJobAction;
-import org.elasticsearch.xpack.prelert.action.TransportPutJobAction;
-import org.elasticsearch.xpack.prelert.rest.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.action.job.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.job.TransportPutJobAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
 
 import java.io.IOException;
 import java.util.Arrays;
