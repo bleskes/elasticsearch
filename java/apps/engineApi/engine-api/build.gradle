@@ -33,5 +33,11 @@ task copyRuntimeJarsToStaging(type: Copy) {
     into "$System.env.PRELERT_HOME/cots/libjar"
 }
 
+jar {
+    manifest {
+        attributes("Prelert-Version": version)
+    }
+}
+
 project.build.dependsOn(copyJarToStaging)
 project.build.dependsOn(copyRuntimeJarsToStaging)

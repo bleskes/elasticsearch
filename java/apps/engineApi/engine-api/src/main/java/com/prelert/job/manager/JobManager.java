@@ -46,6 +46,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.Manifest;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -912,14 +913,14 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         try
         {
             // Try to get the API version as recorded by Maven at build time
-            InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engine-api/pom.properties");
+            InputStream is = getClass().getResourceAsStream("/META-INF/MANIFEST.MF");
             if (is != null)
             {
-                try
-                {
-                    Properties props = new Properties();
-                    props.load(is);
-                    return props.getProperty("version", "");
+                try {
+                    Manifest mf = new Manifest(is);
+
+                    String version = mf.getMainAttributes().getValue("Prelert-Version");
+                    return (version != null) ? version : "";
                 }
                 finally
                 {
