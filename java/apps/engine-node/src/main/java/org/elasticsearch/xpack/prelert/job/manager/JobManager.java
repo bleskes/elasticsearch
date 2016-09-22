@@ -208,14 +208,18 @@ public class JobManager {
      * @throws JobInUseException            If the job cannot be deleted because the
      *                                      native process is in use.
      */
-    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException {
+    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException, JobInUseException {
         LOGGER.debug("Deleting job '" + jobId + "'");
 
-        boolean success = jobProvider.deleteJob(jobId);
-        if (success) {
-            audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                     processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
+
+            boolean success = jobProvider.deleteJob(jobId);
+            if (success) {
+                audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+            }
+            return success;
         }
-        return success;
     }
 
 

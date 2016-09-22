@@ -29,7 +29,6 @@ public class TransformTypeTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testFromString_UnknownType() {
-        @SuppressWarnings("unused")
-        TransformType created = TransformType.fromString("random_type");
+        TransformType.fromString("random_type");
     }
 }

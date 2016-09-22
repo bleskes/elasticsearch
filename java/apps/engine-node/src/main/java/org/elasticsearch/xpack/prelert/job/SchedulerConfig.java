@@ -19,8 +19,7 @@ import java.util.*;
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)
-public class SchedulerConfig
-{
+public class SchedulerConfig {
     /**
      * Enum of the acceptable data sources.
      */
@@ -148,20 +147,6 @@ public class SchedulerConfig
     public void setDataSource(DataSource dataSource)
     {
         this.dataSource = dataSource;
-    }
-
-    /**
-     * Gets the compatibility for the data source.
-     * @return The data source compatibility.
-     */
-    public String getDataSourceCompatibility()
-    {
-        return this.dataSourceCompatibility;
-    }
-
-    public void setDataSourceCompatibility(String dataSourceCompatibility)
-    {
-        this.dataSourceCompatibility = dataSourceCompatibility;
     }
 
     public Long getQueryDelay()
@@ -320,12 +305,36 @@ public class SchedulerConfig
         this.scrollSize = scrollSize;
     }
 
-    public String getEncryptedPassword() {
+    /**
+     * The encrypted password to use to connect to the data source (if any).
+     * A class outside this package is responsible for encrypting and decrypting
+     * the password.
+     * @return The password, or <code>null</code> if not set.
+     */
+    public String getEncryptedPassword()
+    {
         return encryptedPassword;
     }
 
+    public void setEncryptedPassword(String encryptedPassword)
+    {
+        this.encryptedPassword = encryptedPassword;
+    }
+
+    /**
+     * The plain text password to use to connect to the data source (if any).
+     * This is likely to return <code>null</code> most of the time, as the
+     * intention is that it is only present it initial configurations, and gets
+     * replaced with an encrypted password as soon as possible after receipt.
+     * @return The password, or <code>null</code> if not set.
+     */
     public String getPassword() {
         return password;
+    }
+
+    public void setPassword(String password)
+    {
+        this.password = password;
     }
 
     /**

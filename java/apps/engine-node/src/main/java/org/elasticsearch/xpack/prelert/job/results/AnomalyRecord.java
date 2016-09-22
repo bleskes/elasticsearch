@@ -372,7 +372,7 @@ public class AnomalyRecord implements StorageSerialisable
         // will hash the same as a record representing the same anomaly that did
         // not come from the data store
 
-        // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
+        // hadBigNormalisedUpdate is also deliberately excluded from the hash
 
         return Objects.hash(detectorIndex, probability, anomalyScore, initialNormalizedProbability,
                 normalizedProbability, Arrays.hashCode(typical), Arrays.hashCode(actual),
@@ -401,7 +401,7 @@ public class AnomalyRecord implements StorageSerialisable
         // equal to a record representing the same anomaly that did not come
         // from the data store
 
-        // m_HadBigNormalisedUpdate is also deliberately excluded from the test
+        // hadBigNormalisedUpdate is also deliberately excluded from the test
         return this.detectorIndex == that.detectorIndex
                 && this.probability == that.probability
                 && this.anomalyScore == that.anomalyScore
