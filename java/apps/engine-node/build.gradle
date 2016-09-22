@@ -46,7 +46,8 @@ task copyRestSpec(type: Copy) {
 
 task startPrelert(type:JavaExec) {
     main = 'org.elasticsearch.xpack.prelert.ServerBootstrap'
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = sourceSets.test.runtimeClasspath
+    debug = project.hasProperty('debug-prelert') ? tru : false
 }
 
 task startPrelertInBackground() {
