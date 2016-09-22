@@ -30,21 +30,11 @@ package com.prelert.job.manager;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Properties;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Manifest;
 
@@ -912,19 +902,19 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         // Try to add extra fields (just appVer for now)
         try
         {
-            // Try to get the API version as recorded by Maven at build time
-            InputStream is = getClass().getResourceAsStream("/META-INF/MANIFEST.MF");
-            if (is != null)
-            {
-                try {
-                    Manifest mf = new Manifest(is);
+            Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
+            while (resources.hasMoreElements()) {
 
-                    String version = mf.getMainAttributes().getValue("Prelert-Version");
-                    return (version != null) ? version : "";
+                try {
+                    Manifest manifest = new Manifest(resources.nextElement().openStream());
+
+                    String version = manifest.getMainAttributes().getValue("Prelert-Version");
+                    if (version != null) {
+                        return version;
+                    }
                 }
-                finally
-                {
-                    is.close();
+                catch (IOException e) {
+                    // suppress
                 }
             }
         }
