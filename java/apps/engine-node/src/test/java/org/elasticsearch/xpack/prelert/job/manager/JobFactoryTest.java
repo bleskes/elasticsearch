@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.manager;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
 import org.junit.Test;
 
@@ -9,9 +10,9 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class JobFactoryTest {
+public class JobFactoryTest extends ESTestCase {
 
-    @Test
+
     public void testGenerateJobId_doesnotIncludeHost()
     {
         Pattern pattern = Pattern.compile("[0-9]{14}-[0-9]{5}");
@@ -22,7 +23,7 @@ public class JobFactoryTest {
         assertTrue(pattern.matcher(id).matches());
     }
 
-    @Test
+
     public void testGenerateJobId_IncludesHost()
     {
         Pattern pattern = Pattern.compile("[0-9]{14}-server-1-[0-9]{5}");
@@ -33,14 +34,14 @@ public class JobFactoryTest {
         assertTrue(pattern.matcher(id).matches());
     }
 
-    @Test
+
     public void testGenerateJobId_isShorterThanMaxHJobLength()
     {
         JobFactory factory = new JobFactory();
         assertTrue(factory.generateJobId().length() < JobConfigurationVerifier.MAX_JOB_ID_LENGTH);
     }
 
-    @Test
+
     public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname()
     {
         JobFactory factory = new JobFactory("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
@@ -49,7 +50,7 @@ public class JobFactoryTest {
         assertTrue(id.endsWith("-00001"));
     }
 
-    @Test
+
     public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname_andSixDigitSequence()
     {
         JobFactory factory = new JobFactory("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");

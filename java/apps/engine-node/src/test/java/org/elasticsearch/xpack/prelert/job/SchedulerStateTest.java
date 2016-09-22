@@ -1,23 +1,24 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class SchedulerStateTest {
-    @Test
+public class SchedulerStateTest extends ESTestCase {
+
     public void testEquals_GivenDifferentClass() {
         assertFalse(new SchedulerState().equals("a string"));
     }
 
-    @Test
+
     public void testEquals_GivenSameReference() {
         SchedulerState schedulerState = new SchedulerState();
         assertTrue(schedulerState.equals(schedulerState));
     }
 
-    @Test
+
     public void testEquals_GivenEqualObjects() {
         SchedulerState schedulerState1 = new SchedulerState();
         schedulerState1.setStartTimeMillis(18L);

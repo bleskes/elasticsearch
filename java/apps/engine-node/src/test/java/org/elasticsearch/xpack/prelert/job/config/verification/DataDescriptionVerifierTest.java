@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.junit.Rule;
@@ -9,11 +10,11 @@ import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertTrue;
 
-public class DataDescriptionVerifierTest {
+public class DataDescriptionVerifierTest extends ESTestCase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Test
+
     public void testVerify_GivenNullTimeFormat() throws JobConfigurationException {
         DataDescription description = new DataDescription();
         description.setTimeFormat(null);
@@ -21,7 +22,7 @@ public class DataDescriptionVerifierTest {
         assertTrue(DataDescriptionVerifier.verify(description));
     }
 
-    @Test
+
     public void testVerify_GivenEmptyTimeFormat() throws JobConfigurationException {
         DataDescription description = new DataDescription();
         description.setTimeFormat("");
@@ -29,7 +30,7 @@ public class DataDescriptionVerifierTest {
         assertTrue(DataDescriptionVerifier.verify(description));
     }
 
-    @Test
+
     public void testVerify_GivenTimeFormatIsEpoch() throws JobConfigurationException {
         DataDescription description = new DataDescription();
         description.setTimeFormat("epoch");
@@ -37,7 +38,7 @@ public class DataDescriptionVerifierTest {
         assertTrue(DataDescriptionVerifier.verify(description));
     }
 
-    @Test
+
     public void testVerify_GivenTimeFormatIsEpochMs() throws JobConfigurationException {
         DataDescription description = new DataDescription();
         description.setTimeFormat("epoch_ms");
@@ -45,7 +46,7 @@ public class DataDescriptionVerifierTest {
         assertTrue(DataDescriptionVerifier.verify(description));
     }
 
-    @Test
+
     public void testVerify_GivenTimeFormatIsValidDateFormat() throws JobConfigurationException {
         DataDescription description = new DataDescription();
         description.setTimeFormat("yyyy-MM-dd HH");
@@ -53,7 +54,7 @@ public class DataDescriptionVerifierTest {
         assertTrue(DataDescriptionVerifier.verify(description));
     }
 
-    @Test
+
     public void testVerify_GivenTimeFormatIsInvalidDateFormat() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expectMessage("Invalid Time format string 'invalid'");
@@ -64,7 +65,7 @@ public class DataDescriptionVerifierTest {
         DataDescriptionVerifier.verify(description);
     }
 
-    @Test
+
     public void testVerify_GivenTimeFormatIsValidButDoesNotContainTime() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expectMessage("Invalid Time format string 'y-M-dd'");
@@ -75,7 +76,7 @@ public class DataDescriptionVerifierTest {
         DataDescriptionVerifier.verify(description);
     }
 
-    @Test
+
     public void testVerify_GivenTimeFormatIsInvalidDateParseFormat()
             throws JobConfigurationException {
         String badFormat = "YYY-mm-UU hh:mm:ssY";

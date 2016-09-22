@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
@@ -25,12 +26,12 @@ import static org.junit.Assert.assertEquals;
  * {@linkplain AnalysisConfig#overFields()}
  * {@linkplain AnalysisConfig#partitionFields()}
  */
-public class AnalysisConfigVerifierTest {
+public class AnalysisConfigVerifierTest extends ESTestCase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
 
-    @Test
+
     public void testVerify_throws()
             throws JobConfigurationException {
         AnalysisConfig ac = new AnalysisConfig();
@@ -113,7 +114,7 @@ public class AnalysisConfigVerifierTest {
         }
     }
 
-    @Test
+
     public void testVerify_GivenNegativeBucketSpan() throws JobConfigurationException {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(-1L);
@@ -123,7 +124,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(analysisConfig);
     }
 
-    @Test
+
     public void testVerify_GivenNegativeBatchSpan() throws JobConfigurationException {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBatchSpan(-1L);
@@ -133,7 +134,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(analysisConfig);
     }
 
-    @Test
+
     public void testVerify_GivenNegativeLatency() throws JobConfigurationException {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setLatency(-1L);
@@ -143,7 +144,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(analysisConfig);
     }
 
-    @Test
+
     public void testVerify_GivenNegativePeriod() throws JobConfigurationException {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setPeriod(-1L);
@@ -153,7 +154,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(analysisConfig);
     }
 
-    @Test
+
     public void testVerify_GivenDefaultConfig_ShouldBeInvalidDueToNoDetectors() throws JobConfigurationException {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         expectedException.expect(JobConfigurationException.class);
@@ -162,14 +163,14 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(analysisConfig);
     }
 
-    @Test
+
     public void testVerify_GivenValidConfig() throws JobConfigurationException {
         AnalysisConfig analysisConfig = createValidConfig();
 
         assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
     }
 
-    @Test
+
     public void testVerify_GivenValidConfigWithCategorizationFieldNameAndCategorizationFilters()
             throws JobConfigurationException {
         AnalysisConfig analysisConfig = createValidConfig();
@@ -179,7 +180,7 @@ public class AnalysisConfigVerifierTest {
         assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
     }
 
-    @Test
+
     public void testVerify_OverlappingBuckets() throws JobConfigurationException {
         AnalysisConfig analysisConfig;
         List<Detector> detectors;
@@ -299,7 +300,7 @@ public class AnalysisConfigVerifierTest {
         assertFalse(analysisConfig.getOverlappingBuckets());
     }
 
-    @Test
+
     public void testMultipleBucketsConfig()
             throws JobConfigurationException {
         AnalysisConfig ac = new AnalysisConfig();
@@ -362,7 +363,7 @@ public class AnalysisConfigVerifierTest {
         }
     }
 
-    @Test
+
     public void testVerify_GivenCategorizationFiltersButNoCategorizationFieldName()
             throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
@@ -376,7 +377,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(config);
     }
 
-    @Test
+
     public void testVerify_GivenDuplicateCategorizationFilters() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expect(
@@ -390,7 +391,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(config);
     }
 
-    @Test
+
     public void testVerify_GivenEmptyCategorizationFilter() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
@@ -403,7 +404,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(config);
     }
 
-    @Test
+
     public void testCheckDetectorsHavePartitionFields()
             throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
@@ -418,7 +419,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(config);
     }
 
-    @Test
+
     public void testCheckDetectorsHavePartitionFields_doesntThrowWhenValid()
             throws JobConfigurationException {
         AnalysisConfig config = createValidConfig();
@@ -428,7 +429,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(config);
     }
 
-    @Test
+
     public void testCheckNoInfluencersAreSet()
             throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
@@ -445,7 +446,7 @@ public class AnalysisConfigVerifierTest {
         AnalysisConfigVerifier.verify(config);
     }
 
-    @Test
+
     public void testVerify_GivenCategorizationFiltersContainInvalidRegex() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));

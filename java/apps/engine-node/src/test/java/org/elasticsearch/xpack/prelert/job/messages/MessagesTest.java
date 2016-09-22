@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.messages;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -13,9 +14,9 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class MessagesTest {
+public class MessagesTest extends ESTestCase {
 
-    @Test
+
     public void testAllStringsAreInTheResourceBundle()
     throws IllegalArgumentException, IllegalAccessException {
         ResourceBundle bundle = Messages.load();
@@ -43,10 +44,6 @@ public class MessagesTest {
         {
             String key = (String)field.get(new String());
             keys.remove(key);
-        }
-        for (String key : keys)
-        {
-            System.out.println(key);
         }
 
         assertEquals(bundle.keySet().size(), publicStrings.size());

@@ -4,6 +4,7 @@ package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -18,11 +19,11 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 
-public class SchedulerConfigTest {
+public class SchedulerConfigTest extends ESTestCase {
     /**
      * Test parsing of the opaque {@link SchedulerConfig#getQuery()} object
      */
-    @Test
+
     public void testAnalysisConfigRequiredFields()
             throws IOException {
         BasicConfigurator.configure();
@@ -65,7 +66,7 @@ public class SchedulerConfigTest {
         assertTrue(query.containsKey("match_all"));
     }
 
-    @Test
+
     public void testBuildAggregatedFieldList_GivenNoAggregations() {
         assertTrue(new SchedulerConfig().buildAggregatedFieldList().isEmpty());
     }
@@ -73,7 +74,7 @@ public class SchedulerConfigTest {
     /**
      * Test parsing of the opaque {@link SchedulerConfig#getAggs()} object
      */
-    @Test
+
     public void testAggsParse()
             throws IOException {
         BasicConfigurator.configure();
@@ -145,7 +146,7 @@ public class SchedulerConfigTest {
         assertEquals("responsetime", aggregatedFieldList.get(2));
     }
 
-    @Test
+
     public void testFillDefaults_GivenDataSourceIsFile() {
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.FILE);
@@ -158,7 +159,7 @@ public class SchedulerConfigTest {
         assertEquals(expectedSchedulerConfig, schedulerConfig);
     }
 
-    @Test
+
     public void testFillDefaults_GivenDataSourceIsElasticsearchAndNothingToFill() {
         SchedulerConfig originalSchedulerConfig = new SchedulerConfig();
         originalSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
@@ -179,7 +180,7 @@ public class SchedulerConfigTest {
         assertEquals(originalSchedulerConfig, defaultedSchedulerConfig);
     }
 
-    @Test
+
     public void testFillDefaults_GivenDataSourceIsElasticsearchAndDefaultsAreApplied() {
         SchedulerConfig expectedSchedulerConfig = new SchedulerConfig();
         expectedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
@@ -200,18 +201,18 @@ public class SchedulerConfigTest {
         assertEquals(expectedSchedulerConfig, defaultedSchedulerConfig);
     }
 
-    @Test
+
     public void testEquals_GivenDifferentClass() {
         assertFalse(new SchedulerConfig().equals("a string"));
     }
 
-    @Test
+
     public void testEquals_GivenSameRef() {
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         assertTrue(schedulerConfig.equals(schedulerConfig));
     }
 
-    @Test
+
     public void testEquals_GivenEqual() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -221,7 +222,7 @@ public class SchedulerConfigTest {
         assertEquals(sc1.hashCode(), sc2.hashCode());
     }
 
-    @Test
+
     public void testEquals_GivenDifferentBaseUrl() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -231,7 +232,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentDataSource() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -241,7 +242,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentQueryDelay() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -251,7 +252,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentScrollSize() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -261,7 +262,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentFrequency() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -271,7 +272,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentIndexes() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -281,7 +282,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentTypes() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -291,7 +292,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentQuery() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -302,7 +303,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentAggregations() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -313,7 +314,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentPath() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();
@@ -323,7 +324,7 @@ public class SchedulerConfigTest {
         assertFalse(sc2.equals(sc1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentTail() {
         SchedulerConfig sc1 = createFullyPopulated();
         SchedulerConfig sc2 = createFullyPopulated();

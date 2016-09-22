@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
@@ -18,11 +19,11 @@ import java.util.*;
 import static org.junit.Assert.assertTrue;
 
 
-public class SchedulerConfigVerifierTest {
+public class SchedulerConfigVerifierTest extends ESTestCase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Test
+
     public void testVerify_GivenAllDataSources_DoesNotThrowIllegalStateException() throws JobConfigurationException {
         for (DataSource dataSource : DataSource.values()) {
             SchedulerConfig conf = new SchedulerConfig();
@@ -36,7 +37,7 @@ public class SchedulerConfigVerifierTest {
         }
     }
 
-    @Test
+
     public void testCheckValidFile_AllOk() throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
@@ -45,7 +46,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidFile_NoPath() throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
@@ -57,7 +58,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidFile_EmptyPath() throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
@@ -70,7 +71,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidFile_InappropriateField() throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
@@ -84,7 +85,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_AllOk() throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -100,7 +101,7 @@ public class SchedulerConfigVerifierTest {
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_WithUsernameAndPassword() throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -117,7 +118,7 @@ public class SchedulerConfigVerifierTest {
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_WithUsernameAndEncryptedPassword() throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -134,7 +135,7 @@ public class SchedulerConfigVerifierTest {
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_WithPasswordNoUsername() throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -149,7 +150,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_BothPasswordAndEncryptedPassword() throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -166,7 +167,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_NoQuery() throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -177,7 +178,7 @@ public class SchedulerConfigVerifierTest {
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_InappropriateField() throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -195,7 +196,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenScriptFieldsNotWholeSource() throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -210,7 +211,7 @@ public class SchedulerConfigVerifierTest {
         assertTrue(SchedulerConfigVerifier.verify(conf));
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenScriptFieldsAndWholeSource() throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
@@ -228,7 +229,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenNullIndexes() throws JobConfigurationException,
             IOException {
         SchedulerConfig conf = new SchedulerConfig();
@@ -245,7 +246,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenEmptyIndexes() throws JobConfigurationException,
             IOException {
         SchedulerConfig conf = new SchedulerConfig();
@@ -262,7 +263,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenIndexesContainsOnlyNulls()
             throws JobConfigurationException, IOException {
         List<String> indexes = new ArrayList<>();
@@ -283,7 +284,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenIndexesContainsOnlyEmptyStrings()
             throws JobConfigurationException, IOException {
         List<String> indexes = new ArrayList<>();
@@ -304,7 +305,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenNegativeQueryDelay()
             throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
@@ -322,7 +323,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenNegativeFrequency()
             throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
@@ -340,7 +341,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenNegativeScrollSize()
             throws JobConfigurationException, IOException {
         SchedulerConfig conf = new SchedulerConfig();
@@ -358,7 +359,7 @@ public class SchedulerConfigVerifierTest {
         SchedulerConfigVerifier.verify(conf);
     }
 
-    @Test
+
     public void testCheckValidElasticsearch_GivenBothAggregationsAndAggsAreSet()
             throws JobConfigurationException {
         SchedulerConfig conf = new SchedulerConfig();

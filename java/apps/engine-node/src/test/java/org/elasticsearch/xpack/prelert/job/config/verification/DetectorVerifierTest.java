@@ -1,7 +1,9 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Detector;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
@@ -46,7 +48,7 @@ import static org.junit.Assert.assertTrue;
  * </tbody>
  * </table>
  */
-public class DetectorVerifierTest {
+public class DetectorVerifierTest extends ESTestCase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
@@ -55,7 +57,6 @@ public class DetectorVerifierTest {
      *
      * @throws JobConfigurationException
      */
-    @Test
     public void testVerify() throws JobConfigurationException {
         // if nothing else is set the count functions (excluding distinct count)
         // are the only allowable functions
@@ -80,14 +81,12 @@ public class DetectorVerifierTest {
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, false);
-                System.out.println(f);
                 Assert.fail("JobConfigurationException not thrown when expected");
             } catch (JobConfigurationException e) {
             }
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, true);
-                System.out.println(f);
                 Assert.fail("JobConfigurationException not thrown when expected");
             } catch (JobConfigurationException e) {
             }
@@ -393,13 +392,13 @@ public class DetectorVerifierTest {
         }
     }
 
-    @Test
+
     public void testVerifyExcludeFrequent_GivenNotSet() throws JobConfigurationException {
         assertTrue(DetectorVerifier.verifyExcludeFrequent(null));
         assertTrue(DetectorVerifier.verifyExcludeFrequent(""));
     }
 
-    @Test
+
     public void testVerifyExcludeFrequent_GivenValidWord() throws JobConfigurationException {
         assertTrue(DetectorVerifier.verifyExcludeFrequent("true"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("false"));
@@ -407,19 +406,19 @@ public class DetectorVerifierTest {
         assertTrue(DetectorVerifier.verifyExcludeFrequent("over"));
     }
 
-    @Test(expected = JobConfigurationException.class)
     public void testVerifyExcludeFrequent_GivenInvalidWord() throws JobConfigurationException {
+        expectedException.expect(JobConfigurationException.class);
         DetectorVerifier.verifyExcludeFrequent("bananas");
     }
 
-    @Test
+
     public void testVerifyExcludeFrequent_GivenNumber() throws JobConfigurationException {
         assertTrue(DetectorVerifier.verifyExcludeFrequent("0"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("1"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("-1"));
     }
 
-    @Test
+
     public void testVerify_GivenInvalidDetectionRuleConditionFieldName() throws JobConfigurationException {
         Detector detector = new Detector();
         detector.setFunction("mean");
@@ -442,7 +441,7 @@ public class DetectorVerifierTest {
         DetectorVerifier.verify(detector, false);
     }
 
-    @Test
+
     public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
             throws JobConfigurationException {
         Detector detector = new Detector();
@@ -468,7 +467,7 @@ public class DetectorVerifierTest {
         DetectorVerifier.verify(detector, false);
     }
 
-    @Test
+
     public void testVerify_GivenDetectionRuleWithInvalidCondition() throws JobConfigurationException {
         Detector detector = new Detector();
         detector.setFunction("mean");
@@ -494,7 +493,7 @@ public class DetectorVerifierTest {
         DetectorVerifier.verify(detector, false);
     }
 
-    @Test
+
     public void testVerify_GivenValidDetectionRule() throws JobConfigurationException {
         Detector detector = new Detector();
         detector.setFunction("mean");

@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.audit;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -8,15 +9,14 @@ import java.util.Date;
 
 import static org.junit.Assert.*;
 
-public class AuditMessageTest {
+public class AuditMessageTest extends ESTestCase {
     private long startMillis;
 
     @Before
-    public void setUp() {
+    public void setStartTime() {
         startMillis = System.currentTimeMillis();
     }
 
-    @Test
     public void testDefaultConstructor() {
         AuditMessage auditMessage = new AuditMessage();
         assertNull(auditMessage.getMessage());
@@ -24,7 +24,6 @@ public class AuditMessageTest {
         assertNull(auditMessage.getTimestamp());
     }
 
-    @Test
     public void testNewInfo() {
         AuditMessage info = AuditMessage.newInfo("foo", "some info");
         assertEquals("foo", info.getJobId());
@@ -33,7 +32,6 @@ public class AuditMessageTest {
         assertDateBetweenStartAndNow(info.getTimestamp());
     }
 
-    @Test
     public void testNewWarning() {
         AuditMessage warning = AuditMessage.newWarning("bar", "some warning");
         assertEquals("bar", warning.getJobId());
@@ -42,7 +40,7 @@ public class AuditMessageTest {
         assertDateBetweenStartAndNow(warning.getTimestamp());
     }
 
-    @Test
+
     public void testNewError() {
         AuditMessage error = AuditMessage.newError("foo", "some error");
         assertEquals("foo", error.getJobId());
@@ -51,7 +49,6 @@ public class AuditMessageTest {
         assertDateBetweenStartAndNow(error.getTimestamp());
     }
 
-    @Test
     public void testNewActivity() {
         AuditMessage error = AuditMessage.newActivity("foo", "some error");
         assertEquals("foo", error.getJobId());

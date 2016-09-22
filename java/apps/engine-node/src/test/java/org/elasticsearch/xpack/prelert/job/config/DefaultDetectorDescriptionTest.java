@@ -1,20 +1,21 @@
 
 package org.elasticsearch.xpack.prelert.job.config;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class DefaultDetectorDescriptionTest {
-    @Test
+public class DefaultDetectorDescriptionTest extends ESTestCase {
+
     public void testOf_GivenEmptyDetector() {
         Detector detector = new Detector();
 
         assertEquals("", DefaultDetectorDescription.of(detector));
     }
 
-    @Test
+
     public void testOf_GivenOnlyFieldName() {
         Detector detector = new Detector();
         detector.setFieldName("value");
@@ -22,7 +23,7 @@ public class DefaultDetectorDescriptionTest {
         assertEquals("value", DefaultDetectorDescription.of(detector));
     }
 
-    @Test
+
     public void testOf_GivenOnlyFunctionAndFieldName() {
         Detector detector = new Detector();
         detector.setFunction("min");
@@ -31,7 +32,7 @@ public class DefaultDetectorDescriptionTest {
         assertEquals("min(value)", DefaultDetectorDescription.of(detector));
     }
 
-    @Test
+
     public void testOf_GivenOnlyFunctionAndFieldNameWithNonWordChars() {
         Detector detector = new Detector();
         detector.setFunction("min");
@@ -40,7 +41,7 @@ public class DefaultDetectorDescriptionTest {
         assertEquals("min(\"val-ue\")", DefaultDetectorDescription.of(detector));
     }
 
-    @Test
+
     public void testOf_GivenFullyPopulatedDetector() {
         Detector detector = new Detector();
         detector.setFunction("sum");

@@ -1,13 +1,14 @@
 
 package org.elasticsearch.xpack.prelert.job.condition;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class ConditionTest {
-    @Test
+public class ConditionTest extends ESTestCase {
+
     public void testSetValues() {
         // When the args can't be parsed the
         // default is the < operator and 0.
@@ -20,7 +21,7 @@ public class ConditionTest {
         assertEquals("astring", cond.getValue());
     }
 
-    @Test
+
     public void testHashCodeAndEquals() {
         Condition cond1 = new Condition(Operator.MATCH, "regex");
         Condition cond2 = new Condition(Operator.MATCH, "regex");

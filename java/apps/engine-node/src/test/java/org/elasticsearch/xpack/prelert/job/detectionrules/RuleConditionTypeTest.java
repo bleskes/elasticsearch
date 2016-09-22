@@ -1,12 +1,13 @@
 
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class RuleConditionTypeTest {
-    @Test
+public class RuleConditionTypeTest extends ESTestCase {
+
     public void testForString() {
         assertEquals(RuleConditionType.CATEGORICAL, RuleConditionType.forString("categorical"));
         assertEquals(RuleConditionType.CATEGORICAL, RuleConditionType.forString("CATEGORICAL"));

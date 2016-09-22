@@ -1,18 +1,19 @@
 
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class ActionTest {
-    @Test
+public class ActionTest extends ESTestCase {
+
     public void testTypename() {
         assertEquals("Action", Action.CLOSED.typename());
     }
 
-    @Test
+
     public void testgetBusyActionError_GivenVariousActionsInUse() {
         assertEquals("Cannot close job foo while another connection is closing the job",
                 Action.CLOSING.getBusyActionError("foo", Action.CLOSING));
@@ -32,7 +33,7 @@ public class ActionTest {
                 Action.CLOSING.getBusyActionError("foo", Action.WRITING));
     }
 
-    @Test
+
     public void testgetBusyActionError_GivenVariousActions() {
         assertEquals("Cannot close job foo while another connection is flushing the job",
                 Action.CLOSING.getBusyActionError("foo", Action.FLUSHING));
@@ -52,7 +53,7 @@ public class ActionTest {
                 Action.WRITING.getBusyActionError("foo", Action.FLUSHING));
     }
 
-    @Test
+
     public void testgetBusyActionErrorWithHost_GivenVariousActions() {
         assertEquals("Cannot close job foo while another connection on host marple is flushing the job",
                 Action.CLOSING.getBusyActionError("foo", Action.FLUSHING, "marple"));
@@ -72,7 +73,7 @@ public class ActionTest {
                 Action.WRITING.getBusyActionError("foo", Action.FLUSHING, "marple"));
     }
 
-    @Test
+
     public void testIsValidTransition_WhenClosed() {
         Action currentAction = Action.CLOSED;
         for (Action nextAction : Action.values()) {
@@ -80,7 +81,7 @@ public class ActionTest {
         }
     }
 
-    @Test
+
     public void testIsValidTransition_FalseWhenNotClosedOrSleeping() {
         for (Action currentAction : Action.values()) {
             if (currentAction == Action.CLOSED || currentAction == Action.SLEEPING) {
@@ -93,7 +94,7 @@ public class ActionTest {
         }
     }
 
-    @Test
+
     public void testIsValidTransition_ValidStatesFromSleeping() {
         assertTrue(Action.SLEEPING.isValidTransition(Action.UPDATING));
         assertTrue(Action.SLEEPING.isValidTransition(Action.FLUSHING));
@@ -107,7 +108,7 @@ public class ActionTest {
         assertFalse(Action.SLEEPING.isValidTransition(Action.CLOSED));
     }
 
-    @Test
+
     public void testNextState() {
         assertEquals(Action.CLOSED, Action.CLOSED.nextState(Action.CLOSED));
         assertEquals(Action.CLOSED, Action.CLOSING.nextState(Action.SLEEPING));
@@ -122,7 +123,7 @@ public class ActionTest {
         assertEquals(Action.SLEEPING, Action.WRITING.nextState(Action.SLEEPING));
     }
 
-    @Test
+
     public void testHoldDistributedLock() {
         assertFalse(Action.CLOSED.holdDistributedLock());
         assertFalse(Action.CLOSING.holdDistributedLock());
@@ -137,12 +138,12 @@ public class ActionTest {
         assertFalse(Action.WRITING.holdDistributedLock());
     }
 
-    @Test
+
     public void testStartingState() {
         assertEquals(Action.CLOSED, Action.startingState());
     }
 
-    @Test
+
     public void testErrorCode() {
         assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.CLOSED.getErrorCode());
         assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.CLOSING.getErrorCode());

@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.condition.verification;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
@@ -12,11 +13,11 @@ import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertTrue;
 
-public class ConditionVerifierTest {
+public class ConditionVerifierTest extends ESTestCase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Test
+
     public void testVerifyArgsNumericArgs() throws JobConfigurationException {
         Condition c = new Condition(Operator.LTE, "100");
         assertTrue(ConditionVerifier.verify(c));
@@ -24,7 +25,7 @@ public class ConditionVerifierTest {
         assertTrue(ConditionVerifier.verify(c));
     }
 
-    @Test
+
     public void testVerify_GivenUnsetOperator() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expectMessage("Invalid operator for condition");
@@ -34,7 +35,7 @@ public class ConditionVerifierTest {
         ConditionVerifier.verify(new Condition());
     }
 
-    @Test
+
     public void testVerify_GivenOperatorIsNone() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expectMessage("Invalid operator for condition");
@@ -47,7 +48,7 @@ public class ConditionVerifierTest {
         ConditionVerifier.verify(condition);
     }
 
-    @Test
+
     public void testVerify_GivenEmptyValue() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expectMessage(
@@ -62,7 +63,7 @@ public class ConditionVerifierTest {
         ConditionVerifier.verify(condition);
     }
 
-    @Test
+
     public void testVerify_GivenInvalidRegex() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expect(
@@ -75,7 +76,7 @@ public class ConditionVerifierTest {
         ConditionVerifier.verify(condition);
     }
 
-    @Test
+
     public void testVerify_GivenNullRegex() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expect(

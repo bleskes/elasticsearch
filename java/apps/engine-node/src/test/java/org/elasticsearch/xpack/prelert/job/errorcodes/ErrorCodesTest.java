@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.errorcodes;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -13,9 +14,9 @@ import static org.junit.Assert.assertEquals;
  * are unique so no 2 conditions can return the same error code.
  * This tests is designed to catch copy/paste errors.
  */
-public class ErrorCodesTest
+public class ErrorCodesTest extends ESTestCase
 {
-	@Test
+
 	public void errorCodesUnique()
 	throws IllegalArgumentException, IllegalAccessException
 	{

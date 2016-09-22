@@ -1,18 +1,19 @@
 
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class ScheduledActionTest {
-    @Test
+public class ScheduledActionTest extends ESTestCase {
+
     public void testTypename() {
         assertEquals("ScheduledAction", ScheduledAction.STOPPED.typename());
     }
 
-    @Test
+
     public void testGetBusyActionError_GivenVariousActionsInUse() {
         assertEquals("Cannot start scheduler for job 'foo' while its status is started",
                 ScheduledAction.STARTED.getBusyActionError("foo", ScheduledAction.STARTED));
@@ -21,7 +22,7 @@ public class ScheduledActionTest {
         assertEquals("Cannot stop scheduler for job 'foo' while its status is started", g);
     }
 
-    @Test
+
     public void testGetBusyActionError_GivenHostAndVariousActionsInUse() {
         assertEquals("Cannot start scheduler for job 'foo' while its status is started on host marple",
                 ScheduledAction.STARTED.getBusyActionError("foo", ScheduledAction.STARTED, "marple"));
@@ -39,7 +40,7 @@ public class ScheduledActionTest {
         assertEquals("Cannot delete scheduler for job 'foo' while its status is started on host marple", msg);
     }
 
-    @Test
+
     public void testIsValidTransition() {
         assertFalse(ScheduledAction.STARTED.isValidTransition(ScheduledAction.STARTED));
         assertTrue(ScheduledAction.STARTED.isValidTransition(ScheduledAction.STOPPING));
@@ -72,7 +73,7 @@ public class ScheduledActionTest {
         assertFalse(ScheduledAction.DELETE.isValidTransition(ScheduledAction.DELETE));
     }
 
-    @Test
+
     public void testNextState() {
         assertEquals(ScheduledAction.STOPPED, ScheduledAction.STARTED.nextState(ScheduledAction.STOPPED));
         assertEquals(ScheduledAction.STOPPED, ScheduledAction.STARTED.nextState(ScheduledAction.STARTED));
@@ -86,7 +87,7 @@ public class ScheduledActionTest {
         assertEquals(ScheduledAction.STOPPED, ScheduledAction.DELETE.nextState(ScheduledAction.STARTED));
     }
 
-    @Test
+
     public void testHoldDistributedLock() {
         assertTrue(ScheduledAction.STARTED.holdDistributedLock());
         assertTrue(ScheduledAction.STOPPING.holdDistributedLock());
@@ -95,12 +96,12 @@ public class ScheduledActionTest {
         assertFalse(ScheduledAction.DELETE.holdDistributedLock());
     }
 
-    @Test
+
     public void testStartingState() {
         assertEquals(ScheduledAction.STOPPED, ScheduledAction.startingState());
     }
 
-    @Test
+
     public void testErrorCode() {
         assertEquals(ErrorCodes.CANNOT_START_JOB_SCHEDULER, ScheduledAction.STARTED.getErrorCode());
         assertEquals(ErrorCodes.CANNOT_STOP_JOB_SCHEDULER, ScheduledAction.STOPPING.getErrorCode());

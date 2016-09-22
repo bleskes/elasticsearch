@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
 import org.junit.Test;
@@ -9,8 +10,8 @@ import org.mockito.Mockito;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class LocalActionGuardianTest {
-    @Test
+public class LocalActionGuardianTest extends ESTestCase {
+
     public void testTryAcquiringAction_GivenAvailable() throws JobInUseException {
         LocalActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.startingState());
         try (ActionGuardian<Action>.ActionTicket actionTicket = actionGuardian.tryAcquiringAction("foo", Action.WRITING)) {
@@ -20,7 +21,7 @@ public class LocalActionGuardianTest {
         assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
     }
 
-    @Test
+
     public void testTryAcquiringAction_GivenJobIsInUse() throws JobInUseException {
         LocalActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.CLOSED);
         try (ActionGuardian<Action>.ActionTicket deleting = actionGuardian.tryAcquiringAction("foo", Action.DELETING)) {
@@ -35,7 +36,7 @@ public class LocalActionGuardianTest {
         assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
     }
 
-    @Test
+
     public void testTryAcquiringAction_acquiresNextLock() throws JobInUseException {
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
@@ -46,7 +47,7 @@ public class LocalActionGuardianTest {
         Mockito.verify(nextGuardian).tryAcquiringAction("foo", Action.CLOSING);
     }
 
-    @Test
+
     public void testTryAcquiringAction_releasesNextLock() throws JobInUseException {
         @SuppressWarnings("unchecked")
         ActionGuardian<Action> nextGuardian = Mockito.mock(ActionGuardian.class);
@@ -57,7 +58,7 @@ public class LocalActionGuardianTest {
         Mockito.verify(nextGuardian).releaseAction("foo", Action.CLOSED);
     }
 
-    @Test
+
     public void testReleasingLockTransitionsToNextState() throws JobInUseException {
         LocalActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.CLOSED);
 
@@ -73,7 +74,7 @@ public class LocalActionGuardianTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test
+
     public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException {
         ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
         LocalActionGuardian<ScheduledAction> actionGuardian =

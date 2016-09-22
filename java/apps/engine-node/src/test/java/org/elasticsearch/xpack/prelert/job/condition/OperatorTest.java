@@ -1,15 +1,16 @@
 
 package org.elasticsearch.xpack.prelert.job.condition;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
-public class OperatorTest {
+public class OperatorTest extends ESTestCase {
 
-    @Test
+
     public void testFromString() throws UnknownOperatorException {
         assertEquals(Operator.fromString("gt"), Operator.GT);
         assertEquals(Operator.fromString("Gt"), Operator.GT);
@@ -21,7 +22,7 @@ public class OperatorTest {
         assertEquals(Operator.fromString("Match"), Operator.MATCH);
     }
 
-    @Test
+
     public void testTest() {
         assertTrue(Operator.GT.expectsANumericArgument());
         assertTrue(Operator.GT.test(1.0, 0.0));
@@ -46,7 +47,7 @@ public class OperatorTest {
         assertFalse(Operator.LTE.test(1.0, 0.0));
     }
 
-    @Test
+
     public void testMatch() {
         assertFalse(Operator.MATCH.expectsANumericArgument());
         assertFalse(Operator.MATCH.test(0.0, 1.0));

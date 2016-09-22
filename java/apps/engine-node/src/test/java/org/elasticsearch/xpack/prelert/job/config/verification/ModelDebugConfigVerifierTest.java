@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -11,11 +12,11 @@ import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertTrue;
 
-public class ModelDebugConfigVerifierTest {
+public class ModelDebugConfigVerifierTest extends ESTestCase {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Test
+
     public void testVerify_GivenBoundPercentileLessThanZero() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expectMessage(
@@ -26,7 +27,7 @@ public class ModelDebugConfigVerifierTest {
         ModelDebugConfigVerifier.verify(new ModelDebugConfig(-1.0, ""));
     }
 
-    @Test
+
     public void testVerify_GivenBoundPercentileGreaterThan100() throws JobConfigurationException {
         expectedException.expect(JobConfigurationException.class);
         expectedException.expectMessage(
@@ -37,7 +38,7 @@ public class ModelDebugConfigVerifierTest {
         ModelDebugConfigVerifier.verify(new ModelDebugConfig(100.1, ""));
     }
 
-    @Test
+
     public void testVerify_GivenValid() throws JobConfigurationException {
         assertTrue(ModelDebugConfigVerifier.verify(new ModelDebugConfig()));
         assertTrue(ModelDebugConfigVerifier.verify(new ModelDebugConfig(93.0, "")));

@@ -1,12 +1,13 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class ModelSizeStatsTest {
-    @Test
+public class ModelSizeStatsTest extends ESTestCase {
+
     public void testDefaultConstructor() {
         ModelSizeStats stats = new ModelSizeStats();
         assertEquals("modelSizeStats", stats.getModelSizeStatsId());
@@ -18,7 +19,7 @@ public class ModelSizeStatsTest {
         assertEquals("OK", stats.getMemoryStatus());
     }
 
-    @Test
+
     public void testSetModelSizeStatsId() {
         ModelSizeStats stats = new ModelSizeStats();
 
@@ -27,7 +28,7 @@ public class ModelSizeStatsTest {
         assertEquals("foo", stats.getModelSizeStatsId());
     }
 
-    @Test
+
     public void testSetMemoryStatus_GivenNull() {
         ModelSizeStats stats = new ModelSizeStats();
 
@@ -36,7 +37,7 @@ public class ModelSizeStatsTest {
         assertEquals("OK", stats.getMemoryStatus());
     }
 
-    @Test
+
     public void testSetMemoryStatus_GivenEmpty() {
         ModelSizeStats stats = new ModelSizeStats();
 
@@ -45,7 +46,7 @@ public class ModelSizeStatsTest {
         assertEquals("OK", stats.getMemoryStatus());
     }
 
-    @Test
+
     public void testSetMemoryStatus_GivenSoftLimit() {
         ModelSizeStats stats = new ModelSizeStats();
 

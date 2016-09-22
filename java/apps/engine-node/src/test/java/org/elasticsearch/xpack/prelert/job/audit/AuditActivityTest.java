@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.audit;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -8,15 +9,14 @@ import java.util.Date;
 
 import static org.junit.Assert.*;
 
-public class AuditActivityTest {
+public class AuditActivityTest extends ESTestCase {
     private long startMillis;
 
     @Before
-    public void setUp() {
+    public void setStartTime() {
         startMillis = System.currentTimeMillis();
     }
 
-    @Test
     public void testDefaultConstructor() {
         AuditActivity activity = new AuditActivity();
         assertEquals(0, activity.getTotalJobs());
@@ -26,7 +26,6 @@ public class AuditActivityTest {
         assertNull(activity.getTimestamp());
     }
 
-    @Test
     public void testNewActivity() {
         AuditActivity activity = AuditActivity.newActivity(10, 100, 5, 50);
         assertEquals(10, activity.getTotalJobs());

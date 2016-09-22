@@ -1,13 +1,14 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class DataDescriptionTest {
-    @Test
+public class DataDescriptionTest extends ESTestCase {
+
     public void testDataFormatForString() {
         assertEquals(DataFormat.DELIMITED, DataFormat.forString("delineated"));
         assertEquals(DataFormat.DELIMITED, DataFormat.forString("DELINEATED"));
@@ -21,14 +22,14 @@ public class DataDescriptionTest {
         assertEquals(DataFormat.SINGLE_LINE, DataFormat.forString("SINGLE_LINE"));
     }
 
-    @Test
+
     public void testTransform_GivenJson() {
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.JSON);
         assertTrue(dd.transform());
     }
 
-    @Test
+
     public void testTransform_GivenDelimitedAndEpoch() {
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.DELIMITED);
@@ -36,7 +37,7 @@ public class DataDescriptionTest {
         assertFalse(dd.transform());
     }
 
-    @Test
+
     public void testTransform_GivenDelimitedAndEpochMs() {
         DataDescription dd = new DataDescription();
         dd.setFormat(DataFormat.DELIMITED);
@@ -44,35 +45,35 @@ public class DataDescriptionTest {
         assertTrue(dd.transform());
     }
 
-    @Test
+
     public void testIsTransformTime_GivenTimeFormatIsNull() {
         DataDescription dd = new DataDescription();
         dd.setTimeFormat(null);
         assertFalse(dd.isTransformTime());
     }
 
-    @Test
+
     public void testIsTransformTime_GivenTimeFormatIsEpoch() {
         DataDescription dd = new DataDescription();
         dd.setTimeFormat("epoch");
         assertFalse(dd.isTransformTime());
     }
 
-    @Test
+
     public void testIsTransformTime_GivenTimeFormatIsEpochMs() {
         DataDescription dd = new DataDescription();
         dd.setTimeFormat("epoch_ms");
         assertTrue(dd.isTransformTime());
     }
 
-    @Test
+
     public void testIsTransformTime_GivenTimeFormatPattern() {
         DataDescription dd = new DataDescription();
         dd.setTimeFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
         assertTrue(dd.isTransformTime());
     }
 
-    @Test
+
     public void testEquals_GivenEqual() {
         DataDescription description1 = new DataDescription();
         description1.setFormat(DataFormat.JSON);
@@ -92,7 +93,7 @@ public class DataDescriptionTest {
         assertTrue(description2.equals(description1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentDateFormat() {
         DataDescription description1 = new DataDescription();
         description1.setFormat(DataFormat.JSON);
@@ -112,7 +113,7 @@ public class DataDescriptionTest {
         assertFalse(description2.equals(description1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentQuoteCharacter() {
         DataDescription description1 = new DataDescription();
         description1.setFormat(DataFormat.JSON);
@@ -132,7 +133,7 @@ public class DataDescriptionTest {
         assertFalse(description2.equals(description1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentTimeField() {
         DataDescription description1 = new DataDescription();
         description1.setFormat(DataFormat.JSON);
@@ -152,7 +153,7 @@ public class DataDescriptionTest {
         assertFalse(description2.equals(description1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentTimeFormat() {
         DataDescription description1 = new DataDescription();
         description1.setFormat(DataFormat.JSON);
@@ -172,7 +173,7 @@ public class DataDescriptionTest {
         assertFalse(description2.equals(description1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentFieldDelimiter() {
         DataDescription description1 = new DataDescription();
         description1.setFormat(DataFormat.JSON);
@@ -192,7 +193,7 @@ public class DataDescriptionTest {
         assertFalse(description2.equals(description1));
     }
 
-    @Test
+
     public void testHashCode_GivenEqual() {
         DataDescription dataDescription1 = new DataDescription();
         dataDescription1.setFormat(DataFormat.JSON);

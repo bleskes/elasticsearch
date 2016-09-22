@@ -1,19 +1,26 @@
 
 package org.elasticsearch.xpack.prelert.job.config;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.time.Duration;
 
 import static org.junit.Assert.assertEquals;
 
-public class DefaultFrequencyTest {
-    @Test(expected = IllegalArgumentException.class)
+public class DefaultFrequencyTest extends ESTestCase {
+
+    @Rule
+    public ExpectedException thrown= ExpectedException.none();
+
     public void testCalc_GivenNegative() {
+        thrown.expect(IllegalArgumentException.class);
         DefaultFrequency.ofBucketSpan(-1);
     }
 
-    @Test
+
     public void testCalc() {
         assertEquals(Duration.ofMinutes(1), DefaultFrequency.ofBucketSpan(1));
         assertEquals(Duration.ofMinutes(1), DefaultFrequency.ofBucketSpan(30));

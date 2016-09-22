@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.manager;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -31,7 +32,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
-public class JobManagerTest
+public class JobManagerTest extends ESTestCase
 {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -44,7 +45,7 @@ public class JobManagerTest
     @Mock private JobDataDeleterFactory jobDataDeleter;
 
     @Before
-    public void setUp()
+    public void setupMocks()
     {
         MockitoAnnotations.initMocks(this);
         when(jobProvider.jobIdIsUnique("not-unique")).thenReturn(false);
@@ -53,12 +54,12 @@ public class JobManagerTest
     }
 
     @After
-    public void tearDown()
+    public void clearSystemProp()
     {
         System.clearProperty("max.jobs.factor");
     }
 
-    @Test
+
     public void testFilter()
 
     {
@@ -71,7 +72,7 @@ public class JobManagerTest
         assertTrue(diff.contains("tom"));
     }
 
-    @Test
+
     public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
             DataStoreException, InterruptedException, ExecutionException
     {
@@ -100,7 +101,7 @@ public class JobManagerTest
     }
 
     @SuppressWarnings("unchecked")
-    @Test
+
     public void testSetModelDebugConfig_GivenConfig() throws UnknownJobException
     {
         ModelDebugConfig config = new ModelDebugConfig(85.0, "bar");
@@ -115,7 +116,7 @@ public class JobManagerTest
         assertEquals("bar", configUpdate.get("terms"));
     }
 
-    @Test
+
     public void testSetModelDebugConfig_GivenNull() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -127,7 +128,7 @@ public class JobManagerTest
         assertNull(jobUpdate.get("modelDebugConfig"));
     }
 
-    @Test
+
     public void testSetDesciption() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -139,7 +140,7 @@ public class JobManagerTest
         assertEquals("foo job", jobUpdate.get(JobDetails.DESCRIPTION));
     }
 
-    @Test
+
     public void testSetBackgroundPersistInterval() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -151,7 +152,7 @@ public class JobManagerTest
         assertEquals(36000L, jobUpdate.get(JobDetails.BACKGROUND_PERSIST_INTERVAL));
     }
 
-    @Test
+
     public void testSetRenormalizationWindowDays() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -163,7 +164,7 @@ public class JobManagerTest
         assertEquals(new Long(7), jobUpdate.get(JobDetails.RENORMALIZATION_WINDOW_DAYS));
     }
 
-    @Test
+
     public void testSetModelSnapshotRetentionDays() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -175,7 +176,7 @@ public class JobManagerTest
         assertEquals(new Long(20), jobUpdate.get(JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS));
     }
 
-    @Test
+
     public void testSetResultsRetentionDays() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -187,7 +188,7 @@ public class JobManagerTest
         assertEquals(new Long(90), jobUpdate.get(JobDetails.RESULTS_RETENTION_DAYS));
     }
 
-    @Test
+
     public void testGetJobOrThrowIfUnknown_GivenUnknownJob() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -198,7 +199,7 @@ public class JobManagerTest
         jobManager.getJobOrThrowIfUnknown("foo");
     }
 
-    @Test
+
     public void testGetJobOrThrowIfUnknown_GivenKnownJob() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -208,7 +209,7 @@ public class JobManagerTest
         assertEquals(job, jobManager.getJobOrThrowIfUnknown("foo"));
     }
 
-    @Test
+
     public void testUpdateCustomSettings() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
@@ -222,7 +223,7 @@ public class JobManagerTest
         assertEquals(customSettings, jobUpdate.get(JobDetails.CUSTOM_SETTINGS));
     }
 
-    @Test
+
     public void testSetAnalysisLimits() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();

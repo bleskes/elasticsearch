@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.junit.Test;
@@ -10,7 +11,7 @@ import java.util.Date;
 
 import static org.junit.Assert.*;
 
-public class ModelSnapshotTest {
+public class ModelSnapshotTest extends ESTestCase {
     private static final Date DEFAULT_TIMESTAMP = new Date();
     private static final String DEFAULT_DESCRIPTION = "a snapshot";
     private static final String DEFAULT_ID = "my_id";
@@ -19,21 +20,21 @@ public class ModelSnapshotTest {
     private static final Date DEFAULT_LATEST_RESULT_TIMESTAMP = new Date(12345678901234L);
     private static final Date DEFAULT_LATEST_RECORD_TIMESTAMP = new Date(12345678904321L);
 
-    @Test
+
     public void testEquals_GivenSameObject() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
 
         assertTrue(modelSnapshot.equals(modelSnapshot));
     }
 
-    @Test
+
     public void testEquals_GivenObjectOfDifferentClass() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
 
         assertFalse(modelSnapshot.equals("a string"));
     }
 
-    @Test
+
     public void testEquals_GivenEqualModelSnapshots() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -43,7 +44,7 @@ public class ModelSnapshotTest {
         assertEquals(modelSnapshot1.hashCode(), modelSnapshot2.hashCode());
     }
 
-    @Test
+
     public void testEquals_GivenDifferentTimestamp() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -53,7 +54,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentDescription() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -63,7 +64,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentRestorePriority() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -73,7 +74,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentId() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -83,7 +84,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentDocCount() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -93,7 +94,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentModelSizeStats() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -103,7 +104,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentQuantiles() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -113,7 +114,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentLatestResultTimestamp() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -124,7 +125,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentLatestRecordTimestamp() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
@@ -135,7 +136,7 @@ public class ModelSnapshotTest {
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-    @Test
+
     public void testSerialise_GivenFullyPopulated() throws IOException {
         ModelSizeStats modelSizeStats = new ModelSizeStats();
         modelSizeStats.setTimestamp(new Date(9123L));
@@ -190,7 +191,7 @@ public class ModelSnapshotTest {
         assertEquals(expected, serialiser.toJson());
     }
 
-    @Test
+
     public void testSerialise_GivenMissingOptionals() throws IOException {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         modelSnapshot.setTimestamp(new Date(54321L));

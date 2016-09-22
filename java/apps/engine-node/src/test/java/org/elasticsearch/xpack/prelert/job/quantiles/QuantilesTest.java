@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.quantiles;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 import org.junit.Test;
 
@@ -9,20 +10,20 @@ import java.util.Date;
 
 import static org.junit.Assert.*;
 
-public class QuantilesTest {
-    @Test
+public class QuantilesTest extends ESTestCase {
+
     public void testEquals_GivenSameObject() {
         Quantiles quantiles = new Quantiles();
         assertTrue(quantiles.equals(quantiles));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentClassObject() {
         Quantiles quantiles = new Quantiles();
         assertFalse(quantiles.equals("not a quantiles object"));
     }
 
-    @Test
+
     public void testEquals_GivenEqualQuantilesObject() {
         Quantiles quantiles1 = new Quantiles();
         quantiles1.setQuantileState("foo");
@@ -34,7 +35,7 @@ public class QuantilesTest {
         assertTrue(quantiles2.equals(quantiles1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentState() {
         Quantiles quantiles1 = new Quantiles();
         quantiles1.setQuantileState("bar1");
@@ -46,7 +47,7 @@ public class QuantilesTest {
         assertFalse(quantiles2.equals(quantiles1));
     }
 
-    @Test
+
     public void testHashCode_GivenEqualObject() {
         Quantiles quantiles1 = new Quantiles();
         quantiles1.setQuantileState("foo");
@@ -57,7 +58,7 @@ public class QuantilesTest {
         assertEquals(quantiles1.hashCode(), quantiles2.hashCode());
     }
 
-    @Test
+
     public void testSerialise() throws IOException {
         Quantiles quantiles = new Quantiles();
         quantiles.setTimestamp(new Date(1234L));

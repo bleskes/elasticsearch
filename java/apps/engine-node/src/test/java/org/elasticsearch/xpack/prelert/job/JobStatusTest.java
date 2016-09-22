@@ -1,13 +1,14 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class JobStatusTest {
-    @Test
+public class JobStatusTest extends ESTestCase {
+
     public void testIsAnyOf() {
         assertFalse(JobStatus.RUNNING.isAnyOf());
         assertFalse(JobStatus.RUNNING.isAnyOf(JobStatus.CLOSED, JobStatus.CLOSING, JobStatus.FAILED,

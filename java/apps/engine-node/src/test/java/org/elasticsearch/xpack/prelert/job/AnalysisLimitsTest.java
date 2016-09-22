@@ -1,14 +1,15 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class AnalysisLimitsTest {
-    @Test
+public class AnalysisLimitsTest extends ESTestCase {
+
     public void testSetModelMemoryLimit_GivenNegative() {
         AnalysisLimits limits = new AnalysisLimits();
 
@@ -17,7 +18,7 @@ public class AnalysisLimitsTest {
         assertEquals(-1, limits.getModelMemoryLimit());
     }
 
-    @Test
+
     public void testSetModelMemoryLimit_GivenZero() {
         AnalysisLimits limits = new AnalysisLimits();
 
@@ -26,7 +27,7 @@ public class AnalysisLimitsTest {
         assertEquals(0, limits.getModelMemoryLimit());
     }
 
-    @Test
+
     public void testSetModelMemoryLimit_GivenPositive() {
         AnalysisLimits limits = new AnalysisLimits();
 
@@ -35,7 +36,7 @@ public class AnalysisLimitsTest {
         assertEquals(52, limits.getModelMemoryLimit());
     }
 
-    @Test
+
     public void testEquals_GivenEqual() {
         AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 20L);
         AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 20L);
@@ -45,7 +46,7 @@ public class AnalysisLimitsTest {
         assertTrue(analysisLimits2.equals(analysisLimits1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentModelMemoryLimit() {
         AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 20L);
         AnalysisLimits analysisLimits2 = new AnalysisLimits(11, 20L);
@@ -54,7 +55,7 @@ public class AnalysisLimitsTest {
         assertFalse(analysisLimits2.equals(analysisLimits1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentCategorizationExamplesLimit() {
         AnalysisLimits analysisLimits1 = new AnalysisLimits(10, 20L);
         AnalysisLimits analysisLimits2 = new AnalysisLimits(10, 21L);
@@ -63,7 +64,7 @@ public class AnalysisLimitsTest {
         assertFalse(analysisLimits2.equals(analysisLimits1));
     }
 
-    @Test
+
     public void testHashCode_GivenEqual() {
         AnalysisLimits analysisLimits1 = new AnalysisLimits(5555, 3L);
         AnalysisLimits analysisLimits2 = new AnalysisLimits(5555, 3L);
@@ -71,7 +72,7 @@ public class AnalysisLimitsTest {
         assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
     }
 
-    @Test
+
     public void testToMap_GivenDefault() {
         AnalysisLimits defaultLimits = new AnalysisLimits();
 
@@ -81,7 +82,7 @@ public class AnalysisLimitsTest {
         assertEquals(0L, map.get(AnalysisLimits.MODEL_MEMORY_LIMIT));
     }
 
-    @Test
+
     public void testToMap_GivenFullyPopulated() {
         AnalysisLimits limits = new AnalysisLimits();
         limits.setCategorizationExamplesLimit(5L);

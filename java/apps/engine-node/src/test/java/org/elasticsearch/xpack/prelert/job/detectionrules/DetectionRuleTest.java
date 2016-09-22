@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
+import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.junit.Test;
 
 import java.lang.reflect.Array;
@@ -10,8 +11,8 @@ import java.util.HashSet;
 
 import static org.junit.Assert.*;
 
-public class DetectionRuleTest {
-    @Test
+public class DetectionRuleTest extends ESTestCase {
+
     public void testDefaultConstructor() {
         DetectionRule rule = new DetectionRule();
         assertEquals(RuleAction.FILTER_RESULTS, rule.getRuleAction());
@@ -21,7 +22,7 @@ public class DetectionRuleTest {
         assertNull(rule.getTargetFieldValue());
     }
 
-    @Test
+
     public void testExtractReferencedLists() {
         DetectionRule rule = new DetectionRule();
         RuleCondition numericalCondition = new RuleCondition();
@@ -34,18 +35,18 @@ public class DetectionRuleTest {
         assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), rule.extractReferencedLists());
     }
 
-    @Test
+
     public void testEqualsGivenSameObject() {
         DetectionRule rule = new DetectionRule();
         assertTrue(rule.equals(rule));
     }
 
-    @Test
+
     public void testEqualsGivenString() {
         assertFalse(new DetectionRule().equals("a string"));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentAction() {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
@@ -54,7 +55,7 @@ public class DetectionRuleTest {
         assertFalse(rule2.equals(rule1));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentTargetFieldName() {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
@@ -63,7 +64,7 @@ public class DetectionRuleTest {
         assertFalse(rule2.equals(rule1));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentTargetFieldValue() {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
@@ -72,7 +73,7 @@ public class DetectionRuleTest {
         assertFalse(rule2.equals(rule1));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentConjunction() {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
@@ -81,7 +82,7 @@ public class DetectionRuleTest {
         assertFalse(rule2.equals(rule1));
     }
 
-    @Test
+
     public void testEqualsGivenRules() {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
@@ -90,7 +91,7 @@ public class DetectionRuleTest {
         assertFalse(rule2.equals(rule1));
     }
 
-    @Test
+
     public void testEqualsGivenEqual() {
         DetectionRule rule1 = createFullyPopulated();
         DetectionRule rule2 = createFullyPopulated();
