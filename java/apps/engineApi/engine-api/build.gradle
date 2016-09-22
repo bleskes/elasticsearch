@@ -16,8 +16,8 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.7.5'
     compile group: 'org.apache.zookeeper', name: 'zookeeper', version:'3.5.1-alpha'
     compile(group: 'org.apache.curator', name: 'curator-recipes', version:'3.2.0') {
-exclude(module: 'netty')
-exclude(module: 'slf4j-api')
+        exclude(module: 'netty')
+        exclude(module: 'slf4j-api')
     }
     testCompile group: 'org.apache.curator', name: 'curator-test', version:'3.2.0'
     compile project(':prelert-engine-api-common')

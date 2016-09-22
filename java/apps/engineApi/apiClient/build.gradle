@@ -11,3 +11,16 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.8.1'
     compile project(':prelert-engine-api-common')
 }
+
+task copyJarToStaging(type: Copy) {
+    from "build/libs/prelert-engine-api-client-" + project.version + ".jar"
+    into "$System.env.PRELERT_HOME/libjar"
+}
+
+task copyRuntimeJarsToStaging(type: Copy) {
+    from configurations.runtime
+    into "$System.env.PRELERT_HOME/cots/libjar"
+}
+
+project.build.dependsOn(copyJarToStaging)
+project.build.dependsOn(copyRuntimeJarsToStaging)
