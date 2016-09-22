@@ -52,7 +52,7 @@ public class ServerBootstrap {
         System.setProperty("es.logger.prefix", "");
 
         Settings.Builder settings = Settings.builder();
-        settings.put("path.home", DEFAULT_JETTY_HOME);
+        settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
         settings.put("http.port", JETTY_PORT);
         settings.put("cluster.name", "prelert");
         // Use netty3 for alpha5, when upgrading to beta1 or higher use netty4
