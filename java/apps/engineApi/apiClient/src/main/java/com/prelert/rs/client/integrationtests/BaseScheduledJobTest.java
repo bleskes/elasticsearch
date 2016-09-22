@@ -236,6 +236,7 @@ public abstract class BaseScheduledJobTest extends BaseIntegrationTest
         schedulerConfig.setBaseUrl(m_EsBaseUrl);
         schedulerConfig.setIndexes(Arrays.asList(INDEX_NAME));
         schedulerConfig.setTypes(Arrays.asList(TYPE_NAME));
+        schedulerConfig.setRetrieveWholeSource(true);
 
         JobConfiguration config = new JobConfiguration(ac);
         config.setDescription("Scheduled job test");
