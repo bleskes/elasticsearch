@@ -253,7 +253,6 @@ public class ElasticsearchJobProvider implements JobProvider
                     " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse response = client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                             .setFetchSource(false)
-                            .setFields()
                             .get();
 
             if (response.isExists() == false)
