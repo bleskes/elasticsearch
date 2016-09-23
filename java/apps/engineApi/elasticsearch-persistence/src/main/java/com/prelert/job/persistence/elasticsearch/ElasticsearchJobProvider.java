@@ -57,6 +57,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
@@ -152,6 +153,8 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
     private static final int RECORDS_TAKE_PARAM = 500;
 
+    private static final long CLUSTER_INIT_TIMEOUT_MS = 30000;
+
 
     private final Node m_Node;
     private final Client m_Client;
@@ -175,23 +178,51 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         LOGGER.info("Connecting to Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
                 + "'");
 
-        // This call was added because if we try to connect to Elasticsearch
-        // while it's doing the recovery operations it does at startup then we
-        // can get weird effects like indexes being reported as not existing
-        // when they do.  See EL16-182 in Jira.
-        LOGGER.trace("ES API CALL: wait for yellow status on whole cluster");
-        ClusterHealthResponse response =  m_Client.admin().cluster()
-                                                .prepareHealth()
-                                                .setWaitForYellowStatus()
-                                                .execute().actionGet();
-
-        // The wait call above can time out.
-        // Throw an error if in cluster health is red
-        if (response.getStatus() == ClusterHealthStatus.RED)
+        long timeOutTime = System.currentTimeMillis() + CLUSTER_INIT_TIMEOUT_MS;
+        while (true)
         {
-            String msg = "Waited for the Elasticsearch status to be YELLOW but is RED after wait timeout";
-            LOGGER.error(msg);
-            throw new IllegalStateException(msg);
+            try
+            {
+                // This call was added because if we try to connect to Elasticsearch
+                // while it's doing the recovery operations it does at startup then we
+                // can get weird effects like indexes being reported as not existing
+                // when they do.  See EL16-182 in Jira.
+                LOGGER.trace("ES API CALL: wait for yellow status on whole cluster");
+                ClusterHealthResponse response = m_Client.admin().cluster()
+                                                        .prepareHealth()
+                                                        .setWaitForYellowStatus()
+                                                        .execute().actionGet();
+
+                // The wait call above can time out.
+                // Throw an error if in cluster health is red
+                if (response.getStatus() == ClusterHealthStatus.RED)
+                {
+                    String msg = "Waited for the Elasticsearch status to be YELLOW but is RED after wait timeout";
+                    LOGGER.error(msg);
+                    throw new IllegalStateException(msg);
+                }
+            }
+            catch (NoNodeAvailableException nnae)
+            {
+                // Propagate if node isn't available after timeout period; suppress
+                // during wait period
+                if (System.currentTimeMillis() > timeOutTime)
+                {
+                    throw nnae;
+                }
+                try
+                {
+                    Thread.sleep(1000);
+                }
+                catch (InterruptedException ie)
+                {
+                    String msg = "Interrupted waiting for the Elasticsearch cluster";
+                    LOGGER.error(msg);
+                    throw new IllegalStateException(msg);
+                }
+                continue;
+            }
+            break;
         }
 
         LOGGER.info("Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
