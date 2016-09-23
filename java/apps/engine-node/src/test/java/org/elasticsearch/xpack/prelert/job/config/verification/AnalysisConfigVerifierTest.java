@@ -322,8 +322,7 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
             assertTrue(false);
         } catch (JobConfigurationException e) {
             assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
-            String rex = String.format(".*'%d'.*'%d'.*", 10, 4);
-            assertTrue(e.getMessage().matches(rex));
+            assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 10, 4), e.getMessage());
         }
 
         ac.setBucketSpan(5L);
@@ -347,8 +346,7 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
             assertTrue(false);
         } catch (JobConfigurationException e) {
             assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
-            String rex = String.format(".*'%d'.*'%d'.*", 222, 222);
-            assertTrue(e.getMessage().matches(rex));
+            assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 222, 222), e.getMessage());
         }
 
         ac.setMultipleBucketSpans(Arrays.asList(-444L, -888L));
@@ -357,8 +355,7 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
             assertTrue(false);
         } catch (JobConfigurationException e) {
             assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
-            String rex = String.format(".*'%d'.*'%d'.*", -444, 222);
-            assertTrue(e.getMessage().matches(rex));
+            assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, -444, 222), e.getMessage());
         }
     }
 
