@@ -138,10 +138,10 @@ public class ElasticsearchServerInfoTest
         when(si.readByte()).thenReturn((byte) 0x01);
 
         when(si.getVersion()).thenReturn(Version.V_5_0_0_alpha5);
-        OsInfo osInfo = OsInfo.readOsInfo(si);
+        OsInfo osInfo = new OsInfo(si);
         when(node.getOs()).thenReturn(osInfo);
         when(node.getJvm()).thenReturn(jvmInfo);
-        when(node.getProcess()).thenReturn(new ProcessInfo(12345678, false));
+        when(node.getProcess()).thenReturn(new ProcessInfo(12345678, false, 60));
 
         List<NodeStats> stats = new ArrayList<>();
         NodeStats stat = mock(NodeStats.class);

@@ -228,7 +228,6 @@ public class MockClientBuilder
         GetRequestBuilder getRequestBuilder = mock(GetRequestBuilder.class);
         when(getRequestBuilder.get()).thenReturn(response);
         when(getRequestBuilder.setFetchSource(false)).thenReturn(getRequestBuilder);
-        when(getRequestBuilder.setFields()).thenReturn(getRequestBuilder);
         when(m_Client.prepareGet(index, type, id)).thenReturn(getRequestBuilder);
         return this;
     }
@@ -241,7 +240,6 @@ public class MockClientBuilder
             throw exception;
         }).when(getRequestBuilder).get();
         when(getRequestBuilder.setFetchSource(false)).thenReturn(getRequestBuilder);
-        when(getRequestBuilder.setFields()).thenReturn(getRequestBuilder);
         when(m_Client.prepareGet(index, type, id)).thenReturn(getRequestBuilder);
         return this;
     }

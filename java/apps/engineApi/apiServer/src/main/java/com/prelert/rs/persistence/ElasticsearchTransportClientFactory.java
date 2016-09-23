@@ -47,8 +47,6 @@ public class ElasticsearchTransportClientFactory extends ElasticsearchFactory
 
     public static ElasticsearchFactory create(String hostPortPairsList, String elasticSearchClusterName)
     {
-        // Tell Elasticsearch to log via our log4j root logger
-//        ESLoggerFactory.setDefaultFactory(new Log4jESLoggerFactory());
         List<HostPortPair> hostAndPortList = HostPortPair.ofList(hostPortPairsList);
         TransportClient client = new PreBuiltTransportClient(
                 Settings.builder().put(CLUSTER_NAME_KEY, elasticSearchClusterName).build());

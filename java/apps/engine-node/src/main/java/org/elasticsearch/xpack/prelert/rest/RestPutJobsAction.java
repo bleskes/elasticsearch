@@ -15,8 +15,8 @@ import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
-import org.elasticsearch.rest.action.support.AcknowledgedRestListener;
-import org.elasticsearch.rest.action.support.RestActions;
+import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.rest.action.RestActions;
 
 import static org.elasticsearch.rest.RestStatus.OK;
 
