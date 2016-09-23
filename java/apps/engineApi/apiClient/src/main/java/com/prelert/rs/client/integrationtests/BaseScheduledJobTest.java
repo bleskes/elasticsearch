@@ -167,11 +167,11 @@ public abstract class BaseScheduledJobTest extends BaseIntegrationTest
 
     private void createDataIndex()
     {
-        try
-        {
-            m_HttpClient.POST(m_EsIndexUrl)
-                        .content(new StringContentProvider(DATA_INDEX_MAPPINGS))
-                        .send();
+        try {
+            m_HttpClient.newRequest(m_EsIndexUrl)
+                    .method(HttpMethod.PUT)
+                    .content(new StringContentProvider(DATA_INDEX_MAPPINGS))
+                    .send();
         }
         catch (InterruptedException | TimeoutException | ExecutionException e)
         {
