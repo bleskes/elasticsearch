@@ -4,20 +4,14 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
 /**
  * Tests the configured fields in the analysis are correct
  * {@linkplain AnalysisConfig#analysisFields()}
@@ -27,10 +21,6 @@ import static org.junit.Assert.assertEquals;
  * {@linkplain AnalysisConfig#partitionFields()}
  */
 public class AnalysisConfigVerifierTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-
 
     public void testVerify_throws()
             throws JobConfigurationException {
@@ -115,52 +105,61 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_GivenNegativeBucketSpan() throws JobConfigurationException {
+    public void testVerify_GivenNegativeBucketSpan() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(-1L);
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("bucketSpan cannot be less than 0. Value = -1");
 
-        AnalysisConfigVerifier.verify(analysisConfig);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "bucketSpan", 0, -1), e.getMessage());
     }
 
-
-    public void testVerify_GivenNegativeBatchSpan() throws JobConfigurationException {
+    public void testVerify_GivenNegativeBatchSpan() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBatchSpan(-1L);
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("batchSpan cannot be less than 0. Value = -1");
 
-        AnalysisConfigVerifier.verify(analysisConfig);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "batchSpan", 0, -1), e.getMessage());
     }
 
 
-    public void testVerify_GivenNegativeLatency() throws JobConfigurationException {
+    public void testVerify_GivenNegativeLatency() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setLatency(-1L);
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("latency cannot be less than 0. Value = -1");
 
-        AnalysisConfigVerifier.verify(analysisConfig);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "latency", 0, -1), e.getMessage());
     }
 
 
-    public void testVerify_GivenNegativePeriod() throws JobConfigurationException {
+    public void testVerify_GivenNegativePeriod() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setPeriod(-1L);
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("period cannot be less than 0. Value = -1");
 
-        AnalysisConfigVerifier.verify(analysisConfig);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "period", 0, -1), e.getMessage());
     }
 
 
-    public void testVerify_GivenDefaultConfig_ShouldBeInvalidDueToNoDetectors() throws JobConfigurationException {
+    public void testVerify_GivenDefaultConfig_ShouldBeInvalidDueToNoDetectors() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("No detectors configured");
 
-        AnalysisConfigVerifier.verify(analysisConfig);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+
+        assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS), e.getMessage());
     }
 
 
@@ -364,59 +363,57 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_GivenCategorizationFiltersButNoCategorizationFieldName()
-            throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME));
-        expectedException.expectMessage("categorizationFilters require setting categorizationFieldName");
+    public void testVerify_GivenCategorizationFiltersButNoCategorizationFieldName() {
 
         AnalysisConfig config = createValidConfig();
         config.setCategorizationFilters(Arrays.asList("foo"));
 
-        AnalysisConfigVerifier.verify(config);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+
+        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME), e.getMessage());
     }
 
 
-    public void testVerify_GivenDuplicateCategorizationFilters() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES));
-        expectedException.expectMessage("categorizationFilters contain duplicates");
+    public void testVerify_GivenDuplicateCategorizationFilters() {
 
         AnalysisConfig config = createValidConfig();
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", "bar", "foo"));
 
-        AnalysisConfigVerifier.verify(config);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+
+        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES), e.getMessage());
     }
 
 
-    public void testVerify_GivenEmptyCategorizationFilter() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
-        expectedException.expectMessage("categorizationFilters are not allowed to contain empty strings");
+    public void testVerify_GivenEmptyCategorizationFilter() {
 
         AnalysisConfig config = createValidConfig();
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", ""));
 
-        AnalysisConfigVerifier.verify(config);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY), e.getMessage());
     }
 
 
-    public void testCheckDetectorsHavePartitionFields()
-            throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(
-                        ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD));
-        expectedException.expectMessage("If the job is configured with Per-Partition Normalization enabled a detector must have a partition field");
+    public void testCheckDetectorsHavePartitionFields() {
 
         AnalysisConfig config = createValidConfig();
         config.setUsePerPartitionNormalization(true);
 
-        AnalysisConfigVerifier.verify(config);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+
+        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD), e.getMessage());
     }
 
 
@@ -430,34 +427,32 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckNoInfluencersAreSet()
-            throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(
-                        ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS));
-        expectedException.expectMessage("A job configured with Per-Partition Normalization cannot use influencers");
+    public void testCheckNoInfluencersAreSet() {
 
         AnalysisConfig config = createValidConfig();
         config.getDetectors().get(0).setPartitionFieldName("pField");
         config.setInfluencers(Arrays.asList("inf1", "inf2"));
         config.setUsePerPartitionNormalization(true);
 
-        AnalysisConfigVerifier.verify(config);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+
+        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS), e.getMessage());
     }
 
 
-    public void testVerify_GivenCategorizationFiltersContainInvalidRegex() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
-        expectedException.expectMessage(
-                "categorizationFilters contains invalid regular expression '('");
+    public void testVerify_GivenCategorizationFiltersContainInvalidRegex() {
 
         AnalysisConfig config = createValidConfig();
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", "("));
 
-        AnalysisConfigVerifier.verify(config);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, "("), e.getMessage());
     }
 
     private static AnalysisConfig createValidConfig() {

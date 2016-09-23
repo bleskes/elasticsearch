@@ -4,19 +4,11 @@ package org.elasticsearch.xpack.prelert.job.transform;
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
-
 public class TransformConfigTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
 
     public void testGetOutputs_GivenEmptyTransformConfig() {
         assertTrue(new TransformConfig().getOutputs().isEmpty());
@@ -50,13 +42,12 @@ public class TransformConfigTest extends ESTestCase {
 
 
     public void testVerify_GivenUnknownTransform() {
-        expectedException.expect(IllegalArgumentException.class);
 
         TransformConfig tr = new TransformConfig();
         tr.setInputs(Arrays.asList("f1", "f2"));
         tr.setTransform("unknown+transform");
 
-        tr.type();
+        ESTestCase.expectThrows(IllegalArgumentException.class, () -> tr.type());
     }
 
 

@@ -2,16 +2,8 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import static org.junit.Assert.assertEquals;
 
 public class IgnoreDowntimeTest extends ESTestCase {
-
-    @Rule
-    public ExpectedException thrown= ExpectedException.none();
 
     public void testFromString_GivenLeadingWhitespace() {
         assertEquals(IgnoreDowntime.ALWAYS, IgnoreDowntime.fromString(" \t ALWAYS"));
@@ -37,7 +29,7 @@ public class IgnoreDowntimeTest extends ESTestCase {
     }
 
     public void testFromString_GivenNonMatchingString() {
-        thrown.expect(IllegalArgumentException.class);
-        IgnoreDowntime.fromString("nope");
+        ESTestCase.expectThrows(IllegalArgumentException.class,
+                () -> IgnoreDowntime.fromString("nope"));
     }
 }

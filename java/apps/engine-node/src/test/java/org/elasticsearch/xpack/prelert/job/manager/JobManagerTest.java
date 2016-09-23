@@ -13,9 +13,6 @@ import org.elasticsearch.xpack.prelert.job.persistence.*;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -25,18 +22,13 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
 import static org.mockito.AdditionalMatchers.not;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 public class JobManagerTest extends ESTestCase
 {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @Captor
     private ArgumentCaptor<Map<String, Object>> jobUpdateCaptor;
 
@@ -189,14 +181,12 @@ public class JobManagerTest extends ESTestCase
     }
 
 
-    public void testGetJobOrThrowIfUnknown_GivenUnknownJob() throws UnknownJobException
+    public void testGetJobOrThrowIfUnknown_GivenUnknownJob()
     {
         JobManager jobManager = createJobManager();
         when(jobProvider.getJobDetails("foo")).thenReturn(Optional.empty());
 
-        expectedException.expect(UnknownJobException.class);
-
-        jobManager.getJobOrThrowIfUnknown("foo");
+        ESTestCase.expectThrows(UnknownJobException.class, () -> jobManager.getJobOrThrowIfUnknown("foo"));
     }
 
 

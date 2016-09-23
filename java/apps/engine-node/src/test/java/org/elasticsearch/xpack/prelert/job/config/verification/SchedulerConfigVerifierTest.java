@@ -6,23 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
-
 
 public class SchedulerConfigVerifierTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
 
     public void testVerify_GivenAllDataSources_DoesNotThrowIllegalStateException() throws JobConfigurationException {
         for (DataSource dataSource : DataSource.values()) {
@@ -47,42 +39,46 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckValidFile_NoPath() throws JobConfigurationException {
+    public void testCheckValidFile_NoPath() {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "filePath", "null"), e.getMessage());
     }
 
 
-    public void testCheckValidFile_EmptyPath() throws JobConfigurationException {
+    public void testCheckValidFile_EmptyPath() {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
         conf.setFilePath("");
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "filePath", ""), e.getMessage());
     }
 
 
-    public void testCheckValidFile_InappropriateField() throws JobConfigurationException {
+    public void testCheckValidFile_InappropriateField() {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.FILE);
         conf.setFilePath("myfile.csv");
         conf.setBaseUrl("http://localhost:9200/");
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE));
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "baseUrl", DataSource.FILE),
+                e.getMessage());
     }
 
 
@@ -136,7 +132,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckValidElasticsearch_WithPasswordNoUsername() throws JobConfigurationException {
+    public void testCheckValidElasticsearch_WithPasswordNoUsername() {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
@@ -144,14 +140,16 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setTypes(Arrays.asList("mytype"));
         conf.setPassword("secret");
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS));
-        SchedulerConfigVerifier.verify(conf);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
+
+        assertEquals(ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS), e.getMessage());
     }
 
 
-    public void testCheckValidElasticsearch_BothPasswordAndEncryptedPassword() throws JobConfigurationException {
+    public void testCheckValidElasticsearch_BothPasswordAndEncryptedPassword() {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
@@ -161,10 +159,12 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setPassword("secret");
         conf.setEncryptedPassword("already_encrypted");
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS));
-        SchedulerConfigVerifier.verify(conf);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
+
+        assertEquals(ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS), e.getMessage());
     }
 
 
@@ -179,21 +179,22 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckValidElasticsearch_InappropriateField() throws JobConfigurationException, IOException {
+    public void testCheckValidElasticsearch_InappropriateField() throws IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
         ObjectMapper mapper = new ObjectMapper();
-        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>() {
-        }));
+        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>() {}));
         conf.setTailFile(true);
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE));
-        SchedulerConfigVerifier.verify(conf);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
+
+        assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "tailFile", DataSource.ELASTICSEARCH), e.getMessage());
     }
 
 
@@ -212,7 +213,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckValidElasticsearch_GivenScriptFieldsAndWholeSource() throws JobConfigurationException, IOException {
+    public void testCheckValidElasticsearch_GivenScriptFieldsAndWholeSource() throws IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
@@ -223,44 +224,42 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         }));
         conf.setRetrieveWholeSource(true);
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE));
-        SchedulerConfigVerifier.verify(conf);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
+
+        assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE, e.getErrorCode());
     }
 
 
-    public void testCheckValidElasticsearch_GivenNullIndexes() throws JobConfigurationException,
-            IOException {
+    public void testCheckValidElasticsearch_GivenNullIndexes() throws IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(null);
         conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        expectedException.expectMessage("Invalid indexes value 'null' in scheduler configuration");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "null"), e.getMessage());
     }
 
-
-    public void testCheckValidElasticsearch_GivenEmptyIndexes() throws JobConfigurationException,
-            IOException {
+    public void testCheckValidElasticsearch_GivenEmptyIndexes() throws IOException {
         SchedulerConfig conf = new SchedulerConfig();
         conf.setDataSource(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Collections.emptyList());
         conf.setTypes(Arrays.asList("mytype"));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        expectedException.expectMessage("Invalid indexes value '[]' in scheduler configuration");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "[]"), e.getMessage());
     }
 
 
@@ -276,12 +275,12 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        expectedException.expectMessage("Invalid indexes value '[null, null]' in scheduler configuration");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "[null, null]"), e.getMessage());
     }
 
 
@@ -297,12 +296,12 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        expectedException.expectMessage("Invalid indexes value '[, ]' in scheduler configuration");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "[, ]"), e.getMessage());
     }
 
 
@@ -315,12 +314,12 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setIndexes(Arrays.asList("myIndex"));
         conf.setTypes(Arrays.asList("mytype"));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        expectedException.expectMessage("Invalid queryDelay value");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "queryDelay", -10L), e.getMessage());
     }
 
 
@@ -333,12 +332,12 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setIndexes(Arrays.asList("myIndex"));
         conf.setTypes(Arrays.asList("mytype"));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        expectedException.expectMessage("Invalid frequency value");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "frequency", -600L), e.getMessage());
     }
 
 
@@ -351,12 +350,12 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setIndexes(Arrays.asList("myIndex"));
         conf.setTypes(Arrays.asList("mytype"));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE));
-        expectedException.expectMessage("Invalid scrollSize value");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "scrollSize", -1000L), e.getMessage());
     }
 
 
@@ -373,12 +372,11 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         conf.setAggregations(aggs);
         conf.setAggs(aggs);
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS));
-        expectedException.expectMessage(
-                "Both aggregations and aggs were specified - please just specify one");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> SchedulerConfigVerifier.verify(conf));
 
-        SchedulerConfigVerifier.verify(conf);
+        assertEquals(ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS), e.getMessage());
     }
 }

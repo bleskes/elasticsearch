@@ -3,19 +3,12 @@ package org.elasticsearch.xpack.prelert.job.condition.verification;
 
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
-import static org.junit.Assert.assertTrue;
 
 public class OperatorVerifierTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
 
     public void testVerify() throws JobConfigurationException {
         assertTrue(OperatorVerifier.verify(Operator.EQ.name()));
@@ -23,13 +16,11 @@ public class OperatorVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_unknownOp() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage(
-                "Unknown condition operator 'bad_op'");
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_UNKNOWN_OPERATOR));
+    public void testVerify_unknownOp() {
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> OperatorVerifier.verify("bad_op"));
 
-        OperatorVerifier.verify("bad_op");
+        assertEquals(ErrorCodes.CONDITION_UNKNOWN_OPERATOR, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, "bad_op"), e.getMessage());
     }
 }

@@ -1,22 +1,17 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     private static final String SUFFIX = "suffix";
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     private Detector detector;
     private String character;
@@ -40,13 +35,8 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
         });
     }
 
-//    @Before
-//    public void createDetector() {
-//        detector = createDetectorWithValidFieldNames();
-//    }
 
-
-    public void testVerifyFieldNames_givenInvalidChars() throws JobConfigurationException {
+    public void testVerifyFieldNames_givenInvalidChars() {
 
         Collection<Object[]> testCaseArguments = getCharactersAndValidity();
 
@@ -68,7 +58,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
         }
     }
 
-    public void testVerifyFunction_forPreSummariedInput() throws JobConfigurationException {
+    public void testVerifyFunction_forPreSummariedInput() {
 
         Collection<Object[]> testCaseArguments = getCharactersAndValidity();
 
@@ -88,71 +78,62 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
         }
     }
 
-    public void verify_FieldName() throws JobConfigurationException {
-        expectJobConfigurationExceptionWhenCharIsInvalid(
-                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-
+    public void verify_FieldName() {
         detector.setFieldName(detector.getFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, false);
+
+        expectJobConfigurationExceptionWhenCharIsInvalid(
+                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
     }
 
 
-    public void verify_ByFieldName() throws JobConfigurationException {
-        expectJobConfigurationExceptionWhenCharIsInvalid(
-                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-
+    public void verify_ByFieldName() {
         detector.setByFieldName(detector.getByFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, false);
+
+        expectJobConfigurationExceptionWhenCharIsInvalid(
+                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
     }
 
 
-    public void verify_OverFieldName() throws JobConfigurationException {
-        expectJobConfigurationExceptionWhenCharIsInvalid(
-                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-
+    public void verify_OverFieldName() {
         detector.setOverFieldName(detector.getOverFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, false);
-    }
 
-
-    public void verify_PartitionFieldName() throws JobConfigurationException {
         expectJobConfigurationExceptionWhenCharIsInvalid(
-                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-
-        detector.setPartitionFieldName(detector.getPartitionFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, false);
+                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
     }
 
 
-    public void verify_FieldNameGivenPresummarised() throws JobConfigurationException {
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
+    public void verify_PartitionFieldName() {
+        detector.setPartitionFieldName(detector.getPartitionFieldName() + getCharacterPlusSuffix());
 
+        expectJobConfigurationExceptionWhenCharIsInvalid(
+                ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
+    }
+
+
+    public void verify_FieldNameGivenPresummarised() {
         detector.setFieldName(detector.getFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, true);
+
+        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
 
-    public void verify_ByFieldNameGivenPresummarised() throws JobConfigurationException {
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
-
+    public void verify_ByFieldNameGivenPresummarised() {
         detector.setByFieldName(detector.getByFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, true);
+
+        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
 
-    public void verify_OverFieldNameGivenPresummarised() throws JobConfigurationException {
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
-
+    public void verify_OverFieldNameGivenPresummarised() {
         detector.setOverFieldName(detector.getOverFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, true);
+
+        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
 
-    public void verify_PartitionFieldNameGivenPresummarised() throws JobConfigurationException {
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION);
-
+    public void verify_PartitionFieldNameGivenPresummarised() {
         detector.setPartitionFieldName(detector.getPartitionFieldName() + getCharacterPlusSuffix());
-        DetectorVerifier.verify(detector, true);
+        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
     private String getCharacterPlusSuffix() {
@@ -167,15 +148,17 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
 
     private void setIsValid(boolean valid) { this.isValid = valid; }
 
-    private void expectJobConfigurationExceptionWhenCharIsInvalid(ErrorCodes errorCode) {
-        if (isValid()) {
-            expectJobConfigurationException(errorCode);
+    private void expectJobConfigurationExceptionWhenCharIsInvalid(ErrorCodes errorCode,
+                                                                  LuceneTestCase.ThrowingRunnable runner) {
+        if (!isValid()) {
+            expectJobConfigurationException(errorCode, runner);
         }
     }
 
-    private void expectJobConfigurationException(ErrorCodes errorCode) {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(ErrorCodeMatcher.hasErrorCode(errorCode));
+    private void expectJobConfigurationException(ErrorCodes errorCode, LuceneTestCase.ThrowingRunnable runner) {
+
+        JobConfigurationException e = ESTestCase.expectThrows(JobConfigurationException.class, runner);
+        assertEquals(errorCode, e.getErrorCode());
     }
 
     private static Detector createDetectorWithValidFieldNames() {

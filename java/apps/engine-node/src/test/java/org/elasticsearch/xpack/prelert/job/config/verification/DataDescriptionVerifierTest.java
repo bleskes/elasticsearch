@@ -3,17 +3,11 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import static org.junit.Assert.assertTrue;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 public class DataDescriptionVerifierTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
 
     public void testVerify_GivenNullTimeFormat() throws JobConfigurationException {
         DataDescription description = new DataDescription();
@@ -56,24 +50,26 @@ public class DataDescriptionVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenTimeFormatIsInvalidDateFormat() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("Invalid Time format string 'invalid'");
-
         DataDescription description = new DataDescription();
         description.setTimeFormat("invalid");
 
-        DataDescriptionVerifier.verify(description);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> DataDescriptionVerifier.verify(description));
+
+        assertEquals(ErrorCodes.INVALID_DATE_FORMAT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, "invalid"), e.getMessage());
     }
 
 
     public void testVerify_GivenTimeFormatIsValidButDoesNotContainTime() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("Invalid Time format string 'y-M-dd'");
-
         DataDescription description = new DataDescription();
         description.setTimeFormat("y-M-dd");
 
-        DataDescriptionVerifier.verify(description);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> DataDescriptionVerifier.verify(description));
+
+        assertEquals(ErrorCodes.INVALID_DATE_FORMAT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, "y-M-dd"), e.getMessage());
     }
 
 

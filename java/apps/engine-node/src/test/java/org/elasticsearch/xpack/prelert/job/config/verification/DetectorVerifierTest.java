@@ -3,19 +3,15 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleConditionType;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -49,8 +45,6 @@ import static org.junit.Assert.assertTrue;
  * </table>
  */
 public class DetectorVerifierTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     /**
      * Test the good/bad detector configurations
@@ -406,9 +400,8 @@ public class DetectorVerifierTest extends ESTestCase {
         assertTrue(DetectorVerifier.verifyExcludeFrequent("over"));
     }
 
-    public void testVerifyExcludeFrequent_GivenInvalidWord() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        DetectorVerifier.verifyExcludeFrequent("bananas");
+    public void testVerifyExcludeFrequent_GivenInvalidWord() {
+        ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verifyExcludeFrequent("bananas"));
     }
 
 
@@ -419,7 +412,7 @@ public class DetectorVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_GivenInvalidDetectionRuleConditionFieldName() throws JobConfigurationException {
+    public void testVerify_GivenInvalidDetectionRuleConditionFieldName() {
         Detector detector = new Detector();
         detector.setFunction("mean");
         detector.setFieldName("metricVale");
@@ -432,13 +425,13 @@ public class DetectorVerifierTest extends ESTestCase {
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME));
-        expectedException.expectMessage(
-                "Invalid detector rule: fieldName has to be one of [metricName]; actual was 'metricValue'");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verify(detector, false));
 
-        DetectorVerifier.verify(detector, false);
+        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME,
+                "[metricName]", "metricValue"),
+                e.getMessage());
     }
 
 
@@ -458,17 +451,17 @@ public class DetectorVerifierTest extends ESTestCase {
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD));
-        expectedException.expectMessage("Invalid detector rule: targetFieldName has to be one of "
-                + "[metricName, instance]; actual was 'instancE'");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verify(detector, false));
 
-        DetectorVerifier.verify(detector, false);
+        assertEquals(ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD_NAME,
+                "[metricName, instance]", "instancE"),
+                e.getMessage());
     }
 
 
-    public void testVerify_GivenDetectionRuleWithInvalidCondition() throws JobConfigurationException {
+    public void testVerify_GivenDetectionRuleWithInvalidCondition() {
         Detector detector = new Detector();
         detector.setFunction("mean");
         detector.setFieldName("metricVale");
@@ -484,13 +477,11 @@ public class DetectorVerifierTest extends ESTestCase {
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-        expectedException.expectMessage(
-                "Invalid condition value: cannot parse a double from string 'invalid'");
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verify(detector, false));
 
-        DetectorVerifier.verify(detector, false);
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, "invalid"), e.getMessage());
     }
 
 

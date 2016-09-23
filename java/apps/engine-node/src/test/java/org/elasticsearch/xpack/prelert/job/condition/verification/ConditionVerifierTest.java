@@ -4,19 +4,12 @@ package org.elasticsearch.xpack.prelert.job.condition.verification;
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
-import static org.junit.Assert.assertTrue;
 
 public class ConditionVerifierTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
 
     public void testVerifyArgsNumericArgs() throws JobConfigurationException {
         Condition c = new Condition(Operator.LTE, "100");
@@ -26,65 +19,61 @@ public class ConditionVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_GivenUnsetOperator() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("Invalid operator for condition");
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
+    public void testVerify_GivenUnsetOperator() {
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(new Condition()));
 
-        ConditionVerifier.verify(new Condition());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_OPERATOR), e.getMessage());
     }
 
 
-    public void testVerify_GivenOperatorIsNone() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage("Invalid operator for condition");
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-
+    public void testVerify_GivenOperatorIsNone() {
         Condition condition = new Condition();
         condition.setOperator(Operator.NONE);
 
-        ConditionVerifier.verify(condition);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_OPERATOR), e.getMessage());
     }
 
 
-    public void testVerify_GivenEmptyValue() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage(
-                "Invalid condition value: cannot parse a double from string ''");
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-
+    public void testVerify_GivenEmptyValue() {
         Condition condition = new Condition();
         condition.setOperator(Operator.LT);
         condition.setValue("");
 
-        ConditionVerifier.verify(condition);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, ""), e.getMessage());
     }
 
 
-    public void testVerify_GivenInvalidRegex() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-
+    public void testVerify_GivenInvalidRegex() {
         Condition condition = new Condition();
         condition.setOperator(Operator.MATCH);
         condition.setValue("[*");
 
-        ConditionVerifier.verify(condition);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_REGEX, "[*"), e.getMessage());
     }
 
 
-    public void testVerify_GivenNullRegex() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.CONDITION_INVALID_ARGUMENT));
-
+    public void testVerify_GivenNullRegex() {
         Condition condition = new Condition();
         condition.setOperator(Operator.MATCH);
 
-        ConditionVerifier.verify(condition);
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NULL, "[*"), e.getMessage());
     }
 }

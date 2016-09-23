@@ -2,12 +2,9 @@
 package org.elasticsearch.xpack.prelert.job.errorcodes;
 
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
-import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * This test ensures that all the error values in {@linkplain ErrorCodes}
@@ -16,8 +13,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class ErrorCodesTest extends ESTestCase
 {
-
-	public void errorCodesUnique()
+	public void testErrorCodesAreUnique()
 	throws IllegalArgumentException, IllegalAccessException
 	{
 		ErrorCodes[] values = ErrorCodes.class.getEnumConstants();

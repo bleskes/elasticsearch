@@ -3,39 +3,30 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodeMatcher;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import static org.junit.Assert.assertTrue;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 public class ModelDebugConfigVerifierTest extends ESTestCase {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
 
-    public void testVerify_GivenBoundPercentileLessThanZero() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage(
-                "Invalid modelDebugConfig: boundsPercentile must be in the range [0, 100]");
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+    public void testVerify_GivenBoundPercentileLessThanZero() {
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> ModelDebugConfigVerifier.verify(new ModelDebugConfig(-1.0, "")));
 
-        ModelDebugConfigVerifier.verify(new ModelDebugConfig(-1.0, ""));
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE, ""), e.getMessage());
     }
 
 
-    public void testVerify_GivenBoundPercentileGreaterThan100() throws JobConfigurationException {
-        expectedException.expect(JobConfigurationException.class);
-        expectedException.expectMessage(
-                "Invalid modelDebugConfig: boundsPercentile must be in the range [0, 100]");
-        expectedException.expect(
-                ErrorCodeMatcher.hasErrorCode(ErrorCodes.INVALID_VALUE));
+    public void testVerify_GivenBoundPercentileGreaterThan100() {
+        JobConfigurationException e =
+                ESTestCase.expectThrows(JobConfigurationException.class,
+                        () -> ModelDebugConfigVerifier.verify(new ModelDebugConfig(100.1, "")));
 
-        ModelDebugConfigVerifier.verify(new ModelDebugConfig(100.1, ""));
+        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE, ""), e.getMessage());
     }
 
 
