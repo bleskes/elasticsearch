@@ -67,6 +67,7 @@ public class WatcherBackwardsCompatibilityTests extends AbstractWatcherIntegrati
         return plugins;
     }
 
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/3611")
     public void testWatchLoadedSuccessfullyAfterUpgrade() throws Exception {
         // setup node
         Path dataDir = createTempDir();
