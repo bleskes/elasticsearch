@@ -34,7 +34,6 @@ public class JobDetailsTest extends ESTestCase {
         assertNull(jobDetails.getFinishedTime());
         assertNull(jobDetails.getIgnoreDowntime());
         assertNull(jobDetails.getLastDataTime());
-        assertNull(jobDetails.getLocation());
         assertNull(jobDetails.getModelDebugConfig());
         assertNull(jobDetails.getModelSizeStats());
         assertNull(jobDetails.getRenormalizationWindowDays());
@@ -102,7 +101,6 @@ public class JobDetailsTest extends ESTestCase {
         jobDetails1.setFinishedTime(new Date(1000));
         jobDetails1.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails1.setLastDataTime(new Date(500));
-        jobDetails1.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails1.setModelDebugConfig(new ModelDebugConfig());
         jobDetails1.setModelSizeStats(modelSizeStats);
         jobDetails1.setRenormalizationWindowDays(60L);
@@ -128,7 +126,6 @@ public class JobDetailsTest extends ESTestCase {
         jobDetails2.setFinishedTime(new Date(1000));
         jobDetails2.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails2.setLastDataTime(new Date(500));
-        jobDetails2.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails2.setModelDebugConfig(new ModelDebugConfig());
         jobDetails2.setModelSizeStats(modelSizeStats);
         jobDetails2.setRenormalizationWindowDays(60L);

@@ -555,7 +555,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         if (Strings.isNullOrEmpty(query.getPartitionValue()))
         {
-            for (Bucket b : buckets.queryResults())
+            for (Bucket b : buckets.hits())
             {
                 if (query.isExpand()  && b.getRecordCount() > 0)
                 {
@@ -570,9 +570,9 @@ public class ElasticsearchJobProvider implements JobProvider
                             query.getEpochStart(), query.getEpochEnd(),
                             query.getPartitionValue());
 
-            mergePartitionScoresIntoBucket(scores, buckets.queryResults());
+            mergePartitionScoresIntoBucket(scores, buckets.hits());
 
-            for (Bucket b : buckets.queryResults())
+            for (Bucket b : buckets.hits())
             {
                 if (query.isExpand() && b.getRecordCount() > 0)
                 {
@@ -812,7 +812,7 @@ public class ElasticsearchJobProvider implements JobProvider
         QueryPage<AnomalyRecord> page = bucketRecords(
                 jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
                 AnomalyRecord.PROBABILITY, false, partitionFieldValue);
-        bucket.setRecords(page.queryResults());
+        bucket.setRecords(page.hits());
 
         while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
         {
@@ -820,7 +820,7 @@ public class ElasticsearchJobProvider implements JobProvider
             page = bucketRecords(
                     jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
                     AnomalyRecord.PROBABILITY, false, partitionFieldValue);
-            bucket.getRecords().addAll(page.queryResults());
+            bucket.getRecords().addAll(page.hits());
         }
 
         return bucket.getRecords().size();
@@ -842,7 +842,7 @@ public class ElasticsearchJobProvider implements JobProvider
         QueryPage<AnomalyRecord> page = bucketRecords(
                 jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
                 AnomalyRecord.PROBABILITY, false, null);
-        bucket.setRecords(page.queryResults());
+        bucket.setRecords(page.hits());
 
         while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
         {
@@ -850,7 +850,7 @@ public class ElasticsearchJobProvider implements JobProvider
             page = bucketRecords(
                     jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
                     AnomalyRecord.PROBABILITY, false, null);
-            bucket.getRecords().addAll(page.queryResults());
+            bucket.getRecords().addAll(page.hits());
         }
 
         return bucket.getRecords().size();
@@ -1298,7 +1298,7 @@ public class ElasticsearchJobProvider implements JobProvider
             throws UnknownJobException, NoSuchModelSnapshotException
     {
         List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
-                    0, 0, null, true, snapshotId, null).queryResults();
+                    0, 0, null, true, snapshotId, null).hits();
         if (deleteCandidates == null || deleteCandidates.isEmpty())
         {
             throw new NoSuchModelSnapshotException(jobId);

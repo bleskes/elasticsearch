@@ -1,4 +1,19 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
@@ -22,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -51,6 +67,13 @@ public class JobManagerTest extends ESTestCase
         System.clearProperty("max.jobs.factor");
     }
 
+    public void testGetJob() throws UnknownJobException {
+        when(jobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
+
+        JobManager jobManager = createJobManager();
+        Optional<JobDetails> doc = jobManager.getJob("foo");
+        assertTrue(doc.isPresent());
+    }
 
     public void testFilter()
 

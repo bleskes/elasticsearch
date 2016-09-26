@@ -1,5 +1,5 @@
 ---
-"Test put job api":
+"Test job crud apis":
   - do:
       xpack.prelert.put_job:
         body:  >
@@ -17,3 +17,10 @@
             }
           }
   - match: { status: "CLOSED" }
+
+  - do:
+      xpack.prelert.get_jobs:
+        skip: 0
+        take: 100
+  - match: { hitCount: 1 }
+  - match: { hits.0.jobId: "farequote" }

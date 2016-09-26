@@ -37,7 +37,6 @@ public class JobDetails {
     public static final String CUSTOM_SETTINGS = "customSettings";
     public static final String DATA_DESCRIPTION = "dataDescription";
     public static final String DESCRIPTION = "description";
-    public static final String ENDPOINTS = "endpoints";
     public static final String FINISHED_TIME = "finishedTime";
     public static final String IGNORE_DOWNTIME = "ignoreDowntime";
     public static final String LAST_DATA_TIME = "lastDataTime";
@@ -89,9 +88,6 @@ public class JobDetails {
     private Long resultsRetentionDays;
     private Map<String, Object> customSettings;
     private Double averageBucketProcessingTimeMs;
-
-    /* The endpoints should not be persisted in the storage */
-    private URI location;
 
 
     /**
@@ -197,14 +193,6 @@ public class JobDetails {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public URI getLocation() {
-        return location;
-    }
-
-    public void setLocation(URI location) {
-        this.location = location;
     }
 
     /**
@@ -568,8 +556,7 @@ public class JobDetails {
                 Objects.equals(this.backgroundPersistInterval, that.backgroundPersistInterval) &&
                 Objects.equals(this.modelSnapshotRetentionDays, that.modelSnapshotRetentionDays) &&
                 Objects.equals(this.resultsRetentionDays, that.resultsRetentionDays) &&
-                Objects.equals(this.customSettings, that.customSettings) &&
-                Objects.equals(this.location, that.location);
+                Objects.equals(this.customSettings, that.customSettings);
     }
 
     @Override
@@ -578,6 +565,6 @@ public class JobDetails {
                 finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
                 dataDescription, modelDebugConfig, modelSizeStats, transforms, counts,
                 renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
-                resultsRetentionDays, ignoreDowntime, customSettings, location);
+                resultsRetentionDays, ignoreDowntime, customSettings);
     }
 }

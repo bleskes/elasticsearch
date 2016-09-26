@@ -1,9 +1,22 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job.manager;
 
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.*;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
@@ -14,6 +27,7 @@ import org.apache.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 
 import java.util.*;
@@ -64,6 +78,31 @@ public class JobManager {
         jobFactory = new JobFactory();
     }
 
+    /**
+     * Get the details of the specific job wrapped in a <code>Optional</code>
+     *
+     * @param jobId
+     * @return An {@code Optional} containing the {@code JobDetails} if a job with the given
+     * {@code jobId} exists, or an empty {@code Optional} otherwise
+     */
+    public Optional<JobDetails> getJob(String jobId) {
+        return jobProvider.getJobDetails(jobId);
+    }
+
+    /**
+     * Get details of all Jobs.
+     *
+     * @param skip Skip the first N Jobs. This parameter is for paging
+     *             results if not required set to 0.
+     * @param take Take only this number of Jobs
+     * @return A query page object with hitCount set to the total number
+     * of jobs not the only the number returned here as determined by the
+     * <code>take</code>
+     * parameter.
+     */
+    public QueryPage<JobDetails> getJobs(int skip, int take) {
+        return jobProvider.getJobs(skip, take);
+    }
 
     /**
      * Returns the non-null {@code JobDetails} object for the given {@code jobId}
