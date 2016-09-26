@@ -52,7 +52,6 @@ public class TenShardsOneReplicaRoutingTests extends ESAllocationTestCase {
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put("cluster.routing.allocation.node_initial_primaries_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
                 .put("cluster.routing.allocation.balance.index", 0.0f)
                 .put("cluster.routing.allocation.balance.replica", 1.0f)
                 .put("cluster.routing.allocation.balance.primary", 0.0f)

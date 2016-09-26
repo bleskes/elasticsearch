@@ -112,7 +112,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         AllocationService strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         MetaData metaData = MetaData.builder()
@@ -193,7 +193,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         clusterState = strategy.reroute(clusterState, "reroute");
@@ -223,7 +223,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         clusterState = strategy.reroute(clusterState, "reroute");
@@ -300,7 +300,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         AllocationService strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         MetaData metaData = MetaData.builder()
@@ -357,7 +357,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         clusterState = strategy.reroute(clusterState, "reroute");
@@ -420,7 +420,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         clusterState = strategy.reroute(clusterState, "reroute");
@@ -450,7 +450,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         clusterState = strategy.reroute(clusterState, "reroute");
@@ -554,7 +554,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         AllocationService strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         MetaData metaData = MetaData.builder()
@@ -624,7 +624,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         AllocationService strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         MetaData metaData = MetaData.builder()
@@ -728,7 +728,6 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         AllocationService strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
 
         MetaData metaData = MetaData.builder()
@@ -899,7 +898,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
         AllocationService strategy = new AllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
         // Ensure that the reroute call doesn't alter the routing table, since the first primary is relocating away
         // and therefor we will have sufficient disk space on node1.
@@ -997,7 +996,7 @@ public class DiskThresholdDeciderTests extends ESAllocationTestCase {
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 10)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
 
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", -1)
+
                 .build(), deciders, new TestGatewayAllocator(), new BalancedShardsAllocator(Settings.EMPTY), cis);
         ClusterState result = strategy.reroute(clusterState, "reroute");
 

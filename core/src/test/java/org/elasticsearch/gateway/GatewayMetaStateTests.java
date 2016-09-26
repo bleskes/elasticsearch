@@ -22,6 +22,7 @@ package org.elasticsearch.gateway;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.metadata.MetaDataIndexUpgradeService;
@@ -33,7 +34,6 @@ import org.elasticsearch.cluster.routing.allocation.decider.ClusterRebalanceAllo
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.plugins.MetaDataUpgrader;
-import org.elasticsearch.cluster.ESAllocationTestCase;
 import org.elasticsearch.test.TestCustomMetaData;
 import org.junit.Before;
 
@@ -72,7 +72,6 @@ public class GatewayMetaStateTests extends ESAllocationTestCase {
         AllocationService strategy = createAllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 100)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", 100)
                 .put("cluster.routing.allocation.node_initial_primaries_recoveries", 100)
                 .build());
         ClusterState newClusterState, previousClusterState;
@@ -129,7 +128,6 @@ public class GatewayMetaStateTests extends ESAllocationTestCase {
         AllocationService strategy = createAllocationService(Settings.builder()
                 .put("cluster.routing.allocation.node_concurrent_recoveries", 100)
                 .put(ClusterRebalanceAllocationDecider.CLUSTER_ROUTING_ALLOCATION_ALLOW_REBALANCE_SETTING.getKey(), "always")
-                .put("cluster.routing.allocation.cluster_concurrent_rebalance", 100)
                 .put("cluster.routing.allocation.node_initial_primaries_recoveries", 100)
                 .build());
         ClusterState newClusterState, previousClusterState;
