@@ -25,6 +25,27 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"status\":\"CLOSED\""));
     }
 
+    public void testGetJob_GivenNoSuchJob() throws Exception {
+        ResponseException e = expectThrows(ResponseException.class, () -> client().performRequest("get", "engine/v2/jobs/non-existing-job"));
+
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
+        assertThat(e.getMessage(), containsString("\"exists\":false"));
+        assertThat(e.getMessage(), containsString("\"type\":\"job\""));
+    }
+
+    public void testGetJob_GivenJobExists() throws Exception {
+        createFarequoteJob();
+
+        Response response = client().performRequest("get", "engine/v2/jobs/farequote");
+
+        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
+        String responseAsString = responseEntityToString(response);
+        assertThat(responseAsString, containsString("\"exists\":true"));
+        assertThat(responseAsString, containsString("\"type\":\"job\""));
+        assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
+        assertThat(responseAsString, containsString("\"status\":\"CLOSED\""));
+    }
+
     public void testGetJobs_GivenNegativeSkip() throws Exception {
         ResponseException e = expectThrows(ResponseException.class, () -> client().performRequest("get", "engine/v2/jobs?skip=-1"));
 

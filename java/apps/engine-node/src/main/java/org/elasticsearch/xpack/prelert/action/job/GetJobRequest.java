@@ -24,25 +24,16 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 
 import java.io.IOException;
 
-public class GetJobsRequest extends MasterNodeReadRequest<GetJobsRequest> {
+public class GetJobRequest extends MasterNodeReadRequest<GetJobRequest> {
 
-    private int skip;
-    private int take;
+    private String jobId;
 
-    public int getSkip() {
-        return skip;
+    public String getJobId() {
+        return jobId;
     }
 
-    public void setSkip(int skip) {
-        this.skip = skip;
-    }
-
-    public int getTake() {
-        return take;
-    }
-
-    public void setTake(int take) {
-        this.take = take;
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
     }
 
     @Override
@@ -53,14 +44,12 @@ public class GetJobsRequest extends MasterNodeReadRequest<GetJobsRequest> {
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);
-        skip = in.readInt();
-        take = in.readInt();
+        jobId = in.readString();
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeInt(skip);
-        out.writeInt(take);
+        out.writeString(jobId);
     }
 }

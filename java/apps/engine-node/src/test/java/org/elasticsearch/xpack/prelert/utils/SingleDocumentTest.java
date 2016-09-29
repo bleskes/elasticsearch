@@ -17,29 +17,31 @@
 
 package org.elasticsearch.xpack.prelert.utils;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.test.ESTestCase;
 
 public class SingleDocumentTest extends ESTestCase {
 
     public void testConstructorWithNullDocument() {
-        expectThrows(NullPointerException.class, () -> new SingleDocument<>("string", null));
+        assertFalse(new SingleDocument("string", null).isExists());
     }
 
-    public void testEmptyDocument()
-    {
-        SingleDocument<String> doc = SingleDocument.empty("string");
+    public void testEmptyDocument() {
+        SingleDocument doc = SingleDocument.empty("string");
 
         assertFalse(doc.isExists());
         assertEquals("string", doc.getType());
         assertNull(doc.getDocument());
+        assertEquals(RestStatus.NOT_FOUND, doc.status());
     }
 
-    public void testExistingDocument()
-    {
-        SingleDocument<String> doc = new SingleDocument<String>("string", "the doc");
+    public void testExistingDocument() {
+        SingleDocument doc = new SingleDocument("string", new BytesArray("the doc"));
 
         assertTrue(doc.isExists());
         assertEquals("string", doc.getType());
-        assertEquals("the doc", doc.getDocument());
+        assertEquals("the doc", doc.getDocument().utf8ToString());
+        assertEquals(RestStatus.OK, doc.status());
     }
 }

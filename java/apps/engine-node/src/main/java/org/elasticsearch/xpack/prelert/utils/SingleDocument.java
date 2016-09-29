@@ -17,28 +17,25 @@
 
 package org.elasticsearch.xpack.prelert.utils;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.xcontent.StatusToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.rest.RestStatus;
 
-import java.util.Objects;
+import java.io.IOException;
 
 /**
  * Generic wrapper class for returning a single document requested through
  * the REST API. If the requested document does not exist {@link #isExists()}
  * will be false and {@link #getDocument()} will return <code>null</code>.
- *
- * @param <T> the requested document type
  */
-@JsonPropertyOrder({"exists", "type", "document"})
-@JsonInclude(Include.NON_NULL)
-public class SingleDocument<T> {
+public class SingleDocument implements StatusToXContent {
     private final boolean exists;
     private final String type;
 
     @Nullable
-    private final T document;
+    private final BytesReference document;
 
     /**
      * Constructor for a SingleDocument with an existing doc
@@ -46,12 +43,8 @@ public class SingleDocument<T> {
      * @param type the document type
      * @param document the document (non-null)
      */
-    public SingleDocument(String type, T document) {
-        this(true, type, Objects.requireNonNull(document));
-    }
-
-    private SingleDocument(boolean exists, String type, T document) {
-        this.exists = exists;
+    public SingleDocument(String type, BytesReference document) {
+        this.exists = document != null;
         this.type = type;
         this.document = document;
     }
@@ -77,8 +70,23 @@ public class SingleDocument<T> {
      * @return The document or <code>null</code>
      */
     @Nullable
-    public T getDocument() {
+    public BytesReference getDocument() {
         return document;
+    }
+
+    @Override
+    public RestStatus status() {
+        return exists ? RestStatus.OK : RestStatus.NOT_FOUND;
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.field("exists", exists);
+        builder.field("type", type);
+        if (document != null) {
+            builder.rawField("document", document);
+        }
+        return builder;
     }
 
     /**
@@ -86,7 +94,7 @@ public class SingleDocument<T> {
      * @param type the document type
      * @return The empty <code>SingleDocument</code>
      */
-    public static <T> SingleDocument<T> empty(String type) {
-        return new SingleDocument<>(false, type, null);
+    public static SingleDocument empty(String type) {
+        return new SingleDocument(type, null);
     }
 }

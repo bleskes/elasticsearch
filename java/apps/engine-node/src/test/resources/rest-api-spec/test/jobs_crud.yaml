@@ -24,3 +24,17 @@
         take: 100
   - match: { hitCount: 1 }
   - match: { hits.0.jobId: "farequote" }
+
+  - do:
+      xpack.prelert.get_job:
+        job_id: "farequote"
+  - match: { exists: true }
+  - match: { type: "job" }
+  - match: { document.jobId: "farequote" }
+
+---
+"Test get job API with non existing job id":
+  - do:
+      catch: missing
+      xpack.prelert.get_job:
+        job_id: "non-existing"

@@ -26,13 +26,15 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
-
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.transport.Netty4Plugin;
+import org.elasticsearch.xpack.prelert.action.job.GetJobAction;
 import org.elasticsearch.xpack.prelert.action.job.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.job.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.job.TransportGetJobAction;
 import org.elasticsearch.xpack.prelert.action.job.TransportGetJobsAction;
 import org.elasticsearch.xpack.prelert.action.job.TransportPutJobAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
 
@@ -102,6 +104,7 @@ public class ServerBootstrap {
         @Override
         public List<Class<? extends RestHandler>> getRestHandlers() {
             return Arrays.asList(
+                    RestGetJobAction.class,
                     RestGetJobsAction.class,
                     RestPutJobsAction.class);
         }
@@ -109,6 +112,7 @@ public class ServerBootstrap {
         @Override
         public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
             return Arrays.asList(
+                    new ActionHandler<>(GetJobAction.INSTANCE, TransportGetJobAction.class),
                     new ActionHandler<>(GetJobsAction.INSTANCE, TransportGetJobsAction.class),
                     new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class));
         }
