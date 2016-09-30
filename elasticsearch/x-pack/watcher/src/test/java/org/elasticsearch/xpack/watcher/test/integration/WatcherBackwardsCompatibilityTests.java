@@ -19,11 +19,13 @@ package org.elasticsearch.xpack.watcher.test.integration;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.admin.cluster.snapshots.restore.RestoreSnapshotResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.MockScriptPlugin;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.xpack.watcher.support.xcontent.ObjectPath;
@@ -32,13 +34,13 @@ import org.elasticsearch.xpack.watcher.transport.actions.get.GetWatchResponse;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -67,21 +69,39 @@ public class WatcherBackwardsCompatibilityTests extends AbstractWatcherIntegrati
         return plugins;
     }
 
-    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/3611")
     public void testWatchLoadedSuccessfullyAfterUpgrade() throws Exception {
         // setup node
-        Path dataDir = createTempDir();
-        Path clusterDir = Files.createDirectory(dataDir.resolve(cluster().getClusterName()));
+        Path repoDir = createTempDir();
         try (InputStream stream = WatcherBackwardsCompatibilityTests.class.
-                getResourceAsStream("/bwc_indices/bwc_index_2_3_5.zip")) {
-            TestUtil.unzip(stream, clusterDir);
+                getResourceAsStream("/bwc_indices/bwc_watcher_index_snapshot_repo_2.3.5.zip")) {
+            TestUtil.unzip(stream, repoDir);
         }
 
         Settings.Builder nodeSettings = Settings.builder()
                 .put(super.nodeSettings(0))
-                .put(Environment.PATH_DATA_SETTING.getKey(), dataDir);
+                .put(Environment.PATH_REPO_SETTING.getKey(), repoDir);
         internalCluster().startNode(nodeSettings.build());
         ensureYellow();
+
+        // stop watcher to be able to trigger the restore
+        assertAcked(watcherClient().prepareWatchService().stop().get());
+
+        // create repo to back up from
+        client().admin().cluster().preparePutRepository("backup")
+                .setType("fs")
+                .setSettings(Settings.builder().put("location", repoDir).put("compress", true))
+                .get();
+
+        // restore the index
+        // POST /_snapshot/backup/snapshot/_restore
+        RestoreSnapshotResponse response = client().admin().cluster()
+                .prepareRestoreSnapshot("backup", "snapshot")
+                .setWaitForCompletion(true)
+                .get();
+        assertThat(response.status(), is(RestStatus.OK));
+
+        // lets get up and running again
+        assertAcked(watcherClient().prepareWatchService().start().get());
 
         // verify cluster state:
         assertBusy(() -> {
