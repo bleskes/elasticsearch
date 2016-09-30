@@ -22,7 +22,7 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:'2.8.1'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.8.1'
     compile group: 'org.elasticsearch', name: 'elasticsearch', version:'5.0.0-beta1'
-    compile group: 'org.elasticsearch.plugin', name: 'transport-netty3-client', version:'5.0.0-beta1'
+    compile group: 'org.elasticsearch.plugin', name: 'transport-netty4-client', version:'5.0.0-beta1'
 
     testCompile (group: 'junit', name: 'junit', version:'4.11') {
         exclude group: 'org.hamcrest', module: 'hamcrest-core'

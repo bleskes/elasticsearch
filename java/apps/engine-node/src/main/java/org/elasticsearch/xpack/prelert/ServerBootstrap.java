@@ -28,7 +28,7 @@ import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 
 import org.elasticsearch.rest.RestHandler;
-import org.elasticsearch.transport.Netty3Plugin;
+import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.xpack.prelert.action.job.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.job.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.job.TransportGetJobsAction;
@@ -58,9 +58,6 @@ public class ServerBootstrap {
         settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
         settings.put("http.port", JETTY_PORT);
         settings.put("cluster.name", "prelert");
-        // Use netty3 for alpha5, when upgrading to beta1 or higher use netty4
-        settings.put("transport.type", "netty3");
-        settings.put("http.type", "netty3");
 
         CountDownLatch latch = new CountDownLatch(1);
         try {
@@ -72,8 +69,10 @@ public class ServerBootstrap {
                     try {
                         node.close();
                     } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        latch.countDown();
                     }
-                    latch.countDown();
                 }
             });
             node.start();
@@ -88,7 +87,7 @@ public class ServerBootstrap {
         public PrelertNode(Settings settings) {
             super(
                     InternalSettingsPreparer.prepareEnvironment(settings, Terminal.DEFAULT),
-                    Arrays.asList(PrelertPlugin.class, Netty3Plugin.class)
+                    Arrays.asList(PrelertPlugin.class, Netty4Plugin.class)
             );
         }
     }
