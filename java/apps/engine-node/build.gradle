@@ -54,10 +54,12 @@ task startPrelert(type:JavaExec) {
 }
 
 task startPrelertInBackground() {
-    def t = Thread.start {
-        startPrelert.execute()
+    doFirst {
+        def t = Thread.start {
+            startPrelert.execute()
+        }
+        sleep 6000
     }
-    sleep 6000
 }
 
 task integTest(type: Test,
