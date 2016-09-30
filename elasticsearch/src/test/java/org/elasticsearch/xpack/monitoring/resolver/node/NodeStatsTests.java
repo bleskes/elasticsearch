@@ -63,8 +63,8 @@ public class NodeStatsTests extends MonitoringIntegTestCase {
             client().prepareIndex("test", "foo").setSource("value", randomInt()).get();
         }
 
-        securedFlush();
-        securedRefresh();
+        flush();
+        refresh();
 
         updateMonitoringInterval(3L, TimeUnit.SECONDS);
         waitForMonitoringIndices();

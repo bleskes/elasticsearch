@@ -30,7 +30,6 @@ import org.junit.After;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -68,9 +67,9 @@ public class ClusterStatsTests extends MonitoringIntegTestCase {
             index(indices[i], "foo", "1", jsonBuilder().startObject().field("dummy_field", 1).endObject());
         }
 
-        securedFlush();
-        securedRefresh();
-        securedEnsureGreen();
+        flush();
+        refresh();
+        ensureGreen();
 
         // ok.. we'll start collecting now...
         updateMonitoringInterval(3L, TimeUnit.SECONDS);

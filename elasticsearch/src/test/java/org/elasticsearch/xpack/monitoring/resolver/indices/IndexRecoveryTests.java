@@ -70,8 +70,8 @@ public class IndexRecoveryTests extends MonitoringIntegTestCase {
         assertBusy(new Runnable() {
             @Override
             public void run() {
-                securedFlush();
-                securedRefresh();
+                flush();
+                refresh();
 
                 RecoveryResponse recoveries = client().admin().indices().prepareRecoveries().get();
                 assertThat(recoveries.hasRecoveries(), is(true));
@@ -107,8 +107,8 @@ public class IndexRecoveryTests extends MonitoringIntegTestCase {
             }
         }
 
-        securedFlush();
-        securedRefresh();
+        flush();
+        refresh();
 
         logger.debug("--> checking that cluster_uuid field is correctly indexed");
         response = client().prepareSearch().setTypes(IndexRecoveryResolver.TYPE).setSize(0).setQuery(existsQuery("cluster_uuid")).get();

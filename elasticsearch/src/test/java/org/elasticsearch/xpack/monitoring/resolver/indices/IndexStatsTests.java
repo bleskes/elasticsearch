@@ -29,7 +29,6 @@ import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
 import org.junit.After;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.greaterThan;
@@ -71,8 +70,8 @@ public class IndexStatsTests extends MonitoringIntegTestCase {
             }
         }
 
-        securedFlush();
-        securedRefresh();
+        flush();
+        refresh();
 
         updateMonitoringInterval(3L, TimeUnit.SECONDS);
         waitForMonitoringIndices();
@@ -83,8 +82,8 @@ public class IndexStatsTests extends MonitoringIntegTestCase {
         assertBusy(new Runnable() {
             @Override
             public void run() {
-                securedFlush(indices);
-                securedRefresh();
+                flush(indices);
+                refresh();
                 for (int i = 0; i < nbIndices; i++) {
                     SearchResponse count = client().prepareSearch()
                             .setSize(0)
