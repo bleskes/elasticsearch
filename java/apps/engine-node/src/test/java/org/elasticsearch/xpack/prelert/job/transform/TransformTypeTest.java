@@ -1,7 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.transform;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.test.ESTestCase;
 
 import java.util.EnumSet;
 import java.util.Set;

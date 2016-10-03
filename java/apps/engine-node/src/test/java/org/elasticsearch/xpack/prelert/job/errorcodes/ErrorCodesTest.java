@@ -1,7 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.errorcodes;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.test.ESTestCase;
 
 import java.util.HashSet;
 import java.util.Set;

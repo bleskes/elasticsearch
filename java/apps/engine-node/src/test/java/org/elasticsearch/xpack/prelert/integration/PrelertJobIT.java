@@ -3,7 +3,7 @@ package org.elasticsearch.xpack.prelert.integration;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
-import org.elasticsearch.xpack.prelert.integration.hack.ESRestTestCase;
+import org.elasticsearch.test.rest.ESRestTestCase;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

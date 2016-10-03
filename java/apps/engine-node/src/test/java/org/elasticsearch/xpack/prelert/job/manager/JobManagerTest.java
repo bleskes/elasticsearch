@@ -16,7 +16,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;

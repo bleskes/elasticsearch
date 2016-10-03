@@ -1,12 +1,8 @@
 
 package org.elasticsearch.xpack.prelert.job.condition;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
-import org.junit.Test;
-
+import org.elasticsearch.test.ESTestCase;
 import java.util.regex.Pattern;
-
-import static org.junit.Assert.*;
 
 public class OperatorTest extends ESTestCase {
 

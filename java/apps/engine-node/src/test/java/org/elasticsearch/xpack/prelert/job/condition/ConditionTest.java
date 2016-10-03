@@ -1,11 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.condition;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import org.elasticsearch.test.ESTestCase;
 
 public class ConditionTest extends ESTestCase {
 

@@ -17,7 +17,7 @@
 package org.elasticsearch.xpack.prelert.validation;
 
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 
 public class PaginationParamsValidatorTest extends ESTestCase {

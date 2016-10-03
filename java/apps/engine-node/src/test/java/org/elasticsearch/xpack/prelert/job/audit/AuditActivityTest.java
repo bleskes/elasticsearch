@@ -1,7 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.audit;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 import org.junit.Test;
 

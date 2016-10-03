@@ -1,7 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.messages;
 
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.lang.reflect.Field;

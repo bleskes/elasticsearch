@@ -2,7 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.xpack.prelert.integration.hack.ESTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
