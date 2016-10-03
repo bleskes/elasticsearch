@@ -114,6 +114,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
     private final Hasher hasher = Hasher.BCRYPT;
     private final AtomicReference<State> state = new AtomicReference<>(State.INITIALIZED);
     private final InternalClient client;
+    private final boolean isTribeNode;
     private int scrollSize;
     private TimeValue scrollKeepAlive;
 
@@ -122,6 +123,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
     public NativeUsersStore(Settings settings, InternalClient client) {
         super(settings);
         this.client = client;
+        this.isTribeNode = settings.getGroups("tribe", true).isEmpty() == false;
     }
 
     /**
@@ -317,6 +319,10 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
     public void changePassword(final ChangePasswordRequest request, final ActionListener<Void> listener) {
         final String username = request.username();
         assert SystemUser.NAME.equals(username) == false && XPackUser.NAME.equals(username) == false : username + "is internal!";
+        if (isTribeNode) {
+            listener.onFailure(new UnsupportedOperationException("users may not be created or modified using a tribe node"));
+            return;
+        }
 
         final String docType;
         if (ReservedRealm.isReserved(username, settings)) {
@@ -384,6 +390,9 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
     public void putUser(final PutUserRequest request, final ActionListener<Boolean> listener) {
         if (state() != State.STARTED) {
             listener.onFailure(new IllegalStateException("user cannot be added as native user service has not been started"));
+            return;
+        } else if (isTribeNode) {
+            listener.onFailure(new UnsupportedOperationException("users may not be created or modified using a tribe node"));
             return;
         }
 
@@ -471,6 +480,9 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
         if (state() != State.STARTED) {
             listener.onFailure(new IllegalStateException("enabled status cannot be changed as native user service has not been started"));
             return;
+        } else if (isTribeNode) {
+            listener.onFailure(new UnsupportedOperationException("users may not be created or modified using a tribe node"));
+            return;
         }
 
         if (ReservedRealm.isReserved(username, settings)) {
@@ -542,6 +554,9 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
         if (state() != State.STARTED) {
             listener.onFailure(new IllegalStateException("user cannot be deleted as native user service has not been started"));
             return;
+        } else if (isTribeNode) {
+            listener.onFailure(new UnsupportedOperationException("users may not be deleted using a tribe node"));
+            return;
         }
 
         try {
@@ -578,6 +593,10 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
             // been restored from the cluster state on disk yet
             logger.debug("native users store waiting until gateway has recovered from disk");
             return false;
+        }
+
+        if (isTribeNode) {
+            return true;
         }
 
         if (securityIndexMappingAndTemplateUpToDate(clusterState, logger) == false) {
