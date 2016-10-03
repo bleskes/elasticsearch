@@ -17,14 +17,22 @@
 package org.elasticsearch.xpack.prelert.utils;
 
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 
 public class ExceptionsHelper {
 
-    public static void throwRestInvalidParamsException(String msg, ErrorCodes errorCode) {
+    public static ElasticsearchStatusException invalidRequestException(String msg, ErrorCodes errorCode) {
         ElasticsearchStatusException e =  new ElasticsearchStatusException(msg, RestStatus.BAD_REQUEST);
         e.addHeader("errorCode", errorCode.getValueString());
-        throw e;
+        return e;
     }
+
+    public static ResourceNotFoundException missingException(String msg, ErrorCodes errorCode) {
+        ResourceNotFoundException e =  new ResourceNotFoundException(msg, RestStatus.BAD_REQUEST);
+        e.addHeader("errorCode", errorCode.getValueString());
+        return e;
+    }
+
 }

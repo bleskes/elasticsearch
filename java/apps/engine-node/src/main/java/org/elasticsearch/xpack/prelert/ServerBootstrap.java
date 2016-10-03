@@ -29,12 +29,16 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.xpack.prelert.action.job.GetJobAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
 import org.elasticsearch.xpack.prelert.action.job.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.job.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.job.TransportGetJobAction;
 import org.elasticsearch.xpack.prelert.action.job.TransportGetJobsAction;
 import org.elasticsearch.xpack.prelert.action.job.TransportPutJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
+import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
+import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
 import org.elasticsearch.xpack.prelert.action.list.CreateListAction;
@@ -114,7 +118,10 @@ public class ServerBootstrap {
                     RestGetJobsAction.class,
                     RestPutJobsAction.class,
                     RestGetListAction.class,
-                    RestCreateListAction.class);
+                    RestCreateListAction.class,
+                    RestPutJobsAction.class,
+                    RestGetBucketsAction.class,
+                    RestGetBucketAction.class);
         }
 
         @Override
@@ -124,8 +131,10 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetJobsAction.INSTANCE, TransportGetJobsAction.class),
                     new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class),
                     new ActionHandler<>(GetListAction.INSTANCE, TransportGetListAction.class),
-                    new ActionHandler<>(CreateListAction.INSTANCE, TransportCreateListAction.class)
-                );
+                    new ActionHandler<>(CreateListAction.INSTANCE, TransportCreateListAction.class),
+                    new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class),
+                    new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
+                    new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class));
         }
     }
 

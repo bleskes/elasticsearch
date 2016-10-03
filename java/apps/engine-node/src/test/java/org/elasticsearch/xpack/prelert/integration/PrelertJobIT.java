@@ -1,3 +1,19 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.integration;
 
 import org.apache.http.entity.StringEntity;
@@ -6,13 +22,14 @@ import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.test.rest.ESRestTestCase;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 
 public class PrelertJobIT extends ESRestTestCase {
 
@@ -163,6 +180,66 @@ public class PrelertJobIT extends ESRestTestCase {
                 "}";
 
         return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
+    }
+
+    public void testGetBucketResults() throws Exception {
+        Map<String, String> params = new HashMap<>();
+        params.put("start", "2016-06-01T00:00:00Z"); // inclusive
+        params.put("end", "2016-06-04T00:00:00Z"); // exclusive
+
+        ResponseException e = expectThrows(ResponseException.class, () ->
+                client().performRequest("get", "/engine/v2/results/1/buckets", params));
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
+        assertThat(e.getMessage(), containsString("No known job with id '1'"));
+        assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
+
+        addBucketResult("1", "2016-06-01T00:00:00Z");
+        addBucketResult("1", "2016-06-02T00:00:00Z");
+        addBucketResult("1", "2016-06-03T00:00:00Z");
+        Response response = client().performRequest("get", "/engine/v2/results/1/buckets", params);
+        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
+        String responseAsString = responseEntityToString(response);
+        assertThat(responseAsString, containsString("\"hitCount\":3"));
+
+        params.put("end", "2016-06-02T00:00:00Z");
+        response = client().performRequest("get", "/engine/v2/results/1/buckets", params);
+        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
+        responseAsString = responseEntityToString(response);
+        assertThat(responseAsString, containsString("\"hitCount\":1"));
+
+        e = expectThrows(ResponseException.class, () ->
+                client().performRequest("get", "/engine/v2/results/2/bucket/2016-06-01T00:00:00Z"));
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
+        assertThat(e.getMessage(), containsString("No known job with id '2'"));
+        assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
+
+        // no 404?
+        response = client().performRequest("get", "/engine/v2/results/1/bucket/2015-06-01T00:00:00Z");
+        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
+        responseAsString = responseEntityToString(response);
+        assertThat(responseAsString, isEmptyString());
+
+        response = client().performRequest("get", "/engine/v2/results/1/bucket/2016-06-01T00:00:00Z");
+        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
+        responseAsString = responseEntityToString(response);
+        assertThat(responseAsString, not(isEmptyString()));
+    }
+
+    private Response addBucketResult(String jobId, String timestamp) throws Exception {
+        String createIndexBody = "{ \"mappings\": {\"bucket\": { \"properties\": { \"@timestamp\": { \"type\" : \"date\" } } } } }";
+        try {
+            client().performRequest("put", "prelertresults-" + jobId, Collections.emptyMap(),
+                    new StringEntity(createIndexBody));
+        } catch (ResponseException e) {
+            // it is ok: the index already exists
+            assertThat(e.getMessage(), containsString("index_already_exists_exception"));
+            assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
+        }
+
+
+        String bucketResult = "{\"@timestamp\": \"" + timestamp + "\"}";
+        return client().performRequest("put", "prelertresults-" + jobId + "/bucket/" + timestamp,
+                Collections.singletonMap("refresh", "true"), new StringEntity(bucketResult));
     }
 
     private static String responseEntityToString(Response response) throws Exception {

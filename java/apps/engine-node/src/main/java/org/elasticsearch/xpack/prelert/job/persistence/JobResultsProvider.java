@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
@@ -15,10 +16,10 @@ public interface JobResultsProvider
      * @param jobId
      * @param query
      * @return QueryPage of Buckets
-     * @throws UnknownJobException If the job id is no recognised
+     * @throws ResourceNotFoundException If the job id is no recognised
      */
     QueryPage<Bucket> buckets(String jobId, BucketsQueryBuilder.BucketsQuery query)
-            throws UnknownJobException;
+            throws ResourceNotFoundException;
 
     /**
      * Get the bucket at time <code>timestampMillis</code> from the job.
@@ -29,7 +30,7 @@ public interface JobResultsProvider
      * @throws UnknownJobException If the job id is no recognised
      */
     Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query)
-            throws UnknownJobException;
+            throws ResourceNotFoundException;
 
     /**
      * Returns a {@link BatchedDocumentsIterator} that allows querying

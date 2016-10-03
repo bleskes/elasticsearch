@@ -1,0 +1,30 @@
+{
+  "xpack.prelert.get_bucket": {
+    "methods": [ "GET" ],
+    "url": {
+      "path": "/engine/v2/results/{jobId}/bucket/{timestamp}",
+      "paths": [ "/engine/v2/results/{jobId}/bucket/{timestamp}" ],
+      "parts": {
+        "jobId": {
+          "type" : "string",
+          "required": true
+        },
+        "timestamp": {
+          "type" : "string",
+          "required": true
+        }
+      },
+      "params": {
+        "expand": {
+          "type": "boolean"
+        },
+        "includeInterim": {
+          "type": "boolean"
+        },
+        "partitionValue": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

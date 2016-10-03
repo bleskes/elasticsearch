@@ -64,12 +64,18 @@ public class PrelertServices {
     private static final long OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES = 30L;
 
     private Client client;
+    private JobProvider jobProvider;
     private volatile JobManager jobManager;
 
     //This isn't set in the ctor because doing so creates a guice circular
     @Inject(optional=true)
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    public JobProvider getJobProvider() {
+        initializeIfNeeded();
+        return jobProvider;
     }
 
     public JobManager getJobManager() {
@@ -81,7 +87,7 @@ public class PrelertServices {
         if (jobManager == null) {
             synchronized (this) {
                 ElasticsearchFactory esFactory = createPersistenceFactory(client);
-                JobProvider jobProvider = esFactory.newJobProvider();
+                jobProvider = esFactory.newJobProvider();
                 ActionGuardian<Action> processActionGuardian =
                         new LocalActionGuardian<>(Action.startingState());
                 ActionGuardian<ScheduledAction> schedulerActionGuardian =

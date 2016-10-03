@@ -1,4 +1,19 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -19,6 +34,7 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
@@ -70,6 +86,7 @@ import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
@@ -80,6 +97,7 @@ import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
@@ -538,7 +556,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public QueryPage<Bucket> buckets(String jobId, BucketsQuery query)
-    throws UnknownJobException
+    throws ResourceNotFoundException
     {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
@@ -617,14 +635,13 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean includeInterim,
-            int skip, int take, QueryBuilder fb) throws UnknownJobException
+            int skip, int take, QueryBuilder fb) throws ResourceNotFoundException
     {
         FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
                     .order(SortOrder.ASC);
 
         SearchResponse searchResponse;
-        try
-        {
+        try {
             LOGGER.trace("ES API CALL: search all of type " + Bucket.TYPE +
                     " from index " + jobId.getIndex() + " sort ascending " + ElasticsearchMappings.ES_TIMESTAMP +
                     " with filter after sort skip " + skip + " take " + take);
@@ -634,10 +651,9 @@ public class ElasticsearchJobProvider implements JobProvider
                                         .setPostFilter(fb)
                                         .setFrom(skip).setSize(take)
                                         .get();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(jobId.getId());
+        } catch (IndexNotFoundException e) {
+            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
+            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
         }
 
         List<Bucket> results = new ArrayList<>();
@@ -664,14 +680,10 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query)
-            throws UnknownJobException
-    {
+    public Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query) throws ResourceNotFoundException {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         SearchHits hits;
-
-        try
-        {
+        try {
             LOGGER.trace("ES API CALL: get Bucket with timestamp " + query.getTimestamp() +
                     " from index " + elasticJobId.getIndex());
             QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP,
@@ -683,15 +695,13 @@ public class ElasticsearchJobProvider implements JobProvider
                     .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                     .get();
             hits = searchResponse.getHits();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(elasticJobId.getId());
+        } catch (IndexNotFoundException e) {
+            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
+            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
         }
 
         Optional<Bucket> doc = Optional.<Bucket>empty();
-        if (hits.getTotalHits() == 1L)
-        {
+        if (hits.getTotalHits() == 1L) {
             SearchHit hit = hits.getAt(0);
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
@@ -702,20 +712,15 @@ public class ElasticsearchJobProvider implements JobProvider
             bucket.setId(hit.getId());
 
             // don't return interim buckets if not requested
-            if (bucket.isInterim() && query.isIncludeInterim() == false)
-            {
+            if (bucket.isInterim() && query.isIncludeInterim() == false) {
                 return doc;
             }
 
-            if (Strings.isNullOrEmpty(query.getPartitionValue()))
-            {
-                if (query.isExpand() && bucket.getRecordCount() > 0)
-                {
+            if (Strings.isNullOrEmpty(query.getPartitionValue())) {
+                if (query.isExpand() && bucket.getRecordCount() > 0) {
                     expandBucket(jobId, query.isIncludeInterim(), bucket);
                 }
-            }
-            else
-            {
+            } else {
                 List<ScoreTimestamp> scores =
                         partitionScores(elasticJobId,
                                 query.getTimestamp(), query.getTimestamp() +1,
@@ -724,8 +729,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
                 bucket.setMaxNormalizedProbability(scores.isEmpty() == false ?
                                 scores.get(0).score : 0.0d);
-                if (query.isExpand() && bucket.getRecordCount() > 0)
-                {
+                if (query.isExpand() && bucket.getRecordCount() > 0) {
                     this.expandBucketForPartitionValue(jobId, query.isIncludeInterim(),
                             bucket, query.getPartitionValue());
                 }
@@ -752,9 +756,9 @@ public class ElasticsearchJobProvider implements JobProvider
         }
     }
 
-    private List<ScoreTimestamp> partitionScores(ElasticsearchJobId jobId, long epochStart,
-                        long epochEnd, String partitionFieldValue)
-    throws UnknownJobException
+    private List<ScoreTimestamp> partitionScores(ElasticsearchJobId jobId, Object epochStart,
+                        Object epochEnd, String partitionFieldValue)
+    throws ResourceNotFoundException
     {
         QueryBuilder qb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, epochStart, epochEnd)
@@ -770,13 +774,11 @@ public class ElasticsearchJobProvider implements JobProvider
                         .setTypes(PartitionNormalisedProb.TYPE);
 
         SearchResponse searchResponse;
-        try
-        {
+        try {
             searchResponse = searchBuilder.get();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(jobId.getId());
+        } catch (IndexNotFoundException e) {
+            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
+            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
         }
 
         List<ScoreTimestamp> results = new ArrayList<>();
@@ -804,8 +806,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     public int expandBucketForPartitionValue(String jobId, boolean includeInterim, Bucket bucket,
-                            String partitionFieldValue)
-    throws UnknownJobException
+                            String partitionFieldValue) throws ResourceNotFoundException
     {
         int skip = 0;
 
@@ -834,9 +835,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public int expandBucket(String jobId, boolean includeInterim, Bucket bucket)
-    throws UnknownJobException
-    {
+    public int expandBucket(String jobId, boolean includeInterim, Bucket bucket) throws ResourceNotFoundException {
         int skip = 0;
 
         QueryPage<AnomalyRecord> page = bucketRecords(
@@ -859,7 +858,7 @@ public class ElasticsearchJobProvider implements JobProvider
     QueryPage<AnomalyRecord> bucketRecords(String jobId,
             Bucket bucket, int skip, int take, boolean includeInterim,
             String sortField, boolean descending, String partitionFieldValue)
-    throws UnknownJobException
+    throws ResourceNotFoundException
     {
         // Find the records using the time stamp rather than a parent-child
         // relationship.  The parent-child filter involves two queries behind
@@ -978,9 +977,7 @@ public class ElasticsearchJobProvider implements JobProvider
      */
     private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId, int skip, int take,
             QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
-            boolean descending)
-    throws UnknownJobException
-    {
+            boolean descending) throws ResourceNotFoundException {
         SearchRequestBuilder searchBuilder = client.prepareSearch(jobId.getIndex())
                 .setTypes(AnomalyRecord.TYPE)
                 .setPostFilter(recordFilter)
@@ -995,17 +992,15 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         SearchResponse searchResponse;
-        try
-        {
+        try {
             LOGGER.trace("ES API CALL: search all of type " + AnomalyRecord.TYPE +
                     " from index " + jobId.getIndex() + ((sb != null) ? " with sort" : "") +
                     (secondarySort.isEmpty() ? "" : " with secondary sort") +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = searchBuilder.get();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(jobId.getId());
+        } catch (IndexNotFoundException e) {
+            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
+            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
         }
 
         List<AnomalyRecord> results = new ArrayList<>();

@@ -38,13 +38,13 @@ public class PaginationParamsValidator {
 
     public void validate() {
         if (skip < 0) {
-            ExceptionsHelper.throwRestInvalidParamsException(Messages.getMessage(Messages.REST_INVALID_SKIP), ErrorCodes.INVALID_SKIP_PARAM);
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_INVALID_SKIP), ErrorCodes.INVALID_SKIP_PARAM);
         }
         if (take < 0) {
-            ExceptionsHelper.throwRestInvalidParamsException(Messages.getMessage(Messages.REST_INVALID_TAKE), ErrorCodes.INVALID_TAKE_PARAM);
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_INVALID_TAKE), ErrorCodes.INVALID_TAKE_PARAM);
         }
         if (skip + take > MAX_SKIP_TAKE_SUM) {
-            ExceptionsHelper.throwRestInvalidParamsException(Messages.getMessage(
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(
                     Messages.REST_INVALID_SKIP_TAKE_SUM, MAX_SKIP_TAKE_SUM_STRING), ErrorCodes.INVALID_TAKE_PARAM);
         }
     }
