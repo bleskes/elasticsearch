@@ -2,6 +2,7 @@ description = 'Prelert Engine-Elastic integration'
 
 apply plugin: 'maven'
 apply plugin: 'java'
+apply plugin: 'eclipse'
 
 group = 'org.elasticsearch.prelert'
 version = '0.1'

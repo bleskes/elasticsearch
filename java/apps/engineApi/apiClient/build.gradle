@@ -1,3 +1,5 @@
+apply plugin: 'eclipse'
+
 group = 'com.prelert.client'
 description = 'prelert-engine-api-client'
 
