@@ -1,9 +1,22 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job.manager;
 
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.*;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
@@ -14,13 +27,9 @@ import org.apache.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.*;
 
 /**
@@ -51,11 +60,10 @@ public class JobManager {
     private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
     private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
 
-    private final ActionGuardian<Action> m_ProcessActionGuardian;
-    private final ActionGuardian<ScheduledAction> m_SchedulerActionGuardian;
-    private final JobProvider m_JobProvider;
-
-    private final JobFactory m_JobFactory;
+    private final ActionGuardian<Action> processActionGuardian;
+    private final ActionGuardian<ScheduledAction> schedulerActionGuardian;
+    private final JobProvider jobProvider;
+    private final JobFactory jobFactory;
 
     /**
      * Create a JobManager
@@ -63,13 +71,38 @@ public class JobManager {
     public JobManager(JobProvider jobProvider,
                       ActionGuardian<Action> processActionGuardian,
                       ActionGuardian<ScheduledAction> schedulerActionGuardian) {
-        m_JobProvider = Objects.requireNonNull(jobProvider);
-        m_ProcessActionGuardian = Objects.requireNonNull(processActionGuardian);
-        m_SchedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
+        this.jobProvider = Objects.requireNonNull(jobProvider);
+        this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
+        this.schedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
 
-        m_JobFactory = new JobFactory();
+        jobFactory = new JobFactory();
     }
 
+    /**
+     * Get the details of the specific job wrapped in a <code>Optional</code>
+     *
+     * @param jobId
+     * @return An {@code Optional} containing the {@code JobDetails} if a job with the given
+     * {@code jobId} exists, or an empty {@code Optional} otherwise
+     */
+    public Optional<JobDetails> getJob(String jobId) {
+        return jobProvider.getJobDetails(jobId);
+    }
+
+    /**
+     * Get details of all Jobs.
+     *
+     * @param skip Skip the first N Jobs. This parameter is for paging
+     *             results if not required set to 0.
+     * @param take Take only this number of Jobs
+     * @return A query page object with hitCount set to the total number
+     * of jobs not the only the number returned here as determined by the
+     * <code>take</code>
+     * parameter.
+     */
+    public QueryPage<JobDetails> getJobs(int skip, int take) {
+        return jobProvider.getJobs(skip, take);
+    }
 
     /**
      * Returns the non-null {@code JobDetails} object for the given {@code jobId}
@@ -80,7 +113,7 @@ public class JobManager {
      * @throws UnknownJobException if there is no job with matching the given {@code jobId}
      */
     public JobDetails getJobOrThrowIfUnknown(String jobId) throws UnknownJobException {
-        Optional<JobDetails> job = m_JobProvider.getJobDetails(jobId);
+        Optional<JobDetails> job = jobProvider.getJobDetails(jobId);
         if (!job.isPresent()) {
             throw new UnknownJobException(jobId);
         }
@@ -104,9 +137,9 @@ public class JobManager {
             throws LicenseViolationException, JobConfigurationException, JobIdAlreadyExistsException,
             DataStoreException, JobInUseException {
 
-        JobDetails jobDetails = m_JobFactory.create(jobConfig);
+        JobDetails jobDetails = jobFactory.create(jobConfig);
         String jobId = jobDetails.getId();
-        if (!m_JobProvider.jobIdIsUnique(jobId)) {
+        if (!jobProvider.jobIdIsUnique(jobId)) {
             try {
                 // A job with the desired ID already exists - try to delete it
                 // if we've been told to overwrite
@@ -125,7 +158,7 @@ public class JobManager {
             }
         }
 
-        m_JobProvider.createJob(jobDetails);
+        jobProvider.createJob(jobDetails);
         audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
         return jobDetails;
     }
@@ -140,7 +173,7 @@ public class JobManager {
             throws UnknownJobException {
         Map<String, Object> update = new HashMap<>();
         update.put(key, value);
-        m_JobProvider.updateJob(jobId, update);
+        jobProvider.updateJob(jobId, update);
     }
 
     /**
@@ -153,7 +186,7 @@ public class JobManager {
     public void setAnalysisLimits(String jobId, AnalysisLimits newLimits) throws UnknownJobException {
         Map<String, Object> update = new HashMap<>();
         update.put(JobDetails.ANALYSIS_LIMITS, newLimits.toMap());
-        m_JobProvider.updateJob(jobId, update);
+        jobProvider.updateJob(jobId, update);
     }
 
     /**
@@ -181,7 +214,7 @@ public class JobManager {
         } else {
             update.put(JobDetails.MODEL_DEBUG_CONFIG, null);
         }
-        m_JobProvider.updateJob(jobId, update);
+        jobProvider.updateJob(jobId, update);
     }
 
     public void setRenormalizationWindowDays(String jobId, Long renormalizationWindowDays) throws UnknownJobException {
@@ -214,22 +247,26 @@ public class JobManager {
      * @throws JobInUseException            If the job cannot be deleted because the
      *                                      native process is in use.
      */
-    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException {
+    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException, JobInUseException {
         LOGGER.debug("Deleting job '" + jobId + "'");
 
-        boolean success = m_JobProvider.deleteJob(jobId);
-        if (success) {
-            audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+        try (ActionGuardian<Action>.ActionTicket actionTicket =
+                     processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
+
+            boolean success = jobProvider.deleteJob(jobId);
+            if (success) {
+                audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+            }
+            return success;
         }
-        return success;
     }
 
 
     public Auditor audit(String jobId) {
-        return m_JobProvider.audit(jobId);
+        return jobProvider.audit(jobId);
     }
 
     public Auditor systemAudit() {
-        return m_JobProvider.audit("");
+        return jobProvider.audit("");
     }
 }

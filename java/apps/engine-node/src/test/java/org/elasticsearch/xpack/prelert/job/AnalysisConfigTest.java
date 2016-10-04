@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.junit.Test;
@@ -10,8 +11,8 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 
-public class AnalysisConfigTest {
-    @Test
+public class AnalysisConfigTest extends ESTestCase {
+
     public void testFieldConfiguration() {
         // Single detector, not pre-summarised
         AnalysisConfig ac = new AnalysisConfig();
@@ -160,23 +161,23 @@ public class AnalysisConfigTest {
         assertTrue(ac.getMultipleBucketSpans().contains(24000L));
     }
 
-    @Test
+
     public void testEquals_GivenSameReference() {
         AnalysisConfig config = new AnalysisConfig();
         assertTrue(config.equals(config));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentClass() {
         assertFalse(new AnalysisConfig().equals("a string"));
     }
 
-    @Test
+
     public void testEquals_GivenNull() {
         assertFalse(new AnalysisConfig().equals(null));
     }
 
-    @Test
+
     public void testEquals_GivenEqualConfig() {
         AnalysisConfig config1 = createFullyPopulatedConfig();
         AnalysisConfig config2 = createFullyPopulatedConfig();
@@ -186,7 +187,7 @@ public class AnalysisConfigTest {
         assertEquals(config1.hashCode(), config2.hashCode());
     }
 
-    @Test
+
     public void testEquals_GivenDifferentBatchSpan() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setBatchSpan(86400L);
@@ -198,7 +199,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentBucketSpan() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setBucketSpan(1800L);
@@ -210,7 +211,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenCategorizationField() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setCategorizationFieldName("foo");
@@ -222,7 +223,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentDetector() {
         AnalysisConfig config1 = new AnalysisConfig();
         Detector detector1 = new Detector();
@@ -238,7 +239,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentInfluencers() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setInfluencers(Arrays.asList("foo"));
@@ -250,7 +251,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentLatency() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setLatency(1800L);
@@ -262,7 +263,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentPeriod() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setPeriod(1800L);
@@ -274,7 +275,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenSummaryCountField() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setSummaryCountFieldName("foo");
@@ -286,7 +287,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenMultivariateByField() {
         AnalysisConfig config1 = new AnalysisConfig();
         config1.setMultivariateByFields(true);
@@ -298,7 +299,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentCategorizationFilters() {
         AnalysisConfig config1 = createFullyPopulatedConfig();
         AnalysisConfig config2 = createFullyPopulatedConfig();
@@ -308,7 +309,7 @@ public class AnalysisConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testBucketSpanOrDefault() {
         AnalysisConfig config1 = new AnalysisConfig();
         assertEquals(AnalysisConfig.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
@@ -316,7 +317,7 @@ public class AnalysisConfigTest {
         assertEquals(100l, config1.getBucketSpanOrDefault());
     }
 
-    @Test
+
     public void testExtractReferencedLists() {
         DetectionRule rule1 = new DetectionRule();
         rule1.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list1")));

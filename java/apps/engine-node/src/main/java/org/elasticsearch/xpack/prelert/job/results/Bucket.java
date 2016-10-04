@@ -1,20 +1,3 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
 
 package org.elasticsearch.xpack.prelert.job.results;
 
@@ -61,42 +44,42 @@ public class Bucket implements StorageSerialisable
      */
     public static final String TYPE = "bucket";
 
-    private String m_Id;
-    private Date m_Timestamp;
-    private double m_AnomalyScore;
-    private long m_BucketSpan;
+    private String id;
+    private Date timestamp;
+    private double anomalyScore;
+    private long bucketSpan;
 
-    private double m_InitialAnomalyScore;
+    private double initialAnomalyScore;
 
-    private double m_MaxNormalizedProbability;
-    private int m_RecordCount;
-    private List<AnomalyRecord> m_Records;
-    private long m_EventCount;
-    private boolean m_IsInterim;
-    private boolean m_HadBigNormalisedUpdate;
-    private List<BucketInfluencer> m_BucketInfluencers;
-    private List<Influencer> m_Influencers;
-    private long m_ProcessingTimeMs;
-    private Map<String, Double> m_PerPartitionMaxProbability;
-    private List<PartitionScore> m_PartitionScores;
+    private double maxNormalizedProbability;
+    private int recordCount;
+    private List<AnomalyRecord> records;
+    private long eventCount;
+    private boolean isInterim;
+    private boolean hadBigNormalisedUpdate;
+    private List<BucketInfluencer> bucketInfluencers;
+    private List<Influencer> influencers;
+    private long processingTimeMs;
+    private Map<String, Double> perPartitionMaxProbability;
+    private List<PartitionScore> partitionScores;
 
     public Bucket()
     {
-        m_Records = Collections.emptyList();
-        m_Influencers = Collections.emptyList();
-        m_PartitionScores = Collections.emptyList();
-        m_BucketInfluencers = new ArrayList<>();
+        records = Collections.emptyList();
+        influencers = Collections.emptyList();
+        partitionScores = Collections.emptyList();
+        bucketInfluencers = new ArrayList<>();
         setPerPartitionMaxProbability(Collections.emptyMap());
     }
 
     public String getId()
     {
-        return m_Id;
+        return id;
     }
 
     public void setId(String id)
     {
-        m_Id = id;
+        this.id = id;
     }
 
     /**
@@ -105,17 +88,17 @@ public class Bucket implements StorageSerialisable
      */
     public long getEpoch()
     {
-        return m_Timestamp.getTime() / 1000;
+        return timestamp.getTime() / 1000;
     }
 
     public Date getTimestamp()
     {
-        return m_Timestamp;
+        return timestamp;
     }
 
     public void setTimestamp(Date timestamp)
     {
-        m_Timestamp = timestamp;
+        this.timestamp = timestamp;
     }
 
     /**
@@ -123,7 +106,7 @@ public class Bucket implements StorageSerialisable
      */
     public long getBucketSpan()
     {
-        return m_BucketSpan;
+        return bucketSpan;
     }
 
     /**
@@ -131,47 +114,47 @@ public class Bucket implements StorageSerialisable
      */
     public void setBucketSpan(long bucketSpan)
     {
-        m_BucketSpan = bucketSpan;
+        this.bucketSpan = bucketSpan;
     }
 
     public double getAnomalyScore()
     {
-        return m_AnomalyScore;
+        return anomalyScore;
     }
 
     public void setAnomalyScore(double anomalyScore)
     {
-        m_AnomalyScore = anomalyScore;
+        this.anomalyScore = anomalyScore;
     }
 
     public double getInitialAnomalyScore()
     {
-        return m_InitialAnomalyScore;
+        return initialAnomalyScore;
     }
 
     public void setInitialAnomalyScore(double influenceScore)
     {
-        this.m_InitialAnomalyScore = influenceScore;
+        this.initialAnomalyScore = influenceScore;
     }
 
     public double getMaxNormalizedProbability()
     {
-        return m_MaxNormalizedProbability;
+        return maxNormalizedProbability;
     }
 
     public void setMaxNormalizedProbability(double maxNormalizedProbability)
     {
-        m_MaxNormalizedProbability = maxNormalizedProbability;
+        this.maxNormalizedProbability = maxNormalizedProbability;
     }
 
     public int getRecordCount()
     {
-        return m_RecordCount;
+        return recordCount;
     }
 
     public void setRecordCount(int recordCount)
     {
-        m_RecordCount = recordCount;
+        this.recordCount = recordCount;
     }
 
     /**
@@ -180,12 +163,12 @@ public class Bucket implements StorageSerialisable
      */
     public List<AnomalyRecord> getRecords()
     {
-        return m_Records;
+        return records;
     }
 
     public void setRecords(List<AnomalyRecord> records)
     {
-        m_Records = records;
+        this.records = records;
     }
 
     /**
@@ -195,74 +178,74 @@ public class Bucket implements StorageSerialisable
      */
     public long getEventCount()
     {
-        return m_EventCount;
+        return eventCount;
     }
 
     public void setEventCount(long value)
     {
-        m_EventCount = value;
+        eventCount = value;
     }
 
     @JsonProperty("isInterim")
     public boolean isInterim()
     {
-        return m_IsInterim;
+        return isInterim;
     }
 
     @JsonProperty("isInterim")
     public void setInterim(boolean isInterim)
     {
-        m_IsInterim = isInterim;
+        this.isInterim = isInterim;
     }
 
     public long getProcessingTimeMs()
     {
-        return m_ProcessingTimeMs;
+        return processingTimeMs;
     }
 
     public void setProcessingTimeMs(long timeMs)
     {
-        m_ProcessingTimeMs = timeMs;
+        processingTimeMs = timeMs;
     }
 
     public List<Influencer> getInfluencers()
     {
-        return m_Influencers;
+        return influencers;
     }
 
     public void setInfluencers(List<Influencer> influences)
     {
-        this.m_Influencers = influences;
+        this.influencers = influences;
     }
 
     public List<BucketInfluencer> getBucketInfluencers()
     {
-        return m_BucketInfluencers;
+        return bucketInfluencers;
     }
 
     public void setBucketInfluencers(List<BucketInfluencer> bucketInfluencers)
     {
-        m_BucketInfluencers = bucketInfluencers;
+        this.bucketInfluencers = bucketInfluencers;
     }
 
     public void addBucketInfluencer(BucketInfluencer bucketInfluencer)
     {
-        if (m_BucketInfluencers == null)
+        if (bucketInfluencers == null)
         {
-            m_BucketInfluencers = new ArrayList<>();
+            bucketInfluencers = new ArrayList<>();
         }
-        m_BucketInfluencers.add(bucketInfluencer);
+        bucketInfluencers.add(bucketInfluencer);
     }
 
 
     public List<PartitionScore> getPartitionScores()
     {
-        return m_PartitionScores;
+        return partitionScores;
     }
 
     public void setPartitionScores(List<PartitionScore> scores)
     {
-        m_PartitionScores = scores;
+        partitionScores = scores;
     }
 
     /**
@@ -297,27 +280,27 @@ public class Bucket implements StorageSerialisable
 
     public Map<String, Double> calcMaxNormalizedProbabilityPerPartition()
     {
-        m_PerPartitionMaxProbability = m_Records.stream().collect(
+        perPartitionMaxProbability = records.stream().collect(
                 Collectors.groupingBy(AnomalyRecord::getPartitionFieldValue,
                         Collector.of(DoubleMaxBox::new,
                                 (m, ar) -> m.accept(ar.getNormalizedProbability()),
                                 DoubleMaxBox::combine, DoubleMaxBox::value)));
 
-        return m_PerPartitionMaxProbability;
+        return perPartitionMaxProbability;
     }
 
     public Map<String, Double> getPerPartitionMaxProbability() {
-        return m_PerPartitionMaxProbability;
+        return perPartitionMaxProbability;
     }
 
     public void setPerPartitionMaxProbability(
-            Map<String, Double> m_PerPartitionMaxProbability) {
-        this.m_PerPartitionMaxProbability = m_PerPartitionMaxProbability;
+            Map<String, Double> perPartitionMaxProbability) {
+        this.perPartitionMaxProbability = perPartitionMaxProbability;
     }
 
     public double partitionAnomalyScore(String partitionValue)
     {
-        Optional<PartitionScore> first = m_PartitionScores.stream()
+        Optional<PartitionScore> first = partitionScores.stream()
                 .filter(s -> partitionValue.equals(s.getPartitionFieldValue()))
                 .findFirst();
 
@@ -327,11 +310,11 @@ public class Bucket implements StorageSerialisable
     @Override
     public int hashCode()
     {
-        // m_HadBigNormalisedUpdate is deliberately excluded from the hash
-        // as is m_Id, which is generated by the datastore
-        return Objects.hash(m_Timestamp, m_EventCount, m_InitialAnomalyScore, m_AnomalyScore,
-                m_MaxNormalizedProbability, m_RecordCount, m_Records, m_IsInterim, m_BucketSpan,
-                m_BucketInfluencers, m_Influencers);
+        // hadBigNormalisedUpdate is deliberately excluded from the hash
+        // as is id, which is generated by the datastore
+        return Objects.hash(timestamp, eventCount, initialAnomalyScore, anomalyScore,
+                maxNormalizedProbability, recordCount, records, isInterim, bucketSpan,
+                bucketInfluencers, influencers);
     }
 
     /**
@@ -352,34 +335,34 @@ public class Bucket implements StorageSerialisable
 
         Bucket that = (Bucket)other;
 
-        // m_HadBigNormalisedUpdate is deliberately excluded from the test
-        // as is m_Id, which is generated by the datastore
-        return Objects.equals(this.m_Timestamp, that.m_Timestamp)
-                && (this.m_EventCount == that.m_EventCount)
-                && (this.m_BucketSpan == that.m_BucketSpan)
-                && (this.m_AnomalyScore == that.m_AnomalyScore)
-                && (this.m_InitialAnomalyScore == that.m_InitialAnomalyScore)
-                && (this.m_MaxNormalizedProbability == that.m_MaxNormalizedProbability)
-                && (this.m_RecordCount == that.m_RecordCount)
-                && Objects.equals(this.m_Records, that.m_Records)
-                && Objects.equals(this.m_IsInterim, that.m_IsInterim)
-                && Objects.equals(this.m_BucketInfluencers, that.m_BucketInfluencers)
-                && Objects.equals(this.m_Influencers, that.m_Influencers);
+        // hadBigNormalisedUpdate is deliberately excluded from the test
+        // as is id, which is generated by the datastore
+        return Objects.equals(this.timestamp, that.timestamp)
+                && (this.eventCount == that.eventCount)
+                && (this.bucketSpan == that.bucketSpan)
+                && (this.anomalyScore == that.anomalyScore)
+                && (this.initialAnomalyScore == that.initialAnomalyScore)
+                && (this.maxNormalizedProbability == that.maxNormalizedProbability)
+                && (this.recordCount == that.recordCount)
+                && Objects.equals(this.records, that.records)
+                && Objects.equals(this.isInterim, that.isInterim)
+                && Objects.equals(this.bucketInfluencers, that.bucketInfluencers)
+                && Objects.equals(this.influencers, that.influencers);
     }
 
     public boolean hadBigNormalisedUpdate()
     {
-        return m_HadBigNormalisedUpdate;
+        return hadBigNormalisedUpdate;
     }
 
     public void resetBigNormalisedUpdateFlag()
     {
-        m_HadBigNormalisedUpdate = false;
+        hadBigNormalisedUpdate = false;
     }
 
     public void raiseBigNormalisedUpdateFlag()
     {
-        m_HadBigNormalisedUpdate = true;
+        hadBigNormalisedUpdate = true;
     }
 
     /**
@@ -401,38 +384,38 @@ public class Bucket implements StorageSerialisable
      */
     public boolean isNormalisable()
     {
-        if (m_BucketInfluencers == null || m_BucketInfluencers.isEmpty())
+        if (bucketInfluencers == null || bucketInfluencers.isEmpty())
         {
             return false;
         }
-        return m_AnomalyScore > 0.0 || m_RecordCount > 0;
+        return anomalyScore > 0.0 || recordCount > 0;
     }
 
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.addTimestamp(m_Timestamp)
-                  .add(ANOMALY_SCORE, m_AnomalyScore)
-                  .add(INITIAL_ANOMALY_SCORE, m_InitialAnomalyScore)
-                  .add(MAX_NORMALIZED_PROBABILITY, m_MaxNormalizedProbability)
-                  .add(RECORD_COUNT, m_RecordCount)
-                  .add(EVENT_COUNT, m_EventCount)
-                  .add(BUCKET_SPAN, m_BucketSpan)
-                  .add(PROCESSING_TIME_MS, m_ProcessingTimeMs);
+        serialiser.addTimestamp(timestamp)
+                  .add(ANOMALY_SCORE, anomalyScore)
+                  .add(INITIAL_ANOMALY_SCORE, initialAnomalyScore)
+                  .add(MAX_NORMALIZED_PROBABILITY, maxNormalizedProbability)
+                  .add(RECORD_COUNT, recordCount)
+                  .add(EVENT_COUNT, eventCount)
+                  .add(BUCKET_SPAN, bucketSpan)
+                  .add(PROCESSING_TIME_MS, processingTimeMs);
 
-        if (m_IsInterim)
+        if (isInterim)
         {
-            serialiser.add(IS_INTERIM, m_IsInterim);
+            serialiser.add(IS_INTERIM, isInterim);
         }
 
-        if (m_BucketInfluencers != null)
+        if (bucketInfluencers != null)
         {
-            serialiser.add(BUCKET_INFLUENCERS, m_BucketInfluencers);
+            serialiser.add(BUCKET_INFLUENCERS, bucketInfluencers);
         }
 
-        if (m_PartitionScores != null && m_PartitionScores.isEmpty() == false)
+        if (partitionScores != null && partitionScores.isEmpty() == false)
         {
-            serialiser.add(PARTITION_SCORES, m_PartitionScores);
+            serialiser.add(PARTITION_SCORES, partitionScores);
         }
     }
 }

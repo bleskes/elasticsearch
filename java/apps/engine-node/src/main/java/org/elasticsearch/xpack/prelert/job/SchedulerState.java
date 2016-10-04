@@ -3,8 +3,7 @@ package org.elasticsearch.xpack.prelert.job;
 
 import java.util.Objects;
 
-public class SchedulerState
-{
+public class SchedulerState {
     public static final String TYPE = "schedulerState";
 
     public static final String START_TIME_MILLIS = "startTimeMillis";

@@ -1,0 +1,19 @@
+{
+  "xpack.prelert.put_job": {
+    "methods": [ "POST" ],
+    "url": {
+      "path": "/engine/v2/jobs",
+      "paths": [ "/engine/v2/jobs" ],
+      "params": {
+        "overwrite": {
+          "type": "boolean",
+          "description": ""
+        }
+      }
+    },
+    "body": {
+      "description" : "The job",
+      "required" : true
+    }    
+  }
+}

@@ -1,20 +1,3 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
 
 package org.elasticsearch.xpack.prelert.job;
 
@@ -36,8 +19,7 @@ import java.util.*;
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)
-public class SchedulerConfig
-{
+public class SchedulerConfig {
     /**
      * Enum of the acceptable data sources.
      */
@@ -165,20 +147,6 @@ public class SchedulerConfig
     public void setDataSource(DataSource dataSource)
     {
         this.dataSource = dataSource;
-    }
-
-    /**
-     * Gets the compatibility for the data source.
-     * @return The data source compatibility.
-     */
-    public String getDataSourceCompatibility()
-    {
-        return this.dataSourceCompatibility;
-    }
-
-    public void setDataSourceCompatibility(String dataSourceCompatibility)
-    {
-        this.dataSourceCompatibility = dataSourceCompatibility;
     }
 
     public Long getQueryDelay()
@@ -337,12 +305,36 @@ public class SchedulerConfig
         this.scrollSize = scrollSize;
     }
 
-    public String getEncryptedPassword() {
+    /**
+     * The encrypted password to use to connect to the data source (if any).
+     * A class outside this package is responsible for encrypting and decrypting
+     * the password.
+     * @return The password, or <code>null</code> if not set.
+     */
+    public String getEncryptedPassword()
+    {
         return encryptedPassword;
     }
 
+    public void setEncryptedPassword(String encryptedPassword)
+    {
+        this.encryptedPassword = encryptedPassword;
+    }
+
+    /**
+     * The plain text password to use to connect to the data source (if any).
+     * This is likely to return <code>null</code> most of the time, as the
+     * intention is that it is only present it initial configurations, and gets
+     * replaced with an encrypted password as soon as possible after receipt.
+     * @return The password, or <code>null</code> if not set.
+     */
     public String getPassword() {
         return password;
+    }
+
+    public void setPassword(String password)
+    {
+        this.password = password;
     }
 
     /**

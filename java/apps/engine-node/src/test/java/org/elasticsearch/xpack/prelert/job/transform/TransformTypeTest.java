@@ -1,21 +1,13 @@
 
 package org.elasticsearch.xpack.prelert.job.transform;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.elasticsearch.test.ESTestCase;
 
 import java.util.EnumSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+public class TransformTypeTest extends ESTestCase {
 
-
-public class TransformTypeTest {
-    @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
-
-    @Test
     public void testFromString() {
         Set<TransformType> all = EnumSet.allOf(TransformType.class);
 
@@ -27,9 +19,7 @@ public class TransformTypeTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
     public void testFromString_UnknownType() {
-        @SuppressWarnings("unused")
-        TransformType created = TransformType.fromString("random_type");
+        ESTestCase.expectThrows(IllegalArgumentException.class, () -> TransformType.fromString("random_type"));
     }
 }

@@ -26,12 +26,27 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
-
 import org.elasticsearch.rest.RestHandler;
-import org.elasticsearch.transport.Netty3Plugin;
-import org.elasticsearch.xpack.prelert.action.PutJobAction;
-import org.elasticsearch.xpack.prelert.action.TransportPutJobAction;
-import org.elasticsearch.xpack.prelert.rest.RestPutJobsAction;
+import org.elasticsearch.transport.Netty4Plugin;
+import org.elasticsearch.xpack.prelert.action.job.GetJobAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+import org.elasticsearch.xpack.prelert.action.job.GetJobsAction;
+import org.elasticsearch.xpack.prelert.action.job.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.job.TransportGetJobAction;
+import org.elasticsearch.xpack.prelert.action.job.TransportGetJobsAction;
+import org.elasticsearch.xpack.prelert.action.job.TransportPutJobAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
+import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
+import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.action.list.CreateListAction;
+import org.elasticsearch.xpack.prelert.action.list.GetListAction;
+import org.elasticsearch.xpack.prelert.action.list.TransportCreateListAction;
+import org.elasticsearch.xpack.prelert.action.list.TransportGetListAction;
+import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
+import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -52,12 +67,9 @@ public class ServerBootstrap {
         System.setProperty("es.logger.prefix", "");
 
         Settings.Builder settings = Settings.builder();
-        settings.put("path.home", DEFAULT_JETTY_HOME);
+        settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
         settings.put("http.port", JETTY_PORT);
         settings.put("cluster.name", "prelert");
-        // Use netty3 for alpha5, when upgrading to beta1 or higher use netty4
-        settings.put("transport.type", "netty3");
-        settings.put("http.type", "netty3");
 
         CountDownLatch latch = new CountDownLatch(1);
         try {
@@ -69,8 +81,10 @@ public class ServerBootstrap {
                     try {
                         node.close();
                     } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        latch.countDown();
                     }
-                    latch.countDown();
                 }
             });
             node.start();
@@ -85,7 +99,7 @@ public class ServerBootstrap {
         public PrelertNode(Settings settings) {
             super(
                     InternalSettingsPreparer.prepareEnvironment(settings, Terminal.DEFAULT),
-                    Arrays.asList(PrelertPlugin.class, Netty3Plugin.class)
+                    Arrays.asList(PrelertPlugin.class, Netty4Plugin.class)
             );
         }
     }
@@ -99,12 +113,26 @@ public class ServerBootstrap {
 
         @Override
         public List<Class<? extends RestHandler>> getRestHandlers() {
-            return Arrays.asList(RestPutJobsAction.class);
+            return Arrays.asList(
+                    RestGetJobAction.class,
+                    RestGetJobsAction.class,
+                    RestPutJobsAction.class,
+                    RestGetListAction.class,
+                    RestCreateListAction.class,
+                    RestGetBucketsAction.class,
+                    RestGetBucketAction.class);
         }
 
         @Override
         public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
-            return Arrays.asList(new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class));
+            return Arrays.asList(
+                    new ActionHandler<>(GetJobAction.INSTANCE, TransportGetJobAction.class),
+                    new ActionHandler<>(GetJobsAction.INSTANCE, TransportGetJobsAction.class),
+                    new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class),
+                    new ActionHandler<>(GetListAction.INSTANCE, TransportGetListAction.class),
+                    new ActionHandler<>(CreateListAction.INSTANCE, TransportCreateListAction.class),
+                    new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
+                    new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class));
         }
     }
 

@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.junit.Test;
 
@@ -13,8 +14,8 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class JobDetailsTest {
-    @Test
+public class JobDetailsTest extends ESTestCase {
+
     public void testConstructor_GivenEmptyJobConfiguration() {
         JobConfiguration jobConfiguration = new JobConfiguration();
 
@@ -33,7 +34,6 @@ public class JobDetailsTest {
         assertNull(jobDetails.getFinishedTime());
         assertNull(jobDetails.getIgnoreDowntime());
         assertNull(jobDetails.getLastDataTime());
-        assertNull(jobDetails.getLocation());
         assertNull(jobDetails.getModelDebugConfig());
         assertNull(jobDetails.getModelSizeStats());
         assertNull(jobDetails.getRenormalizationWindowDays());
@@ -46,7 +46,7 @@ public class JobDetailsTest {
         assertTrue(jobDetails.allFields().isEmpty());
     }
 
-    @Test
+
     public void testConstructor_GivenJobConfigurationWithIgnoreDowntime() {
         JobConfiguration jobConfiguration = new JobConfiguration();
         jobConfiguration.setIgnoreDowntime(IgnoreDowntime.ONCE);
@@ -57,7 +57,7 @@ public class JobDetailsTest {
         assertEquals(IgnoreDowntime.ONCE, jobDetails.getIgnoreDowntime());
     }
 
-    @Test
+
     public void testConstructor_GivenJobConfigurationWithElasticsearchScheduler_ShouldFillDefaults() {
         SchedulerConfig schedulerConfig = new SchedulerConfig();
         schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
@@ -71,19 +71,19 @@ public class JobDetailsTest {
         assertNotNull(schedulerQuery);
     }
 
-    @Test
+
     public void testEquals_GivenSameReference() {
         JobDetails jobDetails = new JobDetails();
         assertTrue(jobDetails.equals(jobDetails));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentClass() {
         JobDetails jobDetails = new JobDetails();
         assertFalse(jobDetails.equals("a string"));
     }
 
-    @Test
+
     public void testEquals_GivenEqualJobDetails() throws URISyntaxException {
         ModelSizeStats modelSizeStats = new ModelSizeStats();
         Map<String, URI> endpoints = new HashMap<>();
@@ -101,7 +101,6 @@ public class JobDetailsTest {
         jobDetails1.setFinishedTime(new Date(1000));
         jobDetails1.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails1.setLastDataTime(new Date(500));
-        jobDetails1.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails1.setModelDebugConfig(new ModelDebugConfig());
         jobDetails1.setModelSizeStats(modelSizeStats);
         jobDetails1.setRenormalizationWindowDays(60L);
@@ -127,7 +126,6 @@ public class JobDetailsTest {
         jobDetails2.setFinishedTime(new Date(1000));
         jobDetails2.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails2.setLastDataTime(new Date(500));
-        jobDetails2.setLocation(new URI("http://localhost:8080/jobs/foo"));
         jobDetails2.setModelDebugConfig(new ModelDebugConfig());
         jobDetails2.setModelSizeStats(modelSizeStats);
         jobDetails2.setRenormalizationWindowDays(60L);
@@ -145,7 +143,7 @@ public class JobDetailsTest {
         assertEquals(jobDetails1.hashCode(), jobDetails2.hashCode());
     }
 
-    @Test
+
     public void testEquals_GivenDifferentIds() {
         JobConfiguration jobConfiguration = new JobConfiguration();
         JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
@@ -157,7 +155,7 @@ public class JobDetailsTest {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentSchedulerStatus() {
         JobConfiguration jobConfiguration = new JobConfiguration();
         JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
@@ -168,7 +166,7 @@ public class JobDetailsTest {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentRenormalizationWindowDays() {
         JobConfiguration jobDetails1 = new JobConfiguration();
         jobDetails1.setRenormalizationWindowDays(3L);
@@ -178,7 +176,7 @@ public class JobDetailsTest {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentBackgroundPersistInterval() {
         JobConfiguration jobDetails1 = new JobConfiguration();
         jobDetails1.setBackgroundPersistInterval(10000L);
@@ -188,7 +186,7 @@ public class JobDetailsTest {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentModelSnapshotRetentionDays() {
         JobConfiguration jobDetails1 = new JobConfiguration();
         jobDetails1.setModelSnapshotRetentionDays(10L);
@@ -198,7 +196,7 @@ public class JobDetailsTest {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentResultsRetentionDays() {
         JobConfiguration jobDetails1 = new JobConfiguration();
         jobDetails1.setResultsRetentionDays(30L);
@@ -208,7 +206,7 @@ public class JobDetailsTest {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentCustomSettings() {
         JobConfiguration jobDetails1 = new JobConfiguration();
         Map<String, Object> customSettings1 = new HashMap<>();
@@ -222,7 +220,7 @@ public class JobDetailsTest {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentIgnoreDowntime() {
         JobDetails job1 = new JobDetails();
         job1.setIgnoreDowntime(IgnoreDowntime.NEVER);
@@ -233,7 +231,7 @@ public class JobDetailsTest {
         assertFalse(job2.equals(job1));
     }
 
-    @Test
+
     public void testToString() {
         Date createTime = new Date(1443410000);
         Date lastDataTime = new Date(1443420000);

@@ -1,20 +1,4 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
+
 package org.elasticsearch.xpack.prelert.job.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -50,11 +34,11 @@ public class BucketInfluencer implements StorageSerialisable
     public static final String RAW_ANOMALY_SCORE = "rawAnomalyScore";
     public static final String PROBABILITY = "probability";
 
-    private String m_InfluenceField;
-    private double m_InitialAnomalyScore;
-    private double m_AnomalyScore;
-    private double m_RawAnomalyScore;
-    private double m_Probability;
+    private String influenceField;
+    private double initialAnomalyScore;
+    private double anomalyScore;
+    private double rawAnomalyScore;
+    private double probability;
 
     public BucketInfluencer()
     {
@@ -63,59 +47,59 @@ public class BucketInfluencer implements StorageSerialisable
 
     public double getProbability()
     {
-        return m_Probability;
+        return probability;
     }
 
     public void setProbability(double probability)
     {
-        this.m_Probability = probability;
+        this.probability = probability;
     }
 
     public String getInfluencerFieldName()
     {
-        return m_InfluenceField;
+        return influenceField;
     }
 
     public void setInfluencerFieldName(String fieldName)
     {
-        this.m_InfluenceField = fieldName;
+        this.influenceField = fieldName;
     }
 
     public double getInitialAnomalyScore()
     {
-        return m_InitialAnomalyScore;
+        return initialAnomalyScore;
     }
 
     public void setInitialAnomalyScore(double influenceScore)
     {
-        this.m_InitialAnomalyScore = influenceScore;
+        this.initialAnomalyScore = influenceScore;
     }
 
     public double getAnomalyScore()
     {
-        return m_AnomalyScore;
+        return anomalyScore;
     }
 
     public void setAnomalyScore(double score)
     {
-        m_AnomalyScore = score;
+        anomalyScore = score;
     }
 
     public double getRawAnomalyScore()
     {
-        return m_RawAnomalyScore;
+        return rawAnomalyScore;
     }
 
     public void setRawAnomalyScore(double score)
     {
-        m_RawAnomalyScore = score;
+        rawAnomalyScore = score;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_InfluenceField, m_InitialAnomalyScore, m_AnomalyScore,
-                m_RawAnomalyScore, m_Probability);
+        return Objects.hash(influenceField, initialAnomalyScore, anomalyScore,
+                rawAnomalyScore, probability);
     }
 
     @Override
@@ -138,20 +122,20 @@ public class BucketInfluencer implements StorageSerialisable
 
         BucketInfluencer other = (BucketInfluencer) obj;
 
-        return  Objects.equals(m_InfluenceField, other.m_InfluenceField) &&
-                Double.compare(m_InitialAnomalyScore, other.m_InitialAnomalyScore) == 0 &&
-                Double.compare(m_AnomalyScore, other.m_AnomalyScore) == 0 &&
-                Double.compare(m_RawAnomalyScore, other.m_RawAnomalyScore) == 0 &&
-                Double.compare(m_Probability, other.m_Probability) == 0;
+        return  Objects.equals(influenceField, other.influenceField) &&
+                Double.compare(initialAnomalyScore, other.initialAnomalyScore) == 0 &&
+                Double.compare(anomalyScore, other.anomalyScore) == 0 &&
+                Double.compare(rawAnomalyScore, other.rawAnomalyScore) == 0 &&
+                Double.compare(probability, other.probability) == 0;
     }
 
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.add(PROBABILITY, m_Probability)
-                  .add(INFLUENCER_FIELD_NAME, m_InfluenceField)
-                  .add(INITIAL_ANOMALY_SCORE, m_InitialAnomalyScore)
-                  .add(ANOMALY_SCORE, m_AnomalyScore)
-                  .add(RAW_ANOMALY_SCORE, m_RawAnomalyScore);
+        serialiser.add(PROBABILITY, probability)
+                  .add(INFLUENCER_FIELD_NAME, influenceField)
+                  .add(INITIAL_ANOMALY_SCORE, initialAnomalyScore)
+                  .add(ANOMALY_SCORE, anomalyScore)
+                  .add(RAW_ANOMALY_SCORE, rawAnomalyScore);
     }
 }

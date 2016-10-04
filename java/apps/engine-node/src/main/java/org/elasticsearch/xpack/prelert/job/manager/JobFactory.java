@@ -23,9 +23,9 @@ class JobFactory
     private static final String NO_HOSTNAME_ID_TEMPLATE = "%s-%05d";
     private static final int HOSTNAME_ID_SEPARATORS_LENGTH = 2;
 
-    private final AtomicLong m_IdSequence;
-    private final DateTimeFormatter m_JobIdDateFormat;
-    private final String m_Hostname;
+    private final AtomicLong idSequence;
+    private final DateTimeFormatter jobIdDateFormat;
+    private final String hostname;
 
     public JobFactory()
     {
@@ -34,9 +34,9 @@ class JobFactory
 
     public JobFactory(String hostname)
     {
-        m_Hostname = hostname == null ? null : hostname.toLowerCase();
-        m_IdSequence = new AtomicLong();
-        m_JobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        this.hostname = hostname == null ? null : hostname.toLowerCase();
+        idSequence = new AtomicLong();
+        jobIdDateFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     }
 
     /**
@@ -78,14 +78,14 @@ class JobFactory
      */
     String generateJobId()
     {
-        String dateStr = m_JobIdDateFormat.format(LocalDateTime.now());
-        long sequence = m_IdSequence.incrementAndGet();
-        if (m_Hostname != null) {
+        String dateStr = jobIdDateFormat.format(LocalDateTime.now());
+        long sequence = idSequence.incrementAndGet();
+        if (hostname != null) {
             int formattedSequenceLen = Math.max(String.valueOf(sequence).length(), MIN_SEQUENCE_LENGTH);
             int hostnameMaxLen = JobConfigurationVerifier.MAX_JOB_ID_LENGTH - dateStr.length()
                     - formattedSequenceLen - HOSTNAME_ID_SEPARATORS_LENGTH;
-            String trimmedHostName = m_Hostname.substring(0,
-                    Math.min(m_Hostname.length(), hostnameMaxLen));
+            String trimmedHostName = hostname.substring(0,
+                    Math.min(hostname.length(), hostnameMaxLen));
             return String.format(HOSTNAME_ID_TEMPLATE, dateStr, trimmedHostName, sequence);
         }
         else

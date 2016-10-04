@@ -1,27 +1,20 @@
 
 package org.elasticsearch.xpack.prelert.job.transform;
 
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+public class TransformConfigTest extends ESTestCase {
 
-public class TransformConfigTest {
-    @Rule
-    public ExpectedException m_ExpectedException = ExpectedException.none();
-
-    @Test
     public void testGetOutputs_GivenEmptyTransformConfig() {
         assertTrue(new TransformConfig().getOutputs().isEmpty());
     }
 
-    @Test
+
     public void testGetOutputs_GivenNoExplicitOutputsSpecified() {
         TransformConfig config = new TransformConfig();
         config.setTransform("concat");
@@ -29,7 +22,7 @@ public class TransformConfigTest {
         assertEquals(Arrays.asList("concat"), config.getOutputs());
     }
 
-    @Test
+
     public void testGetOutputs_GivenEmptyOutputsSpecified() {
         TransformConfig config = new TransformConfig();
         config.setTransform("concat");
@@ -38,7 +31,7 @@ public class TransformConfigTest {
         assertEquals(Arrays.asList("concat"), config.getOutputs());
     }
 
-    @Test
+
     public void testGetOutputs_GivenOutputsSpecified() {
         TransformConfig config = new TransformConfig();
         config.setTransform("concat");
@@ -47,36 +40,35 @@ public class TransformConfigTest {
         assertEquals(Arrays.asList("o1", "o2"), config.getOutputs());
     }
 
-    @Test
+
     public void testVerify_GivenUnknownTransform() {
-        m_ExpectedException.expect(IllegalArgumentException.class);
 
         TransformConfig tr = new TransformConfig();
         tr.setInputs(Arrays.asList("f1", "f2"));
         tr.setTransform("unknown+transform");
 
-        tr.type();
+        ESTestCase.expectThrows(IllegalArgumentException.class, () -> tr.type());
     }
 
-    @Test
+
     public void testEquals_GivenSameReference() {
         TransformConfig config = new TransformConfig();
         assertTrue(config.equals(config));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentClass() {
         TransformConfig config = new TransformConfig();
         assertFalse(config.equals("a string"));
     }
 
-    @Test
+
     public void testEquals_GivenNull() {
         TransformConfig config = new TransformConfig();
         assertFalse(config.equals(null));
     }
 
-    @Test
+
     public void testEquals_GivenEqualTransform() {
         TransformConfig config1 = new TransformConfig();
         config1.setTransform("concat");
@@ -96,7 +88,7 @@ public class TransformConfigTest {
         assertTrue(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentType() {
         TransformConfig config1 = new TransformConfig();
         config1.setTransform("concat");
@@ -108,7 +100,7 @@ public class TransformConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentInputs() {
         TransformConfig config1 = new TransformConfig();
         config1.setTransform("concat");
@@ -122,7 +114,7 @@ public class TransformConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentOutputs() {
         TransformConfig config1 = new TransformConfig();
         config1.setTransform("concat");
@@ -138,7 +130,7 @@ public class TransformConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentArguments() {
         TransformConfig config1 = new TransformConfig();
         config1.setTransform("concat");
@@ -156,7 +148,7 @@ public class TransformConfigTest {
         assertFalse(config2.equals(config1));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentConditions() {
         TransformConfig config1 = new TransformConfig();
         config1.setTransform("concat");

@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
@@ -11,8 +12,8 @@ import java.util.HashSet;
 
 import static org.junit.Assert.*;
 
-public class DetectorTest {
-    @Test
+public class DetectorTest extends ESTestCase {
+
     public void testEquals_GivenEqual() {
         Detector detector1 = new Detector();
         detector1.setDetectorDescription("foo");
@@ -37,7 +38,7 @@ public class DetectorTest {
         assertEquals(detector1.hashCode(), detector2.hashCode());
     }
 
-    @Test
+
     public void testEquals_GivenDifferentDetectorDescription() {
         Detector detector1 = createDetector();
         Detector detector2 = createDetector();
@@ -46,7 +47,7 @@ public class DetectorTest {
         assertFalse(detector1.equals(detector2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentByFieldName() {
         Detector detector1 = createDetector();
         Detector detector2 = createDetector();
@@ -57,7 +58,7 @@ public class DetectorTest {
         assertFalse(detector1.equals(detector2));
     }
 
-    @Test
+
     public void testEquals_GivenDifferentRules() {
         Detector detector1 = createDetector();
         Detector detector2 = createDetector();
@@ -67,7 +68,7 @@ public class DetectorTest {
         assertFalse(detector2.equals(detector1));
     }
 
-    @Test
+
     public void testExtractAnalysisFields() {
         Detector detector = createDetector();
         assertEquals(Arrays.asList("by", "over", "partition"), detector.extractAnalysisFields());
@@ -79,7 +80,7 @@ public class DetectorTest {
         assertTrue(detector.extractAnalysisFields().isEmpty());
     }
 
-    @Test
+
     public void testExtractReferencedLists() {
         Detector detector = createDetector();
         detector.setDetectorRules(Arrays.asList(new DetectionRule(), new DetectionRule()));

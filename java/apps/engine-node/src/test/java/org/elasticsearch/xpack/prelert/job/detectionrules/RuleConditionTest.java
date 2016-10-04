@@ -1,14 +1,15 @@
 
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class RuleConditionTest {
-    @Test
+public class RuleConditionTest extends ESTestCase {
+
     public void testDefaultConstructor() {
         RuleCondition condition = new RuleCondition();
         assertNull(condition.getConditionType());
@@ -17,18 +18,18 @@ public class RuleConditionTest {
         assertNull(condition.getCondition());
     }
 
-    @Test
+
     public void testEqualsGivenSameObject() {
         RuleCondition condition = new RuleCondition();
         assertTrue(condition.equals(condition));
     }
 
-    @Test
+
     public void testEqualsGivenString() {
         assertFalse(new RuleCondition().equals("a string"));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentType() {
         RuleCondition condition1 = createFullyPopulated();
         RuleCondition condition2 = createFullyPopulated();
@@ -37,7 +38,7 @@ public class RuleConditionTest {
         assertFalse(condition2.equals(condition1));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentFieldName() {
         RuleCondition condition1 = createFullyPopulated();
         RuleCondition condition2 = createFullyPopulated();
@@ -46,7 +47,7 @@ public class RuleConditionTest {
         assertFalse(condition2.equals(condition1));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentFieldValue() {
         RuleCondition condition1 = createFullyPopulated();
         RuleCondition condition2 = createFullyPopulated();
@@ -55,7 +56,7 @@ public class RuleConditionTest {
         assertFalse(condition2.equals(condition1));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentCondition() {
         RuleCondition condition1 = createFullyPopulated();
         RuleCondition condition2 = createFullyPopulated();
@@ -64,7 +65,7 @@ public class RuleConditionTest {
         assertFalse(condition2.equals(condition1));
     }
 
-    @Test
+
     public void testEqualsGivenDifferentValueList() {
         RuleCondition condition1 = createFullyPopulated();
         RuleCondition condition2 = createFullyPopulated();
@@ -73,7 +74,7 @@ public class RuleConditionTest {
         assertFalse(condition2.equals(condition1));
     }
 
-    @Test
+
     public void testEqualsGivenEqual() {
         RuleCondition condition1 = createFullyPopulated();
         RuleCondition condition2 = createFullyPopulated();

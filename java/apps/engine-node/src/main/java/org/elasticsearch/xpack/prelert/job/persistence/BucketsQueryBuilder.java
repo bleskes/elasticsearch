@@ -1,4 +1,19 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.xpack.prelert.utils.Strings;
@@ -8,63 +23,56 @@ import java.util.Objects;
 /**
  * One time query builder for buckets.
  * <ul>
- *     <li>Skip- Skip the first N Buckets. This parameter is for paging
+ * <li>Skip- Skip the first N Buckets. This parameter is for paging
  * if not required set to 0. Default = 0</li>
- *     <li>Take- Take only this number of Buckets. Default = {@value DEFAULT_TAKE_SIZE}</li>
- *     <li>Expand- Include anomaly records. Default= false</li>
- *     <li>IncludeInterim- Include interim results. Default = false</li>
- *     <li>anomalyScoreThreshold- Return only buckets with an anomalyScore >=
+ * <li>Take- Take only this number of Buckets. Default = {@value DEFAULT_TAKE_SIZE}</li>
+ * <li>Expand- Include anomaly records. Default= false</li>
+ * <li>IncludeInterim- Include interim results. Default = false</li>
+ * <li>anomalyScoreThreshold- Return only buckets with an anomalyScore >=
  * this value. Default = 0.0</li>
- *     <li>normalizedProbabilityThreshold- Return only buckets with a maxNormalizedProbability >=
+ * <li>normalizedProbabilityThreshold- Return only buckets with a maxNormalizedProbability >=
  * this value. Default = 0.0</li>
- *     <li>epochStart- The start bucket time. A bucket with this timestamp will be
+ * <li>epochStart- The start bucket time. A bucket with this timestamp will be
  * included in the results. If 0 all buckets up to <code>endEpochMs</code>
  * are returned. Default = -1</li>
- *     <li>epochEnd- The end bucket timestamp buckets up to but NOT including this
+ * <li>epochEnd- The end bucket timestamp buckets up to but NOT including this
  * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
  * are returned. Default = -1</li>
- *     <li>partitionValue Set the bucket's max normalised probability to this
+ * <li>partitionValue Set the bucket's max normalised probability to this
  * partition field value's max normalised probability. Default = null</li>
  * </ul>
  */
-public final class BucketsQueryBuilder
-{
+public final class BucketsQueryBuilder {
     public static int DEFAULT_TAKE_SIZE = 100;
 
     private BucketsQuery bucketsQuery = new BucketsQuery();
 
-    public BucketsQueryBuilder skip(int skip)
-    {
+    public BucketsQueryBuilder skip(int skip) {
         bucketsQuery.skip = skip;
         return this;
     }
 
-    public BucketsQueryBuilder take(int take)
-    {
+    public BucketsQueryBuilder take(int take) {
         bucketsQuery.take = take;
         return this;
     }
 
-    public BucketsQueryBuilder expand(boolean expand)
-    {
+    public BucketsQueryBuilder expand(boolean expand) {
         bucketsQuery.expand = expand;
         return this;
     }
 
-    public BucketsQueryBuilder includeInterim(boolean include)
-    {
+    public BucketsQueryBuilder includeInterim(boolean include) {
         bucketsQuery.includeInterim = include;
         return this;
     }
 
-    public BucketsQueryBuilder anomalyScoreThreshold(Double anomalyScoreFilter)
-    {
+    public BucketsQueryBuilder anomalyScoreThreshold(Double anomalyScoreFilter) {
         bucketsQuery.anomalyScoreFilter = anomalyScoreFilter;
         return this;
     }
 
-    public BucketsQueryBuilder normalizedProbabilityThreshold(Double normalizedProbability)
-    {
+    public BucketsQueryBuilder normalizedProbabilityThreshold(Double normalizedProbability) {
         bucketsQuery.normalizedProbability = normalizedProbability;
         return this;
     }
@@ -73,10 +81,8 @@ public final class BucketsQueryBuilder
      * @param partitionValue Not set if null or empty
      * @return
      */
-    public BucketsQueryBuilder partitionValue(String partitionValue)
-    {
-        if (!Strings.isNullOrEmpty(partitionValue))
-        {
+    public BucketsQueryBuilder partitionValue(String partitionValue) {
+        if (!Strings.isNullOrEmpty(partitionValue)) {
             bucketsQuery.partitionValue = partitionValue;
         }
         return this;
@@ -85,100 +91,82 @@ public final class BucketsQueryBuilder
 
     /**
      * If startTime <= 0 the parameter is not set
+     *
      * @param startTime
      * @return
      */
-    public BucketsQueryBuilder epochStart(long startTime)
-    {
-        if (startTime > 0)
-        {
-            bucketsQuery.epochStart = startTime;
-        }
+    public BucketsQueryBuilder epochStart(String startTime) {
+        bucketsQuery.epochStart = startTime;
         return this;
     }
 
     /**
      * If endTime <= 0 the parameter is not set
+     *
      * @param endTime
      * @return
      */
-    public BucketsQueryBuilder epochEnd(long endTime)
-    {
-        if (endTime > 0)
-        {
-            bucketsQuery.epochEnd = endTime;
-        }
+    public BucketsQueryBuilder epochEnd(String endTime) {
+        bucketsQuery.epochEnd = endTime;
         return this;
     }
 
-    public BucketsQueryBuilder.BucketsQuery build()
-    {
+    public BucketsQueryBuilder.BucketsQuery build() {
         return bucketsQuery;
     }
 
-    public void clear()
-    {
+    public void clear() {
         bucketsQuery = new BucketsQueryBuilder.BucketsQuery();
     }
 
 
-    public class BucketsQuery
-    {
+    public class BucketsQuery {
         private int skip = 0;
         private int take = DEFAULT_TAKE_SIZE;
-        private boolean expand =  false;
+        private boolean expand = false;
         private boolean includeInterim = false;
         private double anomalyScoreFilter = 0.0d;
         private double normalizedProbability = 0.0d;
-        private long epochStart = -1;
-        private long epochEnd = -1;
+        private String epochStart;
+        private String epochEnd;
         private String partitionValue = null;
 
-        public int getSkip()
-        {
+        public int getSkip() {
             return skip;
         }
 
-        public int getTake()
-        {
+        public int getTake() {
             return take;
         }
 
-        public boolean isExpand()
-        {
+        public boolean isExpand() {
             return expand;
         }
 
-        public boolean isIncludeInterim()
-        {
+        public boolean isIncludeInterim() {
             return includeInterim;
         }
 
-        public double getAnomalyScoreFilter()
-        {
+        public double getAnomalyScoreFilter() {
             return anomalyScoreFilter;
         }
 
-        public double getNormalizedProbability()
-        {
+        public double getNormalizedProbability() {
             return normalizedProbability;
         }
 
-        public long getEpochStart()
-        {
+        public String getEpochStart() {
             return epochStart;
         }
 
-        public long getEpochEnd()
-        {
+        public String getEpochEnd() {
             return epochEnd;
         }
 
         /**
          * @return Null if not set
          */
-        public String getPartitionValue()
-        {
+        public String getPartitionValue() {
             return partitionValue;
         }
 
@@ -192,29 +180,26 @@ public final class BucketsQueryBuilder
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj)
-            {
+            if (this == obj) {
                 return true;
             }
-            if (obj == null)
-            {
+            if (obj == null) {
                 return false;
             }
-            if (getClass() != obj.getClass())
-            {
+            if (getClass() != obj.getClass()) {
                 return false;
             }
 
             BucketsQuery other = (BucketsQuery) obj;
-            return this.skip == other.skip &&
-                   this.take == other.take &&
-                   this.expand == other.expand &&
-                   this.includeInterim == other.includeInterim &&
-                   this.epochStart == other.epochStart &&
-                   this.epochStart == other.epochStart &&
-                   this.anomalyScoreFilter == other.anomalyScoreFilter &&
-                   this.normalizedProbability == other.normalizedProbability &&
-                   this.partitionValue == other.partitionValue;
+            return Objects.equals(skip, other.skip) &&
+                    Objects.equals(take, other.take) &&
+                    Objects.equals(expand, other.expand) &&
+                    Objects.equals(includeInterim, other.includeInterim) &&
+                    Objects.equals(epochStart, other.epochStart) &&
+                    Objects.equals(epochStart, other.epochStart) &&
+                    Objects.equals(anomalyScoreFilter, other.anomalyScoreFilter) &&
+                    Objects.equals(normalizedProbability, other.normalizedProbability) &&
+                    Objects.equals(partitionValue, other.partitionValue);
         }
 
     }

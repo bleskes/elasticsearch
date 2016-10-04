@@ -1,4 +1,19 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import java.util.ArrayList;
@@ -12,49 +27,38 @@ import org.elasticsearch.index.query.TermQueryBuilder;
 
 import org.elasticsearch.xpack.prelert.utils.Strings;
 
-
 /**
  * This builder facilitates the creation of a {@link QueryBuilder} with common
  * characteristics to both buckets and records.
  */
-class ResultsFilterBuilder
-{
-    private final List<QueryBuilder> m_Filters;
+class ResultsFilterBuilder {
+    private final List<QueryBuilder> filters;
 
-    public ResultsFilterBuilder()
-    {
-        m_Filters = new ArrayList<>();
+    ResultsFilterBuilder() {
+        filters = new ArrayList<>();
     }
 
-    public ResultsFilterBuilder(QueryBuilder filterBuilder)
-    {
+    ResultsFilterBuilder(QueryBuilder filterBuilder) {
         this();
-        m_Filters.add(filterBuilder);
+        filters.add(filterBuilder);
     }
 
-    public ResultsFilterBuilder timeRange(String field, long startEpochMs, long endEpochMs)
-    {
-        if (startEpochMs > 0 || endEpochMs > 0)
-        {
+    ResultsFilterBuilder timeRange(String field, Object start, Object end) {
+        if (start != null || end != null) {
             RangeQueryBuilder timeRange = QueryBuilders.rangeQuery(field);
-
-            if (startEpochMs > 0)
-            {
-                timeRange.gte(startEpochMs);
+            if (start != null) {
+                timeRange.gte(start);
             }
-            if (endEpochMs > 0)
-            {
-                timeRange.lt(endEpochMs);
+            if (end != null) {
+                timeRange.lt(end);
             }
             addFilter(timeRange);
         }
         return this;
     }
 
-    public ResultsFilterBuilder score(String fieldName, double threshold)
-    {
-        if (threshold > 0.0)
-        {
+    ResultsFilterBuilder score(String fieldName, double threshold) {
+        if (threshold > 0.0) {
             RangeQueryBuilder scoreFilter = QueryBuilders.rangeQuery(fieldName);
             scoreFilter.gte(threshold);
             addFilter(scoreFilter);
@@ -62,10 +66,8 @@ class ResultsFilterBuilder
         return this;
     }
 
-    public ResultsFilterBuilder interim(String fieldName, boolean includeInterim)
-    {
-        if (includeInterim)
-        {
+    public ResultsFilterBuilder interim(String fieldName, boolean includeInterim) {
+        if (includeInterim) {
             // Including interim results does not stop final results being
             // shown, so including interim results means no filtering on the
             // isInterim field
@@ -83,10 +85,8 @@ class ResultsFilterBuilder
         return this;
     }
 
-    public ResultsFilterBuilder term(String fieldName, String fieldValue)
-    {
-        if (Strings.isNullOrEmpty(fieldName) || Strings.isNullOrEmpty(fieldValue))
-        {
+    ResultsFilterBuilder term(String fieldName, String fieldValue) {
+        if (Strings.isNullOrEmpty(fieldName) || Strings.isNullOrEmpty(fieldValue)) {
             return this;
         }
 
@@ -95,24 +95,19 @@ class ResultsFilterBuilder
         return this;
     }
 
-    private void addFilter(QueryBuilder fb)
-    {
-        m_Filters.add(fb);
+    private void addFilter(QueryBuilder fb) {
+        filters.add(fb);
     }
 
-    public QueryBuilder build()
-    {
-        if (m_Filters.isEmpty())
-        {
+    public QueryBuilder build() {
+        if (filters.isEmpty()) {
             return QueryBuilders.matchAllQuery();
         }
-        if (m_Filters.size() == 1)
-        {
-            return m_Filters.get(0);
+        if (filters.size() == 1) {
+            return filters.get(0);
         }
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        for (QueryBuilder query : m_Filters)
-        {
+        for (QueryBuilder query : filters) {
             boolQueryBuilder.must(query);
         }
         return boolQueryBuilder;

@@ -1,20 +1,3 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
 
 package org.elasticsearch.xpack.prelert.job.results;
 
@@ -36,66 +19,66 @@ public class CategoryDefinition implements StorageSerialisable
     public static final String MAX_MATCHING_LENGTH = "maxMatchingLength";
     public static final String EXAMPLES = "examples";
 
-    private long m_Id = 0L;
-    private String m_Terms = "";
-    private String m_Regex = "";
-    private long m_MaxMatchingLength = 0L;
-    private final Set<String> m_Examples = new TreeSet<>();
+    private long id = 0L;
+    private String terms = "";
+    private String regex = "";
+    private long maxMatchingLength = 0L;
+    private final Set<String> examples = new TreeSet<>();
 
     public long getCategoryId()
     {
-        return m_Id;
+        return id;
     }
 
     public void setCategoryId(long categoryId)
     {
-        m_Id = categoryId;
+        id = categoryId;
     }
 
     public String getTerms()
     {
-        return m_Terms;
+        return terms;
     }
 
     public void setTerms(String terms)
     {
-        m_Terms = terms;
+        this.terms = terms;
     }
 
     public String getRegex()
     {
-        return m_Regex;
+        return regex;
     }
 
     public void setRegex(String regex)
     {
-        m_Regex = regex;
+        this.regex = regex;
     }
 
     public long getMaxMatchingLength()
     {
-        return m_MaxMatchingLength;
+        return maxMatchingLength;
     }
 
     public void setMaxMatchingLength(long maxMatchingLength)
     {
-        m_MaxMatchingLength = maxMatchingLength;
+        this.maxMatchingLength = maxMatchingLength;
     }
 
     public List<String> getExamples()
     {
-        return new ArrayList<>(m_Examples);
+        return new ArrayList<>(examples);
     }
 
     public void setExamples(Collection<String> examples)
     {
-        m_Examples.clear();
-        m_Examples.addAll(examples);
+        this.examples.clear();
+        this.examples.addAll(examples);
     }
 
     public void addExample(String example)
     {
-        m_Examples.add(example);
+        examples.add(example);
     }
 
     @Override
@@ -110,26 +93,26 @@ public class CategoryDefinition implements StorageSerialisable
             return false;
         }
         CategoryDefinition that = (CategoryDefinition) other;
-        return Objects.equals(this.m_Id, that.m_Id)
-                && Objects.equals(this.m_Terms, that.m_Terms)
-                && Objects.equals(this.m_Regex, that.m_Regex)
-                && Objects.equals(this.m_MaxMatchingLength, that.m_MaxMatchingLength)
-                && Objects.equals(this.m_Examples, that.m_Examples);
+        return Objects.equals(this.id, that.id)
+                && Objects.equals(this.terms, that.terms)
+                && Objects.equals(this.regex, that.regex)
+                && Objects.equals(this.maxMatchingLength, that.maxMatchingLength)
+                && Objects.equals(this.examples, that.examples);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Id, m_Terms, m_Regex, m_MaxMatchingLength, m_Examples);
+        return Objects.hash(id, terms, regex, maxMatchingLength, examples);
     }
 
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.add(CATEGORY_ID, m_Id)
-                  .add(TERMS, m_Terms)
-                  .add(REGEX, m_Regex)
-                  .add(MAX_MATCHING_LENGTH, m_MaxMatchingLength)
-                  .add(EXAMPLES, m_Examples.toArray(new String[m_Examples.size()]));
+        serialiser.add(CATEGORY_ID, id)
+                  .add(TERMS, terms)
+                  .add(REGEX, regex)
+                  .add(MAX_MATCHING_LENGTH, maxMatchingLength)
+                  .add(EXAMPLES, examples.toArray(new String[examples.size()]));
     }
 }

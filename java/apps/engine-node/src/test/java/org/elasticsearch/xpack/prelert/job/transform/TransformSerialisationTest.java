@@ -5,14 +5,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-public class TransformSerialisationTest {
-    @Test
+public class TransformSerialisationTest extends ESTestCase {
+
     public void testDeserialise_singleFieldAsArray() throws JsonProcessingException, IOException {
         ObjectMapper mapper = new ObjectMapper();
         ObjectReader reader = mapper.readerFor(TransformConfig.class)
@@ -37,7 +38,7 @@ public class TransformSerialisationTest {
         assertEquals("catted", tr.getOutputs().get(0));
     }
 
-    @Test
+
     public void testDeserialise_fieldsArray() throws JsonProcessingException, IOException {
         ObjectMapper mapper = new ObjectMapper();
         ObjectReader reader = mapper.readerFor(TransformConfig.class)

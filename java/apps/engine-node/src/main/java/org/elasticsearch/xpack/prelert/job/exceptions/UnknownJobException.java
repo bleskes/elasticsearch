@@ -12,7 +12,7 @@ public class UnknownJobException extends JobException
 {
     private static final long serialVersionUID = 8603362038035845948L;
 
-    private final String m_JobId;
+    private final String jobId;
 
     /**
      * Create with the default message and error code
@@ -22,7 +22,7 @@ public class UnknownJobException extends JobException
     public UnknownJobException(String jobId)
     {
         super(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId), ErrorCodes.MISSING_JOB_ERROR);
-        m_JobId = jobId;
+        this.jobId = jobId;
     }
 
     /**
@@ -35,14 +35,14 @@ public class UnknownJobException extends JobException
     public UnknownJobException(String jobId, String message, ErrorCodes errorCode)
     {
         super(message, errorCode);
-        m_JobId = jobId;
+        this.jobId = jobId;
     }
 
     public UnknownJobException(String jobId, String message, ErrorCodes errorCode,
                                Throwable cause)
     {
         super(message, errorCode, cause);
-        m_JobId = jobId;
+        this.jobId = jobId;
     }
 
     /**
@@ -51,6 +51,6 @@ public class UnknownJobException extends JobException
      */
     public String getJobId()
     {
-        return m_JobId;
+        return jobId;
     }
 }

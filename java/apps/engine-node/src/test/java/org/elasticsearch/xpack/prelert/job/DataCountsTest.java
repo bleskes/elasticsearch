@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.beans.IntrospectionException;
@@ -11,9 +12,9 @@ import java.util.Date;
 
 import static org.junit.Assert.*;
 
-public class DataCountsTest {
+public class DataCountsTest extends ESTestCase {
 
-    @Test
+
     public void testCountsEquals_GivenEqualCounts() {
         DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
         DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
@@ -22,7 +23,7 @@ public class DataCountsTest {
         assertTrue(counts2.equals(counts1));
     }
 
-    @Test
+
     public void testCountsHashCode_GivenEqualCounts() {
         DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
         DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
@@ -30,7 +31,7 @@ public class DataCountsTest {
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
 
-    @Test
+
     public void testCountsCopyConstructor() {
         DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
         DataCounts counts2 = new DataCounts(counts1);
@@ -38,13 +39,13 @@ public class DataCountsTest {
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
 
-    @Test
+
     public void testCountCreatedZero() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
         DataCounts counts = new DataCounts();
         testAllFieldsEqualZero(counts);
     }
 
-    @Test
+
     public void testCountCopyCreatedFieldsNotZero()
             throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 9, 10);
@@ -54,7 +55,7 @@ public class DataCountsTest {
         testAllFieldsGreaterThanZero(counts2);
     }
 
-    @Test
+
     public void testIncrements() {
         DataCounts counts = new DataCounts();
 
@@ -77,7 +78,7 @@ public class DataCountsTest {
         assertEquals(40, counts.getProcessedRecordCount());
     }
 
-    @Test
+
     public void testGetInputRecordCount() {
         DataCounts counts = new DataCounts();
         counts.incrementProcessedRecordCount(5);
@@ -90,7 +91,7 @@ public class DataCountsTest {
         assertEquals(8, counts.getInputRecordCount());
     }
 
-    @Test
+
     public void testCalcProcessedFieldCount() {
         DataCounts counts = new DataCounts();
         counts.setProcessedRecordCount(10);
@@ -104,7 +105,7 @@ public class DataCountsTest {
         assertEquals(25, counts.getProcessedFieldCount());
     }
 
-    @Test
+
     public void testEquals() {
         DataCounts counts1 = new DataCounts();
         counts1.setBucketCount(3L);

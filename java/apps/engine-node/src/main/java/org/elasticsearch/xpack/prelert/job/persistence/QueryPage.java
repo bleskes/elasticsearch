@@ -1,22 +1,23 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job.persistence;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 
@@ -25,29 +26,29 @@ import java.util.List;
  * total number of query hits.<br>
  * {@linkplain #hitCount()} is the total number of results
  * but that value may not be equal to the actual length of
- * the {@linkplain #queryResults()} list if skip & take or
+ * the {@linkplain #hits()} list if skip & take or
  * some cursor was used in the database query.
  *
  * @param <T>
  */
-public final class QueryPage<T>
-{
-    private final List<T> m_QueryResults;
-    private final long m_HitCount;
+@JsonPropertyOrder({"hitCount", "hits"})
+public final class QueryPage<T> {
 
-    public QueryPage(List<T> queryResults, long hitCount)
-    {
-        m_QueryResults = queryResults;
-        m_HitCount = hitCount;
+    private final List<T> hits;
+    private final long hitCount;
+
+    public QueryPage(List<T> hits, long hitCount) {
+        this.hits = hits;
+        this.hitCount = hitCount;
     }
 
-    public List<T> queryResults()
-    {
-        return m_QueryResults;
+    @JsonGetter("hits")
+    public List<T> hits() {
+        return hits;
     }
 
-    public long hitCount()
-    {
-        return m_HitCount;
+    @JsonGetter("hitCount")
+    public long hitCount() {
+        return hitCount;
     }
 }

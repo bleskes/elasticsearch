@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job;
 
 
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -9,12 +10,12 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class JobConfigurationTest {
+public class JobConfigurationTest extends ESTestCase {
     /**
      * Test the {@link AnalysisConfig#analysisFields()} method which produces
      * a list of analysis fields from the detectors
      */
-    @Test
+
     public void testAnalysisConfigRequiredFields() {
         Detector d1 = new Detector();
         d1.setFieldName("field");
@@ -66,19 +67,19 @@ public class JobConfigurationTest {
         assertFalse(analysisFields.contains(null));
     }
 
-    @Test
+
     public void testDefaultRenormalizationWindowDays() {
         assertNull(new JobConfiguration().getRenormalizationWindowDays());
     }
 
-    @Test
+
     public void testSetRenormalizationWindowDays() {
         JobConfiguration config = new JobConfiguration();
         config.setRenormalizationWindowDays(3L);
         assertEquals(3L, config.getRenormalizationWindowDays().longValue());
     }
 
-    @Test
+
     public void testSetIgnoreDowntime() {
         JobConfiguration config = new JobConfiguration();
         config.setIgnoreDowntime(IgnoreDowntime.ONCE);

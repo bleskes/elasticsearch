@@ -42,185 +42,185 @@ public class AnomalyCause implements StorageSerialisable
      */
     public static final String FIELD_NAME = "fieldName";
 
-    private double m_Probability;
-    private String m_ByFieldName;
-    private String m_ByFieldValue;
-    private String m_CorrelatedByFieldValue;
-    private String m_PartitionFieldName;
-    private String m_PartitionFieldValue;
-    private String m_Function;
-    private String m_FunctionDescription;
-    private double[] m_Typical;
-    private double[] m_Actual;
+    private double probability;
+    private String byFieldName;
+    private String byFieldValue;
+    private String correlatedByFieldValue;
+    private String partitionFieldName;
+    private String partitionFieldValue;
+    private String function;
+    private String functionDescription;
+    private double[] typical;
+    private double[] actual;
 
-    private String m_FieldName;
+    private String fieldName;
 
-    private String m_OverFieldName;
-    private String m_OverFieldValue;
+    private String overFieldName;
+    private String overFieldValue;
 
-    private List<Influence> m_Influencers;
+    private List<Influence> influencers;
 
 
     public double getProbability()
     {
-        return m_Probability;
+        return probability;
     }
 
     public void setProbability(double value)
     {
-        m_Probability = value;
+        probability = value;
     }
 
 
     public String getByFieldName()
     {
-        return m_ByFieldName;
+        return byFieldName;
     }
 
     public void setByFieldName(String value)
     {
-        m_ByFieldName = value.intern();
+        byFieldName = value.intern();
     }
 
     public String getByFieldValue()
     {
-        return m_ByFieldValue;
+        return byFieldValue;
     }
 
     public void setByFieldValue(String value)
     {
-        m_ByFieldValue = value.intern();
+        byFieldValue = value.intern();
     }
 
     public String getCorrelatedByFieldValue()
     {
-        return m_CorrelatedByFieldValue;
+        return correlatedByFieldValue;
     }
 
     public void setCorrelatedByFieldValue(String value)
     {
-        m_CorrelatedByFieldValue = value.intern();
+        correlatedByFieldValue = value.intern();
     }
 
     public String getPartitionFieldName()
     {
-        return m_PartitionFieldName;
+        return partitionFieldName;
     }
 
     public void setPartitionFieldName(String field)
     {
-        m_PartitionFieldName = field.intern();
+        partitionFieldName = field.intern();
     }
 
     public String getPartitionFieldValue()
     {
-        return m_PartitionFieldValue;
+        return partitionFieldValue;
     }
 
     public void setPartitionFieldValue(String value)
     {
-        m_PartitionFieldValue = value.intern();
+        partitionFieldValue = value.intern();
     }
 
     public String getFunction()
     {
-        return m_Function;
+        return function;
     }
 
     public void setFunction(String name)
     {
-        m_Function = name.intern();
+        function = name.intern();
     }
 
     public String getFunctionDescription()
     {
-        return m_FunctionDescription;
+        return functionDescription;
     }
 
     public void setFunctionDescription(String functionDescription)
     {
-        m_FunctionDescription = functionDescription.intern();
+        this.functionDescription = functionDescription.intern();
     }
 
     @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public double[] getTypical()
     {
-        return m_Typical;
+        return typical;
     }
 
     public void setTypical(double[] typical)
     {
-        m_Typical = typical;
+        this.typical = typical;
     }
 
     @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public double[] getActual()
     {
-        return m_Actual;
+        return actual;
     }
 
     public void setActual(double[] actual)
     {
-        m_Actual = actual;
+        this.actual = actual;
     }
 
     public String getFieldName()
     {
-        return m_FieldName;
+        return fieldName;
     }
 
     public void setFieldName(String field)
     {
-        m_FieldName = field.intern();
+        fieldName = field.intern();
     }
 
     public String getOverFieldName()
     {
-        return m_OverFieldName;
+        return overFieldName;
     }
 
     public void setOverFieldName(String name)
     {
-        m_OverFieldName = name.intern();
+        overFieldName = name.intern();
     }
 
     public String getOverFieldValue()
     {
-        return m_OverFieldValue;
+        return overFieldValue;
     }
 
     public void setOverFieldValue(String value)
     {
-        m_OverFieldValue = value.intern();
+        overFieldValue = value.intern();
     }
 
     public List<Influence> getInfluencers()
     {
-        return m_Influencers;
+        return influencers;
     }
 
     public void setInfluencers(List<Influence> influencers)
     {
-        m_Influencers = influencers;
+        this.influencers = influencers;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(m_Probability,
-                Arrays.hashCode(m_Actual),
-                Arrays.hashCode(m_Typical),
-                m_ByFieldName,
-                m_ByFieldValue,
-                m_CorrelatedByFieldValue,
-                m_FieldName,
-                m_Function,
-                m_FunctionDescription,
-                m_OverFieldName,
-                m_OverFieldValue,
-                m_PartitionFieldName,
-                m_PartitionFieldValue,
-                m_Influencers);
+        return Objects.hash(probability,
+                Arrays.hashCode(actual),
+                Arrays.hashCode(typical),
+                byFieldName,
+                byFieldValue,
+                correlatedByFieldValue,
+                fieldName,
+                function,
+                functionDescription,
+                overFieldName,
+                overFieldValue,
+                partitionFieldName,
+                partitionFieldValue,
+                influencers);
     }
 
     @Override
@@ -238,103 +238,103 @@ public class AnomalyCause implements StorageSerialisable
 
         AnomalyCause that = (AnomalyCause)other;
 
-        return this.m_Probability == that.m_Probability &&
-                Objects.deepEquals(this.m_Typical, that.m_Typical) &&
-                Objects.deepEquals(this.m_Actual, that.m_Actual) &&
-                Objects.equals(this.m_Function, that.m_Function) &&
-                Objects.equals(this.m_FunctionDescription, that.m_FunctionDescription) &&
-                Objects.equals(this.m_FieldName, that.m_FieldName) &&
-                Objects.equals(this.m_ByFieldName, that.m_ByFieldName) &&
-                Objects.equals(this.m_ByFieldValue, that.m_ByFieldValue) &&
-                Objects.equals(this.m_CorrelatedByFieldValue, that.m_CorrelatedByFieldValue) &&
-                Objects.equals(this.m_PartitionFieldName, that.m_PartitionFieldName) &&
-                Objects.equals(this.m_PartitionFieldValue, that.m_PartitionFieldValue) &&
-                Objects.equals(this.m_OverFieldName, that.m_OverFieldName) &&
-                Objects.equals(this.m_OverFieldValue, that.m_OverFieldValue) &&
-                Objects.equals(this.m_Influencers, that.m_Influencers);
+        return this.probability == that.probability &&
+                Objects.deepEquals(this.typical, that.typical) &&
+                Objects.deepEquals(this.actual, that.actual) &&
+                Objects.equals(this.function, that.function) &&
+                Objects.equals(this.functionDescription, that.functionDescription) &&
+                Objects.equals(this.fieldName, that.fieldName) &&
+                Objects.equals(this.byFieldName, that.byFieldName) &&
+                Objects.equals(this.byFieldValue, that.byFieldValue) &&
+                Objects.equals(this.correlatedByFieldValue, that.correlatedByFieldValue) &&
+                Objects.equals(this.partitionFieldName, that.partitionFieldName) &&
+                Objects.equals(this.partitionFieldValue, that.partitionFieldValue) &&
+                Objects.equals(this.overFieldName, that.overFieldName) &&
+                Objects.equals(this.overFieldValue, that.overFieldValue) &&
+                Objects.equals(this.influencers, that.influencers);
     }
 
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.add(PROBABILITY, m_Probability);
+        serialiser.add(PROBABILITY, probability);
 
-        if (m_Typical != null)
+        if (typical != null)
         {
-            if (m_Typical.length == 1)
+            if (typical.length == 1)
             {
-                serialiser.add(AnomalyCause.TYPICAL, m_Typical[0]);
+                serialiser.add(AnomalyCause.TYPICAL, typical[0]);
             }
             else
             {
-                serialiser.add(AnomalyCause.TYPICAL, m_Typical);
+                serialiser.add(AnomalyCause.TYPICAL, typical);
             }
         }
-        if (m_Actual != null)
+        if (actual != null)
         {
-            if (m_Actual.length == 1)
+            if (actual.length == 1)
             {
-                serialiser.add(ACTUAL, m_Actual[0]);
+                serialiser.add(ACTUAL, actual[0]);
             }
             else
             {
-                serialiser.add(ACTUAL, m_Actual);
+                serialiser.add(ACTUAL, actual);
             }
         }
 
         DotNotationReverser reverser = serialiser.newDotNotationReverser();
 
-        if (m_ByFieldName != null)
+        if (byFieldName != null)
         {
-            serialiser.add(AnomalyCause.BY_FIELD_NAME, m_ByFieldName);
-            if (m_ByFieldValue != null)
+            serialiser.add(AnomalyCause.BY_FIELD_NAME, byFieldName);
+            if (byFieldValue != null)
             {
-                reverser.add(m_ByFieldName, m_ByFieldValue);
+                reverser.add(byFieldName, byFieldValue);
             }
         }
-        if (m_ByFieldValue != null)
+        if (byFieldValue != null)
         {
-            serialiser.add(AnomalyCause.BY_FIELD_VALUE, m_ByFieldValue);
+            serialiser.add(AnomalyCause.BY_FIELD_VALUE, byFieldValue);
         }
-        if (m_CorrelatedByFieldValue != null)
+        if (correlatedByFieldValue != null)
         {
-            serialiser.add(AnomalyCause.CORRELATED_BY_FIELD_VALUE, m_CorrelatedByFieldValue);
+            serialiser.add(AnomalyCause.CORRELATED_BY_FIELD_VALUE, correlatedByFieldValue);
         }
-        if (m_FieldName != null)
+        if (fieldName != null)
         {
-            serialiser.add(AnomalyCause.FIELD_NAME, m_FieldName);
+            serialiser.add(AnomalyCause.FIELD_NAME, fieldName);
         }
-        if (m_Function != null)
+        if (function != null)
         {
-            serialiser.add(AnomalyCause.FUNCTION, m_Function);
+            serialiser.add(AnomalyCause.FUNCTION, function);
         }
-        if (m_FunctionDescription != null)
+        if (functionDescription != null)
         {
-            serialiser.add(AnomalyCause.FUNCTION_DESCRIPTION, m_FunctionDescription);
+            serialiser.add(AnomalyCause.FUNCTION_DESCRIPTION, functionDescription);
         }
-        if (m_PartitionFieldName != null)
+        if (partitionFieldName != null)
         {
-            serialiser.add(AnomalyCause.PARTITION_FIELD_NAME, m_PartitionFieldName);
-            if (m_PartitionFieldValue != null)
+            serialiser.add(AnomalyCause.PARTITION_FIELD_NAME, partitionFieldName);
+            if (partitionFieldValue != null)
             {
-                reverser.add(m_PartitionFieldName, m_PartitionFieldValue);
+                reverser.add(partitionFieldName, partitionFieldValue);
             }
         }
-        if (m_PartitionFieldValue != null)
+        if (partitionFieldValue != null)
         {
-            serialiser.add(AnomalyCause.PARTITION_FIELD_VALUE, m_PartitionFieldValue);
+            serialiser.add(AnomalyCause.PARTITION_FIELD_VALUE, partitionFieldValue);
         }
-        if (m_OverFieldName != null)
+        if (overFieldName != null)
         {
-            serialiser.add(AnomalyCause.OVER_FIELD_NAME, m_OverFieldName);
-            if (m_OverFieldValue != null)
+            serialiser.add(AnomalyCause.OVER_FIELD_NAME, overFieldName);
+            if (overFieldValue != null)
             {
-                reverser.add(m_OverFieldName, m_OverFieldValue);
+                reverser.add(overFieldName, overFieldValue);
             }
         }
-        if (m_OverFieldValue != null)
+        if (overFieldValue != null)
         {
-            serialiser.add(AnomalyCause.OVER_FIELD_VALUE, m_OverFieldValue);
+            serialiser.add(AnomalyCause.OVER_FIELD_VALUE, overFieldValue);
         }
 
         serialiser.addReverserResults(reverser);

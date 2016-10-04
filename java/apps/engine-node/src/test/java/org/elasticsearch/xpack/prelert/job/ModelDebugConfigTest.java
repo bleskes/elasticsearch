@@ -1,13 +1,14 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig.DebugDestination;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class ModelDebugConfigTest {
-    @Test
+public class ModelDebugConfigTest extends ESTestCase {
+
     public void testIsEnabled_GivenNullBoundsPercentile() {
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
         modelDebugConfig.setBoundsPercentile(null);
@@ -15,7 +16,7 @@ public class ModelDebugConfigTest {
         assertFalse(modelDebugConfig.isEnabled());
     }
 
-    @Test
+
     public void testIsEnabled_GivenBoundsPercentile() {
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
         modelDebugConfig.setBoundsPercentile(0.95);
@@ -23,7 +24,7 @@ public class ModelDebugConfigTest {
         assertTrue(modelDebugConfig.isEnabled());
     }
 
-    @Test
+
     public void testEquals() {
         assertFalse(new ModelDebugConfig().equals(null));
         assertFalse(new ModelDebugConfig().equals("a string"));
@@ -39,7 +40,7 @@ public class ModelDebugConfigTest {
         assertTrue(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").equals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")));
     }
 
-    @Test
+
     public void testHashCode() {
         assertEquals(new ModelDebugConfig(80.0, "foo").hashCode(),
                 new ModelDebugConfig(80.0, "foo").hashCode());

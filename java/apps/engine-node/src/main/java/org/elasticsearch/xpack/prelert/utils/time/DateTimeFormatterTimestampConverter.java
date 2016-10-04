@@ -17,16 +17,16 @@ import java.time.temporal.TemporalAccessor;
  */
 public class DateTimeFormatterTimestampConverter implements TimestampConverter
 {
-    private final DateTimeFormatter m_Formatter;
-    private final boolean m_HasTimeZone;
-    private final ZoneId m_DefaultZoneId;
+    private final DateTimeFormatter formatter;
+    private final boolean hasTimeZone;
+    private final ZoneId defaultZoneId;
 
     private DateTimeFormatterTimestampConverter(DateTimeFormatter dateTimeFormatter,
                                                 boolean hasTimeZone, ZoneId defaultTimezone)
     {
-        m_Formatter = dateTimeFormatter;
-        m_HasTimeZone = hasTimeZone;
-        m_DefaultZoneId = defaultTimezone;
+        formatter = dateTimeFormatter;
+        this.hasTimeZone = hasTimeZone;
+        defaultZoneId = defaultTimezone;
     }
 
     /**
@@ -95,11 +95,11 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
 
     private Instant toInstant(String timestamp)
     {
-        TemporalAccessor parsed = m_Formatter.parse(timestamp);
-        if (m_HasTimeZone)
+        TemporalAccessor parsed = formatter.parse(timestamp);
+        if (hasTimeZone)
         {
             return Instant.from(parsed);
         }
-        return LocalDateTime.from(parsed).atZone(m_DefaultZoneId).toInstant();
+        return LocalDateTime.from(parsed).atZone(defaultZoneId).toInstant();
     }
 }

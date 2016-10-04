@@ -1,23 +1,7 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
@@ -32,10 +16,10 @@ public interface JobResultsProvider
      * @param jobId
      * @param query
      * @return QueryPage of Buckets
-     * @throws UnknownJobException If the job id is no recognised
+     * @throws ResourceNotFoundException If the job id is no recognised
      */
     QueryPage<Bucket> buckets(String jobId, BucketsQueryBuilder.BucketsQuery query)
-            throws UnknownJobException;
+            throws ResourceNotFoundException;
 
     /**
      * Get the bucket at time <code>timestampMillis</code> from the job.
@@ -46,7 +30,7 @@ public interface JobResultsProvider
      * @throws UnknownJobException If the job id is no recognised
      */
     Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query)
-            throws UnknownJobException;
+            throws ResourceNotFoundException;
 
     /**
      * Returns a {@link BatchedDocumentsIterator} that allows querying

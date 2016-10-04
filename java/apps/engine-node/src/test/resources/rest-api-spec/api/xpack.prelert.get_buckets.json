@@ -1,0 +1,46 @@
+{
+  "xpack.prelert.get_buckets": {
+    "methods": [ "GET" ],
+    "url": {
+      "path": "/engine/v2/results/{jobId}/buckets",
+      "paths": [ "/engine/v2/results/{jobId}/buckets" ],
+      "parts": {
+        "jobId": {
+          "type" : "string",
+          "required": true
+        }
+      },
+      "params": {
+        "expand": {
+          "type": "boolean"
+        },
+        "includeInterim": {
+          "type": "boolean"
+        },
+        "skip": {
+          "type": "int",
+          "description": "skips a number of buckets"
+        },
+        "take": {
+          "type": "int",
+          "description": "specifies a max number of buckets to get"
+        },
+        "start": {
+          "type": "string"
+        },
+        "end": {
+          "type": "string"
+        },
+        "anomalyScore": {
+          "type": "double"
+        },
+        "maxNormalizedProbability": {
+          "type": "double"
+        },
+        "partitionValue": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -18,13 +18,13 @@ class ElasticsearchJobDetailsMapper
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobDetailsMapper.class);
 
-    private final Client m_Client;
-    private final ObjectMapper m_ObjectMapper;
+    private final Client client;
+    private final ObjectMapper objectMapper;
 
     public ElasticsearchJobDetailsMapper(Client client, ObjectMapper objectMapper)
     {
-        m_Client = Objects.requireNonNull(client);
-        m_ObjectMapper = Objects.requireNonNull(objectMapper);
+        this.client = Objects.requireNonNull(client);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     /**
@@ -38,7 +38,7 @@ class ElasticsearchJobDetailsMapper
         JobDetails job;
         try
         {
-            job = m_ObjectMapper.convertValue(source, JobDetails.class);
+            job = objectMapper.convertValue(source, JobDetails.class);
         }
         catch (IllegalArgumentException e)
         {
@@ -59,7 +59,7 @@ class ElasticsearchJobDetailsMapper
         // Pull out the modelSizeStats document, and add this to the JobDetails
         LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
                 " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
-        GetResponse modelSizeStatsResponse = m_Client.prepareGet(
+        GetResponse modelSizeStatsResponse = client.prepareGet(
                 elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
 
         if (!modelSizeStatsResponse.isExists())
@@ -74,7 +74,7 @@ class ElasticsearchJobDetailsMapper
             Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
             modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
 
-            ModelSizeStats modelSizeStats = m_ObjectMapper.convertValue(
+            ModelSizeStats modelSizeStats = objectMapper.convertValue(
                 modelSizeStatsResponse.getSource(), ModelSizeStats.class);
             job.setModelSizeStats(modelSizeStats);
         }
@@ -85,7 +85,7 @@ class ElasticsearchJobDetailsMapper
         // Pull out the modelSizeStats document, and add this to the JobDetails
         LOGGER.trace("ES API CALL: get ID " + BucketProcessingTime.TYPE +
                 " type " + BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS + " from index " + elasticJobId.getIndex());
-        GetResponse procTimeResponse = m_Client.prepareGet(
+        GetResponse procTimeResponse = client.prepareGet(
                 elasticJobId.getIndex(), BucketProcessingTime.TYPE,
                 BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS).get();
 

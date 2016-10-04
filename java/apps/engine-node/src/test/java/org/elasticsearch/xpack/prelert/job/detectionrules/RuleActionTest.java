@@ -1,12 +1,10 @@
 
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import org.junit.Test;
+import org.elasticsearch.test.ESTestCase;
 
-import static org.junit.Assert.assertEquals;
+public class RuleActionTest extends ESTestCase {
 
-public class RuleActionTest {
-    @Test
     public void testForString() {
         assertEquals(RuleAction.FILTER_RESULTS, RuleAction.forString("filter_results"));
         assertEquals(RuleAction.FILTER_RESULTS, RuleAction.forString("FILTER_RESULTS"));

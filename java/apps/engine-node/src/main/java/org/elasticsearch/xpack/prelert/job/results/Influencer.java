@@ -1,20 +1,4 @@
-/****************************************************************************
- *                                                                          *
- * Copyright 2015-2016 Prelert Ltd                                          *
- *                                                                          *
- * Licensed under the Apache License, Version 2.0 (the "License");          *
- * you may not use this file except in compliance with the License.         *
- * You may obtain a copy of the License at                                  *
- *                                                                          *
- *    http://www.apache.org/licenses/LICENSE-2.0                            *
- *                                                                          *
- * Unless required by applicable law or agreed to in writing, software      *
- * distributed under the License is distributed on an "AS IS" BASIS,        *
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
- * See the License for the specific language governing permissions and      *
- * limitations under the License.                                           *
- *                                                                          *
- ***************************************************************************/
+
 package org.elasticsearch.xpack.prelert.job.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -44,16 +28,16 @@ public class Influencer implements StorageSerialisable
     public static final String INITIAL_ANOMALY_SCORE = "initialAnomalyScore";
     public static final String ANOMALY_SCORE = "anomalyScore";
 
-    private String m_Id;
+    private String id;
 
-    private Date m_Timestamp;
-    private String m_InfluenceField;
-    private String m_InfluenceValue;
-    private double m_Probability;
-    private double m_InitialAnomalyScore;
-    private double m_AnomalyScore;
-    private boolean m_HadBigNormalisedUpdate;
-    private boolean m_IsInterim;
+    private Date timestamp;
+    private String influenceField;
+    private String influenceValue;
+    private double probability;
+    private double initialAnomalyScore;
+    private double anomalyScore;
+    private boolean hadBigNormalisedUpdate;
+    private boolean isInterim;
 
     public Influencer()
     {
@@ -61,8 +45,8 @@ public class Influencer implements StorageSerialisable
 
     public Influencer(String fieldName, String fieldValue)
     {
-        m_InfluenceField = fieldName;
-        m_InfluenceValue = fieldValue;
+        influenceField = fieldName;
+        influenceValue = fieldValue;
     }
 
     /**
@@ -72,102 +56,102 @@ public class Influencer implements StorageSerialisable
     @JsonIgnore
     public String getId()
     {
-        return m_Id;
+        return id;
     }
 
     @JsonIgnore
     public void setId(String id)
     {
-        m_Id = id;
+        this.id = id;
     }
 
     public double getProbability()
     {
-        return m_Probability;
+        return probability;
     }
 
     public void setProbability(double probability)
     {
-        m_Probability = probability;
+        this.probability = probability;
     }
 
 
     public Date getTimestamp()
     {
-        return m_Timestamp;
+        return timestamp;
     }
 
     public void setTimestamp(Date date)
     {
-        m_Timestamp = date;
+        timestamp = date;
     }
 
 
     public String getInfluencerFieldName()
     {
-        return m_InfluenceField;
+        return influenceField;
     }
 
     public void setInfluencerFieldName(String fieldName)
     {
-        m_InfluenceField = fieldName;
+        influenceField = fieldName;
     }
 
 
     public String getInfluencerFieldValue()
     {
-        return m_InfluenceValue;
+        return influenceValue;
     }
 
     public void setInfluencerFieldValue(String fieldValue)
     {
-        m_InfluenceValue = fieldValue;
+        influenceValue = fieldValue;
     }
 
     public double getInitialAnomalyScore()
     {
-        return m_InitialAnomalyScore;
+        return initialAnomalyScore;
     }
 
     public void setInitialAnomalyScore(double influenceScore)
     {
-        m_InitialAnomalyScore = influenceScore;
+        initialAnomalyScore = influenceScore;
     }
 
     public double getAnomalyScore()
     {
-        return m_AnomalyScore;
+        return anomalyScore;
     }
 
     public void setAnomalyScore(double score)
     {
-        m_AnomalyScore = score;
+        anomalyScore = score;
     }
 
     public boolean isInterim()
     {
-        return m_IsInterim;
+        return isInterim;
     }
 
     @JsonProperty("isInterim")
     public void setInterim(boolean value)
     {
-        m_IsInterim = value;
+        isInterim = value;
     }
 
     public boolean hadBigNormalisedUpdate()
     {
-        return m_HadBigNormalisedUpdate;
+        return this.hadBigNormalisedUpdate;
     }
 
     public void resetBigNormalisedUpdateFlag()
     {
-        m_HadBigNormalisedUpdate = false;
+        hadBigNormalisedUpdate = false;
     }
 
     public void raiseBigNormalisedUpdateFlag()
     {
-        m_HadBigNormalisedUpdate = true;
+        hadBigNormalisedUpdate = true;
     }
 
     @Override
@@ -177,10 +161,10 @@ public class Influencer implements StorageSerialisable
         // will hash the same as a record representing the same anomaly that did
         // not come from the data store
 
-        // m_HadBigNormalisedUpdate is also deliberately excluded from the hash
+        // hadBigNormalisedUpdate is also deliberately excluded from the hash
 
-        return Objects.hash(m_Timestamp, m_InfluenceField, m_InfluenceValue, m_InitialAnomalyScore,
-                m_AnomalyScore, m_Probability, m_IsInterim);
+        return Objects.hash(timestamp, influenceField, influenceValue, initialAnomalyScore,
+                anomalyScore, probability, isInterim);
     }
 
     @Override
@@ -207,33 +191,33 @@ public class Influencer implements StorageSerialisable
         // equal to a record representing the same anomaly that did not come
         // from the data store
 
-        // m_HadBigNormalisedUpdate is also deliberately excluded from the test
-        return Objects.equals(m_Timestamp, other.m_Timestamp) &&
-                Objects.equals(m_InfluenceField, other.m_InfluenceField) &&
-                Objects.equals(m_InfluenceValue, other.m_InfluenceValue) &&
-                Double.compare(m_InitialAnomalyScore, other.m_InitialAnomalyScore) == 0 &&
-                Double.compare(m_AnomalyScore, other.m_AnomalyScore) == 0 &&
-                Double.compare(m_Probability, other.m_Probability) == 0 &&
-                (m_IsInterim == other.m_IsInterim);
+        // hadBigNormalisedUpdate is also deliberately excluded from the test
+        return Objects.equals(timestamp, other.timestamp) &&
+                Objects.equals(influenceField, other.influenceField) &&
+                Objects.equals(influenceValue, other.influenceValue) &&
+                Double.compare(initialAnomalyScore, other.initialAnomalyScore) == 0 &&
+                Double.compare(anomalyScore, other.anomalyScore) == 0 &&
+                Double.compare(probability, other.probability) == 0 &&
+                (isInterim == other.isInterim);
     }
 
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.addTimestamp(m_Timestamp)
-                  .add(PROBABILITY, m_Probability)
-                  .add(INFLUENCER_FIELD_NAME, m_InfluenceField)
-                  .add(INFLUENCER_FIELD_VALUE, m_InfluenceValue)
-                  .add(INITIAL_ANOMALY_SCORE, m_InitialAnomalyScore)
-                  .add(ANOMALY_SCORE, m_AnomalyScore);
+        serialiser.addTimestamp(timestamp)
+                  .add(PROBABILITY, probability)
+                  .add(INFLUENCER_FIELD_NAME, influenceField)
+                  .add(INFLUENCER_FIELD_VALUE, influenceValue)
+                  .add(INITIAL_ANOMALY_SCORE, initialAnomalyScore)
+                  .add(ANOMALY_SCORE, anomalyScore);
 
-        if (m_IsInterim)
+        if (isInterim)
         {
             serialiser.add(Bucket.IS_INTERIM, true);
         }
 
         DotNotationReverser reverser = serialiser.newDotNotationReverser();
-        reverser.add(m_InfluenceField, m_InfluenceValue);
+        reverser.add(influenceField, influenceValue);
         serialiser.addReverserResults(reverser);
     }
 }
