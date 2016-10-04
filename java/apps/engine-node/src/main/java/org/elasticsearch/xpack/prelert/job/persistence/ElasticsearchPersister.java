@@ -1,6 +1,24 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.admin.indices.flush.FlushRequest;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.engine.VersionConflictEngineException;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
+import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
+import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
+import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.results.*;
 
 import java.io.IOException;
 import java.util.Date;
@@ -10,32 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import org.apache.log4j.Logger;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.admin.indices.flush.FlushRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.engine.VersionConflictEngineException;
-
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
-import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
-import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
-import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
-import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
-import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
-import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
-import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br>
@@ -65,7 +58,7 @@ import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
 public class ElasticsearchPersister implements JobResultsPersister, JobRenormaliser
 {
 
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchPersister.class);
+    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchPersister.class);
 
     /**
      * We add the jobId in top level results to facilitate display in kibana
