@@ -1,8 +1,9 @@
 
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
-import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
                             extends ActionGuardian<T>
 {
-    private static final Logger LOGGER = Logger.getLogger(LocalActionGuardian.class);
+    private static final Logger LOGGER = Loggers.getLogger(LocalActionGuardian.class);
 
     private final Map<String, T> actionsByJob = new HashMap<>();
 

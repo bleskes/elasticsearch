@@ -1,17 +1,18 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.util.Objects;
-
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.logging.Loggers;
+
+import java.util.Objects;
 
 /**
  * A factory for the entire family of Elasticsearch-based classes
  */
 public abstract class ElasticsearchFactory implements AutoCloseable
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchFactory.class);
+    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchFactory.class);
 
     protected static final String CLUSTER_NAME_KEY = "cluster.name";
 

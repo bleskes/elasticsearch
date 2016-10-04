@@ -16,23 +16,11 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import org.apache.log4j.Logger;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -50,6 +38,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -64,19 +53,7 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.elasticsearch.xpack.prelert.job.CategorizerState;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.JobStatus;
-import org.elasticsearch.xpack.prelert.job.JsonViews;
-import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
-import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
-import org.elasticsearch.xpack.prelert.job.SchedulerState;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -89,19 +66,19 @@ import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
-import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
-import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
-import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
-import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
-import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
-import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
+import org.elasticsearch.xpack.prelert.job.results.*;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobProvider.class);
+    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchJobProvider.class);
 
     /**
      * The index to store total usage/metering information

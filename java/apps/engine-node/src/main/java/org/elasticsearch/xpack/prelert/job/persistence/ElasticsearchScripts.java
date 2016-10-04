@@ -1,27 +1,27 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
-
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Create methods for the custom scripts that are run on Elasticsearch
  */
 public final class ElasticsearchScripts
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchScripts.class);
+    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchScripts.class);
 
     private static final String PAINLESS = "painless";
 

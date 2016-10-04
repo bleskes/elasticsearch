@@ -16,21 +16,27 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager;
 
-import org.elasticsearch.xpack.prelert.job.*;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.*;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
-
-import org.apache.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Allows interactions with jobs. The managed interactions include:
@@ -46,7 +52,7 @@ import java.util.*;
  * </ul
  */
 public class JobManager {
-    private static final Logger LOGGER = Logger.getLogger(JobManager.class);
+    private static final Logger LOGGER = Loggers.getLogger(JobManager.class);
 
     /**
      * Field name in which to store the API version in the usage info

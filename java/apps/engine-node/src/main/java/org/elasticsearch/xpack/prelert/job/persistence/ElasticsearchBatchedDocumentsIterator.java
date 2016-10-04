@@ -1,23 +1,19 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-
-import org.apache.log4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.*;
 
 abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchBatchedDocumentsIterator.class);
+    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchBatchedDocumentsIterator.class);
 
     private static final String CONTEXT_ALIVE_DURATION = "5m";
     private static final int BATCH_SIZE = 10000;

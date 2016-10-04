@@ -1,22 +1,22 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.util.Map;
-import java.util.Objects;
-
-import org.apache.log4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
 import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
 
+import java.util.Map;
+import java.util.Objects;
+
 class ElasticsearchJobDetailsMapper
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchJobDetailsMapper.class);
+    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchJobDetailsMapper.class);
 
     private final Client client;
     private final ObjectMapper objectMapper;

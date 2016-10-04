@@ -4,20 +4,16 @@ package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.*;
-
 
 public class SchedulerConfigTest extends ESTestCase {
     /**
@@ -26,8 +22,7 @@ public class SchedulerConfigTest extends ESTestCase {
 
     public void testAnalysisConfigRequiredFields()
             throws IOException {
-        BasicConfigurator.configure();
-        Logger logger = Logger.getLogger(SchedulerConfigTest.class);
+        Logger logger = Loggers.getLogger(SchedulerConfigTest.class);
 
         String jobConfigStr =
                 "{" +
@@ -77,8 +72,7 @@ public class SchedulerConfigTest extends ESTestCase {
 
     public void testAggsParse()
             throws IOException {
-        BasicConfigurator.configure();
-        Logger logger = Logger.getLogger(SchedulerConfigTest.class);
+        Logger logger = Loggers.getLogger(SchedulerConfigTest.class);
 
         String jobConfigStr =
                 "{" +

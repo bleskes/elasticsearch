@@ -1,7 +1,8 @@
 
 package org.elasticsearch.xpack.prelert.settings;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.Loggers;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -26,7 +27,7 @@ import org.yaml.snakeyaml.error.YAMLException;
  * many other Settings classes out there.
  */
 public final class PrelertSettings {
-    private static final Logger LOGGER = Logger.getLogger(PrelertSettings.class);
+    private static final Logger LOGGER = Loggers.getLogger(PrelertSettings.class);
 
     /**
      * Name of the System property containing the value of Prelert Home

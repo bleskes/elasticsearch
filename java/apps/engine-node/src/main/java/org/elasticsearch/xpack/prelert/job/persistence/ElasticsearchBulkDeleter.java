@@ -1,10 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.util.Objects;
-import java.util.function.LongSupplier;
-
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeAction;
 import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeResponse;
@@ -15,24 +12,23 @@ import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.sort.SortBuilders;
-
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
-import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
-import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
-import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
+import org.elasticsearch.xpack.prelert.job.results.*;
+
+import java.util.Objects;
+import java.util.function.LongSupplier;
 
 public class ElasticsearchBulkDeleter implements JobDataDeleter
 {
-    private static final Logger LOGGER = Logger.getLogger(ElasticsearchBulkDeleter.class);
+    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchBulkDeleter.class);
 
     private static final int SCROLL_SIZE = 1000;
     private static final String SCROLL_CONTEXT_DURATION = "5m";
