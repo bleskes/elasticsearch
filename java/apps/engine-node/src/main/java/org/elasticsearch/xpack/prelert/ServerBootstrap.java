@@ -119,7 +119,6 @@ public class ServerBootstrap {
                     RestPutJobsAction.class,
                     RestGetListAction.class,
                     RestCreateListAction.class,
-                    RestPutJobsAction.class,
                     RestGetBucketsAction.class,
                     RestGetBucketAction.class);
         }
@@ -132,7 +131,6 @@ public class ServerBootstrap {
                     new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class),
                     new ActionHandler<>(GetListAction.INSTANCE, TransportGetListAction.class),
                     new ActionHandler<>(CreateListAction.INSTANCE, TransportCreateListAction.class),
-                    new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class),
                     new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
                     new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class));
         }
