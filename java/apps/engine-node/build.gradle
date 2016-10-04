@@ -29,6 +29,9 @@ dependencies {
     compile group: 'org.elasticsearch.plugin', name: 'transport-netty4-client', version:'5.0.0-alpha5'
 
     testCompile group: 'org.elasticsearch', name: 'rest-api-spec', version: '5.0.0-alpha5'
+
+    // Elasticsearch 5.x depends on snakeyaml, remove after upgrading
+    compile "org.yaml:snakeyaml:1.17"
 }
 
 
