@@ -23,7 +23,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
@@ -31,6 +30,8 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.security.action.role.DeleteRoleResponse;
 import org.elasticsearch.xpack.security.client.SecurityClient;
+
+import java.io.IOException;
 
 import static org.elasticsearch.rest.RestRequest.Method.DELETE;
 
@@ -52,16 +53,18 @@ public class RestDeleteRoleAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, final RestChannel channel, NodeClient client) throws Exception {
-        new SecurityClient(client).prepareDeleteRole(request.param("name"))
-                .setRefreshPolicy(request.param("refresh"))
+    public RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+        final String name = request.param("name");
+        final String refresh = request.param("refresh");
+
+        return channel -> new SecurityClient(client).prepareDeleteRole(name)
+                .setRefreshPolicy(refresh)
                 .execute(new RestBuilderListener<DeleteRoleResponse>(channel) {
                     @Override
                     public RestResponse buildResponse(DeleteRoleResponse response, XContentBuilder builder) throws Exception {
-                        return new BytesRestResponse(response.found() ? RestStatus.OK : RestStatus.NOT_FOUND,
-                                builder.startObject()
-                                .field("found", response.found())
-                                .endObject());
+                        return new BytesRestResponse(
+                                response.found() ? RestStatus.OK : RestStatus.NOT_FOUND,
+                                builder.startObject().field("found", response.found()).endObject());
                     }
                 });
     }

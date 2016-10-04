@@ -14,6 +14,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
+
 package org.elasticsearch.license;
 
 import org.elasticsearch.common.inject.Inject;
@@ -21,7 +22,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
@@ -29,6 +29,7 @@ import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.XPackClient;
 import org.elasticsearch.xpack.rest.XPackRestHandler;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,14 +60,14 @@ public class RestGetLicenseAction extends XPackRestHandler {
      * The licenses are sorted by latest issue_date
      */
     @Override
-    public void handleRequest(final RestRequest request, final RestChannel channel, final XPackClient client) {
+    public RestChannelConsumer doPrepareRequest(final RestRequest request, final XPackClient client) throws IOException {
         final Map<String, String> overrideParams = new HashMap<>(2);
         overrideParams.put(License.REST_VIEW_MODE, "true");
         overrideParams.put(License.LICENSE_VERSION_MODE, String.valueOf(License.VERSION_CURRENT));
         final ToXContent.Params params = new ToXContent.DelegatingMapParams(overrideParams, request);
         GetLicenseRequest getLicenseRequest = new GetLicenseRequest();
         getLicenseRequest.local(request.paramAsBoolean("local", getLicenseRequest.local()));
-        client.es().admin().cluster().execute(GetLicenseAction.INSTANCE, getLicenseRequest,
+        return channel -> client.es().admin().cluster().execute(GetLicenseAction.INSTANCE, getLicenseRequest,
                 new RestBuilderListener<GetLicenseResponse>(channel) {
                     @Override
                     public RestResponse buildResponse(GetLicenseResponse response, XContentBuilder builder) throws Exception {
