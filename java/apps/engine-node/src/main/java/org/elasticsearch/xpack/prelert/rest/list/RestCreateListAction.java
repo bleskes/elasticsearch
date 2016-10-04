@@ -24,8 +24,8 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.support.AcknowledgedRestListener;
-import org.elasticsearch.rest.action.support.RestActions;
+import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.xpack.prelert.action.list.CreateListRequest;
 import org.elasticsearch.xpack.prelert.action.list.TransportCreateListAction;
 

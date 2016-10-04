@@ -2,9 +2,9 @@
 package org.elasticsearch.xpack.prelert.settings;
 
 import org.apache.log4j.Logger;
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.Yaml;
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.constructor.SafeConstructor;
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * Wrapper for Prelert settings.

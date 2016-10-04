@@ -27,10 +27,7 @@ import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -49,7 +46,7 @@ public class TransportGetJobAction extends TransportMasterNodeReadAction<GetJobR
     public TransportGetJobAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                  ThreadPool threadPool, ActionFilters actionFilters,
                                  IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
-        super(settings, GetJobsAction.NAME, transportService, clusterService, threadPool, actionFilters,
+        super(settings, GetJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
                 indexNameExpressionResolver, GetJobRequest::new);
         this.prelertServices = prelertServices;
     }

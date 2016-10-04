@@ -4,7 +4,7 @@ package org.elasticsearch.xpack.prelert.settings;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

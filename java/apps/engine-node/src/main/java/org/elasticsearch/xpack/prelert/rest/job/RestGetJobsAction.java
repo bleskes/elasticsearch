@@ -22,7 +22,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.*;
-import org.elasticsearch.rest.action.support.AcknowledgedRestListener;
+import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.action.job.GetJobsRequest;
 import org.elasticsearch.xpack.prelert.action.job.GetJobsResponse;
 import org.elasticsearch.xpack.prelert.action.job.TransportGetJobsAction;
