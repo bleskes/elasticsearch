@@ -37,6 +37,12 @@ import org.elasticsearch.xpack.prelert.action.job.TransportPutJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.action.list.CreateListAction;
+import org.elasticsearch.xpack.prelert.action.list.GetListAction;
+import org.elasticsearch.xpack.prelert.action.list.TransportCreateListAction;
+import org.elasticsearch.xpack.prelert.action.list.TransportGetListAction;
+import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
+import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -106,7 +112,9 @@ public class ServerBootstrap {
             return Arrays.asList(
                     RestGetJobAction.class,
                     RestGetJobsAction.class,
-                    RestPutJobsAction.class);
+                    RestPutJobsAction.class,
+                    RestGetListAction.class,
+                    RestCreateListAction.class);
         }
 
         @Override
@@ -114,7 +122,10 @@ public class ServerBootstrap {
             return Arrays.asList(
                     new ActionHandler<>(GetJobAction.INSTANCE, TransportGetJobAction.class),
                     new ActionHandler<>(GetJobsAction.INSTANCE, TransportGetJobsAction.class),
-                    new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class));
+                    new ActionHandler<>(PutJobAction.INSTANCE, TransportPutJobAction.class),
+                    new ActionHandler<>(GetListAction.INSTANCE, TransportGetListAction.class),
+                    new ActionHandler<>(CreateListAction.INSTANCE, TransportCreateListAction.class)
+                );
         }
     }
 
