@@ -31,10 +31,9 @@ import java.util.List;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.common.logging.log4j.Log4jESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.elasticsearch.ElasticsearchJobProvider;
@@ -48,12 +47,9 @@ public class ElasticsearchTransportClientFactory extends ElasticsearchFactory
 
     public static ElasticsearchFactory create(String hostPortPairsList, String elasticSearchClusterName)
     {
-        // Tell Elasticsearch to log via our log4j root logger
-        ESLoggerFactory.setDefaultFactory(new Log4jESLoggerFactory());
         List<HostPortPair> hostAndPortList = HostPortPair.ofList(hostPortPairsList);
-        TransportClient client = TransportClient.builder()
-                .settings(Settings.builder().put(CLUSTER_NAME_KEY, elasticSearchClusterName).build())
-                .build();
+        TransportClient client = new PreBuiltTransportClient(
+                Settings.builder().put(CLUSTER_NAME_KEY, elasticSearchClusterName).build());
         for (HostPortPair hostAndPort : hostAndPortList)
         {
             client.addTransportAddress(

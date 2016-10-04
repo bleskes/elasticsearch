@@ -27,9 +27,9 @@
 
 package com.prelert.job.config;
 
-import com.google.common.base.Strings;
 import com.prelert.job.Detector;
 import com.prelert.utils.PrelertStrings;
+import com.prelert.utils.Strings;
 
 public final class DefaultDetectorDescription
 {

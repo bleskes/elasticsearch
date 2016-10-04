@@ -32,10 +32,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.HashSet;
 
 import org.junit.Test;
 
-import com.google.common.collect.Sets;
 import com.prelert.job.detectionrules.Connective;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.detectionrules.RuleCondition;
@@ -124,7 +124,7 @@ public class DetectorTest
         detector.getDetectorRules().get(1).setRuleConditions(Arrays.asList(
                 RuleCondition.createCategorical("bar", "list2")));
 
-        assertEquals(Sets.newHashSet("list1", "list2"), detector.extractReferencedLists());
+        assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), detector.extractReferencedLists());
     }
 
     private Detector createDetector()

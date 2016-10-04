@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.primitives.Ints;
-
 /**
  * Persist the records sent the the API.
  * Only the analysis fields are written. Records are mapped by the
@@ -68,7 +66,7 @@ public abstract class JobDataPersister
                 mappings.add(index);
             }
         }
-        return Ints.toArray(mappings);
+        return mappings.stream().mapToInt(i->i).toArray();
     }
 
     /**

@@ -48,7 +48,7 @@
 # determined at run time, with the Node Client being preferred when the Engine
 # API is being used with its bundled Elasticsearch and the Transport Client
 # otherwise.
-# results.storage.client: es-auto
+results.storage.client: es-transport
 
 # Elasticsearch cluster name
 # es.cluster.name: prelert

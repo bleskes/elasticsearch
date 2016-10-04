@@ -49,14 +49,16 @@ public final class ElasticsearchScripts
 {
     private static final Logger LOGGER = Logger.getLogger(ElasticsearchScripts.class);
 
+    private static final String PAINLESS = "painless";
+
     // Script names
-    private static final String UPDATE_AVERAGE_PROCESSING_TIME = "update-average-processing-time";
-    private static final String UPDATE_BUCKET_COUNT = "update-bucket-count";
-    private static final String UPDATE_USAGE = "update-usage";
-    private static final String UPDATE_CATEGORIZATION_FILTERS = "update-categorization-filters";
-    private static final String UPDATE_DETECTOR_DESCRIPTION = "update-detector-description";
-    private static final String UPDATE_DETECTOR_RULES = "update-detector-rules";
-    private static final String UPDATE_SCHEDULER_CONFIG = "update-scheduler-config";
+    private static final String UPDATE_AVERAGE_PROCESSING_TIME = "ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + params.timeMs * 0.1";
+    private static final String UPDATE_BUCKET_COUNT = "ctx._source.counts.bucketCount += params.count";
+    private static final String UPDATE_USAGE = "ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount += params.recordCount;";
+    private static final String UPDATE_CATEGORIZATION_FILTERS = "ctx._source.analysisConfig.categorizationFilters = params.newFilters;";
+    private static final String UPDATE_DETECTOR_DESCRIPTION = "ctx._source.analysisConfig.detectors[params.detectorIndex].detectorDescription = params.newDescription;";
+    private static final String UPDATE_DETECTOR_RULES = "ctx._source.analysisConfig.detectors[params.detectorIndex].detectorRules = params.newDetectorRules;";
+    private static final String UPDATE_SCHEDULER_CONFIG = "ctx._source.schedulerConfig = params.newSchedulerConfig;";
 
     // Script parameters
     private static final String COUNT_PARAM = "count";
@@ -81,8 +83,7 @@ public final class ElasticsearchScripts
     {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(COUNT_PARAM, count);
-        return new Script(UPDATE_BUCKET_COUNT, ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
+        return new Script(UPDATE_BUCKET_COUNT, ScriptService.ScriptType.INLINE, PAINLESS, scriptParams);
     }
 
     public static Script newUpdateUsage(long additionalBytes, long additionalFields,
@@ -92,16 +93,15 @@ public final class ElasticsearchScripts
         scriptParams.put(BYTES_PARAM, additionalBytes);
         scriptParams.put(FIELD_COUNT_PARAM, additionalFields);
         scriptParams.put(RECORD_COUNT_PARAM, additionalRecords);
-        return new Script(UPDATE_USAGE, ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
+        return new Script(UPDATE_USAGE, ScriptService.ScriptType.INLINE, PAINLESS, scriptParams);
     }
 
     public static Script newUpdateCategorizationFilters(List<String> newFilters)
     {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(NEW_CATEGORIZATION_FILTERS_PARAM, newFilters);
-        return new Script(UPDATE_CATEGORIZATION_FILTERS, ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
+        return new Script(UPDATE_CATEGORIZATION_FILTERS, ScriptService.ScriptType.INLINE,
+                PAINLESS, scriptParams);
     }
 
     public static Script newUpdateDetectorDescription(int detectorIndex, String newDescription)
@@ -109,8 +109,8 @@ public final class ElasticsearchScripts
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
         scriptParams.put(NEW_DESCRIPTION_PARAM, newDescription);
-        return new Script(UPDATE_DETECTOR_DESCRIPTION, ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
+        return new Script(UPDATE_DETECTOR_DESCRIPTION, ScriptService.ScriptType.INLINE,
+                PAINLESS, scriptParams);
     }
 
     public static Script newUpdateDetectorRules(int detectorIndex, List<Map<String, Object>> newRules)
@@ -118,24 +118,24 @@ public final class ElasticsearchScripts
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
         scriptParams.put(NEW_DETECTOR_RULES_PARAM, newRules);
-        return new Script(UPDATE_DETECTOR_RULES, ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
+        return new Script(UPDATE_DETECTOR_RULES, ScriptService.ScriptType.INLINE,
+                PAINLESS, scriptParams);
     }
 
     public static Script newUpdateSchedulerConfig(Map<String, Object> newSchedulerConfig)
     {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(NEW_SCHEDULER_CONFIG_PARAM, newSchedulerConfig);
-        return new Script(UPDATE_SCHEDULER_CONFIG, ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
+        return new Script(UPDATE_SCHEDULER_CONFIG, ScriptService.ScriptType.INLINE,
+                PAINLESS, scriptParams);
     }
 
     public static Script updateProcessingTime(Long processingTimeMs)
     {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(PROCESSING_TIME_PARAM, processingTimeMs);
-        return new Script(UPDATE_AVERAGE_PROCESSING_TIME, ScriptService.ScriptType.FILE,
-                ScriptService.DEFAULT_LANG, scriptParams);
+        return new Script(UPDATE_AVERAGE_PROCESSING_TIME, ScriptService.ScriptType.INLINE,
+                PAINLESS, scriptParams);
     }
 
     /**

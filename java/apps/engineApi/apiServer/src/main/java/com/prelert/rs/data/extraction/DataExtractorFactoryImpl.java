@@ -30,7 +30,6 @@ package com.prelert.rs.data.extraction;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -38,14 +37,10 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
-import com.prelert.data.extractors.elasticsearch.AllIndexSelector;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchDataExtractor;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchQueryBuilder;
 import com.prelert.data.extractors.elasticsearch.ElasticsearchUrlBuilder;
-import com.prelert.data.extractors.elasticsearch.FieldStatsCachedIndexSelector;
 import com.prelert.data.extractors.elasticsearch.HttpRequester;
-import com.prelert.data.extractors.elasticsearch.IndexSelector;
 import com.prelert.job.ElasticsearchDataSourceCompatibility;
 import com.prelert.job.JobDetails;
 import com.prelert.job.SchedulerConfig;
@@ -95,14 +90,11 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
                 schedulerConfig.getUsername(), schedulerConfig.getEncryptedPassword()),
                 ELASTICSEARCH_CONTENT_TYPE);
         ElasticsearchUrlBuilder urlBuilder = ElasticsearchUrlBuilder
-                .create(schedulerConfig.getBaseUrl(), schedulerConfig.getTypes());
-        IndexSelector indexSelector = createIndexSelector(compatibility, httpRequester,
-                urlBuilder, timeField, schedulerConfig.getIndexes());
+                .create(schedulerConfig.getBaseUrl(), schedulerConfig.getIndexes(), schedulerConfig.getTypes());
         return new ElasticsearchDataExtractor(httpRequester, urlBuilder, queryBuilder,
-                indexSelector, schedulerConfig.getScrollSize());
+                schedulerConfig.getScrollSize());
     }
 
-    @VisibleForTesting
     String createBasicAuthHeader(String username, String encryptedPassword)
     {
         if (username == null)
@@ -130,7 +122,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         return "Basic " + Base64.getMimeEncoder().encodeToString(toEncode.getBytes(StandardCharsets.ISO_8859_1));
     }
 
-    @VisibleForTesting
     String stringifyElasticsearchQuery(Map<String, Object> queryMap)
     {
         String queryStr = writeObjectAsJson(queryMap);
@@ -141,7 +132,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         return queryStr;
     }
 
-    @VisibleForTesting
     String stringifyElasticsearchAggregations(Map<String, Object> aggregationsMap,
             Map<String, Object> aggsMap)
     {
@@ -156,7 +146,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         return null;
     }
 
-    @VisibleForTesting
     String stringifyElasticsearchScriptFields(Map<String, Object> scriptFieldsMap)
     {
         if (scriptFieldsMap != null)
@@ -176,21 +165,6 @@ public class DataExtractorFactoryImpl implements DataExtractorFactory
         catch (JsonProcessingException e)
         {
             throw new IllegalStateException(e);
-        }
-    }
-
-    private static IndexSelector createIndexSelector(
-            ElasticsearchDataSourceCompatibility compatibility, HttpRequester httpRequester,
-            ElasticsearchUrlBuilder urlBuilder, String timeField, List<String> allIndices)
-    {
-        switch (compatibility)
-        {
-            case V_1_7_X:
-                return new AllIndexSelector(allIndices);
-            case V_2_X_X:
-                return new FieldStatsCachedIndexSelector(httpRequester, urlBuilder, timeField, allIndices);
-            default:
-                throw new AssertionError();
         }
     }
 }

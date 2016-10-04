@@ -55,7 +55,9 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.NoNodeAvailableException;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
@@ -72,7 +74,6 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -80,7 +81,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.CategorizerState;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobException;
@@ -91,8 +91,6 @@ import com.prelert.job.ModelSizeStats;
 import com.prelert.job.ModelSnapshot;
 import com.prelert.job.ModelState;
 import com.prelert.job.NoSuchModelSnapshotException;
-import com.prelert.job.persistence.*;
-import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.SchedulerConfig;
 import com.prelert.job.SchedulerState;
 import com.prelert.job.UnknownJobException;
@@ -102,6 +100,8 @@ import com.prelert.job.audit.Auditor;
 import com.prelert.job.detectionrules.DetectionRule;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
+import com.prelert.job.persistence.BucketQueryBuilder;
+import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobProvider;
 import com.prelert.job.persistence.ListProvider;
@@ -153,6 +153,8 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
     private static final int RECORDS_TAKE_PARAM = 500;
 
+    private static final long CLUSTER_INIT_TIMEOUT_MS = 30000;
+
 
     private final Node m_Node;
     private final Client m_Client;
@@ -176,23 +178,51 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         LOGGER.info("Connecting to Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
                 + "'");
 
-        // This call was added because if we try to connect to Elasticsearch
-        // while it's doing the recovery operations it does at startup then we
-        // can get weird effects like indexes being reported as not existing
-        // when they do.  See EL16-182 in Jira.
-        LOGGER.trace("ES API CALL: wait for yellow status on whole cluster");
-        ClusterHealthResponse response =  m_Client.admin().cluster()
-                                                .prepareHealth()
-                                                .setWaitForYellowStatus()
-                                                .execute().actionGet();
-
-        // The wait call above can time out.
-        // Throw an error if in cluster health is red
-        if (response.getStatus() == ClusterHealthStatus.RED)
+        long timeOutTime = System.currentTimeMillis() + CLUSTER_INIT_TIMEOUT_MS;
+        while (true)
         {
-            String msg = "Waited for the Elasticsearch status to be YELLOW but is RED after wait timeout";
-            LOGGER.error(msg);
-            throw new IllegalStateException(msg);
+            try
+            {
+                // This call was added because if we try to connect to Elasticsearch
+                // while it's doing the recovery operations it does at startup then we
+                // can get weird effects like indexes being reported as not existing
+                // when they do.  See EL16-182 in Jira.
+                LOGGER.trace("ES API CALL: wait for yellow status on whole cluster");
+                ClusterHealthResponse response = m_Client.admin().cluster()
+                                                        .prepareHealth()
+                                                        .setWaitForYellowStatus()
+                                                        .execute().actionGet();
+
+                // The wait call above can time out.
+                // Throw an error if in cluster health is red
+                if (response.getStatus() == ClusterHealthStatus.RED)
+                {
+                    String msg = "Waited for the Elasticsearch status to be YELLOW but is RED after wait timeout";
+                    LOGGER.error(msg);
+                    throw new IllegalStateException(msg);
+                }
+            }
+            catch (NoNodeAvailableException nnae)
+            {
+                // Propagate if node isn't available after timeout period; suppress
+                // during wait period
+                if (System.currentTimeMillis() > timeOutTime)
+                {
+                    throw nnae;
+                }
+                try
+                {
+                    Thread.sleep(1000);
+                }
+                catch (InterruptedException ie)
+                {
+                    String msg = "Interrupted waiting for the Elasticsearch cluster";
+                    LOGGER.error(msg);
+                    throw new IllegalStateException(msg);
+                }
+                continue;
+            }
+            break;
         }
 
         LOGGER.info("Elasticsearch cluster '" + m_Client.settings().get("cluster.name")
@@ -235,8 +265,15 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         LOGGER.info("Elasticsearch client shut down");
         if (m_Node != null)
         {
-            m_Node.close();
-            LOGGER.info("Elasticsearch node shut down");
+            try
+            {
+                m_Node.close();
+                LOGGER.info("Elasticsearch node shut down");
+            }
+            catch (IOException e)
+            {
+                LOGGER.error("Failed to shut down elasticsearch node", e);
+            }
         }
     }
 
@@ -322,7 +359,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                     " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse response = m_Client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                             .setFetchSource(false)
-                            .setFields()
                             .get();
 
             if (response.isExists() == false)
@@ -368,7 +404,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
      */
     private Settings.Builder prelertIndexSettings()
     {
-        return Settings.settingsBuilder()
+        return Settings.builder()
                 // Our indexes are small and one shard puts the
                 // least possible burden on Elasticsearch
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
@@ -416,7 +452,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     @Override
     public QueryPage<JobDetails> getJobs(int skip, int take)
     {
-        SortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
+        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
                                 .unmappedType("string")
                                 .order(SortOrder.ASC);
 
@@ -518,7 +554,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                     " to index " + elasticJobId.getIndex() + " with ID " + elasticJobId.getId());
             m_Client.prepareIndex(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
                     .setSource(json)
-                    .setRefresh(true)
+                    .setRefreshPolicy(RefreshPolicy.IMMEDIATE)
                     .get();
 
             return true;
@@ -692,7 +728,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean includeInterim,
             int skip, int take, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
+        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
                     .order(SortOrder.ASC);
 
         SearchResponse searchResponse;
@@ -748,7 +784,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             LOGGER.trace("ES API CALL: get Bucket with timestamp " + query.getTimestamp() +
                     " from index " + elasticJobId.getIndex());
             QueryBuilder qb = QueryBuilders.matchQuery(ElasticsearchMappings.ES_TIMESTAMP,
-                    new Date(query.getTimestamp()));
+                    query.getTimestamp());
 
             SearchResponse searchResponse = m_Client.prepareSearch(elasticJobId.getIndex())
                     .setTypes(Bucket.TYPE)
@@ -833,7 +869,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, epochStart, epochEnd)
                 .build();
 
-        SortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
+        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
                 .order(SortOrder.ASC);
 
         SearchRequestBuilder searchBuilder = m_Client
@@ -929,7 +965,6 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
         return bucket.getRecords().size();
     }
 
-    @VisibleForTesting
     QueryPage<AnomalyRecord> bucketRecords(String jobId,
             Bucket bucket, int skip, int take, boolean includeInterim,
             String sortField, boolean descending, String partitionFieldValue)
@@ -948,7 +983,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                     .term(AnomalyRecord.PARTITION_FIELD_VALUE, partitionFieldValue)
                     .build();
 
-        SortBuilder sb = null;
+        FieldSortBuilder sb = null;
         if (sortField != null)
         {
             sb = new FieldSortBuilder(esSortField(sortField))
@@ -1035,7 +1070,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
             String sortField, boolean descending)
     throws UnknownJobException
     {
-        SortBuilder sb = null;
+        FieldSortBuilder sb = null;
         if (sortField != null)
         {
             sb = new FieldSortBuilder(esSortField(sortField))
@@ -1051,7 +1086,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
      * The returned records have the parent bucket id set.
      */
     private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId, int skip, int take,
-            QueryBuilder recordFilter, SortBuilder sb, List<String> secondarySort,
+            QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
             boolean descending)
     throws UnknownJobException
     {
@@ -1060,7 +1095,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                 .setPostFilter(recordFilter)
                 .setFrom(skip).setSize(take)
                 .addSort(sb == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC) : sb)
-                .addField(ElasticsearchMappings.PARENT)   // include the parent id
+                .addDocValueField(ElasticsearchMappings.PARENT)   // include the parent id
                 .setFetchSource(true);  // the field option turns off source so request it explicitly
 
         for (String sortField : secondarySort)
@@ -1147,7 +1182,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
                 .setPostFilter(filterBuilder)
                 .setFrom(skip).setSize(take);
 
-        SortBuilder sb = sortField == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)
+        FieldSortBuilder sb = sortField == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)
                 : new FieldSortBuilder(esSortField(sortField))
                         .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
         searchRequestBuilder.addSort(sb);
@@ -1295,7 +1330,7 @@ public class ElasticsearchJobProvider implements JobProvider, ListProvider
     private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId, int skip, int take,
             String sortField, boolean sortDescending, QueryBuilder fb) throws UnknownJobException
     {
-        SortBuilder sb = new FieldSortBuilder(esSortField(sortField))
+        FieldSortBuilder sb = new FieldSortBuilder(esSortField(sortField))
                 .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
 
         SearchResponse searchResponse;

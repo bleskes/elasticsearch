@@ -17,12 +17,12 @@
  ***************************************************************************/
 package com.prelert.job;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableList;
 
 public class ListDocument
 {
@@ -47,7 +47,7 @@ public class ListDocument
 
     public List<String> getItems()
     {
-        return ImmutableList.copyOf(m_Items);
+        return new ArrayList<>(m_Items);
     }
 
     @Override

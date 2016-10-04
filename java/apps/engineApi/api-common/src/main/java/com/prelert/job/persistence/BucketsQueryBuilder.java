@@ -28,7 +28,7 @@ package com.prelert.job.persistence;
 
 import java.util.Objects;
 
-import com.google.common.base.Strings;
+import com.prelert.utils.Strings;
 
 /**
  * One time query builder for buckets.

@@ -31,12 +31,12 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.Detector;
 import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobConfigurationException;
 import com.prelert.job.messages.Messages;
+import com.prelert.utils.Strings;
 
 public final class AnalysisConfigVerifier
 {

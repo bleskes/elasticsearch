@@ -44,12 +44,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.log4j.Logger;
 
-import com.google.common.base.Strings;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataDescription;
 import com.prelert.job.IgnoreDowntime;
 import com.prelert.job.JobDetails;
 import com.prelert.settings.PrelertSettings;
+import com.prelert.utils.Strings;
 
 
 /**

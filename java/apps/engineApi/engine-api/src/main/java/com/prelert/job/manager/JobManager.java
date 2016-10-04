@@ -27,26 +27,16 @@
 
 package com.prelert.job.manager;
 
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.jar.Manifest;
 
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
@@ -54,9 +44,6 @@ import javax.ws.rs.core.FeatureContext;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.google.common.base.Preconditions;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.prelert.app.Shutdownable;
 import com.prelert.job.AnalysisLimits;
 import com.prelert.job.DataCounts;
@@ -141,7 +128,6 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
 
-    private static final int LAST_DATA_TIME_CACHE_SIZE = 1000;
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
 
     private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
@@ -173,8 +159,12 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * updating a job with the same last data time multiple times,
      * which in turn avoids any version conflict errors from
      * the storage.
+     *
+     * TODO This used to be a guava cache. After removing guava,
+     * a better cache data structure should be used instead of the
+     * weak hash map.
      */
-    private final Cache<String, Long> m_LastDataTimePerJobCache;
+    private final Map<String, Long> m_LastDataTimePerJobCache;
 
     /**
      * Create a JobManager
@@ -198,9 +188,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         m_SchedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
 
         m_ScheduledJobs = new ConcurrentHashMap<>();
-        m_LastDataTimePerJobCache = CacheBuilder.newBuilder()
-                .maximumSize(LAST_DATA_TIME_CACHE_SIZE)
-                .build();
+        m_LastDataTimePerJobCache = new WeakHashMap<>();
 
         // This requires the process manager and data storage connection in
         // order to work, but failure is considered non-fatal
@@ -645,15 +633,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
 
     private long retrieveCachedLastDataTimeEpochMs(String jobId)
     {
-        try
-        {
-            return m_LastDataTimePerJobCache.get(jobId, () -> 0L);
-        }
-        catch (ExecutionException e)
-        {
-            LOGGER.debug("Failed to load cached last data time for job: " + jobId, e);
-            return 0;
-        }
+        return m_LastDataTimePerJobCache.computeIfAbsent(jobId, k -> 0L);
     }
 
     /**
@@ -922,19 +902,19 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
         // Try to add extra fields (just appVer for now)
         try
         {
-            // Try to get the API version as recorded by Maven at build time
-            InputStream is = getClass().getResourceAsStream("/META-INF/maven/com.prelert/engine-api/pom.properties");
-            if (is != null)
-            {
-                try
-                {
-                    Properties props = new Properties();
-                    props.load(is);
-                    return props.getProperty("version", "");
+            Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
+            while (resources.hasMoreElements()) {
+
+                try {
+                    Manifest manifest = new Manifest(resources.nextElement().openStream());
+
+                    String version = manifest.getMainAttributes().getValue("Prelert-Version");
+                    if (version != null) {
+                        return version;
+                    }
                 }
-                finally
-                {
-                    is.close();
+                catch (IOException e) {
+                    // suppress
                 }
             }
         }
@@ -1050,7 +1030,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      */
     public void setupScheduledJobs()
     {
-        Preconditions.checkState(m_ScheduledJobs.isEmpty());
+        if (!m_ScheduledJobs.isEmpty())
+        {
+            LOGGER.error("Cannot setup scheduled jobs unless none is running");
+            return;
+        }
         Boolean isAutoRestart = PrelertSettings.getSettingOrDefault(
                 SCHEDULER_AUTORESTART_SETTING, DEFAULT_SCHEDULER_AUTORESTART);
 
@@ -1233,7 +1217,10 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void pauseJob(String jobId) throws JobInUseException, NativeProcessRunException,
             UnknownJobException, CannotPauseJobException
     {
-        Preconditions.checkState(!isScheduledJob(jobId));
+        if (isScheduledJob(jobId))
+        {
+            throw new IllegalStateException("Cannot pause a scheduled job");
+        }
 
         LOGGER.info("Pausing job " + jobId);
 
@@ -1271,7 +1258,11 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
     public void resumeJob(String jobId)
             throws JobInUseException, UnknownJobException, CannotResumeJobException
     {
-        Preconditions.checkState(!isScheduledJob(jobId));
+        if (isScheduledJob(jobId))
+        {
+            throw new IllegalStateException("Cannot resume a scheduled job");
+        }
+
         LOGGER.info("Resuming job " + jobId);
 
         JobDetails job = getJobOrThrowIfUnknown(jobId);

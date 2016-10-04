@@ -47,7 +47,6 @@ import java.util.function.Supplier;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.google.common.base.Preconditions;
 import com.prelert.job.DataCounts;
 import com.prelert.job.JobDetails;
 import com.prelert.job.JobSchedulerStatus;
@@ -248,7 +247,10 @@ public class JobScheduler
 
     private void makeResultsAvailable()
     {
-        Preconditions.checkState(m_LastEndTimeMs != null);
+        if (m_LastEndTimeMs == null)
+        {
+            m_Logger.error("Failed to make results available: no last end time is set");
+        }
 
         Builder flushParamsBuilder = InterimResultsParams.newBuilder().calcInterim(true);
         if (isInRealTimeMode())

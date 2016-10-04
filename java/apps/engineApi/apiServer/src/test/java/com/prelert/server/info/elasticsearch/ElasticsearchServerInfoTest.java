@@ -31,12 +31,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang.SystemUtils;
@@ -46,6 +50,7 @@ import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNode.Role;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -64,12 +69,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 import com.prelert.server.info.ServerInfo;
 import com.prelert.utils.HostnameFinder;
-
-
 
 /**
  * These tests rely on extensive mocking of the elasticsearch client.
@@ -94,22 +95,20 @@ public class ElasticsearchServerInfoTest
     @Test
     public void testClientNodeReturnsNoServerInfo() throws InterruptedException, ExecutionException
     {
-        ImmutableMap<String, String> attributes = ImmutableSortedMap.<String, String>naturalOrder()
-                                                                    .put("client", "true")
-                                                                    .put("data", "false")
-                                                                    .build();
+        Map<String, String> attributes = Collections.emptyMap();
+        Set<Role> roles = Collections.emptySet();
         TransportAddress transportAddress = mock(TransportAddress.class);
         when(transportAddress.getHost()).thenReturn("localhost");
         when(transportAddress.getAddress()).thenReturn("127.0.0.1");
 
         DiscoveryNode clientNode = new DiscoveryNode("nname", "nodeId", transportAddress,
-                                        attributes, mock(Version.class));
+                                        attributes, roles, mock(Version.class));
 
         m_NodeStats.add(new NodeStats(clientNode, 0, null, null, null, null, null, null, null,
-                null, null, null));
+                null, null, null, null, null));
 
         m_NodeInfo.add(new NodeInfo(mock(Version.class), mock(Build.class), clientNode, null, null,
-                null, null, null, null, null, null, null));
+                null, null, null, null, null, null, null, null));
 
         ElasticsearchServerInfo esi = new TestServerInfo(m_Client);
         ServerInfo info = esi.serverInfo();
@@ -126,27 +125,27 @@ public class ElasticsearchServerInfoTest
     public void testNodesStats() throws IOException
     {
         ElasticsearchServerInfo esi = Mockito.spy(new ElasticsearchServerInfo(m_Client));
-        NodeInfo[] nodes = new NodeInfo[1];
+        List<NodeInfo> nodes = new ArrayList<>();
         NodeInfo node = mock(NodeInfo.class);
-        nodes[0] = node;
+        nodes.add(node);
         DiscoveryNode discoveryNode = mock(DiscoveryNode.class);
         when(node.getNode()).thenReturn(discoveryNode);
-        when(discoveryNode.isClientNode()).thenReturn(false);
+        when(discoveryNode.isMasterNode()).thenReturn(true);
         when(discoveryNode.isDataNode()).thenReturn(false);
 
         JvmInfo jvmInfo = JvmInfo.jvmInfo();
         StreamInput si = mock(StreamInput.class);
         when(si.readByte()).thenReturn((byte) 0x01);
 
-        when(si.getVersion()).thenReturn(Version.V_0_90_0_Beta1);
-        OsInfo osInfo = OsInfo.readOsInfo(si);
+        when(si.getVersion()).thenReturn(Version.V_5_0_0_beta1);
+        OsInfo osInfo = new OsInfo(si);
         when(node.getOs()).thenReturn(osInfo);
         when(node.getJvm()).thenReturn(jvmInfo);
-        when(node.getProcess()).thenReturn(new ProcessInfo(12345678, false));
+        when(node.getProcess()).thenReturn(new ProcessInfo(12345678, false, 60));
 
-        NodeStats[] stats = new NodeStats[1];
+        List<NodeStats> stats = new ArrayList<>();
         NodeStats stat = mock(NodeStats.class);
-        stats[0] = stat;
+        stats.add(stat);
         when(stat.getNode()).thenReturn(discoveryNode);
         when(stat.getHostname()).thenReturn("test_host");
         when(stat.getIndices()).thenReturn(mock(NodeIndicesStats.class));
@@ -170,12 +169,12 @@ public class ElasticsearchServerInfoTest
     {
         ElasticsearchServerInfo esi = Mockito.spy(new ElasticsearchServerInfo(m_Client));
         DiscoveryNode discoveryNode = mock(DiscoveryNode.class);
-        when(discoveryNode.isClientNode()).thenReturn(false);
+        when(discoveryNode.isMasterNode()).thenReturn(false);
         when(discoveryNode.isDataNode()).thenReturn(true);
 
-        NodeStats[] stats = new NodeStats[1];
+        List<NodeStats> stats = new ArrayList<>();
         NodeStats stat = mock(NodeStats.class);
-        stats[0] = stat;
+        stats.add(stat);
         when(stat.getNode()).thenReturn(discoveryNode);
 
         OsStats os = mock(OsStats.class);
@@ -210,15 +209,15 @@ public class ElasticsearchServerInfoTest
         }
 
         @Override
-        protected NodeInfo[] nodesInfo()
+        protected List<NodeInfo> nodesInfo()
         {
-            return m_NodeInfo.toArray(new NodeInfo[m_NodeInfo.size()]);
+            return m_NodeInfo;
         }
 
         @Override
-        protected NodeStats[] nodesStats()
+        protected List<NodeStats> nodesStats()
         {
-            return m_NodeStats.toArray(new NodeStats[m_NodeStats.size()]);
+            return m_NodeStats;
         }
     }
 }

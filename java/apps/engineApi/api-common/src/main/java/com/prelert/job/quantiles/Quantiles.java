@@ -24,9 +24,9 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.google.common.base.Strings;
 import com.prelert.job.persistence.serialisation.StorageSerialisable;
 import com.prelert.job.persistence.serialisation.StorageSerialiser;
+import com.prelert.utils.Strings;
 
 /**
  * Quantiles Result POJO

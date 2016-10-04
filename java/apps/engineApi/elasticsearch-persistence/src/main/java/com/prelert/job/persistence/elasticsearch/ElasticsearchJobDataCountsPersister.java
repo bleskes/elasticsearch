@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
+import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -78,7 +79,7 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
             Map<String, Object> countUpdates = new HashMap<>();
             countUpdates.put(JobDetails.COUNTS, updates);
 
-            updateBuilder.setDoc(countUpdates).setRefresh(true);
+            updateBuilder.setDoc(countUpdates).setRefreshPolicy(RefreshPolicy.IMMEDIATE);
 
             m_Logger.trace("ES API CALL: update ID " + jobId + " type " + JobDetails.TYPE +
                     " in index " + elasticJobId.getIndex() + " using map of new values");

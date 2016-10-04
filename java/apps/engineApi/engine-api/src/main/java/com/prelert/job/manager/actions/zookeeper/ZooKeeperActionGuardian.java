@@ -52,7 +52,6 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.KeeperException.UnimplementedException;
 import org.apache.zookeeper.ZooDefs.Ids;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.manager.actions.ActionGuardian;
 import com.prelert.job.manager.actions.ActionState;
@@ -595,7 +594,6 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         }
     }
 
-    @VisibleForTesting
     HostnameAction lockDataToHostAction(String data)
     {
         int lastIndex = data.lastIndexOf(HOST_ACTION_SEPARATOR);
@@ -623,7 +621,6 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         return new HostnameAction(host, action);
     }
 
-    @VisibleForTesting
     String hostActionToData(String hostname, T action)
     {
         return hostname + HOST_ACTION_SEPARATOR + action.toString();
@@ -639,13 +636,11 @@ public final class ZooKeeperActionGuardian<T extends Enum<T> & ActionState<T>>
         return JOBS_PATH + "/" + jobId + "/" + m_NoneAction.typename() + "/description--lock" ;
     }
 
-    @VisibleForTesting
     String descriptionPath(String jobId)
     {
         return JOBS_PATH + "/" + jobId + "/" + m_NoneAction.typename() + "/description";
     }
 
-    @VisibleForTesting
     class HostnameAction
     {
         final String m_Host;
