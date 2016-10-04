@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.prelert;
 
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.bootstrap.JarHell;
 import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.settings.Settings;
@@ -28,23 +29,18 @@ import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.transport.Netty4Plugin;
-import org.elasticsearch.xpack.prelert.action.job.GetJobAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
-import org.elasticsearch.xpack.prelert.action.job.GetJobsAction;
-import org.elasticsearch.xpack.prelert.action.job.PutJobAction;
-import org.elasticsearch.xpack.prelert.action.job.TransportGetJobAction;
-import org.elasticsearch.xpack.prelert.action.job.TransportGetJobsAction;
-import org.elasticsearch.xpack.prelert.action.job.TransportPutJobAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
-import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
-import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.action.job.*;
 import org.elasticsearch.xpack.prelert.action.list.CreateListAction;
 import org.elasticsearch.xpack.prelert.action.list.GetListAction;
 import org.elasticsearch.xpack.prelert.action.list.TransportCreateListAction;
 import org.elasticsearch.xpack.prelert.action.list.TransportGetListAction;
+import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
+import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 
@@ -64,11 +60,10 @@ public class ServerBootstrap {
     public static final int JETTY_PORT = 8080;
 
     public static void main(String[] args) throws Exception {
-        System.setProperty("es.logger.prefix", "");
-
+        JarHell.checkJarHell();
         Settings.Builder settings = Settings.builder();
         settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
-        settings.put("http.port", JETTY_PORT);
+        settings.put("http.port", System.getProperty(JETTY_PORT_PROPERTY, Integer.toString(JETTY_PORT)));
         settings.put("cluster.name", "prelert");
 
         CountDownLatch latch = new CountDownLatch(1);
