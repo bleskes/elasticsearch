@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import java.util.Locale;
 import java.util.Objects;
 
 @JsonIgnoreProperties({"enabled"})
@@ -29,7 +30,7 @@ public class ModelDebugConfig
         @JsonCreator
         public static DebugDestination forString(String value)
         {
-            String valueUpperCase = value.toUpperCase();
+            String valueUpperCase = value.toUpperCase(Locale.ROOT);
             return DebugDestination.valueOf(valueUpperCase);
         }
     }

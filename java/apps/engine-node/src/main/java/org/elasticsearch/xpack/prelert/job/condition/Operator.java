@@ -4,6 +4,7 @@ package org.elasticsearch.xpack.prelert.job.condition;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,7 +73,7 @@ public enum Operator {
     public static Operator fromString(String name) throws UnknownOperatorException {
         Set<Operator> all = EnumSet.allOf(Operator.class);
 
-        String ucName = name.toUpperCase();
+        String ucName = name.toUpperCase(Locale.ROOT);
         for (Operator type : all) {
             if (type.toString().equals(ucName)) {
                 return type;

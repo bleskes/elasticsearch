@@ -9,6 +9,7 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -86,11 +87,11 @@ class JobFactory
                     - formattedSequenceLen - HOSTNAME_ID_SEPARATORS_LENGTH;
             String trimmedHostName = hostname.substring(0,
                     Math.min(hostname.length(), hostnameMaxLen));
-            return String.format(HOSTNAME_ID_TEMPLATE, dateStr, trimmedHostName, sequence);
+            return String.format(Locale.ROOT, HOSTNAME_ID_TEMPLATE, dateStr, trimmedHostName, sequence);
         }
         else
         {
-            return String.format(NO_HOSTNAME_ID_TEMPLATE, dateStr, sequence);
+            return String.format(Locale.ROOT, NO_HOSTNAME_ID_TEMPLATE, dateStr, sequence);
         }
     }
 

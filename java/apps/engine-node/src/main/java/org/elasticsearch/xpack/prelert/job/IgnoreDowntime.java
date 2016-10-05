@@ -19,6 +19,8 @@ package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.Locale;
+
 public enum IgnoreDowntime {
     NEVER, ONCE, ALWAYS;
 
@@ -40,6 +42,6 @@ public enum IgnoreDowntime {
      */
     @JsonCreator
     public static IgnoreDowntime fromString(String value) {
-        return valueOf(value.trim().toUpperCase());
+        return valueOf(value.trim().toUpperCase(Locale.ROOT));
     }
 }

@@ -3,6 +3,8 @@ package org.elasticsearch.xpack.prelert.job.detectionrules;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.Locale;
+
 public enum RuleAction
 {
     FILTER_RESULTS;
@@ -16,6 +18,6 @@ public enum RuleAction
     @JsonCreator
     public static RuleAction forString(String value)
     {
-        return RuleAction.valueOf(value.toUpperCase());
+        return RuleAction.valueOf(value.toUpperCase(Locale.ROOT));
     }
 }

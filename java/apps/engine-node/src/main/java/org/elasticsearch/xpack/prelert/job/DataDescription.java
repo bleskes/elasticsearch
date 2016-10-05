@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -60,7 +61,7 @@ public class DataDescription {
          */
         @JsonCreator
         public static DataFormat forString(String value) {
-            String valueUpperCase = value.toUpperCase();
+            String valueUpperCase = value.toUpperCase(Locale.ROOT);
             return DEPRECATED_DELINEATED.equals(valueUpperCase) ? DELIMITED : DataFormat
                     .valueOf(valueUpperCase);
         }

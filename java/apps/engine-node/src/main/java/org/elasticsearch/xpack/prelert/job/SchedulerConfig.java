@@ -7,7 +7,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 
 /**
@@ -37,7 +45,7 @@ public class SchedulerConfig {
         @JsonCreator
         public static DataSource forString(String value)
         {
-            String valueUpperCase = value.toUpperCase();
+            String valueUpperCase = value.toUpperCase(Locale.ROOT);
             return DataSource.valueOf(valueUpperCase);
         }
     }

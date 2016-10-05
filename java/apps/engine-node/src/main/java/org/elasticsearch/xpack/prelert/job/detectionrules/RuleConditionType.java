@@ -3,6 +3,8 @@ package org.elasticsearch.xpack.prelert.job.detectionrules;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.Locale;
+
 public enum RuleConditionType
 {
     CATEGORICAL, NUMERICAL_ACTUAL, NUMERICAL_TYPICAL, NUMERICAL_DIFF_ABS;
@@ -16,6 +18,6 @@ public enum RuleConditionType
     @JsonCreator
     public static RuleConditionType forString(String value)
     {
-        return RuleConditionType.valueOf(value.toUpperCase());
+        return RuleConditionType.valueOf(value.toUpperCase(Locale.ROOT));
     }
 }

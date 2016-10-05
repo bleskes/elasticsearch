@@ -3,6 +3,8 @@ package org.elasticsearch.xpack.prelert.job.detectionrules;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.Locale;
+
 public enum Connective
 {
     OR, AND;
@@ -16,6 +18,6 @@ public enum Connective
     @JsonCreator
     public static Connective forString(String value)
     {
-        return Connective.valueOf(value.toUpperCase());
+        return Connective.valueOf(value.toUpperCase(Locale.ROOT));
     }
 }

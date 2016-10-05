@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -150,7 +151,7 @@ class ElasticsearchDotNotationReverser implements DotNotationReverser
                         // strings, this way of getting the type would work for
                         // many Elasticsearch types, e.g. date, int, long,
                         // double and boolean
-                        value.getClass().getSimpleName().toLowerCase());
+                        value.getClass().getSimpleName().toLowerCase(Locale.ROOT));
                 mappingsMap.put(name, typeMap);
             }
         }
