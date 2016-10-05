@@ -29,13 +29,7 @@ import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.transport.Netty4Plugin;
-import org.elasticsearch.xpack.prelert.action.GetBucketAction;
-import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
-import org.elasticsearch.xpack.prelert.action.GetJobAction;
-import org.elasticsearch.xpack.prelert.action.GetJobsAction;
-import org.elasticsearch.xpack.prelert.action.PutJobAction;
-import org.elasticsearch.xpack.prelert.action.CreateListAction;
-import org.elasticsearch.xpack.prelert.action.GetListAction;
+import org.elasticsearch.xpack.prelert.action.*;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
@@ -67,26 +61,22 @@ public class ServerBootstrap {
         settings.put("cluster.name", "prelert");
 
         CountDownLatch latch = new CountDownLatch(1);
-        try {
-            Node node = new PrelertNode(settings.build());
-            Runtime.getRuntime().addShutdownHook(new Thread() {
+        Node node = new PrelertNode(settings.build());
+        Runtime.getRuntime().addShutdownHook(new Thread() {
 
-                @Override
-                public void run() {
-                    try {
-                        node.close();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        latch.countDown();
-                    }
+            @Override
+            public void run() {
+                try {
+                    node.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    latch.countDown();
                 }
-            });
-            node.start();
-            latch.await();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            }
+        });
+        node.start();
+        latch.await();
     }
 
     static class PrelertNode extends Node {
