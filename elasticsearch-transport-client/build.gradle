@@ -52,7 +52,7 @@ namingConventions {
 publishing {
     publications {
         nebula(MavenPublication) {
-            pom.projectIdentity.artifactId = archivesBaseName
+            artifactId = archivesBaseName
         }
     }
 }
