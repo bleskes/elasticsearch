@@ -24,17 +24,16 @@ import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
-import org.elasticsearch.xpack.prelert.action.job.GetJobRequest;
-import org.elasticsearch.xpack.prelert.action.job.TransportGetJobAction;
+import org.elasticsearch.xpack.prelert.action.GetJobAction;
 
 public class RestGetJobAction extends BaseRestHandler {
 
     private static final String JOB_ID = "jobId";
 
-    private final TransportGetJobAction transportGetJobAction;
+    private final GetJobAction.TransportAction transportGetJobAction;
 
     @Inject
-    public RestGetJobAction(Settings settings, RestController controller, TransportGetJobAction transportGetJobAction) {
+    public RestGetJobAction(Settings settings, RestController controller, GetJobAction.TransportAction transportGetJobAction) {
         super(settings);
         this.transportGetJobAction = transportGetJobAction;
         controller.registerHandler(RestRequest.Method.GET, "/engine/v2/jobs/{jobId}", this);
@@ -42,7 +41,7 @@ public class RestGetJobAction extends BaseRestHandler {
 
     @Override
     public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        GetJobRequest getJobRequest = new GetJobRequest();
+        GetJobAction.Request getJobRequest = new GetJobAction.Request();
         getJobRequest.setJobId(request.param(JOB_ID));
         transportGetJobAction.execute(getJobRequest, new RestStatusToXContentListener<>(channel));
     }

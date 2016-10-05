@@ -50,7 +50,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
     public static final GetBucketsAction INSTANCE = new GetBucketsAction();
     public static final String NAME = "indices:admin/prelert/results/buckets/get";
 
-    public GetBucketsAction() {
+    private GetBucketsAction() {
         super(NAME);
     }
 

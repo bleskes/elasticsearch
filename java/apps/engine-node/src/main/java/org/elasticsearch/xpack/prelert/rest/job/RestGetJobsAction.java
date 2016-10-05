@@ -22,10 +22,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.*;
-import org.elasticsearch.rest.action.AcknowledgedRestListener;
-import org.elasticsearch.xpack.prelert.action.job.GetJobsRequest;
-import org.elasticsearch.xpack.prelert.action.job.GetJobsResponse;
-import org.elasticsearch.xpack.prelert.action.job.TransportGetJobsAction;
+import org.elasticsearch.rest.action.RestBuilderListener;
+import org.elasticsearch.xpack.prelert.action.GetJobsAction;
 
 import static org.elasticsearch.rest.RestStatus.OK;
 
@@ -36,10 +34,10 @@ public class RestGetJobsAction extends BaseRestHandler {
     private static final int DEFAULT_SKIP = 0;
     private static final int DEFAULT_TAKE = 100;
 
-    private final TransportGetJobsAction transportGetJobsAction;
+    private final GetJobsAction.TransportAction transportGetJobsAction;
 
     @Inject
-    public RestGetJobsAction(Settings settings, RestController controller, TransportGetJobsAction transportGetJobsAction) {
+    public RestGetJobsAction(Settings settings, RestController controller, GetJobsAction.TransportAction transportGetJobsAction) {
         super(settings);
         this.transportGetJobsAction = transportGetJobsAction;
         controller.registerHandler(RestRequest.Method.GET, "/engine/v2/jobs", this);
@@ -47,13 +45,13 @@ public class RestGetJobsAction extends BaseRestHandler {
 
     @Override
     public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        GetJobsRequest getJobsRequest = new GetJobsRequest();
+        GetJobsAction.Request getJobsRequest = new GetJobsAction.Request();
         getJobsRequest.setSkip(request.paramAsInt(SKIP, DEFAULT_SKIP));
         getJobsRequest.setTake(request.paramAsInt(TAKE, DEFAULT_TAKE));
-        transportGetJobsAction.execute(getJobsRequest, new AcknowledgedRestListener<GetJobsResponse>(channel) {
+        transportGetJobsAction.execute(getJobsRequest, new RestBuilderListener<GetJobsAction.Response>(channel) {
 
             @Override
-            public RestResponse buildResponse(GetJobsResponse response, XContentBuilder builder) throws Exception {
+            public RestResponse buildResponse(GetJobsAction.Response response, XContentBuilder builder) throws Exception {
                 return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
             }
         });

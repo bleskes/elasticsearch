@@ -25,15 +25,14 @@ import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
-import org.elasticsearch.xpack.prelert.action.list.GetListRequest;
-import org.elasticsearch.xpack.prelert.action.list.TransportGetListAction;
+import org.elasticsearch.xpack.prelert.action.GetListAction;
 
 public class RestGetListAction extends BaseRestHandler {
 
-    private final TransportGetListAction transportGetListAction;
+    private final GetListAction.TransportAction transportGetListAction;
 
     @Inject
-    public RestGetListAction(Settings settings, RestController controller, TransportGetListAction transportGetListAction) {
+    public RestGetListAction(Settings settings, RestController controller, GetListAction.TransportAction transportGetListAction) {
         super(settings);
         this.transportGetListAction = transportGetListAction;
         controller.registerHandler(RestRequest.Method.GET, "/engine/v2/lists/{listId}", this);
@@ -41,7 +40,7 @@ public class RestGetListAction extends BaseRestHandler {
 
     @Override
     public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        GetListRequest getListRequest = new GetListRequest();
+        GetListAction.Request getListRequest = new GetListAction.Request();
         getListRequest.setListId(request.param("listId"));
         transportGetListAction.execute(getListRequest, new RestStatusToXContentListener<>(channel));
     }

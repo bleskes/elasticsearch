@@ -26,15 +26,14 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
-import org.elasticsearch.xpack.prelert.action.list.CreateListRequest;
-import org.elasticsearch.xpack.prelert.action.list.TransportCreateListAction;
+import org.elasticsearch.xpack.prelert.action.CreateListAction;
 
 public class RestCreateListAction extends BaseRestHandler {
 
-    private final TransportCreateListAction transportCreateListAction;
+    private final CreateListAction.TransportAction transportCreateListAction;
 
     @Inject
-    public RestCreateListAction(Settings settings, RestController controller, TransportCreateListAction transportCreateListAction) {
+    public RestCreateListAction(Settings settings, RestController controller, CreateListAction.TransportAction transportCreateListAction) {
         super(settings);
         this.transportCreateListAction = transportCreateListAction;
         controller.registerHandler(RestRequest.Method.POST, "/engine/v2/lists", this);
@@ -42,7 +41,7 @@ public class RestCreateListAction extends BaseRestHandler {
 
     @Override
     public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        CreateListRequest createListRequest = new CreateListRequest(RestActions.getRestContent(request));
+        CreateListAction.Request createListRequest = new CreateListAction.Request(RestActions.getRestContent(request));
         transportCreateListAction.execute(createListRequest, new AcknowledgedRestListener<>(channel));
     }
 
