@@ -18,9 +18,12 @@
 package org.elasticsearch.test;
 
 import org.elasticsearch.AbstractOldXPackIndicesBackwardsCompatibilityTestCase;
+import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
+import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
@@ -29,14 +32,13 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.xpack.XPackClient;
+import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.client.SecurityClient;
-import org.elasticsearch.test.ESIntegTestCase.SuppressLocalMode;
-import org.elasticsearch.xpack.XPackClient;
-import org.elasticsearch.xpack.XPackPlugin;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -52,14 +54,16 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
+import static org.elasticsearch.test.ESIntegTestCase.SuppressLocalMode;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoTimeout;
+import static org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 
 /**
  * Base class to run tests against a cluster with X-Pack installed and security enabled.
- * The default {@link org.elasticsearch.test.ESIntegTestCase.Scope} is {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE}
+ * The default {@link Scope} is {@link Scope#SUITE}
  *
  * @see SecuritySettingsSource
  */
@@ -69,8 +73,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
     private static SecuritySettingsSource SECURITY_DEFAULT_SETTINGS;
 
     /**
-     * Settings used when the {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * Settings used when the {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      * so that some of the configuration parameters can be overridden through test instance methods, similarly
      * to how {@link #nodeSettings(int)} and {@link #transportClientSettings()} work.
      */
@@ -244,24 +248,24 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
     }
 
     /**
-     * Allows to override the users config file when the {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * Allows to override the users config file when the {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected String configUsers() {
         return SECURITY_DEFAULT_SETTINGS.configUsers();
     }
 
     /**
-     * Allows to override the users_roles config file when the {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * Allows to override the users_roles config file when the {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected String configUsersRoles() {
         return SECURITY_DEFAULT_SETTINGS.configUsersRoles();
     }
 
     /**
-     * Allows to override the roles config file when the {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * Allows to override the roles config file when the {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected String configRoles() {
         return SECURITY_DEFAULT_SETTINGS.configRoles();
@@ -269,8 +273,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
 
     /**
      * Allows to override the node client username (used while sending requests to the test cluster) when the
-     * {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected String nodeClientUsername() {
         return SECURITY_DEFAULT_SETTINGS.nodeClientUsername();
@@ -278,8 +282,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
 
     /**
      * Allows to override the node client password (used while sending requests to the test cluster) when the
-     * {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected SecuredString nodeClientPassword() {
         return SECURITY_DEFAULT_SETTINGS.nodeClientPassword();
@@ -287,8 +291,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
 
     /**
      * Allows to override the transport client username (used while sending requests to the test cluster) when the
-     * {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected String transportClientUsername() {
         return SECURITY_DEFAULT_SETTINGS.transportClientUsername();
@@ -296,8 +300,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
 
     /**
      * Allows to override the transport client password (used while sending requests to the test cluster) when the
-     * {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected SecuredString transportClientPassword() {
         return SECURITY_DEFAULT_SETTINGS.transportClientPassword();
@@ -305,8 +309,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
 
     /**
      * Allows to control whether ssl is enabled or not on the transport layer when the
-     * {@link org.elasticsearch.test.ESIntegTestCase.ClusterScope} is set to
-     * {@link org.elasticsearch.test.ESIntegTestCase.Scope#SUITE} or {@link org.elasticsearch.test.ESIntegTestCase.Scope#TEST}
+     * {@link ClusterScope} is set to
+     * {@link Scope#SUITE} or {@link Scope#TEST}
      */
     protected boolean sslTransportEnabled() {
         return randomBoolean();
@@ -367,10 +371,39 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
         }
     }
 
-    protected void assertGreenClusterState(Client client) {
+    protected static void assertGreenClusterState(Client client) {
         ClusterHealthResponse clusterHealthResponse = client.admin().cluster().prepareHealth().get();
         assertNoTimeout(clusterHealthResponse);
         assertThat(clusterHealthResponse.getStatus(), is(ClusterHealthStatus.GREEN));
+    }
+
+    protected static void assertThrowsAuthorizationException(ActionRequestBuilder actionRequestBuilder) {
+        ElasticsearchSecurityException e = expectThrows(ElasticsearchSecurityException.class, actionRequestBuilder::get);
+        SecurityTestsUtils.assertAuthorizationException(e, containsString("is unauthorized for user ["));
+    }
+
+    protected void createIndicesWithRandomAliases(String... indices) {
+        if (randomBoolean()) {
+            //no aliases
+            createIndex(indices);
+        } else {
+            if (randomBoolean()) {
+                //one alias per index with suffix "-alias"
+                for (String index : indices) {
+                    client().admin().indices().prepareCreate(index).setSettings(indexSettings()).addAlias(new Alias(index + "-alias"));
+                }
+            } else {
+                //same alias pointing to all indices
+                for (String index : indices) {
+                    client().admin().indices().prepareCreate(index).setSettings(indexSettings()).addAlias(new Alias("alias"));
+                }
+            }
+        }
+
+        for (String index : indices) {
+            client().prepareIndex(index, "type").setSource("field", "value").get();
+        }
+        refresh();
     }
 
     @Override

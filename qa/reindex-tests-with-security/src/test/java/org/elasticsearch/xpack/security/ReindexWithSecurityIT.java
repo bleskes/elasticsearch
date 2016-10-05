@@ -18,7 +18,6 @@
 
 package org.elasticsearch.xpack.security;
 
-import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -73,7 +72,7 @@ public class ReindexWithSecurityIT extends SecurityIntegTestCase {
     }
 
     public void testDeleteByQuery() {
-        createIndices("test1", "test2", "test3");
+        createIndicesWithRandomAliases("test1", "test2", "test3");
 
         BulkIndexByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client()).source("test1", "test2").get();
         assertNotNull(response);
@@ -87,7 +86,7 @@ public class ReindexWithSecurityIT extends SecurityIntegTestCase {
     }
 
     public void testUpdateByQuery() {
-        createIndices("test1", "test2", "test3");
+        createIndicesWithRandomAliases("test1", "test2", "test3");
 
         BulkIndexByScrollResponse response = UpdateByQueryAction.INSTANCE.newRequestBuilder(client()).source("test1", "test2").get();
         assertNotNull(response);
@@ -101,7 +100,7 @@ public class ReindexWithSecurityIT extends SecurityIntegTestCase {
     }
 
     public void testReindex() {
-        createIndices("test1", "test2", "test3", "dest");
+        createIndicesWithRandomAliases("test1", "test2", "test3", "dest");
 
         BulkIndexByScrollResponse response = ReindexAction.INSTANCE.newRequestBuilder(client()).source("test1", "test2")
                 .destination("dest").get();
@@ -113,29 +112,5 @@ public class ReindexWithSecurityIT extends SecurityIntegTestCase {
         IndexNotFoundException e = expectThrows(IndexNotFoundException.class,
                 () -> ReindexAction.INSTANCE.newRequestBuilder(client()).source("test1", "index1").destination("dest").get());
         assertEquals("no such index", e.getMessage());
-    }
-
-    private void createIndices(String... indices) {
-        if (randomBoolean()) {
-            //no aliases
-            createIndex(indices);
-        } else {
-            if (randomBoolean()) {
-                //one alias per index with suffix "-alias"
-                for (String index : indices) {
-                    client().admin().indices().prepareCreate(index).setSettings(indexSettings()).addAlias(new Alias(index + "-alias"));
-                }
-            } else {
-                //same alias pointing to all indices
-                for (String index : indices) {
-                    client().admin().indices().prepareCreate(index).setSettings(indexSettings()).addAlias(new Alias("alias"));
-                }
-            }
-        }
-
-        for (String index : indices) {
-            client().prepareIndex(index, "type").setSource("field", "value").get();
-        }
-        refresh();
     }
 }
