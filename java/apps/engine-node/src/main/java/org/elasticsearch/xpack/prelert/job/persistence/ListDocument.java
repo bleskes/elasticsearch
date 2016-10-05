@@ -33,7 +33,7 @@ public class ListDocument {
     private final List<String> items;
 
     @JsonCreator
-    public ListDocument(@JsonProperty("id") String id, @JsonProperty("items") List<String> items) {
+    public ListDocument(@JsonProperty(value = "id", required = true) String id, @JsonProperty("items") List<String> items) {
         this.id = Objects.requireNonNull(id);
         this.items = items;
     }

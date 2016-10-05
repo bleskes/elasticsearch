@@ -17,7 +17,9 @@
 
 package org.elasticsearch.xpack.prelert.action.list;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexRequest;
@@ -35,6 +37,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.persistence.ListDocument;
+
+import java.io.IOException;
 
 public class TransportCreateListAction extends TransportMasterNodeAction<CreateListRequest, CreateListResponse> {
 
@@ -66,7 +70,12 @@ public class TransportCreateListAction extends TransportMasterNodeAction<CreateL
 
     @Override
     protected void masterOperation(CreateListRequest request, ClusterState state, ActionListener<CreateListResponse> listener) throws Exception {
-        ListDocument listDocument = objectMapper.readValue(request.getRequest().toBytesRef().bytes, ListDocument.class);
+        ListDocument listDocument;
+        try {
+            listDocument = objectMapper.readValue(request.getRequest().toBytesRef().bytes, ListDocument.class);
+        } catch (JsonMappingException e) {
+            throw new ElasticsearchParseException("Missing required properties for List", e);
+        }
         final String listId = listDocument.getId();
         IndexRequest indexRequest = new IndexRequest(PRELERT_INFO_INDEX, ListDocument.TYPE, listId);
         indexRequest.source(request.getRequest());
