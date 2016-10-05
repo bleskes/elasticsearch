@@ -213,11 +213,11 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(e.getMessage(), containsString("No known job with id '2'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
 
-        // no 404?
-        response = client().performRequest("get", "/engine/v2/results/1/bucket/2015-06-01T00:00:00Z");
-        assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
-        responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, isEmptyString());
+        e = expectThrows(ResponseException.class,
+                () -> client().performRequest("get", "/engine/v2/results/1/bucket/2015-06-01T00:00:00Z"));
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
+        responseAsString = responseEntityToString(e.getResponse());
+        assertThat(responseAsString, equalTo("{\"exists\":false,\"type\":\"bucket\"}"));
 
         response = client().performRequest("get", "/engine/v2/results/1/bucket/2016-06-01T00:00:00Z");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));

@@ -28,6 +28,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestBuilderListener;
+import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 
 import static org.elasticsearch.rest.RestStatus.OK;
@@ -51,13 +52,6 @@ public class RestGetBucketAction extends BaseRestHandler {
         if (restRequest.hasParam("partitionValue")) {
             request.setPartitionValue(restRequest.param("partitionValue"));
         }
-
-        transportAction.execute(request, new RestBuilderListener<GetBucketAction.Response>(channel) {
-
-            @Override
-            public RestResponse buildResponse(GetBucketAction.Response response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
-            }
-        });
+        transportAction.execute(request, new RestStatusToXContentListener<>(channel));
     }
 }

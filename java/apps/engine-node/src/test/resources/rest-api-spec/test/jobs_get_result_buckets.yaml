@@ -37,4 +37,4 @@ setup:
         jobId: "farequote"
         timestamp: "2016-06-01T00:00:00Z"
 
-  - match: { timestamp: 1464739200000 }
+  - match: { document.timestamp: 1464739200000 }

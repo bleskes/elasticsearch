@@ -34,12 +34,17 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.StatusToXContent;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -145,32 +150,43 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         }
     }
 
-    public static class Response extends ActionResponse {
+    public static class Response extends ActionResponse implements StatusToXContent {
 
-        private BytesReference response;
+        private SingleDocument result;
 
-        Response() {
-            response = new BytesArray("");
+        private Response() {
+            result = SingleDocument.empty(Bucket.TYPE);
         }
 
-        Response(Bucket bucket, ObjectMapper objectMapper) throws JsonProcessingException {
-            response = new BytesArray(objectMapper.writeValueAsBytes(bucket));
+        Response(SingleDocument result) {
+            this.result = result;
         }
 
-        public BytesReference getResponse() {
-            return response;
+        public SingleDocument getResponse() {
+            return result;
+        }
+
+        @Override
+        public RestStatus status() {
+            return result.isExists() ? RestStatus.OK : RestStatus.NOT_FOUND;
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            return result.toXContent(builder, params);
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = in.readBytesReference();
+            result = new SingleDocument(in.readString(), in.readBytesReference());
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(response);
+            out.writeString(result.getType());
+            out.writeBytesReference(result.getDocument());
         }
     }
 
@@ -196,13 +212,11 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
                             .partitionValue(request.partitionValue)
                             .build();
 
-            // TODO: I don't think we should use SingleDocument here,
-            // once we moved away from jackson-databind the rest layer can send the appropiate response code.
-            // NORELEASE: response code delegation
             Optional<Bucket> b = provider.bucket(request.jobId, query);
             if (b.isPresent()) {
                 try {
-                    listener.onResponse(new Response(b.get(), objectMapper));
+                    BytesReference document = new BytesArray(objectMapper.writeValueAsBytes(b.get()));
+                    listener.onResponse(new Response(new SingleDocument(Bucket.TYPE, document)));
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
