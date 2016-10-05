@@ -49,7 +49,7 @@ public class ElasticsearchMappings
      * String constants used in mappings
      */
     static final String INDEX = "index";
-    static final String NO = "no";
+    static final String NO = "false";
     static final String ALL = "_all";
     static final String ENABLED = "enabled";
     static final String ANALYZER = "analyzer";
