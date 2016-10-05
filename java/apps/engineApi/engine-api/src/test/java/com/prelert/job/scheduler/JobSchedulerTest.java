@@ -308,8 +308,9 @@ public class JobSchedulerTest
             else
             {
                 // Assert rest of real-time searches
-                assertEquals(dataExtractor.getEnd(i - 1), dataExtractor.getStart(i));
-                assertEquals(searchStart + m_Frequency.toMillis(), searchEnd);
+                assertEquals(Math.max(dataExtractor.getEnd(i - 1), latestRecordTimes[i - 1] + 1), dataExtractor.getStart(i));
+                assertTrue(searchEnd % m_Frequency.toMillis() == 0);
+                assertTrue(searchEnd > dataExtractor.getEnd(i - 1));
             }
 
             assertTrue(flushParams.get(i).shouldAdvanceTime());

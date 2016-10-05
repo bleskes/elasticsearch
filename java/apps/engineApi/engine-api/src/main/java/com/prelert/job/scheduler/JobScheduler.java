@@ -229,7 +229,7 @@ public class JobScheduler
                 && !m_ProblemTracker.hasProblems()
                 && isInRealTimeMode())
         {
-            m_LastEndTimeMs = Math.min(searchEndTimeMs, alignToBucketEnd(latestRecordTimestamp));
+            m_LastEndTimeMs = Math.max(m_LastEndTimeMs, Math.min(searchEndTimeMs, alignToBucketEnd(latestRecordTimestamp)));
         }
     }
 
