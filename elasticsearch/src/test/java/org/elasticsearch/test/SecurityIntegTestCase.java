@@ -18,8 +18,6 @@
 package org.elasticsearch.test;
 
 import org.elasticsearch.AbstractOldXPackIndicesBackwardsCompatibilityTestCase;
-import org.elasticsearch.ElasticsearchSecurityException;
-import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
@@ -57,7 +55,6 @@ import java.util.stream.Collectors;
 import static org.elasticsearch.test.ESIntegTestCase.SuppressLocalMode;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoTimeout;
 import static org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken.basicAuthHeaderValue;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 
@@ -377,11 +374,10 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
         assertThat(clusterHealthResponse.getStatus(), is(ClusterHealthStatus.GREEN));
     }
 
-    protected static void assertThrowsAuthorizationException(ActionRequestBuilder actionRequestBuilder) {
-        ElasticsearchSecurityException e = expectThrows(ElasticsearchSecurityException.class, actionRequestBuilder::get);
-        SecurityTestsUtils.assertAuthorizationException(e, containsString("is unauthorized for user ["));
-    }
-
+    /**
+     * Creates the indices provided as argument, randomly associating them with aliases, indexes one dummy document per index
+     * and refreshes the new indices
+     */
     protected void createIndicesWithRandomAliases(String... indices) {
         if (randomBoolean()) {
             //no aliases
@@ -403,7 +399,7 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
         for (String index : indices) {
             client().prepareIndex(index, "type").setSource("field", "value").get();
         }
-        refresh();
+        refresh(indices);
     }
 
     @Override
