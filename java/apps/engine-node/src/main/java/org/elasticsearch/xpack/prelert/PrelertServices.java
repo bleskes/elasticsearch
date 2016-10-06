@@ -3,6 +3,7 @@
 package org.elasticsearch.xpack.prelert;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
@@ -65,14 +66,14 @@ public class PrelertServices {
     private final JobProvider jobProvider;
     private final JobManager jobManager;
 
-    public PrelertServices(Client client) {
+    public PrelertServices(Client client, ClusterService clusterService) {
         ElasticsearchFactory esFactory = createPersistenceFactory(client);
         jobProvider = esFactory.newJobProvider();
         ActionGuardian<Action> processActionGuardian =
                 new LocalActionGuardian<>(Action.startingState());
         ActionGuardian<ScheduledAction> schedulerActionGuardian =
                 new LocalActionGuardian<>(ScheduledAction.STOPPED);
-        this.jobManager = new JobManager(jobProvider,
+        this.jobManager = new JobManager(jobProvider, clusterService,
                 processActionGuardian, schedulerActionGuardian);
     }
 

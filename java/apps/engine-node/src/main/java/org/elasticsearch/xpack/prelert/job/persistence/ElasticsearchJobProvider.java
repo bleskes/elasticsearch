@@ -399,7 +399,6 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         Collection<String> influencers = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().getInfluencers() : null;
         try
         {
-            XContentBuilder jobMapping = ElasticsearchMappings.jobMapping();
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
             XContentBuilder bucketInfluencerMapping = ElasticsearchMappings.bucketInfluencerMapping();
             XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
@@ -421,7 +420,6 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
             client.admin().indices()
                     .prepareCreate(elasticJobId.getIndex())
                     .setSettings(prelertIndexSettings())
-                    .addMapping(JobDetails.TYPE, jobMapping)
                     .addMapping(Bucket.TYPE, bucketMapping)
                     .addMapping(BucketInfluencer.TYPE, bucketInfluencerMapping)
                     .addMapping(CategorizerState.TYPE, categorizerStateMapping)

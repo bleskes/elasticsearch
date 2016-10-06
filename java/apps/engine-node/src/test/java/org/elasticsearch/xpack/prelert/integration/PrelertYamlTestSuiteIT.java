@@ -23,6 +23,7 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 import org.elasticsearch.test.rest.yaml.parser.ClientYamlTestParseException;
+import org.junit.After;
 
 import java.io.IOException;
 
@@ -36,6 +37,11 @@ public class PrelertYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
     @ParametersFactory
     public static Iterable<Object[]> parameters() throws IOException, ClientYamlTestParseException {
         return createParameters(0, 1);
+    }
+
+    @After
+    public void clearPrelertState() throws IOException {
+        adminClient().performRequest("DELETE", "/engine/v2/clear");
     }
 
 }

@@ -171,7 +171,7 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
             logger.debug("Get job '" + request.getJobId() + "'");
-            Optional<JobDetails> optionalJob = prelertServices.getJobManager().getJob(request.getJobId());
+            Optional<JobDetails> optionalJob = prelertServices.getJobManager().getJob(request.getJobId(), state);
             SingleDocument jobDocument = optionalJob.isPresent() ? createJobDocument(optionalJob.get()) : SingleDocument.empty(JobDetails.TYPE);
             if (jobDocument.isExists()) {
                 logger.debug("Returning job '" + optionalJob.get().getJobId() + "'");

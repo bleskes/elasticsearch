@@ -169,7 +169,7 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
             new PaginationParamsValidator(request.getSkip(), request.getTake()).validate();
-            QueryPage<JobDetails> jobsPage = prelertServices.getJobManager().getJobs(request.getSkip(), request.getTake());
+            QueryPage<JobDetails> jobsPage = prelertServices.getJobManager().getJobs(request.getSkip(), request.getTake(), state);
             listener.onResponse(new Response(jobsPage, objectMapper));
         }
 

@@ -16,19 +16,32 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager;
 
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.cluster.ClusterName;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.*;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
+import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
-import org.elasticsearch.xpack.prelert.job.persistence.*;
-
+import org.elasticsearch.xpack.prelert.job.metadata.Job;
+import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
+import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
+import org.elasticsearch.xpack.prelert.job.persistence.JobDataDeleterFactory;
+import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.junit.After;
 import org.junit.Before;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
@@ -37,7 +50,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -68,10 +82,13 @@ public class JobManagerTest extends ESTestCase
     }
 
     public void testGetJob() throws UnknownJobException {
-        when(jobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
-
         JobManager jobManager = createJobManager();
-        Optional<JobDetails> doc = jobManager.getJob("foo");
+        PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
+        builder.putJob(new Job(new JobDetails("foo", new JobConfiguration())), false);
+        ClusterState clusterState = ClusterState.builder(new ClusterName("name"))
+                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, builder.build()))
+                .build();
+        Optional<JobDetails> doc = jobManager.getJob("foo", clusterState);
         assertTrue(doc.isPresent());
     }
 
@@ -256,6 +273,70 @@ public class JobManagerTest extends ESTestCase
         assertEquals(2L, capturedLimits.get(AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT));
     }
 
+    public void testGetJobs() {
+        PrelertMetadata.Builder prelertMetadata = new PrelertMetadata.Builder();
+        for (int i = 0; i < 10; i++) {
+            prelertMetadata.putJob(new Job(new JobDetails(Integer.toString(i), new JobConfiguration())), false);
+        }
+        ClusterState clusterState = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata.build()))
+                .build();
+
+        JobManager jobManager = createJobManager();
+        QueryPage<JobDetails> result = jobManager.getJobs(0, 10, clusterState);
+        assertThat(result.hitCount(), equalTo(10L));
+        assertThat(result.hits().get(0).getId(), equalTo("0"));
+        assertThat(result.hits().get(1).getId(), equalTo("1"));
+        assertThat(result.hits().get(2).getId(), equalTo("2"));
+        assertThat(result.hits().get(3).getId(), equalTo("3"));
+        assertThat(result.hits().get(4).getId(), equalTo("4"));
+        assertThat(result.hits().get(5).getId(), equalTo("5"));
+        assertThat(result.hits().get(6).getId(), equalTo("6"));
+        assertThat(result.hits().get(7).getId(), equalTo("7"));
+        assertThat(result.hits().get(8).getId(), equalTo("8"));
+        assertThat(result.hits().get(9).getId(), equalTo("9"));
+
+        result = jobManager.getJobs(0, 5, clusterState);
+        assertThat(result.hitCount(), equalTo(10L));
+        assertThat(result.hits().get(0).getId(), equalTo("0"));
+        assertThat(result.hits().get(1).getId(), equalTo("1"));
+        assertThat(result.hits().get(2).getId(), equalTo("2"));
+        assertThat(result.hits().get(3).getId(), equalTo("3"));
+        assertThat(result.hits().get(4).getId(), equalTo("4"));
+
+        result = jobManager.getJobs(5, 5, clusterState);
+        assertThat(result.hitCount(), equalTo(10L));
+        assertThat(result.hits().get(0).getId(), equalTo("5"));
+        assertThat(result.hits().get(1).getId(), equalTo("6"));
+        assertThat(result.hits().get(2).getId(), equalTo("7"));
+        assertThat(result.hits().get(3).getId(), equalTo("8"));
+        assertThat(result.hits().get(4).getId(), equalTo("9"));
+
+        result = jobManager.getJobs(9, 1, clusterState);
+        assertThat(result.hitCount(), equalTo(10L));
+        assertThat(result.hits().get(0).getId(), equalTo("9"));
+
+        result = jobManager.getJobs(9, 10, clusterState);
+        assertThat(result.hitCount(), equalTo(10L));
+        assertThat(result.hits().get(0).getId(), equalTo("9"));
+    }
+
+    public void testInnerPutJob() {
+        JobManager jobManager = createJobManager();
+        ClusterState cs = ClusterState.builder(new ClusterName("_name")).build();
+
+        JobDetails jobDetails1 = new JobDetails("_id", new JobConfiguration());
+        ClusterState result1 = jobManager.innerPutJob(jobDetails1, false, cs);
+        PrelertMetadata pm = result1.getMetaData().custom(PrelertMetadata.TYPE);
+        assertThat(pm.getJobs().get("_id").getJobDetails(), sameInstance(jobDetails1));
+
+        JobDetails jobDetails2 = new JobDetails("_id", new JobConfiguration());
+        expectThrows(ElasticsearchStatusException.class, () -> jobManager.innerPutJob(jobDetails2, false, result1));
+
+        ClusterState result2 = jobManager.innerPutJob(jobDetails2, true, result1);
+        pm = result2.getMetaData().custom(PrelertMetadata.TYPE);
+        assertThat(pm.getJobs().get("_id").getJobDetails(), sameInstance(jobDetails2));
+    }
 
     private List<String> createJobIds(int jobCount)
     {
@@ -267,11 +348,11 @@ public class JobManagerTest extends ESTestCase
         return jobIds;
     }
 
-    private JobManager createJobManager()
-    {
+    private JobManager createJobManager() {
+        ClusterService clusterService = mock(ClusterService.class);
         return new JobManager(jobProvider,
-                new LocalActionGuardian<Action>(Action.CLOSED),
-                new LocalActionGuardian<ScheduledAction>(ScheduledAction.STOPPED));
+                clusterService, new LocalActionGuardian<>(Action.CLOSED),
+                new LocalActionGuardian<>(ScheduledAction.STOPPED));
     }
 
     private static JobConfiguration createScheduledJobConfig()

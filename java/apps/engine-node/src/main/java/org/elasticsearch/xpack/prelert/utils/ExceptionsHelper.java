@@ -20,6 +20,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 public class ExceptionsHelper {
 
@@ -32,6 +33,13 @@ public class ExceptionsHelper {
     public static ResourceNotFoundException missingException(String msg, ErrorCodes errorCode) {
         ResourceNotFoundException e =  new ResourceNotFoundException(msg, RestStatus.BAD_REQUEST);
         e.addHeader("errorCode", errorCode.getValueString());
+        return e;
+    }
+
+    public static ElasticsearchStatusException jobAlreadyExists(String jobId) {
+        String msg = Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId);
+        ElasticsearchStatusException e = new ElasticsearchStatusException(msg, RestStatus.BAD_REQUEST);
+        e.addHeader("errorCode", ErrorCodes.JOB_ID_TAKEN.getValueString());
         return e;
     }
 

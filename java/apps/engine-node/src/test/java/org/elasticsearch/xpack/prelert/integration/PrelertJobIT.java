@@ -20,6 +20,7 @@ import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.test.rest.ESRestTestCase;
+import org.junit.After;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -246,5 +247,10 @@ public class PrelertJobIT extends ESRestTestCase {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))) {
             return reader.lines().collect(Collectors.joining("\n"));
         }
+    }
+
+    @After
+    public void clearPrelertState() throws IOException {
+        adminClient().performRequest("DELETE", "/engine/v2/clear");
     }
 }

@@ -5,7 +5,6 @@ import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,14 +47,10 @@ class JobFactory
      *
      * @param jobConfig the job configuration
      * @return the created {@Code JobDetails} object
-     * @throws JobConfigurationException
      */
-    public JobDetails create(JobConfiguration jobConfig)
-            throws JobConfigurationException
-    {
+    public JobDetails create(JobConfiguration jobConfig) {
         String jobId = jobConfig.getId();
-        if (jobId == null || jobId.isEmpty())
-        {
+        if (jobId == null || jobId.isEmpty()) {
             jobId = generateJobId();
         }
         JobDetails jobDetails = new JobDetails(jobId, jobConfig);

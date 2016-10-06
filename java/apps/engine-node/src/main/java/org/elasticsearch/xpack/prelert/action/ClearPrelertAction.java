@@ -16,8 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -27,30 +25,27 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
 import org.elasticsearch.client.ElasticsearchClient;
+import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
+import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 
-import java.io.IOException;
+// Only exists for testing purposes, so that between tests we can clear state.
+// The prelert jobs are stored in cluster state as custom metadata and that needs to cleared between tests.
+public class ClearPrelertAction extends Action<ClearPrelertAction.Request, ClearPrelertAction.Response, ClearPrelertAction.RequestBuilder> {
 
-public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Response, PutJobAction.RequestBuilder> {
+    public static final ClearPrelertAction INSTANCE = new ClearPrelertAction();
+    private static final String NAME = "cluster:admin/prelert/clear";
 
-    public static final PutJobAction INSTANCE = new PutJobAction();
-    public static final String NAME = "cluster:admin/prelert/job/put";
-
-    private PutJobAction() {
+    private ClearPrelertAction() {
         super(NAME);
     }
 
@@ -66,93 +61,33 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
 
     public static class Request extends AcknowledgedRequest<Request> {
 
-        private BytesReference jobConfiguration;
-        private boolean overwrite;
-
-        public BytesReference getJobConfiguration() {
-            return jobConfiguration;
-        }
-
-        public void setJobConfiguration(BytesReference jobConfiguration) {
-            this.jobConfiguration = jobConfiguration;
-        }
-
-        public boolean isOverwrite() {
-            return overwrite;
-        }
-
-        public void setOverwrite(boolean overwrite) {
-            this.overwrite = overwrite;
-        }
-
         @Override
         public ActionRequestValidationException validate() {
             return null;
         }
 
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            jobConfiguration = in.readBytesReference();
-            overwrite = in.readBoolean();
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
-            out.writeBytesReference(jobConfiguration);
-            out.writeBoolean(overwrite);
-        }
     }
 
     public static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, PutJobAction action) {
+        public RequestBuilder(ElasticsearchClient client, ClearPrelertAction action) {
             super(client, action, new Request());
         }
     }
 
     public static class Response extends AcknowledgedResponse {
 
-        private BytesReference response;
-
-        public Response(JobDetails jobDetails, ObjectMapper objectMapper) throws JsonProcessingException {
-            super(true);
-            this.response = new BytesArray(objectMapper.writeValueAsString(jobDetails));
-        }
-
-        public Response() {
-        }
-
-        public BytesReference getResponse() {
-            return response;
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            response = in.readBytesReference();
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
-            out.writeBytesReference(response);
-        }
     }
 
-    // extends TransportMasterNodeAction, because we will store in cluster state.
     public static class TransportAction extends TransportMasterNodeAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                     ThreadPool threadPool, ActionFilters actionFilters,
-                                     IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
-            super(settings, PutJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
+                               ThreadPool threadPool, ActionFilters actionFilters,
+                               IndexNameExpressionResolver indexNameExpressionResolver) {
+            super(settings, ClearPrelertAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
         }
 
         @Override
@@ -167,7 +102,20 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            prelertServices.getJobManager().putJob(request, listener);
+            clusterService.submitStateUpdateTask("clear-prelert", new AckedClusterStateUpdateTask<Response>(request, listener) {
+
+                @Override
+                protected Response newResponse(boolean acknowledged) {
+                    return new Response();
+                }
+
+                @Override
+                public ClusterState execute(ClusterState currentState) throws Exception {
+                    return ClusterState.builder(currentState)
+                            .metaData(MetaData.builder(currentState.metaData()).removeCustom(PrelertMetadata.TYPE))
+                            .build();
+                }
+            });
         }
 
         @Override

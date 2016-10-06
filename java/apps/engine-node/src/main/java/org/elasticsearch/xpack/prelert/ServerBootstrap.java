@@ -22,6 +22,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.bootstrap.JarHell;
 import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
@@ -35,6 +36,10 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.prelert.action.*;
+import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
+import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
+import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
+import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
@@ -49,7 +54,6 @@ import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -99,9 +103,25 @@ public class ServerBootstrap {
 
     public static class PrelertPlugin extends Plugin implements ActionPlugin {
 
+        private final Settings settings;
+
+        static {
+            MetaData.registerPrototype(PrelertMetadata.TYPE, PrelertMetadata.PROTO);
+        }
+
+        public PrelertPlugin(Settings settings) {
+            this.settings = settings;
+        }
+
         @Override
-        public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool, ResourceWatcherService resourceWatcherService, ScriptService scriptService, SearchRequestParsers searchRequestParsers) {
-            return Collections.singleton(new PrelertServices(client));
+        public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
+                                                   ResourceWatcherService resourceWatcherService, ScriptService scriptService,
+                                                   SearchRequestParsers searchRequestParsers) {
+            return Arrays.asList(
+                    new PrelertServices(client, clusterService),
+                    new JobAllocator(settings, clusterService, threadPool),
+                    new JobLifeCycleService(settings, clusterService)
+            );
         }
 
         @Override
@@ -116,7 +136,8 @@ public class ServerBootstrap {
                     RestGetBucketAction.class,
                     RestPostDataAction.class,
                     RestPostDataCloseAction.class,
-                    RestPostDataFlushAction.class);
+                    RestPostDataFlushAction.class,
+                    RestClearPrelertAction.class);
         }
 
         @Override
@@ -131,7 +152,8 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class),
                     new ActionHandler<>(PostDataAction.INSTANCE, PostDataAction.TransportAction.class),
                     new ActionHandler<>(PostDataCloseAction.INSTANCE, PostDataCloseAction.TransportAction.class),
-                    new ActionHandler<>(PostDataFlushAction.INSTANCE, PostDataFlushAction.TransportAction.class));
+                    new ActionHandler<>(PostDataFlushAction.INSTANCE, PostDataFlushAction.TransportAction.class),
+                    new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class));
         }
     }
 

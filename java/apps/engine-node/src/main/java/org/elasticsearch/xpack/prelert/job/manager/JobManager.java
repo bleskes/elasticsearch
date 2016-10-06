@@ -16,27 +16,37 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.*;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
+import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.metadata.Job;
+import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Allows interactions with jobs. The managed interactions include:
@@ -52,6 +62,7 @@ import java.util.Optional;
  * </ul
  */
 public class JobManager {
+
     private static final Logger LOGGER = Loggers.getLogger(JobManager.class);
 
     /**
@@ -66,18 +77,21 @@ public class JobManager {
     private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
     private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final ActionGuardian<Action> processActionGuardian;
     private final ActionGuardian<ScheduledAction> schedulerActionGuardian;
     private final JobProvider jobProvider;
     private final JobFactory jobFactory;
+    private final ClusterService clusterService;
 
     /**
      * Create a JobManager
      */
     public JobManager(JobProvider jobProvider,
-                      ActionGuardian<Action> processActionGuardian,
+                      ClusterService clusterService, ActionGuardian<Action> processActionGuardian,
                       ActionGuardian<ScheduledAction> schedulerActionGuardian) {
         this.jobProvider = Objects.requireNonNull(jobProvider);
+        this.clusterService = clusterService;
         this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
         this.schedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
 
@@ -91,8 +105,18 @@ public class JobManager {
      * @return An {@code Optional} containing the {@code JobDetails} if a job with the given
      * {@code jobId} exists, or an empty {@code Optional} otherwise
      */
-    public Optional<JobDetails> getJob(String jobId) {
-        return jobProvider.getJobDetails(jobId);
+    public Optional<JobDetails> getJob(String jobId, ClusterState clusterState) {
+        PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
+        if (prelertMetadata == null) {
+            return Optional.empty();
+        }
+
+        Job job = prelertMetadata.getJobs().get(jobId);
+        if (job == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(job.getJobDetails());
     }
 
     /**
@@ -106,8 +130,19 @@ public class JobManager {
      * <code>take</code>
      * parameter.
      */
-    public QueryPage<JobDetails> getJobs(int skip, int take) {
-        return jobProvider.getJobs(skip, take);
+    public QueryPage<JobDetails> getJobs(int skip, int take, ClusterState clusterState) {
+        PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
+        if (prelertMetadata == null) {
+            return new QueryPage<>(Collections.emptyList(), 0);
+        }
+
+        List<JobDetails> jobs = prelertMetadata.getJobs().entrySet().stream()
+                .skip(skip)
+                .limit(take)
+                .map(Map.Entry::getValue)
+                .map(Job::getJobDetails)
+                .collect(Collectors.toList());
+        return new QueryPage<>(jobs, prelertMetadata.getJobs().size());
     }
 
     /**
@@ -127,46 +162,57 @@ public class JobManager {
     }
 
     /**
-     * Create a new job from the configuration object and insert into the
-     * document store. The details of the newly created job are returned.
-     *
-     * @param jobConfig
-     * @param overwrite If another job with the same name exists, should
-     *                  it be overwritten?
-     * @return The new job or <code>null</code> if an exception occurs.
-     * @throws JobConfigurationException    If the license is violated
-     * @throws JobIdAlreadyExistsException  If the job ID is already taken
-     * @throws DataStoreException           Possible only if overwriting
-     * @throws JobInUseException            Possible only if overwriting
+     * Stores a job in the cluster state
      */
-    public JobDetails createJob(JobConfiguration jobConfig, boolean overwrite)
-            throws LicenseViolationException, JobConfigurationException, JobIdAlreadyExistsException,
-            DataStoreException, JobInUseException {
+    public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) {
+        JobConfiguration jobConfiguration;
+        try {
+            jobConfiguration = objectMapper.readValue(request.getJobConfiguration().toBytesRef().bytes, JobConfiguration.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        JobDetails jobDetails = jobFactory.create(jobConfiguration);
+        clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(), new AckedClusterStateUpdateTask<PutJobAction.Response>(request, actionListener) {
 
-        JobDetails jobDetails = jobFactory.create(jobConfig);
-        String jobId = jobDetails.getId();
-        if (!jobProvider.jobIdIsUnique(jobId)) {
-            try {
-                // A job with the desired ID already exists - try to delete it
-                // if we've been told to overwrite
-                if (overwrite == false || deleteJob(jobId) == false) {
-                    throw new JobIdAlreadyExistsException(jobId);
+            @Override
+            protected PutJobAction.Response newResponse(boolean acknowledged) {
+                // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on the cluster state update task thread
+                // and any action performed on that thread should be quick. (so no indexing documents)
+                // audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
+
+                // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
+                // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
+                try {
+                    return new PutJobAction.Response(jobDetails, objectMapper);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
                 }
-                LOGGER.debug("Overwriting job '" + jobId + "'");
-            } catch (UnknownJobException e) {
-                // This implies another request to delete the job has executed
-                // at the same time as the overwrite request.  In this case we
-                // should be good to continue, as long as the createJob method
-                // in org.elasticsearch.xpack.prelert.rs.resources.Jobs only allows one job creation
-                // at a time (which it did at the time of writing this comment).
-                LOGGER.warn("Independent deletion of job '" + jobId +
-                        "' occurred whilst overwriting it");
             }
+
+            @Override
+            public ClusterState execute(ClusterState currentState) throws Exception {
+                return innerPutJob(jobDetails, request.isOverwrite(), currentState);
+            }
+
+        });
+    }
+
+    ClusterState innerPutJob(JobDetails jobDetails, boolean overwrite, ClusterState currentState) {
+        PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
+        PrelertMetadata.Builder builder;
+        if (currentPrelertMetadata != null) {
+            builder = new PrelertMetadata.Builder(currentPrelertMetadata);
+        } else {
+            builder = new PrelertMetadata.Builder();
         }
 
-        jobProvider.createJob(jobDetails);
-        audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
-        return jobDetails;
+        builder.putJob(new Job(jobDetails), overwrite);
+
+        ClusterState.Builder newState = ClusterState.builder(currentState);
+        newState.metaData(MetaData.builder(currentState.getMetaData())
+                .putCustom(PrelertMetadata.TYPE, builder.build())
+                .build());
+        return newState.build();
     }
 
 
