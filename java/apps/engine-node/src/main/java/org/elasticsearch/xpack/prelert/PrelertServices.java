@@ -3,7 +3,6 @@
 package org.elasticsearch.xpack.prelert;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
@@ -63,43 +62,29 @@ public class PrelertServices {
      */
     private static final long OLD_RESULTS_REMOVAL_PAST_MIDNIGHT_OFFSET_MINUTES = 30L;
 
-    private Client client;
-    private JobProvider jobProvider;
-    private volatile JobManager jobManager;
+    private final JobProvider jobProvider;
+    private final JobManager jobManager;
 
-    //This isn't set in the ctor because doing so creates a guice circular
-    @Inject(optional=true)
-    public void setClient(Client client) {
-        this.client = client;
+    public PrelertServices(Client client) {
+        ElasticsearchFactory esFactory = createPersistenceFactory(client);
+        jobProvider = esFactory.newJobProvider();
+        ActionGuardian<Action> processActionGuardian =
+                new LocalActionGuardian<>(Action.startingState());
+        ActionGuardian<ScheduledAction> schedulerActionGuardian =
+                new LocalActionGuardian<>(ScheduledAction.STOPPED);
+        this.jobManager = new JobManager(jobProvider,
+                processActionGuardian, schedulerActionGuardian);
     }
 
     public JobProvider getJobProvider() {
-        initializeIfNeeded();
         return jobProvider;
     }
 
     public JobManager getJobManager() {
-        initializeIfNeeded();
         return jobManager;
     }
 
-    private void initializeIfNeeded() {
-        if (jobManager == null) {
-            synchronized (this) {
-                ElasticsearchFactory esFactory = createPersistenceFactory(client);
-                jobProvider = esFactory.newJobProvider();
-                ActionGuardian<Action> processActionGuardian =
-                        new LocalActionGuardian<>(Action.startingState());
-                ActionGuardian<ScheduledAction> schedulerActionGuardian =
-                        new LocalActionGuardian<>(ScheduledAction.STOPPED);
-                this.jobManager = new JobManager(jobProvider,
-                        processActionGuardian, schedulerActionGuardian);
-            }
-        }
-    }
-
     private static ElasticsearchFactory createPersistenceFactory(Client client) {
-
         return new ElasticsearchFactory(client) {
 
             @Override

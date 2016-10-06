@@ -21,14 +21,19 @@ import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.bootstrap.JarHell;
 import org.elasticsearch.cli.Terminal;
-import org.elasticsearch.common.inject.Module;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.search.SearchRequestParsers;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
+import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.prelert.action.*;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
@@ -92,8 +97,8 @@ public class ServerBootstrap {
     public static class PrelertPlugin extends Plugin implements ActionPlugin {
 
         @Override
-        public Collection<Module> createGuiceModules() {
-            return Collections.singleton(new PrelertModule());
+        public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool, ResourceWatcherService resourceWatcherService, ScriptService scriptService, SearchRequestParsers searchRequestParsers) {
+            return Collections.singleton(new PrelertServices(client));
         }
 
         @Override

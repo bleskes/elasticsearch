@@ -38,6 +38,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -76,7 +77,7 @@ import java.util.stream.Collectors;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-public class ElasticsearchJobProvider implements JobProvider
+public class ElasticsearchJobProvider extends AbstractLifecycleComponent implements JobProvider
 {
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchJobProvider.class);
 
@@ -118,8 +119,8 @@ public class ElasticsearchJobProvider implements JobProvider
 
     private final ObjectMapper objectMapper;
 
-    public ElasticsearchJobProvider(Node node, Client client, int numberOfReplicas)
-    {
+    public ElasticsearchJobProvider(Node node, Client client, int numberOfReplicas) {
+        super(Settings.EMPTY);
         this.node = node;
         this.client = Objects.requireNonNull(client);
         this.numberOfReplicas = numberOfReplicas;
@@ -130,8 +131,11 @@ public class ElasticsearchJobProvider implements JobProvider
         objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
         // When we serialise objects with multiple views we want to choose the datastore view
         objectMapper.setConfig(objectMapper.getSerializationConfig().withView(JsonViews.DatastoreView.class));
+    }
 
-        LOGGER.info("Connecting to Elasticsearch cluster '" + this.client.settings().get("cluster.name")
+    @Override
+    protected void doStart() {
+        LOGGER.info("Connecting to Elasticsearch cluster '" + client.settings().get("cluster.name")
                 + "'");
 
         // This call was added because if we try to connect to Elasticsearch
@@ -139,31 +143,37 @@ public class ElasticsearchJobProvider implements JobProvider
         // can get weird effects like indexes being reported as not existing
         // when they do.  See EL16-182 in Jira.
         LOGGER.trace("ES API CALL: wait for yellow status on whole cluster");
-        ClusterHealthResponse response =  this.client.admin().cluster()
-                                                .prepareHealth()
-                                                .setWaitForYellowStatus()
-                                                .execute().actionGet();
+        ClusterHealthResponse response = client.admin().cluster()
+                .prepareHealth()
+                .setWaitForYellowStatus()
+                .execute().actionGet();
 
         // The wait call above can time out.
         // Throw an error if in cluster health is red
-        if (response.getStatus() == ClusterHealthStatus.RED)
-        {
+        if (response.getStatus() == ClusterHealthStatus.RED) {
             String msg = "Waited for the Elasticsearch status to be YELLOW but is RED after wait timeout";
             LOGGER.error(msg);
             throw new IllegalStateException(msg);
         }
 
-        LOGGER.info("Elasticsearch cluster '" + this.client.settings().get("cluster.name")
+        LOGGER.info("Elasticsearch cluster '" + client.settings().get("cluster.name")
                 + "' now ready to use");
+    }
 
+    @Override
+    protected void doStop() {
+    }
+
+    @Override
+    protected void doClose() {
     }
 
     /*
-     * True if the Job index is healthy
-     *
-     * (non-Javadoc)
-     * @see org.elasticsearch.xpack.prelert.job.persistence.JobProvider#isConnected(java.lang.String)
-     */
+         * True if the Job index is healthy
+         *
+         * (non-Javadoc)
+         * @see org.elasticsearch.xpack.prelert.job.persistence.JobProvider#isConnected(java.lang.String)
+         */
     @Override
     public boolean isConnected(String jobId)
     {
