@@ -1,0 +1,315 @@
+
+package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
+import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
+import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
+import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
+import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Parses the JSON output of the autodetect program.
+ * <p>
+ * Expects an array of buckets so the first element will always be the
+ * start array symbol and the data must be terminated with the end array symbol.
+ */
+public class AutoDetectResultsParser {
+    private final List<AlertObserver> observers = new ArrayList<>();
+    private final Set<String> acknowledgedFlushes = new HashSet<>();
+    private volatile boolean parsingStarted;
+    private volatile boolean parsingInProgress;
+    private boolean isPerPartitionNormalization;
+
+    public AutoDetectResultsParser() {
+        this(false);
+    }
+
+    public AutoDetectResultsParser(boolean isPerPartition) {
+        isPerPartitionNormalization = isPerPartition;
+    }
+
+    public void addObserver(AlertObserver obs) {
+        synchronized (observers) {
+            observers.add(obs);
+        }
+    }
+
+    public boolean removeObserver(AlertObserver obs) {
+        synchronized (observers) {
+            // relies on obj reference id for equality
+            return observers.remove(obs);
+        }
+    }
+
+    public int observerCount() {
+        return observers.size();
+    }
+
+
+    /**
+     * Parse the bucket results from inputstream and perist
+     * via the JobDataPersister.
+     * <p>
+     * Trigger renormalisation of past results when new quantiles
+     * are seen.
+     *
+     * @param inputStream
+     * @param persister
+     * @param renormaliser
+     * @param logger
+     * @return
+     * @throws ElasticsearchParseException
+     */
+    public void parseResults(InputStream inputStream, JobResultsPersister persister,
+                             Renormaliser renormaliser, Logger logger) throws ElasticsearchParseException {
+        synchronized (acknowledgedFlushes) {
+            parsingStarted = true;
+            parsingInProgress = true;
+            acknowledgedFlushes.notifyAll();
+        }
+
+        try {
+            parseResultsInternal(inputStream, persister, renormaliser, logger);
+        } catch (IOException e) {
+            throw new ElasticsearchParseException(e.getMessage(), e);
+        } finally {
+            // Don't leave any threads waiting for flushes in the lurch
+            synchronized (acknowledgedFlushes) {
+                // Leave m_ParsingStarted set to true to avoid deadlock in the
+                // case where the entire parse happens without the interested
+                // thread getting scheduled
+                parsingInProgress = false;
+                acknowledgedFlushes.notifyAll();
+            }
+        }
+    }
+
+
+    /**
+     * Wait for a particular flush ID to be received by the parser.  In
+     * order to wait, this method must be called after parsing has started.
+     * It will give up waiting if parsing finishes before the flush ID is
+     * seen.
+     *
+     * @param flushId The ID to wait for.
+     * @return true if the supplied flush ID was seen; false if parsing finished
+     * before the supplied flush ID was seen.
+     */
+    public boolean waitForFlushAcknowledgement(String flushId)
+            throws InterruptedException {
+        synchronized (acknowledgedFlushes) {
+            while (parsingInProgress && !acknowledgedFlushes.contains(flushId)) {
+                acknowledgedFlushes.wait();
+            }
+            return acknowledgedFlushes.remove(flushId);
+        }
+    }
+
+
+    /**
+     * Can be used by unit tests to ensure the pre-condition of the
+     * {@link #waitForFlushAcknowledgement(String) waitForFlushAcknowledgement} method is met.
+     */
+    void waitForParseStart()
+            throws InterruptedException {
+        synchronized (acknowledgedFlushes) {
+            while (!parsingStarted) {
+                acknowledgedFlushes.wait();
+            }
+        }
+    }
+
+
+    private void parseResultsInternal(InputStream inputStream, JobResultsPersister persister,
+                                      Renormaliser renormaliser, Logger logger) throws IOException, ElasticsearchParseException {
+        logger.debug("Parse Results");
+        boolean deleteInterimRequired = true;
+        JsonParser parser = new JsonFactory().createParser(inputStream);
+        parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
+
+        JsonToken token = parser.nextToken();
+        // if start of an array ignore it, we expect an array of buckets
+        if (token == JsonToken.START_ARRAY) {
+            token = parser.nextToken();
+            logger.debug("JSON starts with an array");
+        }
+
+        if (token == JsonToken.END_ARRAY) {
+            logger.info("Empty results array, 0 buckets parsed");
+            return;
+        } else if (token != JsonToken.START_OBJECT) {
+            logger.error("Expecting Json Start Object token after the Start Array token");
+            throw new ElasticsearchParseException(
+                    "Invalid JSON should start with an array of objects or an object = " + token);
+        }
+
+        // Parse the buckets from the stream
+        int bucketCount = 0;
+        while (token != JsonToken.END_ARRAY) {
+            if (token == null) // end of input
+            {
+                logger.error("Unexpected end of Json input");
+                break;
+            }
+            if (token == JsonToken.START_OBJECT) {
+                token = parser.nextToken();
+                if (token == JsonToken.FIELD_NAME) {
+                    String fieldName = parser.getCurrentName();
+                    switch (fieldName) {
+                        case Bucket.TIMESTAMP:
+                            if (deleteInterimRequired == true) {
+                                // Delete any existing interim results at the start of a job upload:
+                                // these are generated by a Flush command, and will be replaced or
+                                // superseded by new results
+                                logger.trace("Deleting interim results");
+                                persister.deleteInterimResults();
+                                deleteInterimRequired = false;
+                            }
+                            Bucket bucket = new BucketParser(parser).parseJsonAfterStartObject();
+                            if (isPerPartitionNormalization) {
+                                bucket.calcMaxNormalizedProbabilityPerPartition();
+                            }
+                            persister.persistBucket(bucket);
+                            tryUpdatingBucket(persister, bucket, logger);
+                            notifyObservers(bucket);
+
+                            logger.trace("Bucket number " + ++bucketCount + " parsed from output");
+                            break;
+                        case Quantiles.QUANTILE_STATE:
+                            Quantiles quantiles = new QuantilesParser(parser).parseJsonAfterStartObject();
+                            persister.persistQuantiles(quantiles);
+
+                            logger.debug("Quantiles parsed from output - will " +
+                                    "trigger renormalisation of scores");
+                            if (isPerPartitionNormalization) {
+                                renormaliser.renormaliseWithPartition(quantiles, logger);
+                            } else {
+                                renormaliser.renormalise(quantiles, logger);
+                            }
+                            break;
+                        case ModelSnapshot.SNAPSHOT_ID:
+                            ModelSnapshot modelSnapshot = new ModelSnapshotParser(parser).parseJsonAfterStartObject();
+                            persister.persistModelSnapshot(modelSnapshot);
+                            break;
+                        case ModelSizeStats.MODEL_BYTES:
+                            ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject();
+                            logger.trace(String.format("Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
+                                    modelSizeStats.getModelBytes(),
+                                    modelSizeStats.getTotalByFieldCount(),
+                                    modelSizeStats.getTotalOverFieldCount(),
+                                    modelSizeStats.getTotalPartitionFieldCount(),
+                                    modelSizeStats.getBucketAllocationFailuresCount(),
+                                    modelSizeStats.getMemoryStatus()));
+
+                            persister.persistModelSizeStats(modelSizeStats);
+                            break;
+                        case ModelDebugOutput.DEBUG_FEATURE:
+                            ModelDebugOutput modelDebugOutput = new ModelDebugOutputParser(parser).parseJsonAfterStartObject();
+                            persister.persistModelDebugOutput(modelDebugOutput);
+                            break;
+                        case FlushAcknowledgement.FLUSH:
+                            FlushAcknowledgement ack = new FlushAcknowledgementParser(parser).parseJsonAfterStartObject();
+                            logger.debug("Flush acknowledgement parsed from output for ID " +
+                                    ack.getId());
+                            // Commit previous writes here, effectively continuing
+                            // the flush from the C++ autodetect process right
+                            // through to the data store
+                            persister.commitWrites();
+                            synchronized (acknowledgedFlushes) {
+                                acknowledgedFlushes.add(ack.getId());
+                                acknowledgedFlushes.notifyAll();
+                            }
+                            // Interim results may have been produced by the flush, which need to be
+                            // deleted when the next finalized results come through
+                            deleteInterimRequired = true;
+                            break;
+                        case CategoryDefinition.TYPE:
+                            CategoryDefinition category = new CategoryDefinitionParser(parser).parseJsonAfterStartObject();
+                            persister.persistCategoryDefinition(category);
+                            break;
+                        default:
+                            logger.error("Unexpected object parsed from output - first field " + fieldName);
+                            throw new ElasticsearchParseException(
+                                    "Invalid JSON  - unexpected object parsed from output - first field " + fieldName);
+                    }
+                }
+            } else {
+                logger.error("Expecting Json Field name token after the Start Object token");
+                throw new ElasticsearchParseException(
+                        "Invalid JSON  - object should start with a field name, not " + parser.getText());
+            }
+
+            token = parser.nextToken();
+        }
+
+        logger.info(bucketCount + " buckets parsed from autodetect output - about to refresh indexes");
+
+        // commit data to the datastore
+        persister.commitWrites();
+    }
+
+    private void tryUpdatingBucket(JobResultsPersister persister, Bucket bucket, Logger logger) {
+        try {
+            persister.incrementBucketCount(1);
+            persister.updateAverageBucketProcessingTime(bucket.getProcessingTimeMs());
+        } catch (JobException e) {
+            logger.error("Error updating bucket stats", e);
+        }
+    }
+
+    private final class ObserverTriggerPair {
+        AlertObserver observer;
+        AlertTrigger trigger;
+
+        private ObserverTriggerPair(AlertObserver observer, AlertTrigger trigger) {
+            this.observer = observer;
+            this.trigger = trigger;
+        }
+    }
+
+    private void notifyObservers(Bucket bucket) {
+        List<ObserverTriggerPair> observersToFire = new ArrayList<>();
+
+        // one-time alerts so remove them from the list before firing
+        synchronized (observers) {
+            Iterator<AlertObserver> iter = observers.iterator();
+            while (iter.hasNext()) {
+                AlertObserver ao = iter.next();
+
+                List<AlertTrigger> triggeredAlerts = ao.triggeredAlerts(bucket);
+                if (triggeredAlerts.isEmpty() == false) {
+                    // only fire on the first alert trigger
+                    observersToFire.add(new ObserverTriggerPair(ao, triggeredAlerts.get(0)));
+                    iter.remove();
+                }
+            }
+        }
+
+        for (ObserverTriggerPair pair : observersToFire) {
+            pair.observer.fire(bucket, pair.trigger);
+        }
+    }
+
+}
+

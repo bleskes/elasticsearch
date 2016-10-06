@@ -1,0 +1,16 @@
+{
+  "xpack.prelert.data.flush": {
+    "methods": [ "POST" ],
+    "url": {
+      "path": "/engine/v2/data/{jobId}/flush",
+      "paths": [ "/engine/v2/data/{jobId}/flush" ],
+      "parts": {
+        "jobId": {
+          "type": "string",
+          "required": true,
+          "description": "The name of the job to flush"
+        }
+      }
+    }
+  }
+}

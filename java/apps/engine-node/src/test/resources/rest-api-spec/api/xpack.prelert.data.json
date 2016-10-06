@@ -1,0 +1,22 @@
+{
+  "xpack.prelert.data": {
+    "methods": [ "POST" ],
+    "url": {
+      "path": "/engine/v2/data/{jobId}",
+      "paths": [ "/engine/v2/data/{jobId}" ],
+      "parts": {
+        "jobId": {
+          "type": "string",
+          "required": true,
+          "description": "The name of the job receiving the data"
+        }
+      },
+      "params": {
+        "ignoreDowntime": {
+          "type": "boolean",
+          "description": "Controls if gaps in data are treated as anomalous or as a maintenance window after a job re-start"
+        }
+      }
+    }
+  }
+}

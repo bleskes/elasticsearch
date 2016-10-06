@@ -1,7 +1,8 @@
 
 package org.elasticsearch.xpack.prelert.job.condition.verification;
 
-import org.elasticsearch.test.ESTestCase;import org.elasticsearch.xpack.prelert.job.condition.Operator;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;

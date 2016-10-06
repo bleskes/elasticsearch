@@ -1,6 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;

@@ -1,8 +1,10 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Logger;
+
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;

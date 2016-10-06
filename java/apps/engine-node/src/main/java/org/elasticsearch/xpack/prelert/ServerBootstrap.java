@@ -37,6 +37,9 @@ import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.prelert.action.*;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
 import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
+import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
+import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
+import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
@@ -110,7 +113,10 @@ public class ServerBootstrap {
                     RestGetListAction.class,
                     RestCreateListAction.class,
                     RestGetBucketsAction.class,
-                    RestGetBucketAction.class);
+                    RestGetBucketAction.class,
+                    RestPostDataAction.class,
+                    RestPostDataCloseAction.class,
+                    RestPostDataFlushAction.class);
         }
 
         @Override
@@ -122,7 +128,10 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
                     new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),
                     new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
-                    new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class));
+                    new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class),
+                    new ActionHandler<>(PostDataAction.INSTANCE, PostDataAction.TransportAction.class),
+                    new ActionHandler<>(PostDataCloseAction.INSTANCE, PostDataCloseAction.TransportAction.class),
+                    new ActionHandler<>(PostDataFlushAction.INSTANCE, PostDataFlushAction.TransportAction.class));
         }
     }
 
