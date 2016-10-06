@@ -881,6 +881,37 @@ public class ElasticsearchDataExtractorTest
                 + "\"hits\":[]"
                 + "}";
 
+        String response5 = "{"
+                + "\"_scroll_id\":\"scrollId_9\","
+                + "\"hits\":{"
+                + "  \"total\":0,"
+                + "  \"hits\":[]"
+                + "}"
+                + "}";
+
+        String finalDataSummaryResponse = "{"
+                + "\"took\":17,"
+                + "\"timed_out\":false,"
+                + "\"_shards\":{"
+                + "  \"total\":0,"
+                + "  \"successful\":0,"
+                + "  \"failed\":0"
+                + "},"
+                + "\"hits\":{"
+                + "  \"total\":0,"
+                + "  \"max_score\":null,"
+                + "  \"hits\":[]"
+                + "},"
+                + "\"aggregations\":{"
+                +   "\"earliestTime\":{"
+                +     "\"value\": null"
+                +   "},"
+                +   "\"latestTime\":{"
+                +     "\"value\": null"
+                +   "}"
+                + "}"
+                + "}";
+
         List<HttpResponse> responses = Arrays.asList(
                 new HttpResponse(toStream(dataSummaryResponse), 200),
                 new HttpResponse(toStream(indexResponse), 200),
@@ -891,8 +922,11 @@ public class ElasticsearchDataExtractorTest
                 new HttpResponse(toStream(endResponse2), 200),
                 new HttpResponse(toStream(initialResponse3), 200),
                 new HttpResponse(toStream(dataSummaryResponse2), 200),
+                new HttpResponse(toStream(indexResponse), 200),
                 new HttpResponse(toStream(initialResponse4), 200),
-                new HttpResponse(toStream(endResponse4), 200));
+                new HttpResponse(toStream(endResponse4), 200),
+                new HttpResponse(toStream(response5), 200),
+                new HttpResponse(toStream(finalDataSummaryResponse), 200));
 
         MockHttpRequester requester = new MockHttpRequester(responses);
         createExtractor(requester);
@@ -907,6 +941,7 @@ public class ElasticsearchDataExtractorTest
         assertEquals(initialResponse2, streamToString(m_Extractor.next().get()));
         assertTrue(m_Extractor.hasNext());
         assertEquals(initialResponse4, streamToString(m_Extractor.next().get()));
+        assertTrue(m_Extractor.hasNext());
         assertFalse(m_Extractor.next().isPresent());
         assertFalse(m_Extractor.hasNext());
 
@@ -1062,7 +1097,7 @@ public class ElasticsearchDataExtractorTest
                 + "          \"must\":{"
                 + "            \"range\": {"
                 + "              \"time\": {"
-                + "                \"gte\": \"2014-05-13T18:53:21.000Z\","
+                + "                \"gte\": \"2014-05-13T19:53:21.000Z\","
                 + "                \"lt\": \"2014-08-05T00:53:20.000Z\","
                 + "                \"format\": \"date_time\""
                 + "              }"
@@ -1084,6 +1119,10 @@ public class ElasticsearchDataExtractorTest
         assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody.replace(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/dataIndex/_settings", requestParams.url);
+        assertNull(requestParams.requestBody);
+
+        requestParams = requester.getGetRequestParams(requestCount++);
         expectedSearchBody = "{"
                 + "  \"sort\": ["
                 + "    {\"time\": {\"order\": \"asc\"}}"
@@ -1099,7 +1138,7 @@ public class ElasticsearchDataExtractorTest
                 + "            \"range\": {"
                 + "              \"time\": {"
                 + "                \"gte\": \"2014-05-13T18:53:21.000Z\","
-                + "                \"lt\": \"2014-08-05T00:53:20.000Z\","
+                + "                \"lt\": \"2014-05-13T18:53:31.000Z\","
                 + "                \"format\": \"date_time\""
                 + "              }"
                 + "            }"
@@ -1116,10 +1155,72 @@ public class ElasticsearchDataExtractorTest
         assertEquals("http://localhost:9200/_search/scroll?scroll=60m", requestParams.url);
         assertEquals("scrollId_7", requestParams.requestBody);
 
+        requestParams = requester.getGetRequestParams(requestCount++);
+        expectedSearchBody = "{"
+                + "  \"sort\": ["
+                + "    {\"time\": {\"order\": \"asc\"}}"
+                + "  ],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\": {"
+                + "            \"match_all\":{}"
+                + "          },"
+                + "          \"must\": {"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": \"2014-05-13T18:53:31.000Z\","
+                + "                \"lt\": \"2014-05-13T18:53:41.000Z\","
+                + "                \"format\": \"date_time\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals("http://localhost:9200/index_2/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
+
+        requestParams = requester.getGetRequestParams(requestCount++);
+        assertEquals("http://localhost:9200/index_2/dataType/_search?size=1", requestParams.url);
+        expectedDataSummaryBody = "{"
+                + "  \"sort\": [{\"_doc\":{\"order\":\"asc\"}}],"
+                + "  \"query\": {"
+                + "    \"filtered\": {"
+                + "      \"filter\": {"
+                + "        \"bool\": {"
+                + "          \"must\":{\"match_all\":{}},"
+                + "          \"must\":{"
+                + "            \"range\": {"
+                + "              \"time\": {"
+                + "                \"gte\": \"2014-05-13T18:53:41.000Z\","
+                + "                \"lt\": \"2014-08-05T00:53:20.000Z\","
+                + "                \"format\": \"date_time\""
+                + "              }"
+                + "            }"
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\":{"
+                + "    \"earliestTime\":{"
+                + "      \"min\":{\"field\":\"time\"}"
+                + "    },"
+                + "    \"latestTime\":{"
+                + "      \"max\":{\"field\":\"time\"}"
+                + "    }"
+                + "  }"
+                + "}";
+        assertEquals(expectedDataSummaryBody.replace(" ", ""), requestParams.requestBody.replace(" ", ""));
+
         assertEquals(requestCount, requester.m_RequestCount);
 
-        String[] deletedScrollIds = {"scrollId_3", "scrollId_5", "scrollId_6", "scrollId_8"};
-        assertEquals(4, requester.m_DeleteRequestParams.size());
+        String[] deletedScrollIds = {"scrollId_3", "scrollId_5", "scrollId_6", "scrollId_8", "scrollId_9"};
+        assertEquals(5, requester.m_DeleteRequestParams.size());
         for (int i = 0; i < deletedScrollIds.length; i++)
         {
             assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(i).url);

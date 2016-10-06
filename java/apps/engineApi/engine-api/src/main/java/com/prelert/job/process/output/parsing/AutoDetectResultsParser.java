@@ -29,6 +29,7 @@ package com.prelert.job.process.output.parsing;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -151,37 +152,47 @@ public class AutoDetectResultsParser
      * Wait for a particular flush ID to be received by the parser.  In
      * order to wait, this method must be called after parsing has started.
      * It will give up waiting if parsing finishes before the flush ID is
-     * seen.
+     * seen or the timeout expires.
      * @param flushId The ID to wait for.
-     * @return true if the supplied flush ID was seen; false if parsing finished
-     * before the supplied flush ID was seen.
+     * @param timeout the timeout
+     * @return true if the supplied flush ID was seen or parsing finished; false if the timeout expired.
      */
-    public boolean waitForFlushAcknowledgement(String flushId)
-    throws InterruptedException
+    public boolean waitForFlushAcknowledgement(String flushId, Duration timeout)
     {
         synchronized (m_AcknowledgedFlushes)
         {
-            while (m_ParsingInProgress && !m_AcknowledgedFlushes.contains(flushId))
+            try
             {
-                m_AcknowledgedFlushes.wait();
+                m_AcknowledgedFlushes.wait(timeout.toMillis());
             }
-            return m_AcknowledgedFlushes.remove(flushId);
+            catch (InterruptedException e)
+            {
+                Thread.currentThread().interrupt();
+            }
+            boolean isFlushAcknowledged = m_AcknowledgedFlushes.remove(flushId);
+            return isFlushAcknowledged || m_ParsingInProgress == false;
         }
     }
 
 
     /**
      * Can be used by unit tests to ensure the pre-condition of the
-     * {@link #waitForFlushAcknowledgement(String) waitForFlushAcknowledgement} method is met.
+     * {@link #waitForFlushAcknowledgement(String, Duration) waitForFlushAcknowledgement} method is met.
      */
     void waitForParseStart()
-    throws InterruptedException
     {
         synchronized (m_AcknowledgedFlushes)
         {
             while (!m_ParsingStarted)
             {
-                m_AcknowledgedFlushes.wait();
+                try
+                {
+                    m_AcknowledgedFlushes.wait();
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
     }

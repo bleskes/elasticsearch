@@ -85,7 +85,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     {
         m_ScrollState.reset();
         m_CurrentStartTime = startEpochMs;
-        m_CurrentEndTime = startEpochMs;
+        m_CurrentEndTime = endEpochMs;
         m_EndTime = endEpochMs;
         m_IsCancelled = false;
         m_Logger = logger;
@@ -106,7 +106,6 @@ public class ElasticsearchDataExtractor implements DataExtractor
 
     private void setUpChunkedSearch() throws IOException
     {
-        m_CurrentEndTime = m_EndTime;
         m_Chunk = null;
         String url = m_UrlBuilder.buildSearchSizeOneUrl();
         String response = requestAndGetStringResponse(url,
@@ -116,19 +115,19 @@ public class ElasticsearchDataExtractor implements DataExtractor
         {
             // Aggregation value may be a double
             m_CurrentStartTime = (long) matchDouble(response, EARLIEST_TIME_PATTERN);
-            m_CurrentEndTime = m_CurrentStartTime;
             long latestTime = (long) matchDouble(response, LATEST_TIME_PATTERN);
             long dataTimeSpread = latestTime - m_CurrentStartTime;
-            if (dataTimeSpread > 0)
-            {
-                String index = matchString(response, INDEX_PATTERN);
-                long shards = readNumberOfShards(index);
-                m_Chunk = Math.max(MIN_CHUNK_SIZE_MS,
-                        (shards * m_ScrollSize * dataTimeSpread) / totalHits);
-                m_Logger.debug("Chunked search configured:  totalHits = " + totalHits
-                        + ", dataTimeSpread = " + dataTimeSpread + " ms, chunk size = " + m_Chunk
-                        + " ms");
-            }
+            String index = matchString(response, INDEX_PATTERN);
+            long shards = readNumberOfShards(index);
+            m_Chunk = Math.max(MIN_CHUNK_SIZE_MS, (shards * m_ScrollSize * dataTimeSpread) / totalHits);
+            m_CurrentEndTime = m_CurrentStartTime + m_Chunk;
+            m_Logger.debug("Chunked search configured:  totalHits = " + totalHits
+                    + ", dataTimeSpread = " + dataTimeSpread + " ms, chunk size = " + m_Chunk
+                    + " ms");
+        }
+        else
+        {
+            m_CurrentStartTime = m_EndTime;
         }
     }
 
@@ -224,11 +223,12 @@ public class ElasticsearchDataExtractor implements DataExtractor
             if (m_ScrollState.isComplete())
             {
                 clearScroll();
+                advanceTime();
 
                 // If it was a new scroll it means it returned 0 hits. If we are doing
                 // a chunked search, we reconfigure the search in order to jump to the next
                 // time interval where there are data.
-                if (isNewScroll && !m_IsCancelled && m_Chunk != null)
+                if (isNewScroll && hasNext() && !m_IsCancelled && m_Chunk != null)
                 {
                     setUpChunkedSearch();
                 }
@@ -269,12 +269,11 @@ public class ElasticsearchDataExtractor implements DataExtractor
     @Override
     public boolean hasNext()
     {
-        return !m_ScrollState.isComplete() || (!m_IsCancelled && m_CurrentEndTime < m_EndTime);
+        return !m_ScrollState.isComplete() || (!m_IsCancelled && m_CurrentStartTime < m_EndTime);
     }
 
     private InputStream initScroll() throws IOException
     {
-        advanceTime();
         String url = buildInitScrollUrl();
         String searchBody = m_QueryBuilder.createSearchBody(m_CurrentStartTime, m_CurrentEndTime);
         m_Logger.trace("About to submit body " + searchBody + " to URL " + url);
@@ -290,8 +289,7 @@ public class ElasticsearchDataExtractor implements DataExtractor
     private void advanceTime()
     {
         m_CurrentStartTime = m_CurrentEndTime;
-        m_CurrentEndTime = m_Chunk == null ? m_EndTime
-                : Math.min(m_CurrentStartTime + m_Chunk, m_EndTime);
+        m_CurrentEndTime = m_Chunk == null ? m_EndTime : Math.min(m_CurrentStartTime + m_Chunk, m_EndTime);
     }
 
     private String buildInitScrollUrl() throws IOException
