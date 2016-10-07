@@ -38,7 +38,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -58,21 +57,11 @@ public class TestUtils {
     private static final DateTimeFormatter dateTimeFormatter = formatDateTimeFormatter.printer();
 
     public static String dateMathString(String time, final long now) {
-        return dateTimeFormatter.print(dateMathParser.parse(time, new Callable<Long>() {
-            @Override
-            public Long call() throws Exception {
-                return now;
-            }
-        }));
+        return dateTimeFormatter.print(dateMathParser.parse(time, () -> now));
     }
 
     public static long dateMath(String time, final long now) {
-        return dateMathParser.parse(time, new Callable<Long>() {
-            @Override
-            public Long call() throws Exception {
-                return now;
-            }
-        });
+        return dateMathParser.parse(time, () -> now);
     }
 
     public static LicenseSpec generateRandomLicenseSpec(int version) {
