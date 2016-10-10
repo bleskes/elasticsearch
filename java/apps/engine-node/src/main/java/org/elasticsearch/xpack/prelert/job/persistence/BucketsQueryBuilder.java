@@ -16,6 +16,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.utils.Strings;
 
 import java.util.Objects;
@@ -88,6 +89,15 @@ public final class BucketsQueryBuilder {
         return this;
     }
 
+    public BucketsQueryBuilder sortField(String sortField) {
+        bucketsQuery.sortField = sortField;
+        return this;
+    }
+
+    public BucketsQueryBuilder sortDescending(boolean sortDescending) {
+        bucketsQuery.sortDescending = sortDescending;
+        return this;
+    }
 
     /**
      * If startTime <= 0 the parameter is not set
@@ -130,6 +140,8 @@ public final class BucketsQueryBuilder {
         private String epochStart;
         private String epochEnd;
         private String partitionValue = null;
+        private String sortField = Bucket.TIMESTAMP;
+        private boolean sortDescending = false;
 
         public int getSkip() {
             return skip;
@@ -170,11 +182,18 @@ public final class BucketsQueryBuilder {
             return partitionValue;
         }
 
+        public String getSortField() {
+            return sortField;
+        }
+
+        public boolean isSortDescending() {
+            return sortDescending;
+        }
+
         @Override
         public int hashCode() {
-            return Objects.hash(skip, take, expand, includeInterim,
-                    anomalyScoreFilter, normalizedProbability,
-                    epochStart, epochEnd, partitionValue);
+            return Objects.hash(skip, take, expand, includeInterim, anomalyScoreFilter, normalizedProbability, epochStart, epochEnd,
+                    partitionValue, sortField, sortDescending);
         }
 
 
@@ -199,7 +218,9 @@ public final class BucketsQueryBuilder {
                     Objects.equals(epochStart, other.epochStart) &&
                     Objects.equals(anomalyScoreFilter, other.anomalyScoreFilter) &&
                     Objects.equals(normalizedProbability, other.normalizedProbability) &&
-                    Objects.equals(partitionValue, other.partitionValue);
+                    Objects.equals(partitionValue, other.partitionValue) &&
+                    Objects.equals(sortField, other.sortField) &&
+                    this.sortDescending == other.sortDescending;
         }
 
     }

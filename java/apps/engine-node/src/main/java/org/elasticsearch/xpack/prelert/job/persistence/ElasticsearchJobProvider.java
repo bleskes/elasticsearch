@@ -52,9 +52,17 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.xpack.prelert.job.CategorizerState;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
+import org.elasticsearch.xpack.prelert.job.JsonViews;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -67,11 +75,27 @@ import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
-import org.elasticsearch.xpack.prelert.job.results.*;
+import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
+import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
+import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
+import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -550,11 +574,10 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 .interim(Bucket.IS_INTERIM, query.isIncludeInterim())
                 .build();
 
+        SortBuilder sortBuilder = new FieldSortBuilder(esSortField(query.getSortField()))
+                .order(query.isSortDescending() ? SortOrder.DESC : SortOrder.ASC);
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
-        QueryPage<Bucket> buckets = buckets(elasticJobId,
-                            query.isIncludeInterim(),
-                            query.getSkip(), query.getTake(), fb);
-
+        QueryPage<Bucket> buckets = buckets(elasticJobId, query.isIncludeInterim(), query.getSkip(), query.getTake(), fb, sortBuilder);
 
         if (Strings.isNullOrEmpty(query.getPartitionValue()))
         {
@@ -620,11 +643,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean includeInterim,
-            int skip, int take, QueryBuilder fb) throws ResourceNotFoundException
+            int skip, int take, QueryBuilder fb, SortBuilder sb) throws ResourceNotFoundException
     {
-        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchMappings.ES_TIMESTAMP)
-                    .order(SortOrder.ASC);
-
         SearchResponse searchResponse;
         try {
             LOGGER.trace("ES API CALL: search all of type " + Bucket.TYPE +

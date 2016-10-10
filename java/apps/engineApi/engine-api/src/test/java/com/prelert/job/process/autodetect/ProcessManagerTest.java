@@ -27,33 +27,6 @@
 
 package com.prelert.job.process.autodetect;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
-
-import org.apache.log4j.Logger;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.prelert.job.AnalysisConfig;
 import com.prelert.job.DataCounts;
@@ -81,6 +54,29 @@ import com.prelert.job.status.OutOfOrderRecordsException;
 import com.prelert.job.status.StatusReporter;
 import com.prelert.job.transform.TransformConfigs;
 import com.prelert.job.usage.UsageReporter;
+import org.apache.log4j.Logger;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 public class ProcessManagerTest
 {
@@ -141,6 +137,8 @@ public class ProcessManagerTest
         MockProcessBuilder mockProcessBuilder = new MockProcessBuilder();
         ProcessAndDataDescription process = mockProcessBuilder.stillRunning(true).build();
         when(m_ProcessFactory.createProcess(m_Job, false)).thenReturn(process);
+
+        when(mockProcessBuilder.m_ResultsReader.waitForFlushAcknowledgement(anyString(), any(Duration.class))).thenReturn(true);
 
         InputStream inputStream = createInputStream("");
         m_ProcessManager.processDataLoadJob(m_Job, inputStream, createNoPersistNoResetDataLoadParams());

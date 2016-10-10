@@ -52,6 +52,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
@@ -120,6 +121,7 @@ import com.prelert.job.manager.actions.ScheduledAction;
 import com.prelert.job.messages.Messages;
 import com.prelert.job.password.PasswordManager;
 import com.prelert.job.persistence.BatchedDocumentsIterator;
+import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.persistence.DataStoreException;
 import com.prelert.job.persistence.JobDataDeleterFactory;
 import com.prelert.job.persistence.JobProvider;
@@ -154,12 +156,13 @@ public class JobManagerTest
     @Mock private JobDataDeleterFactory m_JobDataDeleter;
 
     @Before
-    public void setUp()
+    public void setUp() throws UnknownJobException
     {
         MockitoAnnotations.initMocks(this);
         when(m_JobProvider.jobIdIsUnique("not-unique")).thenReturn(false);
         when(m_JobProvider.jobIdIsUnique(not(eq("not-unique")))).thenReturn(true);
         when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
+        when(m_JobProvider.buckets(anyString(), any(BucketsQuery.class))).thenReturn(new QueryPage<>(Collections.emptyList(), 0));
     }
 
     @After

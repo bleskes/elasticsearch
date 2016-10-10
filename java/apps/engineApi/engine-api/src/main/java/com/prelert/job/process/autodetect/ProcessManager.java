@@ -31,6 +31,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -336,25 +337,22 @@ public class ProcessManager
             writer.writeCalcInterimMessage(interimResultsParams);
             String flushId = writer.writeFlushMessage();
 
-            // Check there wasn't an error in the transfer.
-            // Throws if there was.
+            Duration intermittentTimeout = Duration.ofSeconds(10);
+            boolean isFlushComplete = false;
+            while (isFlushComplete == false)
+            {
+                // Check there wasn't an error in the transfer. Throws if there was.
+                processStillRunning(process);
+                isFlushComplete = process.getResultsReader().waitForFlushAcknowledgement(flushId, intermittentTimeout);
+            }
+
+            // We also have to wait for the normaliser to become idle so that we block
+            // clients from querying results in the middle of normalisation.
+            process.getResultsReader().waitUntilRenormaliserIsIdle();
+
+            // Final check that the process is still running to ensure the response
+            // has an error if the process crashed.
             processStillRunning(process);
-
-            process.getResultsReader().waitForFlushComplete(flushId);
-
-            // This test detects if the back-end process crashed while
-            // processing the flush.   Throws if it did.
-            processStillRunning(process);
-        }
-        catch (InterruptedException ie)
-        {
-            Thread.currentThread().interrupt();
-            String msg = String.format("Interrupted while flushing process for job %s", jobId);
-
-            process.getLogger().error(msg);
-
-            throw new NativeProcessRunException(msg,
-                    ErrorCodes.NATIVE_PROCESS_FLUSH_INTERRUPTED);
         }
         catch (IOException ioe)
         {

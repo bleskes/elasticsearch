@@ -29,6 +29,7 @@ package com.prelert.job.persistence;
 import java.util.Objects;
 
 import com.prelert.utils.Strings;
+import com.prelert.job.results.Bucket;
 
 /**
  * One time query builder for buckets.
@@ -136,6 +137,18 @@ public final class BucketsQueryBuilder
         return this;
     }
 
+    public BucketsQueryBuilder sortField(String sortField)
+    {
+        m_BucketsQuery.m_SortField = sortField;
+        return this;
+    }
+
+    public BucketsQueryBuilder sortDescending(boolean sortDescending)
+    {
+        m_BucketsQuery.m_SortDescending = sortDescending;
+        return this;
+    }
+
     public BucketsQueryBuilder.BucketsQuery build()
     {
         return m_BucketsQuery;
@@ -158,6 +171,8 @@ public final class BucketsQueryBuilder
         private long m_EpochStart = -1;
         private long m_EpochEnd = -1;
         private String m_PartitionValue = null;
+        private String m_SortField = Bucket.TIMESTAMP;
+        private boolean m_SortDescending = false;
 
         public int getSkip()
         {
@@ -207,11 +222,21 @@ public final class BucketsQueryBuilder
             return m_PartitionValue;
         }
 
+        public String getSortField()
+        {
+            return m_SortField;
+        }
+
+        public boolean isSortDescending()
+        {
+            return m_SortDescending;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(m_Skip, m_Take, m_Expand, m_IncludeInterim,
                         m_AnomalyScoreFilter, m_NormalizedProbability,
-                        m_EpochStart, m_EpochEnd, m_PartitionValue);
+                        m_EpochStart, m_EpochEnd, m_PartitionValue, m_SortField, m_SortDescending);
         }
 
 
@@ -239,7 +264,9 @@ public final class BucketsQueryBuilder
                    this.m_EpochStart == other.m_EpochStart &&
                    this.m_AnomalyScoreFilter == other.m_AnomalyScoreFilter &&
                    this.m_NormalizedProbability == other.m_NormalizedProbability &&
-                   this.m_PartitionValue == other.m_PartitionValue;
+                   Objects.equals(m_PartitionValue, other.m_PartitionValue) &&
+                   Objects.equals(m_SortField, other.m_SortField) &&
+                   this.m_SortDescending == other.m_SortDescending;
         }
 
     }

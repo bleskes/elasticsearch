@@ -86,12 +86,16 @@ import com.prelert.job.errorcodes.ErrorCodes;
 import com.prelert.job.exceptions.JobInUseException;
 import com.prelert.job.exceptions.LicenseViolationException;
 import com.prelert.job.logging.JobLoggerFactory;
+import com.prelert.job.persistence.BucketsQueryBuilder;
+import com.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import com.prelert.job.persistence.JobProvider;
+import com.prelert.job.persistence.QueryPage;
 import com.prelert.job.process.exceptions.MalformedJsonException;
 import com.prelert.job.process.exceptions.MissingFieldException;
 import com.prelert.job.process.exceptions.NativeProcessRunException;
 import com.prelert.job.process.params.DataLoadParams;
 import com.prelert.job.process.params.InterimResultsParams;
+import com.prelert.job.results.Bucket;
 import com.prelert.job.status.HighProportionOfBadTimestampsException;
 import com.prelert.job.status.OutOfOrderRecordsException;
 
@@ -128,6 +132,7 @@ public class JobSchedulerTest
         when(m_JobProvider.audit(anyString())).thenReturn(m_Auditor);
         recordSchedulerStatus();
         recordSchedulerStoppedAudited();
+        givenNoExistingBuckets();
     }
 
     @Test
@@ -299,18 +304,10 @@ public class JobSchedulerTest
                 continue;
             }
 
-            if (i == 1)
-            {
-                // Assert first real-time search
-                assertEquals(lookbackLatestRecordTime + 1, searchStart);
-                assertTrue(searchEnd > lookbackLatestRecordTime + 1);
-            }
-            else
-            {
-                // Assert rest of real-time searches
-                assertEquals(dataExtractor.getEnd(i - 1), dataExtractor.getStart(i));
-                assertEquals(searchStart + m_Frequency.toMillis(), searchEnd);
-            }
+            assertTrue(searchStart > dataExtractor.getStart(i - 1));
+            assertTrue(searchStart < System.currentTimeMillis());
+            assertTrue(searchEnd > dataExtractor.getEnd(i - 1));
+            assertTrue(searchEnd < System.currentTimeMillis());
 
             assertTrue(flushParams.get(i).shouldAdvanceTime());
             assertEquals("i=" + i, Math.min(calcAlignedBucketEnd(latestRecordTimes[i]), searchEnd),
@@ -348,10 +345,12 @@ public class JobSchedulerTest
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
-        assertEquals(1, flushParams.size());
+        assertEquals(2, flushParams.size());
 
         assertTrue(flushParams.get(0).shouldCalculateInterim());
         assertFalse(flushParams.get(0).shouldAdvanceTime());
+        assertTrue(flushParams.get(1).shouldCalculateInterim());
+        assertTrue(flushParams.get(1).shouldAdvanceTime());
     }
 
     @Test
@@ -387,8 +386,13 @@ public class JobSchedulerTest
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         assertEquals(1400000000000L, dataExtractor.getStart(0));
-        assertEquals(1400000000000L, dataExtractor.getStart(1));
-        assertTrue(dataProcessor.getFlushParams().isEmpty());
+        assertTrue(dataExtractor.getStart(1) < System.currentTimeMillis());
+        assertEquals(10, dataProcessor.getFlushParams().size());
+        assertFalse(dataProcessor.getFlushParams().get(0).shouldAdvanceTime());
+        for (int i = 1; i < dataProcessor.getFlushParams().size(); i++)
+        {
+            assertTrue(dataProcessor.getFlushParams().get(i).shouldAdvanceTime());
+        }
 
         assertTrue(dataProcessor.isJobClosed());
         verify(m_Auditor).warning("Scheduler has been retrieving no data for a while");
@@ -420,7 +424,7 @@ public class JobSchedulerTest
         assertEquals(0, dataProcessor.getNumberOfStreams());
         assertEquals(1400000000000L, dataExtractor.getStart(0));
         assertEquals(1400000001000L, dataExtractor.getEnd(0));
-        assertEquals(0, dataProcessor.getFlushParams().size());
+        assertEquals(1, dataProcessor.getFlushParams().size());
 
         // Repeat to test that scheduler did not advance time
         m_JobScheduler.start(new JobDetails(), 1400000000000L, OptionalLong.of(1400000001000L),
@@ -450,11 +454,11 @@ public class JobSchedulerTest
         verify(dataExtractor).clear();
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
-        assertEquals(0, dataProcessor.getFlushParams().size());
+        assertEquals(1, dataProcessor.getFlushParams().size());
     }
 
     @Test
-    public void testStart_GivenLatestRecordTimestampIsBeforeSchedulerStartTime()
+    public void testStart_GivenLatestRecordTimestampIsAfterSchedulerStartTime()
             throws CannotStartSchedulerException, CannotStopSchedulerException
     {
         JobDetails job = new JobDetails(JOB_ID, new JobConfiguration());
@@ -484,7 +488,38 @@ public class JobSchedulerTest
     }
 
     @Test
-    public void testStart_GivenLatestRecordTimestampIsAfterSchedulerStartTime()
+    public void testStart_GivenLastFinalBucketEndAfterLatestRecordTimestampAndAfterSchedulerStartTime()
+            throws CannotStartSchedulerException, CannotStopSchedulerException, UnknownJobException
+    {
+        JobDetails job = new JobDetails(JOB_ID, new JobConfiguration());
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setLatestRecordTimeStamp(new Date(1455000000000L));
+        job.setCounts(dataCounts);
+        givenLatestFinalBucketTime(1455000000000L);
+
+        MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
+        MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
+                newCounts(67, 1455000000000L)));
+        m_JobScheduler = createJobScheduler(dataExtractor, dataProcessor);
+
+        m_JobScheduler.start(job, 1450000000000L, OptionalLong.of(1460000000000L), m_StopCallback);
+        waitUntilSchedulerStoppedIsAudited();
+        assertEquals(JobSchedulerStatus.STOPPED, m_CurrentStatus);
+        verify(m_StopCallback).call(JOB_ID);
+        assertEquals(1, dataExtractor.m_NCleared);
+
+        assertEquals(1, dataProcessor.getNumberOfStreams());
+        assertEquals("0-0", dataProcessor.getStream(0));
+        assertEquals(1455000002000L, dataExtractor.getStart(0));
+        assertEquals(1460000000000L, dataExtractor.getEnd(0));
+        List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
+        assertEquals(1, flushParams.size());
+        assertTrue(flushParams.get(0).shouldCalculateInterim());
+        assertFalse(flushParams.get(0).shouldAdvanceTime());
+    }
+
+    @Test
+    public void testStart_GivenLatestRecordTimestampIsBeforeSchedulerStartTime()
             throws CannotStartSchedulerException, CannotStopSchedulerException
     {
         JobDetails job = new JobDetails(JOB_ID, new JobConfiguration());
@@ -634,6 +669,29 @@ public class JobSchedulerTest
                 return null;
             }
         }).when(m_Auditor).info("Scheduler stopped");
+    }
+
+    private void givenNoExistingBuckets() throws UnknownJobException
+    {
+        givenLatestFinalBucketTime(null);
+    }
+
+    private void givenLatestFinalBucketTime(Long latestBucketTimeMs) throws UnknownJobException
+    {
+        BucketsQuery latestBucketQuery = new BucketsQueryBuilder().sortField(Bucket.TIMESTAMP).sortDescending(true).take(1)
+                .includeInterim(false).build();
+        QueryPage<Bucket> buckets = null;
+        if (latestBucketTimeMs == null)
+        {
+            buckets = new QueryPage<>(Collections.emptyList(), 0);
+        }
+        else
+        {
+            Bucket bucket = new Bucket();
+            bucket.setTimestamp(new Date(latestBucketTimeMs));
+            buckets = new QueryPage<>(Arrays.asList(bucket), 1);
+        }
+        when(m_JobProvider.buckets(JOB_ID, latestBucketQuery)).thenReturn(buckets);
     }
 
     private void waitUntilSchedulerStoppedIsAudited()
