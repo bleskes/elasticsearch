@@ -1181,11 +1181,11 @@ public class ElasticsearchDataExtractorTest
                 + "    }"
                 + "  }"
                 + "}";
-        assertEquals("http://localhost:9200/index_2/dataType/_search?scroll=60m&size=1000", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?scroll=60m&size=1000", requestParams.url);
         assertEquals(expectedSearchBody.replaceAll(" ", ""), requestParams.requestBody.replaceAll(" ", ""));
 
         requestParams = requester.getGetRequestParams(requestCount++);
-        assertEquals("http://localhost:9200/index_2/dataType/_search?size=1", requestParams.url);
+        assertEquals("http://localhost:9200/index-*/dataType/_search?size=1", requestParams.url);
         expectedDataSummaryBody = "{"
                 + "  \"sort\": [{\"_doc\":{\"order\":\"asc\"}}],"
                 + "  \"query\": {"
