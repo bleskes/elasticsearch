@@ -16,6 +16,7 @@
  */
 package org.elasticsearch.xpack.prelert.utils;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.rest.RestStatus;
@@ -40,6 +41,12 @@ public class ExceptionsHelper {
         String msg = Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId);
         ElasticsearchStatusException e = new ElasticsearchStatusException(msg, RestStatus.BAD_REQUEST);
         e.addHeader("errorCode", ErrorCodes.JOB_ID_TAKEN.getValueString());
+        return e;
+    }
+
+    public static ElasticsearchParseException parseException(String msg, ErrorCodes errorCode) {
+        ElasticsearchParseException e = new ElasticsearchParseException(msg);
+        e.addHeader("errorCode", errorCode.getValueString());
         return e;
     }
 

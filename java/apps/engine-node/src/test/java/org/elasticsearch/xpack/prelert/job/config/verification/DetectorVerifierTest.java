@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
@@ -9,15 +10,12 @@ import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleConditionType;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.junit.Assert;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -49,9 +47,9 @@ public class DetectorVerifierTest extends ESTestCase {
     /**
      * Test the good/bad detector configurations
      *
-     * @throws JobConfigurationException
+     * @throws ElasticsearchParseException
      */
-    public void testVerify() throws JobConfigurationException {
+    public void testVerify() throws ElasticsearchParseException {
         // if nothing else is set the count functions (excluding distinct count)
         // are the only allowable functions
         Detector d = new Detector();
@@ -76,13 +74,13 @@ public class DetectorVerifierTest extends ESTestCase {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, false);
                 Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+            } catch (ElasticsearchParseException e) {
             }
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, true);
                 Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+            } catch (ElasticsearchParseException e) {
             }
         }
 
@@ -91,13 +89,13 @@ public class DetectorVerifierTest extends ESTestCase {
         d.setByFieldName("by");
         try {
             DetectorVerifier.verify(d, false);
-            Assert.fail("JobConfigurationException not thrown when expected");
-        } catch (JobConfigurationException e) {
+            Assert.fail("ElasticsearchParseException not thrown when expected");
+        } catch (ElasticsearchParseException e) {
         }
         try {
             DetectorVerifier.verify(d, true);
-            Assert.fail("JobConfigurationException not thrown when expected");
-        } catch (JobConfigurationException e) {
+            Assert.fail("ElasticsearchParseException not thrown when expected");
+        } catch (ElasticsearchParseException e) {
         }
 
         // an overField on its own is invalid
@@ -105,13 +103,13 @@ public class DetectorVerifierTest extends ESTestCase {
         d.setOverFieldName("over");
         try {
             DetectorVerifier.verify(d, false);
-            Assert.fail("JobConfigurationException not thrown when expected");
-        } catch (JobConfigurationException e) {
+            Assert.fail("ElasticsearchParseException not thrown when expected");
+        } catch (ElasticsearchParseException e) {
         }
         try {
             DetectorVerifier.verify(d, true);
-            Assert.fail("JobConfigurationException not thrown when expected");
-        } catch (JobConfigurationException e) {
+            Assert.fail("ElasticsearchParseException not thrown when expected");
+        } catch (ElasticsearchParseException e) {
         }
 
         // certain fields aren't allowed with certain functions
@@ -124,13 +122,13 @@ public class DetectorVerifierTest extends ESTestCase {
             d.setFunction(f);
             try {
                 DetectorVerifier.verify(d, false);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
             try {
                 DetectorVerifier.verify(d, true);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
         }
 
@@ -145,13 +143,13 @@ public class DetectorVerifierTest extends ESTestCase {
             d.setFunction(f);
             try {
                 DetectorVerifier.verify(d, false);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
             try {
                 DetectorVerifier.verify(d, true);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
         }
 
@@ -187,7 +185,7 @@ public class DetectorVerifierTest extends ESTestCase {
             try {
                 DetectorVerifier.verify(d, true);
                 Assert.assertFalse(Detector.METRIC.equals(f));
-            } catch (JobConfigurationException e) {
+            } catch (ElasticsearchParseException e) {
                 // "metric" is not allowed as the function for pre-summarised input
                 Assert.assertEquals(Detector.METRIC, f);
             }
@@ -228,13 +226,13 @@ public class DetectorVerifierTest extends ESTestCase {
             d.setFunction(f);
             try {
                 DetectorVerifier.verify(d, false);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
             try {
                 DetectorVerifier.verify(d, true);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
         }
 
@@ -274,7 +272,7 @@ public class DetectorVerifierTest extends ESTestCase {
             try {
                 DetectorVerifier.verify(d, true);
                 Assert.assertFalse(Detector.METRIC.equals(f));
-            } catch (JobConfigurationException e) {
+            } catch (ElasticsearchParseException e) {
                 // "metric" is not allowed as the function for pre-summarised input
                 Assert.assertEquals(Detector.METRIC, f);
             }
@@ -293,14 +291,14 @@ public class DetectorVerifierTest extends ESTestCase {
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, false);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, true);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
         }
 
@@ -314,14 +312,14 @@ public class DetectorVerifierTest extends ESTestCase {
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, false);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, true);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
         }
 
@@ -329,13 +327,13 @@ public class DetectorVerifierTest extends ESTestCase {
         d.setFunction(Detector.FREQ_RARE);
         try {
             DetectorVerifier.verify(d, false);
-            Assert.fail("JobConfigurationException not thrown when expected");
-        } catch (JobConfigurationException e) {
+            Assert.fail("ElasticsearchParseException not thrown when expected");
+        } catch (ElasticsearchParseException e) {
         }
         try {
             DetectorVerifier.verify(d, true);
-            Assert.fail("JobConfigurationException not thrown when expected");
-        } catch (JobConfigurationException e) {
+            Assert.fail("ElasticsearchParseException not thrown when expected");
+        } catch (ElasticsearchParseException e) {
         }
 
 
@@ -374,26 +372,26 @@ public class DetectorVerifierTest extends ESTestCase {
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, false);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, true);
-                Assert.fail("JobConfigurationException not thrown when expected");
-            } catch (JobConfigurationException e) {
+                Assert.fail("ElasticsearchParseException not thrown when expected");
+            } catch (ElasticsearchParseException e) {
             }
         }
     }
 
 
-    public void testVerifyExcludeFrequent_GivenNotSet() throws JobConfigurationException {
+    public void testVerifyExcludeFrequent_GivenNotSet() throws ElasticsearchParseException {
         assertTrue(DetectorVerifier.verifyExcludeFrequent(null));
         assertTrue(DetectorVerifier.verifyExcludeFrequent(""));
     }
 
 
-    public void testVerifyExcludeFrequent_GivenValidWord() throws JobConfigurationException {
+    public void testVerifyExcludeFrequent_GivenValidWord() throws ElasticsearchParseException {
         assertTrue(DetectorVerifier.verifyExcludeFrequent("true"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("false"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("by"));
@@ -401,11 +399,11 @@ public class DetectorVerifierTest extends ESTestCase {
     }
 
     public void testVerifyExcludeFrequent_GivenInvalidWord() {
-        ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verifyExcludeFrequent("bananas"));
+        ESTestCase.expectThrows(ElasticsearchParseException.class, () -> DetectorVerifier.verifyExcludeFrequent("bananas"));
     }
 
 
-    public void testVerifyExcludeFrequent_GivenNumber() throws JobConfigurationException {
+    public void testVerifyExcludeFrequent_GivenNumber() throws ElasticsearchParseException {
         assertTrue(DetectorVerifier.verifyExcludeFrequent("0"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("1"));
         assertTrue(DetectorVerifier.verifyExcludeFrequent("-1"));
@@ -425,10 +423,11 @@ public class DetectorVerifierTest extends ESTestCase {
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verify(detector, false));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> DetectorVerifier.verify(detector, false));
 
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME,
                 "[metricName]", "metricValue"),
                 e.getMessage());
@@ -436,7 +435,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
-            throws JobConfigurationException {
+            throws ElasticsearchParseException {
         Detector detector = new Detector();
         detector.setFunction("mean");
         detector.setFieldName("metricVale");
@@ -451,10 +450,11 @@ public class DetectorVerifierTest extends ESTestCase {
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verify(detector, false));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> DetectorVerifier.verify(detector, false));
 
-        assertEquals(ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD_NAME,
                 "[metricName, instance]", "instancE"),
                 e.getMessage());
@@ -477,15 +477,16 @@ public class DetectorVerifierTest extends ESTestCase {
         rule.setRuleConditions(Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> DetectorVerifier.verify(detector, false));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> DetectorVerifier.verify(detector, false));
 
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, "invalid"), e.getMessage());
     }
 
 
-    public void testVerify_GivenValidDetectionRule() throws JobConfigurationException {
+    public void testVerify_GivenValidDetectionRule() throws ElasticsearchParseException {
         Detector detector = new Detector();
         detector.setFunction("mean");
         detector.setFieldName("metricVale");
