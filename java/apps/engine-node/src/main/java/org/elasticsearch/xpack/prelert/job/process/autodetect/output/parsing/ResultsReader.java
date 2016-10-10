@@ -9,6 +9,7 @@ import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 
 /**
  * A runnable class that reads the autodetect process output
@@ -71,12 +72,19 @@ public class ResultsReader implements Runnable {
         return parser.removeObserver(ao);
     }
 
-    public void waitForFlushComplete(String flushId)
+    /**
+     * Blocks until a flush is acknowledged or the timeout expires, whichever happens first.
+     *
+     * @param flushId the id of the flush request to wait for
+     * @param timeout the timeout
+     * @return {@code true} if the flush has completed or the parsing finished; {@code false} if the timeout expired
+     */
+    public void waitForFlushAcknowledgement(String flushId, Duration timeout)
             throws InterruptedException {
-        parser.waitForFlushAcknowledgement(flushId);
+        parser.waitForFlushAcknowledgement(flushId, timeout);
+    }
 
-        // We also have to wait for the normaliser to become idle so that we block
-        // clients from querying results in the middle of normalisation.
+    public void waitUntilRenormaliserIsIdle() {
         renormaliser.waitUntilIdle();
     }
 }

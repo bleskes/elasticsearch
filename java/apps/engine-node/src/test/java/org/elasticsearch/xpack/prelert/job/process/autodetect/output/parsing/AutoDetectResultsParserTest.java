@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -69,11 +70,9 @@ public class AutoDetectResultsParserTest extends ESTestCase {
 
         @Override
         public void run() {
-            try {
-                resultsParser.waitForParseStart();
-                gotAcknowledgement = resultsParser.waitForFlushAcknowledgement(flushId);
-            } catch (InterruptedException e) {
-                fail("Flush waiter run should not have been interrupted");
+            resultsParser.waitForParseStart();
+            while (!gotAcknowledgement) {
+                gotAcknowledgement = resultsParser.waitForFlushAcknowledgement(flushId, Duration.ofMillis(1000));
             }
         }
 
@@ -202,17 +201,13 @@ public class AutoDetectResultsParserTest extends ESTestCase {
 
         AutoDetectResultsParser parser = new AutoDetectResultsParser();
 
-        FlushWaiterThread flushWaiter1 = new FlushWaiterThread(parser, "testing1");
-        FlushWaiterThread flushWaiter2 = new FlushWaiterThread(parser, "testing2");
-        flushWaiter1.start();
-        flushWaiter2.start();
+        FlushWaiterThread flushWaiter = new FlushWaiterThread(parser, "testing1");
+        flushWaiter.start();
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
-        flushWaiter1.joinNoInterrupt();
-        flushWaiter2.joinNoInterrupt();
-        assertTrue(flushWaiter1.gotAcknowledgement());
-        assertFalse(flushWaiter2.gotAcknowledgement());
+        flushWaiter.joinNoInterrupt();
+        assertTrue(flushWaiter.gotAcknowledgement());
 
         List<Bucket> buckets = persister.getBuckets();
 
@@ -302,17 +297,13 @@ public class AutoDetectResultsParserTest extends ESTestCase {
 
         AutoDetectResultsParser parser = new AutoDetectResultsParser();
 
-        FlushWaiterThread flushWaiter1 = new FlushWaiterThread(parser, "testing1");
-        FlushWaiterThread flushWaiter2 = new FlushWaiterThread(parser, "testing2");
-        flushWaiter1.start();
-        flushWaiter2.start();
+        FlushWaiterThread flushWaiter = new FlushWaiterThread(parser, "testing2");
+        flushWaiter.start();
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
-        flushWaiter1.joinNoInterrupt();
-        flushWaiter2.joinNoInterrupt();
-        assertFalse(flushWaiter1.gotAcknowledgement());
-        assertTrue(flushWaiter2.gotAcknowledgement());
+        flushWaiter.joinNoInterrupt();
+        assertTrue(flushWaiter.gotAcknowledgement());
 
         List<Bucket> buckets = persister.getBuckets();
 

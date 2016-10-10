@@ -31,6 +31,8 @@ public class BucketsQueryBuilderTest extends ESTestCase {
         assertEquals(0.0, query.getNormalizedProbability(), 0.0001);
         assertNull(query.getEpochStart());
         assertNull(query.getEpochEnd());
+        assertEquals("timestamp", query.getSortField());
+        assertFalse(query.isSortDescending());
     }
 
     public void testAll() {
@@ -44,6 +46,8 @@ public class BucketsQueryBuilderTest extends ESTestCase {
                 .epochStart("1000")
                 .epochEnd("2000")
                 .partitionValue("foo")
+                .sortField("anomalyScore")
+                .sortDescending(true)
                 .build();
 
         assertEquals(20, query.getSkip());
@@ -55,6 +59,8 @@ public class BucketsQueryBuilderTest extends ESTestCase {
         assertEquals("1000", query.getEpochStart());
         assertEquals("2000", query.getEpochEnd());
         assertEquals("foo", query.getPartitionValue());
+        assertEquals("anomalyScore", query.getSortField());
+        assertTrue(query.isSortDescending());
     }
 
     public void testEqualsHash() {
