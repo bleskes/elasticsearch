@@ -2,14 +2,15 @@
 package org.elasticsearch.xpack.prelert.job.transform.verification;
 
 
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 public class TransformConfigsVerifier
 {
@@ -28,7 +29,7 @@ public class TransformConfigsVerifier
      * @param transforms
      * @return boolean
      */
-    public static boolean verify(List<TransformConfig> transforms) throws JobConfigurationException
+    public static boolean verify(List<TransformConfig> transforms) throws ElasticsearchParseException
     {
         for (TransformConfig tr : transforms)
         {
@@ -40,7 +41,7 @@ public class TransformConfigsVerifier
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_TRANSFORM_OUTPUT_NAME_USED_MORE_THAN_ONCE, duplicatedName);
-             throw new JobConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+            throw ExceptionsHelper.parseException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
         }
 
         // Check for circular dependencies
@@ -50,7 +51,7 @@ public class TransformConfigsVerifier
             TransformConfig tc = transforms.get(index);
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY,
                     tc.type(), tc.getInputs());
-            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_HAS_CIRCULAR_DEPENDENCY);
+            throw ExceptionsHelper.parseException(msg, ErrorCodes.TRANSFORM_HAS_CIRCULAR_DEPENDENCY);
         }
 
         return true;
@@ -117,8 +118,8 @@ public class TransformConfigsVerifier
 
 
     private static boolean checkCircularDependenciesRecursive(TransformConfig transform,
-                                                    List<TransformConfig> transforms,
-                                                    Set<Integer> chain)
+            List<TransformConfig> transforms,
+            Set<Integer> chain)
     {
         boolean result = true;
 

@@ -2,11 +2,10 @@
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
-
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -19,19 +18,19 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
 
     public static Collection<Object[]> getCharactersAndValidity() {
         return Arrays.asList(new Object[][]{
-                // char, isValid?
-                {"a", true},
-                {"[", true},
-                {"]", true},
-                {"(", true},
-                {")", true},
-                {"=", true},
-                {"-", true},
-                {" ", true},
-                {"\"", false},
-                {"\\", false},
-                {"\t", false},
-                {"\n", false},
+            // char, isValid?
+            {"a", true},
+            {"[", true},
+            {"]", true},
+            {"(", true},
+            {")", true},
+            {"=", true},
+            {"-", true},
+            {" ", true},
+            {"\"", false},
+            {"\\", false},
+            {"\t", false},
+            {"\n", false},
         });
     }
 
@@ -81,7 +80,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     public void verify_FieldName() {
         detector.setFieldName(detector.getFieldName() + getCharacterPlusSuffix());
 
-        expectJobConfigurationExceptionWhenCharIsInvalid(
+        expectElasticsearchParseExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
     }
 
@@ -89,7 +88,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     public void verify_ByFieldName() {
         detector.setByFieldName(detector.getByFieldName() + getCharacterPlusSuffix());
 
-        expectJobConfigurationExceptionWhenCharIsInvalid(
+        expectElasticsearchParseExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
     }
 
@@ -97,7 +96,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     public void verify_OverFieldName() {
         detector.setOverFieldName(detector.getOverFieldName() + getCharacterPlusSuffix());
 
-        expectJobConfigurationExceptionWhenCharIsInvalid(
+        expectElasticsearchParseExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
     }
 
@@ -105,7 +104,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     public void verify_PartitionFieldName() {
         detector.setPartitionFieldName(detector.getPartitionFieldName() + getCharacterPlusSuffix());
 
-        expectJobConfigurationExceptionWhenCharIsInvalid(
+        expectElasticsearchParseExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
     }
 
@@ -113,27 +112,27 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     public void verify_FieldNameGivenPresummarised() {
         detector.setFieldName(detector.getFieldName() + getCharacterPlusSuffix());
 
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
+        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
 
     public void verify_ByFieldNameGivenPresummarised() {
         detector.setByFieldName(detector.getByFieldName() + getCharacterPlusSuffix());
 
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
+        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
 
     public void verify_OverFieldNameGivenPresummarised() {
         detector.setOverFieldName(detector.getOverFieldName() + getCharacterPlusSuffix());
 
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
+        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
 
     public void verify_PartitionFieldNameGivenPresummarised() {
         detector.setPartitionFieldName(detector.getPartitionFieldName() + getCharacterPlusSuffix());
-        expectJobConfigurationException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
+        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
 
     private String getCharacterPlusSuffix() {
@@ -148,17 +147,17 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
 
     private void setIsValid(boolean valid) { this.isValid = valid; }
 
-    private void expectJobConfigurationExceptionWhenCharIsInvalid(ErrorCodes errorCode,
-                                                                  LuceneTestCase.ThrowingRunnable runner) {
+    private void expectElasticsearchParseExceptionWhenCharIsInvalid(ErrorCodes errorCode, LuceneTestCase.ThrowingRunnable runner) {
         if (!isValid()) {
-            expectJobConfigurationException(errorCode, runner);
+            expectElasticsearchParseException(errorCode, runner);
         }
     }
 
-    private void expectJobConfigurationException(ErrorCodes errorCode, LuceneTestCase.ThrowingRunnable runner) {
+    private void expectElasticsearchParseException(ErrorCodes errorCode, LuceneTestCase.ThrowingRunnable runner) {
 
-        JobConfigurationException e = ESTestCase.expectThrows(JobConfigurationException.class, runner);
-        assertEquals(errorCode, e.getErrorCode());
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class, runner);
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(errorCode.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     private static Detector createDetectorWithValidFieldNames() {

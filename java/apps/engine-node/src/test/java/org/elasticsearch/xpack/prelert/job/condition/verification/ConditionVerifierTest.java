@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.condition.verification;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
@@ -20,10 +21,11 @@ public class ConditionVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenUnsetOperator() {
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(new Condition()));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> ConditionVerifier.verify(new Condition()));
 
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_OPERATOR), e.getMessage());
     }
 
@@ -32,10 +34,11 @@ public class ConditionVerifierTest extends ESTestCase {
         Condition condition = new Condition();
         condition.setOperator(Operator.NONE);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> ConditionVerifier.verify(condition));
 
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_OPERATOR), e.getMessage());
     }
 
@@ -45,10 +48,11 @@ public class ConditionVerifierTest extends ESTestCase {
         condition.setOperator(Operator.LT);
         condition.setValue("");
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> ConditionVerifier.verify(condition));
 
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, ""), e.getMessage());
     }
 
@@ -58,10 +62,11 @@ public class ConditionVerifierTest extends ESTestCase {
         condition.setOperator(Operator.MATCH);
         condition.setValue("[*");
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> ConditionVerifier.verify(condition));
 
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_REGEX, "[*"), e.getMessage());
     }
 
@@ -70,10 +75,11 @@ public class ConditionVerifierTest extends ESTestCase {
         Condition condition = new Condition();
         condition.setOperator(Operator.MATCH);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> ConditionVerifier.verify(condition));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> ConditionVerifier.verify(condition));
 
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NULL, "[*"), e.getMessage());
     }
 }

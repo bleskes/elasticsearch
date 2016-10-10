@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.condition.verification;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -16,10 +17,10 @@ public class OperatorVerifierTest extends ESTestCase {
 
 
     public void testVerify_unknownOp() {
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> OperatorVerifier.verify("bad_op"));
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class, () -> OperatorVerifier.verify("bad_op"));
 
-        assertEquals(ErrorCodes.CONDITION_UNKNOWN_OPERATOR, e.getErrorCode());
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_UNKNOWN_OPERATOR.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, "bad_op"), e.getMessage());
     }
 }

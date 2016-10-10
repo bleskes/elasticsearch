@@ -1,15 +1,16 @@
 
 package org.elasticsearch.xpack.prelert.job.transform.verification;
 
+import java.util.List;
+
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.xpack.prelert.job.condition.verification.ConditionVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.IntRange;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformType;
-
-import java.util.List;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 public final class TransformConfigVerifier
 {
@@ -21,20 +22,20 @@ public final class TransformConfigVerifier
     /**
      * Checks the transform configuration is valid
      * <ol>
-     * <li>Checks there are the correct number of inputs for a given
-     * transform type and that those inputs are not empty strings</li>
-     * <li>Check the number of arguments is correct for the transform type
-     * and verify the argument (i.e. is is a valid regex)</li>
-     * <li>Check there is a valid number of ouputs for the transform type
-     * and those outputs are not empty strings</li>
+     * <li>Checks there are the correct number of inputs for a given transform
+     * type and that those inputs are not empty strings</li>
+     * <li>Check the number of arguments is correct for the transform type and
+     * verify the argument (i.e. is is a valid regex)</li>
+     * <li>Check there is a valid number of ouputs for the transform type and
+     * those outputs are not empty strings</li>
      * <li>If the transform has a condition verify it</li>
      * </ol>
      *
      * @param tc
      * @return
-     * @throws JobConfigurationException
+     * @throws ElasticsearchParseException
      */
-    public static boolean verify(TransformConfig tc) throws JobConfigurationException
+    public static boolean verify(TransformConfig tc) throws ElasticsearchParseException
     {
         TransformType type;
         try
@@ -43,7 +44,7 @@ public final class TransformConfigVerifier
         }
         catch (IllegalArgumentException e)
         {
-            throw new JobConfigurationException(
+            throw ExceptionsHelper.parseException(
                     Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_UNKNOWN_TYPE, tc.getTransform()),
                     ErrorCodes.UNKNOWN_TRANSFORM);
         }
@@ -57,13 +58,13 @@ public final class TransformConfigVerifier
     }
 
     private static void checkCondition(TransformConfig tc, TransformType type)
-    throws JobConfigurationException
+            throws ElasticsearchParseException
     {
         if (type.hasCondition())
         {
             if (tc.getCondition() == null)
             {
-                throw new JobConfigurationException(
+                throw ExceptionsHelper.parseException(
                         Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CONDITION_REQUIRED,
                                 type.prettyName()),
                         ErrorCodes.TRANSFORM_REQUIRES_CONDITION);
@@ -74,7 +75,7 @@ public final class TransformConfigVerifier
     }
 
     private static void checkInputs(TransformConfig tc, TransformType type)
-    throws JobConfigurationException
+            throws ElasticsearchParseException
     {
         List<String> inputs = tc.getInputs();
         checkValidInputCount(tc, type, inputs);
@@ -82,25 +83,25 @@ public final class TransformConfigVerifier
     }
 
     private static void checkValidInputCount(TransformConfig tc, TransformType type, List<String> inputs)
-            throws JobConfigurationException
+            throws ElasticsearchParseException
     {
         int inputsSize = (inputs == null) ? 0 : inputs.size();
         if (!type.arityRange().contains(inputsSize))
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_INPUT_COUNT,
                     tc.getTransform(), rangeAsString(type.arityRange()), inputsSize);
-            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT);
+            throw ExceptionsHelper.parseException(msg, ErrorCodes.TRANSFORM_INVALID_INPUT_COUNT);
         }
     }
 
     private static void checkInputsAreNonEmptyStrings(TransformConfig tc, List<String> inputs)
-            throws JobConfigurationException
+            throws ElasticsearchParseException
     {
         if (containsEmptyString(inputs))
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_TRANSFORM_INPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
-            throw new JobConfigurationException(msg,
+            throw ExceptionsHelper.parseException(msg,
                     ErrorCodes.TRANSFORM_INPUTS_CANNOT_BE_EMPTY_STRINGS);
         }
     }
@@ -110,13 +111,13 @@ public final class TransformConfigVerifier
         return strings.stream().anyMatch(s -> s.trim().isEmpty());
     }
 
-    private static void checkArguments(TransformConfig tc, TransformType type) throws JobConfigurationException
+    private static void checkArguments(TransformConfig tc, TransformType type) throws ElasticsearchParseException
     {
         checkArgumentsCountValid(tc, type);
         checkArgumentsValid(tc, type);
     }
 
-    private static void checkArgumentsCountValid(TransformConfig tc, TransformType type) throws JobConfigurationException
+    private static void checkArgumentsCountValid(TransformConfig tc, TransformType type) throws ElasticsearchParseException
     {
         List<String> arguments = tc.getArguments();
         int argumentsSize = (arguments == null) ? 0 : arguments.size();
@@ -124,11 +125,11 @@ public final class TransformConfigVerifier
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_ARGUMENT_COUNT,
                     tc.getTransform(), rangeAsString(type.argumentsRange()), argumentsSize);
-            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT);
+            throw ExceptionsHelper.parseException(msg, ErrorCodes.TRANSFORM_INVALID_ARGUMENT_COUNT);
         }
     }
 
-    private static void checkArgumentsValid(TransformConfig tc, TransformType type) throws JobConfigurationException
+    private static void checkArgumentsValid(TransformConfig tc, TransformType type) throws ElasticsearchParseException
     {
 
         if (tc.getArguments() != null)
@@ -146,18 +147,18 @@ public final class TransformConfigVerifier
     {
         switch (type)
         {
-            case REGEX_EXTRACT:
-                return new RegexExtractVerifier();
-            case REGEX_SPLIT:
-                return new RegexPatternVerifier();
-            default:
-                return (argument, config) -> {};
+        case REGEX_EXTRACT:
+            return new RegexExtractVerifier();
+        case REGEX_SPLIT:
+            return new RegexPatternVerifier();
+        default:
+            return (argument, config) -> {};
         }
     }
 
 
     private static void checkOutputs(TransformConfig tc, TransformType type)
-    throws JobConfigurationException
+            throws ElasticsearchParseException
     {
         List<String> outputs = tc.getOutputs();
         checkValidOutputCount(tc, type, outputs);
@@ -165,26 +166,26 @@ public final class TransformConfigVerifier
     }
 
     private static void checkValidOutputCount(TransformConfig tc, TransformType type,
-                                            List<String> outputs)
-    throws JobConfigurationException
+            List<String> outputs)
+            throws ElasticsearchParseException
     {
         int outputsSize = (outputs == null) ? 0 : outputs.size();
         if (!type.outputsRange().contains(outputsSize))
         {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_INVALID_OUTPUT_COUNT,
                     tc.getTransform(), rangeAsString(type.outputsRange()), outputsSize);
-            throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT);
+            throw ExceptionsHelper.parseException(msg, ErrorCodes.TRANSFORM_INVALID_OUTPUT_COUNT);
         }
     }
 
     private static void checkOutputsAreNonEmptyStrings(TransformConfig tc, List<String> outputs)
-            throws JobConfigurationException
+            throws ElasticsearchParseException
     {
         if (containsEmptyString(outputs))
         {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_CONTAIN_EMPTY_STRING, tc.getTransform());
-            throw new JobConfigurationException(msg,
+            throw ExceptionsHelper.parseException(msg,
                     ErrorCodes.TRANSFORM_OUTPUTS_CANNOT_BE_EMPTY_STRINGS);
         }
     }

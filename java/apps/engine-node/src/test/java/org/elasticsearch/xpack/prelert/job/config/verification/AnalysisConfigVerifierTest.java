@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
@@ -32,8 +33,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION, e.getErrorCode());
+        } catch (ElasticsearchParseException e) {
+            assertEquals(1, e.getHeader("errorCode").size());
+            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         // count works with no fields
@@ -44,8 +46,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION, e.getErrorCode());
+        } catch (ElasticsearchParseException e) {
+            assertEquals(1, e.getHeader("errorCode").size());
+            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         // should work now
@@ -64,8 +67,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.UNKNOWN_FUNCTION, e.getErrorCode());
+        } catch (ElasticsearchParseException e) {
+            assertEquals(1, e.getHeader("errorCode").size());
+            assertEquals(ErrorCodes.UNKNOWN_FUNCTION.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         ac.setBatchSpan(-1L);
