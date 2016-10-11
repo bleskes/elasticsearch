@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.prelert.job.persistence;
+package org.elasticsearch.xpack.prelert.lists;
 
 import java.util.ArrayList;
 import java.util.List;

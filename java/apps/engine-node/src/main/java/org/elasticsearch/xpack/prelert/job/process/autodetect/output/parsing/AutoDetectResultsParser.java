@@ -96,7 +96,7 @@ public class AutoDetectResultsParser {
         } finally {
             // Don't leave any threads waiting for flushes in the lurch
             synchronized (acknowledgedFlushes) {
-                // Leave m_ParsingStarted set to true to avoid deadlock in the
+                // Leave parsingStarted set to true to avoid deadlock in the
                 // case where the entire parse happens without the interested
                 // thread getting scheduled
                 parsingInProgress = false;

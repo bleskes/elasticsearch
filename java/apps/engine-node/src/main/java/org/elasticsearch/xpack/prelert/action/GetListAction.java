@@ -46,7 +46,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.persistence.ListDocument;
+import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;

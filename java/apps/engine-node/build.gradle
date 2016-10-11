@@ -28,6 +28,7 @@ dependencies {
     compile group: 'org.elasticsearch.plugin', name: 'transport-netty4-client', version:'5.0.0-beta1'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.6.2'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.6.2'
+    compile group: 'net.sf.supercsv', name: 'super-csv', version:'2.4.0'
 
     testCompile group: 'org.elasticsearch', name: 'rest-api-spec', version: '5.0.0-beta1'
 }
