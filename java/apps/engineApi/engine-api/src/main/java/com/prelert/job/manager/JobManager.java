@@ -160,7 +160,7 @@ public class JobManager implements DataProcessor, Shutdownable, Feature
      * which in turn avoids any version conflict errors from
      * the storage.
      *
-     * TODO This used to be a guava cache. After removing guava,
+     * NORELEASE This used to be a guava cache. After removing guava,
      * a better cache data structure should be used instead of the
      * weak hash map.
      */
