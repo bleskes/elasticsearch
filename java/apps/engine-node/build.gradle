@@ -59,7 +59,20 @@ task startPrelertInBackground() {
         def t = Thread.start {
             startPrelert.execute()
         }
-        sleep 6000
+        while (true) {
+            sleep 500
+            if (prelertStarted()) {
+                break;
+            }
+        }
+    }
+}
+
+static boolean prelertStarted() {
+    try {
+        return new URL("http://localhost:8080/_cat/health").text.contains("green");
+    } catch (Exception e) {
+        return false;
     }
 }
 
