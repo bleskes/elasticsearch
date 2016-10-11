@@ -60,10 +60,8 @@ public interface JobResultsProvider
      * @param skip Skip the first N categories. This parameter is for paging
      * @param take Take only this number of categories
      * @return QueryPage of CategoryDefinition
-     * @throws UnknownJobException If the job id is no recognised
      */
-    QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
-            throws UnknownJobException;
+    QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take);
 
     /**
      * Get the specific CategoryDefinition for the given job and category id.
@@ -71,10 +69,8 @@ public interface JobResultsProvider
      * @param jobId
      * @param categoryId Unique id
      * @return Optional CategoryDefinition
-     * @throws UnknownJobException
      */
-    Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
-            throws UnknownJobException;
+    Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId);
 
     /**
      * Search for anomaly records with the parameters in the

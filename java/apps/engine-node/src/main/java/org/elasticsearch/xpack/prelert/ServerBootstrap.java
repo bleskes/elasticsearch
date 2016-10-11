@@ -35,6 +35,8 @@ import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.watcher.ResourceWatcherService;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
 import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
 import org.elasticsearch.xpack.prelert.action.CreateListAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
@@ -55,8 +57,8 @@ import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
-import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketAction;
-import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
@@ -65,9 +67,11 @@ import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoriesAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoryAction;
+import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
-import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
 
@@ -160,7 +164,9 @@ public class ServerBootstrap {
                     RestValidateDetectorAction.class,
                     RestValidateTransformAction.class,
                     RestValidateTransformsAction.class,
-                    RestClearPrelertAction.class);
+                    RestClearPrelertAction.class,
+                    RestGetCategoriesAction.class,
+                    RestGetCategoryAction.class);
         }
 
         @Override
@@ -181,7 +187,9 @@ public class ServerBootstrap {
                     new ActionHandler<>(ValidateDetectorAction.INSTANCE, ValidateDetectorAction.TransportAction.class),
                     new ActionHandler<>(ValidateTransformAction.INSTANCE, ValidateTransformAction.TransportAction.class),
                     new ActionHandler<>(ValidateTransformsAction.INSTANCE, ValidateTransformsAction.TransportAction.class),
-                    new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class));
+                    new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class),
+                    new ActionHandler<>(GetCategoryDefinitionsAction.INSTANCE, GetCategoryDefinitionsAction.TransportAction.class),
+                    new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class));
         }
     }
 }

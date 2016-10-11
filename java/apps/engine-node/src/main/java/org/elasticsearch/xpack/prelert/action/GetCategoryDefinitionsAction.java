@@ -20,18 +20,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.master.MasterNodeReadOperationRequestBuilder;
-import org.elasticsearch.action.support.master.MasterNodeReadRequest;
-import org.elasticsearch.action.support.master.TransportMasterNodeReadAction;
+import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
-import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.block.ClusterBlockException;
-import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
@@ -41,35 +37,49 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.PrelertServices;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
+import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
 
 import java.io.IOException;
+import java.util.Objects;
 
-public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.Response, GetJobsAction.RequestBuilder> {
+public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsAction.Request, GetCategoryDefinitionsAction.Response, GetCategoryDefinitionsAction.RequestBuilder> {
 
-    public static final GetJobsAction INSTANCE = new GetJobsAction();
-    public static final String NAME = "cluster:admin/prelert/jobs/get";
+    public static final GetCategoryDefinitionsAction INSTANCE = new GetCategoryDefinitionsAction();
+    private static final String NAME = "cluster:admin/prelert/categorydefinitions/get";
 
-    private GetJobsAction() {
+    private GetCategoryDefinitionsAction() {
         super(NAME);
     }
 
     @Override
-    public GetJobsAction.RequestBuilder newRequestBuilder(ElasticsearchClient client) {
+    public RequestBuilder newRequestBuilder(ElasticsearchClient client) {
         return new RequestBuilder(client, this);
     }
 
     @Override
-    public GetJobsAction.Response newResponse() {
+    public Response newResponse() {
         return new Response();
     }
 
-    public static class Request extends MasterNodeReadRequest<Request> {
+    public static class Request extends ActionRequest<Request> {
 
-        private int skip;
-        private int take;
+        private String jobId;
+        private int skip = 0;
+        private int take = 100;
+
+        public Request(String jobId) {
+            this.jobId = Objects.requireNonNull(jobId);
+        }
+
+        private Request() {
+        }
+
+        public String getJobId() {
+            return jobId;
+        }
 
         public int getSkip() {
             return skip;
@@ -93,6 +103,7 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
+            jobId = in.readString();
             skip = in.readInt();
             take = in.readInt();
         }
@@ -100,21 +111,29 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
+            out.writeString(jobId);
             out.writeInt(skip);
             out.writeInt(take);
         }
     }
 
+    public static class RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder> {
+
+        public RequestBuilder(ElasticsearchClient client, GetCategoryDefinitionsAction action) {
+            super(client, action, new Request());
+        }
+    }
 
     public static class Response extends ActionResponse {
 
         private BytesReference response;
 
-        public Response(QueryPage<JobDetails> jobsPage, ObjectMapper objectMapper) throws JsonProcessingException {
-            this.response = new BytesArray(objectMapper.writeValueAsString(jobsPage));
+        public Response(ObjectMapper objectMapper, QueryPage<CategoryDefinition> result) throws JsonProcessingException {
+            this.response = new BytesArray(objectMapper.writeValueAsBytes(result));
         }
 
-        public Response() {}
+        private Response() {
+        }
 
         public BytesReference getResponse() {
             return response;
@@ -133,47 +152,26 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
         }
     }
 
-    public static class RequestBuilder extends MasterNodeReadOperationRequestBuilder<Request, Response, RequestBuilder> {
+    public static class TransportAction extends HandledTransportAction<Request, Response> {
 
-        public RequestBuilder(ElasticsearchClient client, GetJobsAction action) {
-            super(client, action, new Request());
-        }
-    }
-
-    public static class TransportAction extends TransportMasterNodeReadAction<Request, Response> {
-
-        private final PrelertServices prelertServices;
+        private final JobProvider jobProvider;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
-        public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                ThreadPool threadPool, ActionFilters actionFilters,
-                IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
-            super(settings, GetJobsAction.NAME, transportService, clusterService, threadPool, actionFilters,
-                    indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+        public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
+                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
+            super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
+            this.jobProvider = prelertServices.getJobProvider();
         }
 
         @Override
-        protected String executor() {
-            return ThreadPool.Names.SAME;
-        }
-
-        @Override
-        protected Response newResponse() {
-            return new Response();
-        }
-
-        @Override
-        protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            QueryPage<JobDetails> jobsPage = prelertServices.getJobManager().getJobs(request.getSkip(), request.getTake(), state);
-            listener.onResponse(new Response(jobsPage, objectMapper));
-        }
-
-        @Override
-        protected ClusterBlockException checkBlock(Request request, ClusterState state) {
-            return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA_READ);
+        protected void doExecute(Request request, ActionListener<Response> listener) {
+            QueryPage<CategoryDefinition> result = jobProvider.categoryDefinitions(request.jobId, request.skip, request.take);
+            try {
+                listener.onResponse(new Response(objectMapper, result));
+            } catch (JsonProcessingException e) {
+                listener.onFailure(e);
+            }
         }
     }
-
 }

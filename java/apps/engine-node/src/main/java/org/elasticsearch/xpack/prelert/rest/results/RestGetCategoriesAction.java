@@ -14,7 +14,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.xpack.prelert.rest.buckets;
+package org.elasticsearch.xpack.prelert.rest.results;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
@@ -28,30 +28,32 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestBuilderListener;
-import org.elasticsearch.rest.action.RestStatusToXContentListener;
-import org.elasticsearch.xpack.prelert.action.GetBucketAction;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
 
 import static org.elasticsearch.rest.RestStatus.OK;
 
-public class RestGetBucketAction extends BaseRestHandler {
+public class RestGetCategoriesAction extends BaseRestHandler {
 
-    private final GetBucketAction.TransportAction transportAction;
+    private final GetCategoryDefinitionsAction.TransportAction transportAction;
 
     @Inject
-    public RestGetBucketAction(Settings settings, RestController controller, GetBucketAction.TransportAction transportAction) {
+    public RestGetCategoriesAction(Settings settings, RestController controller, GetCategoryDefinitionsAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/bucket/{timestamp}", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/categorydefinitions", this);
     }
 
     @Override
     public void handleRequest(RestRequest restRequest, RestChannel channel, NodeClient client) throws Exception {
-        GetBucketAction.Request request = new GetBucketAction.Request(restRequest.param("jobId"), restRequest.param("timestamp"));
-        request.setExpand(restRequest.paramAsBoolean("expand", false));
-        request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
-        if (restRequest.hasParam("partitionValue")) {
-            request.setPartitionValue(restRequest.param("partitionValue"));
-        }
-        transportAction.execute(request, new RestStatusToXContentListener<>(channel));
+        GetCategoryDefinitionsAction.Request request = new GetCategoryDefinitionsAction.Request(restRequest.param("jobId"));
+        request.setPagination(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100));
+        transportAction.execute(request, new RestBuilderListener<GetCategoryDefinitionsAction.Response>(channel) {
+
+            @Override
+            public RestResponse buildResponse(GetCategoryDefinitionsAction.Response response, XContentBuilder builder) throws Exception {
+                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
+            }
+        });
     }
+
 }

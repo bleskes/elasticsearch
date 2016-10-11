@@ -31,9 +31,10 @@ public class ExceptionsHelper {
         return e;
     }
 
-    public static ResourceNotFoundException missingException(String msg, ErrorCodes errorCode) {
+    public static ResourceNotFoundException missingException(String jobId) {
+        String msg = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
         ResourceNotFoundException e =  new ResourceNotFoundException(msg, RestStatus.BAD_REQUEST);
-        e.addHeader("errorCode", errorCode.getValueString());
+        e.addHeader("errorCode", ErrorCodes.MISSING_JOB_ERROR.getValueString());
         return e;
     }
 

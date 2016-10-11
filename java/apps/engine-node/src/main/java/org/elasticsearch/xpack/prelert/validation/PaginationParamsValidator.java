@@ -43,4 +43,5 @@ public final class PaginationParamsValidator {
                     Messages.REST_INVALID_SKIP_TAKE_SUM, MAX_SKIP_TAKE_SUM_STRING), ErrorCodes.INVALID_TAKE_PARAM);
         }
     }
+
 }

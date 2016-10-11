@@ -14,7 +14,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.xpack.prelert.rest.buckets;
+package org.elasticsearch.xpack.prelert.rest.results;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
@@ -28,41 +28,30 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestBuilderListener;
-import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 
 import static org.elasticsearch.rest.RestStatus.OK;
 
-public class RestGetBucketsAction extends BaseRestHandler {
+public class RestGetBucketAction extends BaseRestHandler {
 
-    private final GetBucketsAction.TransportAction transportAction;
+    private final GetBucketAction.TransportAction transportAction;
 
     @Inject
-    public RestGetBucketsAction(Settings settings, RestController controller, GetBucketsAction.TransportAction transportAction) {
+    public RestGetBucketAction(Settings settings, RestController controller, GetBucketAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/buckets", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/bucket/{timestamp}", this);
     }
 
     @Override
     public void handleRequest(RestRequest restRequest, RestChannel channel, NodeClient client) throws Exception {
-        GetBucketsAction.Request request =
-                new GetBucketsAction.Request(restRequest.param("jobId"), restRequest.param("start"), restRequest.param("end"));
+        GetBucketAction.Request request = new GetBucketAction.Request(restRequest.param("jobId"), restRequest.param("timestamp"));
         request.setExpand(restRequest.paramAsBoolean("expand", false));
         request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
-        request.setSkip(restRequest.paramAsInt("skip", 0));
-        request.setTake(restRequest.paramAsInt("take", 100));
-        request.setAnomalyScore(Double.parseDouble(restRequest.param("anomalyScore", "0.0")));
-        request.setMaxNormalizedProbability(Double.parseDouble(restRequest.param("maxNormalizedProbability", "0.0")));
         if (restRequest.hasParam("partitionValue")) {
             request.setPartitionValue(restRequest.param("partitionValue"));
         }
-
-        transportAction.execute(request, new RestBuilderListener<GetBucketsAction.Response>(channel) {
-
-            @Override
-            public RestResponse buildResponse(GetBucketsAction.Response response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
-            }
-        });
+        transportAction.execute(request, new RestStatusToXContentListener<>(channel));
     }
 }

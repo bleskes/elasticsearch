@@ -46,8 +46,7 @@ public class RestGetJobsAction extends BaseRestHandler {
     @Override
     public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         GetJobsAction.Request getJobsRequest = new GetJobsAction.Request();
-        getJobsRequest.setSkip(request.paramAsInt(SKIP, DEFAULT_SKIP));
-        getJobsRequest.setTake(request.paramAsInt(TAKE, DEFAULT_TAKE));
+        getJobsRequest.setPagination(request.paramAsInt(SKIP, DEFAULT_SKIP), request.paramAsInt(TAKE, DEFAULT_TAKE));
         transportGetJobsAction.execute(getJobsRequest, new RestBuilderListener<GetJobsAction.Response>(channel) {
 
             @Override

@@ -73,7 +73,6 @@ import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -693,8 +692,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                     .setFrom(skip).setSize(take)
                     .get();
         } catch (IndexNotFoundException e) {
-            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
+            throw ExceptionsHelper.missingException(jobId.getId());
         }
 
         List<Bucket> results = new ArrayList<>();
@@ -737,8 +735,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                     .get();
             hits = searchResponse.getHits();
         } catch (IndexNotFoundException e) {
-            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
+            throw ExceptionsHelper.missingException(jobId);
         }
 
         Optional<Bucket> doc = Optional.<Bucket>empty();
@@ -818,8 +815,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         try {
             searchResponse = searchBuilder.get();
         } catch (IndexNotFoundException e) {
-            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
+            throw ExceptionsHelper.missingException(jobId.getId());
         }
 
         List<ScoreTimestamp> results = new ArrayList<>();
@@ -927,9 +923,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     @Override
-    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take)
-            throws UnknownJobException
-    {
+    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take) {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         LOGGER.trace("ES API CALL: search all of type " + CategoryDefinition.TYPE +
                 " from index " + elasticJobId.getIndex() + " sort ascending " + CategoryDefinition.CATEGORY_ID +
@@ -940,13 +934,10 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 .addSort(new FieldSortBuilder(CategoryDefinition.CATEGORY_ID).order(SortOrder.ASC));
 
         SearchResponse searchResponse;
-        try
-        {
+        try {
             searchResponse = searchBuilder.get();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(jobId);
+        } catch (IndexNotFoundException e) {
+            throw ExceptionsHelper.missingException(jobId);
         }
 
         List<CategoryDefinition> results = Arrays.stream(searchResponse.getHits().getHits())
@@ -958,21 +949,16 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
 
     @Override
-    public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId)
-            throws UnknownJobException
-    {
+    public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId) {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         GetResponse response;
 
-        try
-        {
+        try {
             LOGGER.trace("ES API CALL: get ID " + categoryId + " type " + CategoryDefinition.TYPE +
                     " from index " + elasticJobId.getIndex());
             response = client.prepareGet(elasticJobId.getIndex(), CategoryDefinition.TYPE, categoryId).get();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(jobId);
+        } catch (IndexNotFoundException e) {
+            throw ExceptionsHelper.missingException(jobId);
         }
 
         return response.isExists() ? Optional.of(objectMapper.convertValue(response.getSource(),
@@ -1040,8 +1026,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = searchBuilder.get();
         } catch (IndexNotFoundException e) {
-            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-            throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
+            throw ExceptionsHelper.missingException(jobId.getId());
         }
 
         List<AnomalyRecord> results = new ArrayList<>();
