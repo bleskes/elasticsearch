@@ -10,6 +10,7 @@ import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.*;
+import org.elasticsearch.xpack.prelert.job.usage.Usage;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -808,6 +809,41 @@ public class ElasticsearchMappings
                     .endObject()
                 .endObject()
             .endObject();
+    }
+
+    /**
+     * The Elasticsearch mappings for the usage documents
+     *
+     * @return
+     * @throws IOException
+     */
+    public static XContentBuilder usageMapping() throws IOException {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(Usage.TYPE)
+                        .startObject(ALL)
+                            .field(ENABLED, false)
+                            // analyzer must be specified even though _all is disabled
+                            // because all types in the same index must have the same
+                            // analyzer for a given field
+                            .field(ANALYZER, WHITESPACE)
+                        .endObject()
+                        .startObject(PROPERTIES)
+                            .startObject(ES_TIMESTAMP)
+                                .field(TYPE, DATE)
+                            .endObject()
+                            .startObject(Usage.INPUT_BYTES)
+                                .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(Usage.INPUT_FIELD_COUNT)
+                                .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(Usage.INPUT_RECORD_COUNT)
+                                .field(TYPE, LONG)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
     }
 
     public static XContentBuilder auditMessageMapping() throws IOException

@@ -4,12 +4,9 @@ package org.elasticsearch.xpack.prelert.job;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Date;
-
-import static org.junit.Assert.*;
 
 public class ModelSnapshotTest extends ESTestCase {
     private static final Date DEFAULT_TIMESTAMP = new Date();

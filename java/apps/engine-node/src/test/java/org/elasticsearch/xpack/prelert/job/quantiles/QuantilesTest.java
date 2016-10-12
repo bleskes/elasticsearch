@@ -3,12 +3,9 @@ package org.elasticsearch.xpack.prelert.job.quantiles;
 
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Date;
-
-import static org.junit.Assert.*;
 
 public class QuantilesTest extends ESTestCase {
 

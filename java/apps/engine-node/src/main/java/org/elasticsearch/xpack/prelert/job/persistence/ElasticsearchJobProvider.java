@@ -48,6 +48,7 @@ import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -83,6 +84,7 @@ import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
+import org.elasticsearch.xpack.prelert.job.usage.Usage;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -135,6 +137,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
     private static final int RECORDS_TAKE_PARAM = 500;
+    private static final long CLUSTER_INIT_TIMEOUT_MS = 30000;
 
 
     private final Node node;
@@ -182,6 +185,9 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
         LOGGER.info("Elasticsearch cluster '" + client.settings().get("cluster.name")
                 + "' now ready to use");
+
+
+        createUsageMeteringIndex();
     }
 
     @Override
@@ -237,7 +243,36 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         }
     }
 
+    /**
+     * If the {@value ElasticsearchJobProvider#PRELERT_USAGE_INDEX} index does
+     * not exist then create it here with the usage document mapping.
+     */
+    private void createUsageMeteringIndex() {
+        try {
+            LOGGER.trace("ES API CALL: index exists? " + PRELERT_USAGE_INDEX);
+            boolean indexExists = client.admin().indices()
+                    .exists(new IndicesExistsRequest(PRELERT_USAGE_INDEX))
+                    .get().isExists();
 
+            if (indexExists == false) {
+                LOGGER.info("Creating the internal '" + PRELERT_USAGE_INDEX + "' index");
+
+                XContentBuilder usageMapping = ElasticsearchMappings.usageMapping();
+
+                LOGGER.trace("ES API CALL: create index " + PRELERT_USAGE_INDEX);
+                client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)
+                        .setSettings(prelertIndexSettings())
+                        .addMapping(Usage.TYPE, usageMapping)
+                        .get();
+                LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_USAGE_INDEX);
+                client.admin().cluster().prepareHealth(PRELERT_USAGE_INDEX).setWaitForYellowStatus().execute().actionGet();
+            }
+        } catch (InterruptedException | ExecutionException | IOException e) {
+            LOGGER.warn("Error checking the usage metering index", e);
+        } catch (IndexAlreadyExistsException e) {
+            LOGGER.debug("Usage metering index already exists", e);
+        }
+    }
 
     /**
      * If the {@value ElasticsearchJobProvider#PRELERT_INFO_INDEX} index does
