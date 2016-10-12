@@ -366,6 +366,9 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
 
     @Override
     public Role role(String roleName) {
+        if (state() != State.STARTED) {
+            return null;
+        }
         RoleAndVersion roleAndVersion = getRoleAndVersion(roleName);
         return roleAndVersion == null ? null : roleAndVersion.getRole();
     }
@@ -455,6 +458,10 @@ public class NativeRolesStore extends AbstractComponent implements RolesStore, C
     }
 
     private RoleAndVersion getRoleAndVersion(final String roleId) {
+        if (securityIndexExists == false) {
+            return null;
+        }
+
         RoleAndVersion roleAndVersion = null;
         final AtomicReference<GetResponse> getRef = new AtomicReference<>(null);
         final CountDownLatch latch = new CountDownLatch(1);
