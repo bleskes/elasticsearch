@@ -11,21 +11,28 @@ import java.util.Set;
  */
 public class TransformConfigs
 {
-    private List<TransformConfig> tansforms;
+    private List<TransformConfig> transforms;
+
+    public TransformConfigs() {
+        this(null);
+    }
 
     public TransformConfigs(List<TransformConfig> transforms)
     {
-        tansforms = transforms;
-        if (tansforms == null)
+        this.transforms = transforms;
+        if (transforms == null)
         {
-            tansforms = Collections.emptyList();
+            this.transforms = Collections.emptyList();
         }
     }
 
+    public void setTransforms(List<TransformConfig> transforms) {
+        this.transforms = transforms;
+    }
 
     public List<TransformConfig> getTransforms()
     {
-        return tansforms;
+        return transforms;
     }
 
 
@@ -37,7 +44,7 @@ public class TransformConfigs
     public Set<String> inputFieldNames()
     {
         Set<String> fields = new HashSet<>();
-        for (TransformConfig t : tansforms)
+        for (TransformConfig t : transforms)
         {
             fields.addAll(t.getInputs());
         }
@@ -52,7 +59,7 @@ public class TransformConfigs
      */
     public Set<String> outputFieldNames() {
         Set<String> fields = new HashSet<>();
-        for (TransformConfig t : tansforms) {
+        for (TransformConfig t : transforms) {
             fields.addAll(t.getOutputs());
         }
 

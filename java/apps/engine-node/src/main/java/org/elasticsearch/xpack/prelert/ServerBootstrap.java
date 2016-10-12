@@ -17,6 +17,12 @@
 
 package org.elasticsearch.xpack.prelert;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.bootstrap.JarHell;
@@ -35,7 +41,20 @@ import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.elasticsearch.xpack.prelert.action.*;
+import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
+import org.elasticsearch.xpack.prelert.action.CreateListAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+import org.elasticsearch.xpack.prelert.action.GetJobAction;
+import org.elasticsearch.xpack.prelert.action.GetJobsAction;
+import org.elasticsearch.xpack.prelert.action.GetListAction;
+import org.elasticsearch.xpack.prelert.action.PostDataAction;
+import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
+import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
+import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
+import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
+import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
@@ -48,61 +67,55 @@ import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
-import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
+import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
+import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
 
 public class ServerBootstrap {
 
-	private static final String JETTY_PORT_PROPERTY = "jetty.port";
-	private static final String JETTY_HOME_PROPERTY = "jetty.home";
-	private static final String DEFAULT_JETTY_HOME = "cots/jetty";
+    private static final String JETTY_PORT_PROPERTY = "jetty.port";
+    private static final String JETTY_HOME_PROPERTY = "jetty.home";
+    private static final String DEFAULT_JETTY_HOME = "cots/jetty";
 
-	public static final int JETTY_PORT = 8080;
+    public static final int JETTY_PORT = 8080;
 
-	public static void main(String[] args) throws Exception {
-		JarHell.checkJarHell();
-		Settings.Builder settings = Settings.builder();
-		settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
-		settings.put("http.port", System.getProperty(JETTY_PORT_PROPERTY, Integer.toString(JETTY_PORT)));
-		settings.put("cluster.name", "prelert");
+    public static void main(String[] args) throws Exception {
+        JarHell.checkJarHell();
+        Settings.Builder settings = Settings.builder();
+        settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
+        settings.put("http.port", System.getProperty(JETTY_PORT_PROPERTY, Integer.toString(JETTY_PORT)));
+        settings.put("cluster.name", "prelert");
 
-		CountDownLatch latch = new CountDownLatch(1);
-		Node node = new PrelertNode(settings.build());
-		Runtime.getRuntime().addShutdownHook(new Thread() {
+        CountDownLatch latch = new CountDownLatch(1);
+        Node node = new PrelertNode(settings.build());
+        Runtime.getRuntime().addShutdownHook(new Thread() {
 
-			@Override
-			public void run() {
-				try {
-					node.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				} finally {
-					latch.countDown();
-				}
-			}
-		});
-		node.start();
-		latch.await();
-	}
+            @Override
+            public void run() {
+                try {
+                    node.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    latch.countDown();
+                }
+            }
+        });
+        node.start();
+        latch.await();
+    }
 
-	static class PrelertNode extends Node {
+    static class PrelertNode extends Node {
 
-		public PrelertNode(Settings settings) {
-			super(
-					InternalSettingsPreparer.prepareEnvironment(settings, Terminal.DEFAULT),
-					Arrays.asList(PrelertPlugin.class, Netty4Plugin.class)
-					);
-		}
-	}
+        public PrelertNode(Settings settings) {
+            super(InternalSettingsPreparer.prepareEnvironment(settings, Terminal.DEFAULT),
+                    Arrays.asList(PrelertPlugin.class, Netty4Plugin.class));
+        }
+    }
 
-	public static class PrelertPlugin extends Plugin implements ActionPlugin {
+    public static class PrelertPlugin extends Plugin implements ActionPlugin {
 
         private final Settings settings;
 
@@ -114,50 +127,54 @@ public class ServerBootstrap {
             this.settings = settings;
         }
 
-		@Override
+        @Override
         public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
-                                                   ResourceWatcherService resourceWatcherService, ScriptService scriptService,
-                                                   SearchRequestParsers searchRequestParsers) {
+                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
+                SearchRequestParsers searchRequestParsers) {
             return Arrays.asList(
                     new PrelertServices(client, clusterService),
                     new JobAllocator(settings, clusterService, threadPool),
                     new JobLifeCycleService(settings, clusterService)
-            );
-		}
+                    );
+        }
 
-		@Override
-		public List<Class<? extends RestHandler>> getRestHandlers() {
-			return Arrays.asList(
-					RestGetJobAction.class,
-					RestGetJobsAction.class,
-					RestPutJobsAction.class,
-					RestGetListAction.class,
-					RestCreateListAction.class,
-					RestGetBucketsAction.class,
-					RestGetBucketAction.class,
-					RestPostDataAction.class,
-					RestPostDataCloseAction.class,
-					RestPostDataFlushAction.class,
-					RestValidateDetectorAction.class,
+        @Override
+        public List<Class<? extends RestHandler>> getRestHandlers() {
+            return Arrays.asList(
+                    RestGetJobAction.class,
+                    RestGetJobsAction.class,
+                    RestPutJobsAction.class,
+                    RestGetListAction.class,
+                    RestCreateListAction.class,
+                    RestGetBucketsAction.class,
+                    RestGetBucketAction.class,
+                    RestPostDataAction.class,
+                    RestPostDataCloseAction.class,
+                    RestPostDataFlushAction.class,
+                    RestValidateDetectorAction.class,
+                    RestValidateTransformAction.class,
+                    RestValidateTransformsAction.class,
                     RestClearPrelertAction.class);
-		}
+        }
 
-		@Override
-		public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
-			return Arrays.asList(
-					new ActionHandler<>(GetJobAction.INSTANCE, GetJobAction.TransportAction.class),
-					new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),
-					new ActionHandler<>(PutJobAction.INSTANCE, PutJobAction.TransportAction.class),
-					new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
-					new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),
-					new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
-					new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class),
-					new ActionHandler<>(PostDataAction.INSTANCE, PostDataAction.TransportAction.class),
-					new ActionHandler<>(PostDataCloseAction.INSTANCE, PostDataCloseAction.TransportAction.class),
-					new ActionHandler<>(PostDataFlushAction.INSTANCE, PostDataFlushAction.TransportAction.class),
-					new ActionHandler<>(ValidateDetectorAction.INSTANCE, ValidateDetectorAction.TransportAction.class),
+        @Override
+        public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
+            return Arrays.asList(
+                    new ActionHandler<>(GetJobAction.INSTANCE, GetJobAction.TransportAction.class),
+                    new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),
+                    new ActionHandler<>(PutJobAction.INSTANCE, PutJobAction.TransportAction.class),
+                    new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
+                    new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),
+                    new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
+                    new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class),
+                    new ActionHandler<>(PostDataAction.INSTANCE, PostDataAction.TransportAction.class),
+                    new ActionHandler<>(PostDataCloseAction.INSTANCE, PostDataCloseAction.TransportAction.class),
+                    new ActionHandler<>(PostDataFlushAction.INSTANCE, PostDataFlushAction.TransportAction.class),
+                    new ActionHandler<>(ValidateDetectorAction.INSTANCE, ValidateDetectorAction.TransportAction.class),
+                    new ActionHandler<>(ValidateTransformAction.INSTANCE, ValidateTransformAction.TransportAction.class),
+                    new ActionHandler<>(ValidateTransformsAction.INSTANCE, ValidateTransformsAction.TransportAction.class),
                     new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class));
-		}
-	}
+        }
+    }
 
 }

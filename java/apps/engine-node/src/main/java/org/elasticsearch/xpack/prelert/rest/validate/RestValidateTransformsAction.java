@@ -25,24 +25,25 @@ import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
-import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
+import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
 
-public class RestValidateDetectorAction extends BaseRestHandler {
+public class RestValidateTransformsAction extends BaseRestHandler {
 
-    private ValidateDetectorAction.TransportAction transportValidateAction;
+    private ValidateTransformsAction.TransportAction transportValidateAction;
 
     @Inject
-    public RestValidateDetectorAction(Settings settings, RestController controller,
-            ValidateDetectorAction.TransportAction transportValidateAction) {
+    public RestValidateTransformsAction(Settings settings, RestController controller,
+            ValidateTransformsAction.TransportAction transportValidateAction) {
         super(settings);
         this.transportValidateAction = transportValidateAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/validate/detector", this);
+        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/validate/transforms", this);
     }
 
     @Override
     public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        ValidateDetectorAction.Request validateDetectorRequest = new ValidateDetectorAction.Request(request.content());
-        transportValidateAction.execute(validateDetectorRequest, new AcknowledgedRestListener<ValidateDetectorAction.Response>(channel));
+        ValidateTransformsAction.Request validateDetectorRequest = new ValidateTransformsAction.Request(
+                request.content());
+        transportValidateAction.execute(validateDetectorRequest, new AcknowledgedRestListener<ValidateTransformsAction.Response>(channel));
     }
 
 }
