@@ -62,8 +62,7 @@ public enum Action implements ActionState<Action>
         this(messageKey, verbKey, errorCode, false);
     }
 
-    private Action(String messageKey, String verbKey, ErrorCodes errorCode,
-                boolean keepDistributedLock)
+    private Action(String messageKey, String verbKey, ErrorCodes errorCode, boolean keepDistributedLock)
     {
         this.messageKey = messageKey;
         this.verbKey = verbKey;

@@ -4,11 +4,9 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 
@@ -20,7 +18,7 @@ public class ControlMsgToProcessWriter {
     /**
      * This should be the same size as the buffer in the C++ autodetect process.
      */
-    private static final int FLUSH_SPACES_LENGTH = 8192;
+    public static final int FLUSH_SPACES_LENGTH = 8192;
 
     /**
      * This must match the code defined in the api::CAnomalyDetector C++ class.
@@ -35,7 +33,7 @@ public class ControlMsgToProcessWriter {
     /**
      * This must match the code defined in the api::CAnomalyDetector C++ class.
      */
-    private static final String RESET_BUCKETS_MESSAGE_CODE = "r";
+    public static final String RESET_BUCKETS_MESSAGE_CODE = "r";
 
     /**
      * This must match the code defined in the api::CAnomalyDetector C++ class.
@@ -45,7 +43,7 @@ public class ControlMsgToProcessWriter {
     /**
      * This must match the code defined in the api::CAnomalyDetector C++ class.
      */
-    private static final String UPDATE_MESSAGE_CODE = "u";
+    public static final String UPDATE_MESSAGE_CODE = "u";
 
     /**
      * An number to uniquely identify each flush so that subsequent code can
@@ -54,15 +52,26 @@ public class ControlMsgToProcessWriter {
     private static AtomicLong ms_FlushNumber = new AtomicLong(1);
 
     private final LengthEncodedWriter lengthEncodedWriter;
-    private final AnalysisConfig analysisConfig;
+    private final int numberOfAnalysisFields;
 
-    ControlMsgToProcessWriter(LengthEncodedWriter outputStreamWriter, AnalysisConfig analysisConfig) {
-        lengthEncodedWriter = Objects.requireNonNull(outputStreamWriter);
-        this.analysisConfig = Objects.requireNonNull(analysisConfig);
+    /**
+     * Construct the control message writer with a LengthEncodedWriter
+     * @param lengthEncodedWriter
+     * @param numberOfAnalysisFields The number of fields configured for analysis not including the time field
+     */
+    public ControlMsgToProcessWriter(LengthEncodedWriter lengthEncodedWriter, int numberOfAnalysisFields) {
+        this.lengthEncodedWriter = Objects.requireNonNull(lengthEncodedWriter);
+        this.numberOfAnalysisFields= numberOfAnalysisFields;
     }
 
-    public static ControlMsgToProcessWriter create(OutputStream os, AnalysisConfig analysisConfig) {
-        return new ControlMsgToProcessWriter(new LengthEncodedWriter(os), analysisConfig);
+    /**
+     * Create the control message writer with a OutputStream. A LengthEncodedWriter is
+     * created on the OutputStream parameter
+     * @param os
+     * @param numberOfAnalysisFields The number of fields configured for analysis not including the time field
+     */
+    public static ControlMsgToProcessWriter create(OutputStream os, int numberOfAnalysisFields) {
+        return new ControlMsgToProcessWriter(new LengthEncodedWriter(os), numberOfAnalysisFields);
     }
 
     /**
@@ -77,8 +86,7 @@ public class ControlMsgToProcessWriter {
             writeMessage(ADVANCE_TIME_MESSAGE_CODE + params.getAdvanceTime());
         }
         if (params.shouldCalculateInterim()) {
-            writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE, params.getStart(),
-                    params.getEnd());
+            writeControlCodeFollowedByTimeRange(INTERIM_MESSAGE_CODE, params.getStart(), params.getEnd());
         }
     }
 
@@ -109,8 +117,7 @@ public class ControlMsgToProcessWriter {
     }
 
     public void writeResetBucketsMessage(DataLoadParams params) throws IOException {
-        writeControlCodeFollowedByTimeRange(RESET_BUCKETS_MESSAGE_CODE, params.getStart(),
-                params.getEnd());
+        writeControlCodeFollowedByTimeRange(RESET_BUCKETS_MESSAGE_CODE, params.getStart(), params.getEnd());
     }
 
     private void writeControlCodeFollowedByTimeRange(String code, String start, String end)
@@ -134,14 +141,13 @@ public class ControlMsgToProcessWriter {
      * @throws IOException
      */
     private void writeMessage(String message) throws IOException {
-        List<String> analysisFields = analysisConfig.analysisFields();
 
         // The fields consist of all the analysis fields plus the time and the
         // control field, hence + 2
-        lengthEncodedWriter.writeNumFields(analysisFields.size() + 2);
+        lengthEncodedWriter.writeNumFields(numberOfAnalysisFields + 2);
 
         // Write blank values for all analysis fields and the time
-        for (int i = -1; i < analysisFields.size(); ++i) {
+        for (int i = -1; i < numberOfAnalysisFields; ++i) {
             lengthEncodedWriter.writeField("");
         }
 

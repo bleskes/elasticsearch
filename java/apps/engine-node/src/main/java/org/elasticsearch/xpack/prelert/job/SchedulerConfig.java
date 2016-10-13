@@ -438,8 +438,7 @@ public class SchedulerConfig {
     }
 
     @SuppressWarnings("unchecked")
-    private void scanSubLevel(Map<String, Object> subLevel, int depth,
-            SortedMap<Integer, String> orderedFields)
+    private void scanSubLevel(Map<String, Object> subLevel, int depth, SortedMap<Integer, String> orderedFields)
     {
         for (Map.Entry<String, Object> entry : subLevel.entrySet())
         {

@@ -18,8 +18,6 @@ public interface DataToProcessWriter {
     /**
      * Reads the inputIndex, transform to length encoded values and pipe
      * to the OutputStream.
-     * No transformation is applied to the data the timestamp is expected
-     * in seconds from the epoch.
      * If any of the fields in <code>analysisFields</code> or the
      * <code>DataDescription</code>s timeField is missing from the CSV header
      * a <code>MissingFieldException</code> is thrown

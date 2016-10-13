@@ -17,6 +17,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.junit.Assert;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -50,7 +51,7 @@ import org.mockito.MockitoAnnotations;
  */
 public class AbstractDataToProcessWriterTest extends ESTestCase {
     @Mock
-    private LengthEncodedWriter lengthEncodedWriter;
+    private AutodetectProcess autodetectProcess;
     @Mock
     private StatusReporter statusReporter;
     @Mock
@@ -80,7 +81,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, lengthEncodedWriter
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
                 , dd, ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
@@ -146,7 +147,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, lengthEncodedWriter
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
                 , dd, ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
@@ -227,7 +228,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
         
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, lengthEncodedWriter, dd, ac, transforms, statusReporter, jobLogger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -310,7 +311,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(concatTc, hrdTc));
 
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, lengthEncodedWriter
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
                 , dd, ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
@@ -369,7 +370,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(excludeConfig));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, lengthEncodedWriter
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
                 , dd, ac, transforms, statusReporter, jobLogger);
 
         String[] header = {"datetime", "metric", "value"};
@@ -383,7 +384,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         assertFalse(writer.applyTransformsAndWrite(input, output, 3));
 
-        verify(lengthEncodedWriter, never()).writeRecord(output);
+        verify(autodetectProcess, never()).writeRecord(output);
         verify(statusReporter, never()).reportRecordWritten(anyLong(), anyLong());
         verify(statusReporter, times(1)).reportExcludedRecord(3);
 
@@ -396,7 +397,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         assertTrue(writer.applyTransformsAndWrite(input, output, 3));
 
 
-        verify(lengthEncodedWriter, times(1)).writeRecord(expectedOutput);
+        verify(autodetectProcess, times(1)).writeRecord(expectedOutput);
         verify(statusReporter, times(1)).reportRecordWritten(3, 2000);
         verify(statusReporter, never()).reportExcludedRecord(anyLong());
     }
@@ -433,7 +434,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(upperTc, concatTc, splitTc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, lengthEncodedWriter,
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess,
                 dd, ac, transforms, statusReporter, jobLogger);
 
 

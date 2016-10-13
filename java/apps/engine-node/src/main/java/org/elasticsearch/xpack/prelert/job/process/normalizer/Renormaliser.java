@@ -2,7 +2,6 @@
 package org.elasticsearch.xpack.prelert.job.process.normalizer;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 
 public interface Renormaliser {

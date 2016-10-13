@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -42,7 +43,7 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 public class CsvDataToProcessWriterTest extends ESTestCase {
 
     @Mock
-    private LengthEncodedWriter lengthEncodedWriter;
+    private AutodetectProcess autodetectProcess;
     private List<TransformConfig> transforms;
     private DataDescription dataDescription;
     private AnalysisConfig analysisConfig;
@@ -66,7 +67,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
                 writtenRecords.add(copy);
                 return null;
             }
-        }).when(lengthEncodedWriter).writeRecord(any(String[].class));
+        }).when(autodetectProcess).writeRecord(any(String[].class));
 
         transforms = new ArrayList<>();
 
@@ -354,7 +355,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     private CsvDataToProcessWriter createWriter() {
-        return new CsvDataToProcessWriter(true, lengthEncodedWriter, dataDescription,
+        return new CsvDataToProcessWriter(true, autodetectProcess, dataDescription,
                 analysisConfig, new TransformConfigs(transforms),
                 statusReporter, jobLogger);
     }

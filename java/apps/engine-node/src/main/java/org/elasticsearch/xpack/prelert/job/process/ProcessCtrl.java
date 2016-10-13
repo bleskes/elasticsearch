@@ -359,7 +359,7 @@ public class ProcessCtrl {
         return rng.nextInt(SECONDS_IN_HOUR);
     }
 
-    static List<String> buildAutoDetectCommand(JobDetails job, Logger logger,
+    static List<String> buildAutodetectCommand(JobDetails job, Logger logger,
                                                String restoreSnapshotId, boolean ignoreDowntime) {
         List<String> command = new ArrayList<>();
         command.add(AUTODETECT_PATH);

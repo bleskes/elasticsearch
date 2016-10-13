@@ -22,7 +22,7 @@ import java.time.Duration;
 public class ResultsReader implements Runnable {
     private final InputStream stream;
     private final Logger logger;
-    private final AutoDetectResultsParser parser;
+    private final AutodetectResultsParser parser;
     private final Renormaliser renormaliser;
     private final JobResultsPersister resultsPersister;
 
@@ -30,7 +30,7 @@ public class ResultsReader implements Runnable {
                          InputStream stream, Logger logger, boolean isPerPartitionNormalisation) {
         this.stream = stream;
         this.logger = logger;
-        parser = new AutoDetectResultsParser(isPerPartitionNormalisation);
+        parser = new AutodetectResultsParser(isPerPartitionNormalisation);
         this.renormaliser = renormaliser;
         resultsPersister = persister;
     }

@@ -2,7 +2,6 @@
 package org.elasticsearch.xpack.prelert.job.process;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
@@ -15,8 +14,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class ProcessCtrlTest extends ESTestCase {
     @Mock
@@ -37,7 +34,7 @@ public class ProcessCtrlTest extends ESTestCase {
         assertEquals(ProcessCtrl.LIB_PATH, pb.environment().get(ProcessCtrl.LIB_PATH_ENV));
     }
 
-    public void testBuildAutoDetectCommand() {
+    public void testBuildAutodetectCommand() {
         JobDetails job = new JobDetails();
         job.setId("unit-test-job");
 
@@ -59,7 +56,7 @@ public class ProcessCtrlTest extends ESTestCase {
 
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
 
         assertEquals(16, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
@@ -86,16 +83,16 @@ public class ProcessCtrlTest extends ESTestCase {
         assertTrue(command.contains(ProcessCtrl.IGNORE_DOWNTIME_ARG));
     }
 
-    public void testBuildAutoDetectCommand_defaultTimeField() {
+    public void testBuildAutodetectCommand_defaultTimeField() {
         JobDetails job = new JobDetails();
         job.setId("unit-test-job");
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "time"));
     }
 
-    public void testBuildAutoDetectCommand_givenPersistModelState() {
+    public void testBuildAutodetectCommand_givenPersistModelState() {
         JobDetails job = new JobDetails();
         job.setId("unit-test-job");
 
@@ -103,29 +100,29 @@ public class ProcessCtrlTest extends ESTestCase {
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
         assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
 
         System.getProperties().remove(ProcessCtrl.DONT_PERSIST_MODEL_STATE);
 
-        command = ProcessCtrl.buildAutoDetectCommand(job, logger, null, false);
+        command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
     }
 
-    public void testBuildAutoDetectCommand_GivenNoIgnoreDowntime() {
+    public void testBuildAutodetectCommand_GivenNoIgnoreDowntime() {
         JobDetails job = new JobDetails();
         job.setId("foo");
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
 
         assertFalse(command.contains("--ignoreDowntime"));
     }
 
-    public void testBuildAutoDetectCommand_GivenIgnoreDowntimeParam() {
+    public void testBuildAutodetectCommand_GivenIgnoreDowntimeParam() {
         JobDetails job = new JobDetails();
         job.setId("foo");
 
-        List<String> command = ProcessCtrl.buildAutoDetectCommand(job, logger, null, true);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, true);
 
         assertTrue(command.contains("--ignoreDowntime"));
     }

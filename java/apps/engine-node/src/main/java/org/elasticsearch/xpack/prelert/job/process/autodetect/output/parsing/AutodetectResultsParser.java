@@ -34,18 +34,18 @@ import java.util.Set;
  * Expects an array of buckets so the first element will always be the
  * start array symbol and the data must be terminated with the end array symbol.
  */
-public class AutoDetectResultsParser {
+public class AutodetectResultsParser {
     private final List<AlertObserver> observers = new ArrayList<>();
     private final Set<String> acknowledgedFlushes = new HashSet<>();
     private volatile boolean parsingStarted;
     private volatile boolean parsingInProgress;
     private boolean isPerPartitionNormalization;
 
-    public AutoDetectResultsParser() {
+    public AutodetectResultsParser() {
         this(false);
     }
 
-    public AutoDetectResultsParser(boolean isPerPartition) {
+    public AutodetectResultsParser(boolean isPerPartition) {
         isPerPartitionNormalization = isPerPartition;
     }
 

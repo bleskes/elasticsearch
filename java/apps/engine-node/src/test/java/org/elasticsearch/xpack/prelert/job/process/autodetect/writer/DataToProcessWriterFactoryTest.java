@@ -10,6 +10,7 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 
@@ -43,8 +44,7 @@ public class DataToProcessWriterFactoryTest extends ESTestCase {
     }
 
     private static DataToProcessWriter createWriter(DataDescription dataDescription) {
-        DataToProcessWriterFactory factory = new DataToProcessWriterFactory();
-        return factory.create(true, mock(LengthEncodedWriter.class), dataDescription,
+        return DataToProcessWriterFactory.create(true, mock(AutodetectProcess.class), dataDescription,
                 mock(AnalysisConfig.class), mock(SchedulerConfig.class), mock(TransformConfigs.class),
                 mock(StatusReporter.class), mock(Logger.class));
     }

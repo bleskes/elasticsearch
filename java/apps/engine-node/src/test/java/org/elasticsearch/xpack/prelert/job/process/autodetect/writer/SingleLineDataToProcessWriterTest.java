@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -37,7 +38,7 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 
 public class SingleLineDataToProcessWriterTest extends ESTestCase {
     @Mock
-    private LengthEncodedWriter lengthEncodedWriter;
+    private AutodetectProcess autodetectProcess;
     private DataDescription dataDescription;
     private AnalysisConfig analysisConfig;
     private List<TransformConfig> transformConfigs;
@@ -59,7 +60,7 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
                 writtenRecords.add(copy);
                 return null;
             }
-        }).when(lengthEncodedWriter).writeRecord(any(String[].class));
+        }).when(autodetectProcess).writeRecord(any(String[].class));
 
         dataDescription = new DataDescription();
         dataDescription.setFieldDelimiter(',');
@@ -180,7 +181,7 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
     }
 
     private SingleLineDataToProcessWriter createWriter() {
-        return new SingleLineDataToProcessWriter(true, lengthEncodedWriter, dataDescription,
+        return new SingleLineDataToProcessWriter(true, autodetectProcess, dataDescription,
                 analysisConfig, new TransformConfigs(transformConfigs), statusReporter, mock(Logger.class));
     }
 

@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -41,7 +42,7 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 public class JsonDataToProcessWriterTest extends ESTestCase {
 
     @Mock
-    private LengthEncodedWriter lengthEncodedWriter;
+    private AutodetectProcess autodetectProcess;
     @Mock
     private StatusReporter statusReporter;
     @Mock
@@ -66,7 +67,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
                 writtenRecords.add(copy);
                 return null;
             }
-        }).when(lengthEncodedWriter).writeRecord(any(String[].class));
+        }).when(autodetectProcess).writeRecord(any(String[].class));
 
         transforms = new ArrayList<>();
 
@@ -369,7 +370,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
     }
 
     private JsonDataToProcessWriter createWriter() {
-        return new JsonDataToProcessWriter(true, lengthEncodedWriter, dataDescription,
+        return new JsonDataToProcessWriter(true, autodetectProcess, dataDescription,
                 analysisConfig, null, new TransformConfigs(transforms),
                 statusReporter, logger);
     }

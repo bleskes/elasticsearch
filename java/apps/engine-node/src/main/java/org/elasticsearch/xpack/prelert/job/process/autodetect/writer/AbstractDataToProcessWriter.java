@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
 import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
 import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
@@ -44,7 +45,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
     protected final boolean includeControlField;
 
-    protected final RecordWriter recordWriter;
+    protected final AutodetectProcess autodetectProcess;
     protected final DataDescription dataDescription;
     protected final AnalysisConfig analysisConfig;
     protected final StatusReporter statusReporter;
@@ -66,11 +67,11 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     private long latestEpochMsThisUpload;
 
 
-    protected AbstractDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
+    protected AbstractDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
                                           DataDescription dataDescription, AnalysisConfig analysisConfig,
                                           TransformConfigs transformConfigs, StatusReporter statusReporter, Logger logger) {
         this.includeControlField = includeControlField;
-        this.recordWriter = Objects.requireNonNull(recordWriter);
+        this.autodetectProcess = Objects.requireNonNull(autodetectProcess);
         this.dataDescription = Objects.requireNonNull(dataDescription);
         this.analysisConfig = Objects.requireNonNull(analysisConfig);
         this.statusReporter = Objects.requireNonNull(statusReporter);
@@ -257,7 +258,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         latestEpochMs = Math.max(latestEpochMs, epochMs);
         latestEpochMsThisUpload = latestEpochMs;
 
-        recordWriter.writeRecord(output);
+        autodetectProcess.writeRecord(output);
         statusReporter.reportRecordWritten(numberOfFieldsRead, latestEpochMs);
 
         return true;
@@ -307,7 +308,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         }
 
         // Write the header
-        recordWriter.writeRecord(record);
+        autodetectProcess.writeRecord(record);
     }
 
 

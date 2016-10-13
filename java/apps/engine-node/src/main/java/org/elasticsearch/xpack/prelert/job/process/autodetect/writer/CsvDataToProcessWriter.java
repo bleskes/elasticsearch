@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
@@ -47,10 +48,10 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
      */
     private static final int MAX_LINES_PER_RECORD = 10000;
 
-    public CsvDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
+    public CsvDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
                                   DataDescription dataDescription, AnalysisConfig analysisConfig,
                                   TransformConfigs transforms, StatusReporter statusReporter, Logger logger) {
-        super(includeControlField, recordWriter, dataDescription, analysisConfig, transforms,
+        super(includeControlField, autodetectProcess, dataDescription, analysisConfig, transforms,
                 statusReporter, logger);
     }
 
@@ -105,8 +106,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
                 Arrays.fill(record, "");
 
                 if (maxIndex >= line.size()) {
-                    logger.warn("Not enough fields in csv record, expected at least " + maxIndex
-                            + ". " + line);
+                    logger.warn("Not enough fields in csv record, expected at least " + maxIndex + ". " + line);
 
                     for (InputOutputMap inOut : inputOutputMap) {
                         if (inOut.inputIndex >= line.size()) {

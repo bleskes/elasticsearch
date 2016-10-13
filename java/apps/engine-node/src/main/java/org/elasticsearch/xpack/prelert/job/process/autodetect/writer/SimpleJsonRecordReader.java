@@ -24,8 +24,7 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
      * @param recordHoldingField
      * @param logger
      */
-    SimpleJsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, String recordHoldingField,
-                           Logger logger) {
+    SimpleJsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, String recordHoldingField, Logger logger) {
         super(parser, fieldMap, recordHoldingField, logger);
     }
 

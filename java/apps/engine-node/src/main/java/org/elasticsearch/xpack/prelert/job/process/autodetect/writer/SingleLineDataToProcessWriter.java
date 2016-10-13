@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
 import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
 import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
@@ -34,10 +35,10 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter {
     private static final String RAW = "raw";
 
-    protected SingleLineDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
+    protected SingleLineDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
                                             DataDescription dataDescription, AnalysisConfig analysisConfig,
                                             TransformConfigs transformConfigs, StatusReporter statusReporter, Logger logger) {
-        super(includeControlField, recordWriter, dataDescription, analysisConfig, transformConfigs, statusReporter, logger);
+        super(includeControlField, autodetectProcess, dataDescription, analysisConfig, transformConfigs, statusReporter, logger);
     }
 
     @Override

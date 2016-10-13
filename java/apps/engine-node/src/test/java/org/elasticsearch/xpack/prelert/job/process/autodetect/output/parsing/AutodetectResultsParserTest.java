@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
 /**
  * Tests for parsing the JSON output of autodetect_api
  */
-public class AutoDetectResultsParserTest extends ESTestCase {
+public class AutodetectResultsParserTest extends ESTestCase {
     private static final double EPSILON = 0.000001;
 
     public static final String METRIC_OUTPUT_SAMPLE = "[{\"timestamp\":1359450000,\"records\":[],\"maxNormalizedProbability\":0,\"anomalyScore\":0,\"recordCount\":0,\"eventCount\":806,\"bucketInfluencers\":[{\"rawAnomalyScore\":0, \"probability\":0.0,\"influencerFieldName\":\"bucketTime\",\"initialAnomalyScore\":0.0}]}" +
@@ -57,11 +57,11 @@ public class AutoDetectResultsParserTest extends ESTestCase {
      * Simple results persister stores buckets and state in a local array.
      */
     public class FlushWaiterThread extends Thread {
-        private final AutoDetectResultsParser resultsParser;
+        private final AutodetectResultsParser resultsParser;
         private final String flushId;
         private volatile boolean gotAcknowledgement;
 
-        public FlushWaiterThread(AutoDetectResultsParser resultsParser,
+        public FlushWaiterThread(AutodetectResultsParser resultsParser,
                                  String flushId) {
             this.resultsParser = resultsParser;
             this.flushId = flushId;
@@ -193,13 +193,13 @@ public class AutoDetectResultsParserTest extends ESTestCase {
     }
 
     public void testParser() throws IOException {
-        Logger logger = Loggers.getLogger(AutoDetectResultsParserTest.class);
+        Logger logger = Loggers.getLogger(AutodetectResultsParserTest.class);
 
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
 
         FlushWaiterThread flushWaiter = new FlushWaiterThread(parser, "testing1");
         flushWaiter.start();
@@ -289,13 +289,13 @@ public class AutoDetectResultsParserTest extends ESTestCase {
     }
 
     public void testPopulationParser() throws IOException, UnknownJobException {
-        Logger logger = Loggers.getLogger(AutoDetectResultsParserTest.class);
+        Logger logger = Loggers.getLogger(AutodetectResultsParserTest.class);
 
         InputStream inputStream = new ByteArrayInputStream(POPULATION_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
 
         FlushWaiterThread flushWaiter = new FlushWaiterThread(parser, "testing2");
         flushWaiter.start();
@@ -334,7 +334,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
      * @throws ElasticsearchParseException
      */
     public void testAlerting() throws IOException {
-        Logger logger = Loggers.getLogger(AutoDetectResultsParserTest.class);
+        Logger logger = Loggers.getLogger(AutodetectResultsParserTest.class);
 
         // 1. normalised prob threshold
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
@@ -345,7 +345,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         double scoreThreshold = 100.0;
         AlertListener listener = new AlertListener(probThreshold, scoreThreshold);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
         parser.addObserver(listener);
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
@@ -361,7 +361,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         scoreThreshold = 18.0;
         listener = new AlertListener(probThreshold, scoreThreshold);
 
-        parser = new AutoDetectResultsParser();
+        parser = new AutodetectResultsParser();
         parser.addObserver(listener);
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
@@ -376,7 +376,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         scoreThreshold = 100.0;
         listener = new AlertListener(probThreshold, scoreThreshold);
 
-        parser = new AutoDetectResultsParser();
+        parser = new AutodetectResultsParser();
         parser.addObserver(listener);
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
@@ -393,7 +393,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         scoreThreshold = 100.0;
         listener = new AlertListener(probThreshold, scoreThreshold);
 
-        parser = new AutoDetectResultsParser();
+        parser = new AutodetectResultsParser();
         parser.addObserver(listener);
 
         probThreshold = 2.0;
@@ -422,7 +422,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
 
         Renormaliser renormaliser = mock(Renormaliser.class);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
@@ -437,7 +437,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = mock(Renormaliser.class);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
@@ -453,7 +453,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = mock(Renormaliser.class);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
@@ -469,7 +469,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = mock(Renormaliser.class);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
 
         ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
                 () -> parser.parseResults(inputStream, persister, renormaliser, logger));
@@ -486,7 +486,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = mock(Renormaliser.class);
 
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
 
         ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
                 () -> parser.parseResults(inputStream, persister, renormaliser, logger));
@@ -496,7 +496,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
 
 
     public void testRemoveObserver() throws ElasticsearchParseException, IOException {
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
         AlertObserver alertObserver = mock(AlertObserver.class);
         parser.addObserver(alertObserver);
 
@@ -517,7 +517,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         Logger logger = mock(Logger.class);
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = mock(Renormaliser.class);
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
         AlertListener alertListener = new AlertListener(90.0, 90.0);
         parser.addObserver(alertListener);
 
@@ -537,7 +537,7 @@ public class AutoDetectResultsParserTest extends ESTestCase {
         Logger logger = mock(Logger.class);
         ResultsPersister persister = new ResultsPersister();
         Renormaliser renormaliser = mock(Renormaliser.class);
-        AutoDetectResultsParser parser = new AutoDetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser();
         AlertListener alertListener = new AlertListener(90.0, 90.0);
         parser.addObserver(alertListener);
 

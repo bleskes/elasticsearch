@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -37,7 +38,7 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 
 public class DataWithTransformsToProcessWriterTest extends ESTestCase {
     @Mock
-    private LengthEncodedWriter lengthEncodedWriter;
+    private AutodetectProcess autodetectProcess;
     @Mock
     private StatusReporter statusReporter;
     @Mock
@@ -58,7 +59,7 @@ public class DataWithTransformsToProcessWriterTest extends ESTestCase {
                 writtenRecords.add(copy);
                 return null;
             }
-        }).when(lengthEncodedWriter).writeRecord(any(String[].class));
+        }).when(autodetectProcess).writeRecord(any(String[].class));
     }
 
     public void testCsvWriteWithConcat() throws MissingFieldException,
@@ -136,9 +137,9 @@ public class DataWithTransformsToProcessWriterTest extends ESTestCase {
         TransformConfigs tcs = new TransformConfigs(Arrays.asList(tc));
 
         if (doCsv) {
-            return new CsvDataToProcessWriter(true, lengthEncodedWriter, dd, ac, tcs, statusReporter, logger);
+            return new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, tcs, statusReporter, logger);
         } else {
-            return new JsonDataToProcessWriter(true, lengthEncodedWriter, dd, ac, null, tcs, statusReporter, logger);
+            return new JsonDataToProcessWriter(true, autodetectProcess, dd, ac, null, tcs, statusReporter, logger);
         }
     }
 

@@ -26,20 +26,14 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
 public class ControlMsgToProcessWriterTest extends ESTestCase {
     @Mock
     private LengthEncodedWriter lengthEncodedWriter;
-    @Mock
-    private AnalysisConfig analysisConfig;
 
     @Before
     public void setUpMocks() {
         MockitoAnnotations.initMocks(this);
-
-        List<String> fields = Arrays.asList("foo", "bar");
-        when(analysisConfig.analysisFields()).thenReturn(fields);
     }
 
     public void testWriteCalcInterimMessage_GivenAdvanceTime() throws IOException {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter,
-                analysisConfig);
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
         InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
                 .advanceTime(1234567890L).build();
 
@@ -53,8 +47,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     }
 
     public void testWriteCalcInterimMessage_GivenCalcInterimResultsWithNoTimeParams() throws IOException {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter,
-                analysisConfig);
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
         InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
                 .calcInterim(true).build();
 
@@ -68,8 +61,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     }
 
     public void testWriteCalcInterimMessage_GivenNeitherCalcInterimNorAdvanceTime() throws IOException {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter,
-                analysisConfig);
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
         InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder().build();
 
         writer.writeCalcInterimMessage(interimResultsParams);
@@ -78,8 +70,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     }
 
     public void testWriteCalcInterimMessage_GivenCalcInterimResultsWithTimeParams() throws IOException {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter,
-                analysisConfig);
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
         InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
                 .calcInterim(true).forTimeRange(120L, 180L).build();
 
@@ -93,8 +84,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     }
 
     public void testWriteCalcInterimMessage_GivenCalcInterimAndAdvanceTime() throws IOException {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter,
-                analysisConfig);
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
         InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
                 .calcInterim(true).forTimeRange(50L, 100L).advanceTime(180L).build();
 
@@ -111,8 +101,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     }
 
     public void testWriteFlushMessage() throws IOException {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter,
-                analysisConfig);
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
         long firstId = Long.parseLong(writer.writeFlushMessage());
         Mockito.reset(lengthEncodedWriter);
 
@@ -135,8 +124,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     }
 
     public void testWriteResetBucketsMessage() throws IOException {
-        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter,
-                analysisConfig);
+        ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
 
         writer.writeResetBucketsMessage(new DataLoadParams(false, new TimeRange(0L, 600L)));
 

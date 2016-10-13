@@ -18,6 +18,7 @@ import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
 import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
 import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
@@ -42,11 +43,11 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
      */
     private SchedulerConfig schedulerConfig;
 
-    public JsonDataToProcessWriter(boolean includeControlField, RecordWriter recordWriter,
+    public JsonDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
                                    DataDescription dataDescription, AnalysisConfig analysisConfig,
                                    SchedulerConfig schedulerConfig, TransformConfigs transforms,
                                    StatusReporter statusReporter, Logger logger) {
-        super(includeControlField, recordWriter, dataDescription, analysisConfig, transforms,
+        super(includeControlField, autodetectProcess, dataDescription, analysisConfig, transforms,
                 statusReporter, logger);
         this.schedulerConfig = schedulerConfig;
     }
@@ -137,9 +138,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
     private JsonRecordReader makeRecordReader(JsonParser parser) {
         List<String> nestingOrder = (schedulerConfig != null) ?
                 schedulerConfig.buildAggregatedFieldList() : Collections.emptyList();
-        return nestingOrder.isEmpty() ? new SimpleJsonRecordReader(parser, inFieldIndexes,
-                getRecordHoldingField(), logger) : new AggregatedJsonRecordReader(parser,
-                inFieldIndexes, getRecordHoldingField(), logger, nestingOrder);
+        return nestingOrder.isEmpty() ? new SimpleJsonRecordReader(parser, inFieldIndexes, getRecordHoldingField(), logger)
+                                : new AggregatedJsonRecordReader(parser, inFieldIndexes, getRecordHoldingField(), logger, nestingOrder);
     }
 
     /**
