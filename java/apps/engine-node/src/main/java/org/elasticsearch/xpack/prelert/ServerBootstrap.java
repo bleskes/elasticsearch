@@ -17,12 +17,6 @@
 
 package org.elasticsearch.xpack.prelert;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.bootstrap.JarHell;
@@ -55,6 +49,7 @@ import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
+import org.elasticsearch.xpack.prelert.action.job.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
@@ -64,6 +59,7 @@ import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
@@ -72,6 +68,12 @@ import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class ServerBootstrap {
 
@@ -144,6 +146,7 @@ public class ServerBootstrap {
                     RestGetJobAction.class,
                     RestGetJobsAction.class,
                     RestPutJobsAction.class,
+                    RestDeleteJobAction.class,
                     RestGetListAction.class,
                     RestCreateListAction.class,
                     RestGetBucketsAction.class,
@@ -163,6 +166,7 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetJobAction.INSTANCE, GetJobAction.TransportAction.class),
                     new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),
                     new ActionHandler<>(PutJobAction.INSTANCE, PutJobAction.TransportAction.class),
+                    new ActionHandler<>(DeleteJobAction.INSTANCE, DeleteJobAction.TransportAction.class),
                     new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
                     new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),
                     new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
@@ -176,5 +180,4 @@ public class ServerBootstrap {
                     new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class));
         }
     }
-
 }

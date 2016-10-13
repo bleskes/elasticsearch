@@ -26,20 +26,21 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.job.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
+import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.metadata.Job;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
-import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
@@ -164,7 +165,7 @@ public class JobManager {
     /**
      * Stores a job in the cluster state
      */
-    public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) {
+    public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) throws JobIdAlreadyExistsException {
         JobConfiguration jobConfiguration;
         try {
             jobConfiguration = objectMapper.readValue(request.getJobConfiguration().toBytesRef().bytes, JobConfiguration.class);
@@ -172,6 +173,7 @@ public class JobManager {
             throw new RuntimeException(e);
         }
         JobDetails jobDetails = jobFactory.create(jobConfiguration);
+        jobProvider.createJob(jobDetails);
         clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(), new AckedClusterStateUpdateTask<PutJobAction.Response>(request, actionListener) {
 
             @Override
@@ -288,29 +290,66 @@ public class JobManager {
 
 
     /**
-     * Stop the associated process and remove it from the Process
-     * Manager then delete the job related documents from the
-     * database.
+     * Deletes a job.
      *
-     * @param jobId
-     * @return
-     * @throws UnknownJobException          If the jobId is not recognised
-     * @throws DataStoreException           If there is an error deleting the job
-     * @throws JobInUseException            If the job cannot be deleted because the
-     *                                      native process is in use.
+     * The clean-up involves:
+     *   <ul>
+     *       <li>Deleting the index containing job results</li>
+     *       <li>Deleting the job logs</li>
+     *       <li>Removing the job from the cluster state</li>
+     *   </ul>
+     *
+     * @param request the delete job request
+     * @param actionListener the action listener
+     * @throws JobException If the job could not be deleted
      */
-    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException, JobInUseException {
+    public void deleteJob(DeleteJobAction.Request request, ActionListener<DeleteJobAction.Response> actionListener) throws JobException {
+        String jobId = request.getJobId();
+
         LOGGER.debug("Deleting job '" + jobId + "'");
 
-        try (ActionGuardian<Action>.ActionTicket actionTicket =
-                     processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
+        // NORELEASE: Should also delete the running process
+        // NORELEASE: Should also handle scheduled jobs
 
-            boolean success = jobProvider.deleteJob(jobId);
-            if (success) {
-                audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+        try (ActionGuardian<Action>.ActionTicket actionTicket = processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
+            // NORELEASE: Index/Logs deletion should be done after job is removed from state in a forked thread
+            if (jobProvider.deleteJob(jobId)) {
+                new JobLogs().deleteLogs(jobId);
+                clusterService.submitStateUpdateTask("delete-job-" + jobId, new AckedClusterStateUpdateTask<DeleteJobAction.Response>(request, actionListener) {
+
+                    @Override
+                    protected DeleteJobAction.Response newResponse(boolean acknowledged) {
+                        // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on the cluster state update task thread
+                        // and any action performed on that thread should be quick. (so no indexing documents)
+                        // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+
+                        // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
+                        // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
+                        return new DeleteJobAction.Response(acknowledged);
+                    }
+
+                    @Override
+                    public ClusterState execute(ClusterState currentState) throws Exception {
+                        return removeJobFromClusterState(jobId, currentState);
+                    }
+                });
             }
-            return success;
         }
+    }
+
+    ClusterState removeJobFromClusterState(String jobId, ClusterState currentState) {
+        PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
+        if (currentPrelertMetadata == null) {
+            return currentState;
+        }
+        PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
+        builder.removeJob(jobId);
+
+        ClusterState.Builder newState = ClusterState.builder(currentState);
+        newState.metaData(MetaData.builder(currentState.getMetaData())
+                .putCustom(PrelertMetadata.TYPE, builder.build())
+                .build());
+        return newState.build();
     }
 
 

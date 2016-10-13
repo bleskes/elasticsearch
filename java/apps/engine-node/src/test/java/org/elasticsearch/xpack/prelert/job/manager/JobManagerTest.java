@@ -17,12 +17,20 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.xpack.prelert.action.job.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.job.Detector;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
@@ -40,36 +48,55 @@ import org.junit.After;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-public class JobManagerTest extends ESTestCase
-{
-    @Captor
+public class JobManagerTest extends ESTestCase {
+
     private ArgumentCaptor<Map<String, Object>> jobUpdateCaptor;
 
-    @Mock private JobProvider jobProvider;
-    @Mock private Auditor auditor;
-    @Mock private JobDataDeleterFactory jobDataDeleter;
+    private ClusterService clusterService;
+    private JobProvider jobProvider;
+    private Auditor auditor;
+    private JobDataDeleterFactory jobDataDeleter;
 
     @Before
     public void setupMocks()
     {
-        MockitoAnnotations.initMocks(this);
+        jobUpdateCaptor = ArgumentCaptor.forClass((Class) HashMap.class);
+
+        clusterService = mock(ClusterService.class);
+        jobProvider = mock(JobProvider.class);
+        auditor = mock(Auditor.class);
+        jobDataDeleter = mock(JobDataDeleterFactory.class);
+
         when(jobProvider.jobIdIsUnique("not-unique")).thenReturn(false);
         when(jobProvider.jobIdIsUnique(not(eq("not-unique")))).thenReturn(true);
         when(jobProvider.audit(anyString())).thenReturn(auditor);
@@ -104,10 +131,8 @@ public class JobManagerTest extends ESTestCase
         assertTrue(diff.contains("tom"));
     }
 
-
     public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
-            DataStoreException, InterruptedException, ExecutionException
-    {
+            DataStoreException, InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
 
         when(jobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
@@ -115,10 +140,21 @@ public class JobManagerTest extends ESTestCase
         doAnswerSleep(200).when(jobProvider).deleteJob("foo");
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        Future<Throwable> task_1_result = executor.submit(
-                new ExceptionCallable(() -> jobManager.deleteJob("foo")));
-        Future<Throwable> task_2_result = executor.submit(
-                new ExceptionCallable(() -> jobManager.deleteJob("foo")));
+        DeleteJobAction.Request request = new DeleteJobAction.Request();
+        request.setJobId("foo");
+        ActionListener<DeleteJobAction.Response> actionListener = new ActionListener<DeleteJobAction.Response>() {
+            @Override
+            public void onResponse(DeleteJobAction.Response response) {
+
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+
+            }
+        };
+        Future<Throwable> task_1_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
+        Future<Throwable> task_2_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
         executor.shutdown();
 
         Throwable result1 = task_1_result.get();
@@ -132,8 +168,31 @@ public class JobManagerTest extends ESTestCase
         verify(jobProvider).deleteJob("foo");
     }
 
-    @SuppressWarnings("unchecked")
+    public void testRemoveJobFromClusterState_GivenExistingMetadata()  {
+        JobManager jobManager = createJobManager();
+        ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
+        JobDetails jobDetails = new JobDetails();
+        jobDetails.setJobId("foo");
+        clusterState = jobManager.innerPutJob(jobDetails, false, clusterState);
 
+        clusterState = jobManager.removeJobFromClusterState("foo", clusterState);
+
+        PrelertMetadata prelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
+        assertThat(prelertMetadata.getJobs().containsKey("foo"), is(false));
+    }
+
+    public void testRemoveJobFromClusterState_GivenNoMetadata()  {
+        JobManager jobManager = createJobManager();
+        ClusterState clusterStateBefore = ClusterState.builder(new ClusterName("_name")).build();
+        JobDetails jobDetails = new JobDetails();
+        jobDetails.setJobId("foo");
+
+        ClusterState clusterStateAfter = jobManager.removeJobFromClusterState("foo", clusterStateBefore);
+
+        assertThat(clusterStateAfter, is(equalTo(clusterStateBefore)));
+    }
+
+    @SuppressWarnings("unchecked")
     public void testSetModelDebugConfig_GivenConfig() throws UnknownJobException
     {
         ModelDebugConfig config = new ModelDebugConfig(85.0, "bar");
@@ -349,9 +408,7 @@ public class JobManagerTest extends ESTestCase
     }
 
     private JobManager createJobManager() {
-        ClusterService clusterService = mock(ClusterService.class);
-        return new JobManager(jobProvider,
-                clusterService, new LocalActionGuardian<>(Action.CLOSED),
+        return new JobManager(jobProvider, clusterService, new LocalActionGuardian<>(Action.CLOSED),
                 new LocalActionGuardian<>(ScheduledAction.STOPPED));
     }
 

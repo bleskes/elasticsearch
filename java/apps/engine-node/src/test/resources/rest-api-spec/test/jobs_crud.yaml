@@ -32,6 +32,16 @@
   - match: { type: "job" }
   - match: { document.jobId: "farequote" }
 
+  - do:
+      xpack.prelert.delete_job:
+        job_id: "farequote"
+  - match: { acknowledged: true }
+
+  - do:
+      catch: missing
+      xpack.prelert.get_job:
+        job_id: "farequote"
+
 ---
 "Test get job API with non existing job id":
   - do:
