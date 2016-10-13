@@ -140,8 +140,7 @@ public class JobManagerTest extends ESTestCase {
         doAnswerSleep(200).when(jobProvider).deleteJob("foo");
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        DeleteJobAction.Request request = new DeleteJobAction.Request();
-        request.setJobId("foo");
+        DeleteJobAction.Request request = new DeleteJobAction.Request("foo");
         ActionListener<DeleteJobAction.Response> actionListener = new ActionListener<DeleteJobAction.Response>() {
             @Override
             public void onResponse(DeleteJobAction.Response response) {
