@@ -39,6 +39,7 @@ import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
 import org.elasticsearch.xpack.prelert.action.CreateListAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.GetListAction;
@@ -59,6 +60,7 @@ import org.elasticsearch.xpack.prelert.rest.buckets.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
+import org.elasticsearch.xpack.prelert.rest.influencers.RestGetInfluencersAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
@@ -150,6 +152,7 @@ public class ServerBootstrap {
                     RestGetListAction.class,
                     RestCreateListAction.class,
                     RestGetBucketsAction.class,
+                    RestGetInfluencersAction.class,
                     RestGetBucketAction.class,
                     RestPostDataAction.class,
                     RestPostDataCloseAction.class,
@@ -171,6 +174,7 @@ public class ServerBootstrap {
                     new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),
                     new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
                     new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class),
+                    new ActionHandler<>(GetInfluencersAction.INSTANCE, GetInfluencersAction.TransportAction.class),
                     new ActionHandler<>(PostDataAction.INSTANCE, PostDataAction.TransportAction.class),
                     new ActionHandler<>(PostDataCloseAction.INSTANCE, PostDataCloseAction.TransportAction.class),
                     new ActionHandler<>(PostDataFlushAction.INSTANCE, PostDataFlushAction.TransportAction.class),

@@ -20,7 +20,7 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
-public class PaginationParamsValidator {
+public final class PaginationParamsValidator {
     /**
      * This is a limit imposed by elasticsearch since version 2.1.0.
      * The reason is to avoid loading too many documents in memory.
@@ -28,15 +28,10 @@ public class PaginationParamsValidator {
     private static final int MAX_SKIP_TAKE_SUM = 10000;
     private static final String MAX_SKIP_TAKE_SUM_STRING = "10,000";
 
-    private final int skip;
-    private final int take;
-
-    public PaginationParamsValidator(int skip, int take) {
-        this.skip = skip;
-        this.take = take;
+    private PaginationParamsValidator() {
     }
 
-    public void validate() {
+    public static void validate(int skip, int take) {
         if (skip < 0) {
             throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_INVALID_SKIP), ErrorCodes.INVALID_SKIP_PARAM);
         }

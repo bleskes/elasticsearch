@@ -23,40 +23,40 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 public class PaginationParamsValidatorTest extends ESTestCase {
 
     public void testValidate_GivenSkipIsMinusOne() {
-        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> new PaginationParamsValidator(-1, 100).validate());
+        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> PaginationParamsValidator.validate(-1, 100));
         assertEquals("Parameter 'skip' cannot be < 0", e.getMessage());
         assertEquals(ErrorCodes.INVALID_SKIP_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testValidate_GivenSkipIsMinusTen() {
-        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> new PaginationParamsValidator(-10, 100).validate());
+        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> PaginationParamsValidator.validate(-10, 100));
         assertEquals("Parameter 'skip' cannot be < 0", e.getMessage());
         assertEquals(ErrorCodes.INVALID_SKIP_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testValidate_GivenTakeIsMinusOne() {
-        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> new PaginationParamsValidator(0, -1).validate());
+        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> PaginationParamsValidator.validate(0, -1));
         assertEquals("Parameter 'take' cannot be < 0", e.getMessage());
         assertEquals(ErrorCodes.INVALID_TAKE_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testValidate_GivenTakeIsMinusHundred() {
-        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> new PaginationParamsValidator(0, -100).validate());
+        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> PaginationParamsValidator.validate(0, -100));
         assertEquals("Parameter 'take' cannot be < 0", e.getMessage());
         assertEquals(ErrorCodes.INVALID_TAKE_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testValidate_GivenSkipAndTakeSumIsMoreThan10000() {
-        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> new PaginationParamsValidator(0, 10001).validate());
+        ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> PaginationParamsValidator.validate(0, 10001));
         assertEquals("The sum of parameters 'skip' and 'take' cannot be higher than 10,000. " +
                 "Please use filters to reduce the number of results.", e.getMessage());
         assertEquals(ErrorCodes.INVALID_TAKE_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testValidate_GivenSkipAndTakeAreValid() {
-        new PaginationParamsValidator(0, 0).validate();
-        new PaginationParamsValidator(100, 0).validate();
-        new PaginationParamsValidator(0, 10000).validate();
-        new PaginationParamsValidator(50, 500).validate();
+        PaginationParamsValidator.validate(0, 0);
+        PaginationParamsValidator.validate(100, 0);
+        PaginationParamsValidator.validate(0, 10000);
+        PaginationParamsValidator.validate(50, 500);
     }
 }

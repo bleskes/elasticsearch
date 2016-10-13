@@ -33,6 +33,7 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -83,7 +84,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testGetQuantiles_GivenNoIndexForJob() throws InterruptedException,
-            ExecutionException, UnknownJobException {
+    ExecutionException, UnknownJobException {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
@@ -98,7 +99,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testGetQuantiles_GivenNoQuantilesForJob() throws InterruptedException,
-            ExecutionException, UnknownJobException {
+    ExecutionException, UnknownJobException {
         GetResponse getResponse = createGetResponse(false, null);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
@@ -149,7 +150,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testGetSchedulerState_GivenNoIndexForJob() throws InterruptedException,
-            ExecutionException, UnknownJobException {
+    ExecutionException, UnknownJobException {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
@@ -161,7 +162,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testGetSchedulerState_GivenNoSchedulerStateForJob() throws InterruptedException,
-            ExecutionException, UnknownJobException {
+    ExecutionException, UnknownJobException {
         GetResponse getResponse = createGetResponse(false, null);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
@@ -175,7 +176,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testGetSchedulerState_GivenSchedulerStateForJob() throws InterruptedException,
-            ExecutionException, UnknownJobException {
+    ExecutionException, UnknownJobException {
         Map<String, Object> source = new HashMap<>();
         source.put(SchedulerState.START_TIME_MILLIS, 18L);
         source.put(SchedulerState.END_TIME_MILLIS, 42L);
@@ -601,7 +602,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
         clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-                .addIndicesDeleteResponse("prelertresults-" + jobId, true, false);
+        .addIndicesDeleteResponse("prelertresults-" + jobId, true, false);
         client = clientBuilder.build();
 
 
@@ -617,7 +618,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
         clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-                .addIndicesDeleteResponse("prelertresults-" + jobId, true, true);
+        .addIndicesDeleteResponse("prelertresults-" + jobId, true, true);
         client = clientBuilder.build();
 
         try {
@@ -1130,7 +1131,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<Influencer> page = provider.influencers(jobId, skip, take, false);
+        InfluencersQuery query = new InfluencersQueryBuilder().skip(skip).take(take).includeInterim(false).build();
+        QueryPage<Influencer> page = provider.influencers(jobId, query);
         assertEquals(2L, page.hitCount());
 
         String queryString = queryBuilder.getValue().toString();
@@ -1188,7 +1190,9 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<Influencer> page = provider.influencers(jobId, skip, take, 0l, 0l, "sort", true, 0.0, true);
+        InfluencersQuery query = new InfluencersQueryBuilder().skip(skip).take(take).epochStart("0").epochEnd("0").sortField("sort")
+                .sortDescending(true).anomalyScoreThreshold(0.0).includeInterim(true).build();
+        QueryPage<Influencer> page = provider.influencers(jobId, query);
         assertEquals(2L, page.hitCount());
 
         String queryString = queryBuilder.getValue().toString();

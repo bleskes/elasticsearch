@@ -5,6 +5,7 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
+import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.results.*;
 
 import java.util.Optional;
@@ -84,46 +85,41 @@ public interface JobResultsProvider
      * @throws UnknownJobException If the job id is no recognised
      */
     QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query)
-        throws UnknownJobException;
+            throws UnknownJobException;
 
     /**
-     * Return a page of influencers for the given job.
+     * Return a page of influencers for the given job and within the given date
+     * range
      *
      * @param jobId
-     * @param skip Skip the first N records. This parameter is for paging
-     * if not required set to 0.
-     * @param take Take only this number of records
-     * @param includeInterim Include interim results
+     *            The job ID for which influencers are requested
+     * @param skip
+     *            Skip the first N Buckets. This parameter is for paging if not
+     *            required set to 0.
+     * @param take
+     *            Maximum number of influencers to insert in the page
+     * @param startEpochMs
+     *            The start influencer timestamp. An influencer with this
+     *            timestamp will be included in the results. If 0 all buckets up
+     *            to <code>endEpochMs</code> are returned
+     * @param endEpochMs
+     *            The end bucket timestamp buckets up to but NOT including this
+     *            timestamp are returned. If 0 all buckets from
+     *            <code>startEpochMs</code> are returned
+     * @param sortField
+     *            The field to sort influencers by. If <code>null</code> no sort
+     *            is applied
+     * @param sortDescending
+     *            Sort in descending order
+     * @param anomalyScoreFilter
+     *            Return only influencers with an anomalyScore >= this value
+     * @param includeInterim
+     *            Include interim results
      * @return QueryPage of Influencer
-     * @throws UnknownJobException
+     * @throws ResourceNotFoundException
      */
-    QueryPage<Influencer> influencers(String jobId, int skip, int take, boolean includeInterim)
-    throws UnknownJobException;
-
-    /**
-     * Return a page of influencers for the given job and within the given date range
-     *
-     * @param jobId The job ID for which influencers are requested
-     * @param skip Skip the first N Buckets. This parameter is for paging
-     * if not required set to 0.
-     * @param take Maximum number of influencers to insert in the page
-     * @param startEpochMs The start influencer timestamp. An influencer with this timestamp will be
-     * included in the results. If 0 all buckets up to <code>endEpochMs</code>
-     * are returned
-     * @param endEpochMs The end bucket timestamp buckets up to but NOT including this
-     * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
-     * are returned
-     * @param sortField The field to sort influencers by. If <code>null</code> no sort is applied
-     * @param sortDescending Sort in descending order
-     * @param anomalyScoreFilter Return only influencers with an anomalyScore >= this value
-     * @param includeInterim Include interim results
-     * @return QueryPage of Influencer
-     * @throws UnknownJobException
-     */
-    QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-                                      long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter,
-                                      boolean includeInterim)
-            throws UnknownJobException;
+    QueryPage<Influencer> influencers(String jobId, InfluencersQuery query)
+            throws ResourceNotFoundException;
 
     /**
      * Get the influencer for the given job for id

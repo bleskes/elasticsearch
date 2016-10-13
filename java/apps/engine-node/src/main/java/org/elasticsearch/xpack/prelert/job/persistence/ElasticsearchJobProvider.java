@@ -75,6 +75,7 @@ import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotExcepti
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
+import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -133,7 +134,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
             AnomalyRecord.BY_FIELD_VALUE,
             AnomalyRecord.FIELD_NAME,
             AnomalyRecord.FUNCTION
-        );
+            );
 
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
     private static final int RECORDS_TAKE_PARAM = 500;
@@ -199,11 +200,11 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     /*
-         * True if the Job index is healthy
-         *
-         * (non-Javadoc)
-         * @see org.elasticsearch.xpack.prelert.job.persistence.JobProvider#isConnected(java.lang.String)
-         */
+     * True if the Job index is healthy
+     *
+     * (non-Javadoc)
+     * @see org.elasticsearch.xpack.prelert.job.persistence.JobProvider#isConnected(java.lang.String)
+     */
     @Override
     public boolean isConnected(String jobId)
     {
@@ -211,8 +212,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         try
         {
             client.admin().cluster()
-                            .prepareHealth(elasticJobId.getIndex())
-                            .get(TimeValue.timeValueSeconds(2));
+            .prepareHealth(elasticJobId.getIndex())
+            .get(TimeValue.timeValueSeconds(2));
             return true;
         }
         catch (Exception e) // nodenotavailable, estimeout
@@ -293,10 +294,10 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
                 LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
                 client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
-                                .setSettings(prelertIndexSettings())
-                                .addMapping(AuditActivity.TYPE, ElasticsearchMappings.auditActivityMapping())
-                                .addMapping(AuditMessage.TYPE, ElasticsearchMappings.auditMessageMapping())
-                                .get();
+                .setSettings(prelertIndexSettings())
+                .addMapping(AuditActivity.TYPE, ElasticsearchMappings.auditActivityMapping())
+                .addMapping(AuditMessage.TYPE, ElasticsearchMappings.auditMessageMapping())
+                .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
                 client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();
             }
@@ -316,8 +317,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
             LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
                     " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse response = client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-                            .setFetchSource(false)
-                            .get();
+                    .setFetchSource(false)
+                    .get();
 
             if (response.isExists() == false)
             {
@@ -411,8 +412,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     public QueryPage<JobDetails> getJobs(int skip, int take)
     {
         FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
-                                .unmappedType("string")
-                                .order(SortOrder.ASC);
+                .unmappedType("string")
+                .order(SortOrder.ASC);
 
         LOGGER.trace("ES API CALL: search all of type " + JobDetails.TYPE +
                 " from index pattern prelertresults-* sort ascending "
@@ -477,24 +478,24 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
             LOGGER.trace("ES API CALL: create index " + job.getId());
             client.admin().indices()
-                    .prepareCreate(elasticJobId.getIndex())
-                    .setSettings(prelertIndexSettings())
-                    .addMapping(Bucket.TYPE, bucketMapping)
-                    .addMapping(BucketInfluencer.TYPE, bucketInfluencerMapping)
-                    .addMapping(CategorizerState.TYPE, categorizerStateMapping)
-                    .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
-                    .addMapping(AnomalyRecord.TYPE, recordMapping)
-                    .addMapping(Quantiles.TYPE, quantilesMapping)
-                    .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
-                    .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
-                    .addMapping(Influencer.TYPE, influencerMapping)
-                    .addMapping(ModelDebugOutput.TYPE, modelDebugMapping)
-                    .addMapping(BucketProcessingTime.TYPE, processingTimeMapping)
-                    .addMapping(PartitionNormalisedProb.TYPE, partitionScoreMapping)
-                    .get();
+            .prepareCreate(elasticJobId.getIndex())
+            .setSettings(prelertIndexSettings())
+            .addMapping(Bucket.TYPE, bucketMapping)
+            .addMapping(BucketInfluencer.TYPE, bucketInfluencerMapping)
+            .addMapping(CategorizerState.TYPE, categorizerStateMapping)
+            .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
+            .addMapping(AnomalyRecord.TYPE, recordMapping)
+            .addMapping(Quantiles.TYPE, quantilesMapping)
+            .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
+            .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
+            .addMapping(Influencer.TYPE, influencerMapping)
+            .addMapping(ModelDebugOutput.TYPE, modelDebugMapping)
+            .addMapping(BucketProcessingTime.TYPE, processingTimeMapping)
+            .addMapping(PartitionNormalisedProb.TYPE, partitionScoreMapping)
+            .get();
             LOGGER.trace("ES API CALL: wait for yellow status " + elasticJobId.getId());
             client.admin().cluster().prepareHealth(elasticJobId.getIndex())
-                    .setWaitForYellowStatus().execute().actionGet();
+            .setWaitForYellowStatus().execute().actionGet();
 
             if (job.getModelSizeStats() != null)
             {
@@ -506,9 +507,9 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
             LOGGER.trace("ES API CALL: index " + JobDetails.TYPE +
                     " to index " + elasticJobId.getIndex() + " with ID " + elasticJobId.getId());
             client.prepareIndex(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-                    .setSource(json)
-                    .setRefreshPolicy(RefreshPolicy.IMMEDIATE)
-                    .get();
+            .setSource(json)
+            .setRefreshPolicy(RefreshPolicy.IMMEDIATE)
+            .get();
 
             return true;
         }
@@ -536,9 +537,9 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         try
         {
             client.prepareUpdate(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-                                .setDoc(updates)
-                                .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT)
-                                .get();
+            .setDoc(updates)
+            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT)
+            .get();
         }
         catch (VersionConflictEngineException e)
         {
@@ -600,7 +601,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
     @Override
     public QueryPage<Bucket> buckets(String jobId, BucketsQuery query)
-    throws ResourceNotFoundException
+            throws ResourceNotFoundException
     {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
@@ -638,8 +639,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 if (query.isExpand() && b.getRecordCount() > 0)
                 {
                     this.expandBucketForPartitionValue(jobId,
-                                                    query.isIncludeInterim(),
-                                                    b, query.getPartitionValue());
+                            query.isIncludeInterim(),
+                            b, query.getPartitionValue());
                 }
 
                 b.setAnomalyScore(
@@ -652,7 +653,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     void mergePartitionScoresIntoBucket(List<ScoreTimestamp> scores,
-                                            List<Bucket> buckets)
+            List<Bucket> buckets)
     {
         Iterator<ScoreTimestamp> itr = scores.iterator();
         ScoreTimestamp score = itr.hasNext() ? itr.next() : null;
@@ -686,11 +687,11 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                     " from index " + jobId.getIndex() + " sort ascending " + ElasticsearchMappings.ES_TIMESTAMP +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = client.prepareSearch(jobId.getIndex())
-                                        .setTypes(Bucket.TYPE)
-                                        .addSort(sb)
-                                        .setPostFilter(fb)
-                                        .setFrom(skip).setSize(take)
-                                        .get();
+                    .setTypes(Bucket.TYPE)
+                    .addSort(sb)
+                    .setPostFilter(fb)
+                    .setFrom(skip).setSize(take)
+                    .get();
         } catch (IndexNotFoundException e) {
             String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
             throw ExceptionsHelper.missingException(message, ErrorCodes.MISSING_JOB_ERROR);
@@ -768,14 +769,14 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
 
                 bucket.setMaxNormalizedProbability(scores.isEmpty() == false ?
-                                scores.get(0).score : 0.0d);
+                        scores.get(0).score : 0.0d);
                 if (query.isExpand() && bucket.getRecordCount() > 0) {
                     this.expandBucketForPartitionValue(jobId, query.isIncludeInterim(),
                             bucket, query.getPartitionValue());
                 }
 
                 bucket.setAnomalyScore(
-                            bucket.partitionAnomalyScore(query.getPartitionValue()));
+                        bucket.partitionAnomalyScore(query.getPartitionValue()));
             }
 
             doc = Optional.of(bucket);
@@ -797,8 +798,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     private List<ScoreTimestamp> partitionScores(ElasticsearchJobId jobId, Object epochStart,
-                        Object epochEnd, String partitionFieldValue)
-    throws ResourceNotFoundException
+            Object epochEnd, String partitionFieldValue)
+                    throws ResourceNotFoundException
     {
         QueryBuilder qb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, epochStart, epochEnd)
@@ -808,10 +809,10 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 .order(SortOrder.ASC);
 
         SearchRequestBuilder searchBuilder = client
-                        .prepareSearch(jobId.getIndex())
-                        .setPostFilter(qb)
-                        .addSort(sb)
-                        .setTypes(PartitionNormalisedProb.TYPE);
+                .prepareSearch(jobId.getIndex())
+                .setPostFilter(qb)
+                .addSort(sb)
+                .setTypes(PartitionNormalisedProb.TYPE);
 
         SearchResponse searchResponse;
         try {
@@ -830,14 +831,14 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> probs = (List<Map<String, Object>>)
-                    m.get(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS);
+            m.get(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS);
             for (Map<String, Object> prob : probs)
             {
                 if (partitionFieldValue.equals(prob.get(AnomalyRecord.PARTITION_FIELD_VALUE)))
                 {
                     Date ts = objectMapper.convertValue(m.get(ElasticsearchMappings.ES_TIMESTAMP), Date.class);
                     results.add(new ScoreTimestamp(ts,
-                                    (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY)));
+                            (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY)));
                 }
             }
         }
@@ -846,7 +847,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     public int expandBucketForPartitionValue(String jobId, boolean includeInterim, Bucket bucket,
-                            String partitionFieldValue) throws ResourceNotFoundException
+            String partitionFieldValue) throws ResourceNotFoundException
     {
         int skip = 0;
 
@@ -898,7 +899,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     QueryPage<AnomalyRecord> bucketRecords(String jobId,
             Bucket bucket, int skip, int take, boolean includeInterim,
             String sortField, boolean descending, String partitionFieldValue)
-    throws ResourceNotFoundException
+                    throws ResourceNotFoundException
     {
         // Find the records using the time stamp rather than a parent-child
         // relationship.  The parent-child filter involves two queries behind
@@ -909,16 +910,16 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 bucket.getTimestamp().getTime());
 
         recordFilter = new ResultsFilterBuilder(recordFilter)
-                    .interim(AnomalyRecord.IS_INTERIM, includeInterim)
-                    .term(AnomalyRecord.PARTITION_FIELD_VALUE, partitionFieldValue)
-                    .build();
+                .interim(AnomalyRecord.IS_INTERIM, includeInterim)
+                .term(AnomalyRecord.PARTITION_FIELD_VALUE, partitionFieldValue)
+                .build();
 
         FieldSortBuilder sb = null;
         if (sortField != null)
         {
             sb = new FieldSortBuilder(esSortField(sortField))
-                        .missing("_last")
-                        .order(descending ? SortOrder.DESC : SortOrder.ASC);
+                    .missing("_last")
+                    .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
 
         return records(new ElasticsearchJobId(jobId), skip, take, recordFilter, sb, SECONDARY_SORT,
@@ -991,21 +992,21 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 .build();
 
         return records(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb,
-                            query.getSortField(), query.isSortDescending());
+                query.getSortField(), query.isSortDescending());
     }
 
 
     private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId,
             int skip, int take, QueryBuilder recordFilter,
             String sortField, boolean descending)
-    throws UnknownJobException
+                    throws UnknownJobException
     {
         FieldSortBuilder sb = null;
         if (sortField != null)
         {
             sb = new FieldSortBuilder(esSortField(sortField))
-                        .missing("_last")
-                        .order(descending ? SortOrder.DESC : SortOrder.ASC);
+                    .missing("_last")
+                    .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
 
         return records(jobId, skip, take, recordFilter, sb, SECONDARY_SORT, descending);
@@ -1064,44 +1065,26 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
     }
 
-
     @Override
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take,
-                                            boolean includeInterim)
-    throws UnknownJobException
+    public QueryPage<Influencer> influencers(String jobId, InfluencersQuery query) throws ResourceNotFoundException
     {
-        QueryBuilder builder = new ResultsFilterBuilder()
-                                .interim(Bucket.IS_INTERIM, includeInterim)
-                                .build();
 
-        return influencers(new ElasticsearchJobId(jobId), skip, take, builder,
-                Influencer.ANOMALY_SCORE, true);
-    }
-
-    @Override
-    public QueryPage<Influencer> influencers(String jobId, int skip, int take, long startEpochMs,
-            long endEpochMs, String sortField, boolean sortDescending, double anomalyScoreFilter,
-            boolean includeInterim)
-    throws UnknownJobException
-    {
         QueryBuilder fb = new ResultsFilterBuilder()
-                .timeRange(Influencer.TIMESTAMP, startEpochMs, endEpochMs)
-                .score(Influencer.ANOMALY_SCORE, anomalyScoreFilter)
-                .interim(Bucket.IS_INTERIM, includeInterim)
+                .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
+                .score(Bucket.ANOMALY_SCORE, query.getAnomalyScoreFilter())
+                .interim(Bucket.IS_INTERIM, query.isIncludeInterim())
                 .build();
 
-        return influencers(new ElasticsearchJobId(jobId), skip, take, fb, sortField,
-                            sortDescending);
+        return influencers(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb, query.getSortField(),
+                query.isSortDescending());
     }
 
-    private QueryPage<Influencer> influencers(ElasticsearchJobId jobId, int skip, int take,
-            QueryBuilder filterBuilder, String sortField, boolean sortDescending)
-            throws UnknownJobException
-    {
+    private QueryPage<Influencer> influencers(ElasticsearchJobId jobId, int skip, int take, QueryBuilder filterBuilder, String sortField,
+            boolean sortDescending) throws ResourceNotFoundException {
         LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + jobId.getIndex()
-                + ((sortField != null) ? " with sort "
-                + (sortDescending ? "descending" : "ascending") + " on field " + esSortField(sortField) : "")
-                + " with filter after sort skip " + skip + " take " + take);
+        + ((sortField != null)
+                ? " with sort " + (sortDescending ? "descending" : "ascending") + " on field " + esSortField(sortField) : "")
+        + " with filter after sort skip " + skip + " take " + take);
 
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(jobId.getIndex())
                 .setTypes(Influencer.TYPE)
@@ -1109,8 +1092,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 .setFrom(skip).setSize(take);
 
         FieldSortBuilder sb = sortField == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)
-                : new FieldSortBuilder(esSortField(sortField))
-                        .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
+                : new FieldSortBuilder(esSortField(sortField)).order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
         searchRequestBuilder.addSort(sb);
 
         SearchResponse response = null;
@@ -1120,7 +1102,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(jobId.getId());
+            throw new ResourceNotFoundException("job " + jobId.getId() + " not found");
         }
 
         List<Influencer> influencers = new ArrayList<>();
@@ -1181,8 +1163,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         LOGGER.trace("ES API CALL: index type " + PRELERT_INFO_TYPE +
                 " in index " + PRELERT_INFO_INDEX + " with ID " + PRELERT_INFO_ID);
         client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
-                        .setSource(infoDoc)
-                        .execute().actionGet();
+        .setSource(infoDoc)
+        .execute().actionGet();
 
         return true;
     }
@@ -1190,7 +1172,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
     @Override
     public Quantiles getQuantiles(String jobId)
-    throws UnknownJobException
+            throws UnknownJobException
     {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
@@ -1215,7 +1197,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
     @Override
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take)
-    throws UnknownJobException
+            throws UnknownJobException
     {
         return modelSnapshots(jobId, skip, take, 0, 0, null, true, null, null);
     }
@@ -1249,8 +1231,8 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
         return modelSnapshots(new ElasticsearchJobId(jobId), skip, take,
                 (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY : sortField,
-                sortDescending, fb.timeRange(
-                        ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
+                        sortDescending, fb.timeRange(
+                                ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
     }
 
     private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId, int skip, int take,
@@ -1266,11 +1248,11 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                     " from index " + jobId.getIndex() + " sort ascending " + esSortField(sortField) +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = client.prepareSearch(jobId.getIndex())
-                                        .setTypes(ModelSnapshot.TYPE)
-                                        .addSort(sb)
-                                        .setPostFilter(fb)
-                                        .setFrom(skip).setSize(take)
-                                        .get();
+                    .setTypes(ModelSnapshot.TYPE)
+                    .addSort(sb)
+                    .setPostFilter(fb)
+                    .setFrom(skip).setSize(take)
+                    .get();
         }
         catch (IndexNotFoundException e)
         {
@@ -1333,7 +1315,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
             throws UnknownJobException, NoSuchModelSnapshotException
     {
         List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
-                    0, 0, null, true, snapshotId, null).hits();
+                0, 0, null, true, snapshotId, null).hits();
         if (deleteCandidates == null || deleteCandidates.isEmpty())
         {
             throw new NoSuchModelSnapshotException(jobId);
@@ -1417,9 +1399,9 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 + categorizationFilters);
 
         return ElasticsearchScripts.updateViaScript(client,
-                                    new ElasticsearchJobId(jobId).getIndex(),
-                                    JobDetails.TYPE, jobId,
-                        ElasticsearchScripts.newUpdateCategorizationFilters(categorizationFilters));
+                new ElasticsearchJobId(jobId).getIndex(),
+                JobDetails.TYPE, jobId,
+                ElasticsearchScripts.newUpdateCategorizationFilters(categorizationFilters));
     }
 
     @Override
@@ -1430,10 +1412,10 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 + newDescription);
 
         return ElasticsearchScripts.updateViaScript(client,
-                                new ElasticsearchJobId(jobId).getIndex(),
-                                JobDetails.TYPE, jobId,
-                                ElasticsearchScripts.newUpdateDetectorDescription(
-                                        detectorIndex, newDescription));
+                new ElasticsearchJobId(jobId).getIndex(),
+                JobDetails.TYPE, jobId,
+                ElasticsearchScripts.newUpdateDetectorDescription(
+                        detectorIndex, newDescription));
     }
 
     @Override
@@ -1450,9 +1432,9 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 + asListOfMaps);
 
         return ElasticsearchScripts.updateViaScript(client,
-                            new ElasticsearchJobId(jobId).getIndex(),
-                            JobDetails.TYPE, jobId,
-                            ElasticsearchScripts.newUpdateDetectorRules(detectorIndex, asListOfMaps));
+                new ElasticsearchJobId(jobId).getIndex(),
+                JobDetails.TYPE, jobId,
+                ElasticsearchScripts.newUpdateDetectorRules(detectorIndex, asListOfMaps));
 
     }
 
@@ -1467,9 +1449,9 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 + asMap);
 
         return ElasticsearchScripts.updateViaScript(client,
-                            new ElasticsearchJobId(jobId).getIndex(),
-                            JobDetails.TYPE, jobId,
-                            ElasticsearchScripts.newUpdateSchedulerConfig(asMap));
+                new ElasticsearchJobId(jobId).getIndex(),
+                JobDetails.TYPE, jobId,
+                ElasticsearchScripts.newUpdateSchedulerConfig(asMap));
     }
 
     @Override
@@ -1483,12 +1465,12 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         try
         {
             client.prepareIndex(esJobId.getIndex(), SchedulerState.TYPE, SchedulerState.TYPE)
-                    .setSource(jsonBuilder()
-                            .startObject()
-                                .field(SchedulerState.START_TIME_MILLIS, schedulerState.getStartTimeMillis())
-                                .field(SchedulerState.END_TIME_MILLIS, schedulerState.getEndTimeMillis())
-                            .endObject())
-                    .execute().actionGet();
+            .setSource(jsonBuilder()
+                    .startObject()
+                    .field(SchedulerState.START_TIME_MILLIS, schedulerState.getStartTimeMillis())
+                    .field(SchedulerState.END_TIME_MILLIS, schedulerState.getEndTimeMillis())
+                    .endObject())
+            .execute().actionGet();
         }
         catch (IndexNotFoundException e)
         {
