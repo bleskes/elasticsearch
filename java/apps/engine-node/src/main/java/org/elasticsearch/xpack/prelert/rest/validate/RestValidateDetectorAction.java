@@ -21,11 +21,12 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
+
+import java.io.IOException;
 
 public class RestValidateDetectorAction extends BaseRestHandler {
 
@@ -40,9 +41,9 @@ public class RestValidateDetectorAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        ValidateDetectorAction.Request validateDetectorRequest = new ValidateDetectorAction.Request(request.content());
-        transportValidateAction.execute(validateDetectorRequest, new AcknowledgedRestListener<ValidateDetectorAction.Response>(channel));
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        ValidateDetectorAction.Request validateDetectorRequest = new ValidateDetectorAction.Request(restRequest.content());
+        return channel -> transportValidateAction.execute(validateDetectorRequest, new AcknowledgedRestListener<ValidateDetectorAction.Response>(channel));
     }
 
 }

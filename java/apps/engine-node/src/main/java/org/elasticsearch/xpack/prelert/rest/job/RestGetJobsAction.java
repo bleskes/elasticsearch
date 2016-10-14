@@ -25,6 +25,8 @@ import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
 
+import java.io.IOException;
+
 import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestGetJobsAction extends BaseRestHandler {
@@ -44,10 +46,10 @@ public class RestGetJobsAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetJobsAction.Request getJobsRequest = new GetJobsAction.Request();
-        getJobsRequest.setPagination(request.paramAsInt(SKIP, DEFAULT_SKIP), request.paramAsInt(TAKE, DEFAULT_TAKE));
-        transportGetJobsAction.execute(getJobsRequest, new RestBuilderListener<GetJobsAction.Response>(channel) {
+        getJobsRequest.setPagination(restRequest.paramAsInt(SKIP, DEFAULT_SKIP), restRequest.paramAsInt(TAKE, DEFAULT_TAKE));
+        return channel -> transportGetJobsAction.execute(getJobsRequest, new RestBuilderListener<GetJobsAction.Response>(channel) {
 
             @Override
             public RestResponse buildResponse(GetJobsAction.Response response, XContentBuilder builder) throws Exception {

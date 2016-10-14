@@ -19,19 +19,13 @@ package org.elasticsearch.xpack.prelert.rest.results;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestResponse;
-import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 
-import static org.elasticsearch.rest.RestStatus.OK;
+import java.io.IOException;
 
 public class RestGetBucketAction extends BaseRestHandler {
 
@@ -45,13 +39,13 @@ public class RestGetBucketAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest restRequest, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetBucketAction.Request request = new GetBucketAction.Request(restRequest.param("jobId"), restRequest.param("timestamp"));
         request.setExpand(restRequest.paramAsBoolean("expand", false));
         request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
         if (restRequest.hasParam("partitionValue")) {
             request.setPartitionValue(restRequest.param("partitionValue"));
         }
-        transportAction.execute(request, new RestStatusToXContentListener<>(channel));
+        return channel -> transportAction.execute(request, new RestStatusToXContentListener<>(channel));
     }
 }

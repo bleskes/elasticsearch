@@ -4,11 +4,12 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
+
+import java.io.IOException;
 
 
 public class RestPostDataCloseAction extends BaseRestHandler {
@@ -23,10 +24,9 @@ public class RestPostDataCloseAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         PostDataCloseAction.Request postDataCloseRequest = new PostDataCloseAction.Request();
-
-        transportPostDataCloseAction.execute(postDataCloseRequest, new AcknowledgedRestListener<>(channel));
+        return channel -> transportPostDataCloseAction.execute(postDataCloseRequest, new AcknowledgedRestListener<>(channel));
     }
 }
 

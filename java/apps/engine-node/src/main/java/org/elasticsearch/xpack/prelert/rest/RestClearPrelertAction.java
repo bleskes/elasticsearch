@@ -4,11 +4,12 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
+
+import java.io.IOException;
 
 public class RestClearPrelertAction extends BaseRestHandler {
 
@@ -22,8 +23,8 @@ public class RestClearPrelertAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        transportAction.execute(new ClearPrelertAction.Request(), new AcknowledgedRestListener<>(channel));
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        return channel -> transportAction.execute(new ClearPrelertAction.Request(), new AcknowledgedRestListener<>(channel));
     }
 
 }

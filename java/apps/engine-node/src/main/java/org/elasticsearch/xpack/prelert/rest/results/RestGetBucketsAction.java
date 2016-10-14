@@ -21,14 +21,11 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestController;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestResponse;
+import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+
+import java.io.IOException;
 
 import static org.elasticsearch.rest.RestStatus.OK;
 
@@ -44,7 +41,7 @@ public class RestGetBucketsAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest restRequest, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetBucketsAction.Request request =
                 new GetBucketsAction.Request(restRequest.param("jobId"), restRequest.param("start"), restRequest.param("end"));
         request.setExpand(restRequest.paramAsBoolean("expand", false));
@@ -57,7 +54,7 @@ public class RestGetBucketsAction extends BaseRestHandler {
             request.setPartitionValue(restRequest.param("partitionValue"));
         }
 
-        transportAction.execute(request, new RestBuilderListener<GetBucketsAction.Response>(channel) {
+        return channel -> transportAction.execute(request, new RestBuilderListener<GetBucketsAction.Response>(channel) {
 
             @Override
             public RestResponse buildResponse(GetBucketsAction.Response response, XContentBuilder builder) throws Exception {

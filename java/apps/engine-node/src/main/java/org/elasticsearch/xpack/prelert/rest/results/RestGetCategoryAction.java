@@ -20,11 +20,12 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
+
+import java.io.IOException;
 
 public class RestGetCategoryAction extends BaseRestHandler {
 
@@ -38,11 +39,11 @@ public class RestGetCategoryAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest restRequest, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetCategoryDefinitionAction.Request request = new GetCategoryDefinitionAction.Request(
                 restRequest.param("jobId"), restRequest.param("categoryId")
         );
-        transportAction.execute(request, new RestStatusToXContentListener<>(channel));
+        return channel -> transportAction.execute(request, new RestStatusToXContentListener<>(channel));
     }
 
 }

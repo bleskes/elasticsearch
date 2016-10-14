@@ -21,12 +21,13 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.xpack.prelert.action.CreateListAction;
+
+import java.io.IOException;
 
 public class RestCreateListAction extends BaseRestHandler {
 
@@ -40,9 +41,9 @@ public class RestCreateListAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
-        CreateListAction.Request createListRequest = new CreateListAction.Request(RestActions.getRestContent(request));
-        transportCreateListAction.execute(createListRequest, new AcknowledgedRestListener<>(channel));
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        CreateListAction.Request createListRequest = new CreateListAction.Request(RestActions.getRestContent(restRequest));
+        return channel -> transportCreateListAction.execute(createListRequest, new AcknowledgedRestListener<>(channel));
     }
 
 }

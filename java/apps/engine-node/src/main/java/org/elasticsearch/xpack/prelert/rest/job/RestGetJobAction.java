@@ -20,11 +20,12 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
+
+import java.io.IOException;
 
 public class RestGetJobAction extends BaseRestHandler {
 
@@ -40,9 +41,9 @@ public class RestGetJobAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetJobAction.Request getJobRequest = new GetJobAction.Request();
-        getJobRequest.setJobId(request.param(JOB_ID));
-        transportGetJobAction.execute(getJobRequest, new RestStatusToXContentListener<>(channel));
+        getJobRequest.setJobId(restRequest.param(JOB_ID));
+        return channel -> transportGetJobAction.execute(getJobRequest, new RestStatusToXContentListener<>(channel));
     }
 }

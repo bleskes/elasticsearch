@@ -21,15 +21,12 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.BytesRestResponse;
-import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestController;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestResponse;
+import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
+
+import java.io.IOException;
 
 import static org.elasticsearch.rest.RestStatus.OK;
 
@@ -45,7 +42,7 @@ public class RestGetInfluencersAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest restRequest, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetInfluencersAction.Request request = new GetInfluencersAction.Request(restRequest.param("jobId"), restRequest.param("start"),
                 restRequest.param("end"));
         request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
@@ -54,8 +51,7 @@ public class RestGetInfluencersAction extends BaseRestHandler {
         request.setSort(restRequest.param("sort", Influencer.ANOMALY_SCORE));
         request.setDecending(restRequest.paramAsBoolean("desc", false));
 
-        transportAction.execute(request, new RestBuilderListener<GetInfluencersAction.Response>(channel) {
-
+        return channel -> transportAction.execute(request, new RestBuilderListener<GetInfluencersAction.Response>(channel) {
             @Override
             public RestResponse buildResponse(GetInfluencersAction.Response response, XContentBuilder builder) throws Exception {
                 return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());

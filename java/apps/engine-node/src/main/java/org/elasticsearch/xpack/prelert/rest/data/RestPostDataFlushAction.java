@@ -3,9 +3,13 @@ package org.elasticsearch.xpack.prelert.rest.data;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.rest.*;
+import org.elasticsearch.rest.BaseRestHandler;
+import org.elasticsearch.rest.RestController;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
+
+import java.io.IOException;
 
 public class RestPostDataFlushAction extends BaseRestHandler {
 
@@ -20,8 +24,8 @@ public class RestPostDataFlushAction extends BaseRestHandler {
     }
 
     @Override
-    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
+    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         PostDataFlushAction.Request postDataFlushRequest = new PostDataFlushAction.Request();
-        transportPostDataFlushAction.execute(postDataFlushRequest, new AcknowledgedRestListener<>(channel));
+        return channel -> transportPostDataFlushAction.execute(postDataFlushRequest, new AcknowledgedRestListener<>(channel));
     }
 }
