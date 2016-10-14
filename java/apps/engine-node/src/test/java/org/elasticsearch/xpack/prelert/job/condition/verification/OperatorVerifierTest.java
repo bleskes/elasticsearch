@@ -12,6 +12,7 @@ public class OperatorVerifierTest extends ESTestCase {
 
     public void testVerify() throws JobConfigurationException {
         assertTrue(OperatorVerifier.verify(Operator.EQ.name()));
+        assertTrue(OperatorVerifier.verify("match"));
         assertTrue(OperatorVerifier.verify("matCh"));
     }
 

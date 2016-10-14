@@ -22,17 +22,17 @@ public class ConditionVerifierTest extends ESTestCase {
 
     public void testVerify_GivenUnsetOperator() {
         ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
-                () -> ConditionVerifier.verify(new Condition()));
+                () -> ConditionVerifier.verify(Condition.NONE));
 
         assertEquals(1, e.getHeader("errorCode").size());
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals("Unexpected ErrorCode: " + ErrorCodes.fromCode(Long.valueOf(e.getHeader("errorCode").get(0))),
+                ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_OPERATOR), e.getMessage());
     }
 
 
     public void testVerify_GivenOperatorIsNone() {
-        Condition condition = new Condition();
-        condition.setOperator(Operator.NONE);
+        Condition condition = Condition.NONE;
 
         ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
                 () -> ConditionVerifier.verify(condition));
@@ -44,9 +44,7 @@ public class ConditionVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenEmptyValue() {
-        Condition condition = new Condition();
-        condition.setOperator(Operator.LT);
-        condition.setValue("");
+        Condition condition = new Condition(Operator.LT, "");
 
         ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
                 () -> ConditionVerifier.verify(condition));
@@ -58,9 +56,7 @@ public class ConditionVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenInvalidRegex() {
-        Condition condition = new Condition();
-        condition.setOperator(Operator.MATCH);
-        condition.setValue("[*");
+        Condition condition = new Condition(Operator.MATCH, "[*");
 
         ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
                 () -> ConditionVerifier.verify(condition));
@@ -72,8 +68,7 @@ public class ConditionVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenNullRegex() {
-        Condition condition = new Condition();
-        condition.setOperator(Operator.MATCH);
+        Condition condition = new Condition(Operator.MATCH, null);
 
         ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
                 () -> ConditionVerifier.verify(condition));

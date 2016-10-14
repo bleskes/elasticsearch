@@ -75,14 +75,14 @@ public class TransformConfigTest extends ESTestCase {
         config1.setInputs(Arrays.asList("input1", "input2"));
         config1.setOutputs(Arrays.asList("output"));
         config1.setArguments(Arrays.asList("-"));
-        config1.setCondition(new Condition());
+        config1.setCondition(Condition.NONE);
 
         TransformConfig config2 = new TransformConfig();
         config2.setTransform("concat");
         config2.setInputs(Arrays.asList("input1", "input2"));
         config2.setOutputs(Arrays.asList("output"));
         config2.setArguments(Arrays.asList("-"));
-        config2.setCondition(new Condition());
+        config2.setCondition(Condition.NONE);
 
         assertTrue(config1.equals(config2));
         assertTrue(config2.equals(config1));
@@ -162,7 +162,7 @@ public class TransformConfigTest extends ESTestCase {
         config2.setInputs(Arrays.asList("input1", "input2"));
         config2.setOutputs(Arrays.asList("output"));
         config2.setArguments(Arrays.asList("-"));
-        config2.setCondition(new Condition());
+        config2.setCondition(Condition.NONE);
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));

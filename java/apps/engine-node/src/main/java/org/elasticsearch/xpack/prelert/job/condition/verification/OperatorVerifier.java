@@ -3,7 +3,6 @@ package org.elasticsearch.xpack.prelert.job.condition.verification;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.elasticsearch.xpack.prelert.job.condition.UnknownOperatorException;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -25,7 +24,7 @@ public final class OperatorVerifier {
     public static boolean verify(String name) throws ElasticsearchParseException {
         try {
             Operator.fromString(name);
-        } catch (UnknownOperatorException e) {
+        } catch (IllegalArgumentException e) {
             throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, name),
                     ErrorCodes.CONDITION_UNKNOWN_OPERATOR);
         }

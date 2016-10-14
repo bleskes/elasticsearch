@@ -27,7 +27,7 @@ public final class ConditionVerifier {
      * @throws ElasticsearchParseException
      */
     public static boolean verify(Condition condition) throws ElasticsearchParseException {
-        OperatorVerifier.verify(condition.getOperator().name());
+        OperatorVerifier.verify(condition.getOperator().getName());
         if (condition.getOperator() == Operator.NONE) {
             throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_OPERATOR),
                     ErrorCodes.CONDITION_INVALID_ARGUMENT);
