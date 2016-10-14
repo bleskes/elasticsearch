@@ -24,7 +24,7 @@ import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
-import org.elasticsearch.xpack.prelert.action.job.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 
 public class RestDeleteJobAction extends BaseRestHandler {
 

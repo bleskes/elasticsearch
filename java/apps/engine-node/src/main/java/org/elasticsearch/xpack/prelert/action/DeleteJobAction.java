@@ -14,7 +14,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.xpack.prelert.action.job;
+package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;

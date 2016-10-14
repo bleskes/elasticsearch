@@ -26,7 +26,7 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
-import org.elasticsearch.xpack.prelert.action.job.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;

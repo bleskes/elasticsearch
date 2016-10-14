@@ -52,7 +52,7 @@ import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
-import org.elasticsearch.xpack.prelert.action.job.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
