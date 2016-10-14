@@ -78,10 +78,8 @@ public interface JobResultsProvider
      * @param jobId
      * @param query
      * @return QueryPage of AnomalyRecords
-     * @throws UnknownJobException If the job id is no recognised
      */
-    QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query)
-            throws UnknownJobException;
+    QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query);
 
     /**
      * Return a page of influencers for the given job and within the given date

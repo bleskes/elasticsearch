@@ -42,13 +42,13 @@ public final class RecordsQueryBuilder
         return this;
     }
 
-    public RecordsQueryBuilder epochStart(long startTime)
+    public RecordsQueryBuilder epochStart(String startTime)
     {
         recordsQuery.epochStart = startTime;
         return this;
     }
 
-    public RecordsQueryBuilder epochEnd(long endTime)
+    public RecordsQueryBuilder epochEnd(String endTime)
     {
         recordsQuery.epochEnd = endTime;
         return this;
@@ -72,7 +72,7 @@ public final class RecordsQueryBuilder
         return this;
     }
 
-    public RecordsQueryBuilder anomalyScoreFilter(double anomalyScoreFilter)
+    public RecordsQueryBuilder anomalyScoreThreshold(double anomalyScoreFilter)
     {
         recordsQuery.anomalyScoreFilter = anomalyScoreFilter;
         return this;
@@ -110,8 +110,8 @@ public final class RecordsQueryBuilder
         private double anomalyScoreFilter = 0.0d;
         private double normalizedProbability = 0.0d;
         private String partitionFieldValue;
-        private long epochStart = -1;
-        private long epochEnd = -1;
+        private String epochStart;
+        private String epochEnd;
 
 
         public int getTake()
@@ -154,12 +154,12 @@ public final class RecordsQueryBuilder
             return skip;
         }
 
-        public long getEpochStart()
+        public String getEpochStart()
         {
             return epochStart;
         }
 
-        public long getEpochEnd()
+        public String getEpochEnd()
         {
             return epochEnd;
         }

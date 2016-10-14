@@ -17,6 +17,12 @@
 
 package org.elasticsearch.xpack.prelert;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.bootstrap.JarHell;
@@ -45,6 +51,7 @@ import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.GetListAction;
+import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
 import org.elasticsearch.xpack.prelert.action.PostDataAction;
 import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
 import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
@@ -69,17 +76,13 @@ import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoriesAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoryAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetRecordsAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
+import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class ServerBootstrap {
 
@@ -157,6 +160,7 @@ public class ServerBootstrap {
                     RestCreateListAction.class,
                     RestGetBucketsAction.class,
                     RestGetInfluencersAction.class,
+                    RestGetRecordsAction.class,
                     RestGetBucketAction.class,
                     RestPostDataAction.class,
                     RestPostDataCloseAction.class,
@@ -181,6 +185,7 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),
                     new ActionHandler<>(GetBucketAction.INSTANCE, GetBucketAction.TransportAction.class),
                     new ActionHandler<>(GetInfluencersAction.INSTANCE, GetInfluencersAction.TransportAction.class),
+                    new ActionHandler<>(GetRecordsAction.INSTANCE, GetRecordsAction.TransportAction.class),
                     new ActionHandler<>(PostDataAction.INSTANCE, PostDataAction.TransportAction.class),
                     new ActionHandler<>(PostDataCloseAction.INSTANCE, PostDataCloseAction.TransportAction.class),
                     new ActionHandler<>(PostDataFlushAction.INSTANCE, PostDataFlushAction.TransportAction.class),

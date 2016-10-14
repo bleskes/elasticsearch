@@ -856,11 +856,10 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         RecordsQueryBuilder rqb = new RecordsQueryBuilder()
                 .skip(skip)
                 .take(take)
-                .epochStart(now.getTime())
-                .epochEnd(now.getTime())
+                .epochStart(String.valueOf(now.getTime())).epochEnd(String.valueOf(now.getTime()))
                 .includeInterim(true)
                 .sortField(sortfield)
-                .anomalyScoreFilter(11.1)
+                .anomalyScoreThreshold(11.1)
                 .normalizedProbability(2.2);
 
         QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
@@ -912,11 +911,11 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         RecordsQueryBuilder rqb = new RecordsQueryBuilder();
         rqb.skip(skip);
         rqb.take(take);
-        rqb.epochStart(now.getTime());
-        rqb.epochEnd(now.getTime());
+        rqb.epochStart(String.valueOf(now.getTime()));
+        rqb.epochEnd(String.valueOf(now.getTime()));
         rqb.includeInterim(true);
         rqb.sortField(sortfield);
-        rqb.anomalyScoreFilter(11.1);
+        rqb.anomalyScoreThreshold(11.1);
         rqb.normalizedProbability(2.2);
 
         QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());

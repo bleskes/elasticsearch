@@ -261,9 +261,9 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
                 LOGGER.trace("ES API CALL: create index " + PRELERT_USAGE_INDEX);
                 client.admin().indices().prepareCreate(PRELERT_USAGE_INDEX)
-                        .setSettings(prelertIndexSettings())
-                        .addMapping(Usage.TYPE, usageMapping)
-                        .get();
+                .setSettings(prelertIndexSettings())
+                .addMapping(Usage.TYPE, usageMapping)
+                .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_USAGE_INDEX);
                 client.admin().cluster().prepareHealth(PRELERT_USAGE_INDEX).setWaitForYellowStatus().execute().actionGet();
             }
@@ -966,26 +966,22 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     @Override
-    public QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query)
-            throws UnknownJobException
-    {
+    public QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query) {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
                 .score(AnomalyRecord.ANOMALY_SCORE, query.getAnomalyScoreThreshold())
                 .score(AnomalyRecord.NORMALIZED_PROBABILITY, query.getNormalizedProbabilityThreshold())
                 .interim(AnomalyRecord.IS_INTERIM, query.isIncludeInterim())
-                .term(AnomalyRecord.PARTITION_FIELD_VALUE, query.getPartitionFieldValue())
-                .build();
+                .term(AnomalyRecord.PARTITION_FIELD_VALUE, query.getPartitionFieldValue()).build();
 
-        return records(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb,
-                query.getSortField(), query.isSortDescending());
+        return records(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb, query.getSortField(), query.isSortDescending());
     }
 
 
     private QueryPage<AnomalyRecord> records(ElasticsearchJobId jobId,
             int skip, int take, QueryBuilder recordFilter,
             String sortField, boolean descending)
-                    throws UnknownJobException
+                    throws ResourceNotFoundException
     {
         FieldSortBuilder sb = null;
         if (sortField != null)
