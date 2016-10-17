@@ -22,8 +22,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
+
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 
 /**
  * Describes the format of the data used in the job and how it should
@@ -39,18 +51,30 @@ import java.util.Objects;
  */
 @JsonIgnoreProperties({"transformTime", "epochMs"})
 @JsonInclude(Include.NON_NULL)
-public class DataDescription {
+public class DataDescription extends ToXContentToBytes implements Writeable {
     /**
      * Enum of the acceptable data formats.
      */
-    public enum DataFormat {
-        JSON, DELIMITED, SINGLE_LINE, ELASTICSEARCH;
+    public enum DataFormat implements Writeable {
+        JSON("json"),
+        DELIMITED("delimited"),
+        SINGLE_LINE("single_line"),
+        ELASTICSEARCH("elasticsearch");
 
         /**
          * Delimited used to be called delineated. We keep supporting that for backwards
          * compatibility.
          */
         private static final String DEPRECATED_DELINEATED = "DELINEATED";
+        private String name;
+
+        private DataFormat(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
 
         /**
          * Case-insensitive from string method.
@@ -65,7 +89,22 @@ public class DataDescription {
             return DEPRECATED_DELINEATED.equals(valueUpperCase) ? DELIMITED : DataFormat
                     .valueOf(valueUpperCase);
         }
+
+        public static DataFormat readFromStream(StreamInput in) throws IOException {
+            int ordinal = in.readVInt();
+            if (ordinal < 0 || ordinal >= values().length) {
+                throw new IOException("Unknown DataFormat ordinal [" + ordinal + "]");
+            }
+            return values()[ordinal];
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            out.writeVInt(ordinal());
+        }
     }
+
+    public static final ParseField DATA_DESCRIPTION_FIELD = new ParseField("data_description");
 
     /**
      * Special time format string for epoch times (seconds)
@@ -80,11 +119,11 @@ public class DataDescription {
     /**
      * The format field name
      */
-    public static final String FORMAT = "format";
+    public static final ParseField FORMAT_FIELD = new ParseField("format");
     /**
      * The time field name
      */
-    public static final String TIME_FIELD_NAME = "timeField";
+    public static final ParseField TIME_FIELD_NAME_FIELD = new ParseField("time_field");
 
     /**
      * By default autodetect expects the timestamp in a field with this name
@@ -94,15 +133,15 @@ public class DataDescription {
     /**
      * The timeFormat field name
      */
-    public static final String TIME_FORMAT = "timeFormat";
+    public static final ParseField TIME_FORMAT_FIELD = new ParseField("time_format");
     /**
      * The field delimiter field name
      */
-    public static final String FIELD_DELIMITER = "fieldDelimiter";
+    public static final ParseField FIELD_DELIMITER_FIELD = new ParseField("field_delimiter");
     /**
      * The quote char field name
      */
-    public static final String QUOTE_CHARACTER = "quoteCharacter";
+    public static final ParseField QUOTE_CHARACTER_FIELD = new ParseField("quote_character");
 
     /**
      * The default field delimiter expected by the native autodetect_api
@@ -121,18 +160,75 @@ public class DataDescription {
      */
     public static final char DEFAULT_QUOTE_CHAR = '"';
 
-    private DataFormat dataFormat;
-    private String timeFieldName;
-    private String timeFormat;
-    private char fieldDelimiter;
-    private char quoteCharacter;
+    private DataFormat dataFormat = DataFormat.DELIMITED;;
+    private String timeFieldName = DEFAULT_TIME_FIELD;
+    private String timeFormat = EPOCH;
+    private char fieldDelimiter = DEFAULT_DELIMITER;
+    private char quoteCharacter = DEFAULT_QUOTE_CHAR;
+
+    public static final ObjectParser<DataDescription, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
+            DATA_DESCRIPTION_FIELD.getPreferredName(), DataDescription::new);
+    static {
+        PARSER.declareField(DataDescription::setFormat, p -> {
+            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
+                return DataFormat.forString(p.text());
+            }
+            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
+        }, FORMAT_FIELD, ValueType.STRING);
+        PARSER.declareString(DataDescription::setTimeField, TIME_FIELD_NAME_FIELD);
+        PARSER.declareString(DataDescription::setTimeFormat, TIME_FORMAT_FIELD);
+        PARSER.declareField(DataDescription::setFieldDelimiter, p -> {
+            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
+                String charStr = p.text();
+                if (charStr.length() != 1) {
+                    throw new IllegalArgumentException("String must be a single character, found [" + charStr + "]");
+                }
+                return charStr.charAt(0);
+            }
+            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
+        }, FIELD_DELIMITER_FIELD, ValueType.STRING);
+        PARSER.declareField(DataDescription::setQuoteCharacter, p -> {
+            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
+                String charStr = p.text();
+                if (charStr.length() != 1) {
+                    throw new IllegalArgumentException("String must be a single character, found [" + charStr + "]");
+                }
+                return charStr.charAt(0);
+            }
+            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
+        }, QUOTE_CHARACTER_FIELD, ValueType.STRING);
+    }
 
     public DataDescription() {
-        dataFormat = DataFormat.DELIMITED;
-        timeFieldName = DEFAULT_TIME_FIELD;
-        timeFormat = EPOCH;
-        fieldDelimiter = DEFAULT_DELIMITER;
-        quoteCharacter = DEFAULT_QUOTE_CHAR;
+    }
+
+    public DataDescription(StreamInput in) throws IOException {
+        dataFormat = DataFormat.readFromStream(in);
+        timeFieldName = in.readString();
+        timeFormat = in.readString();
+        fieldDelimiter = (char) in.read();
+        quoteCharacter = (char) in.read();
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        dataFormat.writeTo(out);
+        out.writeString(timeFieldName);
+        out.writeString(timeFormat);
+        out.write(fieldDelimiter);
+        out.write(quoteCharacter);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(FORMAT_FIELD.getPreferredName(), dataFormat);
+        builder.field(TIME_FIELD_NAME_FIELD.getPreferredName(), timeFieldName);
+        builder.field(TIME_FORMAT_FIELD.getPreferredName(), timeFormat);
+        builder.field(FIELD_DELIMITER_FIELD.getPreferredName(), String.valueOf(fieldDelimiter));
+        builder.field(QUOTE_CHARACTER_FIELD.getPreferredName(), String.valueOf(quoteCharacter));
+        builder.endObject();
+        return builder;
     }
 
     /**
@@ -146,6 +242,7 @@ public class DataDescription {
     }
 
     public void setFormat(DataFormat format) {
+        Objects.requireNonNull(format, FORMAT_FIELD.getPreferredName() + " must not be null");
         dataFormat = format;
     }
 
@@ -159,6 +256,7 @@ public class DataDescription {
     }
 
     public void setTimeField(String fieldName) {
+        Objects.requireNonNull(fieldName, TIME_FIELD_NAME_FIELD.getPreferredName() + " must not be null");
         timeFieldName = fieldName;
     }
 

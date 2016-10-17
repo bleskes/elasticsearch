@@ -1,26 +1,13 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
-import org.junit.Test;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import static org.junit.Assert.*;
-
-public class DataDescriptionTest extends ESTestCase {
-
-    public void testDataFormatForString() {
-        assertEquals(DataFormat.DELIMITED, DataFormat.forString("delineated"));
-        assertEquals(DataFormat.DELIMITED, DataFormat.forString("DELINEATED"));
-        assertEquals(DataFormat.DELIMITED, DataFormat.forString("delimited"));
-        assertEquals(DataFormat.DELIMITED, DataFormat.forString("DELIMITED"));
-
-        assertEquals(DataFormat.JSON, DataFormat.forString("json"));
-        assertEquals(DataFormat.JSON, DataFormat.forString("JSON"));
-
-        assertEquals(DataFormat.SINGLE_LINE, DataFormat.forString("single_line"));
-        assertEquals(DataFormat.SINGLE_LINE, DataFormat.forString("SINGLE_LINE"));
-    }
+public class DataDescriptionTest extends AbstractSerializingTestCase<DataDescription> {
 
 
     public void testTransform_GivenJson() {
@@ -210,5 +197,36 @@ public class DataDescriptionTest extends ESTestCase {
         dataDescription2.setFieldDelimiter(',');
 
         assertEquals(dataDescription1.hashCode(), dataDescription2.hashCode());
+    }
+
+    @Override
+    protected DataDescription createTestInstance() {
+        DataDescription dataDescription = new DataDescription();
+        if (randomBoolean()) {
+            dataDescription.setFormat(randomFrom(DataFormat.values()));
+        }
+        if (randomBoolean()) {
+            dataDescription.setTimeField(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            dataDescription.setTimeFormat(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            dataDescription.setFieldDelimiter(randomAsciiOfLength(1).charAt(0));
+        }
+        if (randomBoolean()) {
+            dataDescription.setQuoteCharacter(randomAsciiOfLength(1).charAt(0));
+        }
+        return dataDescription;
+    }
+
+    @Override
+    protected Reader<DataDescription> instanceReader() {
+        return DataDescription::new;
+    }
+
+    @Override
+    protected DataDescription parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return DataDescription.PARSER.apply(parser, () -> matcher);
     }
 }

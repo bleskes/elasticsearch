@@ -137,11 +137,11 @@ public final class ReservedFieldNames
         DataCounts.EXCLUDED_RECORD_COUNT,
         DataCounts.LATEST_RECORD_TIME,
 
-        DataDescription.FORMAT,
-        DataDescription.TIME_FIELD_NAME,
-        DataDescription.TIME_FORMAT,
-        DataDescription.FIELD_DELIMITER,
-        DataDescription.QUOTE_CHARACTER,
+        DataDescription.FORMAT_FIELD.getPreferredName(),
+        DataDescription.TIME_FIELD_NAME_FIELD.getPreferredName(),
+        DataDescription.TIME_FORMAT_FIELD.getPreferredName(),
+        DataDescription.FIELD_DELIMITER_FIELD.getPreferredName(),
+        DataDescription.QUOTE_CHARACTER_FIELD.getPreferredName(),
 
         DetectionRule.RULE_ACTION_FIELD.getPreferredName(),
         DetectionRule.TARGET_FIELD_NAME_FIELD.getPreferredName(),

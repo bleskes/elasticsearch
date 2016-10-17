@@ -65,7 +65,6 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
         dataDescription = new DataDescription();
         dataDescription.setFieldDelimiter(',');
         dataDescription.setFormat(DataFormat.SINGLE_LINE);
-        dataDescription.setTimeFormat(DataDescription.FORMAT);
         dataDescription.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
 
         analysisConfig = new AnalysisConfig();
