@@ -21,6 +21,8 @@ import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
 import org.elasticsearch.xpack.watcher.client.WatcherClient;
+import org.elasticsearch.xpack.watcher.condition.always.AlwaysCondition;
+import org.elasticsearch.xpack.watcher.condition.never.NeverCondition;
 import org.elasticsearch.xpack.watcher.execution.ActionExecutionMode;
 import org.elasticsearch.xpack.watcher.execution.Wid;
 import org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils;
@@ -43,8 +45,6 @@ import java.util.Map;
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.xpack.watcher.actions.ActionBuilders.loggingAction;
 import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBuilder;
-import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.alwaysCondition;
-import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.neverCondition;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.xpack.watcher.trigger.schedule.Schedules.cron;
@@ -91,7 +91,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? 2099")))
                         .input(simpleInput("foo", "bar"))
-                        .condition(alwaysCondition())
+                        .condition(AlwaysCondition.INSTANCE)
                         .addAction("log", loggingAction("_text")))
                 .get();
 
@@ -132,7 +132,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? 2099")))
                         .input(simpleInput("foo", "bar"))
-                        .condition(alwaysCondition())
+                        .condition(AlwaysCondition.INSTANCE)
                         .addAction("log", loggingAction("_text")))
                 .get();
 
@@ -188,7 +188,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? 2099")))
                         .input(simpleInput("foo", "bar"))
-                        .condition(alwaysCondition())
+                        .condition(AlwaysCondition.INSTANCE)
                         .addAction("log", loggingAction("_text")))
                 .get();
 
@@ -231,7 +231,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
                 .setSource(watchBuilder()
                         .trigger(schedule(cron("0/5 * * * * ? 2099")))
                         .input(simpleInput("foo", "bar"))
-                        .condition(neverCondition())
+                        .condition(NeverCondition.INSTANCE)
                         .addAction("log", loggingAction("_text")))
                 .get();
 
@@ -276,7 +276,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
                         .trigger(schedule(interval("1s"))) // run every second so we can ack it
                         .input(simpleInput("foo", "bar"))
                         .defaultThrottlePeriod(TimeValue.timeValueMillis(0))
-                        .condition(alwaysCondition())
+                        .condition(AlwaysCondition.INSTANCE)
                         .addAction("log", loggingAction("_text")))
                 .get();
 

@@ -33,6 +33,7 @@ import org.elasticsearch.xpack.watcher.actions.ActionStatus;
 import org.elasticsearch.xpack.watcher.actions.logging.LoggingAction;
 import org.elasticsearch.xpack.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.xpack.watcher.condition.always.AlwaysCondition;
+import org.elasticsearch.xpack.watcher.condition.never.NeverCondition;
 import org.elasticsearch.xpack.watcher.condition.script.ScriptCondition;
 import org.elasticsearch.xpack.watcher.history.HistoryStore;
 import org.elasticsearch.xpack.watcher.history.WatchRecord;
@@ -68,8 +69,6 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.xpack.watcher.actions.ActionBuilders.loggingAction;
 import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBuilder;
-import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.alwaysCondition;
-import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.neverCondition;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.xpack.watcher.trigger.schedule.Schedules.cron;
@@ -136,7 +135,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))
-                .condition(conditionAlwaysTrue ? alwaysCondition() : neverCondition())
+                .condition(conditionAlwaysTrue ? AlwaysCondition.INSTANCE : NeverCondition.INSTANCE)
                 .addAction("log", loggingAction("foobar"));
 
         ManualExecutionContext.Builder ctxBuilder;
@@ -219,7 +218,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))
-                .condition(alwaysCondition())
+                .condition(AlwaysCondition.INSTANCE)
                 .addAction("log", loggingAction("foobar"));
 
         ExecuteWatchRequestBuilder builder = watcherClient().prepareExecuteWatch()
@@ -242,7 +241,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))
-                .condition(alwaysCondition())
+                .condition(AlwaysCondition.INSTANCE)
                 .addAction("log", loggingAction("foobar"));
 
         try {
@@ -261,7 +260,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))
-                .condition(alwaysCondition())
+                .condition(AlwaysCondition.INSTANCE)
                 .addAction("log", loggingAction("foobar"));
 
         try {
@@ -322,7 +321,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
         WatchSourceBuilder watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))
-                .condition(neverCondition())
+                .condition(NeverCondition.INSTANCE)
                 .defaultThrottlePeriod(new TimeValue(1, TimeUnit.HOURS))
                 .addAction("log", loggingAction("foobar"));
         watcherClient().putWatch(new PutWatchRequest("_id", watchBuilder)).actionGet();
@@ -341,7 +340,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
         watchBuilder = watchBuilder()
                 .trigger(schedule(cron("0 0 0 1 * ? 2099")))
                 .input(simpleInput("foo", "bar"))
-                .condition(alwaysCondition())
+                .condition(AlwaysCondition.INSTANCE)
                 .defaultThrottlePeriod(new TimeValue(1, TimeUnit.HOURS))
                 .addAction("log", loggingAction("foobar"));
         watcherClient().putWatch(new PutWatchRequest("_id", watchBuilder)).actionGet();

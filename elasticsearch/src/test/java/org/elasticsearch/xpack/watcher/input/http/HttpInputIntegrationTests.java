@@ -48,7 +48,6 @@ import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
 import static org.elasticsearch.xpack.watcher.actions.ActionBuilders.loggingAction;
 import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBuilder;
-import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.compareCondition;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.httpInput;
 import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.xContentSource;
 import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
@@ -85,7 +84,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                                 .path("/index/_search")
                                 .body(jsonBuilder().startObject().field("size", 1).endObject().string())
                                 .auth(securityEnabled() ? new BasicAuth("test", "changeme".toCharArray()) : null)))
-                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L))
+                        .condition(new CompareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L))
                         .addAction("_id", loggingAction("watch [{{ctx.watch_id}}] matched")))
                 .get();
 
@@ -104,7 +103,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                         .input(httpInput(HttpRequestTemplate.builder(address.getHostString(), address.getPort())
                                 .path("/_cluster/stats")
                                 .auth(securityEnabled() ? new BasicAuth("test", "changeme".toCharArray()) : null)))
-                        .condition(compareCondition("ctx.payload.nodes.count.total", CompareCondition.Op.GTE, 1L))
+                        .condition(new CompareCondition("ctx.payload.nodes.count.total", CompareCondition.Op.GTE, 1L))
                         .addAction("_id", loggingAction("watch [{{ctx.watch_id}}] matched")))
                 .get();
 
@@ -139,7 +138,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                 .setSource(watchBuilder()
                         .trigger(schedule(interval(10, IntervalSchedule.Interval.Unit.SECONDS)))
                         .input(httpInput(requestBuilder).extractKeys("hits.total"))
-                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L)))
+                        .condition(new CompareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L)))
                 .get();
 
         // in this watcher the condition will fail, because max_score isn't extracted, only total:
@@ -147,7 +146,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                 .setSource(watchBuilder()
                         .trigger(schedule(interval(10, IntervalSchedule.Interval.Unit.SECONDS)))
                         .input(httpInput(requestBuilder).extractKeys("hits.total"))
-                        .condition(compareCondition("ctx.payload.hits.max_score", CompareCondition.Op.GTE, 0L)))
+                        .condition(new CompareCondition("ctx.payload.hits.max_score", CompareCondition.Op.GTE, 0L)))
                 .get();
 
         if (timeWarped()) {

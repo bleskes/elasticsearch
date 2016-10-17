@@ -37,7 +37,6 @@ import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.xpack.watcher.actions.ActionBuilders.indexAction;
 import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBuilder;
-import static org.elasticsearch.xpack.watcher.condition.ConditionBuilders.compareCondition;
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.searchInput;
 import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.templateRequest;
 import static org.elasticsearch.xpack.watcher.transform.TransformBuilders.searchTransform;
@@ -74,7 +73,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
                 .setSource(watchBuilder()
                         .trigger(schedule(interval("5s")))
                         .input(searchInput(templateRequest(new SearchSourceBuilder(), "events")))
-                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
+                        .condition(new CompareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
                         .transform(searchTransform(templateRequest(new SearchSourceBuilder(), "events")))
                         .addAction("_id", indexAction("actions", "action"))
                         .defaultThrottlePeriod(TimeValue.timeValueSeconds(30)))
@@ -148,7 +147,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
                 .setSource(watchBuilder()
                         .trigger(schedule(interval("1s")))
                         .input(searchInput(templateRequest(new SearchSourceBuilder(), "events")))
-                        .condition(compareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
+                        .condition(new CompareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
                         .transform(searchTransform(templateRequest(new SearchSourceBuilder(), "events")))
                         .addAction("_id", indexAction("actions", "action")))
                 .get();
