@@ -52,7 +52,7 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider
      * @return page of model snapshots
      */
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
-                                                   long startEpochMs, long endEpochMs, String sortField, boolean sortDescending,
+                                                   String startEpochMs, String endEpochMs, String sortField, boolean sortDescending,
                                                    String snapshotId, String description)
     throws UnknownJobException;
 

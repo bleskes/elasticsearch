@@ -1067,12 +1067,12 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take)
             throws UnknownJobException
     {
-        return modelSnapshots(jobId, skip, take, 0, 0, null, true, null, null);
+        return modelSnapshots(jobId, skip, take, null, null, null, true, null, null);
     }
 
     @Override
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
-            long startEpochMs, long endEpochMs, String sortField, boolean sortDescending,
+            String startEpochMs, String endEpochMs, String sortField, boolean sortDescending,
             String snapshotId, String description) throws UnknownJobException
     {
         boolean haveId = snapshotId != null && !snapshotId.isEmpty();
@@ -1183,7 +1183,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
             throws UnknownJobException, NoSuchModelSnapshotException
     {
         List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
-                0, 0, null, true, snapshotId, null).hits();
+                null, null, null, true, snapshotId, null).hits();
         if (deleteCandidates == null || deleteCandidates.isEmpty())
         {
             throw new NoSuchModelSnapshotException(jobId);

@@ -1123,7 +1123,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take, 0, 0,
+        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take, null, null,
                 "sortfield", true, "snappyId", "description1");
         assertEquals(2L, page.hitCount());
         List<ModelSnapshot> snapshots = page.hits();

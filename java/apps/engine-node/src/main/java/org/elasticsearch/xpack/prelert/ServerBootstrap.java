@@ -46,6 +46,7 @@ import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.GetListAction;
+import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
 import org.elasticsearch.xpack.prelert.action.PostDataAction;
 import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
@@ -78,6 +79,7 @@ import org.elasticsearch.xpack.prelert.rest.results.RestGetRecordsAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
+import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -172,7 +174,8 @@ public class ServerBootstrap {
                     RestValidateTransformsAction.class,
                     RestClearPrelertAction.class,
                     RestGetCategoriesAction.class,
-                    RestGetCategoryAction.class);
+                    RestGetCategoryAction.class,
+                    RestGetModelSnapshotsAction.class);
         }
 
         @Override
@@ -197,7 +200,8 @@ public class ServerBootstrap {
                     new ActionHandler<>(ValidateTransformsAction.INSTANCE, ValidateTransformsAction.TransportAction.class),
                     new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class),
                     new ActionHandler<>(GetCategoryDefinitionsAction.INSTANCE, GetCategoryDefinitionsAction.TransportAction.class),
-                    new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class));
+                    new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class),
+                    new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class));
         }
     }
 }
