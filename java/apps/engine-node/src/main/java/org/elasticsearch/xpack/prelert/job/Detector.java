@@ -1,12 +1,30 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
@@ -15,16 +33,38 @@ import java.util.stream.Collectors;
  * and <code>overFieldName</code> should be set.
  */
 @JsonInclude(Include.NON_NULL)
-public class Detector {
-    public static final String DETECTOR_DESCRIPTION = "detectorDescription";
-    public static final String FUNCTION = "function";
-    public static final String FIELD_NAME = "fieldName";
-    public static final String BY_FIELD_NAME = "byFieldName";
-    public static final String OVER_FIELD_NAME = "overFieldName";
-    public static final String PARTITION_FIELD_NAME = "partitionFieldName";
-    public static final String USE_NULL = "useNull";
-    public static final String EXCLUDE_FREQUENT = "excludeFrequent";
-    public static final String DETECTOR_RULES = "detectorRules";
+public class Detector extends ToXContentToBytes implements Writeable {
+    public static final ParseField DETECTOR_FIELD = new ParseField("detector");
+    public static final ParseField DETECTOR_DESCRIPTION_FIELD = new ParseField("detector_description");
+    public static final ParseField FUNCTION_FIELD = new ParseField("function");
+    public static final ParseField FIELD_NAME_FIELD = new ParseField("field_name");
+    public static final ParseField BY_FIELD_NAME_FIELD = new ParseField("by_field_name");
+    public static final ParseField OVER_FIELD_NAME_FIELD = new ParseField("over_field_name");
+    public static final ParseField PARTITION_FIELD_NAME_FIELD = new ParseField("partition_field_name");
+    public static final ParseField USE_NULL_FIELD = new ParseField("use_null");
+    public static final ParseField EXCLUDE_FREQUENT_FIELD = new ParseField("exclude_frequent");
+    public static final ParseField DETECTOR_RULES_FIELD = new ParseField("detector_rules");
+
+    public static final ConstructingObjectParser<Detector, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            DETECTOR_FIELD.getPreferredName(), a -> {
+                if (a.length == 2) {
+                    return new Detector((String) a[0], (String) a[1]);
+                } else {
+                    return new Detector((String) a[0], (String) a[1], (String) a[2]);
+                }
+            });
+
+    static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), DETECTOR_DESCRIPTION_FIELD);
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), FUNCTION_FIELD);
+        PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), FIELD_NAME_FIELD);
+        PARSER.declareString(Detector::setByFieldName, BY_FIELD_NAME_FIELD);
+        PARSER.declareString(Detector::setOverFieldName, OVER_FIELD_NAME_FIELD);
+        PARSER.declareString(Detector::setPartitionFieldName, PARTITION_FIELD_NAME_FIELD);
+        PARSER.declareString(Detector::setExcludeFrequent, EXCLUDE_FREQUENT_FIELD);
+        PARSER.declareBoolean(Detector::setUseNull, USE_NULL_FIELD);
+        PARSER.declareObjectArray(Detector::setDetectorRules, DetectionRule.PARSER, DETECTOR_RULES_FIELD);
+    }
 
 
     public static final String COUNT = "count";
@@ -113,7 +153,7 @@ public class Detector {
                     TIME_OF_DAY,
                     TIME_OF_WEEK,
                     LAT_LONG
-            ));
+                    ));
 
     /**
      * The set of functions that do not require a field, by field or over field
@@ -128,7 +168,7 @@ public class Detector {
                     HIGH_NON_ZERO_COUNT, HIGH_NZC,
                     TIME_OF_DAY,
                     TIME_OF_WEEK
-            ));
+                    ));
 
     /**
      * The set of functions that require a fieldname
@@ -158,7 +198,7 @@ public class Detector {
                     LOW_POPULATION_VARIANCE,
                     HIGH_POPULATION_VARIANCE,
                     LAT_LONG
-            ));
+                    ));
 
     /**
      * The set of functions that require a by fieldname
@@ -167,7 +207,7 @@ public class Detector {
             new HashSet<>(Arrays.asList(
                     RARE,
                     FREQ_RARE
-            ));
+                    ));
 
     /**
      * The set of functions that require a over fieldname
@@ -175,7 +215,7 @@ public class Detector {
     public static final Set<String> OVER_FIELD_NAME_FUNCTIONS =
             new HashSet<>(Arrays.asList(
                     FREQ_RARE
-            ));
+                    ));
 
     /**
      * The set of functions that cannot have a by fieldname
@@ -191,7 +231,7 @@ public class Detector {
                     NON_ZERO_COUNT, NZC,
                     LOW_NON_ZERO_COUNT, LOW_NZC,
                     HIGH_NON_ZERO_COUNT, HIGH_NZC
-            ));
+                    ));
 
     /**
      * The set of functions that must not be used with overlapping buckets
@@ -200,7 +240,7 @@ public class Detector {
             new HashSet<>(Arrays.asList(
                     RARE,
                     FREQ_RARE
-            ));
+                    ));
 
     /**
      * The set of functions that should not be used with overlapping buckets
@@ -212,7 +252,7 @@ public class Detector {
                     MAX,
                     TIME_OF_DAY,
                     TIME_OF_WEEK
-            ));
+                    ));
 
     /**
      * field names cannot contain any of these characters
@@ -225,25 +265,95 @@ public class Detector {
 
 
     private String detectorDescription;
-    private String function;
-    private String fieldName;
+    private final String function;
+    private final String fieldName;
     private String byFieldName;
     private String overFieldName;
     private String partitionFieldName;
-    private Boolean useNull;
+    private boolean useNull = false;
     private String excludeFrequent;
-    private List<DetectionRule> detectorRules;
+    private List<DetectionRule> detectorRules = new ArrayList<>();
 
-    public Detector() {
-        // Default constructor
+    public Detector(StreamInput in) throws IOException {
+        detectorDescription = in.readOptionalString();
+        function = in.readString();
+        fieldName = in.readOptionalString();
+        byFieldName = in.readOptionalString();
+        overFieldName = in.readOptionalString();
+        partitionFieldName = in.readOptionalString();
+        useNull = in.readBoolean();
+        excludeFrequent = in.readOptionalString();
+        int size = in.readVInt();
+        detectorRules = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            detectorRules.add(new DetectionRule(in));
+        }
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeOptionalString(detectorDescription);
+        out.writeString(function);
+        out.writeOptionalString(fieldName);
+        out.writeOptionalString(byFieldName);
+        out.writeOptionalString(overFieldName);
+        out.writeOptionalString(partitionFieldName);
+        out.writeBoolean(useNull);
+        out.writeOptionalString(excludeFrequent);
+        out.writeVInt(detectorRules.size());
+        for (DetectionRule rule : detectorRules) {
+            rule.writeTo(out);
+        }
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(DETECTOR_DESCRIPTION_FIELD.getPreferredName(), detectorDescription);
+        builder.field(FUNCTION_FIELD.getPreferredName(), function);
+        if (fieldName != null) {
+            builder.field(FIELD_NAME_FIELD.getPreferredName(), fieldName);
+        }
+        if (byFieldName != null) {
+            builder.field(BY_FIELD_NAME_FIELD.getPreferredName(), byFieldName);
+        }
+        if (overFieldName != null) {
+            builder.field(OVER_FIELD_NAME_FIELD.getPreferredName(), overFieldName);
+        }
+        if (partitionFieldName != null) {
+            builder.field(PARTITION_FIELD_NAME_FIELD.getPreferredName(), partitionFieldName);
+        }
+        if (useNull) {
+            builder.field(USE_NULL_FIELD.getPreferredName(), useNull);
+        }
+        if (excludeFrequent != null) {
+            builder.field(EXCLUDE_FREQUENT_FIELD.getPreferredName(), excludeFrequent);
+        }
+        if (detectorRules != null) {
+            builder.field(DETECTOR_RULES_FIELD.getPreferredName(), detectorRules);
+        }
+        builder.endObject();
+        return builder;
+    }
+
+    public Detector(String description, String function) {
+        this(description, function, null);
+    }
+
+    @JsonCreator
+    public Detector(@JsonProperty("detector_description") String description, @JsonProperty("function") String function,
+            @JsonProperty("field_name") String fieldName) {
+        detectorDescription = description;
+        this.function = function;
+        this.fieldName = fieldName;
+    }
+
+    public void setDetectorDescription(String detectorDescription) {
+        this.detectorDescription = detectorDescription;
     }
 
     public String getDetectorDescription() {
         return detectorDescription;
-    }
-
-    public void setDetectorDescription(String description) {
-        detectorDescription = description;
     }
 
     /**
@@ -256,10 +366,6 @@ public class Detector {
         return function;
     }
 
-    public void setFunction(String function) {
-        this.function = function;
-    }
-
     /**
      * The Analysis field
      *
@@ -267,10 +373,6 @@ public class Detector {
      */
     public String getFieldName() {
         return fieldName;
-    }
-
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
     }
 
     /**
@@ -320,11 +422,11 @@ public class Detector {
      *
      * @return true if the 'null' series should be created
      */
-    public Boolean isUseNull() {
+    public boolean isUseNull() {
         return useNull;
     }
 
-    public void setUseNull(Boolean useNull) {
+    public void setUseNull(boolean useNull) {
         this.useNull = useNull;
     }
 

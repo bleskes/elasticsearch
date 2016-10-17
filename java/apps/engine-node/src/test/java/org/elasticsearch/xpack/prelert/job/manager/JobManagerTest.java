@@ -25,13 +25,12 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
-import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
@@ -290,23 +289,6 @@ public class JobManagerTest extends ESTestCase {
                 new LocalActionGuardian<>(ScheduledAction.STOPPED));
     }
 
-    private static JobConfiguration createScheduledJobConfig()
-    {
-        AnalysisConfig analysisConfig = new AnalysisConfig();
-        analysisConfig.setBucketSpan(3600L);
-        analysisConfig.setDetectors(Arrays.asList(new Detector()));
-
-        SchedulerConfig schedulerConfig = new SchedulerConfig();
-        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        schedulerConfig.setBaseUrl("http://localhost");
-
-        JobConfiguration jobConfig = new JobConfiguration();
-        jobConfig.setId("foo");
-        jobConfig.setAnalysisConfig(analysisConfig);
-        jobConfig.setSchedulerConfig(schedulerConfig);
-        return jobConfig;
-    }
-
     private static Stubber doAnswerSleep(long millis)
     {
         return doAnswer(new Answer<Void>()
@@ -347,7 +329,7 @@ public class JobManagerTest extends ESTestCase {
             return null;
         }
     }
-/*
+    /*
     private static MockBatchedDocumentsIterator<JobDetails> newBatchedJobsIterator(List<JobDetails> jobs)
     {
         Deque<JobDetails> batch1 = new ArrayDeque<>();

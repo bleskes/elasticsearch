@@ -152,8 +152,7 @@ public class JobUpdaterTest extends ESTestCase {
         String update = "{\"categorizationFilters\": [\"SQL.*\"]}";
 
         AnalysisConfig analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFunction("count");
+        Detector detector = new Detector("foo", "count");
         detector.setByFieldName("prelertCategory");
         analysisConfig.setDetectors(Arrays.asList(detector));
         analysisConfig.setCategorizationFieldName("myCategory");
@@ -168,7 +167,7 @@ public class JobUpdaterTest extends ESTestCase {
         String update = "{\"detectors\": [{\"index\":0,\"description\":\"the A train\"}]}";
 
         AnalysisConfig analysisConfig = new AnalysisConfig();
-        analysisConfig.setDetectors(Arrays.asList(new Detector()));
+        analysisConfig.setDetectors(Arrays.asList(new Detector("foo", "count")));
         m_Job.setAnalysisConfig(analysisConfig);
 
         new JobUpdater(m_Job).update(update);
@@ -180,8 +179,7 @@ public class JobUpdaterTest extends ESTestCase {
         String update = "{\"detectors\": [{\"index\":0,\"detectorRules\":[]}]}";
 
         AnalysisConfig analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFunction("count");
+        Detector detector = new Detector("foo", "count");
         analysisConfig.setDetectors(Arrays.asList(detector));
         m_Job.setAnalysisConfig(analysisConfig);
         List<DetectionRule> rules = new ArrayList<>();

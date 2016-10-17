@@ -79,8 +79,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName("host-metric");
         ac.setDetectors(Arrays.asList(detector));
 

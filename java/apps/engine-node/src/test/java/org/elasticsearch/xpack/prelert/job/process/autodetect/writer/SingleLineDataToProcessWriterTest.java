@@ -69,8 +69,7 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
         dataDescription.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
 
         analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFunction("count");
+        Detector detector = new Detector("foo", "count");
         detector.setByFieldName("message");
         analysisConfig.setDetectors(Arrays.asList(detector));
 
@@ -78,7 +77,7 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenDataIsValid() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig transformConfig = new TransformConfig();
         transformConfig.setInputs(Arrays.asList("raw"));
         transformConfig.setOutputs(Arrays.asList("time", "message"));
@@ -115,7 +114,7 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenDataContainsInvalidRecords() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig transformConfig = new TransformConfig();
         transformConfig.setInputs(Arrays.asList("raw"));
         transformConfig.setOutputs(Arrays.asList("time", "message"));
@@ -154,7 +153,7 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenNoTransforms() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         StringBuilder input = new StringBuilder();
         input.append("2015-04-29 10:00:00Z This is message 1\n");
         InputStream inputStream = createInputStream(input.toString());

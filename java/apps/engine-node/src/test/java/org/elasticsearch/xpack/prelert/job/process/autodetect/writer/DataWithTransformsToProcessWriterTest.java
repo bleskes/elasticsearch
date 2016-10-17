@@ -1,7 +1,5 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
@@ -63,8 +61,8 @@ public class DataWithTransformsToProcessWriterTest extends ESTestCase {
     }
 
     public void testCsvWriteWithConcat() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
-            MalformedJsonException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+    MalformedJsonException {
         StringBuilder input = new StringBuilder();
         input.append("time,host,metric,value\n");
         input.append("1,hostA,foo,3.0\n");
@@ -89,8 +87,8 @@ public class DataWithTransformsToProcessWriterTest extends ESTestCase {
     }
 
     public void testJsonWriteWithConcat() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
-            MalformedJsonException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+    MalformedJsonException {
         StringBuilder input = new StringBuilder();
         input.append("{\"time\" : 1, \"host\" : \"hostA\", \"metric\" : \"foo\", \"value\" : 3.0}\n");
         input.append("{\"time\" : 2, \"host\" : \"hostB\", \"metric\" : \"bar\", \"value\" : 2.0}\n");
@@ -125,8 +123,7 @@ public class DataWithTransformsToProcessWriterTest extends ESTestCase {
         dd.setTimeFormat(DataDescription.EPOCH);
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName("concat");
         ac.setDetectors(Arrays.asList(detector));
 

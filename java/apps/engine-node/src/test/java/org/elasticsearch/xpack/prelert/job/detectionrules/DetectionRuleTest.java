@@ -1,17 +1,20 @@
 
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.condition.Condition;
+import org.elasticsearch.xpack.prelert.job.condition.Operator;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
-import static org.junit.Assert.*;
-
-public class DetectionRuleTest extends ESTestCase {
+public class DetectionRuleTest extends AbstractSerializingTestCase<DetectionRule> {
 
     public void testDefaultConstructor() {
         DetectionRule rule = new DetectionRule();
@@ -25,8 +28,7 @@ public class DetectionRuleTest extends ESTestCase {
 
     public void testExtractReferencedLists() {
         DetectionRule rule = new DetectionRule();
-        RuleCondition numericalCondition = new RuleCondition();
-        numericalCondition.setConditionType(RuleConditionType.NUMERICAL_ACTUAL);
+        RuleCondition numericalCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
         rule.setRuleConditions(Arrays.asList(
                 numericalCondition,
                 RuleCondition.createCategorical("foo", "list1"),
@@ -44,15 +46,6 @@ public class DetectionRuleTest extends ESTestCase {
 
     public void testEqualsGivenString() {
         assertFalse(new DetectionRule().equals("a string"));
-    }
-
-
-    public void testEqualsGivenDifferentAction() {
-        DetectionRule rule1 = createFullyPopulated();
-        DetectionRule rule2 = createFullyPopulated();
-        rule2.setRuleAction(null);
-        assertFalse(rule1.equals(rule2));
-        assertFalse(rule2.equals(rule1));
     }
 
 
@@ -102,11 +95,48 @@ public class DetectionRuleTest extends ESTestCase {
 
     private static DetectionRule createFullyPopulated() {
         DetectionRule rule = new DetectionRule();
-        rule.setRuleAction(RuleAction.FILTER_RESULTS);
         rule.setTargetFieldName("targetField");
         rule.setTargetFieldValue("targetValue");
         rule.setConditionsConnective(Connective.AND);
-        rule.setRuleConditions(Arrays.asList(new RuleCondition()));
+        rule.setRuleConditions(Arrays.asList(new RuleCondition(RuleConditionType.CATEGORICAL)));
         return rule;
+    }
+
+    @Override
+    protected DetectionRule createTestInstance() {
+        DetectionRule detectionRule = new DetectionRule();
+        if (randomBoolean()) {
+            detectionRule.setConditionsConnective(randomFrom(Connective.values()));
+        }
+        if (randomBoolean()) {
+            int size = randomInt(20);
+            List<RuleCondition> ruleConditions = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                RuleCondition condition = new RuleCondition(randomFrom(RuleConditionType.values()));
+                condition.setCondition(new Condition(randomFrom(Operator.values()), randomAsciiOfLengthBetween(1, 20)));
+                condition.setFieldName(randomAsciiOfLengthBetween(1, 20));
+                condition.setFieldValue(randomAsciiOfLengthBetween(1, 20));
+                condition.setValueList(randomAsciiOfLengthBetween(1, 20));
+                ruleConditions.add(condition);
+            }
+            detectionRule.setRuleConditions(ruleConditions);
+        }
+        if (randomBoolean()) {
+            detectionRule.setTargetFieldName(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            detectionRule.setTargetFieldValue(randomAsciiOfLengthBetween(1, 20));
+        }
+        return detectionRule;
+    }
+
+    @Override
+    protected Reader<DetectionRule> instanceReader() {
+        return DetectionRule::new;
+    }
+
+    @Override
+    protected DetectionRule parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return DetectionRule.PARSER.apply(parser, () -> matcher);
     }
 }

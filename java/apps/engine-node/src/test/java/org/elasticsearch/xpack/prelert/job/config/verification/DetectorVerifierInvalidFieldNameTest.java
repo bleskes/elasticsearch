@@ -78,7 +78,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     }
 
     public void verify_FieldName() {
-        detector.setFieldName(detector.getFieldName() + getCharacterPlusSuffix());
+        detector = createDetectorWithSpecificFieldName(detector.getFieldName() + getCharacterPlusSuffix());
 
         expectElasticsearchParseExceptionWhenCharIsInvalid(
                 ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, () -> DetectorVerifier.verify(detector, false));
@@ -110,7 +110,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
 
 
     public void verify_FieldNameGivenPresummarised() {
-        detector.setFieldName(detector.getFieldName() + getCharacterPlusSuffix());
+        detector = createDetectorWithSpecificFieldName(detector.getFieldName() + getCharacterPlusSuffix());
 
         expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> DetectorVerifier.verify(detector, true));
     }
@@ -161,8 +161,15 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     }
 
     private static Detector createDetectorWithValidFieldNames() {
-        Detector d = new Detector();
-        d.setFieldName("field");
+        Detector d = new Detector("foo", "metric", "field");
+        d.setByFieldName("by");
+        d.setOverFieldName("over");
+        d.setPartitionFieldName("partition");
+        return d;
+    }
+
+    private static Detector createDetectorWithSpecificFieldName(String fieldName) {
+        Detector d = new Detector("foo", "metric", fieldName);
         d.setByFieldName("by");
         d.setOverFieldName("over");
         d.setPartitionFieldName("partition");

@@ -77,8 +77,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
         analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         analysisConfig.setDetectors(Arrays.asList(detector));
     }
 
@@ -112,7 +111,15 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         transform.setOutputs(Arrays.asList("transformed"));
         transforms.add(transform);
 
-        analysisConfig.getDetectors().get(0).setFieldName("transformed");
+        Detector existingDetector = analysisConfig.getDetectors().get(0);
+        Detector newDetector = new Detector(existingDetector.getDetectorDescription(), existingDetector.getFunction(), "transformed");
+        newDetector.setByFieldName(existingDetector.getByFieldName());
+        newDetector.setOverFieldName(existingDetector.getOverFieldName());
+        newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
+        newDetector.setDetectorRules(existingDetector.getDetectorRules());
+        newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
+        newDetector.setUseNull(existingDetector.isUseNull());
+        analysisConfig.getDetectors().set(0, newDetector);
 
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
@@ -307,8 +314,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         transforms.add(tc1);
         transforms.add(tc2);
 
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName("dns_upper");
         analysisConfig.setDetectors(Arrays.asList(detector));
 

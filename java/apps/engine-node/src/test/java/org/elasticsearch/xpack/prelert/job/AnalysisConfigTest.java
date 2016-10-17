@@ -4,11 +4,7 @@ package org.elasticsearch.xpack.prelert.job;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
-import org.junit.Test;
-
 import java.util.*;
-
-import static org.junit.Assert.*;
 
 
 public class AnalysisConfigTest extends ESTestCase {
@@ -16,8 +12,7 @@ public class AnalysisConfigTest extends ESTestCase {
     public void testFieldConfiguration() {
         // Single detector, not pre-summarised
         AnalysisConfig ac = new AnalysisConfig();
-        Detector det = new Detector();
-        det.setFieldName("responsetime");
+        Detector det = new Detector("foo", "metric", "responsetime");
         det.setByFieldName("airline");
         det.setPartitionFieldName("sourcetype");
         ac.setDetectors(Arrays.asList(det));
@@ -76,20 +71,17 @@ public class AnalysisConfigTest extends ESTestCase {
 
         ac = new AnalysisConfig();
         ac.setInfluencers(Arrays.asList("Influencer_Field"));
-        det = new Detector();
-        det.setFieldName("metric1");
+        det = new Detector("foo", "metric", "metric1");
         det.setByFieldName("by_one");
         det.setPartitionFieldName("partition_one");
         detectors.add(det);
 
-        det = new Detector();
-        det.setFieldName("metric2");
+        det = new Detector("foo", "metric", "metric2");
         det.setByFieldName("by_two");
         det.setOverFieldName("over_field");
         detectors.add(det);
 
-        det = new Detector();
-        det.setFieldName("metric2");
+        det = new Detector("foo", "metric", "metric2");
         det.setByFieldName("by_two");
         det.setPartitionFieldName("partition_two");
         detectors.add(det);
@@ -226,13 +218,11 @@ public class AnalysisConfigTest extends ESTestCase {
 
     public void testEquals_GivenDifferentDetector() {
         AnalysisConfig config1 = new AnalysisConfig();
-        Detector detector1 = new Detector();
-        detector1.setFunction("low_count");
+        Detector detector1 = new Detector("foo", "low_count");
         config1.setDetectors(Arrays.asList(detector1));
 
         AnalysisConfig config2 = new AnalysisConfig();
-        Detector detector2 = new Detector();
-        detector2.setFunction("high_count");
+        Detector detector2 = new Detector("foo", "high_count");
         config2.setDetectors(Arrays.asList(detector2));
 
         assertFalse(config1.equals(config2));
@@ -323,12 +313,12 @@ public class AnalysisConfigTest extends ESTestCase {
         rule1.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list1")));
         DetectionRule rule2 = new DetectionRule();
         rule2.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list2")));
-        Detector detector1 = new Detector();
+        Detector detector1 = new Detector("foo1", "metric", "foo1");
         detector1.setDetectorRules(Arrays.asList(rule1));
-        Detector detector2 = new Detector();
+        Detector detector2 = new Detector("foo2", "metric", "foo2");
         detector2.setDetectorRules(Arrays.asList(rule2));
         AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Arrays.asList(detector1, detector2, new Detector()));
+        config.setDetectors(Arrays.asList(detector1, detector2, new Detector("foo3", "metric", "foo3")));
 
         assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), config.extractReferencedLists());
     }
@@ -339,8 +329,7 @@ public class AnalysisConfigTest extends ESTestCase {
         config.setBucketSpan(3600L);
         config.setCategorizationFieldName("cat");
         config.setCategorizationFilters(Arrays.asList("foo"));
-        Detector detector1 = new Detector();
-        detector1.setFunction("count");
+        Detector detector1 = new Detector("foo", "count");
         config.setDetectors(Arrays.asList(detector1));
         config.setInfluencers(Arrays.asList("myInfluencer"));
         config.setLatency(3600L);

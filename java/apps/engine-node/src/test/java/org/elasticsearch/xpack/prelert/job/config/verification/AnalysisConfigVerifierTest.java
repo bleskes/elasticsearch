@@ -26,22 +26,13 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
     public void testVerify_throws() {
         AnalysisConfig ac = new AnalysisConfig();
 
-        // no detector config
-        Detector d = new Detector();
-        ac.setDetectors(Arrays.asList(new Detector[]{d}));
-        try {
-            AnalysisConfigVerifier.verify(ac);
-            assertTrue(false); // shouldn't get here
-        } catch (ElasticsearchParseException e) {
-            assertEquals(1, e.getHeader("errorCode").size());
-            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION.getValueString(), e.getHeader("errorCode").get(0));
-        }
-
         // count works with no fields
-        d.setFunction("count");
+        Detector d = new Detector(null, "count");
+        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         AnalysisConfigVerifier.verify(ac);
 
-        d.setFunction("distinct_count");
+        d = new Detector(null, "distinct_count");
+        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
@@ -51,18 +42,23 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         }
 
         // should work now
-        d.setFieldName("somefield");
+        d = new Detector(null, "distinct_count", "somefield");
         d.setOverFieldName("over");
+        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         AnalysisConfigVerifier.verify(ac);
 
-        d.setFunction("info_content");
+        d = new Detector(null, "info_content", "somefield");
+        d.setOverFieldName("over");
+        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         AnalysisConfigVerifier.verify(ac);
 
         d.setByFieldName("by");
+        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         AnalysisConfigVerifier.verify(ac);
 
-        d.setByFieldName(null);
-        d.setFunction("made_up_function");
+        d = new Detector(null, "made_up_function", "somefield");
+        d.setOverFieldName("over");
+        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
@@ -197,12 +193,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
             analysisConfig.setBucketSpan(5000L);
             analysisConfig.setBatchSpan(0L);
             detectors = new ArrayList<>();
-            detector = new Detector();
-            detector.setFunction("count");
+            detector = new Detector(null, "count");
             detectors.add(detector);
-            detector = new Detector();
-            detector.setFunction("mean");
-            detector.setFieldName("value");
+            detector = new Detector(null, "mean", "value");
             detectors.add(detector);
             analysisConfig.setDetectors(detectors);
             assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -213,12 +206,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
             analysisConfig.setBucketSpan(5000L);
             analysisConfig.setBatchSpan(0L);
             detectors = new ArrayList<>();
-            detector = new Detector();
-            detector.setFunction("count");
+            detector = new Detector(null, "count");
             detectors.add(detector);
-            detector = new Detector();
-            detector.setFunction("rare");
-            detector.setByFieldName("value");
+            detector = new Detector(null, "rare", "value");
             detectors.add(detector);
             analysisConfig.setDetectors(detectors);
             assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -229,16 +219,11 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
             analysisConfig.setBucketSpan(5000L);
             analysisConfig.setBatchSpan(0L);
             detectors = new ArrayList<>();
-            detector = new Detector();
-            detector.setFunction("count");
+            detector = new Detector(null, "count");
             detectors.add(detector);
-            detector = new Detector();
-            detector.setFunction("min");
-            detector.setFieldName("value");
+            detector = new Detector(null, "min", "value");
             detectors.add(detector);
-            detector = new Detector();
-            detector.setFunction("max");
-            detector.setFieldName("value");
+            detector = new Detector(null, "max", "value");
             detectors.add(detector);
             analysisConfig.setDetectors(detectors);
             assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -250,11 +235,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         analysisConfig.setBucketSpan(5000L);
         analysisConfig.setBatchSpan(0L);
         detectors = new ArrayList<>();
-        detector = new Detector();
-        detector.setFunction("count");
+        detector = new Detector(null, "count");
         detectors.add(detector);
-        detector = new Detector();
-        detector.setFunction("rare");
+        detector = new Detector(null, "rare");
         detector.setByFieldName("value");
         detectors.add(detector);
         analysisConfig.setOverlappingBuckets(false);
@@ -268,11 +251,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         analysisConfig.setBatchSpan(0L);
         analysisConfig.setOverlappingBuckets(true);
         detectors = new ArrayList<>();
-        detector = new Detector();
-        detector.setFunction("count");
+        detector = new Detector(null, "count");
         detectors.add(detector);
-        detector = new Detector();
-        detector.setFunction("rare");
+        detector = new Detector(null, "rare");
         detector.setByFieldName("value");
         detectors.add(detector);
         analysisConfig.setDetectors(detectors);
@@ -289,12 +270,9 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         analysisConfig.setBatchSpan(0L);
         analysisConfig.setOverlappingBuckets(false);
         detectors = new ArrayList<>();
-        detector = new Detector();
-        detector.setFunction("count");
+        detector = new Detector(null, "count");
         detectors.add(detector);
-        detector = new Detector();
-        detector.setFunction("mean");
-        detector.setFieldName("value");
+        detector = new Detector(null, "mean", "value");
         detectors.add(detector);
         analysisConfig.setDetectors(detectors);
         assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -306,8 +284,7 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         AnalysisConfig ac = new AnalysisConfig();
         ac.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
         List<Detector> detectors = new ArrayList<>();
-        Detector detector = new Detector();
-        detector.setFunction("count");
+        Detector detector = new Detector(null, "count");
         detectors.add(detector);
         ac.setDetectors(detectors);
         try {
@@ -459,8 +436,7 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         analysisConfig.setLatency(0L);
         analysisConfig.setPeriod(0L);
         List<Detector> detectors = new ArrayList<>();
-        Detector detector = new Detector();
-        detector.setFieldName("count");
+        Detector detector = new Detector(null, "count");
         detectors.add(detector);
         analysisConfig.setDetectors(detectors);
         return analysisConfig;

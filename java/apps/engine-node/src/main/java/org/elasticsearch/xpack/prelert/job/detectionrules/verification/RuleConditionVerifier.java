@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.detectionrules.verification;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.condition.verification.ConditionVerifier;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
@@ -40,9 +41,9 @@ public final class RuleConditionVerifier {
     }
 
     private static void verifyCategorical(RuleCondition ruleCondition) throws ElasticsearchParseException {
-        checkCategoricalHasNoField(RuleCondition.CONDITION, ruleCondition.getCondition());
-        checkCategoricalHasNoField(RuleCondition.FIELD_VALUE, ruleCondition.getFieldValue());
-        checkCategoricalHasField(RuleCondition.VALUE_LIST, ruleCondition.getValueList());
+        checkCategoricalHasNoField(Condition.CONDITION_FIELD.getPreferredName(), ruleCondition.getCondition());
+        checkCategoricalHasNoField(RuleCondition.FIELD_VALUE_FIELD.getPreferredName(), ruleCondition.getFieldValue());
+        checkCategoricalHasField(RuleCondition.VALUE_LIST_FIELD.getPreferredName(), ruleCondition.getValueList());
     }
 
     private static void checkCategoricalHasNoField(String fieldName, Object fieldValue) throws ElasticsearchParseException {
@@ -60,8 +61,8 @@ public final class RuleConditionVerifier {
     }
 
     private static void verifyNumerical(RuleCondition ruleCondition) throws ElasticsearchParseException {
-        checkNumericalHasNoField(RuleCondition.VALUE_LIST, ruleCondition.getValueList());
-        checkNumericalHasField(RuleCondition.CONDITION, ruleCondition.getCondition());
+        checkNumericalHasNoField(RuleCondition.VALUE_LIST_FIELD.getPreferredName(), ruleCondition.getValueList());
+        checkNumericalHasField(Condition.CONDITION_FIELD.getPreferredName(), ruleCondition.getCondition());
         if (ruleCondition.getFieldName() != null && ruleCondition.getFieldValue() == null) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_NUMERICAL_WITH_FIELD_NAME_REQUIRES_FIELD_VALUE);
             throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);

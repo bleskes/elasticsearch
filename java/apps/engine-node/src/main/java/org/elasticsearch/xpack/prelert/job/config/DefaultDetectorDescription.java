@@ -46,7 +46,7 @@ public final class DefaultDetectorDescription
             if (isNotNullOrEmpty(detector.getFieldName()))
             {
                 sb.append('(').append(quoteField(detector.getFieldName()))
-                        .append(')');
+                .append(')');
             }
         }
         else if (isNotNullOrEmpty(detector.getFieldName()))
@@ -64,7 +64,7 @@ public final class DefaultDetectorDescription
             sb.append(OVER_TOKEN).append(quoteField(detector.getOverFieldName()));
         }
 
-        if (detector.isUseNull() != null)
+        if (detector.isUseNull())
         {
             sb.append(USE_NULL_OPTION).append(detector.isUseNull());
         }
@@ -72,13 +72,13 @@ public final class DefaultDetectorDescription
         if (isNotNullOrEmpty(detector.getPartitionFieldName()))
         {
             sb.append(PARTITION_FIELD_OPTION)
-                    .append(quoteField(detector.getPartitionFieldName()));
+            .append(quoteField(detector.getPartitionFieldName()));
         }
 
         if (isNotNullOrEmpty(detector.getExcludeFrequent()))
         {
             sb.append(EXCLUDE_FREQUENT_OPTION)
-                    .append(detector.getExcludeFrequent());
+            .append(detector.getExcludeFrequent());
         }
     }
 

@@ -68,8 +68,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("metric(value) by host-metric", "metric", "value");
         detector.setByFieldName("host-metric");
         ac.setDetectors(Arrays.asList(detector));
 
@@ -127,15 +126,14 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         assertEquals(inOutMaps.get(0).outputIndex, 2);
     }
 
-    
+
     public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException, IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         detector.setOverFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(1));
         ac.setDetectors(Arrays.asList(detector));
@@ -209,7 +207,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
      * @throws MissingFieldException
      * @throws IOException
      */
-    
+
     public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed()
             throws MissingFieldException, IOException {
 
@@ -217,8 +215,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
@@ -227,7 +224,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
-        
+
         AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
@@ -286,7 +283,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
      * @throws MissingFieldException
      * @throws IOException
      */
-    
+
     public void testBuildTransforms_ChainedTransforms()
             throws MissingFieldException, IOException {
 
@@ -294,8 +291,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
@@ -351,15 +347,14 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
      * @throws OutOfOrderRecordsException
      * @throws HighProportionOfBadTimestampsException
      */
-    
+
     public void testApplyTransforms_transformReturnsExclude()
             throws MissingFieldException, IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         DataDescription dd = new DataDescription();
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName("metric");
         ac.setDetectors(Arrays.asList(detector));
 
@@ -403,15 +398,14 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
     }
 
 
-    
+
     public void testBuildTransforms_DateTransformsAreSorted() throws MissingFieldException, IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName("type");
         ac.setDetectors(Arrays.asList(detector));
 

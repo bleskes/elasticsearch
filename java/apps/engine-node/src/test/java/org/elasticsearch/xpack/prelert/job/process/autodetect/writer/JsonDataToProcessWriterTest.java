@@ -23,7 +23,6 @@ import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
@@ -76,14 +75,13 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
         analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         analysisConfig.setDetectors(Arrays.asList(detector));
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndDataIsValid() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
-            MalformedJsonException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+    MalformedJsonException {
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"metric\":\"foo\", \"value\":\"1.0\"}");
         input.append("{\"time\":\"2\", \"metric\":\"bar\", \"value\":\"2.0\"}");
@@ -187,8 +185,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
     public void testWrite_GivenMalformedJsonWithNestedLevels()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, IOException, MalformedJsonException {
-        Detector detector = new Detector();
-        detector.setFieldName("nested.value");
+        Detector detector = new Detector("foo", "metric", "nested.value");
         analysisConfig.setDetectors(Arrays.asList(detector));
         analysisConfig.setLatency(2L);
 
@@ -288,8 +285,8 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenDateTimeFieldIsOutputOfTransform() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
-            MalformedJsonException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+    MalformedJsonException {
         TransformConfig transform = new TransformConfig();
         transform.setTransform("concat");
         transform.setInputs(Arrays.asList("date", "time-of-day"));
@@ -324,8 +321,8 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenChainedTransforms_SortsByDependencies() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
-            MalformedJsonException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
+    MalformedJsonException {
         TransformConfig tc1 = new TransformConfig();
         tc1.setTransform(TransformType.Names.UPPERCASE_NAME);
         tc1.setInputs(Arrays.asList("dns"));
@@ -340,8 +337,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
         transforms.add(tc1);
         transforms.add(tc2);
 
-        Detector detector = new Detector();
-        detector.setFieldName("value");
+        Detector detector = new Detector("foo", "metric", "value");
         detector.setByFieldName("dns_upper");
         analysisConfig.setDetectors(Arrays.asList(detector));
 

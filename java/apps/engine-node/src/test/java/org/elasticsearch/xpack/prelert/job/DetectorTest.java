@@ -1,33 +1,31 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
-import org.junit.Test;
+import org.elasticsearch.xpack.prelert.job.detectionrules.RuleConditionType;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
-import static org.junit.Assert.*;
-
-public class DetectorTest extends ESTestCase {
+public class DetectorTest extends AbstractSerializingTestCase<Detector> {
 
     public void testEquals_GivenEqual() {
-        Detector detector1 = new Detector();
-        detector1.setDetectorDescription("foo");
-        detector1.setFunction("mean");
-        detector1.setFieldName("field");
+        Detector detector1 = new Detector("foo", "mean", "field");
         detector1.setByFieldName("by");
         detector1.setOverFieldName("over");
         detector1.setPartitionFieldName("partition");
         detector1.setUseNull(false);
 
-        Detector detector2 = new Detector();
-        detector2.setDetectorDescription("foo");
-        detector2.setFunction("mean");
-        detector2.setFieldName("field");
+        Detector detector2 = new Detector("foo", "mean", "field");
         detector2.setByFieldName("by");
         detector2.setOverFieldName("over");
         detector2.setPartitionFieldName("partition");
@@ -93,9 +91,7 @@ public class DetectorTest extends ESTestCase {
     }
 
     private Detector createDetector() {
-        Detector detector = new Detector();
-        detector.setFunction("mean");
-        detector.setFieldName("field");
+        Detector detector = new Detector("foo", "mean", "field");
         detector.setByFieldName("by");
         detector.setOverFieldName("over");
         detector.setPartitionFieldName("partition");
@@ -105,5 +101,64 @@ public class DetectorTest extends ESTestCase {
         detector.setDetectorRules(Arrays.asList(rule));
 
         return detector;
+    }
+
+    @Override
+    protected Detector createTestInstance() {
+        Detector detector;
+        if (randomBoolean()) {
+            detector = new Detector(frequently() ? randomAsciiOfLengthBetween(1, 100) : null,
+                    randomFrom(Detector.COUNT_WITHOUT_FIELD_FUNCTIONS));
+        } else {
+            detector = new Detector(frequently() ? randomAsciiOfLengthBetween(1, 100) : null, randomFrom(Detector.FIELD_NAME_FUNCTIONS),
+                    randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            detector.setByFieldName(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            detector.setOverFieldName(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            detector.setPartitionFieldName(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            detector.setExcludeFrequent(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            int size = randomInt(10);
+            List<DetectionRule> detectorRules = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                DetectionRule detectionRule = new DetectionRule();
+                if (randomBoolean()) {
+                    detectionRule.setConditionsConnective(randomFrom(Connective.values()));
+                }
+                if (randomBoolean()) {
+                    detectionRule.setTargetFieldName(randomAsciiOfLengthBetween(1, 20));
+                }
+                if (randomBoolean()) {
+                    detectionRule.setTargetFieldValue(randomAsciiOfLengthBetween(1, 20));
+                }
+                if (randomBoolean()) {
+                    detectionRule.setRuleConditions(Collections.singletonList(new RuleCondition(randomFrom(RuleConditionType.values()))));
+                }
+                detectorRules.add(detectionRule);
+            }
+            detector.setDetectorRules(detectorRules);
+        }
+        if (randomBoolean()) {
+            detector.setUseNull(randomBoolean());
+        }
+        return detector;
+    }
+
+    @Override
+    protected Reader<Detector> instanceReader() {
+        return Detector::new;
+    }
+
+    @Override
+    protected Detector parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return Detector.PARSER.apply(parser, () -> matcher);
     }
 }

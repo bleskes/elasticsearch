@@ -51,11 +51,6 @@ public final class DetectorVerifier {
         boolean emptyByField = detector.getByFieldName() == null || detector.getByFieldName().isEmpty();
         boolean emptyOverField = detector.getOverFieldName() == null || detector.getOverFieldName().isEmpty();
 
-        // The default function is 'metric' - set this here as it simplifies
-        // subsequent validation
-        if (detector.getFunction() == null || detector.getFunction().isEmpty()) {
-            detector.setFunction(Detector.METRIC);
-        }
 
         if (Detector.ANALYSIS_FUNCTIONS.contains(detector.getFunction()) == false) {
             throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_UNKNOWN_FUNCTION, detector.getFunction()),

@@ -122,7 +122,7 @@ public final class DetectionRuleVerifier {
             throws ElasticsearchParseException {
         if (condition.getConditionType() == RuleConditionType.CATEGORICAL && rule.getTargetFieldName() != null) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_INVALID_OPTION,
-                    DetectionRule.TARGET_FIELD_NAME);
+                    DetectionRule.TARGET_FIELD_NAME_FIELD.getPreferredName());
             throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
         }
     }

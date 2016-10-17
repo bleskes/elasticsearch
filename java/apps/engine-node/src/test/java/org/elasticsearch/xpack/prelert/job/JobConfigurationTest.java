@@ -3,12 +3,8 @@ package org.elasticsearch.xpack.prelert.job;
 
 
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class JobConfigurationTest extends ESTestCase {
     /**
@@ -17,13 +13,10 @@ public class JobConfigurationTest extends ESTestCase {
      */
 
     public void testAnalysisConfigRequiredFields() {
-        Detector d1 = new Detector();
-        d1.setFieldName("field");
+        Detector d1 = new Detector("foo", "max", "field");
         d1.setByFieldName("by");
-        d1.setFunction("max");
 
-        Detector d2 = new Detector();
-        d2.setFieldName("field2");
+        Detector d2 = new Detector("foo", "metric", "field2");
         d2.setOverFieldName("over");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -43,8 +36,7 @@ public class JobConfigurationTest extends ESTestCase {
         assertFalse(analysisFields.contains(""));
         assertFalse(analysisFields.contains(null));
 
-        Detector d3 = new Detector();
-        d3.setFunction("count");
+        Detector d3 = new Detector("foo", "count");
         d3.setByFieldName("by2");
         d3.setPartitionFieldName("partition");
 
