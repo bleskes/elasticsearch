@@ -32,7 +32,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenNull() throws IOException {
-        givenJobWithSchedulerConfig("foo", new SchedulerConfig());
+        givenJobWithSchedulerConfig("foo", new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH).build());
         String update = "null";
         JsonNode node = new ObjectMapper().readTree(update);
 
@@ -42,7 +42,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenInvalidJson() throws IOException {
-        givenJobWithSchedulerConfig("foo", new SchedulerConfig());
+        givenJobWithSchedulerConfig("foo", new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH).build());
         String update = "{\"dataSour!!ce\":\"whatever\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
@@ -52,8 +52,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenDifferentDataSource() throws IOException {
-        SchedulerConfig existingSchedulerConfig = new SchedulerConfig();
-        existingSchedulerConfig.setDataSource(SchedulerConfig.DataSource.ELASTICSEARCH);
+        SchedulerConfig existingSchedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH).build();
         givenJobWithSchedulerConfig("foo", existingSchedulerConfig);
 
         String update = "{\"dataSource\":\"FILE\"}";
@@ -65,8 +64,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenValidationError() throws IOException {
-        SchedulerConfig existingSchedulerConfig = new SchedulerConfig();
-        existingSchedulerConfig.setDataSource(SchedulerConfig.DataSource.ELASTICSEARCH);
+        SchedulerConfig existingSchedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH).build();
         givenJobWithSchedulerConfig("foo", existingSchedulerConfig);
         String update = "{\"dataSource\":\"ELASTICSEARCH\", \"queryDelay\":\"-10\"}";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -77,8 +75,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenValid() throws JobException, IOException {
-        SchedulerConfig existingSchedulerConfig = new SchedulerConfig();
-        existingSchedulerConfig.setDataSource(SchedulerConfig.DataSource.ELASTICSEARCH);
+        SchedulerConfig existingSchedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH).build();
         givenJobWithSchedulerConfig("foo", existingSchedulerConfig);
         String update = "{"
                 + "\"dataSource\":\"ELASTICSEARCH\","
@@ -92,8 +89,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
 
         createUpdater().update(node);
 
-        SchedulerConfig expected = new SchedulerConfig();
-        expected.setDataSource(SchedulerConfig.DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder expected = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
         expected.setBaseUrl("http://localhost:9200");
         expected.setIndexes(Arrays.asList("index1", "index2"));
         expected.setTypes(Arrays.asList("type1", "type2"));
@@ -106,7 +102,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
         expected.setRetrieveWholeSource(false);
         expected.setScrollSize(10000);
 
-        assertThat(m_Job.getSchedulerConfig(), equalTo(expected));
+        assertThat(m_Job.getSchedulerConfig(), equalTo(expected.build()));
     }
 
     private SchedulerConfigUpdater createUpdater() {

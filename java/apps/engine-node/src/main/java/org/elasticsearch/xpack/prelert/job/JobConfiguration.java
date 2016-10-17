@@ -38,7 +38,7 @@ public class JobConfiguration {
 
     private AnalysisConfig analysisConfig;
     private AnalysisLimits analysisLimits;
-    private SchedulerConfig schedulerConfig;
+    private SchedulerConfig.Builder schedulerConfig;
     private List<TransformConfig> transforms;
     private DataDescription dataDescription;
     private Long timeout;
@@ -133,11 +133,11 @@ public class JobConfiguration {
      *
      * @return Scheduler configuration or null if not set.
      */
-    public SchedulerConfig getSchedulerConfig() {
+    public SchedulerConfig.Builder getSchedulerConfig() {
         return schedulerConfig;
     }
 
-    public void setSchedulerConfig(SchedulerConfig config) {
+    public void setSchedulerConfig(SchedulerConfig.Builder config) {
         schedulerConfig = config;
     }
 

@@ -5,9 +5,13 @@ package org.elasticsearch.xpack.prelert.job;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -15,11 +19,38 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SchedulerConfigTest extends ESTestCase {
+public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerConfig> {
+
+    @Override
+    protected SchedulerConfig createTestInstance() {
+        DataSource dataSource = randomFrom(DataSource.values());
+        SchedulerConfig.Builder builder = new SchedulerConfig.Builder(dataSource);
+        switch (dataSource) {
+            case FILE:
+                builder.setFilePath(randomAsciiOfLength(10));
+                builder.setTailFile(randomBoolean());
+                break;
+            case ELASTICSEARCH:
+                break;
+            default:
+                throw new UnsupportedOperationException();
+        }
+        return builder.build();
+    }
+
+    @Override
+    protected Writeable.Reader<SchedulerConfig> instanceReader() {
+        return SchedulerConfig::new;
+    }
+
+    @Override
+    protected SchedulerConfig parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return SchedulerConfig.PARSER.apply(parser, () -> matcher).build();
+    }
+
     /**
      * Test parsing of the opaque {@link SchedulerConfig#getQuery()} object
      */
-
     public void testAnalysisConfigRequiredFields()
             throws IOException {
         Logger logger = Loggers.getLogger(SchedulerConfigTest.class);
@@ -50,7 +81,7 @@ public class SchedulerConfigTest extends ESTestCase {
         JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
         assertNotNull(jobConfig);
 
-        SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();
+        SchedulerConfig.Builder schedulerConfig = jobConfig.getSchedulerConfig();
         assertNotNull(schedulerConfig);
 
         Map<String, Object> query = schedulerConfig.getQuery();
@@ -63,7 +94,7 @@ public class SchedulerConfigTest extends ESTestCase {
 
 
     public void testBuildAggregatedFieldList_GivenNoAggregations() {
-        assertTrue(new SchedulerConfig().buildAggregatedFieldList().isEmpty());
+        assertTrue(new SchedulerConfig.Builder(DataSource.ELASTICSEARCH).build().buildAggregatedFieldList().isEmpty());
     }
 
     /**
@@ -123,7 +154,7 @@ public class SchedulerConfigTest extends ESTestCase {
         JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
         assertNotNull(jobConfig);
 
-        SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();
+        SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig().build();
         assertNotNull(schedulerConfig);
 
         Map<String, Object> aggs = schedulerConfig.getAggregationsOrAggs();
@@ -142,42 +173,34 @@ public class SchedulerConfigTest extends ESTestCase {
 
 
     public void testFillDefaults_GivenDataSourceIsFile() {
-        SchedulerConfig schedulerConfig = new SchedulerConfig();
-        schedulerConfig.setDataSource(DataSource.FILE);
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(DataSource.FILE);
 
-        schedulerConfig.fillDefaults();
-
-        SchedulerConfig expectedSchedulerConfig = new SchedulerConfig();
+        SchedulerConfig.Builder expectedSchedulerConfig = new SchedulerConfig.Builder(DataSource.FILE);
         expectedSchedulerConfig.setTailFile(false);
 
-        assertEquals(expectedSchedulerConfig, schedulerConfig);
+        assertEquals(expectedSchedulerConfig.build(), schedulerConfig.build());
     }
 
 
     public void testFillDefaults_GivenDataSourceIsElasticsearchAndNothingToFill() {
-        SchedulerConfig originalSchedulerConfig = new SchedulerConfig();
-        originalSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        originalSchedulerConfig.setQuery(new HashMap<String, Object>());
+        SchedulerConfig.Builder originalSchedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
+        originalSchedulerConfig.setQuery(new HashMap<>());
         originalSchedulerConfig.setQueryDelay(30L);
         originalSchedulerConfig.setRetrieveWholeSource(true);
         originalSchedulerConfig.setScrollSize(2000);
 
-        SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
-        defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        defaultedSchedulerConfig.setQuery(new HashMap<String, Object>());
+        SchedulerConfig.Builder defaultedSchedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
+        defaultedSchedulerConfig.setQuery(new HashMap<>());
         defaultedSchedulerConfig.setQueryDelay(30L);
         defaultedSchedulerConfig.setRetrieveWholeSource(true);
         defaultedSchedulerConfig.setScrollSize(2000);
 
-        defaultedSchedulerConfig.fillDefaults();
-
-        assertEquals(originalSchedulerConfig, defaultedSchedulerConfig);
+        assertEquals(originalSchedulerConfig.build(), defaultedSchedulerConfig.build());
     }
 
 
     public void testFillDefaults_GivenDataSourceIsElasticsearchAndDefaultsAreApplied() {
-        SchedulerConfig expectedSchedulerConfig = new SchedulerConfig();
-        expectedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder expectedSchedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         Map<String, Object> defaultQuery = new HashMap<>();
         defaultQuery.put("match_all", new HashMap<String, Object>());
         expectedSchedulerConfig.setQuery(defaultQuery);
@@ -185,32 +208,29 @@ public class SchedulerConfigTest extends ESTestCase {
         expectedSchedulerConfig.setRetrieveWholeSource(false);
         expectedSchedulerConfig.setScrollSize(1000);
 
-        SchedulerConfig defaultedSchedulerConfig = new SchedulerConfig();
-        defaultedSchedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        defaultedSchedulerConfig.setQuery(null);
-        defaultedSchedulerConfig.setQueryDelay(null);
+        SchedulerConfig.Builder defaultedSchedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
 
-        defaultedSchedulerConfig.fillDefaults();
-
-        assertEquals(expectedSchedulerConfig, defaultedSchedulerConfig);
+        assertEquals(expectedSchedulerConfig.build(), defaultedSchedulerConfig.build());
     }
 
 
     public void testEquals_GivenDifferentClass() {
-        assertFalse(new SchedulerConfig().equals("a string"));
+        assertFalse(new SchedulerConfig.Builder(DataSource.FILE).build().equals("a string"));
     }
 
 
     public void testEquals_GivenSameRef() {
-        SchedulerConfig schedulerConfig = new SchedulerConfig();
+        SchedulerConfig schedulerConfig = new SchedulerConfig.Builder(DataSource.FILE).build();
         assertTrue(schedulerConfig.equals(schedulerConfig));
     }
 
 
     public void testEquals_GivenEqual() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
+        SchedulerConfig.Builder b1 = createFullyPopulated();
+        SchedulerConfig.Builder b2 = createFullyPopulated();
 
+        SchedulerConfig sc1 = b1.build();
+        SchedulerConfig sc2 = b2.build();
         assertTrue(sc1.equals(sc2));
         assertTrue(sc2.equals(sc1));
         assertEquals(sc1.hashCode(), sc2.hashCode());
@@ -218,120 +238,119 @@ public class SchedulerConfigTest extends ESTestCase {
 
 
     public void testEquals_GivenDifferentBaseUrl() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setBaseUrl("http://localhost:8081");
+        SchedulerConfig.Builder b1 = createFullyPopulated();
+        SchedulerConfig.Builder b2 = createFullyPopulated();
+        b2.setBaseUrl("http://localhost:8081");
 
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
-    }
-
-
-    public void testEquals_GivenDifferentDataSource() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setDataSource(DataSource.FILE);
-
+        SchedulerConfig sc1 = b1.build();
+        SchedulerConfig sc2 = b2.build();
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
 
 
     public void testEquals_GivenDifferentQueryDelay() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setQueryDelay(120L);
+        SchedulerConfig.Builder b1 = createFullyPopulated();
+        SchedulerConfig.Builder b2 = createFullyPopulated();
+        b2.setQueryDelay(120L);
 
+        SchedulerConfig sc1 = b1.build();
+        SchedulerConfig sc2 = b2.build();
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
 
 
     public void testEquals_GivenDifferentScrollSize() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setScrollSize(1);
+        SchedulerConfig.Builder b1 = createFullyPopulated();
+        SchedulerConfig.Builder b2 = createFullyPopulated();
+        b2.setScrollSize(1);
 
+        SchedulerConfig sc1 = b1.build();
+        SchedulerConfig sc2 = b2.build();
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
 
 
     public void testEquals_GivenDifferentFrequency() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
-        sc2.setFrequency(120L);
+        SchedulerConfig.Builder b1 = createFullyPopulated();
+        SchedulerConfig.Builder b2 = createFullyPopulated();
+        b2.setFrequency(120L);
 
+        SchedulerConfig sc1 = b1.build();
+        SchedulerConfig sc2 = b2.build();
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
 
 
     public void testEquals_GivenDifferentIndexes() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
+        SchedulerConfig.Builder sc1 = createFullyPopulated();
+        SchedulerConfig.Builder sc2 = createFullyPopulated();
         sc2.setIndexes(Arrays.asList("thisOtherCrazyIndex"));
 
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
+        assertFalse(sc1.build().equals(sc2.build()));
+        assertFalse(sc2.build().equals(sc1.build()));
     }
 
 
     public void testEquals_GivenDifferentTypes() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
+        SchedulerConfig.Builder sc1 = createFullyPopulated();
+        SchedulerConfig.Builder sc2 = createFullyPopulated();
         sc2.setTypes(Arrays.asList("thisOtherCrazyType"));
 
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
+        assertFalse(sc1.build().equals(sc2.build()));
+        assertFalse(sc2.build().equals(sc1.build()));
     }
 
 
     public void testEquals_GivenDifferentQuery() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
+        SchedulerConfig.Builder b1 = createFullyPopulated();
+        SchedulerConfig.Builder b2 = createFullyPopulated();
         Map<String, Object> emptyQuery = new HashMap<>();
-        sc2.setQuery(emptyQuery);
+        b2.setQuery(emptyQuery);
 
+        SchedulerConfig sc1 = b1.build();
+        SchedulerConfig sc2 = b2.build();
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
 
 
     public void testEquals_GivenDifferentAggregations() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
+        SchedulerConfig.Builder sc1 = createFullyPopulated();
+        SchedulerConfig.Builder sc2 = createFullyPopulated();
         Map<String, Object> emptyAggs = new HashMap<>();
         sc2.setAggregations(emptyAggs);
 
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
+        assertFalse(sc1.build().equals(sc2.build()));
+        assertFalse(sc2.build().equals(sc1.build()));
     }
 
 
     public void testEquals_GivenDifferentPath() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
+        SchedulerConfig.Builder sc1 = createFullyPopulated();
+        SchedulerConfig.Builder sc2 = createFullyPopulated();
         sc2.setFilePath("thisOtherCrazyPath");
 
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
+        assertFalse(sc1.build().equals(sc2.build()));
+        assertFalse(sc2.build().equals(sc1.build()));
     }
 
 
     public void testEquals_GivenDifferentTail() {
-        SchedulerConfig sc1 = createFullyPopulated();
-        SchedulerConfig sc2 = createFullyPopulated();
+        SchedulerConfig.Builder sc1 = createFullyPopulated();
+        SchedulerConfig.Builder sc2 = createFullyPopulated();
         sc2.setTailFile(false);
 
-        assertFalse(sc1.equals(sc2));
-        assertFalse(sc2.equals(sc1));
+        assertFalse(sc1.build().equals(sc2.build()));
+        assertFalse(sc2.build().equals(sc1.build()));
     }
 
-    private static SchedulerConfig createFullyPopulated() {
-        SchedulerConfig sc = new SchedulerConfig();
+    private static SchedulerConfig.Builder createFullyPopulated() {
+        SchedulerConfig.Builder sc = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         sc.setBaseUrl("http://localhost:8080");
-        sc.setDataSource(DataSource.ELASTICSEARCH);
         sc.setFrequency(60L);
         sc.setScrollSize(5000);
         sc.setIndexes(Arrays.asList("myIndex"));

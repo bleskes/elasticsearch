@@ -370,7 +370,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN);
 
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getAnalysisConfig().setBucketSpan(null);
@@ -386,7 +386,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     public void testVerify_GivenElasticsearchSchedulerAndNonZeroLatency() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
 
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getAnalysisConfig().setBucketSpan(1800L);
@@ -401,7 +401,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenElasticsearchSchedulerAndZeroLatency() {
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
@@ -413,7 +413,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenElasticsearchSchedulerAndNullLatency() {
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
@@ -425,7 +425,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenElasticsearchSchedulerWithAggsAndCorrectSummaryCountField() throws IOException {
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
@@ -442,7 +442,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
                 Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
                 DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT);
 
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
@@ -461,7 +461,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
                 Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
                 DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT);
 
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
@@ -494,18 +494,17 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         return jc;
     }
 
-    private static SchedulerConfig createValidElasticsearchSchedulerConfig() {
-        SchedulerConfig schedulerConfig = new SchedulerConfig();
-        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
+    private static SchedulerConfig.Builder createValidElasticsearchSchedulerConfig() {
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         schedulerConfig.setBaseUrl("http://localhost:9200");
         schedulerConfig.setIndexes(Arrays.asList("myIndex"));
         schedulerConfig.setTypes(Arrays.asList("myType"));
         return schedulerConfig;
     }
 
-    private static SchedulerConfig createValidElasticsearchSchedulerConfigWithAggs()
+    private static SchedulerConfig.Builder createValidElasticsearchSchedulerConfigWithAggs()
             throws IOException {
-        SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
+        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         String aggStr =
                 "{" +
                         "\"buckets\" : {" +

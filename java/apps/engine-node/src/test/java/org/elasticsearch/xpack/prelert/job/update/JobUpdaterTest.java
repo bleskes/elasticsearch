@@ -190,8 +190,7 @@ public class JobUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenValidSchedulerConfigUpdate() throws JobException {
-        SchedulerConfig schedulerConfig = new SchedulerConfig();
-        schedulerConfig.setDataSource(SchedulerConfig.DataSource.ELASTICSEARCH);
+        SchedulerConfig schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH).build();
         m_Job.setSchedulerConfig(schedulerConfig);
         String update = "{\"schedulerConfig\": {"
                 + "\"dataSource\":\"ELASTICSEARCH\","
@@ -202,8 +201,7 @@ public class JobUpdaterTest extends ESTestCase {
 
         new JobUpdater(m_Job).update(update);
 
-        SchedulerConfig expected = new SchedulerConfig();
-        expected.setDataSource(SchedulerConfig.DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder expected = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
         expected.setBaseUrl("http://localhost:9200");
         expected.setIndexes(Arrays.asList("index1", "index2"));
         expected.setTypes(Arrays.asList("type1", "type2"));
@@ -215,7 +213,7 @@ public class JobUpdaterTest extends ESTestCase {
         expected.setRetrieveWholeSource(false);
         expected.setScrollSize(1000);
 
-        assertThat(m_Job.getSchedulerConfig(), equalTo(expected));
+        assertThat(m_Job.getSchedulerConfig(), equalTo(expected.build()));
     }
 
     public void testUpdate_GivenValidAnalysisLimitsUpdate() throws JobException {

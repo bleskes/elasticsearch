@@ -124,7 +124,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
         if (dataDescription.getFormat().equals(DataFormat.ELASTICSEARCH)) {
             if (schedulerConfig != null) {
                 if (schedulerConfig.getAggregationsOrAggs() != null) {
-                    return SchedulerConfig.AGGREGATIONS;
+                    return SchedulerConfig.AGGREGATIONS.getPreferredName();
                 }
                 if (!Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource())) {
                     return ELASTICSEARCH_FIELDS_FIELD;

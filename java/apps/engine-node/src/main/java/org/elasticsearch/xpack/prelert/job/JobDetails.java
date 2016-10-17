@@ -116,8 +116,11 @@ public class JobDetails {
 
         analysisConfig = jobConfig.getAnalysisConfig();
         analysisLimits = jobConfig.getAnalysisLimits();
-        schedulerConfig = jobConfig.getSchedulerConfig();
-        invokeIfNotNull(schedulerConfig, sc -> sc.fillDefaults());
+        SchedulerConfig.Builder builder;
+        if (jobConfig.getSchedulerConfig() != null) {
+            builder = jobConfig.getSchedulerConfig();
+            schedulerConfig = builder.build();
+        }
         transforms = jobConfig.getTransforms();
         modelDebugConfig = jobConfig.getModelDebugConfig();
 

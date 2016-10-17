@@ -112,7 +112,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(JobDetails.DESCRIPTION);
         overridden.add(JobDetails.STATUS);
         overridden.add(ModelSnapshot.DESCRIPTION);
-        overridden.add(SchedulerConfig.USERNAME);
+        overridden.add(SchedulerConfig.USERNAME.getPreferredName());
 
         Set<String> expected = new HashSet<>();
 

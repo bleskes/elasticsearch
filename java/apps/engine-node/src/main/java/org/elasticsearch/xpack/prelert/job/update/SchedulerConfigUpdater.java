@@ -17,12 +17,11 @@ class SchedulerConfigUpdater extends AbstractUpdater {
     @Override
     void update(JsonNode node) {
         checkJobIsScheduled();
-        SchedulerConfig newConfig = parseSchedulerConfig(node);
+        SchedulerConfig.Builder newConfig = parseSchedulerConfig(node);
         checkNotNull(newConfig);
-        newConfig.fillDefaults();
         checkDataSourceHasNotChanged(newConfig);
         SchedulerConfigVerifier.verify(newConfig);
-        job().setSchedulerConfig(newConfig);
+        job().setSchedulerConfig(newConfig.build());
     }
 
     private void checkJobIsScheduled() {
@@ -32,23 +31,23 @@ class SchedulerConfigUpdater extends AbstractUpdater {
         }
     }
 
-    private static SchedulerConfig parseSchedulerConfig(JsonNode node) {
+    private static SchedulerConfig.Builder parseSchedulerConfig(JsonNode node) {
         try {
-            return JSON_MAPPER.convertValue(node, SchedulerConfig.class);
+            return JSON_MAPPER.convertValue(node, SchedulerConfig.Builder.class);
         } catch (IllegalArgumentException e) {
             throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_UPDATE_SCHEDULE_CONFIG_PARSE_ERROR),
                     ErrorCodes.INVALID_VALUE);
         }
     }
 
-    private static void checkNotNull(SchedulerConfig schedulerConfig) {
+    private static void checkNotNull(SchedulerConfig.Builder schedulerConfig) {
         if (schedulerConfig == null) {
             throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_UPDATE_SCHEDULE_CONFIG_CANNOT_BE_NULL),
                     ErrorCodes.INVALID_VALUE);
         }
     }
 
-    private void checkDataSourceHasNotChanged(SchedulerConfig schedulerConfig) {
+    private void checkDataSourceHasNotChanged(SchedulerConfig.Builder schedulerConfig) {
         JobDetails job = job();
         SchedulerConfig currentSchedulerConfig = job.getSchedulerConfig();
         SchedulerConfig.DataSource currentDataSource = currentSchedulerConfig.getDataSource();

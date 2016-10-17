@@ -59,16 +59,8 @@ public class JobDetailsTest extends ESTestCase {
 
 
     public void testConstructor_GivenJobConfigurationWithElasticsearchScheduler_ShouldFillDefaults() {
-        SchedulerConfig schedulerConfig = new SchedulerConfig();
-        schedulerConfig.setDataSource(DataSource.ELASTICSEARCH);
-        schedulerConfig.setQuery(null);
-        JobConfiguration jobConfiguration = new JobConfiguration();
-        jobConfiguration.setSchedulerConfig(schedulerConfig);
-
-        JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
-
-        Map<String, Object> schedulerQuery = jobDetails.getSchedulerConfig().getQuery();
-        assertNotNull(schedulerQuery);
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
+        expectThrows(NullPointerException.class, () ->schedulerConfig.setQuery(null));
     }
 
 
@@ -107,7 +99,7 @@ public class JobDetailsTest extends ESTestCase {
         jobDetails1.setBackgroundPersistInterval(10000L);
         jobDetails1.setModelSnapshotRetentionDays(10L);
         jobDetails1.setResultsRetentionDays(30L);
-        jobDetails1.setSchedulerConfig(new SchedulerConfig());
+        jobDetails1.setSchedulerConfig(new SchedulerConfig.Builder(DataSource.FILE).build());
         jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
         jobDetails1.setStatus(JobStatus.RUNNING);
         jobDetails1.setTimeout(3600L);
@@ -132,7 +124,7 @@ public class JobDetailsTest extends ESTestCase {
         jobDetails2.setBackgroundPersistInterval(10000L);
         jobDetails2.setModelSnapshotRetentionDays(10L);
         jobDetails2.setResultsRetentionDays(30L);
-        jobDetails2.setSchedulerConfig(new SchedulerConfig());
+        jobDetails2.setSchedulerConfig(new SchedulerConfig.Builder(DataSource.FILE).build());
         jobDetails2.setSchedulerStatus(JobSchedulerStatus.STOPPED);
         jobDetails2.setStatus(JobStatus.RUNNING);
         jobDetails2.setTimeout(3600L);

@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
+//NORELEASE: validation should be part of SchedulerConfig.Builder
 public final class SchedulerConfigVerifier
 {
     private SchedulerConfigVerifier()
@@ -39,9 +40,9 @@ public final class SchedulerConfigVerifier
      * </li>
      * </ul>
      */
-    public static boolean verify(SchedulerConfig config) {
-        checkFieldIsNotNegative(SchedulerConfig.QUERY_DELAY, config.getQueryDelay());
-        checkFieldIsNotNegative(SchedulerConfig.FREQUENCY, config.getFrequency());
+    public static boolean verify(SchedulerConfig.Builder config) {
+        checkFieldIsNotNegative(SchedulerConfig.QUERY_DELAY.getPreferredName(), config.getQueryDelay());
+        checkFieldIsNotNegative(SchedulerConfig.FREQUENCY.getPreferredName(), config.getFrequency());
 
         DataSource dataSource = config.getDataSource();
         switch (dataSource) {
@@ -58,34 +59,34 @@ public final class SchedulerConfigVerifier
         return true;
     }
 
-    private static void verifyFileSchedulerConfig(SchedulerConfig config, DataSource dataSource) {
-        checkFieldIsNotNullOrEmpty(SchedulerConfig.FILE_PATH, config.getFilePath());
-        checkFieldIsNull(dataSource, SchedulerConfig.BASE_URL, config.getBaseUrl());
-        checkFieldIsNull(dataSource, SchedulerConfig.USERNAME, config.getUsername());
-        checkFieldIsNull(dataSource, SchedulerConfig.PASSWORD, config.getPassword());
-        checkFieldIsNull(dataSource, SchedulerConfig.ENCRYPTED_PASSWORD, config.getEncryptedPassword());
-        checkFieldIsNull(dataSource, SchedulerConfig.INDEXES, config.getIndexes());
-        checkFieldIsNull(dataSource, SchedulerConfig.TYPES, config.getTypes());
-        checkFieldIsNull(dataSource, SchedulerConfig.RETRIEVE_WHOLE_SOURCE, config.getRetrieveWholeSource());
-        checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS, config.getAggregations());
-        checkFieldIsNull(dataSource, SchedulerConfig.QUERY, config.getQuery());
-        checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS, config.getScriptFields());
-        checkFieldIsNull(dataSource, SchedulerConfig.SCROLL_SIZE, config.getScrollSize());
+    private static void verifyFileSchedulerConfig(SchedulerConfig.Builder config, DataSource dataSource) {
+        checkFieldIsNotNullOrEmpty(SchedulerConfig.FILE_PATH.getPreferredName(), config.getFilePath());
+        checkFieldIsNull(dataSource, SchedulerConfig.BASE_URL.getPreferredName(), config.getBaseUrl());
+        checkFieldIsNull(dataSource, SchedulerConfig.USERNAME.getPreferredName(), config.getUsername());
+        checkFieldIsNull(dataSource, SchedulerConfig.PASSWORD.getPreferredName(), config.getPassword());
+        checkFieldIsNull(dataSource, SchedulerConfig.ENCRYPTED_PASSWORD.getPreferredName(), config.getEncryptedPassword());
+        checkFieldIsNull(dataSource, SchedulerConfig.INDEXES.getPreferredName(), config.getIndexes());
+        checkFieldIsNull(dataSource, SchedulerConfig.TYPES.getPreferredName(), config.getTypes());
+        checkFieldIsNull(dataSource, SchedulerConfig.RETRIEVE_WHOLE_SOURCE.getPreferredName(), config.getRetrieveWholeSource());
+        checkFieldIsNull(dataSource, SchedulerConfig.AGGREGATIONS.getPreferredName(), config.getAggregations());
+        checkFieldIsNull(dataSource, SchedulerConfig.QUERY.getPreferredName(), config.getQuery());
+        checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS.getPreferredName(), config.getScriptFields());
+        checkFieldIsNull(dataSource, SchedulerConfig.SCROLL_SIZE.getPreferredName(), config.getScrollSize());
     }
 
-    private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config, DataSource dataSource) {
-        checkUrl(SchedulerConfig.BASE_URL, config.getBaseUrl());
+    private static void verifyElasticsearchSchedulerConfig(SchedulerConfig.Builder config, DataSource dataSource) {
+        checkUrl(SchedulerConfig.BASE_URL.getPreferredName(), config.getBaseUrl());
         checkUserPass(config.getUsername(), config.getPassword(), config.getEncryptedPassword());
-        checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES, config.getIndexes());
-        checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES, config.getTypes());
+        checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES.getPreferredName(), config.getIndexes());
+        checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES.getPreferredName(), config.getTypes());
         checkNoMultipleAggregations(config);
         if (Boolean.TRUE.equals(config.getRetrieveWholeSource())) {
             // Not allowed script_fields when retrieveWholeSource is true
-            checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS, config.getScriptFields());
+            checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS.getPreferredName(), config.getScriptFields());
         }
-        checkFieldIsNotNegative(SchedulerConfig.SCROLL_SIZE, config.getScrollSize());
-        checkFieldIsNull(dataSource, SchedulerConfig.FILE_PATH, config.getFilePath());
-        checkFieldIsNull(dataSource, SchedulerConfig.TAIL_FILE, config.getTailFile());
+        checkFieldIsNotNegative(SchedulerConfig.SCROLL_SIZE.getPreferredName(), config.getScrollSize());
+        checkFieldIsNull(dataSource, SchedulerConfig.FILE_PATH.getPreferredName(), config.getFilePath());
+        checkFieldIsNull(dataSource, SchedulerConfig.TAIL_FILE.getPreferredName(), config.getTailFile());
     }
 
     private static void checkUserPass(String username, String password, String encryptedPassword) {
@@ -108,7 +109,7 @@ public final class SchedulerConfigVerifier
         }
     }
 
-    private static void checkNoMultipleAggregations(SchedulerConfig config) {
+    private static void checkNoMultipleAggregations(SchedulerConfig.Builder config) {
         if (config.getAggregations() != null && config.getAggs() != null) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS);
             throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);

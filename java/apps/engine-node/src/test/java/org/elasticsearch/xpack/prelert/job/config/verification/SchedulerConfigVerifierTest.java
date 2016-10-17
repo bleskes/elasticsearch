@@ -21,23 +21,8 @@ import java.util.Map;
 
 public class SchedulerConfigVerifierTest extends ESTestCase {
 
-    public void testVerify_GivenAllDataSources_DoesNotThrowIllegalStateException() {
-        for (DataSource dataSource : DataSource.values()) {
-            SchedulerConfig conf = new SchedulerConfig();
-            conf.setDataSource(dataSource);
-
-            try {
-                SchedulerConfigVerifier.verify(conf);
-            } catch (ElasticsearchStatusException e) {
-                // Expected
-            }
-        }
-    }
-
-
     public void testCheckValidFile_AllOk() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.FILE);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.FILE);
         conf.setFilePath("myfile.csv");
 
         SchedulerConfigVerifier.verify(conf);
@@ -45,8 +30,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidFile_NoPath() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.FILE);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.FILE);
 
         ElasticsearchStatusException e =
                 ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> SchedulerConfigVerifier.verify(conf));
@@ -57,8 +41,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidFile_EmptyPath() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.FILE);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.FILE);
         conf.setFilePath("");
 
         ElasticsearchStatusException e =
@@ -70,8 +53,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidFile_InappropriateField() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.FILE);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.FILE);
         conf.setFilePath("myfile.csv");
         conf.setBaseUrl("http://localhost:9200/");
 
@@ -85,8 +67,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_AllOk() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setQueryDelay(90L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
@@ -101,8 +82,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_WithUsernameAndPassword() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setQueryDelay(90L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
@@ -118,8 +98,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_WithUsernameAndEncryptedPassword() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setQueryDelay(90L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
@@ -135,8 +114,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_WithPasswordNoUsername() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -151,8 +129,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_BothPasswordAndEncryptedPassword() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -169,8 +146,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_NoQuery() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -180,8 +156,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_InappropriateField() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -198,8 +173,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_GivenScriptFieldsNotWholeSource() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -213,8 +187,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_GivenScriptFieldsAndWholeSource() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
@@ -231,22 +204,13 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_GivenNullIndexes() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
-        conf.setIndexes(null);
-        conf.setTypes(new ArrayList<String>(Arrays.asList("mytype")));
-
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> SchedulerConfigVerifier.verify(conf));
-
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
-        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "null"), e.getMessage());
+        expectThrows(NullPointerException.class, () -> conf.setIndexes(null));
     }
 
     public void testCheckValidElasticsearch_GivenEmptyIndexes() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Collections.emptyList());
         conf.setTypes(Arrays.asList("mytype"));
@@ -264,8 +228,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         indexes.add(null);
         indexes.add(null);
 
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
@@ -283,8 +246,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
         indexes.add("");
         indexes.add("");
 
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
@@ -298,8 +260,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_GivenNegativeQueryDelay() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setQueryDelay(-10L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myIndex"));
@@ -314,8 +275,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_GivenNegativeFrequency() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setFrequency(-600L);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myIndex"));
@@ -330,8 +290,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_GivenNegativeScrollSize() throws IOException {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setScrollSize(-1000);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myIndex"));
@@ -346,8 +305,7 @@ public class SchedulerConfigVerifierTest extends ESTestCase {
 
 
     public void testCheckValidElasticsearch_GivenBothAggregationsAndAggsAreSet() {
-        SchedulerConfig conf = new SchedulerConfig();
-        conf.setDataSource(DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         conf.setScrollSize(1000);
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myIndex"));

@@ -1,4 +1,19 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -6,7 +21,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,240 +53,280 @@ import java.util.TreeMap;
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)
-public class SchedulerConfig {
-    /**
-     * Enum of the acceptable data sources.
-     */
-    public enum DataSource
-    {
-        FILE, ELASTICSEARCH;
-
-        /**
-         * Case-insensitive from string method.
-         * Works with ELASTICSEARCH, Elasticsearch, ElasticSearch, etc.
-         *
-         * @param value String representation
-         * @return The data source
-         */
-        @JsonCreator
-        public static DataSource forString(String value)
-        {
-            String valueUpperCase = value.toUpperCase(Locale.ROOT);
-            return DataSource.valueOf(valueUpperCase);
-        }
-    }
+public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
     /**
      * The field name used to specify aggregation fields in Elasticsearch aggregations
      */
     private static final String FIELD = "field";
-
     /**
      * The field name used to specify document counts in Elasticsearch aggregations
      */
     public static final String DOC_COUNT = "doc_count";
 
-    /**
-     * The default query for elasticsearch searches
-     */
-    private static final String MATCH_ALL_ES_QUERY = "match_all";
-
-    /**
-     * Serialisation names
-     */
-    public static final String DATA_SOURCE = "dataSource";
-    public static final String QUERY_DELAY = "queryDelay";
-    public static final String FREQUENCY = "frequency";
-    public static final String FILE_PATH = "filePath";
-    public static final String TAIL_FILE = "tailFile";
-    public static final String BASE_URL = "baseUrl";
-    public static final String USERNAME = "username";
-    public static final String PASSWORD = "password";
-    public static final String ENCRYPTED_PASSWORD = "encryptedPassword";
-    public static final String INDEXES = "indexes";
-    public static final String TYPES = "types";
-    public static final String QUERY = "query";
-    public static final String RETRIEVE_WHOLE_SOURCE = "retrieveWholeSource";
-    public static final String SCROLL_SIZE = "scrollSize";
-    public static final String AGGREGATIONS = "aggregations";
-    public static final String AGGS = "aggs";
-
+    // NORELEASE: no camel casing:
+    public static final ParseField DATA_SOURCE = new ParseField("dataSource");
+    public static final ParseField QUERY_DELAY = new ParseField("queryDelay");
+    public static final ParseField FREQUENCY = new ParseField("frequency");
+    public static final ParseField FILE_PATH = new ParseField("filePath");
+    public static final ParseField TAIL_FILE = new ParseField("tailFile");
+    public static final ParseField BASE_URL = new ParseField("baseUrl");
+    public static final ParseField USERNAME = new ParseField("username");
+    public static final ParseField PASSWORD = new ParseField("password");
+    public static final ParseField ENCRYPTED_PASSWORD = new ParseField("encryptedPassword");
+    public static final ParseField INDEXES = new ParseField("indexes");
+    public static final ParseField TYPES = new ParseField("types");
+    public static final ParseField QUERY = new ParseField("query");
+    public static final ParseField RETRIEVE_WHOLE_SOURCE = new ParseField("retrieveWholeSource");
+    public static final ParseField SCROLL_SIZE = new ParseField("scrollSize");
+    public static final ParseField AGGREGATIONS = new ParseField("aggregations");
+    public static final ParseField AGGS = new ParseField("aggs");
     /**
      * Named to match Elasticsearch, hence lowercase_with_underscores instead
      * of camelCase
      */
-    public static final String SCRIPT_FIELDS = "script_fields";
+    public static final ParseField SCRIPT_FIELDS = new ParseField("scriptFields");
 
-    private static final int DEFAULT_SCROLL_SIZE = 1000;
-    private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
+    public static final ConstructingObjectParser<SchedulerConfig.Builder, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            "schedule_config", a -> new SchedulerConfig.Builder((DataSource) a[0]));
 
-    private DataSource dataSource;
+    static {
+        PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> {
+            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
+                return DataSource.readFromString(p.text());
+            }
+            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
+        }, DATA_SOURCE, ObjectParser.ValueType.STRING);
+        PARSER.declareLong(Builder::setQueryDelay, QUERY_DELAY);
+        PARSER.declareLong(Builder::setFrequency, FREQUENCY);
+        PARSER.declareString(Builder::setFilePath, FILE_PATH);
+        PARSER.declareBoolean(Builder::setTailFile, TAIL_FILE);
+        PARSER.declareString(Builder::setUsername, USERNAME);
+        PARSER.declareString(Builder::setPassword, PASSWORD);
+        PARSER.declareString(Builder::setEncryptedPassword, ENCRYPTED_PASSWORD);
+        PARSER.declareString(Builder::setBaseUrl, BASE_URL);
+        PARSER.declareStringArray(Builder::setIndexes, INDEXES);
+        PARSER.declareStringArray(Builder::setTypes, TYPES);
+        PARSER.declareObject(Builder::setQuery, (p, c) -> {
+            try {
+                return p.map();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, QUERY);
+        PARSER.declareObject(Builder::setAggregations, (p, c) -> {
+            try {
+                return p.map();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, AGGREGATIONS);
+        PARSER.declareObject(Builder::setAggs, (p, c) -> {
+            try {
+                return p.map();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, AGGS);
+        PARSER.declareObject(Builder::setScriptFields, (p, c) -> {
+            try {
+                return p.map();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, SCRIPT_FIELDS);
+        PARSER.declareBoolean(Builder::setRetrieveWholeSource, RETRIEVE_WHOLE_SOURCE);
+        PARSER.declareInt(Builder::setScrollSize, SCROLL_SIZE);
+    }
+
+    // NORELEASE: please use primitives where possible here:
+    private final DataSource dataSource;
 
     /**
      * The delay in seconds before starting to query a period of time
      */
-    private Long queryDelay;
+    private final Long queryDelay;
 
     /**
      * The frequency in seconds with which queries are executed
      */
-    private Long frequency;
+    private final Long frequency;
 
     /**
      * These values apply to the FILE data source
      */
-    private String filePath;
-    private Boolean tailFile;
+    private final String filePath;
+    private final Boolean tailFile;
 
     /**
      * Used for data sources that require credentials.  May be null in the case
      * where credentials are sometimes needed and sometimes not (e.g. Elasticsearch).
      */
-    private String username;
-    private String password;
-    private String encryptedPassword;
+    private final String username;
+    private final String password;
+    private final String encryptedPassword;
 
     /**
      * These values apply to the ELASTICSEARCH data source
      */
-    private String baseUrl;
-    private List<String> indexes;
-    private List<String> types;
-    private Map<String, Object> query;
-    private Map<String, Object> aggregations;
-    private Map<String, Object> aggs;
-    private Map<String, Object> scriptFields;
-    private Boolean retrieveWholeSource;
-    private Integer scrollSize;
+    private final String baseUrl;
+    private final List<String> indexes;
+    private final List<String> types;
+    // NORELEASE: I think these 4 fields can be reduced to a single BytesReference field holding the entire source:
+    private final Map<String, Object> query;
+    private final Map<String, Object> aggregations;
+    private final Map<String, Object> aggs;
+    private final Map<String, Object> scriptFields;
+    private final Boolean retrieveWholeSource;
+    private final Integer scrollSize;
 
-    /**
-     * Default constructor
-     */
-    public SchedulerConfig()
-    {
-        this.dataSource = DataSource.FILE;
+    @JsonCreator
+    public SchedulerConfig(@JsonProperty("dataSource") DataSource dataSource, @JsonProperty("queryDelay") Long queryDelay,
+                           @JsonProperty("frequency") Long frequency, @JsonProperty("filePath") String filePath,
+                           @JsonProperty("tailFile") Boolean tailFile, @JsonProperty("username") String username,
+                           @JsonProperty("password") String password, @JsonProperty("encryptedPassword") String encryptedPassword,
+                           @JsonProperty("baseUrl") String baseUrl, @JsonProperty("indexes") List<String> indexes,
+                           @JsonProperty("types") List<String> types, @JsonProperty("query")  Map<String, Object> query,
+                           @JsonProperty("aggregations") Map<String, Object> aggregations,
+                           @JsonProperty("aggs") Map<String, Object> aggs, @JsonProperty("script_fields") Map<String, Object> scriptFields,
+                           @JsonProperty("retrieveWholeSource") Boolean retrieveWholeSource,
+                           @JsonProperty("scrollSize") Integer scrollSize) {
+        this.dataSource = dataSource;
+        this.queryDelay = queryDelay;
+        this.frequency = frequency;
+        this.filePath = filePath;
+        this.tailFile = tailFile;
+        this.username = username;
+        this.password = password;
+        this.encryptedPassword = encryptedPassword;
+        this.baseUrl = baseUrl;
+        this.indexes = indexes;
+        this.types = types;
+        this.query = query;
+        this.aggregations = aggregations;
+        this.aggs = aggs;
+        this.scriptFields = scriptFields;
+        this.retrieveWholeSource = retrieveWholeSource;
+        this.scrollSize = scrollSize;
+    }
+
+    public SchedulerConfig(StreamInput in) throws IOException {
+        this.dataSource = DataSource.readFromStream(in);
+        this.queryDelay = in.readOptionalLong();
+        this.frequency = in.readOptionalLong();
+        this.filePath = in.readOptionalString();
+        this.tailFile = in.readOptionalBoolean();
+        this.username = in.readOptionalString();
+        this.password = in.readOptionalString();
+        this.encryptedPassword = in.readOptionalString();
+        this.baseUrl = in.readOptionalString();
+        if (in.readBoolean()) {
+            this.indexes = in.readList(StreamInput::readString);
+        } else {
+            this.indexes = null;
+        }
+        if (in.readBoolean()) {
+            this.types = in.readList(StreamInput::readString);
+        } else {
+            this.types = null;
+        }
+        if (in.readBoolean()) {
+            this.query = in.readMap();
+        } else {
+            this.query = null;
+        }
+        if (in.readBoolean()) {
+            this.aggregations = in.readMap();
+        } else {
+            this.aggregations = null;
+        }
+        if (in.readBoolean()) {
+            this.aggs = in.readMap();
+        } else {
+            this.aggs = null;
+        }
+        if (in.readBoolean()) {
+            this.scriptFields = in.readMap();
+        } else {
+            this.scriptFields = null;
+        }
+        this.retrieveWholeSource = in.readOptionalBoolean();
+        this.scrollSize = in.readOptionalVInt();
     }
 
     /**
      * The data source that the scheduler is to pull data from.
+     *
      * @return The data source.
      */
-    public DataSource getDataSource()
-    {
+    public DataSource getDataSource() {
         return this.dataSource;
     }
 
-    public void setDataSource(DataSource dataSource)
-    {
-        this.dataSource = dataSource;
-    }
-
-    public Long getQueryDelay()
-    {
+    public Long getQueryDelay() {
         return this.queryDelay;
     }
 
-    public void setQueryDelay(Long delay)
-    {
-        this.queryDelay = delay;
-    }
-
-    public Long getFrequency()
-    {
+    public Long getFrequency() {
         return this.frequency;
-    }
-
-    public void setFrequency(Long frequency)
-    {
-        this.frequency = frequency;
     }
 
     /**
      * For the FILE data source only, the path to the file.
+     *
      * @return The path to the file, or <code>null</code> if not set.
      */
-    public String getFilePath()
-    {
+    public String getFilePath() {
         return this.filePath;
-    }
-
-    public void setFilePath(String filePath)
-    {
-        this.filePath = filePath;
     }
 
     /**
      * For the FILE data source only, should the file be tailed?  If not it will
      * just be read from once.
+     *
      * @return Should the file be tailed?  (<code>null</code> if not set.)
      */
-    public Boolean getTailFile()
-    {
+    public Boolean getTailFile() {
         return this.tailFile;
-    }
-
-    public void setTailFile(Boolean tailFile)
-    {
-        this.tailFile = tailFile;
     }
 
     /**
      * For the ELASTICSEARCH data source only, the base URL to connect to
      * Elasticsearch on.
+     *
      * @return The URL, or <code>null</code> if not set.
      */
-    public String getBaseUrl()
-    {
+    public String getBaseUrl() {
         return this.baseUrl;
-    }
-
-    public void setBaseUrl(String baseUrl)
-    {
-        this.baseUrl = baseUrl;
     }
 
     /**
      * The username to use to connect to the data source (if any).
+     *
      * @return The username, or <code>null</code> if not set.
      */
-    public String getUsername()
-    {
+    public String getUsername() {
         return this.username;
-    }
-
-    public void setUsername(String username)
-    {
-        this.username = username;
     }
 
     /**
      * For the ELASTICSEARCH data source only, one or more indexes to search for
      * input data.
+     *
      * @return The indexes to search, or <code>null</code> if not set.
      */
-    public List<String> getIndexes()
-    {
+    public List<String> getIndexes() {
         return this.indexes;
-    }
-
-    public void setIndexes(List<String> indexes)
-    {
-        this.indexes = indexes;
     }
 
     /**
      * For the ELASTICSEARCH data source only, one or more types to search for
      * input data.
+     *
      * @return The types to search, or <code>null</code> if not set.
      */
-    public List<String> getTypes()
-    {
+    public List<String> getTypes() {
         return this.types;
-    }
-
-    public void setTypes(List<String> types)
-    {
-        this.types = types;
     }
 
     /**
@@ -269,62 +335,42 @@ public class SchedulerConfig {
      * This should not include time bounds, as these are added separately.
      * This class does not attempt to interpret the query.  The map will be
      * converted back to an arbitrary JSON object.
+     *
      * @return The search query, or <code>null</code> if not set.
      */
-    public Map<String, Object> getQuery()
-    {
+    public Map<String, Object> getQuery() {
         return this.query;
-    }
-
-    public void setQuery(Map<String, Object> query)
-    {
-        this.query = query;
     }
 
     /**
      * For the ELASTICSEARCH data source only, should the whole _source document
      * be retrieved for analysis, or just the analysis fields?
+     *
      * @return Should the whole of _source be retrieved?  (<code>null</code> if not set.)
      */
-    public Boolean getRetrieveWholeSource()
-    {
+    public Boolean getRetrieveWholeSource() {
         return this.retrieveWholeSource;
-    }
-
-    public void setRetrieveWholeSource(Boolean retrieveWholeSource)
-    {
-        this.retrieveWholeSource = retrieveWholeSource;
     }
 
     /**
      * For the ELASTICSEARCH data source only, get the size of documents to
      * be retrieved from each shard via a scroll search
+     *
      * @return The size of documents to be retrieved from each shard via a scroll search
      */
-    public Integer getScrollSize()
-    {
+    public Integer getScrollSize() {
         return this.scrollSize;
-    }
-
-    public void setScrollSize(Integer scrollSize)
-    {
-        this.scrollSize = scrollSize;
     }
 
     /**
      * The encrypted password to use to connect to the data source (if any).
      * A class outside this package is responsible for encrypting and decrypting
      * the password.
+     *
      * @return The password, or <code>null</code> if not set.
      */
-    public String getEncryptedPassword()
-    {
+    public String getEncryptedPassword() {
         return encryptedPassword;
-    }
-
-    public void setEncryptedPassword(String encryptedPassword)
-    {
-        this.encryptedPassword = encryptedPassword;
     }
 
     /**
@@ -332,15 +378,11 @@ public class SchedulerConfig {
      * This is likely to return <code>null</code> most of the time, as the
      * intention is that it is only present it initial configurations, and gets
      * replaced with an encrypted password as soon as possible after receipt.
+     *
      * @return The password, or <code>null</code> if not set.
      */
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password)
-    {
-        this.password = password;
     }
 
     /**
@@ -348,18 +390,12 @@ public class SchedulerConfig {
      * script_fields to add to the search to be submitted to Elasticsearch to
      * get the input data.  This class does not attempt to interpret the
      * script fields.  The map will be converted back to an arbitrary JSON object.
+     *
      * @return The script fields, or <code>null</code> if not set.
      */
     @JsonProperty("script_fields")
-    public Map<String, Object> getScriptFields()
-    {
+    public Map<String, Object> getScriptFields() {
         return this.scriptFields;
-    }
-
-    @JsonProperty("script_fields")
-    public void setScriptFields(Map<String, Object> scriptFields)
-    {
-        this.scriptFields = scriptFields;
     }
 
     /**
@@ -368,19 +404,11 @@ public class SchedulerConfig {
      * get the input data.  This class does not attempt to interpret the
      * aggregations.  The map will be converted back to an arbitrary JSON object.
      * Synonym for {@link #getAggs()} (like Elasticsearch).
+     *
      * @return The aggregations, or <code>null</code> if not set.
      */
-    public Map<String, Object> getAggregations()
-    {
+    public Map<String, Object> getAggregations() {
         return this.aggregations;
-    }
-
-    public void setAggregations(Map<String, Object> aggregations)
-    {
-        // It's only expected that one of aggregations or aggs will be set,
-        // having two member variables makes it easier to remember which the
-        // user used so their input can be recreated
-        this.aggregations = aggregations;
     }
 
     /**
@@ -389,42 +417,33 @@ public class SchedulerConfig {
      * get the input data.  This class does not attempt to interpret the
      * aggregations.  The map will be converted back to an arbitrary JSON object.
      * Synonym for {@link #getAggregations()} (like Elasticsearch).
+     *
      * @return The aggregations, or <code>null</code> if not set.
      */
-    public Map<String, Object> getAggs()
-    {
+    public Map<String, Object> getAggs() {
         return this.aggs;
-    }
-
-    public void setAggs(Map<String, Object> aggs)
-    {
-        // It's only expected that one of aggregations or aggs will be set,
-        // having two member variables makes it easier to remember which the
-        // user used so their input can be recreated
-        this.aggs = aggs;
     }
 
     /**
      * Convenience method to get either aggregations or aggs.
+     *
      * @return The aggregations (whether initially specified in aggregations
      * or aggs), or <code>null</code> if neither are set.
      */
     @JsonIgnore
-    public Map<String, Object> getAggregationsOrAggs()
-    {
+    public Map<String, Object> getAggregationsOrAggs() {
         return (this.aggregations != null) ? this.aggregations : this.aggs;
     }
 
     /**
      * Build the list of fields expected in the output from aggregations
      * submitted to Elasticsearch.
+     *
      * @return The list of fields, or empty list if there are no aggregations.
      */
-    public List<String> buildAggregatedFieldList()
-    {
+    public List<String> buildAggregatedFieldList() {
         Map<String, Object> aggs = getAggregationsOrAggs();
-        if (aggs == null)
-        {
+        if (aggs == null) {
             return Collections.emptyList();
         }
 
@@ -436,64 +455,122 @@ public class SchedulerConfig {
     }
 
     @SuppressWarnings("unchecked")
-    private void scanSubLevel(Map<String, Object> subLevel, int depth, SortedMap<Integer, String> orderedFields)
-    {
-        for (Map.Entry<String, Object> entry : subLevel.entrySet())
-        {
+    private void scanSubLevel(Map<String, Object> subLevel, int depth, SortedMap<Integer, String> orderedFields) {
+        for (Map.Entry<String, Object> entry : subLevel.entrySet()) {
             Object value = entry.getValue();
-            if (value instanceof Map<?, ?>)
-            {
-                scanSubLevel((Map<String, Object>)value, depth + 1, orderedFields);
-            }
-            else if (value instanceof String && FIELD.equals(entry.getKey()))
-            {
-                orderedFields.put(depth, (String)value);
+            if (value instanceof Map<?, ?>) {
+                scanSubLevel((Map<String, Object>) value, depth + 1, orderedFields);
+            } else if (value instanceof String && FIELD.equals(entry.getKey())) {
+                orderedFields.put(depth, (String) value);
             }
         }
     }
 
-    public void fillDefaults()
-    {
-        switch (this.dataSource)
-        {
-            case ELASTICSEARCH:
-                fillElasticsearchDefaults();
-                break;
-            case FILE:
-                fillFileDefaults();
-                break;
-            default:
-                throw new IllegalStateException();
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        dataSource.writeTo(out);
+        out.writeOptionalLong(queryDelay);
+        out.writeOptionalLong(frequency);
+        out.writeOptionalString(filePath);
+        out.writeOptionalBoolean(tailFile);
+        out.writeOptionalString(username);
+        out.writeOptionalString(password);
+        out.writeOptionalString(encryptedPassword);
+        out.writeOptionalString(baseUrl);
+        if (indexes != null) {
+            out.writeBoolean(true);
+            out.writeStringList(indexes);
+        } else {
+            out.writeBoolean(false);
         }
+        if (types != null) {
+            out.writeBoolean(true);
+            out.writeStringList(types);
+        } else {
+            out.writeBoolean(false);
+        }
+        if (query != null) {
+            out.writeBoolean(true);
+            out.writeMap(query);
+        } else {
+            out.writeBoolean(false);
+        }
+        if (aggregations != null) {
+            out.writeBoolean(true);
+            out.writeMap(aggregations);
+        } else {
+            out.writeBoolean(false);
+        }
+        if (aggs != null) {
+            out.writeBoolean(true);
+            out.writeMap(aggs);
+        } else {
+            out.writeBoolean(false);
+        }
+        if (scriptFields != null) {
+            out.writeBoolean(true);
+            out.writeMap(scriptFields);
+        } else {
+            out.writeBoolean(false);
+        }
+        out.writeOptionalBoolean(retrieveWholeSource);
+        out.writeOptionalVInt(scrollSize);
     }
 
-    private void fillElasticsearchDefaults()
-    {
-        if (this.query == null)
-        {
-            this.query = new HashMap<>();
-            this.query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(DATA_SOURCE.getPreferredName(), dataSource.name().toUpperCase(Locale.ROOT));
+        if (queryDelay != null) {
+            builder.field(QUERY_DELAY.getPreferredName(), queryDelay);
         }
-        if (this.queryDelay == null)
-        {
-            this.queryDelay = DEFAULT_ELASTICSEARCH_QUERY_DELAY;
+        if (frequency != null) {
+            builder.field(FREQUENCY.getPreferredName(), frequency);
         }
-        if (this.retrieveWholeSource == null)
-        {
-            this.retrieveWholeSource = false;
+        if (filePath != null) {
+            builder.field(FILE_PATH.getPreferredName(), filePath);
         }
-        if (this.scrollSize == null)
-        {
-            this.scrollSize = DEFAULT_SCROLL_SIZE;
+        if (tailFile != null) {
+            builder.field(TAIL_FILE.getPreferredName(), tailFile);
         }
-    }
-
-    private void fillFileDefaults()
-    {
-        if (this.tailFile == null)
-        {
-            this.tailFile = false;
+        if (username != null) {
+            builder.field(USERNAME.getPreferredName(), username);
         }
+        if (password != null) {
+            builder.field(PASSWORD.getPreferredName(), password);
+        }
+        if (encryptedPassword != null) {
+            builder.field(ENCRYPTED_PASSWORD.getPreferredName(), encryptedPassword);
+        }
+        if (baseUrl != null) {
+            builder.field(BASE_URL.getPreferredName(), baseUrl);
+        }
+        if (indexes != null) {
+            builder.field(INDEXES.getPreferredName(), indexes);
+        }
+        if (types != null) {
+            builder.field(TYPES.getPreferredName(), types);
+        }
+        if (query != null) {
+            builder.field(QUERY.getPreferredName(), query);
+        }
+        if (aggregations != null) {
+            builder.field(AGGREGATIONS.getPreferredName(), aggregations);
+        }
+        if (aggs != null) {
+            builder.field(AGGS.getPreferredName(), aggs);
+        }
+        if (scriptFields != null) {
+            builder.field(SCRIPT_FIELDS.getPreferredName(), scriptFields);
+        }
+        if (retrieveWholeSource != null) {
+            builder.field(RETRIEVE_WHOLE_SOURCE.getPreferredName(), retrieveWholeSource);
+        }
+        if (scrollSize != null) {
+            builder.field(SCROLL_SIZE.getPreferredName(), scrollSize);
+        }
+        builder.endObject();
+        return builder;
     }
 
     /**
@@ -502,19 +579,16 @@ public class SchedulerConfig {
      * lists are in different orders.
      */
     @Override
-    public boolean equals(Object other)
-    {
-        if (this == other)
-        {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
 
-        if (other instanceof SchedulerConfig == false)
-        {
+        if (other instanceof SchedulerConfig == false) {
             return false;
         }
 
-        SchedulerConfig that = (SchedulerConfig)other;
+        SchedulerConfig that = (SchedulerConfig) other;
 
         return Objects.equals(this.dataSource, that.dataSource) &&
                 Objects.equals(this.frequency, that.frequency) &&
@@ -535,9 +609,256 @@ public class SchedulerConfig {
     }
 
     @Override
-    public int hashCode()
-    {
-        return Objects.hash(dataSource, frequency, queryDelay, filePath, tailFile, baseUrl, username, password, encryptedPassword,
-                this.indexes, types, query, retrieveWholeSource, scrollSize, getAggregationsOrAggs(), scriptFields);
+    public int hashCode() {
+        return Objects.hash(this.dataSource, frequency, queryDelay,
+                this.filePath, tailFile, baseUrl, username, password, encryptedPassword,
+                this.indexes, types, query, retrieveWholeSource, scrollSize,
+                getAggregationsOrAggs(), this.scriptFields);
     }
+
+    /**
+     * Enum of the acceptable data sources.
+     */
+    public enum DataSource implements Writeable {
+
+        FILE, ELASTICSEARCH;
+
+        /**
+         * Case-insensitive from string method.
+         * Works with ELASTICSEARCH, Elasticsearch, ElasticSearch, etc.
+         *
+         * @param value String representation
+         * @return The data source
+         */
+        @JsonCreator
+        public static DataSource readFromString(String value) {
+            String valueUpperCase = value.toUpperCase(Locale.ROOT);
+            return DataSource.valueOf(valueUpperCase);
+        }
+
+        public static DataSource readFromStream(StreamInput in) throws IOException {
+            int ordinal = in.readVInt();
+            if (ordinal < 0 || ordinal >= values().length) {
+                throw new IOException("Unknown Operator ordinal [" + ordinal + "]");
+            }
+            return values()[ordinal];
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            out.writeVInt(ordinal());
+        }
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    public static class Builder {
+
+        private static final int DEFAULT_SCROLL_SIZE = 1000;
+        private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
+
+        /**
+         * The default query for elasticsearch searches
+         */
+        private static final String MATCH_ALL_ES_QUERY = "match_all";
+
+        private final DataSource dataSource;
+        private Long queryDelay;
+        private Long frequency;
+        private String filePath;
+        private Boolean tailFile;
+        private String username;
+        private String password;
+        private String encryptedPassword;
+        private String baseUrl;
+        // NORELEASE: use Collections.emptyList() instead of null as initial value:
+        private List<String> indexes = null;
+        private List<String> types = null;
+        // NORELEASE: use Collections.emptyMap() instead of null as initial value:
+        private Map<String, Object> query = null;
+        private Map<String, Object> aggregations = null;
+        private Map<String, Object> aggs = null;
+        private Map<String, Object> scriptFields = null;
+        private Boolean retrieveWholeSource;
+        private Integer scrollSize;
+
+        // NORELEASE: figure out what the required fields are and made part of the only public constructor
+        @JsonCreator
+        public Builder(@JsonProperty("dataSource") DataSource dataSource) {
+            this.dataSource = Objects.requireNonNull(dataSource);
+            switch (dataSource) {
+                case FILE:
+                    setTailFile(false);
+                    break;
+                case ELASTICSEARCH:
+                    Map<String, Object> query = new HashMap<>();
+                    query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
+                    setQuery(query);
+                    setQueryDelay(DEFAULT_ELASTICSEARCH_QUERY_DELAY);
+                    setRetrieveWholeSource(false);
+                    setScrollSize(DEFAULT_SCROLL_SIZE);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("unsupported datasource " + dataSource);
+            }
+        }
+
+        public void setQueryDelay(long queryDelay) {
+            this.queryDelay = queryDelay;
+        }
+
+        public void setFrequency(long frequency) {
+            this.frequency = frequency;
+        }
+
+        public void setFilePath(String filePath) {
+            this.filePath = Objects.requireNonNull(filePath);
+        }
+
+        public void setTailFile(boolean tailFile) {
+            this.tailFile = tailFile;
+        }
+
+        public void setUsername(String username) {
+            this.username = Objects.requireNonNull(username);
+        }
+
+        public void setPassword(String password) {
+            this.password = Objects.requireNonNull(password);
+        }
+
+        public void setEncryptedPassword(String encryptedPassword) {
+            this.encryptedPassword = Objects.requireNonNull(encryptedPassword);
+        }
+
+        public void setBaseUrl(String baseUrl) {
+            this.baseUrl = Objects.requireNonNull(baseUrl);
+        }
+
+        public void setIndexes(List<String> indexes) {
+            // NORELEASE: make use of Collections.unmodifiableList(...)
+            this.indexes = Objects.requireNonNull(indexes);
+        }
+
+        public void setTypes(List<String> types) {
+            // NORELEASE: make use of Collections.unmodifiableList(...)
+            this.types = Objects.requireNonNull(types);
+        }
+
+        public void setQuery(Map<String, Object> query) {
+            // NORELEASE: make use of Collections.unmodifiableMap(...)
+            this.query = Objects.requireNonNull(query);
+        }
+
+        public void setAggregations(Map<String, Object> aggregations) {
+            // NORELEASE: make use of Collections.unmodifiableMap(...)
+            this.aggregations = Objects.requireNonNull(aggregations);
+        }
+
+        public void setAggs(Map<String, Object> aggs) {
+            // NORELEASE: make use of Collections.unmodifiableMap(...)
+            this.aggs = Objects.requireNonNull(aggs);
+        }
+
+        @JsonProperty("script_fields")
+        public void setScriptFields(Map<String, Object> scriptFields) {
+            // NORELEASE: make use of Collections.unmodifiableMap(...)
+            this.scriptFields = Objects.requireNonNull(scriptFields);
+        }
+
+        public void setRetrieveWholeSource(boolean retrieveWholeSource) {
+            this.retrieveWholeSource = retrieveWholeSource;
+        }
+
+        public void setScrollSize(int scrollSize) {
+            this.scrollSize = scrollSize;
+        }
+
+        public DataSource getDataSource() {
+            return dataSource;
+        }
+
+        public Long getQueryDelay() {
+            return queryDelay;
+        }
+
+        public Long getFrequency() {
+            return frequency;
+        }
+
+        public String getFilePath() {
+            return filePath;
+        }
+
+        public Boolean getTailFile() {
+            return tailFile;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public String getEncryptedPassword() {
+            return encryptedPassword;
+        }
+
+        public String getBaseUrl() {
+            return baseUrl;
+        }
+
+        public List<String> getIndexes() {
+            return indexes;
+        }
+
+        public List<String> getTypes() {
+            return types;
+        }
+
+        public Map<String, Object> getQuery() {
+            return query;
+        }
+
+        public Map<String, Object> getAggregations() {
+            return aggregations;
+        }
+
+        public Map<String, Object> getAggs() {
+            return aggs;
+        }
+
+        /**
+         * Convenience method to get either aggregations or aggs.
+         *
+         * @return The aggregations (whether initially specified in aggregations
+         * or aggs), or <code>null</code> if neither are set.
+         */
+        @JsonIgnore
+        public Map<String, Object> getAggregationsOrAggs() {
+            return (this.aggregations != null) ? this.aggregations : this.aggs;
+        }
+
+        public Map<String, Object> getScriptFields() {
+            return scriptFields;
+        }
+
+        public Boolean getRetrieveWholeSource() {
+            return retrieveWholeSource;
+        }
+
+        public Integer getScrollSize() {
+            return scrollSize;
+        }
+
+        public SchedulerConfig build() {
+            return new SchedulerConfig(
+                    dataSource, queryDelay, frequency, filePath, tailFile, username, password, encryptedPassword, baseUrl,
+                    indexes, types, query, aggregations, aggs, scriptFields, retrieveWholeSource, scrollSize
+            );
+        }
+
+    }
+
 }

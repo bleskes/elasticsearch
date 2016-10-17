@@ -99,7 +99,8 @@ public final class JobConfigurationVerifier {
     }
 
     private static void verifySchedulerConfig(JobConfiguration config) {
-        SchedulerConfig schedulerConfig = config.getSchedulerConfig();
+        // NORELEASE move all scheduler validation to SchedulerConfig.Builder
+        SchedulerConfig.Builder schedulerConfig = config.getSchedulerConfig();
         SchedulerConfigVerifier.verify(schedulerConfig);
 
         AnalysisConfig analysisConfig = config.getAnalysisConfig();
