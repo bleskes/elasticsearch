@@ -56,7 +56,6 @@ import org.elasticsearch.xpack.watcher.actions.ActionFactory;
 import org.elasticsearch.xpack.watcher.actions.ActionRegistry;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
 import org.elasticsearch.xpack.watcher.actions.ActionWrapper;
-import org.elasticsearch.xpack.watcher.actions.ExecutableActions;
 import org.elasticsearch.xpack.watcher.actions.email.EmailAction;
 import org.elasticsearch.xpack.watcher.actions.email.EmailActionFactory;
 import org.elasticsearch.xpack.watcher.actions.email.ExecutableEmailAction;
@@ -203,7 +202,7 @@ public class WatchTests extends ESTestCase {
 
         ExecutableTransform transform = randomTransform();
 
-        ExecutableActions actions = randomActions();
+        List<ActionWrapper> actions = randomActions();
         ActionRegistry actionRegistry = registry(actions, conditionRegistry, transformRegistry);
 
         Map<String, Object> metadata = singletonMap("_key", "_val");
@@ -249,7 +248,7 @@ public class WatchTests extends ESTestCase {
 
         TransformRegistry transformRegistry = transformRegistry();
 
-        ExecutableActions actions = randomActions();
+        List<ActionWrapper> actions = randomActions();
         ActionRegistry actionRegistry = registry(actions,conditionRegistry, transformRegistry);
 
 
@@ -276,8 +275,7 @@ public class WatchTests extends ESTestCase {
         ConditionRegistry conditionRegistry = conditionRegistry();
         InputRegistry inputRegistry = registry(new ExecutableNoneInput(logger).type());
         TransformRegistry transformRegistry = transformRegistry();
-        ExecutableActions actions =  new ExecutableActions(Collections.emptyList());
-        ActionRegistry actionRegistry = registry(actions, conditionRegistry, transformRegistry);
+        ActionRegistry actionRegistry = registry(Collections.emptyList(), conditionRegistry, transformRegistry);
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject();
@@ -294,7 +292,7 @@ public class WatchTests extends ESTestCase {
         assertThat(watch.condition(), instanceOf(ExecutableAlwaysCondition.class));
         assertThat(watch.transform(), nullValue());
         assertThat(watch.actions(), notNullValue());
-        assertThat(watch.actions().count(), is(0));
+        assertThat(watch.actions().size(), is(0));
     }
 
     public void testParseWatch_verifyScriptLangDefault() throws Exception {
@@ -306,8 +304,7 @@ public class WatchTests extends ESTestCase {
         ConditionRegistry conditionRegistry = conditionRegistry();
         InputRegistry inputRegistry = registry(SearchInput.TYPE);
         TransformRegistry transformRegistry = transformRegistry();
-        ExecutableActions actions =  new ExecutableActions(Collections.emptyList());
-        ActionRegistry actionRegistry = registry(actions, conditionRegistry, transformRegistry);
+        ActionRegistry actionRegistry = registry(Collections.emptyList(), conditionRegistry, transformRegistry);
         Watch.Parser watchParser = new Watch.Parser(settings, conditionRegistry, triggerService, transformRegistry, actionRegistry,
                 inputRegistry, null, SystemClock.INSTANCE);
 
@@ -520,7 +517,7 @@ public class WatchTests extends ESTestCase {
         return new TransformRegistry(Settings.EMPTY, unmodifiableMap(factories));
     }
 
-    private ExecutableActions randomActions() {
+    private List<ActionWrapper> randomActions() {
         List<ActionWrapper> list = new ArrayList<>();
         if (randomBoolean()) {
             EmailAction action = new EmailAction(EmailTemplate.builder().build(), null, null, Profile.STANDARD,
@@ -544,10 +541,10 @@ public class WatchTests extends ESTestCase {
             list.add(new ActionWrapper("_webhook_" + randomAsciiOfLength(8), randomThrottler(), randomCondition(), randomTransform(),
                     new ExecutableWebhookAction(action, logger, httpClient, templateEngine)));
         }
-        return new ExecutableActions(list);
+        return list;
     }
 
-    private ActionRegistry registry(ExecutableActions actions, ConditionRegistry conditionRegistry, TransformRegistry transformRegistry) {
+    private ActionRegistry registry(List<ActionWrapper> actions, ConditionRegistry conditionRegistry, TransformRegistry transformRegistry) {
         Map<String, ActionFactory> parsers = new HashMap<>();
         for (ActionWrapper action : actions) {
             switch (action.action().type()) {

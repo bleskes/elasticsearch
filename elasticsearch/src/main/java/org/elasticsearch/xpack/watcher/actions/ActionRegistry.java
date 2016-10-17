@@ -57,7 +57,7 @@ public class ActionRegistry {
         return parsers.get(type);
     }
 
-    public ExecutableActions parseActions(String watchId, XContentParser parser, boolean upgradeActionSource) throws IOException {
+    public List<ActionWrapper> parseActions(String watchId, XContentParser parser, boolean upgradeActionSource) throws IOException {
         if (parser.currentToken() != XContentParser.Token.START_OBJECT) {
             throw new ElasticsearchParseException("could not parse actions for watch [{}]. expected an object but found [{}] instead",
                     watchId, parser.currentToken());
@@ -78,7 +78,7 @@ public class ActionRegistry {
                         licenseState, upgradeActionSource));
             }
         }
-        return new ExecutableActions(actions);
+        return actions;
     }
 
 }

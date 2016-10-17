@@ -39,7 +39,6 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.xpack.common.text.TextTemplate;
-import org.elasticsearch.xpack.watcher.actions.ExecutableActions;
 import org.elasticsearch.xpack.watcher.condition.always.ExecutableAlwaysCondition;
 import org.elasticsearch.xpack.watcher.execution.TriggeredExecutionContext;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
@@ -274,7 +273,7 @@ public class SearchTransformTests extends ESIntegTestCase {
                         new ExecutableAlwaysCondition(logger),
                         null,
                         null,
-                        new ExecutableActions(new ArrayList<>()),
+                        new ArrayList<>(),
                         null,
                         new WatchStatus( new DateTime(40000, UTC), emptyMap())),
                 new DateTime(60000, UTC),

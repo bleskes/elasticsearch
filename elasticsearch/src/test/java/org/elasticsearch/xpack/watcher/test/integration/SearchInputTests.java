@@ -34,7 +34,6 @@ import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
-import org.elasticsearch.xpack.watcher.actions.ExecutableActions;
 import org.elasticsearch.xpack.watcher.condition.always.ExecutableAlwaysCondition;
 import org.elasticsearch.xpack.watcher.execution.TriggeredExecutionContext;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
@@ -99,7 +98,7 @@ public class SearchInputTests extends ESIntegTestCase {
                         new ExecutableAlwaysCondition(logger),
                         null,
                         null,
-                        new ExecutableActions(new ArrayList<>()),
+                        new ArrayList<>(),
                         null,
                         new WatchStatus(new DateTime(0, UTC), emptyMap())),
                 new DateTime(0, UTC),
@@ -131,7 +130,7 @@ public class SearchInputTests extends ESIntegTestCase {
                         new ExecutableAlwaysCondition(logger),
                         null,
                         null,
-                        new ExecutableActions(new ArrayList<>()),
+                        new ArrayList<>(),
                         null,
                         new WatchStatus(new DateTime(0, UTC), emptyMap())),
                 new DateTime(0, UTC),
