@@ -85,7 +85,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
      * Named to match Elasticsearch, hence lowercase_with_underscores instead
      * of camelCase
      */
-    public static final ParseField SCRIPT_FIELDS = new ParseField("scriptFields");
+    public static final ParseField SCRIPT_FIELDS = new ParseField("script_fields");
 
     public static final ConstructingObjectParser<SchedulerConfig.Builder, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
             "schedule_config", a -> new SchedulerConfig.Builder((DataSource) a[0]));

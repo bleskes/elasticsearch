@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job;
 
 
+import com.carrotsearch.randomizedtesting.generators.RandomPicks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.logging.log4j.Logger;
@@ -9,12 +10,15 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.ingest.RandomDocumentPicks;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +35,49 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
                 builder.setTailFile(randomBoolean());
                 break;
             case ELASTICSEARCH:
+                builder.setBaseUrl(randomAsciiOfLength(10));
+                if (randomBoolean()) {
+                    builder.setQuery(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+                }
+                if (randomBoolean()) {
+                    builder.setRetrieveWholeSource(randomBoolean());
+                }
+                if (randomBoolean()) {
+                    builder.setScrollSize(randomInt());
+                }
+                if (randomBoolean()) {
+                    builder.setUsername(randomAsciiOfLength(10));
+                }
+                if (randomBoolean()) {
+                    builder.setPassword(randomAsciiOfLength(10));
+                }
+                if (randomBoolean()) {
+                    builder.setEncryptedPassword(randomAsciiOfLength(10));
+                }
+                if (randomBoolean()) {
+                    builder.setIndexes(Arrays.asList(generateRandomStringArray(0, 10, false)));
+                }
+                if (randomBoolean()) {
+                    builder.setTypes(Arrays.asList(generateRandomStringArray(0, 10, false)));
+                }
+                if (randomBoolean()) {
+                    builder.setAggregations(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+                }
+                if (randomBoolean()) {
+                    builder.setAggs(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+                }
+                if (randomBoolean()) {
+                    builder.setScriptFields(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+                }
                 break;
             default:
                 throw new UnsupportedOperationException();
+        }
+        if (randomBoolean()) {
+            builder.setFrequency(randomLong());
+        }
+        if (randomBoolean()) {
+            builder.setQueryDelay(randomLong());
         }
         return builder.build();
     }
