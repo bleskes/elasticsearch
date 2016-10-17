@@ -41,27 +41,6 @@ public interface JobDetailsProvider
     boolean jobIdIsUnique(String jobId);
 
     /**
-     * Get the details of the specific job or an empty
-     * Optional if there is no job with the given id.
-     *
-     * @param jobId
-     * @return The JobDetails
-     */
-    Optional<JobDetails> getJobDetails(String jobId);
-
-    /**
-     * Get details of all Jobs.
-     *
-     * @param skip Skip the first N Jobs. This parameter is for paging
-     * results if not required set to 0.
-     * @param take Take only this number of Jobs
-     * @return A QueryPage object with hitCount set to the total number
-     * of jobs not the only the number returned here as determined by the
-     * <code>take</code> parameter.
-     */
-    QueryPage<JobDetails> getJobs(int skip, int take);
-
-    /**
      * Returns a {@link BatchedDocumentsIterator} that allows querying
      * and iterating over all jobs
      *
@@ -81,17 +60,6 @@ public interface JobDetailsProvider
     boolean createJob(JobDetails job) throws JobIdAlreadyExistsException;
 
     /**
-     * Update the job document with the values in the <code>updates</code> map.
-     * e.g. Map<String, Object> update = new HashMap<>();<br>
-     *      update.put(JobDetails.STATUS, JobStatus.CLOSED);
-     *
-     * @param jobId
-     * @return Whether the operation was a success
-     * @throws UnknownJobException if there is no job with the id.
-     */
-    boolean updateJob(String jobId, Map<String, Object> updates) throws UnknownJobException;
-
-    /**
      * Delete all the job related documents from the database.
      *
      * @param jobId
@@ -100,78 +68,6 @@ public interface JobDetailsProvider
      * @throws DataStoreException If there is a datastore error
      */
     boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException;
-
-    /**
-     * Set the job status
-     *
-     * @param jobId
-     * @param status
-     * @return
-     * @throws UnknownJobException If there is no job with id <code>jobId</code>
-     */
-    boolean setJobStatus(String jobId, JobStatus status) throws UnknownJobException;
-
-    /**
-     * Set the job's finish time and status
-     * @param jobId
-     * @param time
-     * @param status
-     * @return
-     * @throws UnknownJobException
-     */
-    boolean setJobFinishedTimeAndStatus(String jobId, Date time, JobStatus status)
-            throws UnknownJobException;
-
-    /**
-     * Updates the categorization filters of job with id {@code jobId} to
-     * {@code categorizationFilters}.
-     *
-     * @param jobId the job id
-     * @param categorizationFilters the new categorization filters
-     * @return {@code true} if update was successful
-     * @throws UnknownJobException If there is no job with id <code>jobId</code>
-     * @throws JobException If there was a problem updating the filter
-     */
-    boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
-            throws JobException;
-
-    /**
-     * Sets the description of detector at {@code detectorIndex} of job
-     * with id {@code jobId} to {@code newDescription}
-     *
-     * @param detectorIndex the zero-based index of the detector in detectors list
-     * @param newDescription the new description
-     * @return {@code true} if update was successful
-     * @throws UnknownJobException If there is no job with id <code>jobId</code>
-     * @throws JobException If there was a problem updating the detector
-     */
-    boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
-            throws JobException;
-
-    /**
-     * Sets the detector rules of detector at {@code detectorIndex} of job
-     * with id {@code jobId} to {@code newDetectorRules}
-     *
-     * @param detectorIndex the zero-based index of the detector in detectors list
-     * @param newDetectorRules the new detector rules
-     * @return {@code true} if update was successful
-     * @throws UnknownJobException If there is no job with id <code>jobId</code>
-     * @throws JobException If there was a problem updating the detector
-     */
-    boolean updateDetectorRules(String jobId, int detectorIndex, List<DetectionRule> newDetectorRules)
-            throws JobException;
-
-    /**
-     * Updates the scheduler config of job with id {@code jobId} to the given {@code newSchedulerConfig}
-     *
-     * @param jobId The job id to be updated
-     * @param newSchedulerConfig the new scheduler config
-     * @return {@code true} if update was successful
-     * @throws UnknownJobException If there is no job with id <code>jobId</code>
-     * @throws JobException If there was a problem updating the scheduler state
-     */
-    boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
-            throws JobException;
 
     /**
      * Updates the scheduler state for the given job

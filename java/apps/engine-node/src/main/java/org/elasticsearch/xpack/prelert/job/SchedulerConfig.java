@@ -69,7 +69,6 @@ public class SchedulerConfig {
      * Serialisation names
      */
     public static final String DATA_SOURCE = "dataSource";
-    public static final String DATA_SOURCE_COMPATIBILITY = "dataSourceCompatibility";
     public static final String QUERY_DELAY = "queryDelay";
     public static final String FREQUENCY = "frequency";
     public static final String FILE_PATH = "filePath";
@@ -96,7 +95,6 @@ public class SchedulerConfig {
     private static final long DEFAULT_ELASTICSEARCH_QUERY_DELAY = 60L;
 
     private DataSource dataSource;
-    private String dataSourceCompatibility;
 
     /**
      * The delay in seconds before starting to query a period of time
@@ -519,7 +517,6 @@ public class SchedulerConfig {
         SchedulerConfig that = (SchedulerConfig)other;
 
         return Objects.equals(this.dataSource, that.dataSource) &&
-                Objects.equals(this.dataSourceCompatibility, that.dataSourceCompatibility) &&
                 Objects.equals(this.frequency, that.frequency) &&
                 Objects.equals(this.queryDelay, that.queryDelay) &&
                 Objects.equals(this.filePath, that.filePath) &&
@@ -540,9 +537,7 @@ public class SchedulerConfig {
     @Override
     public int hashCode()
     {
-        return Objects.hash(this.dataSource, dataSourceCompatibility, frequency, queryDelay,
-                this.filePath, tailFile, baseUrl, username, password, encryptedPassword,
-                this.indexes, types, query, retrieveWholeSource, scrollSize,
-                getAggregationsOrAggs(), this.scriptFields);
+        return Objects.hash(dataSource, frequency, queryDelay, filePath, tailFile, baseUrl, username, password, encryptedPassword,
+                this.indexes, types, query, retrieveWholeSource, scrollSize, getAggregationsOrAggs(), scriptFields);
     }
 }

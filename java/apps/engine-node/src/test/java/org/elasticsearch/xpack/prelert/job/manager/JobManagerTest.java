@@ -17,6 +17,7 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
@@ -24,15 +25,15 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
@@ -134,12 +135,11 @@ public class JobManagerTest extends ESTestCase {
             DataStoreException, InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
 
-        when(jobProvider.getJobDetails("foo")).thenReturn(Optional.of(new JobDetails()));
-
         doAnswerSleep(200).when(jobProvider).deleteJob("foo");
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         DeleteJobAction.Request request = new DeleteJobAction.Request("foo");
+        request.setJobId("foo");
         ActionListener<DeleteJobAction.Response> actionListener = new ActionListener<DeleteJobAction.Response>() {
             @Override
             public void onResponse(DeleteJobAction.Response response) {
@@ -190,100 +190,11 @@ public class JobManagerTest extends ESTestCase {
         assertThat(clusterStateAfter, is(equalTo(clusterStateBefore)));
     }
 
-    @SuppressWarnings("unchecked")
-    public void testSetModelDebugConfig_GivenConfig() throws UnknownJobException
-    {
-        ModelDebugConfig config = new ModelDebugConfig(85.0, "bar");
-        JobManager jobManager = createJobManager();
-
-        jobManager.setModelDebugConfig("foo", config);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        Map<String, Object> configUpdate = (Map<String, Object>) jobUpdate.get("modelDebugConfig");
-        assertEquals(85.0, configUpdate.get("boundsPercentile"));
-        assertEquals("bar", configUpdate.get("terms"));
-    }
-
-
-    public void testSetModelDebugConfig_GivenNull() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-
-        jobManager.setModelDebugConfig("foo", null);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        assertNull(jobUpdate.get("modelDebugConfig"));
-    }
-
-
-    public void testSetDesciption() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-
-        jobManager.setDescription("foo", "foo job");
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        assertEquals("foo job", jobUpdate.get(JobDetails.DESCRIPTION));
-    }
-
-
-    public void testSetBackgroundPersistInterval() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-
-        jobManager.setBackgroundPersistInterval("foo", 36000L);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        assertEquals(36000L, jobUpdate.get(JobDetails.BACKGROUND_PERSIST_INTERVAL));
-    }
-
-
-    public void testSetRenormalizationWindowDays() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-
-        jobManager.setRenormalizationWindowDays("foo", 7L);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        assertEquals(new Long(7), jobUpdate.get(JobDetails.RENORMALIZATION_WINDOW_DAYS));
-    }
-
-
-    public void testSetModelSnapshotRetentionDays() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-
-        jobManager.setModelSnapshotRetentionDays("foo", 20L);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        assertEquals(new Long(20), jobUpdate.get(JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS));
-    }
-
-
-    public void testSetResultsRetentionDays() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-
-        jobManager.setResultsRetentionDays("foo", 90L);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        assertEquals(new Long(90), jobUpdate.get(JobDetails.RESULTS_RETENTION_DAYS));
-    }
-
-
     public void testGetJobOrThrowIfUnknown_GivenUnknownJob()
     {
         JobManager jobManager = createJobManager();
-        when(jobProvider.getJobDetails("foo")).thenReturn(Optional.empty());
-
-        ESTestCase.expectThrows(UnknownJobException.class, () -> jobManager.getJobOrThrowIfUnknown("foo"));
+        ClusterState cs = ClusterState.builder(new ClusterName("_name")).build();
+        ESTestCase.expectThrows(ResourceNotFoundException.class, () -> jobManager.getJobOrThrowIfUnknown(cs, "foo"));
     }
 
 
@@ -291,43 +202,12 @@ public class JobManagerTest extends ESTestCase {
     {
         JobManager jobManager = createJobManager();
         JobDetails job = new JobDetails();
-        when(jobProvider.getJobDetails("foo")).thenReturn(Optional.of(job));
+        job.setId("foo");
+        PrelertMetadata prelertMetadata = new PrelertMetadata.Builder().putJob(new Job(job), false).build();
+        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata)).build();
 
-        assertEquals(job, jobManager.getJobOrThrowIfUnknown("foo"));
-    }
-
-
-    public void testUpdateCustomSettings() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-        Map<String, Object> customSettings = new HashMap<>();
-        customSettings.put("answer", 42);
-
-        jobManager.updateCustomSettings("foo", customSettings);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        Map<String, Object> jobUpdate = jobUpdateCaptor.getValue();
-        assertEquals(customSettings, jobUpdate.get(JobDetails.CUSTOM_SETTINGS));
-    }
-
-
-    public void testSetAnalysisLimits() throws UnknownJobException
-    {
-        JobManager jobManager = createJobManager();
-
-        AnalysisLimits newLimits = new AnalysisLimits();
-        newLimits.setModelMemoryLimit(1L);
-        newLimits.setCategorizationExamplesLimit(2L);
-
-        jobManager.setAnalysisLimits("foo", newLimits);
-
-        verify(jobProvider).updateJob(eq("foo"), jobUpdateCaptor.capture());
-        @SuppressWarnings("unchecked")
-        Map<String, Object> capturedLimits = (Map<String, Object>) jobUpdateCaptor.getValue()
-                .get(JobDetails.ANALYSIS_LIMITS);
-        assertNotNull(capturedLimits);
-        assertEquals(1L, capturedLimits.get(AnalysisLimits.MODEL_MEMORY_LIMIT));
-        assertEquals(2L, capturedLimits.get(AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT));
+        assertEquals(job, jobManager.getJobOrThrowIfUnknown(cs, "foo"));
     }
 
     public void testGetJobs() {

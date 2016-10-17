@@ -5,12 +5,11 @@ import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 public class OperatorVerifierTest extends ESTestCase {
 
-    public void testVerify() throws JobConfigurationException {
+    public void testVerify() {
         assertTrue(OperatorVerifier.verify(Operator.EQ.name()));
         assertTrue(OperatorVerifier.verify("match"));
         assertTrue(OperatorVerifier.verify("matCh"));

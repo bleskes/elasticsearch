@@ -26,7 +26,7 @@ public final class DetectorVerifier {
      * <li>If byFieldName is set function or fieldName must bet set</li>
      * <li>If overFieldName is set function or fieldName must bet set</li>
      * <li>function is one of the strings in the set
-     * {@link #ANALYSIS_FUNCTIONS}</li>
+     * {@link Detector#ANALYSIS_FUNCTIONS}</li>
      * <li>Function cannot be 'metric' (explicitly or implicitly) in jobs that
      * take pre-summarised input</li>
      * <li>If function is not set but the fieldname happens to be the same as
@@ -45,7 +45,6 @@ public final class DetectorVerifier {
      * @param isSummarised
      *            Is this detector in a pre-summarised job?
      * @return true
-     * @throws JobConfigurationException
      */
     public static boolean verify(Detector detector, boolean isSummarised) throws ElasticsearchParseException {
         boolean emptyField = detector.getFieldName() == null || detector.getFieldName().isEmpty();
@@ -134,7 +133,6 @@ public final class DetectorVerifier {
      * @param excludeFrequent
      *            The setting as a string.
      * @return true
-     * @throws JobConfigurationException
      */
     static boolean verifyExcludeFrequent(String excludeFrequent) throws ElasticsearchParseException {
         // Not set is fine
@@ -167,7 +165,6 @@ public final class DetectorVerifier {
      * @param field
      *            The field name to be validated
      * @return true
-     * @throws JobConfigurationException
      */
     public static boolean verifyFieldName(String field) throws ElasticsearchParseException {
         if (field != null && containsInvalidChar(field)) {

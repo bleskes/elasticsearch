@@ -1,11 +1,39 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.core.JsonParseException;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.NoNodeAvailableException;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.node.Node;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.SchedulerState;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
+import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.junit.Before;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,45 +44,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.NoNodeAvailableException;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.IndexNotFoundException;
-import org.elasticsearch.index.engine.VersionConflictEngineException;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHitField;
-import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
-import org.junit.Before;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.JobStatus;
-import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
-import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.SchedulerState;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
-import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
-import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
-import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ElasticsearchJobProviderTest extends ESTestCase {
     private static final String CLUSTER_NAME = "myCluster";
@@ -339,117 +333,6 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertFalse(provider.jobIdIsUnique(jobId));
     }
 
-    public void testGetJobDetails() throws InterruptedException, ExecutionException {
-        String jobId = "myJob";
-        Map<String, Object> source = new HashMap<>();
-        source.put("jobId", jobId);
-        source.put("description", "This is a job description");
-        GetResponse response = createGetResponse(true, source);
-
-        GetResponse response2 = createGetResponse(false, null);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, response)
-                .prepareGet("prelertresults-" + jobId, ModelSizeStats.TYPE, "modelSizeStats", response2)
-                .prepareGet("prelertresults-" + jobId, BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2);
-
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        Optional<JobDetails> details = provider.getJobDetails(jobId);
-        assertTrue(details.isPresent());
-        JobConfiguration config = new JobConfiguration();
-        config.setDescription("This is a job description");
-        JobDetails expected = new JobDetails(jobId, config);
-        assertEquals(details.get().allFields(), expected.allFields());
-    }
-
-
-    public void testGetJobDetails_NonExistent() throws InterruptedException, ExecutionException {
-        String jobId = "myJob";
-        Map<String, Object> source = new HashMap<>();
-        source.put("jobId", jobId);
-        source.put("description", "This is a job description");
-        GetResponse response = createGetResponse(false, null);
-
-        GetResponse response2 = createGetResponse(false, null);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, response)
-                .prepareGet("prelertresults-" + jobId, ModelSizeStats.TYPE, "modelSizeStats", response2)
-                .prepareGet("prelertresults-" + jobId, BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2);
-
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        Optional<JobDetails> details = provider.getJobDetails(jobId);
-        assertFalse(details.isPresent());
-    }
-
-    public void testGetJobDetails_IndexNotFound() throws InterruptedException, ExecutionException {
-        String jobId = "myJob";
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, new IndexNotFoundException("not today"));
-
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        Optional<JobDetails> details = provider.getJobDetails(jobId);
-        assertFalse(details.isPresent());
-    }
-
-    public void testGetJobs() throws InterruptedException, ExecutionException {
-        List<Map<String, Object>> source = new ArrayList<>();
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("jobId", "job1");
-        map.put("description", "This is a job description");
-        source.add(map);
-
-        Map<String, Object> map2 = new HashMap<>();
-        map2.put("jobId", "job2");
-        map2.put("description", "This is a job description 2");
-        source.add(map2);
-
-        Map<String, Object> map3 = new HashMap<>();
-        map3.put("jobId", "job3");
-        map3.put("description", "This is a job description 3");
-        source.add(map3);
-
-        Map<String, Object> map4 = new HashMap<>();
-        map4.put("jobId", "job4");
-        map4.put("description", "This is a job description 4");
-        source.add(map4);
-
-        SearchResponse response = createSearchResponse(true, source);
-        GetResponse response2 = createGetResponse(false, null);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-*", JobDetails.TYPE, 0, 10, response)
-                .prepareGet("prelertresults-job1", ModelSizeStats.TYPE, "modelSizeStats", response2)
-                .prepareGet("prelertresults-job1", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2)
-                .prepareGet("prelertresults-job2", ModelSizeStats.TYPE, "modelSizeStats", response2)
-                .prepareGet("prelertresults-job2", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2)
-                .prepareGet("prelertresults-job3", ModelSizeStats.TYPE, "modelSizeStats", response2)
-                .prepareGet("prelertresults-job3", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2)
-                .prepareGet("prelertresults-job4", ModelSizeStats.TYPE, "modelSizeStats", response2)
-                .prepareGet("prelertresults-job4", BucketProcessingTime.TYPE, BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, response2);
-
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        int skip = 0;
-        int take = 10;
-        QueryPage<JobDetails> page = provider.getJobs(skip, take);
-        assertEquals(source.size(), page.hitCount());
-        List<JobDetails> jobs = page.hits();
-        for (int i = 0; i < source.size(); i++) {
-            assertEquals(source.get(i).get("jobId"), jobs.get(i).getId());
-            assertEquals(source.get(i).get("description"), jobs.get(i).getDescription());
-        }
-    }
-
     public void testCreateJob() throws InterruptedException, ExecutionException {
         JobDetails job = new JobDetails();
         job.setJobId("marscapone");
@@ -512,85 +395,6 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         assertFalse(provider.createJob(job));
-    }
-
-    public void testUpdateJob() throws InterruptedException, ExecutionException, UnknownJobException {
-        String job = "testjob";
-        Map<String, Object> map = new HashMap<>();
-        map.put("testKey", "testValue");
-
-        GetResponse getResponse = createGetResponse(true, null);
-
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
-                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job, mapCaptor);
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        assertTrue(provider.updateJob(job, map));
-        Map<String, Object> response = mapCaptor.getValue();
-        assertTrue(response.equals(map));
-    }
-
-    public void testUpdateJob_ConflictedVersion() throws InterruptedException, ExecutionException, UnknownJobException {
-        String job = "testjob";
-        Map<String, Object> map = new HashMap<>();
-        map.put("testKey", "testValue");
-
-        GetResponse getResponse = createGetResponse(true, null);
-        StreamInput si = mock(StreamInput.class);
-
-        MockClientBuilder clientBuilder;
-        try {
-            clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                    .addClusterStatusYellowResponse()
-                    .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                    .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
-                    .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job, mapCaptor, new VersionConflictEngineException(si));
-
-            Client client = clientBuilder.build();
-            ElasticsearchJobProvider provider = createProvider(client);
-            assertFalse(provider.updateJob(job, map));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void testSetJobStatus() throws InterruptedException, ExecutionException, UnknownJobException {
-        String job = "testjob";
-
-        GetResponse getResponse = createGetResponse(true, null);
-
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
-                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job, mapCaptor);
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        assertTrue(provider.setJobStatus(job, JobStatus.PAUSING));
-        Map<String, Object> response = mapCaptor.getValue();
-        assertTrue(response.get(JobDetails.STATUS).equals(JobStatus.PAUSING));
-    }
-
-    public void testSetJobFinishedTimeAndStatus() throws InterruptedException, ExecutionException, UnknownJobException {
-        String job = "testjob";
-
-        GetResponse getResponse = createGetResponse(true, null);
-
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + job, JobDetails.TYPE, job, getResponse)
-                .prepareUpdate("prelertresults-" + job, JobDetails.TYPE, job, mapCaptor);
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        Date now = new Date();
-        assertTrue(provider.setJobFinishedTimeAndStatus(job, now, JobStatus.CLOSING));
-        Map<String, Object> response = mapCaptor.getValue();
-        assertTrue(response.get(JobDetails.STATUS).equals(JobStatus.CLOSING));
-        assertTrue(response.get(JobDetails.FINISHED_TIME).equals(now));
     }
 
     public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, DataStoreException, IOException {

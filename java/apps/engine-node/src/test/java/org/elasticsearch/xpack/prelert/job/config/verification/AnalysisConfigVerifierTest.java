@@ -2,11 +2,11 @@
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.util.ArrayList;
@@ -23,8 +23,7 @@ import java.util.List;
  */
 public class AnalysisConfigVerifierTest extends ESTestCase {
 
-    public void testVerify_throws()
-            throws JobConfigurationException {
+    public void testVerify_throws() {
         AnalysisConfig ac = new AnalysisConfig();
 
         // no detector config
@@ -76,8 +75,8 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         ac = new AnalysisConfig();
@@ -85,8 +84,8 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         ac = new AnalysisConfig();
@@ -94,8 +93,8 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         ac = new AnalysisConfig();
@@ -103,8 +102,8 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         }
     }
 
@@ -113,10 +112,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(-1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+        ElasticsearchStatusException e = ESTestCase.expectThrows(
+                ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "bucketSpan", 0, -1), e.getMessage());
     }
 
@@ -124,10 +123,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBatchSpan(-1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "batchSpan", 0, -1), e.getMessage());
     }
 
@@ -136,10 +135,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setLatency(-1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "latency", 0, -1), e.getMessage());
     }
 
@@ -148,10 +147,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setPeriod(-1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "period", 0, -1), e.getMessage());
     }
 
@@ -159,23 +158,22 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
     public void testVerify_GivenDefaultConfig_ShouldBeInvalidDueToNoDetectors() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(analysisConfig));
 
-        assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION, e.getErrorCode());
+        assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS), e.getMessage());
     }
 
 
-    public void testVerify_GivenValidConfig() throws JobConfigurationException {
+    public void testVerify_GivenValidConfig() {
         AnalysisConfig analysisConfig = createValidConfig();
 
         assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
     }
 
 
-    public void testVerify_GivenValidConfigWithCategorizationFieldNameAndCategorizationFilters()
-            throws JobConfigurationException {
+    public void testVerify_GivenValidConfigWithCategorizationFieldNameAndCategorizationFilters() {
         AnalysisConfig analysisConfig = createValidConfig();
         analysisConfig.setCategorizationFieldName("myCategory");
         analysisConfig.setCategorizationFilters(Arrays.asList("foo", "bar"));
@@ -184,7 +182,7 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_OverlappingBuckets() throws JobConfigurationException {
+    public void testVerify_OverlappingBuckets() {
         AnalysisConfig analysisConfig;
         List<Detector> detectors;
         Detector detector;
@@ -281,8 +279,8 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(analysisConfig);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_FUNCTION, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_FUNCTION.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         // Test overlappingBuckets set
@@ -304,8 +302,7 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
     }
 
 
-    public void testMultipleBucketsConfig()
-            throws JobConfigurationException {
+    public void testMultipleBucketsConfig() {
         AnalysisConfig ac = new AnalysisConfig();
         ac.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
         List<Detector> detectors = new ArrayList<>();
@@ -316,16 +313,16 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false);
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         ac.setBucketSpan(4L);
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false);
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
             assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 10, 4), e.getMessage());
         }
 
@@ -348,8 +345,8 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false);
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
             assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 222, 222), e.getMessage());
         }
 
@@ -357,8 +354,8 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         try {
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false);
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
             assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, -444, 222), e.getMessage());
         }
     }
@@ -369,10 +366,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         AnalysisConfig config = createValidConfig();
         config.setCategorizationFilters(Arrays.asList("foo"));
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(config));
 
-        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME, e.getErrorCode());
+        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME), e.getMessage());
     }
 
@@ -383,10 +380,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", "bar", "foo"));
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(config));
 
-        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES, e.getErrorCode());
+        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES), e.getMessage());
     }
 
@@ -397,10 +394,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", ""));
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(config));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY), e.getMessage());
     }
 
@@ -410,16 +407,15 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         AnalysisConfig config = createValidConfig();
         config.setUsePerPartitionNormalization(true);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(config));
 
-        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD, e.getErrorCode());
+        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD), e.getMessage());
     }
 
 
-    public void testCheckDetectorsHavePartitionFields_doesntThrowWhenValid()
-            throws JobConfigurationException {
+    public void testCheckDetectorsHavePartitionFields_doesntThrowWhenValid() {
         AnalysisConfig config = createValidConfig();
         config.getDetectors().get(0).setPartitionFieldName("pField");
         config.setUsePerPartitionNormalization(true);
@@ -435,10 +431,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         config.setInfluencers(Arrays.asList("inf1", "inf2"));
         config.setUsePerPartitionNormalization(true);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(config));
 
-        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS, e.getErrorCode());
+        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS), e.getMessage());
     }
 
@@ -449,10 +445,10 @@ public class AnalysisConfigVerifierTest extends ESTestCase {
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", "("));
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisConfigVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisConfigVerifier.verify(config));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, "("), e.getMessage());
     }
 

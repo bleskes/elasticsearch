@@ -16,7 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -44,7 +43,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
-import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -58,19 +56,14 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.JsonViews;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
@@ -92,7 +85,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -379,68 +371,6 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     }
 
     @Override
-    public Optional<JobDetails> getJobDetails(String jobId)
-    {
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
-        try
-        {
-            LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
-                    " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse response = client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE,
-                    elasticJobId.getId()).get();
-            if (!response.isExists())
-            {
-                String msg = "No details for job with id " + elasticJobId.getId();
-                LOGGER.warn(msg);
-                return Optional.empty();
-            }
-            ElasticsearchJobDetailsMapper jobMapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
-            JobDetails details = jobMapper.map(response.getSource());
-            return Optional.of(details);
-        }
-        catch (IndexNotFoundException e)
-        {
-            // the job does not exist
-            String msg = "Missing Index no job with id " + elasticJobId.getId();
-            LOGGER.warn(msg);
-            return Optional.empty();
-        }
-    }
-
-    @Override
-    public QueryPage<JobDetails> getJobs(int skip, int take)
-    {
-        FieldSortBuilder sb = new FieldSortBuilder(ElasticsearchPersister.JOB_ID_NAME)
-                .unmappedType("string")
-                .order(SortOrder.ASC);
-
-        LOGGER.trace("ES API CALL: search all of type " + JobDetails.TYPE +
-                " from index pattern prelertresults-* sort ascending "
-                + ElasticsearchPersister.JOB_ID_NAME + " skip " + skip + " take " + take);
-        SearchResponse response = client.prepareSearch(ElasticsearchJobId.INDEX_PREFIX + "*")
-                .setTypes(JobDetails.TYPE)
-                .setFrom(skip).setSize(take)
-                .addSort(sb)
-                .get();
-
-        ElasticsearchJobDetailsMapper jobMapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
-        List<JobDetails> jobs = new ArrayList<>();
-        for (SearchHit hit : response.getHits().getHits())
-        {
-            try
-            {
-                jobs.add(jobMapper.map(hit.getSource()));
-            }
-            catch (CannotMapJobFromJson e)
-            {
-                continue;
-            }
-        }
-
-        return new QueryPage<>(jobs, response.getHits().getTotalHits());
-    }
-
-    @Override
     public BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator()
     {
         return new ElasticsearchBatchedJobsIterator(client, ElasticsearchJobId.INDEX_PREFIX + "*",
@@ -523,49 +453,6 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         }
 
         return false;
-    }
-
-    @Override
-    public boolean updateJob(String jobId, Map<String, Object> updates) throws UnknownJobException
-    {
-        checkJobExists(jobId);
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
-
-        LOGGER.trace("ES API CALL: update ID " + elasticJobId.getId() + " type " + JobDetails.TYPE +
-                " in index " + elasticJobId.getIndex() + " using map of new values");
-        try
-        {
-            client.prepareUpdate(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-            .setDoc(updates)
-            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT)
-            .get();
-        }
-        catch (VersionConflictEngineException e)
-        {
-            LOGGER.warn("Unable to update conflicted job document " + elasticJobId.getId() +
-                    ". Updates = " + updates);
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public boolean setJobStatus(String jobId, JobStatus status) throws UnknownJobException
-    {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.STATUS, status);
-        return updateJob(jobId, update);
-    }
-
-    @Override
-    public boolean setJobFinishedTimeAndStatus(String jobId, Date time, JobStatus status)
-            throws UnknownJobException
-    {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.FINISHED_TIME, time);
-        update.put(JobDetails.STATUS, status);
-        return updateJob(jobId, update);
     }
 
     @Override
@@ -1370,69 +1257,6 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         // Refresh should wait for Lucene to make the data searchable
         LOGGER.trace("ES API CALL: refresh index " + indexName);
         client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
-    }
-
-    @Override
-    public boolean updateCategorizationFilters(String jobId, List<String> categorizationFilters)
-            throws JobException, UnknownJobException {
-        LOGGER.trace("ES API CALL: update categorization filters for job " + jobId
-                +  " by running Groovy script update-categorization-filters with params newFilters="
-                + categorizationFilters);
-
-        return ElasticsearchScripts.updateViaScript(client,
-                new ElasticsearchJobId(jobId).getIndex(),
-                JobDetails.TYPE, jobId,
-                ElasticsearchScripts.newUpdateCategorizationFilters(categorizationFilters));
-    }
-
-    @Override
-    public boolean updateDetectorDescription(String jobId, int detectorIndex, String newDescription)
-            throws JobException {
-        LOGGER.trace("ES API CALL: update detector description for job " + jobId + ", detector at index "
-                + detectorIndex + " by running Groovy script update-detector-description with params newDescription="
-                + newDescription);
-
-        return ElasticsearchScripts.updateViaScript(client,
-                new ElasticsearchJobId(jobId).getIndex(),
-                JobDetails.TYPE, jobId,
-                ElasticsearchScripts.newUpdateDetectorDescription(
-                        detectorIndex, newDescription));
-    }
-
-    @Override
-    public boolean updateDetectorRules(String jobId, int detectorIndex, List<DetectionRule> newDetectorRules)
-            throws JobException, UnknownJobException {
-        List<Map<String, Object>> asListOfMaps = new ArrayList<>();
-        for (DetectionRule rule : newDetectorRules)
-        {
-            asListOfMaps.add(objectMapper.convertValue(rule, new TypeReference<Map<String, Object>>() {}));
-        }
-
-        LOGGER.trace("ES API CALL: update detector rules for job " + jobId + ", detector at index "
-                + detectorIndex + " by running Groovy script update-detector-rules with params newDetectorRules="
-                + asListOfMaps);
-
-        return ElasticsearchScripts.updateViaScript(client,
-                new ElasticsearchJobId(jobId).getIndex(),
-                JobDetails.TYPE, jobId,
-                ElasticsearchScripts.newUpdateDetectorRules(detectorIndex, asListOfMaps));
-
-    }
-
-    @Override
-    public boolean updateSchedulerConfig(String jobId, SchedulerConfig newSchedulerConfig)
-            throws JobException, UnknownJobException {
-        Map<String, Object> asMap = objectMapper.convertValue(newSchedulerConfig,
-                new TypeReference<Map<String, Object>>() {});
-
-        LOGGER.trace("ES API CALL: update schedulerConfig for job " + jobId
-                + " by running Groovy script update-scheduler-config with params newSchedulerConfig="
-                + asMap);
-
-        return ElasticsearchScripts.updateViaScript(client,
-                new ElasticsearchJobId(jobId).getIndex(),
-                JobDetails.TYPE, jobId,
-                ElasticsearchScripts.newUpdateSchedulerConfig(asMap));
     }
 
     @Override

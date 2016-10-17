@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.messages;
 
 import java.text.MessageFormat;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -268,6 +269,6 @@ public final class Messages
      */
     public static String getMessage(String key, Object...args)
     {
-        return MessageFormat.format(load().getString(key), args);
+        return new MessageFormat(load().getString(key), Locale.ROOT).format(args);
     }
 }

@@ -29,21 +29,12 @@ public final class ElasticsearchScripts
     private static final String UPDATE_AVERAGE_PROCESSING_TIME = "ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + params.timeMs * 0.1";
     private static final String UPDATE_BUCKET_COUNT = "ctx._source.counts.bucketCount += params.count";
     private static final String UPDATE_USAGE = "ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount += params.recordCount;";
-    private static final String UPDATE_CATEGORIZATION_FILTERS = "ctx._source.analysisConfig.categorizationFilters = params.newFilters;";
-    private static final String UPDATE_DETECTOR_DESCRIPTION = "ctx._source.analysisConfig.detectors[params.detectorIndex].detectorDescription = params.newDescription;";
-    private static final String UPDATE_DETECTOR_RULES = "ctx._source.analysisConfig.detectors[params.detectorIndex].detectorRules = params.newDetectorRules;";
-    private static final String UPDATE_SCHEDULER_CONFIG = "ctx._source.schedulerConfig = params.newSchedulerConfig;";
 
     // Script parameters
     private static final String COUNT_PARAM = "count";
     private static final String BYTES_PARAM = "bytes";
     private static final String FIELD_COUNT_PARAM = "fieldCount";
     private static final String RECORD_COUNT_PARAM = "recordCount";
-    private static final String NEW_CATEGORIZATION_FILTERS_PARAM = "newFilters";
-    private static final String DETECTOR_INDEX_PARAM = "detectorIndex";
-    private static final String NEW_DESCRIPTION_PARAM = "newDescription";
-    private static final String NEW_DETECTOR_RULES_PARAM = "newDetectorRules";
-    private static final String NEW_SCHEDULER_CONFIG_PARAM = "newSchedulerConfig";
     private static final String PROCESSING_TIME_PARAM = "timeMs";
 
     public static final int UPDATE_JOB_RETRY_COUNT = 3;
@@ -68,40 +59,6 @@ public final class ElasticsearchScripts
         scriptParams.put(FIELD_COUNT_PARAM, additionalFields);
         scriptParams.put(RECORD_COUNT_PARAM, additionalRecords);
         return new Script(UPDATE_USAGE, ScriptService.ScriptType.INLINE, PAINLESS, scriptParams);
-    }
-
-    public static Script newUpdateCategorizationFilters(List<String> newFilters)
-    {
-        Map<String, Object> scriptParams = new HashMap<>();
-        scriptParams.put(NEW_CATEGORIZATION_FILTERS_PARAM, newFilters);
-        return new Script(UPDATE_CATEGORIZATION_FILTERS, ScriptService.ScriptType.INLINE,
-                PAINLESS, scriptParams);
-    }
-
-    public static Script newUpdateDetectorDescription(int detectorIndex, String newDescription)
-    {
-        Map<String, Object> scriptParams = new HashMap<>();
-        scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
-        scriptParams.put(NEW_DESCRIPTION_PARAM, newDescription);
-        return new Script(UPDATE_DETECTOR_DESCRIPTION, ScriptService.ScriptType.INLINE,
-                PAINLESS, scriptParams);
-    }
-
-    public static Script newUpdateDetectorRules(int detectorIndex, List<Map<String, Object>> newRules)
-    {
-        Map<String, Object> scriptParams = new HashMap<>();
-        scriptParams.put(DETECTOR_INDEX_PARAM, detectorIndex);
-        scriptParams.put(NEW_DETECTOR_RULES_PARAM, newRules);
-        return new Script(UPDATE_DETECTOR_RULES, ScriptService.ScriptType.INLINE,
-                PAINLESS, scriptParams);
-    }
-
-    public static Script newUpdateSchedulerConfig(Map<String, Object> newSchedulerConfig)
-    {
-        Map<String, Object> scriptParams = new HashMap<>();
-        scriptParams.put(NEW_SCHEDULER_CONFIG_PARAM, newSchedulerConfig);
-        return new Script(UPDATE_SCHEDULER_CONFIG, ScriptService.ScriptType.INLINE,
-                PAINLESS, scriptParams);
     }
 
     public static Script updateProcessingTime(Long processingTimeMs)

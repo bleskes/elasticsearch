@@ -31,6 +31,12 @@ public class ExceptionsHelper {
         return e;
     }
 
+    public static ElasticsearchStatusException invalidRequestException(String msg, ErrorCodes errorCode, Throwable cause) {
+        ElasticsearchStatusException e =  new ElasticsearchStatusException(msg, RestStatus.BAD_REQUEST, cause);
+        e.addHeader("errorCode", errorCode.getValueString());
+        return e;
+    }
+
     public static ResourceNotFoundException missingException(String jobId) {
         String msg = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
         ResourceNotFoundException e =  new ResourceNotFoundException(msg, RestStatus.BAD_REQUEST);

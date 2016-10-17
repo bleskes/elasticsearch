@@ -4,8 +4,8 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.Strings;
 
 import java.util.ArrayList;
@@ -13,11 +13,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public final class AnalysisConfigVerifier
-{
-    private AnalysisConfigVerifier()
-    {
-    }
+public final class AnalysisConfigVerifier {
+
+    private AnalysisConfigVerifier() {}
 
     /**
      * Checks the configuration is valid
@@ -32,8 +30,7 @@ public final class AnalysisConfigVerifier
      * must have a partition field and no influences can be used</li>
      * </ol>
      */
-    public static boolean verify(AnalysisConfig config) throws JobConfigurationException
-    {
+    public static boolean verify(AnalysisConfig config) {
         checkFieldIsNotNegativeIfSpecified("bucketSpan", config.getBucketSpan());
         checkFieldIsNotNegativeIfSpecified("batchSpan", config.getBatchSpan());
         checkFieldIsNotNegativeIfSpecified("latency", config.getLatency());
@@ -44,8 +41,7 @@ public final class AnalysisConfigVerifier
         verifyCategorizationFilters(config);
         verifyMultipleBucketSpans(config);
 
-        if (config.getUsePerPartitionNormalization())
-        {
+        if (config.getUsePerPartitionNormalization()) {
             checkDetectorsHavePartitionFields(config.getDetectors());
             checkNoInfluencersAreSet(config);
         }
@@ -53,23 +49,16 @@ public final class AnalysisConfigVerifier
         return true;
     }
 
-    private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value)
-            throws JobConfigurationException
-    {
-        if (value != null && value < 0)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
-                                                fieldName, 0, value);
-            throw new JobConfigurationException(msg, ErrorCodes.INVALID_VALUE);
+    private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value) {
+        if (value != null && value < 0) {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, fieldName, 0, value);
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.INVALID_VALUE);
         }
     }
 
-    private static void verifyDetectors(AnalysisConfig config) throws JobConfigurationException
-    {
-        if (config.getDetectors().isEmpty())
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS),
+    private static void verifyDetectors(AnalysisConfig config) {
+        if (config.getDetectors().isEmpty()) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS),
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
@@ -83,8 +72,7 @@ public final class AnalysisConfigVerifier
         verifyOverlappingBucketsConfig(config);
     }
 
-    private static void verifyOverlappingBucketsConfig(AnalysisConfig config) throws JobConfigurationException
-    {
+    private static void verifyOverlappingBucketsConfig(AnalysisConfig config)  {
         // If any detector function is rare/freq_rare, mustn't use overlapping buckets
         boolean mustNotUse = false;
 
@@ -107,44 +95,29 @@ public final class AnalysisConfigVerifier
         setOverlappingBucketsConfig(config, mustNotUse, canUse, illegalFunctions, false);
     }
 
-    private static void setOverlappingBucketsConfig(AnalysisConfig config, boolean mustNotUse,
-            boolean canUse, List<String> illegalFunctions, boolean defaultOn)
-                    throws JobConfigurationException
-    {
-        if (config.getOverlappingBuckets() == null)
-        {
-            if (defaultOn == true)
-            {
+    private static void setOverlappingBucketsConfig(AnalysisConfig config, boolean mustNotUse, boolean canUse,
+                                                    List<String> illegalFunctions, boolean defaultOn) {
+        if (config.getOverlappingBuckets() == null) {
+            if (defaultOn == true) {
                 // Wasn't specified: turn on by default if detectors allow
-                if (mustNotUse == false &&
-                        canUse == true)
-                {
+                if (mustNotUse == false && canUse == true) {
                     config.setOverlappingBuckets(true);
-                }
-                else
-                {
+                } else {
                     config.setOverlappingBuckets(false);
                 }
             }
-        }
-        else
-        {
-            if (config.getOverlappingBuckets() == true && mustNotUse == true)
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(Messages.JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION,
-                                            illegalFunctions.toString()),
+        } else {
+            if (config.getOverlappingBuckets() == true && mustNotUse == true) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION, illegalFunctions.toString()),
                         ErrorCodes.INVALID_FUNCTION);
             }
         }
     }
 
-    private static void verifyCategorizationFilters(AnalysisConfig config)
-            throws JobConfigurationException
-    {
+    private static void verifyCategorizationFilters(AnalysisConfig config) {
         List<String> filters = config.getCategorizationFilters();
-        if (filters == null || filters.isEmpty())
-        {
+        if (filters == null || filters.isEmpty()) {
             return;
         }
 
@@ -154,108 +127,74 @@ public final class AnalysisConfigVerifier
         verifyCategorizationFiltersAreValidRegex(filters);
     }
 
-    private static void verifyCategorizationFieldNameSetIfFiltersAreSet(AnalysisConfig config)
-            throws JobConfigurationException
-    {
-        if (config.getCategorizationFieldName() == null)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(
-                            Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME),
+    private static void verifyCategorizationFieldNameSetIfFiltersAreSet(AnalysisConfig config) {
+        if (config.getCategorizationFieldName() == null) {
+            throw ExceptionsHelper.invalidRequestException(
+                    Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME),
                     ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME);
         }
     }
 
-    private static void verifyCategorizationFiltersAreDistinct(List<String> filters)
-            throws JobConfigurationException
-    {
-        if (filters.stream().distinct().count() != filters.size())
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(
-                            Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES),
+    private static void verifyCategorizationFiltersAreDistinct(List<String> filters) {
+        if (filters.stream().distinct().count() != filters.size()) {
+            throw ExceptionsHelper.invalidRequestException(
+                    Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES),
                     ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES);
         }
     }
 
-    private static void verifyCategorizationFiltersContainNoneEmpty(List<String> filters)
-            throws JobConfigurationException
-    {
-        if (filters.stream().anyMatch(f -> f.isEmpty()))
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(
-                            Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY),
+    private static void verifyCategorizationFiltersContainNoneEmpty(List<String> filters) {
+        if (filters.stream().anyMatch(f -> f.isEmpty())) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY),
                     ErrorCodes.INVALID_VALUE);
         }
     }
 
-    private static void verifyCategorizationFiltersAreValidRegex(List<String> filters)
-            throws JobConfigurationException
-    {
-        for (String filter : filters)
-        {
-            if (!isValidRegex(filter))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(
-                                Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, filter),
+    private static void verifyCategorizationFiltersAreValidRegex(List<String> filters) {
+        for (String filter : filters) {
+            if (!isValidRegex(filter)) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, filter),
                         ErrorCodes.INVALID_VALUE);
             }
         }
     }
 
-    private static void verifyMultipleBucketSpans(AnalysisConfig config)
-            throws JobConfigurationException
-    {
+    private static void verifyMultipleBucketSpans(AnalysisConfig config)  {
         List<Long> multipleBucketSpans = config.getMultipleBucketSpans();
-        if (multipleBucketSpans == null)
-        {
+        if (multipleBucketSpans == null) {
             return;
         }
 
         Long bucketSpan = config.getBucketSpan();
-        if (bucketSpan == null)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(
-                            Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN),
+        if (bucketSpan == null) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN),
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
-        for (Long span : multipleBucketSpans)
-        {
-            if ((span % bucketSpan != 0L) || (span <= bucketSpan))
-            {
-                throw new JobConfigurationException(
-                        Messages.getMessage(
-                                Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, span, bucketSpan),
+        for (Long span : multipleBucketSpans) {
+            if ((span % bucketSpan != 0L) || (span <= bucketSpan)) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, span, bucketSpan),
                         ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE);
             }
         }
     }
 
-    private static boolean checkDetectorsHavePartitionFields(List<Detector> detectors)
-            throws JobConfigurationException
-    {
-        for (Detector detector : detectors)
-        {
-            if (!Strings.isNullOrEmpty(detector.getPartitionFieldName()))
-            {
+    private static boolean checkDetectorsHavePartitionFields(List<Detector> detectors) {
+        for (Detector detector : detectors) {
+            if (!Strings.isNullOrEmpty(detector.getPartitionFieldName())) {
                 return true;
             }
         }
 
-        throw new JobConfigurationException(
+        throw ExceptionsHelper.invalidRequestException(
                 Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD),
                 ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD);
     }
 
-    private static boolean checkNoInfluencersAreSet(AnalysisConfig config)
-            throws JobConfigurationException
-    {
-        if (!config.getInfluencers().isEmpty())
-        {
-            throw new JobConfigurationException(
+    private static boolean checkNoInfluencersAreSet(AnalysisConfig config) {
+        if (!config.getInfluencers().isEmpty()) {
+            throw ExceptionsHelper.invalidRequestException(
                     Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS),
                     ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS);
         }
@@ -263,15 +202,11 @@ public final class AnalysisConfigVerifier
         return true;
     }
 
-    private static boolean isValidRegex(String exp)
-    {
-        try
-        {
+    private static boolean isValidRegex(String exp) {
+        try {
             Pattern.compile(exp);
             return true;
-        }
-        catch (PatternSyntaxException e)
-        {
+        } catch (PatternSyntaxException e) {
             return false;
         }
     }

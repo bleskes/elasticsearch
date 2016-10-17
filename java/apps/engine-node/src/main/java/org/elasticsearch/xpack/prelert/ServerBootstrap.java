@@ -17,12 +17,6 @@
 
 package org.elasticsearch.xpack.prelert;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.bootstrap.JarHell;
@@ -41,12 +35,13 @@ import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
-import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
 import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
 import org.elasticsearch.xpack.prelert.action.CreateListAction;
+import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
 import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
@@ -56,16 +51,14 @@ import org.elasticsearch.xpack.prelert.action.PostDataAction;
 import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
 import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
-import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
@@ -74,15 +67,23 @@ import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestUpdateJobAction;
+import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
+import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketsAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoriesAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoryAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetRecordsAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
-import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
-import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
-import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class ServerBootstrap {
 
@@ -155,6 +156,7 @@ public class ServerBootstrap {
                     RestGetJobAction.class,
                     RestGetJobsAction.class,
                     RestPutJobsAction.class,
+                    RestUpdateJobAction.class,
                     RestDeleteJobAction.class,
                     RestGetListAction.class,
                     RestCreateListAction.class,
@@ -179,6 +181,7 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetJobAction.INSTANCE, GetJobAction.TransportAction.class),
                     new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),
                     new ActionHandler<>(PutJobAction.INSTANCE, PutJobAction.TransportAction.class),
+                    new ActionHandler<>(UpdateJobAction.INSTANCE, UpdateJobAction.TransportAction.class),
                     new ActionHandler<>(DeleteJobAction.INSTANCE, DeleteJobAction.TransportAction.class),
                     new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
                     new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),

@@ -3,14 +3,19 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
+import org.elasticsearch.xpack.prelert.job.Detector;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformType;
@@ -20,24 +25,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 public class JobConfigurationVerifierTest extends ESTestCase {
 
     public void testCheckValidId_IdTooLong()  {
         JobConfiguration conf = buildJobConfigurationNoTransforms();
         conf.setId("averyveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryverylongid");
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(conf));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(conf));
 
-        assertEquals(ErrorCodes.JOB_ID_TOO_LONG, e.getErrorCode());
+        assertEquals(ErrorCodes.JOB_ID_TOO_LONG.getValueString(), e.getHeader("errorCode").get(0));
     }
 
 
-    public void testCheckValidId_GivenAllValidChars() throws JobConfigurationException {
+    public void testCheckValidId_GivenAllValidChars() {
         JobConfiguration conf = buildJobConfigurationNoTransforms();
         conf.setId("abcdefghijklmnopqrstuvwxyz-0123456789_.");
 
@@ -45,7 +46,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckValidId_GivenEmpty() throws JobConfigurationException {
+    public void testCheckValidId_GivenEmpty() {
         JobConfiguration conf = buildJobConfigurationNoTransforms();
         conf.setId("");
 
@@ -53,7 +54,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckValidId_ProhibitedChars() throws JobConfigurationException {
+    public void testCheckValidId_ProhibitedChars() {
         String invalidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()+?\"'~±/\\[]{},<>=";
 
         JobConfiguration conf = buildJobConfigurationNoTransforms();
@@ -66,8 +67,8 @@ public class JobConfigurationVerifierTest extends ESTestCase {
             try {
                 JobConfigurationVerifier.verify(conf);
                 fail("Character '" + c + "' should not be valid");
-            } catch (JobConfigurationException e) {
-                assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID, e.getErrorCode());
+            } catch (ElasticsearchStatusException e) {
+                assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
                 assertEquals(errorMessage, e.getMessage());
             }
         }
@@ -79,29 +80,28 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
         conf.setId("two\nlines");
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(conf));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(conf));
 
-        assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID, e.getErrorCode());
+        assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
     }
 
 
-    public void jobConfigurationTest()
-            throws JobConfigurationException {
+    public void jobConfigurationTest() {
         JobConfiguration jc = new JobConfiguration();
         try {
             JobConfigurationVerifier.verify(jc);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         jc.setId("bad id with spaces");
         try {
             JobConfigurationVerifier.verify(jc);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
         }
 
 
@@ -109,16 +109,16 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         try {
             JobConfigurationVerifier.verify(jc);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertTrue(e.getErrorCode() == ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         jc.setId("a very  very very very very very very very very very very very very very very very very very very very long id");
         try {
             JobConfigurationVerifier.verify(jc);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertTrue(e.getErrorCode() == ErrorCodes.JOB_ID_TOO_LONG);
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.JOB_ID_TOO_LONG.getValueString(), e.getHeader("errorCode").get(0));
         }
 
 
@@ -127,8 +127,8 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         try {
             JobConfigurationVerifier.verify(jc);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertTrue(e.getErrorCode() == ErrorCodes.INCOMPLETE_CONFIGURATION);
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").equals(0));
         }
 
 
@@ -145,7 +145,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         jc.setAnalysisLimits(new AnalysisLimits(-1, null));
         try {
             JobConfigurationVerifier.verify(jc);
-        } catch (JobConfigurationException e) {
+        } catch (ElasticsearchStatusException e) {
             assertTrue(false); // shouldn't get here
         }
 
@@ -159,8 +159,8 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         try {
             JobConfigurationVerifier.verify(jc);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_DATE_FORMAT, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").equals(0));
         }
 
 
@@ -171,8 +171,8 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         try {
             JobConfigurationVerifier.verify(jc);
             assertTrue(false); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").equals(0));
         }
 
         jc.setTimeout(300L);
@@ -182,7 +182,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
 
 
-    public void testCheckTransformOutputIsUsed_throws() throws JobConfigurationException {
+    public void testCheckTransformOutputIsUsed_throws() {
         JobConfiguration jc = buildJobConfigurationNoTransforms();
 
         TransformConfig tc = new TransformConfig();
@@ -194,9 +194,8 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         try {
             JobConfigurationVerifier.verify(jc);
             fail("verify should throw"); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertTrue(e instanceof JobConfigurationException);
-            assertEquals(ErrorCodes.TRANSFORM_OUTPUTS_UNUSED, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.TRANSFORM_OUTPUTS_UNUSED.getValueString(), e.getHeader("errorCode").get(0));
         }
 
 
@@ -205,7 +204,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() throws JobConfigurationException {
+    public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
         JobConfiguration jc = buildJobConfigurationNoTransforms();
         jc.getAnalysisConfig().setSummaryCountFieldName("summaryCountField");
 
@@ -219,9 +218,8 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         try {
             JobConfigurationVerifier.verify(jc);
             fail("verify should throw"); // shouldn't get here
-        } catch (JobConfigurationException e) {
-            assertTrue(e instanceof JobConfigurationException);
-            assertEquals(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME.getValueString(), e.getHeader("errorCode").get(0));
         }
 
         jc.getAnalysisConfig().getDetectors().get(0).setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
@@ -230,8 +228,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     }
 
 
-    public void testCheckTransformOutputIsUsed_transformHasNoOutput()
-            throws JobConfigurationException {
+    public void testCheckTransformOutputIsUsed_transformHasNoOutput() {
         JobConfiguration jc = buildJobConfigurationNoTransforms();
 
         // The exclude filter has no output
@@ -254,10 +251,10 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         JobConfiguration config = buildJobConfigurationNoTransforms();
         config.getDataDescription().setFormat(DataFormat.SINGLE_LINE);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(config));
 
-        assertEquals(ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS, e.getErrorCode());
+        assertEquals(ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -271,16 +268,15 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         config.setTransforms(new ArrayList<>());
         config.getDataDescription().setFormat(DataFormat.SINGLE_LINE);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(config));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(config));
 
-        assertEquals(ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS, e.getErrorCode());
+        assertEquals(ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
 
-    public void testVerify_GivenDataFormatIsSingleLineAndNonEmptyTransforms()
-            throws JobConfigurationException {
+    public void testVerify_GivenDataFormatIsSingleLineAndNonEmptyTransforms() {
         ArrayList<TransformConfig> transforms = new ArrayList<>();
         TransformConfig transform = new TransformConfig();
         transform.setTransform("trim");
@@ -302,25 +298,24 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setRenormalizationWindowDays(-1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
 
-    public void testVerify_GivenNegativeModelSnapshotRetentionDays() throws JobConfigurationException {
-        String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
-                "modelSnapshotRetentionDays", 0, -1);
+    public void testVerify_GivenNegativeModelSnapshotRetentionDays() {
+        String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "modelSnapshotRetentionDays", 0, -1);
 
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setModelSnapshotRetentionDays(-1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -332,10 +327,10 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setBackgroundPersistInterval(3599L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -347,10 +342,10 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setResultsRetentionDays(-1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -364,10 +359,10 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getAnalysisConfig().setBucketSpan(null);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN, e.getErrorCode());
+        assertEquals(ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -381,15 +376,15 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         jobConfig.getAnalysisConfig().setBucketSpan(1800L);
         jobConfig.getAnalysisConfig().setLatency(3600L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY, e.getErrorCode());
+        assertEquals(ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
 
-    public void testVerify_GivenElasticsearchSchedulerAndZeroLatency() throws JobConfigurationException {
+    public void testVerify_GivenElasticsearchSchedulerAndZeroLatency() {
         SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
@@ -401,7 +396,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_GivenElasticsearchSchedulerAndNullLatency() throws JobConfigurationException {
+    public void testVerify_GivenElasticsearchSchedulerAndNullLatency() {
         SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
@@ -413,8 +408,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_GivenElasticsearchSchedulerWithAggsAndCorrectSummaryCountField()
-            throws JobConfigurationException, IOException {
+    public void testVerify_GivenElasticsearchSchedulerWithAggsAndCorrectSummaryCountField() throws IOException {
         SchedulerConfig schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
@@ -438,16 +432,15 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
         jobConfig.getAnalysisConfig().setBucketSpan(1800L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD, e.getErrorCode());
+        assertEquals(ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
 
-    public void testVerify_GivenElasticsearchSchedulerWithAggsAndWrongSummaryCountField()
-            throws JobConfigurationException, IOException {
+    public void testVerify_GivenElasticsearchSchedulerWithAggsAndWrongSummaryCountField() throws IOException {
         String errorMessage = Messages.getMessage(
                 Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
                 DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT);
@@ -459,10 +452,10 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         jobConfig.getAnalysisConfig().setBucketSpan(1800L);
         jobConfig.getAnalysisConfig().setSummaryCountFieldName("wrong");
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> JobConfigurationVerifier.verify(jobConfig));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
 
-        assertEquals(ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD, e.getErrorCode());
+        assertEquals(ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 

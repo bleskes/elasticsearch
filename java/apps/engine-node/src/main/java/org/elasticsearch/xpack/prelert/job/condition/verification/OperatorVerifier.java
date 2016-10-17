@@ -4,7 +4,6 @@ package org.elasticsearch.xpack.prelert.job.condition.verification;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
@@ -19,7 +18,6 @@ public final class OperatorVerifier {
      *
      * @param name
      * @return
-     * @throws JobConfigurationException
      */
     public static boolean verify(String name) throws ElasticsearchParseException {
         try {

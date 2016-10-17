@@ -227,7 +227,6 @@ public final class ReservedFieldNames
         Quantiles.QUANTILE_STATE,
 
         SchedulerConfig.DATA_SOURCE,
-        SchedulerConfig.DATA_SOURCE_COMPATIBILITY,
         SchedulerConfig.QUERY_DELAY,
         SchedulerConfig.FREQUENCY,
         SchedulerConfig.FILE_PATH,

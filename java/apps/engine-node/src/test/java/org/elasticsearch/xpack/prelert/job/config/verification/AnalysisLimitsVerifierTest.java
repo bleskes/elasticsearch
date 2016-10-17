@@ -1,10 +1,10 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 public class AnalysisLimitsVerifierTest extends ESTestCase {
@@ -16,14 +16,14 @@ public class AnalysisLimitsVerifierTest extends ESTestCase {
 
         AnalysisLimits limits = new AnalysisLimits(1L, -1L);
 
-        JobConfigurationException e =
-                ESTestCase.expectThrows(JobConfigurationException.class, () -> AnalysisLimitsVerifier.verify(limits));
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> AnalysisLimitsVerifier.verify(limits));
         assertEquals(errorMessage, e.getMessage());
-        assertEquals(ErrorCodes.INVALID_VALUE, e.getErrorCode());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 
 
-    public void testVerify_GivenValid() throws JobConfigurationException {
+    public void testVerify_GivenValid() {
         AnalysisLimits limits = new AnalysisLimits(0L, 0L);
         assertTrue(AnalysisLimitsVerifier.verify(limits));
         limits = new AnalysisLimits(1L, null);

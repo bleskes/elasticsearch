@@ -6,13 +6,12 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 
 public class ConditionVerifierTest extends ESTestCase {
 
-    public void testVerifyArgsNumericArgs() throws JobConfigurationException {
+    public void testVerifyArgsNumericArgs() {
         Condition c = new Condition(Operator.LTE, "100");
         assertTrue(ConditionVerifier.verify(c));
         c = new Condition(Operator.GT, "10.0");

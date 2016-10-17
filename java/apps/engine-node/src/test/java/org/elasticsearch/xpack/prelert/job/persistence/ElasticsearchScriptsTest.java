@@ -46,48 +46,6 @@ public class ElasticsearchScriptsTest extends ESTestCase {
         assertEquals(3L, script.getParams().get("recordCount"));
     }
 
-    public void testNewUpdateCategorizationFilters() {
-        List<String> newFilters = Arrays.asList("foo", "bar");
-
-        Script script = ElasticsearchScripts.newUpdateCategorizationFilters(newFilters);
-
-        assertEquals("ctx._source.analysisConfig.categorizationFilters = params.newFilters;", script.getScript());
-        assertEquals(1, script.getParams().size());
-        assertEquals(newFilters, script.getParams().get("newFilters"));
-    }
-
-    
-    public void testNewUpdateDetectorDescription() {
-        Script script = ElasticsearchScripts.newUpdateDetectorDescription(2, "Almost Blue");
-        assertEquals("ctx._source.analysisConfig.detectors[params.detectorIndex].detectorDescription = params.newDescription;", script.getScript());
-        assertEquals(2, script.getParams().size());
-        assertEquals(2, script.getParams().get("detectorIndex"));
-        assertEquals("Almost Blue", script.getParams().get("newDescription"));
-    }
-
-    
-    public void testNewUpdateDetectorRules() {
-        List<Map<String, Object>> newRules = new ArrayList<>();
-        Script script = ElasticsearchScripts.newUpdateDetectorRules(1, newRules);
-        assertEquals("ctx._source.analysisConfig.detectors[params.detectorIndex].detectorRules = params.newDetectorRules;", script.getScript());
-        assertEquals(2, script.getParams().size());
-        assertEquals(1, script.getParams().get("detectorIndex"));
-        assertEquals(newRules, script.getParams().get("newDetectorRules"));
-    }
-
-    
-    public void testNewUpdateSchedulerConfig() {
-        Map<String, Object> newSchedulerConfig = new HashMap<>();
-        newSchedulerConfig.put("foo", "bar");
-
-        Script script = ElasticsearchScripts.newUpdateSchedulerConfig(newSchedulerConfig);
-
-        assertEquals("ctx._source.schedulerConfig = params.newSchedulerConfig;", script.getScript());
-        assertEquals(1, script.getParams().size());
-        assertEquals(newSchedulerConfig, script.getParams().get("newSchedulerConfig"));
-    }
-
-    
     public void testUpdateProcessingTime() {
         Long time = 135790L;
         Script script = ElasticsearchScripts.updateProcessingTime(time);

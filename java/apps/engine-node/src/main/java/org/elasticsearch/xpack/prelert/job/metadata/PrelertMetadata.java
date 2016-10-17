@@ -68,6 +68,7 @@ public class PrelertMetadata implements MetaData.Custom {
     }
 
     public Map<String, Job> getJobs() {
+        // NORELEASE jobs should be immutable or a job can be modified in the cluster state of a single node without a cluster state update
         return jobs;
     }
 
@@ -202,31 +203,35 @@ public class PrelertMetadata implements MetaData.Custom {
             allocations = new TreeMap<>(previous.allocations);
         }
 
-        public void putJob(Job job, boolean overwrite) {
+        public Builder putJob(Job job, boolean overwrite) {
             if (jobs.containsKey(job.getJobDetails().getId()) && overwrite == false) {
                 throw ExceptionsHelper.jobAlreadyExists(job.getJobDetails().getId());
             }
             this.jobs.put(job.getJobDetails().getId(), job);
+            return this;
         }
 
-        public void removeJob(String jobId) {
+        public Builder removeJob(String jobId) {
             this.jobs.remove(jobId);
             this.allocations.remove(jobId);
+            return this;
         }
 
-        public void putAllocation(String nodeId, String jobId) {
+        public Builder putAllocation(String nodeId, String jobId) {
             Allocation.Builder builder = new Allocation.Builder();
             builder.setJobId(jobId);
             builder.setNodeId(nodeId);
             this.allocations.put(jobId, builder.build());
+            return this;
         }
 
         // only for parsing
-        private void putAllocations(Collection<Allocation.Builder> allocations) {
+        private Builder putAllocations(Collection<Allocation.Builder> allocations) {
             for (Allocation.Builder allocationBuilder : allocations) {
                 Allocation allocation = allocationBuilder.build();
                 this.allocations.put(allocation.getJobId(), allocation);
             }
+            return this;
         }
 
         public PrelertMetadata build() {

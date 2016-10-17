@@ -4,8 +4,8 @@ package org.elasticsearch.xpack.prelert.job.config.verification;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,14 +39,12 @@ public final class SchedulerConfigVerifier
      * </li>
      * </ul>
      */
-    public static boolean verify(SchedulerConfig config) throws JobConfigurationException
-    {
+    public static boolean verify(SchedulerConfig config) {
         checkFieldIsNotNegative(SchedulerConfig.QUERY_DELAY, config.getQueryDelay());
         checkFieldIsNotNegative(SchedulerConfig.FREQUENCY, config.getFrequency());
 
         DataSource dataSource = config.getDataSource();
-        switch (dataSource)
-        {
+        switch (dataSource) {
             case FILE:
                 verifyFileSchedulerConfig(config, dataSource);
                 break;
@@ -60,9 +58,7 @@ public final class SchedulerConfigVerifier
         return true;
     }
 
-    private static void verifyFileSchedulerConfig(SchedulerConfig config, DataSource dataSource)
-            throws JobConfigurationException
-    {
+    private static void verifyFileSchedulerConfig(SchedulerConfig config, DataSource dataSource) {
         checkFieldIsNotNullOrEmpty(SchedulerConfig.FILE_PATH, config.getFilePath());
         checkFieldIsNull(dataSource, SchedulerConfig.BASE_URL, config.getBaseUrl());
         checkFieldIsNull(dataSource, SchedulerConfig.USERNAME, config.getUsername());
@@ -77,16 +73,13 @@ public final class SchedulerConfigVerifier
         checkFieldIsNull(dataSource, SchedulerConfig.SCROLL_SIZE, config.getScrollSize());
     }
 
-    private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config,
-            DataSource dataSource) throws JobConfigurationException
-    {
+    private static void verifyElasticsearchSchedulerConfig(SchedulerConfig config, DataSource dataSource) {
         checkUrl(SchedulerConfig.BASE_URL, config.getBaseUrl());
         checkUserPass(config.getUsername(), config.getPassword(), config.getEncryptedPassword());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.INDEXES, config.getIndexes());
         checkFieldIsNotNullOrEmpty(SchedulerConfig.TYPES, config.getTypes());
         checkNoMultipleAggregations(config);
-        if (Boolean.TRUE.equals(config.getRetrieveWholeSource()))
-        {
+        if (Boolean.TRUE.equals(config.getRetrieveWholeSource())) {
             // Not allowed script_fields when retrieveWholeSource is true
             checkFieldIsNull(dataSource, SchedulerConfig.SCRIPT_FIELDS, config.getScriptFields());
         }
@@ -95,78 +88,55 @@ public final class SchedulerConfigVerifier
         checkFieldIsNull(dataSource, SchedulerConfig.TAIL_FILE, config.getTailFile());
     }
 
-    private static void checkUserPass(String username, String password, String encryptedPassword)
-            throws JobConfigurationException
-    {
+    private static void checkUserPass(String username, String password, String encryptedPassword) {
         boolean isNoPasswordSet = password == null && encryptedPassword == null;
         boolean isMultiplePasswordSet = password != null && encryptedPassword != null;
 
-        if (username == null && isNoPasswordSet)
-        {
+        if (username == null && isNoPasswordSet) {
             // It's acceptable to have no credentials
             return;
         }
 
-        if (username == null || isNoPasswordSet)
-        {
+        if (username == null || isNoPasswordSet) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
         }
 
-        if (isMultiplePasswordSet)
-        {
+        if (isMultiplePasswordSet) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
         }
     }
 
-    private static void checkNoMultipleAggregations(SchedulerConfig config)
-            throws JobConfigurationException
-    {
-        if (config.getAggregations() != null && config.getAggs() != null)
-        {
+    private static void checkNoMultipleAggregations(SchedulerConfig config) {
+        if (config.getAggregations() != null && config.getAggs() != null) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS);
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);
         }
     }
 
-    private static void checkFieldIsNull(DataSource dataSource, String fieldName, Object value)
-            throws JobConfigurationException
-    {
-        if (value != null)
-        {
-            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED,
-                                                fieldName, dataSource.toString());
-            throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE);
+    private static void checkFieldIsNull(DataSource dataSource, String fieldName, Object value) {
+        if (value != null) {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, fieldName, dataSource.toString());
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE);
         }
     }
 
-    private static void checkFieldIsNotNullOrEmpty(String fieldName, String value)
-            throws JobConfigurationException
-    {
-        if (value == null || value.isEmpty())
-        {
+    private static void checkFieldIsNotNullOrEmpty(String fieldName, String value) {
+        if (value == null || value.isEmpty()) {
             throwInvalidOptionValue(fieldName, value);
         }
     }
 
-    private static void throwInvalidOptionValue(String fieldName, Object value)
-            throws JobConfigurationException
-    {
-        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
-                fieldName, value);
-        throw new JobConfigurationException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+    private static void throwInvalidOptionValue(String fieldName, Object value) {
+        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, fieldName, value);
+        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
     }
 
-    private static void checkFieldIsNotNullOrEmpty(String fieldName, List<String> value)
-            throws JobConfigurationException
-    {
-        if (value != null)
-        {
-            for (String item : value)
-            {
-                if (item != null && !item.isEmpty())
-                {
+    private static void checkFieldIsNotNullOrEmpty(String fieldName, List<String> value) {
+        if (value != null) {
+            for (String item : value)            {
+                if (item != null && !item.isEmpty()) {
                     return;
                 }
             }
@@ -175,24 +145,16 @@ public final class SchedulerConfigVerifier
         throwInvalidOptionValue(fieldName, value);
     }
 
-    private static void checkFieldIsNotNegative(String fieldName, Number value)
-            throws JobConfigurationException
-    {
-        if (value != null && value.longValue() < 0)
-        {
+    private static void checkFieldIsNotNegative(String fieldName, Number value) {
+        if (value != null && value.longValue() < 0) {
             throwInvalidOptionValue(fieldName, value);
         }
     }
 
-    private static void checkUrl(String fieldName, String value)
-            throws JobConfigurationException
-    {
-        try
-        {
+    private static void checkUrl(String fieldName, String value) {
+        try {
             new URL(value);
-        }
-        catch (MalformedURLException e)
-        {
+        } catch (MalformedURLException e) {
             throwInvalidOptionValue(fieldName, value);
         }
     }

@@ -73,13 +73,13 @@ public class DetectorVerifierTest extends ESTestCase {
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, false);
-                Assert.fail("JobConfigurationException not thrown when expected");
+                Assert.fail("ElasticsearchParseException not thrown when expected");
             } catch (ElasticsearchParseException e) {
             }
             try {
                 d.setFunction(f);
                 DetectorVerifier.verify(d, true);
-                Assert.fail("JobConfigurationException not thrown when expected");
+                Assert.fail("ElasticsearchParseException not thrown when expected");
             } catch (ElasticsearchParseException e) {
             }
         }

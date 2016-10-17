@@ -25,12 +25,11 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
@@ -44,9 +43,15 @@ import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.update.JobUpdater;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -148,18 +153,22 @@ public class JobManager {
 
     /**
      * Returns the non-null {@code JobDetails} object for the given {@code jobId}
-     * or throws {@link UnknownJobException}
+     * or throws {@link org.elasticsearch.ResourceNotFoundException}
      *
      * @param jobId
      * @return the {@code JobDetails} if a job with the given {@code jobId} exists
-     * @throws UnknownJobException if there is no job with matching the given {@code jobId}
+     * @throws org.elasticsearch.ResourceNotFoundException if there is no job with matching the given {@code jobId}
      */
-    public JobDetails getJobOrThrowIfUnknown(String jobId) throws UnknownJobException {
-        Optional<JobDetails> job = jobProvider.getJobDetails(jobId);
-        if (!job.isPresent()) {
-            throw new UnknownJobException(jobId);
+    public JobDetails getJobOrThrowIfUnknown(ClusterState clusterState, String jobId) {
+        PrelertMetadata prelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
+        if (prelertMetadata == null) {
+            throw ExceptionsHelper.missingException(jobId);
         }
-        return job.get();
+        Job job = prelertMetadata.getJobs().get(jobId);
+        if (job == null) {
+            throw ExceptionsHelper.missingException(jobId);
+        }
+        return job.getJobDetails();
     }
 
     /**
@@ -216,78 +225,6 @@ public class JobManager {
                 .build());
         return newState.build();
     }
-
-
-    public void updateCustomSettings(String jobId, Map<String, Object> customSettings)
-            throws UnknownJobException {
-        updateJobTopLevelKeyValue(jobId, JobDetails.CUSTOM_SETTINGS, customSettings);
-    }
-
-    private void updateJobTopLevelKeyValue(String jobId, String key, Object value)
-            throws UnknownJobException {
-        Map<String, Object> update = new HashMap<>();
-        update.put(key, value);
-        jobProvider.updateJob(jobId, update);
-    }
-
-    /**
-     * Updates a job with new {@code AnalysisLimits}.
-     *
-     * @param jobId     the job id
-     * @param newLimits the new limits
-     * @throws UnknownJobException if the job if unknown
-     */
-    public void setAnalysisLimits(String jobId, AnalysisLimits newLimits) throws UnknownJobException {
-        Map<String, Object> update = new HashMap<>();
-        update.put(JobDetails.ANALYSIS_LIMITS, newLimits.toMap());
-        jobProvider.updateJob(jobId, update);
-    }
-
-    /**
-     * Set the job's description.
-     * If the description cannot be set an exception is thrown.
-     *
-     * @param jobId
-     * @param description
-     * @throws UnknownJobException
-     */
-    public void setDescription(String jobId, String description)
-            throws UnknownJobException {
-        updateJobTopLevelKeyValue(jobId, JobDetails.DESCRIPTION, description);
-    }
-
-    public void setModelDebugConfig(String jobId, ModelDebugConfig modelDebugConfig)
-            throws UnknownJobException {
-        Map<String, Object> update = new HashMap<>();
-        if (modelDebugConfig != null) {
-            Map<String, Object> objectMap = new HashMap<>();
-            objectMap.put(ModelDebugConfig.WRITE_TO, modelDebugConfig.getWriteTo());
-            objectMap.put(ModelDebugConfig.BOUNDS_PERCENTILE, modelDebugConfig.getBoundsPercentile());
-            objectMap.put(ModelDebugConfig.TERMS, modelDebugConfig.getTerms());
-            update.put(JobDetails.MODEL_DEBUG_CONFIG, objectMap);
-        } else {
-            update.put(JobDetails.MODEL_DEBUG_CONFIG, null);
-        }
-        jobProvider.updateJob(jobId, update);
-    }
-
-    public void setRenormalizationWindowDays(String jobId, Long renormalizationWindowDays) throws UnknownJobException {
-        updateJobTopLevelKeyValue(jobId, JobDetails.RENORMALIZATION_WINDOW_DAYS, renormalizationWindowDays);
-    }
-
-    public void setModelSnapshotRetentionDays(String jobId, Long retentionDays) throws UnknownJobException {
-        updateJobTopLevelKeyValue(jobId, JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS, retentionDays);
-    }
-
-    public void setResultsRetentionDays(String jobId, Long retentionDays) throws UnknownJobException {
-        updateJobTopLevelKeyValue(jobId, JobDetails.RESULTS_RETENTION_DAYS, retentionDays);
-    }
-
-    public void setBackgroundPersistInterval(String jobId, Long backgroundPersistInterval)
-            throws UnknownJobException {
-        updateJobTopLevelKeyValue(jobId, JobDetails.BACKGROUND_PERSIST_INTERVAL, backgroundPersistInterval);
-    }
-
 
     /**
      * Deletes a job.
@@ -352,6 +289,22 @@ public class JobManager {
         return newState.build();
     }
 
+    public void updateJob(UpdateJobAction.Request request, ActionListener<UpdateJobAction.Response> actionListener) {
+        clusterService.submitStateUpdateTask("update-job-" + request.getJobId(), new AckedClusterStateUpdateTask<UpdateJobAction.Response>(request, actionListener) {
+
+            @Override
+            protected UpdateJobAction.Response newResponse(boolean acknowledged) {
+                return new UpdateJobAction.Response(acknowledged);
+            }
+
+            @Override
+            public ClusterState execute(ClusterState currentState) throws Exception {
+                JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, request.getJobId());
+                new JobUpdater(jobDetails).update(request.getUpdateJson());
+                return innerPutJob(jobDetails, true, currentState);
+            }
+        });
+    }
 
     public Auditor audit(String jobId) {
         return jobProvider.audit(jobId);

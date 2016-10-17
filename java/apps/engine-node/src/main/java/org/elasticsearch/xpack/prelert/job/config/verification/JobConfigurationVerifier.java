@@ -1,22 +1,25 @@
 
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobConfigurationException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 import org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigsVerifier;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.Strings;
 
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public final class JobConfigurationVerifier
-{
+public final class JobConfigurationVerifier {
+
     public static final long MIN_BACKGROUND_PERSIST_INTERVAL = 3600;
 
     public static final int MAX_JOB_ID_LENGTH = 64;
@@ -36,45 +39,39 @@ public final class JobConfigurationVerifier
      *
      * <ol>
      * <li>Either an AnalysisConfig or Job reference must be set</li>
-     * <li>Verify {@link AnalysisConfigVerifier#verify() AnalysisConfig}</li>
-     * <li>Verify {@link AnalysisLimitsVerifier#verify() AnalysisLimits}</li>
-     * <li>Verify {@link SchedulerConfigVerifier#verify() SchedulerConfig}</li>
-     * <li>Verify {@link DataDescriptionVerifier#verify() DataDescription}</li>
-     * <li>Verify {@link TransformConfigsVerifier#verify() Transforms}</li>
+     * <li>Verify {@link AnalysisConfigVerifier#verify(AnalysisConfig) AnalysisConfig}</li>
+     * <li>Verify {@link AnalysisLimitsVerifier#verify(AnalysisLimits) AnalysisLimits}</li>
+     * <li>Verify {@link SchedulerConfigVerifier#verify(SchedulerConfig) SchedulerConfig}</li>
+     * <li>Verify {@link DataDescriptionVerifier#verify(DataDescription) DataDescription}</li>
+     * <li>Verify {@link TransformConfigsVerifier#verify(List<TransformConfig>) Transforms}</li>
+     * <li>Verify {@link ModelDebugConfigVerifier#verify(ModelDebugConfig) ModelDebugConfig}</li>
      * <li>Verify all the transform outputs are used</li>
      * <li>Check timeout is a +ve number</li>
      * <li>The job ID cannot contain any upper case characters, control
-     * characters or any characters in {@link #PROHIBITED_JOB_ID_CHARACTERS_SET}</li>
-     * <li>The job is cannot be longer than {@link MAX_JOB_ID_LENGTH }</li>
-     * <li>Verify {@link ModelDebugConfig#verify() ModelDebugConfig}</li>
+     * characters or any characters not matched by {@link #VALID_JOB_ID_CHAR_PATTERN}</li>
+     * <li>The job is cannot be longer than {@link #MAX_JOB_ID_LENGTH }</li>
      * <li></li>
      * </ol>
      *
      * @param config The job configuration
      */
-    public static boolean verify(JobConfiguration config)
-    throws JobConfigurationException
-    {
-        if (config.getId() != null && config.getId().isEmpty() == false)
-        {
+    public static boolean verify(JobConfiguration config) {
+        if (config.getId() != null && config.getId().isEmpty() == false) {
             checkValidId(config.getId());
         }
 
         checkAnalysisConfigIsPresent(config);
         AnalysisConfigVerifier.verify(config.getAnalysisConfig());
 
-        if (config.getAnalysisLimits() != null)
-        {
+        if (config.getAnalysisLimits() != null) {
             AnalysisLimitsVerifier.verify(config.getAnalysisLimits());
         }
 
-        if (config.getSchedulerConfig() != null)
-        {
+        if (config.getSchedulerConfig() != null) {
             verifySchedulerConfig(config);
         }
 
-        if (config.getDataDescription() != null)
-        {
+        if (config.getDataDescription() != null) {
             DataDescriptionVerifier.verify(config.getDataDescription());
         }
 
@@ -86,71 +83,56 @@ public final class JobConfigurationVerifier
         checkValueNotLessThan(0, "modelSnapshotRetentionDays", config.getModelSnapshotRetentionDays());
         checkValueNotLessThan(0, "resultsRetentionDays", config.getResultsRetentionDays());
 
-        if (config.getModelDebugConfig() != null)
-        {
+        if (config.getModelDebugConfig() != null) {
             ModelDebugConfigVerifier.verify(config.getModelDebugConfig());
         }
 
         return true;
     }
 
-    private static void checkAnalysisConfigIsPresent(JobConfiguration config)
-            throws JobConfigurationException
-    {
+    private static void checkAnalysisConfigIsPresent(JobConfiguration config) {
         if (config.getAnalysisConfig() == null)
         {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
     }
 
-    private static void verifySchedulerConfig(JobConfiguration config) throws JobConfigurationException
-    {
+    private static void verifySchedulerConfig(JobConfiguration config) {
         SchedulerConfig schedulerConfig = config.getSchedulerConfig();
         SchedulerConfigVerifier.verify(schedulerConfig);
 
         AnalysisConfig analysisConfig = config.getAnalysisConfig();
-        if (analysisConfig.getBucketSpan() == null)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN),
+        if (analysisConfig.getBucketSpan() == null) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN),
                     ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN);
         }
-        if (schedulerConfig.getDataSource() == DataSource.ELASTICSEARCH)
-        {
-            if (!isNullOrZero(analysisConfig.getLatency()))
-            {
-                throw new JobConfigurationException(
+        if (schedulerConfig.getDataSource() == DataSource.ELASTICSEARCH) {
+            if (!isNullOrZero(analysisConfig.getLatency())) {
+                throw ExceptionsHelper.invalidRequestException(
                         Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY),
                         ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
             }
             if (schedulerConfig.getAggregationsOrAggs() != null
-                    && !SchedulerConfig.DOC_COUNT.equals(analysisConfig.getSummaryCountFieldName()))
-            {
-                throw new JobConfigurationException(
+                    && !SchedulerConfig.DOC_COUNT.equals(analysisConfig.getSummaryCountFieldName())) {
+                throw ExceptionsHelper.invalidRequestException(
                         Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
                             DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT),
                         ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD);
             }
-            if (config.getDataDescription() == null
-                    || config.getDataDescription().getFormat() != DataFormat.ELASTICSEARCH)
-            {
-                throw new JobConfigurationException(
+            if (config.getDataDescription() == null || config.getDataDescription().getFormat() != DataFormat.ELASTICSEARCH) {
+                throw ExceptionsHelper.invalidRequestException(
                         Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH),
                         ErrorCodes.SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH);
             }
         }
     }
 
-    private static boolean isNullOrZero(Long value)
-    {
+    private static boolean isNullOrZero(Long value) {
         return value == null || value.longValue() == 0;
     }
 
-    private static void checkValidTransforms(JobConfiguration config)
-            throws JobConfigurationException
-    {
+    private static void checkValidTransforms(JobConfiguration config) {
         if (config.getTransforms() != null)
         {
             TransformConfigsVerifier.verify(config.getTransforms());
@@ -164,17 +146,13 @@ public final class JobConfigurationVerifier
      * Transform outputs should be used in either the date field,
      * as an analysis field or input to another transform
      * @return
-     * @throws JobConfigurationException
      */
-    private static boolean checkTransformOutputIsUsed(JobConfiguration config)
-            throws JobConfigurationException
-    {
+    private static boolean checkTransformOutputIsUsed(JobConfiguration config) {
         Set<String> usedFields = new TransformConfigs(config.getTransforms()).inputFieldNames();
         usedFields.addAll(config.getAnalysisConfig().analysisFields());
         String summaryCountFieldName = config.getAnalysisConfig().getSummaryCountFieldName();
         boolean isSummarised = !Strings.isNullOrEmpty(summaryCountFieldName);
-        if (isSummarised)
-        {
+        if (isSummarised) {
             usedFields.remove(summaryCountFieldName);
         }
 
@@ -182,92 +160,67 @@ public final class JobConfigurationVerifier
                 : config.getDataDescription().getTimeField();
         usedFields.add(timeField);
 
-        for (TransformConfig tc : config.getTransforms())
-        {
+        for (TransformConfig tc : config.getTransforms()) {
             // if the type has no default outputs it doesn't need an output
             boolean usesAnOutput = tc.type().defaultOutputNames().isEmpty()
                     || tc.getOutputs().stream().anyMatch(outputName -> usedFields.contains(outputName));
 
-            if (isSummarised && tc.getOutputs().contains(summaryCountFieldName))
-            {
-                String msg = Messages.getMessage(
-                        Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME,
-                        tc.type().prettyName());
-                throw new JobConfigurationException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+            if (isSummarised && tc.getOutputs().contains(summaryCountFieldName)) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME, tc.type().prettyName());
+                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
             }
 
-            if (!usesAnOutput)
-            {
+            if (!usesAnOutput) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED,
                         tc.type().prettyName());
-                throw new JobConfigurationException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
+                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
             }
         }
 
         return false;
     }
 
-    private static void checkAtLeastOneTransformIfDataFormatIsSingleLine(JobConfiguration config)
-    throws JobConfigurationException
-    {
-        if (isSingleLineFormat(config) && hasNoTransforms(config))
-        {
+    private static void checkAtLeastOneTransformIfDataFormatIsSingleLine(JobConfiguration config) {
+        if (isSingleLineFormat(config) && hasNoTransforms(config)) {
             String msg = Messages.getMessage(
                             Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
                             DataFormat.SINGLE_LINE);
 
-            throw new JobConfigurationException(msg,
-                    ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
         }
     }
 
-    private static boolean isSingleLineFormat(JobConfiguration config)
-    {
-        return config.getDataDescription() != null
-                && config.getDataDescription().getFormat() == DataFormat.SINGLE_LINE;
+    private static boolean isSingleLineFormat(JobConfiguration config) {
+        return config.getDataDescription() != null && config.getDataDescription().getFormat() == DataFormat.SINGLE_LINE;
     }
 
-    private static boolean hasNoTransforms(JobConfiguration config)
-    {
+    private static boolean hasNoTransforms(JobConfiguration config) {
         return config.getTransforms() == null || config.getTransforms().isEmpty();
     }
 
-    private static void checkValidId(String jobId) throws JobConfigurationException
-    {
+    private static void checkValidId(String jobId) {
         checkValidIdLength(jobId);
         checkIdContainsValidCharacters(jobId);
     }
 
-    private static void checkValidIdLength(String jobId) throws JobConfigurationException
-    {
-        if (jobId.length() > MAX_JOB_ID_LENGTH)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
-                            ErrorCodes.JOB_ID_TOO_LONG);
+    private static void checkValidIdLength(String jobId) {
+        if (jobId.length() > MAX_JOB_ID_LENGTH) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
+                    ErrorCodes.JOB_ID_TOO_LONG);
         }
     }
 
-    private static void checkIdContainsValidCharacters(String jobId)
-            throws JobConfigurationException
-    {
-        if (!VALID_JOB_ID_CHAR_PATTERN.matcher(jobId).matches())
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS),
+    private static void checkIdContainsValidCharacters(String jobId) {
+        if (!VALID_JOB_ID_CHAR_PATTERN.matcher(jobId).matches()) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS),
                     ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
         }
     }
 
-    private static void checkValueNotLessThan(long minVal, String name, Long value)
-            throws JobConfigurationException
-    {
-        if (value != null && value < minVal)
-        {
-            throw new JobConfigurationException(
-                    Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, name, minVal, value),
-                    ErrorCodes.INVALID_VALUE);
+    private static void checkValueNotLessThan(long minVal, String name, Long value) {
+        if (value != null && value < minVal) {
+            throw ExceptionsHelper.invalidRequestException(
+                    Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, name, minVal, value), ErrorCodes.INVALID_VALUE);
         }
     }
-
 }
