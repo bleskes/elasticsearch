@@ -309,7 +309,9 @@ public class Detector extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(DETECTOR_DESCRIPTION_FIELD.getPreferredName(), detectorDescription);
+        if (detectorDescription != null) {
+            builder.field(DETECTOR_DESCRIPTION_FIELD.getPreferredName(), detectorDescription);
+        }
         builder.field(FUNCTION_FIELD.getPreferredName(), function);
         if (fieldName != null) {
             builder.field(FIELD_NAME_FIELD.getPreferredName(), fieldName);
