@@ -14,11 +14,11 @@ import java.util.List;
 
 class CategorizationFiltersUpdater extends AbstractUpdater {
 
-    private List<String> m_NewCategorizationFilters;
+    private List<String> newCategorizationFilters;
 
     public CategorizationFiltersUpdater(JobDetails job, String updateKey) {
         super(job, updateKey);
-        m_NewCategorizationFilters = null;
+        newCategorizationFilters = null;
     }
 
     @Override
@@ -31,16 +31,16 @@ class CategorizationFiltersUpdater extends AbstractUpdater {
             parseStringArray(node);
             verifyNewCategorizationFilters();
         }
-        job().getAnalysisConfig().setCategorizationFilters(m_NewCategorizationFilters);
+        job().getAnalysisConfig().setCategorizationFilters(newCategorizationFilters);
     }
 
     private void parseStringArray(JsonNode arrayNode) {
         Iterator<JsonNode> iterator = arrayNode.elements();
-        m_NewCategorizationFilters = iterator.hasNext() ? new ArrayList<>() : null;
+        newCategorizationFilters = iterator.hasNext() ? new ArrayList<>() : null;
         while (iterator.hasNext()) {
             JsonNode elementNode = iterator.next();
             if (elementNode.isTextual()) {
-                m_NewCategorizationFilters.add(elementNode.asText());
+                newCategorizationFilters.add(elementNode.asText());
             } else {
                 throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_UPDATE_CATEGORIZATION_FILTERS_INVALID,
                         arrayNode.toString()), ErrorCodes.INVALID_VALUE);
@@ -50,7 +50,7 @@ class CategorizationFiltersUpdater extends AbstractUpdater {
 
     private void verifyNewCategorizationFilters() {
         AnalysisConfig analysisConfig = job().getAnalysisConfig();
-        analysisConfig.setCategorizationFilters(m_NewCategorizationFilters);
+        analysisConfig.setCategorizationFilters(newCategorizationFilters);
         AnalysisConfigVerifier.verify(analysisConfig);
     }
 }

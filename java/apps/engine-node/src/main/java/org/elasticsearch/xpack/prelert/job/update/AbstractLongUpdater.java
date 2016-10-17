@@ -7,19 +7,19 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 abstract class AbstractLongUpdater extends AbstractUpdater {
-    private Long m_NewValue;
-    private long m_MinVal;
+    private Long newValue;
+    private long minVal;
 
     public AbstractLongUpdater(JobDetails job, String updateKey, long minVal) {
         super(job, updateKey);
-        m_MinVal = minVal;
+        this.minVal = minVal;
     }
 
     @Override
     void update(JsonNode node) {
         if (node.isIntegralNumber() || node.isNull()) {
-            m_NewValue = node.isIntegralNumber() ? node.asLong() : null;
-            if (m_NewValue != null && m_NewValue < m_MinVal) {
+            newValue = node.isIntegralNumber() ? node.asLong() : null;
+            if (newValue != null && newValue < minVal) {
                 throwInvalidValue();
             }
         } else {
@@ -29,7 +29,7 @@ abstract class AbstractLongUpdater extends AbstractUpdater {
     }
 
     protected Long getNewValue() {
-        return m_NewValue;
+        return newValue;
     }
 
     private void throwInvalidValue() {

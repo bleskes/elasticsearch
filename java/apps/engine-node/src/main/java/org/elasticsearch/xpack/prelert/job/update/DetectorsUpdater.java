@@ -29,13 +29,13 @@ class DetectorsUpdater extends AbstractUpdater {
     private static final Set<String> REQUIRED_PARAMS = new LinkedHashSet<>(Arrays.asList(DETECTOR_INDEX));
     private static final Set<String> OPTIONAL_PARAMS = new LinkedHashSet<>(Arrays.asList(DESCRIPTION, DETECTOR_RULES));
 
-    private final StringWriter m_ConfigWriter;
-    private List<UpdateParams> m_Updates;
+    private final StringWriter configWriter;
+    private List<UpdateParams> updates;
 
     public DetectorsUpdater(JobDetails job, String updateKey, StringWriter configWriter) {
         super(job, updateKey);
-        m_Updates = new ArrayList<>();
-        m_ConfigWriter = configWriter;
+        updates = new ArrayList<>();
+        this.configWriter = configWriter;
     }
 
     @Override
@@ -43,7 +43,7 @@ class DetectorsUpdater extends AbstractUpdater {
         JobDetails job = job();
         parseUpdate(node);
         int detectorsCount = job.getAnalysisConfig().getDetectors().size();
-        for (UpdateParams update : m_Updates) {
+        for (UpdateParams update : updates) {
             validateDetectorIndex(update, detectorsCount);
             fillDefaultDescriptionIfSetEmpty(job, update);
             validateDetectorRules(job, update);
@@ -90,7 +90,7 @@ class DetectorsUpdater extends AbstractUpdater {
             parsedParams.detectorRules = parseDetectorRules(updateParams.get(DETECTOR_RULES));
         }
 
-        m_Updates.add(parsedParams);
+        updates.add(parsedParams);
     }
 
     private static int parseDetectorIndex(Object detectorIndex) {
@@ -176,9 +176,9 @@ class DetectorsUpdater extends AbstractUpdater {
             } catch (JsonProcessingException e) {
                 throw ExceptionsHelper.invalidRequestException("Failed to write detectorRules", ErrorCodes.UNKNOWN_ERROR, e);
             }
-            m_ConfigWriter.write("[detectorRules]\n");
-            m_ConfigWriter.write("detectorIndex = " + detectorIndex + "\n");
-            m_ConfigWriter.write("rulesJson = " + rulesJson + "\n");
+            configWriter.write("[detectorRules]\n");
+            configWriter.write("detectorIndex = " + detectorIndex + "\n");
+            configWriter.write("rulesJson = " + rulesJson + "\n");
         }
     }
 }

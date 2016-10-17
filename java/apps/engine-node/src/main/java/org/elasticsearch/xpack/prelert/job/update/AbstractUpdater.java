@@ -16,24 +16,24 @@ import java.util.function.Supplier;
 abstract class AbstractUpdater {
     protected static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    private final JobDetails m_Job;
-    private final String m_UpdateKey;
+    private final JobDetails job;
+    private final String updateKey;
 
     AbstractUpdater(JobDetails job, String updateKey) {
-        m_Job = Objects.requireNonNull(job);
-        m_UpdateKey = Objects.requireNonNull(updateKey);
+        this.job = Objects.requireNonNull(job);
+        this.updateKey = Objects.requireNonNull(updateKey);
     }
 
     protected JobDetails job() {
-        return m_Job;
+        return job;
     }
 
     protected String jobId() {
-        return m_Job.getId();
+        return job.getId();
     }
 
     protected String updateKey() {
-        return m_UpdateKey;
+        return updateKey;
     }
 
     protected final Map<String, Object> convertToMap(JsonNode node, Supplier<String> errorMessageSupplier) {
@@ -45,10 +45,10 @@ abstract class AbstractUpdater {
     }
 
     protected void checkJobIsClosed() {
-        JobStatus jobStatus = m_Job.getStatus();
+        JobStatus jobStatus = job.getStatus();
         if (jobStatus != JobStatus.CLOSED) {
             throw ExceptionsHelper.invalidRequestException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_JOB_IS_NOT_CLOSED, m_UpdateKey, jobStatus), ErrorCodes.JOB_NOT_CLOSED);
+                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_JOB_IS_NOT_CLOSED, updateKey, jobStatus), ErrorCodes.JOB_NOT_CLOSED);
         }
     }
 
