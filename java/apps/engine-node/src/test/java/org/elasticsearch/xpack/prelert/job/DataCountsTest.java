@@ -1,8 +1,25 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -10,10 +27,34 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+public class DataCountsTest extends AbstractSerializingTestCase<DataCounts> {
 
-public class DataCountsTest extends ESTestCase {
+    @Override
+    protected DataCounts createTestInstance() {
+        DataCounts dataCounts = new DataCounts();
+        dataCounts.setBucketCount(randomPositiveLong());
+        dataCounts.setExcludedRecordCount(randomPositiveLong());
+        dataCounts.setFailedTransformCount(randomPositiveLong());
+        dataCounts.setInputBytes(randomPositiveLong());
+        dataCounts.setInputFieldCount(randomPositiveLong());
+        dataCounts.setInvalidDateCount(randomPositiveLong());
+        dataCounts.setLatestRecordTimeStamp(new Date(randomIntBetween(0, Integer.MAX_VALUE)));
+        dataCounts.setMissingFieldCount(randomPositiveLong());
+        dataCounts.setOutOfOrderTimeStampCount(randomPositiveLong());
+        dataCounts.setProcessedFieldCount(randomPositiveLong());
+        dataCounts.setProcessedRecordCount(randomPositiveLong());
+        return dataCounts;
+    }
 
+    @Override
+    protected Writeable.Reader<DataCounts> instanceReader() {
+        return DataCounts::new;
+    }
+
+    @Override
+    protected DataCounts parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return DataCounts.PARSER.apply(parser, () -> matcher);
+    }
 
     public void testCountsEquals_GivenEqualCounts() {
         DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
@@ -23,14 +64,12 @@ public class DataCountsTest extends ESTestCase {
         assertTrue(counts2.equals(counts1));
     }
 
-
     public void testCountsHashCode_GivenEqualCounts() {
         DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
         DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
-
 
     public void testCountsCopyConstructor() {
         DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
@@ -39,12 +78,10 @@ public class DataCountsTest extends ESTestCase {
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
 
-
     public void testCountCreatedZero() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
         DataCounts counts = new DataCounts();
         testAllFieldsEqualZero(counts);
     }
-
 
     public void testCountCopyCreatedFieldsNotZero()
             throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -54,7 +91,6 @@ public class DataCountsTest extends ESTestCase {
         DataCounts counts2 = new DataCounts(counts1);
         testAllFieldsGreaterThanZero(counts2);
     }
-
 
     public void testIncrements() {
         DataCounts counts = new DataCounts();
@@ -78,7 +114,6 @@ public class DataCountsTest extends ESTestCase {
         assertEquals(40, counts.getProcessedRecordCount());
     }
 
-
     public void testGetInputRecordCount() {
         DataCounts counts = new DataCounts();
         counts.incrementProcessedRecordCount(5);
@@ -90,7 +125,6 @@ public class DataCountsTest extends ESTestCase {
         counts.incrementInvalidDateCount(1);
         assertEquals(8, counts.getInputRecordCount());
     }
-
 
     public void testCalcProcessedFieldCount() {
         DataCounts counts = new DataCounts();
@@ -104,7 +138,6 @@ public class DataCountsTest extends ESTestCase {
         counts.calcProcessedFieldCount(3);
         assertEquals(25, counts.getProcessedFieldCount());
     }
-
 
     public void testEquals() {
         DataCounts counts1 = new DataCounts();

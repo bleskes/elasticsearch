@@ -14,14 +14,30 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-
 package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.joda.FormatDateTimeFormatter;
+import org.elasticsearch.common.joda.Joda;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,22 +57,46 @@ import java.util.Objects;
  */
 
 @JsonInclude(Include.NON_NULL)
-public class DataCounts {
-    public static final String BUCKET_COUNT = "bucketCount";
-    public static final String PROCESSED_RECORD_COUNT = "processedRecordCount";
-    public static final String PROCESSED_FIELD_COUNT = "processedFieldCount";
-    public static final String INPUT_BYTES = "inputBytes";
-    public static final String INPUT_RECORD_COUNT = "inputRecordCount";
-    public static final String INPUT_FIELD_COUNT = "inputFieldCount";
-    public static final String INVALID_DATE_COUNT = "invalidDateCount";
-    public static final String MISSING_FIELD_COUNT = "missingFieldCount";
-    public static final String OUT_OF_ORDER_TIME_COUNT = "outOfOrderTimeStampCount";
-    public static final String FAILED_TRANSFORM_COUNT = "failedTransformCount";
-    public static final String LATEST_RECORD_TIME = "latestRecordTimeStamp";
-    public static final String EXCLUDED_RECORD_COUNT = "excludedRecordCount";
+public class DataCounts extends ToXContentToBytes implements Writeable {
 
+    public static final ParseField BUCKET_COUNT = new ParseField("bucketCount");
+    public static final ParseField PROCESSED_RECORD_COUNT = new ParseField("processedRecordCount");
+    public static final ParseField PROCESSED_FIELD_COUNT = new ParseField("processedFieldCount");
+    public static final ParseField INPUT_BYTES = new ParseField("inputBytes");
+    public static final ParseField INPUT_RECORD_COUNT = new ParseField("inputRecordCount");
+    public static final ParseField INPUT_FIELD_COUNT = new ParseField("inputFieldCount");
+    public static final ParseField INVALID_DATE_COUNT = new ParseField("invalidDateCount");
+    public static final ParseField MISSING_FIELD_COUNT = new ParseField("missingFieldCount");
+    public static final ParseField OUT_OF_ORDER_TIME_COUNT = new ParseField("outOfOrderTimeStampCount");
+    public static final ParseField FAILED_TRANSFORM_COUNT = new ParseField("failedTransformCount");
+    public static final ParseField EXCLUDED_RECORD_COUNT = new ParseField("excludedRecordCount");
+    public static final ParseField LATEST_RECORD_TIME = new ParseField("latestRecordTimeStamp");
 
-    private Long bucketCount;
+    public static final ObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
+            new ObjectParser<>("data_counts", DataCounts::new);
+
+    static {
+        PARSER.declareLong(DataCounts::setBucketCount, BUCKET_COUNT);
+        PARSER.declareLong(DataCounts::setProcessedRecordCount, PROCESSED_RECORD_COUNT);
+        PARSER.declareLong(DataCounts::setProcessedFieldCount, PROCESSED_FIELD_COUNT);
+        PARSER.declareLong(DataCounts::setInputBytes, INPUT_BYTES);
+        PARSER.declareLong(DataCounts::setInputRecordCount, INPUT_RECORD_COUNT);
+        PARSER.declareLong(DataCounts::setInputFieldCount, INPUT_FIELD_COUNT);
+        PARSER.declareLong(DataCounts::setInvalidDateCount, INVALID_DATE_COUNT);
+        PARSER.declareLong(DataCounts::setMissingFieldCount, MISSING_FIELD_COUNT);
+        PARSER.declareLong(DataCounts::setOutOfOrderTimeStampCount, OUT_OF_ORDER_TIME_COUNT);
+        PARSER.declareLong(DataCounts::setFailedTransformCount, FAILED_TRANSFORM_COUNT);
+        PARSER.declareLong(DataCounts::setExcludedRecordCount, EXCLUDED_RECORD_COUNT);
+        PARSER.declareField(
+                (p, v, c) -> {
+                    v.setLatestRecordTimeStamp(new Date(p.longValue()));
+                },
+                LATEST_RECORD_TIME,
+                ObjectParser.ValueType.LONG
+        );
+    }
+
+    private long bucketCount;
     private long processedRecordCount;
     private long processedFieldCount;
     private long inputBytes;
@@ -69,7 +109,6 @@ public class DataCounts {
     private Date latestRecordTimeStamp;
 
     public DataCounts() {
-        bucketCount = new Long(0);
     }
 
     public DataCounts(DataCounts lhs) {
@@ -82,8 +121,22 @@ public class DataCounts {
         missingFieldCount = lhs.missingFieldCount;
         outOfOrderTimeStampCount = lhs.outOfOrderTimeStampCount;
         failedTransformCount = lhs.failedTransformCount;
-        latestRecordTimeStamp = lhs.latestRecordTimeStamp;
         excludedRecordCount = lhs.excludedRecordCount;
+        latestRecordTimeStamp = lhs.latestRecordTimeStamp;
+    }
+
+    public DataCounts(StreamInput in) throws IOException {
+        bucketCount = in.readVLong();
+        processedRecordCount = in.readVLong();
+        processedFieldCount = in.readVLong();
+        inputBytes = in.readVLong();
+        inputFieldCount = in.readVLong();
+        invalidDateCount = in.readVLong();
+        missingFieldCount = in.readVLong();
+        outOfOrderTimeStampCount = in.readVLong();
+        failedTransformCount = in.readVLong();
+        excludedRecordCount = in.readVLong();
+        latestRecordTimeStamp = new Date(in.readVLong());
     }
 
 
@@ -92,11 +145,11 @@ public class DataCounts {
      *
      * @return May be <code>null</code>
      */
-    public Long getBucketCount() {
+    public long getBucketCount() {
         return bucketCount;
     }
 
-    public void setBucketCount(Long count) {
+    public void setBucketCount(long count) {
         bucketCount = count;
     }
 
@@ -317,19 +370,52 @@ public class DataCounts {
 
     public Map<String, Object> toObjectMap() {
         Map<String, Object> map = new HashMap<>();
-        map.put(BUCKET_COUNT, bucketCount);
-        map.put(PROCESSED_RECORD_COUNT, processedRecordCount);
-        map.put(PROCESSED_FIELD_COUNT, processedFieldCount);
-        map.put(INPUT_BYTES, inputBytes);
-        map.put(INPUT_RECORD_COUNT, getInputRecordCount());
-        map.put(INPUT_FIELD_COUNT, inputFieldCount);
-        map.put(INVALID_DATE_COUNT, invalidDateCount);
-        map.put(MISSING_FIELD_COUNT, missingFieldCount);
-        map.put(OUT_OF_ORDER_TIME_COUNT, outOfOrderTimeStampCount);
-        map.put(FAILED_TRANSFORM_COUNT, failedTransformCount);
-        map.put(LATEST_RECORD_TIME, latestRecordTimeStamp);
-        map.put(EXCLUDED_RECORD_COUNT, excludedRecordCount);
+        map.put(BUCKET_COUNT.getPreferredName(), bucketCount);
+        map.put(PROCESSED_RECORD_COUNT.getPreferredName(), processedRecordCount);
+        map.put(PROCESSED_FIELD_COUNT.getPreferredName(), processedFieldCount);
+        map.put(INPUT_BYTES.getPreferredName(), inputBytes);
+        map.put(INPUT_RECORD_COUNT.getPreferredName(), getInputRecordCount());
+        map.put(INPUT_FIELD_COUNT.getPreferredName(), inputFieldCount);
+        map.put(INVALID_DATE_COUNT.getPreferredName(), invalidDateCount);
+        map.put(MISSING_FIELD_COUNT.getPreferredName(), missingFieldCount);
+        map.put(OUT_OF_ORDER_TIME_COUNT.getPreferredName(), outOfOrderTimeStampCount);
+        map.put(FAILED_TRANSFORM_COUNT.getPreferredName(), failedTransformCount);
+        map.put(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp);
+        map.put(EXCLUDED_RECORD_COUNT.getPreferredName(), excludedRecordCount);
         return map;
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeVLong(bucketCount);
+        out.writeVLong(processedRecordCount);
+        out.writeVLong(processedFieldCount);
+        out.writeVLong(inputBytes);
+        out.writeVLong(inputFieldCount);
+        out.writeVLong(invalidDateCount);
+        out.writeVLong(missingFieldCount);
+        out.writeVLong(outOfOrderTimeStampCount);
+        out.writeVLong(failedTransformCount);
+        out.writeVLong(excludedRecordCount);
+        out.writeVLong(latestRecordTimeStamp.getTime());
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(BUCKET_COUNT.getPreferredName(), bucketCount);
+        builder.field(PROCESSED_RECORD_COUNT.getPreferredName(), processedRecordCount);
+        builder.field(PROCESSED_FIELD_COUNT.getPreferredName(), processedFieldCount);
+        builder.field(INPUT_BYTES.getPreferredName(), inputBytes);
+        builder.field(INPUT_FIELD_COUNT.getPreferredName(), inputFieldCount);
+        builder.field(INVALID_DATE_COUNT.getPreferredName(), invalidDateCount);
+        builder.field(MISSING_FIELD_COUNT.getPreferredName(), missingFieldCount);
+        builder.field(OUT_OF_ORDER_TIME_COUNT.getPreferredName(), outOfOrderTimeStampCount);
+        builder.field(FAILED_TRANSFORM_COUNT.getPreferredName(), failedTransformCount);
+        builder.field(EXCLUDED_RECORD_COUNT.getPreferredName(), excludedRecordCount);
+        builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
+        builder.endObject();
+        return builder;
     }
 
     /**
@@ -347,7 +433,7 @@ public class DataCounts {
 
         DataCounts that = (DataCounts) other;
 
-        return this.bucketCount.equals(that.bucketCount) &&
+        return this.bucketCount == that.bucketCount &&
                 this.processedRecordCount == that.processedRecordCount &&
                 this.processedFieldCount == that.processedFieldCount &&
                 this.inputBytes == that.inputBytes &&
