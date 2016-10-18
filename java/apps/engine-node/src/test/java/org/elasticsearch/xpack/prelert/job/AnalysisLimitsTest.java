@@ -1,38 +1,44 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
+public class AnalysisLimitsTest extends AbstractSerializingTestCase<AnalysisLimits> {
 
-public class AnalysisLimitsTest extends ESTestCase {
+    @Override
+    protected AnalysisLimits createTestInstance() {
+        return new AnalysisLimits(randomLong(), randomBoolean() ? randomLong() : null);
+    }
+
+    @Override
+    protected Writeable.Reader<AnalysisLimits> instanceReader() {
+        return AnalysisLimits::new;
+    }
+
+    @Override
+    protected AnalysisLimits parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return AnalysisLimits.PARSER.apply(parser, () -> matcher);
+    }
 
     public void testSetModelMemoryLimit_GivenNegative() {
-        AnalysisLimits limits = new AnalysisLimits();
-
-        limits.setModelMemoryLimit(-42);
-
+        AnalysisLimits limits = new AnalysisLimits(-42, null);
         assertEquals(-1, limits.getModelMemoryLimit());
     }
 
 
     public void testSetModelMemoryLimit_GivenZero() {
-        AnalysisLimits limits = new AnalysisLimits();
-
-        limits.setModelMemoryLimit(0);
-
+        AnalysisLimits limits = new AnalysisLimits(0, null);
         assertEquals(0, limits.getModelMemoryLimit());
     }
 
 
     public void testSetModelMemoryLimit_GivenPositive() {
-        AnalysisLimits limits = new AnalysisLimits();
-
-        limits.setModelMemoryLimit(52);
-
+        AnalysisLimits limits = new AnalysisLimits(52L, null);
         assertEquals(52, limits.getModelMemoryLimit());
     }
 
@@ -66,32 +72,26 @@ public class AnalysisLimitsTest extends ESTestCase {
 
 
     public void testHashCode_GivenEqual() {
-        AnalysisLimits analysisLimits1 = new AnalysisLimits(5555, 3L);
-        AnalysisLimits analysisLimits2 = new AnalysisLimits(5555, 3L);
+        AnalysisLimits analysisLimits1 = new AnalysisLimits(5555L, 3L);
+        AnalysisLimits analysisLimits2 = new AnalysisLimits(5555L, 3L);
 
         assertEquals(analysisLimits1.hashCode(), analysisLimits2.hashCode());
     }
 
 
     public void testToMap_GivenDefault() {
-        AnalysisLimits defaultLimits = new AnalysisLimits();
-
+        AnalysisLimits defaultLimits = new AnalysisLimits(0, null);
         Map<String, Object> map = defaultLimits.toMap();
-
         assertEquals(1, map.size());
-        assertEquals(0L, map.get(AnalysisLimits.MODEL_MEMORY_LIMIT));
+        assertEquals(0L, map.get(AnalysisLimits.MODEL_MEMORY_LIMIT.getPreferredName()));
     }
 
 
     public void testToMap_GivenFullyPopulated() {
-        AnalysisLimits limits = new AnalysisLimits();
-        limits.setCategorizationExamplesLimit(5L);
-        limits.setModelMemoryLimit(1000L);
-
+        AnalysisLimits limits = new AnalysisLimits(1000L, 5L);
         Map<String, Object> map = limits.toMap();
-
         assertEquals(2, map.size());
-        assertEquals(1000L, map.get(AnalysisLimits.MODEL_MEMORY_LIMIT));
-        assertEquals(5L, map.get(AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT));
+        assertEquals(1000L, map.get(AnalysisLimits.MODEL_MEMORY_LIMIT.getPreferredName()));
+        assertEquals(5L, map.get(AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT.getPreferredName()));
     }
 }

@@ -53,8 +53,8 @@ public final class ReservedFieldNames
         AnalysisConfig.RESULT_FINALIZATION_WINDOW,
         AnalysisConfig.MULTIVARIATE_BY_FIELDS,
 
-        AnalysisLimits.MODEL_MEMORY_LIMIT,
-        AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT,
+        AnalysisLimits.MODEL_MEMORY_LIMIT.getPreferredName(),
+        AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT.getPreferredName(),
 
         AnomalyCause.PROBABILITY,
         AnomalyCause.OVER_FIELD_NAME,

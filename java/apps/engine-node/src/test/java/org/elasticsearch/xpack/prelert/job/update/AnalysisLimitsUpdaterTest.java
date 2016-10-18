@@ -92,8 +92,7 @@ public class AnalysisLimitsUpdaterTest extends ESTestCase {
         job.setId(jobId);
         job.setStatus(jobStatus);
         if (memoryLimit != null) {
-            AnalysisLimits analysisLimits = new AnalysisLimits();
-            analysisLimits.setModelMemoryLimit(memoryLimit);
+            AnalysisLimits analysisLimits = new AnalysisLimits(memoryLimit, null);
             job.setAnalysisLimits(analysisLimits);
         }
         return job;

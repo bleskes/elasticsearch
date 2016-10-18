@@ -147,7 +147,8 @@ public class JobConfigurationVerifierTest extends ESTestCase {
             assertTrue(false); // shouldn't get here
         }
 
-        jc.setAnalysisLimits(new AnalysisLimits(1000, 4L));
+        AnalysisLimits limits = new AnalysisLimits(1000L, 4L);
+        jc.setAnalysisLimits(limits);
         JobConfigurationVerifier.verify(jc);
 
         DataDescription dc = new DataDescription();

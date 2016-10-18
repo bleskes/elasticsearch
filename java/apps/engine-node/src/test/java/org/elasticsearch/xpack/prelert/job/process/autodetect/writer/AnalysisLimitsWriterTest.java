@@ -30,7 +30,7 @@ public class AnalysisLimitsWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenUnsetValues() throws IOException {
-        AnalysisLimits limits = new AnalysisLimits();
+        AnalysisLimits limits = new AnalysisLimits(0L, null);
         AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
 
         analysisLimitsWriter.write();
@@ -39,8 +39,7 @@ public class AnalysisLimitsWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenModelMemoryLimitWasSet() throws IOException {
-        AnalysisLimits limits = new AnalysisLimits();
-        limits.setModelMemoryLimit(10);
+        AnalysisLimits limits = new AnalysisLimits(10L, null);
         AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
 
         analysisLimitsWriter.write();
@@ -49,8 +48,7 @@ public class AnalysisLimitsWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenCategorizationExamplesLimitWasSet() throws IOException {
-        AnalysisLimits limits = new AnalysisLimits();
-        limits.setCategorizationExamplesLimit(5L);
+        AnalysisLimits limits = new AnalysisLimits(0L, 5L);
         AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
 
         analysisLimitsWriter.write();

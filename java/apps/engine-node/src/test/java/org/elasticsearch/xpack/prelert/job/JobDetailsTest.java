@@ -80,7 +80,7 @@ public class JobDetailsTest extends ESTestCase {
         JobDetails jobDetails1 = new JobDetails();
         jobDetails1.setId("foo");
         jobDetails1.setAnalysisConfig(new AnalysisConfig());
-        jobDetails1.setAnalysisLimits(new AnalysisLimits());
+        jobDetails1.setAnalysisLimits(new AnalysisLimits(0L, null));
         jobDetails1.setCounts(new DataCounts());
         jobDetails1.setCreateTime(new Date(0));
         jobDetails1.setCustomSettings(new HashMap<>());
@@ -105,7 +105,7 @@ public class JobDetailsTest extends ESTestCase {
         JobDetails jobDetails2 = new JobDetails();
         jobDetails2.setId("foo");
         jobDetails2.setAnalysisConfig(new AnalysisConfig());
-        jobDetails2.setAnalysisLimits(new AnalysisLimits());
+        jobDetails2.setAnalysisLimits(new AnalysisLimits(0L, null));
         jobDetails2.setCounts(new DataCounts());
         jobDetails2.setCreateTime(new Date(0));
         jobDetails2.setCustomSettings(new HashMap<>());

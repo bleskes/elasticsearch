@@ -217,9 +217,7 @@ public class JobUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenValidAnalysisLimitsUpdate() throws JobException {
-        AnalysisLimits analysisLimits = new AnalysisLimits();
-        analysisLimits.setModelMemoryLimit(100L);
-        analysisLimits.setCategorizationExamplesLimit(4L);
+        AnalysisLimits analysisLimits = new AnalysisLimits(100L, 4L);
         m_Job.setStatus(JobStatus.CLOSED);
         m_Job.setAnalysisLimits(analysisLimits);
 
@@ -230,9 +228,7 @@ public class JobUpdaterTest extends ESTestCase {
 
         new JobUpdater(m_Job).update(update);
 
-        AnalysisLimits newLimits = new AnalysisLimits();
-        newLimits.setModelMemoryLimit(1000L);
-        newLimits.setCategorizationExamplesLimit(10L);
+        AnalysisLimits newLimits = new AnalysisLimits(1000L, 10L);
         assertThat(m_Job.getAnalysisLimits(), equalTo(newLimits));
     }
 }

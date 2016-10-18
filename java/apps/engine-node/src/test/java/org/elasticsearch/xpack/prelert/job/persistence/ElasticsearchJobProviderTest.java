@@ -338,8 +338,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         job.setJobId("marscapone");
         job.setDescription("This is a very cheesy job");
         job.setStatus(JobStatus.FAILED);
-        AnalysisLimits limits = new AnalysisLimits();
-        limits.setModelMemoryLimit(9878695309134L);
+        AnalysisLimits limits = new AnalysisLimits(9878695309134L, null);
         job.setAnalysisLimits(limits);
 
         ArgumentCaptor<String> getSource = ArgumentCaptor.forClass(String.class);
