@@ -52,23 +52,23 @@ public class FieldConfigWriterTest extends ESTestCase {
             throws IOException {
         List<Detector> detectors = new ArrayList<>();
 
-        Detector d = new Detector("foo", "metric", "Integer_Value");
+        Detector d = new Detector("metric", "Integer_Value");
         d.setByFieldName("ts_hash");
         detectors.add(d);
-        Detector d2 = new Detector("foo", "count");
+        Detector d2 = new Detector("count");
         d2.setByFieldName("ipaddress");
         detectors.add(d2);
-        Detector d3 = new Detector("foo", "max", "Integer_Value");
+        Detector d3 = new Detector("max", "Integer_Value");
         d3.setOverFieldName("ts_hash");
         detectors.add(d3);
-        Detector d4 = new Detector("foo", "rare");
+        Detector d4 = new Detector("rare");
         d4.setByFieldName("ipaddress");
         d4.setPartitionFieldName("host");
         detectors.add(d4);
-        Detector d5 = new Detector("foo", "rare");
+        Detector d5 = new Detector("rare");
         d5.setByFieldName("weird field");
         detectors.add(d5);
-        Detector d6 = new Detector("foo", "max", "\"quoted\" field");
+        Detector d6 = new Detector("max", "\"quoted\" field");
         d6.setOverFieldName("ts\\hash");
         detectors.add(d6);
 
@@ -113,7 +113,7 @@ public class FieldConfigWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenConfigHasCategorizationField() throws IOException {
-        Detector d = new Detector("foo", "metric", "Integer_Value");
+        Detector d = new Detector("metric", "Integer_Value");
         d.setByFieldName("ts_hash");
 
         analysisConfig.setDetectors(Arrays.asList(d));
@@ -127,7 +127,7 @@ public class FieldConfigWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenConfigHasInfluencers() throws IOException {
-        Detector d = new Detector("Integer_Value by ts_hash", "metric", "Integer_Value");
+        Detector d = new Detector("metric", "Integer_Value");
         d.setByFieldName("ts_hash");
 
         analysisConfig.setDetectors(Arrays.asList(d));
@@ -145,7 +145,7 @@ public class FieldConfigWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenConfigHasCategorizationFieldAndFiltersAndInfluencer() throws IOException {
-        Detector d = new Detector("foo", "metric", "Integer_Value");
+        Detector d = new Detector("metric", "Integer_Value");
         d.setByFieldName("ts_hash");
 
         analysisConfig.setDetectors(Arrays.asList(d));
@@ -167,7 +167,7 @@ public class FieldConfigWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenDetectorWithRules() throws IOException {
-        Detector detector = new Detector("foo", "mean", "metricValue");
+        Detector detector = new Detector("mean", "metricValue");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
         RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
@@ -201,7 +201,7 @@ public class FieldConfigWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenLists() throws IOException {
-        Detector d = new Detector("foo", "count");
+        Detector d = new Detector("count");
 
         analysisConfig.setDetectors(Arrays.asList(d));
         lists.add(new ListDocument("list_1", Arrays.asList("a", "b")));

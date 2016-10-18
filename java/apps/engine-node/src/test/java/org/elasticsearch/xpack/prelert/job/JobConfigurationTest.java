@@ -13,10 +13,10 @@ public class JobConfigurationTest extends ESTestCase {
      */
 
     public void testAnalysisConfigRequiredFields() {
-        Detector d1 = new Detector("foo", "max", "field");
+        Detector d1 = new Detector("max", "field");
         d1.setByFieldName("by");
 
-        Detector d2 = new Detector("foo", "metric", "field2");
+        Detector d2 = new Detector("metric", "field2");
         d2.setOverFieldName("over");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -36,7 +36,7 @@ public class JobConfigurationTest extends ESTestCase {
         assertFalse(analysisFields.contains(""));
         assertFalse(analysisFields.contains(null));
 
-        Detector d3 = new Detector("foo", "count");
+        Detector d3 = new Detector("count");
         d3.setByFieldName("by2");
         d3.setPartitionFieldName("partition");
 

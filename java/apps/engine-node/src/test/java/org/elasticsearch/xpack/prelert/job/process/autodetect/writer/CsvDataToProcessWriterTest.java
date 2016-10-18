@@ -77,12 +77,12 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
         analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         analysisConfig.setDetectors(Arrays.asList(detector));
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndDataIsValid() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
         input.append("1,foo,1.0\n");
@@ -104,7 +104,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenTransformAndEmptyField() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig transform = new TransformConfig();
         transform.setTransform("uppercase");
         transform.setInputs(Arrays.asList("value"));
@@ -112,13 +112,14 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         transforms.add(transform);
 
         Detector existingDetector = analysisConfig.getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getDetectorDescription(), existingDetector.getFunction(), "transformed");
+        Detector newDetector = new Detector(existingDetector.getFunction(), "transformed");
         newDetector.setByFieldName(existingDetector.getByFieldName());
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
         newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
         newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
         newDetector.setUseNull(existingDetector.isUseNull());
+        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
         analysisConfig.getDetectors().set(0, newDetector);
 
         StringBuilder input = new StringBuilder();
@@ -263,7 +264,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenDateTimeFieldIsOutputOfTransform() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig transform = new TransformConfig();
         transform.setTransform("concat");
         transform.setInputs(Arrays.asList("date", "time-of-day"));
@@ -299,7 +300,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenChainedTransforms_SortsByDependencies() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig tc1 = new TransformConfig();
         tc1.setTransform(TransformType.Names.UPPERCASE_NAME);
         tc1.setInputs(Arrays.asList("dns"));
@@ -314,7 +315,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         transforms.add(tc1);
         transforms.add(tc2);
 
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName("dns_upper");
         analysisConfig.setDetectors(Arrays.asList(detector));
 
@@ -339,7 +340,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenMisplacedQuoteMakesRecordExtendOverTooManyLines() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
 
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");

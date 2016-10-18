@@ -19,13 +19,13 @@ import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 public class DetectorTest extends AbstractSerializingTestCase<Detector> {
 
     public void testEquals_GivenEqual() {
-        Detector detector1 = new Detector("foo", "mean", "field");
+        Detector detector1 = new Detector("mean", "field");
         detector1.setByFieldName("by");
         detector1.setOverFieldName("over");
         detector1.setPartitionFieldName("partition");
         detector1.setUseNull(false);
 
-        Detector detector2 = new Detector("foo", "mean", "field");
+        Detector detector2 = new Detector("mean", "field");
         detector2.setByFieldName("by");
         detector2.setOverFieldName("over");
         detector2.setPartitionFieldName("partition");
@@ -91,7 +91,7 @@ public class DetectorTest extends AbstractSerializingTestCase<Detector> {
     }
 
     private Detector createDetector() {
-        Detector detector = new Detector("foo", "mean", "field");
+        Detector detector = new Detector("mean", "field");
         detector.setByFieldName("by");
         detector.setOverFieldName("over");
         detector.setPartitionFieldName("partition");
@@ -107,14 +107,15 @@ public class DetectorTest extends AbstractSerializingTestCase<Detector> {
     protected Detector createTestInstance() {
         Detector detector;
         if (randomBoolean()) {
-            detector = new Detector(frequently() ? randomAsciiOfLengthBetween(1, 100) : null,
-                    randomFrom(Detector.COUNT_WITHOUT_FIELD_FUNCTIONS));
+            detector = new Detector(randomFrom(Detector.COUNT_WITHOUT_FIELD_FUNCTIONS));
         } else {
-            detector = new Detector(frequently() ? randomAsciiOfLengthBetween(1, 100) : null, randomFrom(Detector.FIELD_NAME_FUNCTIONS),
-                    randomAsciiOfLengthBetween(1, 20));
+            detector = new Detector(randomFrom(Detector.FIELD_NAME_FUNCTIONS), randomAsciiOfLengthBetween(1, 20));
         }
         if (randomBoolean()) {
             detector.setByFieldName(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            detector.setDetectorDescription(randomAsciiOfLengthBetween(1, 20));
         }
         if (randomBoolean()) {
             detector.setOverFieldName(randomAsciiOfLengthBetween(1, 20));

@@ -68,8 +68,9 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("metric(value) by host-metric", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName("host-metric");
+        detector.setDetectorDescription("metric(value) by host-metric");
         ac.setDetectors(Arrays.asList(detector));
 
         TransformConfig tc = new TransformConfig();
@@ -133,7 +134,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         detector.setOverFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(1));
         ac.setDetectors(Arrays.asList(detector));
@@ -215,7 +216,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
@@ -291,7 +292,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
@@ -354,7 +355,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName("metric");
         ac.setDetectors(Arrays.asList(detector));
 
@@ -405,7 +406,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName("type");
         ac.setDetectors(Arrays.asList(detector));
 

@@ -176,7 +176,7 @@ public class DetectorsUpdaterTest extends ESTestCase {
         JsonNode node = new ObjectMapper().readTree("[{\"index\":1, \"description\":\"\"}]");
         givenJobHasNDetectors(3);
         Detector existingDetector = m_Job.getAnalysisConfig().getDetectors().get(1);
-        Detector newDetector = new Detector("foo", "mean", "responsetime");
+        Detector newDetector = new Detector("mean", "responsetime");
         newDetector.setByFieldName("airline");
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
         newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
@@ -210,13 +210,14 @@ public class DetectorsUpdaterTest extends ESTestCase {
                         + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"}}]}]}]");
         givenJobHasNDetectors(1);
         Detector existingDetector = m_Job.getAnalysisConfig().getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getDetectorDescription(), "count");
+        Detector newDetector = new Detector("count");
         newDetector.setByFieldName(existingDetector.getByFieldName());
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
         newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
         newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
         newDetector.setUseNull(existingDetector.isUseNull());
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
+        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
         m_Job.getAnalysisConfig().getDetectors().set(0, newDetector);
 
         List<DetectionRule> rules = new ArrayList<>();
@@ -244,13 +245,14 @@ public class DetectorsUpdaterTest extends ESTestCase {
                         + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"}}]}]}]");
         givenJobHasNDetectors(1);
         Detector existingDetector = m_Job.getAnalysisConfig().getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getDetectorDescription(), "count");
+        Detector newDetector = new Detector("count");
         newDetector.setByFieldName(existingDetector.getByFieldName());
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
         newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
         newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
         newDetector.setUseNull(existingDetector.isUseNull());
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
+        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
         m_Job.getAnalysisConfig().getDetectors().set(0, newDetector);
 
         List<DetectionRule> rules = new ArrayList<>();
@@ -280,7 +282,7 @@ public class DetectorsUpdaterTest extends ESTestCase {
         List<Detector> detectors = new ArrayList<>();
         for (int i = 0; i< n; i++)
         {
-            detectors.add(new Detector("foo", "count"));
+            detectors.add(new Detector("count"));
         }
         analysisConfig.setDetectors(detectors);
         m_Job.setAnalysisConfig(analysisConfig);

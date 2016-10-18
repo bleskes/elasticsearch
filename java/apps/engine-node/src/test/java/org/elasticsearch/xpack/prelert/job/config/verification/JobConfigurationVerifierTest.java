@@ -133,7 +133,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector d = new Detector("foo", "max", "a");
+        Detector d = new Detector("max", "a");
         d.setByFieldName("b");
         ac.setDetectors(Arrays.asList(new Detector[]{d}));
 
@@ -198,7 +198,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
 
         Detector existingDetector = jc.getAnalysisConfig().getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getDetectorDescription(), existingDetector.getFunction(),
+        Detector newDetector = new Detector(existingDetector.getFunction(),
                 TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         newDetector.setByFieldName(existingDetector.getByFieldName());
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
@@ -206,6 +206,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
         newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
         newDetector.setUseNull(existingDetector.isUseNull());
+        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
         jc.getAnalysisConfig().getDetectors().set(0, newDetector);
         assertTrue(JobConfigurationVerifier.verify(jc));
     }
@@ -230,7 +231,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         }
 
         Detector existingDetector = jc.getAnalysisConfig().getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getDetectorDescription(), existingDetector.getFunction(),
+        Detector newDetector = new Detector(existingDetector.getFunction(),
                 TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         newDetector.setByFieldName(existingDetector.getByFieldName());
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
@@ -238,6 +239,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
         newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
         newDetector.setUseNull(existingDetector.isUseNull());
+        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
         jc.getAnalysisConfig().getDetectors().set(0, newDetector);
         tc.setOutputs(TransformType.DOMAIN_SPLIT.defaultOutputNames());
         assertTrue(JobConfigurationVerifier.verify(jc));
@@ -478,10 +480,10 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     private JobConfiguration buildJobConfigurationNoTransforms() {
         JobConfiguration jc = new JobConfiguration();
 
-        Detector d1 = new Detector("foo", "info_content", "domain");
+        Detector d1 = new Detector("info_content", "domain");
         d1.setOverFieldName("client");
 
-        Detector d2 = new Detector("foo", "count");
+        Detector d2 = new Detector("count");
 
         AnalysisConfig ac = new AnalysisConfig();
         ac.setDetectors(Arrays.asList(new Detector[]{d1, d2}));

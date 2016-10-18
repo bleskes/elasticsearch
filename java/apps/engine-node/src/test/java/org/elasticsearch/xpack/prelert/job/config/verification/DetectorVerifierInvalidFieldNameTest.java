@@ -161,7 +161,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     }
 
     private static Detector createDetectorWithValidFieldNames() {
-        Detector d = new Detector("foo", "metric", "field");
+        Detector d = new Detector("metric", "field");
         d.setByFieldName("by");
         d.setOverFieldName("over");
         d.setPartitionFieldName("partition");
@@ -169,7 +169,7 @@ public class DetectorVerifierInvalidFieldNameTest extends ESTestCase {
     }
 
     private static Detector createDetectorWithSpecificFieldName(String fieldName) {
-        Detector d = new Detector("foo", "metric", fieldName);
+        Detector d = new Detector("metric", fieldName);
         d.setByFieldName("by");
         d.setOverFieldName("over");
         d.setPartitionFieldName("partition");

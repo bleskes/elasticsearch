@@ -47,17 +47,17 @@ public class Detector extends ToXContentToBytes implements Writeable {
 
     public static final ConstructingObjectParser<Detector, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
             DETECTOR_FIELD.getPreferredName(), a -> {
-                if (a.length == 2) {
-                    return new Detector((String) a[0], (String) a[1]);
+                if (a.length == 1) {
+                    return new Detector((String) a[0]);
                 } else {
-                    return new Detector((String) a[0], (String) a[1], (String) a[2]);
+                    return new Detector((String) a[0], (String) a[1]);
                 }
             });
 
     static {
-        PARSER.declareString(ConstructingObjectParser.constructorArg(), DETECTOR_DESCRIPTION_FIELD);
         PARSER.declareString(ConstructingObjectParser.constructorArg(), FUNCTION_FIELD);
         PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), FIELD_NAME_FIELD);
+        PARSER.declareString(Detector::setDetectorDescription, DETECTOR_DESCRIPTION_FIELD);
         PARSER.declareString(Detector::setByFieldName, BY_FIELD_NAME_FIELD);
         PARSER.declareString(Detector::setOverFieldName, OVER_FIELD_NAME_FIELD);
         PARSER.declareString(Detector::setPartitionFieldName, PARTITION_FIELD_NAME_FIELD);
@@ -338,14 +338,12 @@ public class Detector extends ToXContentToBytes implements Writeable {
         return builder;
     }
 
-    public Detector(String description, String function) {
-        this(description, function, null);
+    public Detector(String function) {
+        this(function, null);
     }
 
     @JsonCreator
-    public Detector(@JsonProperty("detector_description") String description, @JsonProperty("function") String function,
-            @JsonProperty("field_name") String fieldName) {
-        detectorDescription = description;
+    public Detector(@JsonProperty("function") String function, @JsonProperty("field_name") String fieldName) {
         this.function = function;
         this.fieldName = fieldName;
     }

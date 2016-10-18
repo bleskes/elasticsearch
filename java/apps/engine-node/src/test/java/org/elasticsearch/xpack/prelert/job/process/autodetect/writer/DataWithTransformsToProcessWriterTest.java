@@ -123,7 +123,7 @@ public class DataWithTransformsToProcessWriterTest extends ESTestCase {
         dd.setTimeFormat(DataDescription.EPOCH);
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName("concat");
         ac.setDetectors(Arrays.asList(detector));
 

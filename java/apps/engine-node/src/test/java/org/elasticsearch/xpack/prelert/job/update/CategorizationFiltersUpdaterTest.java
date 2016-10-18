@@ -26,7 +26,7 @@ public class CategorizationFiltersUpdaterTest extends ESTestCase {
     @Before
     public void setJob() {
         job = new JobDetails();
-        Detector detector = new Detector("foo", "count");
+        Detector detector = new Detector("count");
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setDetectors(Arrays.asList(detector));
         analysisConfig.setCategorizationFilters(null);

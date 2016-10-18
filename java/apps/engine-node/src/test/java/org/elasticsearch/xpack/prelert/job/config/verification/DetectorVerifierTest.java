@@ -52,7 +52,7 @@ public class DetectorVerifierTest extends ESTestCase {
     public void testVerify() throws ElasticsearchParseException {
         // if nothing else is set the count functions (excluding distinct count)
         // are the only allowable functions
-        Detector d = new Detector("foo", Detector.COUNT);
+        Detector d = new Detector(Detector.COUNT);
         DetectorVerifier.verify(d, false);
         DetectorVerifier.verify(d, true);
 
@@ -70,13 +70,13 @@ public class DetectorVerifierTest extends ESTestCase {
         difference.remove(Detector.TIME_OF_WEEK);
         for (String f : difference) {
             try {
-                d = new Detector("foo", f);
+                d = new Detector(f);
                 DetectorVerifier.verify(d, false);
                 Assert.fail("ElasticsearchParseException not thrown when expected");
             } catch (ElasticsearchParseException e) {
             }
             try {
-                d = new Detector("foo", f);
+                d = new Detector(f);
                 DetectorVerifier.verify(d, true);
                 Assert.fail("ElasticsearchParseException not thrown when expected");
             } catch (ElasticsearchParseException e) {
@@ -88,7 +88,7 @@ public class DetectorVerifierTest extends ESTestCase {
         for (String f : new String[]{Detector.NON_ZERO_COUNT, Detector.NZC,
                 Detector.LOW_NON_ZERO_COUNT, Detector.LOW_NZC, Detector.HIGH_NON_ZERO_COUNT,
                 Detector.HIGH_NZC}) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setOverFieldName("over");
             try {
                 DetectorVerifier.verify(d, false);
@@ -110,7 +110,7 @@ public class DetectorVerifierTest extends ESTestCase {
         difference.remove(Detector.TIME_OF_DAY);
         difference.remove(Detector.TIME_OF_WEEK);
         for (String f : difference) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setOverFieldName("over");
             try {
                 DetectorVerifier.verify(d, false);
@@ -127,14 +127,14 @@ public class DetectorVerifierTest extends ESTestCase {
         // these functions can have just an over field
         for (String f : new String[]{Detector.COUNT, Detector.HIGH_COUNT,
                 Detector.LOW_COUNT}) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setOverFieldName("over");
             DetectorVerifier.verify(d, false);
             DetectorVerifier.verify(d, true);
         }
 
         for (String f : new String[]{Detector.RARE, Detector.FREQ_RARE}) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setByFieldName("by");
             d.setOverFieldName("over");
             DetectorVerifier.verify(d, false);
@@ -151,7 +151,7 @@ public class DetectorVerifierTest extends ESTestCase {
                 Detector.LOW_SUM, Detector.HIGH_SUM, Detector.NON_NULL_SUM,
                 Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM, Detector.POPULATION_VARIANCE,
                 Detector.LOW_POPULATION_VARIANCE, Detector.HIGH_POPULATION_VARIANCE}) {
-            d = new Detector("foo", f, "f");
+            d = new Detector(f, "f");
             d.setOverFieldName("over");
             DetectorVerifier.verify(d, false);
             try {
@@ -195,7 +195,7 @@ public class DetectorVerifierTest extends ESTestCase {
         difference.remove(Detector.HIGH_INFO_CONTENT);
         difference.remove(Detector.LAT_LONG);
         for (String f : difference) {
-            d = new Detector("foo", f, "f");
+            d = new Detector(f, "f");
             d.setOverFieldName("over");
             try {
                 DetectorVerifier.verify(d, false);
@@ -213,13 +213,13 @@ public class DetectorVerifierTest extends ESTestCase {
         for (String f : new String[]{Detector.COUNT, Detector.HIGH_COUNT,
                 Detector.LOW_COUNT, Detector.RARE,
                 Detector.NON_ZERO_COUNT, Detector.NZC}) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setByFieldName("b");
             DetectorVerifier.verify(d, false);
             DetectorVerifier.verify(d, true);
         }
 
-        d = new Detector("foo", Detector.FREQ_RARE);
+        d = new Detector(Detector.FREQ_RARE);
         d.setByFieldName("b");
         d.setOverFieldName("over");
         DetectorVerifier.verify(d, false);
@@ -237,7 +237,7 @@ public class DetectorVerifierTest extends ESTestCase {
                 Detector.HIGH_DISTINCT_COUNT, Detector.HIGH_DC, Detector.LOW_DISTINCT_COUNT,
                 Detector.LOW_DC, Detector.INFO_CONTENT, Detector.LOW_INFO_CONTENT,
                 Detector.HIGH_INFO_CONTENT, Detector.LAT_LONG}) {
-            d = new Detector("foo", f, "f");
+            d = new Detector(f, "f");
             d.setByFieldName("b");
             DetectorVerifier.verify(d, false);
             try {
@@ -256,14 +256,14 @@ public class DetectorVerifierTest extends ESTestCase {
                 Detector.RARE, Detector.FREQ_RARE, Detector.TIME_OF_DAY,
                 Detector.TIME_OF_WEEK}) {
             try {
-                d = new Detector("foo", f, "field");
+                d = new Detector(f, "field");
                 d.setByFieldName("b");
                 DetectorVerifier.verify(d, false);
                 Assert.fail("ElasticsearchParseException not thrown when expected");
             } catch (ElasticsearchParseException e) {
             }
             try {
-                d = new Detector("foo", f, "field");
+                d = new Detector(f, "field");
                 d.setByFieldName("b");
                 DetectorVerifier.verify(d, true);
                 Assert.fail("ElasticsearchParseException not thrown when expected");
@@ -279,14 +279,14 @@ public class DetectorVerifierTest extends ESTestCase {
                 Detector.RARE, Detector.FREQ_RARE, Detector.TIME_OF_DAY,
                 Detector.TIME_OF_WEEK}) {
             try {
-                d = new Detector("foo", f, "field");
+                d = new Detector(f, "field");
                 d.setByFieldName("b");
                 DetectorVerifier.verify(d, false);
                 Assert.fail("ElasticsearchParseException not thrown when expected");
             } catch (ElasticsearchParseException e) {
             }
             try {
-                d = new Detector("foo", f, "field");
+                d = new Detector(f, "field");
                 d.setByFieldName("b");
                 DetectorVerifier.verify(d, true);
                 Assert.fail("ElasticsearchParseException not thrown when expected");
@@ -294,7 +294,7 @@ public class DetectorVerifierTest extends ESTestCase {
             }
         }
 
-        d = new Detector("foo", Detector.FREQ_RARE, "field");
+        d = new Detector(Detector.FREQ_RARE, "field");
         d.setByFieldName("b");
         d.setOverFieldName("over");
         try {
@@ -311,7 +311,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
         for (String f : new String[]{Detector.HIGH_COUNT,
                 Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC}) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setByFieldName("by");
             DetectorVerifier.verify(d, false);
             DetectorVerifier.verify(d, true);
@@ -319,7 +319,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
         for (String f : new String[]{Detector.COUNT, Detector.HIGH_COUNT,
                 Detector.LOW_COUNT}) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setOverFieldName("over");
             DetectorVerifier.verify(d, false);
             DetectorVerifier.verify(d, true);
@@ -327,7 +327,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
         for (String f : new String[]{Detector.HIGH_COUNT,
                 Detector.LOW_COUNT}) {
-            d = new Detector("foo", f);
+            d = new Detector(f);
             d.setByFieldName("by");
             d.setOverFieldName("over");
             DetectorVerifier.verify(d, false);
@@ -336,7 +336,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
         for (String f : new String[]{Detector.NON_ZERO_COUNT, Detector.NZC}) {
             try {
-                d = new Detector("foo", f, "field");
+                d = new Detector(f, "field");
                 d.setByFieldName("by");
                 d.setOverFieldName("over");
                 DetectorVerifier.verify(d, false);
@@ -344,7 +344,7 @@ public class DetectorVerifierTest extends ESTestCase {
             } catch (ElasticsearchParseException e) {
             }
             try {
-                d = new Detector("foo", f, "field");
+                d = new Detector(f, "field");
                 d.setByFieldName("by");
                 d.setOverFieldName("over");
                 DetectorVerifier.verify(d, true);
@@ -381,7 +381,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenInvalidDetectionRuleConditionFieldName() {
-        Detector detector = new Detector("foo", "mean", "metricVale");
+        Detector detector = new Detector("mean", "metricVale");
         detector.setByFieldName("metricName");
         RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
         ruleCondition.setFieldName("metricValue");
@@ -403,7 +403,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
     public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
             throws ElasticsearchParseException {
-        Detector detector = new Detector("foo", "mean", "metricVale");
+        Detector detector = new Detector("mean", "metricVale");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
         RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
@@ -426,7 +426,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenDetectionRuleWithInvalidCondition() {
-        Detector detector = new Detector("foo", "mean", "metricVale");
+        Detector detector = new Detector("mean", "metricVale");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
         RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
@@ -448,7 +448,7 @@ public class DetectorVerifierTest extends ESTestCase {
 
 
     public void testVerify_GivenValidDetectionRule() throws ElasticsearchParseException {
-        Detector detector = new Detector("foo", "mean", "metricVale");
+        Detector detector = new Detector("mean", "metricVale");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
         RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);

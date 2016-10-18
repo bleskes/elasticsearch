@@ -12,7 +12,7 @@ public class AnalysisConfigTest extends ESTestCase {
     public void testFieldConfiguration() {
         // Single detector, not pre-summarised
         AnalysisConfig ac = new AnalysisConfig();
-        Detector det = new Detector("foo", "metric", "responsetime");
+        Detector det = new Detector("metric", "responsetime");
         det.setByFieldName("airline");
         det.setPartitionFieldName("sourcetype");
         ac.setDetectors(Arrays.asList(det));
@@ -71,17 +71,17 @@ public class AnalysisConfigTest extends ESTestCase {
 
         ac = new AnalysisConfig();
         ac.setInfluencers(Arrays.asList("Influencer_Field"));
-        det = new Detector("foo", "metric", "metric1");
+        det = new Detector("metric", "metric1");
         det.setByFieldName("by_one");
         det.setPartitionFieldName("partition_one");
         detectors.add(det);
 
-        det = new Detector("foo", "metric", "metric2");
+        det = new Detector("metric", "metric2");
         det.setByFieldName("by_two");
         det.setOverFieldName("over_field");
         detectors.add(det);
 
-        det = new Detector("foo", "metric", "metric2");
+        det = new Detector("metric", "metric2");
         det.setByFieldName("by_two");
         det.setPartitionFieldName("partition_two");
         detectors.add(det);
@@ -313,12 +313,12 @@ public class AnalysisConfigTest extends ESTestCase {
         rule1.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list1")));
         DetectionRule rule2 = new DetectionRule();
         rule2.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list2")));
-        Detector detector1 = new Detector("foo1", "metric", "foo1");
+        Detector detector1 = new Detector("metric", "foo1");
         detector1.setDetectorRules(Arrays.asList(rule1));
-        Detector detector2 = new Detector("foo2", "metric", "foo2");
+        Detector detector2 = new Detector("metric", "foo2");
         detector2.setDetectorRules(Arrays.asList(rule2));
         AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Arrays.asList(detector1, detector2, new Detector("foo3", "metric", "foo3")));
+        config.setDetectors(Arrays.asList(detector1, detector2, new Detector("metric", "foo3")));
 
         assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), config.extractReferencedLists());
     }

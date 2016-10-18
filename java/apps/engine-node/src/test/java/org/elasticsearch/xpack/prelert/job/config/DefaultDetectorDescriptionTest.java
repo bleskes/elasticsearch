@@ -8,21 +8,21 @@ public class DefaultDetectorDescriptionTest extends ESTestCase {
 
 
     public void testOf_GivenOnlyFunctionAndFieldName() {
-        Detector detector = new Detector(null, "min", "value");
+        Detector detector = new Detector("min", "value");
 
         assertEquals("min(value)", DefaultDetectorDescription.of(detector));
     }
 
 
     public void testOf_GivenOnlyFunctionAndFieldNameWithNonWordChars() {
-        Detector detector = new Detector(null, "min", "val-ue");
+        Detector detector = new Detector("min", "val-ue");
 
         assertEquals("min(\"val-ue\")", DefaultDetectorDescription.of(detector));
     }
 
 
     public void testOf_GivenFullyPopulatedDetector() {
-        Detector detector = new Detector(null, "sum", "value");
+        Detector detector = new Detector("sum", "value");
         detector.setByFieldName("airline");
         detector.setOverFieldName("region");
         detector.setUseNull(true);

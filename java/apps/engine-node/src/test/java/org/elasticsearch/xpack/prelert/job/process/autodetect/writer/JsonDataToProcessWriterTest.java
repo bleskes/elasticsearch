@@ -75,7 +75,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
         analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         analysisConfig.setDetectors(Arrays.asList(detector));
     }
 
@@ -185,7 +185,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
     public void testWrite_GivenMalformedJsonWithNestedLevels()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, IOException, MalformedJsonException {
-        Detector detector = new Detector("foo", "metric", "nested.value");
+        Detector detector = new Detector("metric", "nested.value");
         analysisConfig.setDetectors(Arrays.asList(detector));
         analysisConfig.setLatency(2L);
 
@@ -337,7 +337,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
         transforms.add(tc1);
         transforms.add(tc2);
 
-        Detector detector = new Detector("foo", "metric", "value");
+        Detector detector = new Detector("metric", "value");
         detector.setByFieldName("dns_upper");
         analysisConfig.setDetectors(Arrays.asList(detector));
 
