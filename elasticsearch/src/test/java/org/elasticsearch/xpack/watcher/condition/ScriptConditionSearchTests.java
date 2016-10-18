@@ -15,12 +15,18 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.watcher.condition.compare;
+package org.elasticsearch.xpack.watcher.condition;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.common.text.Text;
+import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.plugins.Plugin;
+import org.elasticsearch.script.MockScriptPlugin;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchShardTarget;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
@@ -28,26 +34,55 @@ import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
+import org.elasticsearch.xpack.watcher.condition.ScriptCondition;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
-import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.watch.Payload;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.mockExecutionContext;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
 
-/**
- */
-public class CompareConditionSearchTests extends AbstractWatcherIntegrationTestCase {
+public class ScriptConditionSearchTests extends AbstractWatcherIntegrationTestCase {
 
     @Override
-    protected boolean enableSecurity() {
-        return true;
+    protected List<Class<? extends Plugin>> pluginTypes() {
+        List<Class<? extends Plugin>> types = super.pluginTypes();
+        types.add(CustomScriptPlugin.class);
+        return types;
+    }
+
+    public static class CustomScriptPlugin extends MockScriptPlugin {
+
+        @Override
+        @SuppressWarnings("unchecked")
+        protected Map<String, Function<Map<String, Object>, Object>> pluginScripts() {
+            Map<String, Function<Map<String, Object>, Object>> scripts = new HashMap<>();
+
+            scripts.put("ctx.payload.aggregations.rate.buckets[0]?.doc_count >= 5", vars -> {
+                List<?> buckets = (List<?>) XContentMapValues.extractValue("ctx.payload.aggregations.rate.buckets", vars);
+                int docCount = (int) XContentMapValues.extractValue("doc_count", (Map<String, Object>) buckets.get(0));
+                return docCount >= 5;
+            });
+
+            scripts.put("ctx.payload.hits?.hits[0]?._score == 1.0", vars -> {
+                List<SearchHit> searchHits = (List<SearchHit>) XContentMapValues.extractValue("ctx.payload.hits.hits", vars);
+                double score = (double) XContentMapValues.extractValue("_score", (Map<String, Object>) searchHits.get(0));
+                return score == 1.0;
+            });
+
+            return scripts;
+        }
+
+        @Override
+        public String pluginScriptLang() {
+            return WATCHER_LANG;
+        }
     }
 
     public void testExecuteWithAggs() throws Exception {
@@ -62,55 +97,41 @@ public class CompareConditionSearchTests extends AbstractWatcherIntegrationTestC
                         .dateHistogramInterval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
                 .get();
 
-        ExecutableCompareCondition condition = new ExecutableCompareCondition(
-                new CompareCondition("ctx.payload.aggregations.rate.buckets.0.doc_count", CompareCondition.Op.GTE, 5),
-                logger, SystemClock.INSTANCE);
+        ScriptService scriptService = internalCluster().getInstance(ScriptService.class);
+        ScriptCondition condition = new ScriptCondition(
+                new Script("ctx.payload.aggregations.rate.buckets[0]?.doc_count >= 5"),
+                scriptService);
+
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.XContent(response));
-        CompareCondition.Result result = condition.execute(ctx);
-        assertThat(result.met(), is(false));
-        Map<String, Object> resolvedValues = result.getResolveValues();
-        assertThat(resolvedValues, notNullValue());
-        assertThat(resolvedValues.size(), is(1));
-        assertThat(resolvedValues, hasEntry("ctx.payload.aggregations.rate.buckets.0.doc_count", (Object) 4));
+        assertFalse(condition.execute(ctx).met());
 
         client().prepareIndex("my-index", "my-type").setSource("@timestamp", "2005-01-01T00:40").get();
         refresh();
 
-        response = client().prepareSearch("my-index")
-                .addAggregation(AggregationBuilders.dateHistogram("rate")
-                        .field("@timestamp").dateHistogramInterval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
+        response = client().prepareSearch("my-index").addAggregation(AggregationBuilders.dateHistogram("rate").field("@timestamp")
+                .dateHistogramInterval(DateHistogramInterval.HOUR).order(Histogram.Order.COUNT_DESC))
                 .get();
 
         ctx = mockExecutionContext("_name", new Payload.XContent(response));
-        result = condition.execute(ctx);
-        assertThat(result.met(), is(true));
-        resolvedValues = result.getResolveValues();
-        assertThat(resolvedValues, notNullValue());
-        assertThat(resolvedValues.size(), is(1));
-        assertThat(resolvedValues, hasEntry("ctx.payload.aggregations.rate.buckets.0.doc_count", (Object) 5));
+        assertThat(condition.execute(ctx).met(), is(true));
     }
 
     public void testExecuteAccessHits() throws Exception {
-        ExecutableCompareCondition condition = new ExecutableCompareCondition(
-                new CompareCondition("ctx.payload.hits.hits.0._score", CompareCondition.Op.EQ, 1),
-                logger, SystemClock.INSTANCE);
+        ScriptService scriptService = internalCluster().getInstance(ScriptService.class);
+        ScriptCondition condition = new ScriptCondition(
+                new Script("ctx.payload.hits?.hits[0]?._score == 1.0"), scriptService);
         InternalSearchHit hit = new InternalSearchHit(0, "1", new Text("type"), null);
         hit.score(1f);
-        hit.shard(new SearchShardTarget("a", new Index("a", "indexUUID"), 0));
+        hit.shard(new SearchShardTarget("a", new Index("a", "testUUID"), 0));
 
-        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(
-                new InternalSearchHits(new InternalSearchHit[]{hit}, 1L, 1f), null, null, null, false, false);
+        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(new InternalSearchHits(
+                new InternalSearchHit[]{hit}, 1L, 1f), null, null, null, false, false);
         SearchResponse response = new SearchResponse(internalSearchResponse, "", 3, 3, 500L, new ShardSearchFailure[0]);
 
         WatchExecutionContext ctx = mockExecutionContext("_watch_name", new Payload.XContent(response));
         assertThat(condition.execute(ctx).met(), is(true));
         hit.score(2f);
         when(ctx.payload()).thenReturn(new Payload.XContent(response));
-        CompareCondition.Result result = condition.execute(ctx);
-        assertThat(result.met(), is(false));
-        Map<String, Object> resolvedValues = result.getResolveValues();
-        assertThat(resolvedValues, notNullValue());
-        assertThat(resolvedValues.size(), is(1));
-        assertThat(resolvedValues, hasEntry(is("ctx.payload.hits.hits.0._score"), notNullValue()));
+        assertThat(condition.execute(ctx).met(), is(false));
     }
 }

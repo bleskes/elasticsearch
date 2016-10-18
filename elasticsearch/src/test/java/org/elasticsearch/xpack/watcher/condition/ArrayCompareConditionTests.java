@@ -15,10 +15,9 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.watcher.condition.compare.array;
+package org.elasticsearch.xpack.watcher.condition;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
@@ -119,8 +118,8 @@ public class ArrayCompareConditionTests extends ESTestCase {
         logger.debug("quantifier [{}]", quantifier);
         logger.debug("met [{}]", met);
 
-        ExecutableArrayCompareCondition condition = new ExecutableArrayCompareCondition(new ArrayCompareCondition("ctx.payload.value", "",
-                op, value, quantifier), logger, SystemClock.INSTANCE);
+        ArrayCompareCondition condition = new ArrayCompareCondition("ctx.payload.value", "", op, value, quantifier,
+                SystemClock.INSTANCE);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.Simple("value", values));
         assertThat(condition.execute(ctx).met(), is(met));
     }
@@ -149,8 +148,8 @@ public class ArrayCompareConditionTests extends ESTestCase {
         logger.debug("quantifier [{}]", quantifier);
         logger.debug("met [{}]", met);
 
-        ExecutableArrayCompareCondition condition = new ExecutableArrayCompareCondition(new ArrayCompareCondition("ctx.payload.value",
-                "doc_count", op, value, quantifier), logger, SystemClock.INSTANCE);
+        ArrayCompareCondition condition = new ArrayCompareCondition("ctx.payload.value", "doc_count", op, value, quantifier,
+                SystemClock.INSTANCE);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.Simple("value", values));
         assertThat(condition.execute(ctx).met(), is(met));
     }
@@ -172,8 +171,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
             values.add(clock.nowUTC());
         }
 
-        ExecutableArrayCompareCondition condition = new ExecutableArrayCompareCondition(
-                new ArrayCompareCondition("ctx.payload.value", "", op, value, quantifier), logger, clock);
+        ArrayCompareCondition condition = new ArrayCompareCondition("ctx.payload.value", "", op, value, quantifier, clock);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.Simple("value", values));
         assertThat(condition.execute(ctx).met(), is(met));
     }
@@ -182,7 +180,6 @@ public class ArrayCompareConditionTests extends ESTestCase {
         ArrayCompareCondition.Op op = randomFrom(ArrayCompareCondition.Op.values());
         ArrayCompareCondition.Quantifier quantifier = randomFrom(ArrayCompareCondition.Quantifier.values());
         Object value = randomFrom("value", 1, null);
-        ArrayCompareConditionFactory factory = new ArrayCompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder =
                 jsonBuilder().startObject()
                     .startObject("key1.key2")
@@ -197,7 +194,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
 
-        ArrayCompareCondition condition = factory.parseCondition("_id", parser, false);
+        ArrayCompareCondition condition = (ArrayCompareCondition) ArrayCompareCondition.parse(new ClockMock(), "_id", parser);
 
         assertThat(condition, notNullValue());
         assertThat(condition.getArrayPath(), is("key1.key2"));
@@ -211,7 +208,6 @@ public class ArrayCompareConditionTests extends ESTestCase {
         ArrayCompareCondition.Op op = randomFrom(ArrayCompareCondition.Op.values());
         ArrayCompareCondition.Quantifier quantifier = randomFrom(ArrayCompareCondition.Quantifier.values());
         Object value = randomFrom("value", 1, null);
-        ArrayCompareConditionFactory factory = new ArrayCompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder =
                 jsonBuilder().startObject()
                     .startObject("key1.key2")
@@ -233,13 +229,12 @@ public class ArrayCompareConditionTests extends ESTestCase {
         expectedException.expect(ElasticsearchParseException.class);
         expectedException.expectMessage("duplicate comparison operator");
 
-        factory.parseCondition("_id", parser, false);
+        ArrayCompareCondition.parse(new ClockMock(), "_id", parser);
     }
 
     public void testParseContainsUnknownOperator() throws IOException {
         ArrayCompareCondition.Quantifier quantifier = randomFrom(ArrayCompareCondition.Quantifier.values());
         Object value = randomFrom("value", 1, null);
-        ArrayCompareConditionFactory factory = new ArrayCompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder =
                 jsonBuilder().startObject()
                     .startObject("key1.key2")
@@ -257,14 +252,13 @@ public class ArrayCompareConditionTests extends ESTestCase {
         expectedException.expect(ElasticsearchParseException.class);
         expectedException.expectMessage("unknown comparison operator");
 
-        factory.parseCondition("_id", parser, false);
+        ArrayCompareCondition.parse(new ClockMock(), "_id", parser);
     }
 
     public void testParseContainsDuplicateValue() throws IOException {
         ArrayCompareCondition.Op op = randomFrom(ArrayCompareCondition.Op.values());
         ArrayCompareCondition.Quantifier quantifier = randomFrom(ArrayCompareCondition.Quantifier.values());
         Object value = randomFrom("value", 1, null);
-        ArrayCompareConditionFactory factory = new ArrayCompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder =
                 jsonBuilder().startObject()
                     .startObject("key1.key2")
@@ -283,14 +277,13 @@ public class ArrayCompareConditionTests extends ESTestCase {
         expectedException.expect(ElasticsearchParseException.class);
         expectedException.expectMessage("duplicate field \"value\"");
 
-        factory.parseCondition("_id", parser, false);
+        ArrayCompareCondition.parse(new ClockMock(), "_id", parser);
     }
 
     public void testParseContainsDuplicateQuantifier() throws IOException {
         ArrayCompareCondition.Op op = randomFrom(ArrayCompareCondition.Op.values());
         ArrayCompareCondition.Quantifier quantifier = randomFrom(ArrayCompareCondition.Quantifier.values());
         Object value = randomFrom("value", 1, null);
-        ArrayCompareConditionFactory factory = new ArrayCompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder =
                 jsonBuilder().startObject()
                     .startObject("key1.key2")
@@ -309,13 +302,12 @@ public class ArrayCompareConditionTests extends ESTestCase {
         expectedException.expect(ElasticsearchParseException.class);
         expectedException.expectMessage("duplicate field \"quantifier\"");
 
-        factory.parseCondition("_id", parser, false);
+        ArrayCompareCondition.parse(new ClockMock(), "_id", parser);
     }
 
     public void testParseContainsUnknownQuantifier() throws IOException {
         ArrayCompareCondition.Op op = randomFrom(ArrayCompareCondition.Op.values());
         Object value = randomFrom("value", 1, null);
-        ArrayCompareConditionFactory factory = new ArrayCompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder =
                 jsonBuilder().startObject()
                     .startObject("key1.key2")
@@ -333,14 +325,13 @@ public class ArrayCompareConditionTests extends ESTestCase {
         expectedException.expect(ElasticsearchParseException.class);
         expectedException.expectMessage("unknown comparison quantifier");
 
-        factory.parseCondition("_id", parser, false);
+        ArrayCompareCondition.parse(new ClockMock(), "_id", parser);
     }
 
     public void testParseContainsUnexpectedFieldInComparisonOperator() throws IOException {
         ArrayCompareCondition.Op op = randomFrom(ArrayCompareCondition.Op.values());
         ArrayCompareCondition.Quantifier quantifier = randomFrom(ArrayCompareCondition.Quantifier.values());
         Object value = randomFrom("value", 1, null);
-        ArrayCompareConditionFactory factory = new ArrayCompareConditionFactory(Settings.EMPTY, SystemClock.INSTANCE);
         XContentBuilder builder =
                 jsonBuilder().startObject()
                     .startObject("key1.key2")
@@ -359,6 +350,6 @@ public class ArrayCompareConditionTests extends ESTestCase {
         expectedException.expect(ElasticsearchParseException.class);
         expectedException.expectMessage("expected a field indicating the comparison value or comparison quantifier");
 
-        factory.parseCondition("_id", parser, false);
+        ArrayCompareCondition.parse(new ClockMock(), "_id", parser);
     }
 }

@@ -34,7 +34,7 @@ import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
-import org.elasticsearch.xpack.watcher.condition.always.ExecutableAlwaysCondition;
+import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
 import org.elasticsearch.xpack.watcher.execution.TriggeredExecutionContext;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.xpack.watcher.input.Input;
@@ -95,7 +95,7 @@ public class SearchInputTests extends ESIntegTestCase {
                 new Watch("test-watch",
                         new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
                         new ExecutableSimpleInput(new SimpleInput(new Payload.Simple()), logger),
-                        new ExecutableAlwaysCondition(logger),
+                        AlwaysCondition.INSTANCE,
                         null,
                         null,
                         new ArrayList<>(),
@@ -127,7 +127,7 @@ public class SearchInputTests extends ESIntegTestCase {
                 new Watch("test-watch",
                         new ScheduleTrigger(new IntervalSchedule(new IntervalSchedule.Interval(1, IntervalSchedule.Interval.Unit.MINUTES))),
                         new ExecutableSimpleInput(new SimpleInput(new Payload.Simple()), logger),
-                        new ExecutableAlwaysCondition(logger),
+                        AlwaysCondition.INSTANCE,
                         null,
                         null,
                         new ArrayList<>(),

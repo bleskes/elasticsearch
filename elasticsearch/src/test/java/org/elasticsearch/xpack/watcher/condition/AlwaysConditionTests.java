@@ -15,56 +15,68 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.watcher.condition.never;
+package org.elasticsearch.xpack.watcher.condition;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.watcher.condition.ConditionFactory;
-import org.elasticsearch.xpack.watcher.condition.ExecutableCondition;
-import org.elasticsearch.xpack.watcher.condition.always.AlwaysCondition;
+import org.elasticsearch.xpack.support.clock.SystemClock;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.hamcrest.Matchers.containsString;
 
 /**
  */
-public class NeverConditionTests extends ESTestCase {
+public class AlwaysConditionTests extends ESTestCase {
     public void testExecute() throws Exception {
-        ExecutableCondition executable = new ExecutableNeverCondition(logger);
-        assertFalse(executable.execute(null).met());
+        Condition alwaysTrue = AlwaysCondition.INSTANCE;
+        assertTrue(alwaysTrue.execute(null).met());
     }
 
     public void testParserValid() throws Exception {
-        NeverConditionFactory factory = new NeverConditionFactory(Settings.builder().build());
         XContentBuilder builder = jsonBuilder();
         builder.startObject();
         builder.endObject();
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
         parser.nextToken();
-
-        NeverCondition condition = factory.parseCondition("_id", parser, false);
-        ExecutableNeverCondition executable = factory.createExecutable(condition);
-        assertFalse(executable.execute(null).met());
+        Condition executable = AlwaysCondition.parse("_id", parser);
+        assertTrue(executable.execute(null).met());
     }
 
     public void testParserInvalid() throws Exception {
-        ConditionFactory factory = new NeverConditionFactory(Settings.builder().build());
-        XContentBuilder builder = jsonBuilder();
-        builder.startObject();
-        builder.field("foo", "bar");
-        builder.endObject();
+        XContentBuilder builder = jsonBuilder()
+                .startObject()
+                .field("foo", "bar")
+                .endObject();
         XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
         parser.nextToken();
         try {
-            factory.parseCondition("_id", parser, false);
+            AlwaysCondition.parse( "_id", parser);
             fail("expected a condition exception trying to parse an invalid condition XContent, ["
                     + AlwaysCondition.TYPE + "] condition should not parse with a body");
         } catch (ElasticsearchParseException e) {
             assertThat(e.getMessage(), containsString("expected an empty object but found [foo]"));
+        }
+    }
+
+    public static Condition randomCondition(ScriptService scriptService) {
+        String type = randomFrom(ScriptCondition.TYPE, AlwaysCondition.TYPE, CompareCondition.TYPE, ArrayCompareCondition.TYPE);
+        switch (type) {
+            case ScriptCondition.TYPE:
+                return new ScriptCondition(new Script("_script"), scriptService);
+            case CompareCondition.TYPE:
+                return new CompareCondition("_path", randomFrom(CompareCondition.Op.values()), randomFrom(5, "3"),
+                        SystemClock.INSTANCE);
+            case ArrayCompareCondition.TYPE:
+                return new ArrayCompareCondition("_array_path", "_path",
+                        randomFrom(ArrayCompareCondition.Op.values()), randomFrom(5, "3"), ArrayCompareCondition.Quantifier.SOME,
+                        SystemClock.INSTANCE);
+            default:
+                return AlwaysCondition.INSTANCE;
         }
     }
 }

@@ -15,7 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.watcher.condition.compare;
+package org.elasticsearch.xpack.watcher.condition;
 
 import org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils;
 import org.joda.time.DateTime;

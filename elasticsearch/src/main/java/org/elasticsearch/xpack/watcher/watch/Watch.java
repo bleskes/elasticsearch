@@ -39,8 +39,8 @@ import org.elasticsearch.xpack.watcher.actions.ActionRegistry;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
 import org.elasticsearch.xpack.watcher.actions.ActionWrapper;
 import org.elasticsearch.xpack.watcher.condition.ConditionRegistry;
-import org.elasticsearch.xpack.watcher.condition.ExecutableCondition;
-import org.elasticsearch.xpack.watcher.condition.always.ExecutableAlwaysCondition;
+import org.elasticsearch.xpack.watcher.condition.Condition;
+import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
 import org.elasticsearch.xpack.watcher.input.ExecutableInput;
 import org.elasticsearch.xpack.watcher.input.InputRegistry;
 import org.elasticsearch.xpack.watcher.input.none.ExecutableNoneInput;
@@ -75,7 +75,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
     private final String id;
     private final Trigger trigger;
     private final ExecutableInput input;
-    private final ExecutableCondition condition;
+    private final Condition condition;
     @Nullable private final ExecutableTransform transform;
     private final List<ActionWrapper> actions;
     @Nullable private final TimeValue throttlePeriod;
@@ -86,7 +86,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
 
     private transient long version = Versions.MATCH_ANY;
 
-    public Watch(String id, Trigger trigger, ExecutableInput input, ExecutableCondition condition, @Nullable ExecutableTransform transform,
+    public Watch(String id, Trigger trigger, ExecutableInput input, Condition condition, @Nullable ExecutableTransform transform,
                  @Nullable TimeValue throttlePeriod, List<ActionWrapper> actions, @Nullable Map<String, Object> metadata,
                  WatchStatus status) {
         this.id = id;
@@ -112,7 +112,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
 
     public ExecutableInput input() { return input;}
 
-    public ExecutableCondition condition() {
+    public Condition condition() {
         return condition;
     }
 
@@ -228,7 +228,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         private final InputRegistry inputRegistry;
         private final CryptoService cryptoService;
         private final ExecutableInput defaultInput;
-        private final ExecutableCondition defaultCondition;
+        private final Condition defaultCondition;
         private final List<ActionWrapper> defaultActions;
         private final Clock clock;
 
@@ -245,7 +245,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
             this.inputRegistry = inputRegistry;
             this.cryptoService = Watcher.ENCRYPT_SENSITIVE_DATA_SETTING.get(settings) ? cryptoService : null;
             this.defaultInput = new ExecutableNoneInput(logger);
-            this.defaultCondition = new ExecutableAlwaysCondition(logger);
+            this.defaultCondition = AlwaysCondition.INSTANCE;
             this.defaultActions = Collections.emptyList();
             this.clock = clock;
         }
@@ -300,7 +300,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         public Watch parse(String id, boolean includeStatus, XContentParser parser, boolean upgradeWatchSource) throws IOException {
             Trigger trigger = null;
             ExecutableInput input = defaultInput;
-            ExecutableCondition condition = defaultCondition;
+            Condition condition = defaultCondition;
             List<ActionWrapper> actions = defaultActions;
             ExecutableTransform transform = null;
             TimeValue throttlePeriod = null;
