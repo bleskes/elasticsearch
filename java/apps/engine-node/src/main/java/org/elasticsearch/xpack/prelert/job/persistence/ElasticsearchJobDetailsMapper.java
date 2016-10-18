@@ -72,10 +72,10 @@ class ElasticsearchJobDetailsMapper
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
             Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
+            modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), timestamp);
 
             ModelSizeStats modelSizeStats = objectMapper.convertValue(
-                modelSizeStatsResponse.getSource(), ModelSizeStats.class);
+                    modelSizeStatsResponse.getSource(), ModelSizeStats.class);
             job.setModelSizeStats(modelSizeStats);
         }
     }
@@ -97,7 +97,7 @@ class ElasticsearchJobDetailsMapper
         else
         {
             Object averageTime = procTimeResponse.getSource()
-                                    .get(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS);
+                    .get(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS);
             if (averageTime instanceof Double)
             {
                 job.setAverageBucketProcessingTimeMs((Double)averageTime);

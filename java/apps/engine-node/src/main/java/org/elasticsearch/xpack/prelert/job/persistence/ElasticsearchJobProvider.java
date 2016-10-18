@@ -1142,7 +1142,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 @SuppressWarnings("unchecked")
                 Map<String, Object> map = (Map<String, Object>)o;
                 Object ts = map.remove(ElasticsearchMappings.ES_TIMESTAMP);
-                map.put(ModelSizeStats.TIMESTAMP, ts);
+                map.put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), ts);
             }
 
             ModelSnapshot modelSnapshot = objectMapper.convertValue(hit.getSource(), ModelSnapshot.class);
@@ -1233,7 +1233,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
                 // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
                 // and replace using the API 'timestamp' key.
                 Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
+                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), timestamp);
 
                 ModelSizeStats modelSizeStats = objectMapper.convertValue(
                         modelSizeStatsResponse.getSource(), ModelSizeStats.class);

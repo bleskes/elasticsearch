@@ -11,6 +11,7 @@ import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
 import java.io.IOException;
 import java.util.Date;
 
+// NORELEASE remove this class in favour of ModelSizeStats.PARSER when we remove Jackson
 final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats> {
     private static final Logger LOGGER = Loggers.getLogger(ModelSizeStats.class);
 
@@ -28,26 +29,26 @@ final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats> {
             throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case ModelSizeStats.MODEL_BYTES:
+            case "modelBytes":
                 modelSizeStats.setModelBytes(parseAsLongOrZero(fieldName));
                 break;
-            case ModelSizeStats.TOTAL_BY_FIELD_COUNT:
+            case "totalByFieldCount":
                 modelSizeStats.setTotalByFieldCount(parseAsLongOrZero(fieldName));
                 break;
-            case ModelSizeStats.TOTAL_OVER_FIELD_COUNT:
+            case "totalOverFieldCount":
                 modelSizeStats.setTotalOverFieldCount(parseAsLongOrZero(fieldName));
                 break;
-            case ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT:
+            case "totalPartitionFieldCount":
                 modelSizeStats.setTotalPartitionFieldCount(parseAsLongOrZero(fieldName));
                 break;
-            case ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT:
+            case "bucketAllocationFailuresCount":
                 modelSizeStats.setBucketAllocationFailuresCount(parseAsLongOrZero(fieldName));
                 break;
-            case ModelSizeStats.MEMORY_STATUS:
+            case "memoryStatus":
                 int status = parseAsIntOrZero(fieldName);
-                modelSizeStats.setMemoryStatus(ModelSizeStats.MemoryStatus.values()[status].name());
+                modelSizeStats.setMemoryStatus(ModelSizeStats.MemoryStatus.values()[status]);
                 break;
-            case ModelSizeStats.BUCKET_TIME:
+            case "bucketTime":
                 modelSizeStats.setTimestamp(parseTimestamp(token));
                 break;
             default:

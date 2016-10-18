@@ -1,12 +1,15 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
+import java.util.Date;
 
-import static org.junit.Assert.assertEquals;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-public class ModelSizeStatsTest extends ESTestCase {
+public class ModelSizeStatsTest extends AbstractSerializingTestCase<ModelSizeStats> {
 
     public void testDefaultConstructor() {
         ModelSizeStats stats = new ModelSizeStats();
@@ -16,7 +19,7 @@ public class ModelSizeStatsTest extends ESTestCase {
         assertEquals(0, stats.getTotalOverFieldCount());
         assertEquals(0, stats.getTotalPartitionFieldCount());
         assertEquals(0, stats.getBucketAllocationFailuresCount());
-        assertEquals("OK", stats.getMemoryStatus());
+        assertEquals(MemoryStatus.OK, stats.getMemoryStatus());
     }
 
 
@@ -32,26 +35,60 @@ public class ModelSizeStatsTest extends ESTestCase {
     public void testSetMemoryStatus_GivenNull() {
         ModelSizeStats stats = new ModelSizeStats();
 
-        stats.setMemoryStatus(null);
+        NullPointerException ex = expectThrows(NullPointerException.class, () -> stats.setMemoryStatus(null));
 
-        assertEquals("OK", stats.getMemoryStatus());
-    }
-
-
-    public void testSetMemoryStatus_GivenEmpty() {
-        ModelSizeStats stats = new ModelSizeStats();
-
-        stats.setMemoryStatus("");
-
-        assertEquals("OK", stats.getMemoryStatus());
+        assertEquals("[memory_status] must not be null", ex.getMessage());
     }
 
 
     public void testSetMemoryStatus_GivenSoftLimit() {
         ModelSizeStats stats = new ModelSizeStats();
 
-        stats.setMemoryStatus("SOFT_LIMIT");
+        stats.setMemoryStatus(MemoryStatus.SOFT_LIMIT);
 
-        assertEquals("SOFT_LIMIT", stats.getMemoryStatus());
+        assertEquals(MemoryStatus.SOFT_LIMIT, stats.getMemoryStatus());
+    }
+
+    @Override
+    protected ModelSizeStats createTestInstance() {
+        ModelSizeStats stats = new ModelSizeStats();
+        if (randomBoolean()) {
+            stats.setBucketAllocationFailuresCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setModelBytes(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setTotalByFieldCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setTotalOverFieldCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setTotalPartitionFieldCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setLogTime(new Date(randomLong()));
+        }
+        if (randomBoolean()) {
+            stats.setTimestamp(new Date(randomLong()));
+        }
+        if (randomBoolean()) {
+            stats.setMemoryStatus(randomFrom(MemoryStatus.values()));
+        }
+        if (randomBoolean()) {
+            stats.setModelSizeStatsId(randomAsciiOfLengthBetween(1, 20));
+        }
+        return stats;
+    }
+
+    @Override
+    protected Reader<ModelSizeStats> instanceReader() {
+        return ModelSizeStats::new;
+    }
+
+    @Override
+    protected ModelSizeStats parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return ModelSizeStats.PARSER.apply(parser, () -> matcher);
     }
 }

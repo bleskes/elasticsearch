@@ -27,7 +27,7 @@ public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBat
         // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
         // and replace using the API 'timestamp' key.
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(ModelSizeStats.TIMESTAMP, timestamp);
+        hit.getSource().put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), timestamp);
 
         ModelSizeStats result = objectMapper.convertValue(hit.getSource(), ModelSizeStats.class);
         result.setModelSizeStatsId(hit.getId());

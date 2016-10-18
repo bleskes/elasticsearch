@@ -63,11 +63,11 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
 
         Map<String, Object> source = objectMapper.convertValue(originalJob,
                 new TypeReference<Map<String, Object>>() {
-                });
+        });
         Map<String, Object> modelSizeStatsSource = objectMapper.convertValue(modelSizeStats,
                 new TypeReference<Map<String, Object>>() {
-                });
-        Object timestamp = modelSizeStatsSource.remove(ModelSizeStats.TIMESTAMP);
+        });
+        Object timestamp = modelSizeStatsSource.remove(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName());
         modelSizeStatsSource.put(ElasticsearchMappings.ES_TIMESTAMP, timestamp);
 
         GetResponse getModelSizeResponse = mock(GetResponse.class);
@@ -88,7 +88,7 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
         when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
         when(client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE,
                 BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS))
-                .thenReturn(getProcTimeRequestBuilder);
+        .thenReturn(getProcTimeRequestBuilder);
 
 
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
@@ -107,7 +107,7 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
 
         Map<String, Object> source = objectMapper.convertValue(originalJob,
                 new TypeReference<Map<String, Object>>() {
-                });
+        });
 
         GetResponse getResponse = mock(GetResponse.class);
         when(getResponse.isExists()).thenReturn(false);
@@ -122,7 +122,7 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
         when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
         when(client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE,
                 BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS))
-                .thenReturn(getProcTimeRequestBuilder);
+        .thenReturn(getProcTimeRequestBuilder);
 
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
 

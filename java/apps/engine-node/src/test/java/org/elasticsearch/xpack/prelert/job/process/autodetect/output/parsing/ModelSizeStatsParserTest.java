@@ -4,13 +4,11 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Date;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ModelSizeStatsParserTest extends ESTestCase {
     public void testParse() throws IOException {
@@ -37,7 +35,7 @@ public class ModelSizeStatsParserTest extends ESTestCase {
         assertEquals(1444333321000L, stats.getTimestamp().getTime());
         assertTrue(stats.getLogTime().getTime() >= d1.getTime());
         assertTrue(stats.getLogTime().getTime() <= d2.getTime());
-        assertEquals("OK", stats.getMemoryStatus());
+        assertEquals(MemoryStatus.OK, stats.getMemoryStatus());
     }
 
     private static final JsonParser createJsonParser(String input) throws IOException {

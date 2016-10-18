@@ -208,13 +208,13 @@ public final class ReservedFieldNames
         ModelDebugOutput.DEBUG_MEDIAN,
         ModelDebugOutput.ACTUAL,
 
-        ModelSizeStats.MODEL_BYTES,
-        ModelSizeStats.TOTAL_BY_FIELD_COUNT,
-        ModelSizeStats.TOTAL_OVER_FIELD_COUNT,
-        ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT,
-        ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT,
-        ModelSizeStats.MEMORY_STATUS,
-        ModelSizeStats.LOG_TIME,
+        ModelSizeStats.MODEL_BYTES_FIELD.getPreferredName(),
+        ModelSizeStats.TOTAL_BY_FIELD_COUNT_FIELD.getPreferredName(),
+        ModelSizeStats.TOTAL_OVER_FIELD_COUNT_FIELD.getPreferredName(),
+        ModelSizeStats.TOTAL_PARTITION_FIELD_COUNT_FIELD.getPreferredName(),
+        ModelSizeStats.BUCKET_ALLOCATION_FAILURES_COUNT_FIELD.getPreferredName(),
+        ModelSizeStats.MEMORY_STATUS_FIELD.getPreferredName(),
+        ModelSizeStats.LOG_TIME_FIELD.getPreferredName(),
 
         // ModelSnapshot.DESCRIPTION is not reserved because it is an analyzed string
         ModelSnapshot.RESTORE_PRIORITY,

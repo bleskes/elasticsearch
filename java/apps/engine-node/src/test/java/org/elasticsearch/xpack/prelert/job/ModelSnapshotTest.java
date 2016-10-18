@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 
@@ -139,7 +140,7 @@ public class ModelSnapshotTest extends ESTestCase {
         modelSizeStats.setTimestamp(new Date(9123L));
         modelSizeStats.setModelBytes(1000L);
         modelSizeStats.setBucketAllocationFailuresCount(1L);
-        modelSizeStats.setMemoryStatus("SOFT_LIMIT");
+        modelSizeStats.setMemoryStatus(MemoryStatus.SOFT_LIMIT);
         modelSizeStats.setTotalByFieldCount(3L);
         modelSizeStats.setTotalOverFieldCount(4L);
         modelSizeStats.setTotalPartitionFieldCount(5L);
