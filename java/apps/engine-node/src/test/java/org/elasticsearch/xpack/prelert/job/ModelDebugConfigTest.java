@@ -1,25 +1,23 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig.DebugDestination;
-import org.junit.Test;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import static org.junit.Assert.*;
-
-public class ModelDebugConfigTest extends ESTestCase {
+public class ModelDebugConfigTest extends AbstractSerializingTestCase<ModelDebugConfig> {
 
     public void testIsEnabled_GivenNullBoundsPercentile() {
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
-        modelDebugConfig.setBoundsPercentile(null);
 
         assertFalse(modelDebugConfig.isEnabled());
     }
 
 
     public void testIsEnabled_GivenBoundsPercentile() {
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
-        modelDebugConfig.setBoundsPercentile(0.95);
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(0.95, null);
 
         assertTrue(modelDebugConfig.isEnabled());
     }
@@ -48,5 +46,20 @@ public class ModelDebugConfigTest extends ESTestCase {
                 new ModelDebugConfig(80.0, "foo").hashCode());
         assertEquals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").hashCode(),
                 new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").hashCode());
+    }
+
+    @Override
+    protected ModelDebugConfig createTestInstance() {
+        return new ModelDebugConfig(randomFrom(DebugDestination.values()), randomDouble(), randomAsciiOfLengthBetween(1, 30));
+    }
+
+    @Override
+    protected Reader<ModelDebugConfig> instanceReader() {
+        return ModelDebugConfig::new;
+    }
+
+    @Override
+    protected ModelDebugConfig parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return ModelDebugConfig.PARSER.apply(parser, () -> matcher);
     }
 }

@@ -3,16 +3,12 @@ package org.elasticsearch.xpack.prelert.job;
 
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
-import org.junit.Test;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.*;
 
 public class JobDetailsTest extends ESTestCase {
 
@@ -93,7 +89,7 @@ public class JobDetailsTest extends ESTestCase {
         jobDetails1.setFinishedTime(new Date(1000));
         jobDetails1.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails1.setLastDataTime(new Date(500));
-        jobDetails1.setModelDebugConfig(new ModelDebugConfig());
+        jobDetails1.setModelDebugConfig(new ModelDebugConfig(1.0, null));
         jobDetails1.setModelSizeStats(modelSizeStats);
         jobDetails1.setRenormalizationWindowDays(60L);
         jobDetails1.setBackgroundPersistInterval(10000L);
@@ -118,7 +114,7 @@ public class JobDetailsTest extends ESTestCase {
         jobDetails2.setFinishedTime(new Date(1000));
         jobDetails2.setIgnoreDowntime(IgnoreDowntime.ALWAYS);
         jobDetails2.setLastDataTime(new Date(500));
-        jobDetails2.setModelDebugConfig(new ModelDebugConfig());
+        jobDetails2.setModelDebugConfig(new ModelDebugConfig(1.0, null));
         jobDetails2.setModelSizeStats(modelSizeStats);
         jobDetails2.setRenormalizationWindowDays(60L);
         jobDetails2.setBackgroundPersistInterval(10000L);

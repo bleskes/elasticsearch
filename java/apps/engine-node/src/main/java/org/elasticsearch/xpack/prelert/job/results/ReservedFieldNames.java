@@ -192,9 +192,9 @@ public final class ReservedFieldNames
         JobDetails.IGNORE_DOWNTIME,
         JobDetails.CUSTOM_SETTINGS,
 
-        ModelDebugConfig.WRITE_TO,
-        ModelDebugConfig.BOUNDS_PERCENTILE,
-        ModelDebugConfig.TERMS,
+        ModelDebugConfig.WRITE_TO_FIELD.getPreferredName(),
+        ModelDebugConfig.BOUNDS_PERCENTILE_FIELD.getPreferredName(),
+        ModelDebugConfig.TERMS_FIELD.getPreferredName(),
 
         ModelDebugOutput.PARTITION_FIELD_NAME,
         ModelDebugOutput.PARTITION_FIELD_VALUE,
