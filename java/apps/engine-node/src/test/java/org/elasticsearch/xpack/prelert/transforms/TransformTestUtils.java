@@ -38,8 +38,7 @@ public final class TransformTestUtils {
             condition = new Condition(Operator.EQ, "100");
         }
 
-        TransformConfig tr = new TransformConfig();
-        tr.setTransform(type.toString());
+        TransformConfig tr = new TransformConfig(type.toString());
         tr.setInputs(inputs);
         tr.setArguments(args);
         tr.setOutputs(outputs);

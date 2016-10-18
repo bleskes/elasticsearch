@@ -73,10 +73,9 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         detector.setDetectorDescription("metric(value) by host-metric");
         ac.setDetectors(Arrays.asList(detector));
 
-        TransformConfig tc = new TransformConfig();
+        TransformConfig tc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         tc.setInputs(Arrays.asList("host", "metric"));
         tc.setOutputs(Arrays.asList("host-metric"));
-        tc.setTransform(TransformType.Names.CONCAT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
@@ -139,9 +138,8 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         detector.setOverFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(1));
         ac.setDetectors(Arrays.asList(detector));
 
-        TransformConfig tc = new TransformConfig();
+        TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("domain"));
-        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
@@ -220,9 +218,8 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
-        TransformConfig tc = new TransformConfig();
+        TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("domain"));
-        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
@@ -296,14 +293,12 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         ac.setDetectors(Arrays.asList(detector));
 
-        TransformConfig concatTc = new TransformConfig();
+        TransformConfig concatTc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         concatTc.setInputs(Arrays.asList("date", "time"));
         concatTc.setOutputs(Arrays.asList("datetime"));
-        concatTc.setTransform(TransformType.Names.CONCAT_NAME);
 
-        TransformConfig hrdTc = new TransformConfig();
+        TransformConfig hrdTc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         hrdTc.setInputs(Arrays.asList("domain"));
-        hrdTc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(concatTc, hrdTc));
 
@@ -359,10 +354,9 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         detector.setByFieldName("metric");
         ac.setDetectors(Arrays.asList(detector));
 
-        TransformConfig excludeConfig = new TransformConfig();
+        TransformConfig excludeConfig = new TransformConfig(TransformType.EXCLUDE.prettyName());
         excludeConfig.setInputs(Arrays.asList("metric"));
         excludeConfig.setCondition(new Condition(Operator.MATCH, "metricA"));
-        excludeConfig.setTransform(TransformType.EXCLUDE.prettyName());
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(excludeConfig));
 
@@ -410,21 +404,18 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         detector.setByFieldName("type");
         ac.setDetectors(Arrays.asList(detector));
 
-        TransformConfig concatTc = new TransformConfig();
+        TransformConfig concatTc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         concatTc.setInputs(Arrays.asList("DATE", "time"));
         concatTc.setOutputs(Arrays.asList("datetime"));
-        concatTc.setTransform(TransformType.Names.CONCAT_NAME);
 
-        TransformConfig upperTc = new TransformConfig();
+        TransformConfig upperTc = new TransformConfig(TransformType.Names.UPPERCASE_NAME);
         upperTc.setInputs(Arrays.asList("date"));
         upperTc.setOutputs(Arrays.asList("DATE"));
-        upperTc.setTransform(TransformType.Names.UPPERCASE_NAME);
 
-        TransformConfig splitTc = new TransformConfig();
+        TransformConfig splitTc = new TransformConfig(TransformType.Names.SPLIT_NAME);
         splitTc.setInputs(Arrays.asList("date-somethingelse"));
         splitTc.setOutputs(Arrays.asList("date"));
         splitTc.setArguments(Arrays.asList("-"));
-        splitTc.setTransform(TransformType.Names.SPLIT_NAME);
 
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(upperTc, concatTc, splitTc));

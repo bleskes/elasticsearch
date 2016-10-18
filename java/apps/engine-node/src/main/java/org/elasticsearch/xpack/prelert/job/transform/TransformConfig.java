@@ -1,10 +1,20 @@
 
 package org.elasticsearch.xpack.prelert.job.transform;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.*;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -13,25 +23,57 @@ import java.util.Objects;
  * Represents an API data transform
  */
 @JsonInclude(Include.NON_NULL)
-public class TransformConfig {
+// NORELEASE: to be replaced by ingest (https://github.com/elastic/prelert-legacy/issues/39)
+public class TransformConfig extends ToXContentToBytes implements Writeable {
     // Serialisation strings
-    public static final String TYPE = "transform";
-    public static final String TRANSFORM = "transform";
-    public static final String ARGUMENTS = "arguments";
-    public static final String INPUTS = "inputs";
-    public static final String OUTPUTS = "outputs";
+    public static final ParseField TYPE = new ParseField("transform");
+    public static final ParseField TRANSFORM = new ParseField("transform");
+    public static final ParseField CONDITION = new ParseField("condition");
+    public static final ParseField ARGUMENTS = new ParseField("arguments");
+    public static final ParseField INPUTS = new ParseField("inputs");
+    public static final ParseField OUTPUTS = new ParseField("outputs");
 
+    public static final ConstructingObjectParser<TransformConfig, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            "schedule_config", objects -> new TransformConfig((String) objects[0])
+    );
+
+    static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), TYPE);
+        PARSER.declareStringArray(TransformConfig::setInputs, INPUTS);
+        PARSER.declareStringArray(TransformConfig::setArguments, ARGUMENTS);
+        PARSER.declareStringArray(TransformConfig::setOutputs, OUTPUTS);
+        PARSER.declareObject(TransformConfig::setCondition, Condition.PARSER, CONDITION);
+    }
 
     private List<String> inputs;
-    private String name;
+    private String type;
     private List<String> arguments;
     private List<String> outputs;
-    private TransformType type;
     private Condition condition;
 
+    // lazily initialized:
+    private transient TransformType lazyType;
 
-    public TransformConfig() {
+    @JsonCreator
+    public TransformConfig(@JsonProperty("transform") String type) {
+        this.type = type;
+        lazyType = TransformType.fromString(type);
+        try {
+            outputs = lazyType.defaultOutputNames();
+        } catch (IllegalArgumentException e) {
+            outputs = Collections.emptyList();
+        }
         arguments = Collections.emptyList();
+    }
+
+    public TransformConfig(StreamInput in) throws IOException {
+        this(in.readString());
+        inputs = (List<String>) in.readGenericValue();
+        arguments = (List<String>) in.readGenericValue();
+        outputs = (List<String>) in.readGenericValue();
+        if (in.readBoolean()) {
+            condition = new Condition(in);
+        }
     }
 
     public List<String> getInputs() {
@@ -43,16 +85,12 @@ public class TransformConfig {
     }
 
     /**
-     * Transform name see {@linkplain TransformType.Names}
+     * Transform type see {@linkplain TransformType.Names}
      *
      * @return
      */
     public String getTransform() {
-        return name;
-    }
-
-    public void setTransform(String type) {
-        name = type;
+        return type;
     }
 
     public List<String> getArguments() {
@@ -64,14 +102,6 @@ public class TransformConfig {
     }
 
     public List<String> getOutputs() {
-        if (outputs == null || outputs.isEmpty()) {
-            try {
-                outputs = type().defaultOutputNames();
-            } catch (IllegalArgumentException e) {
-                outputs = Collections.emptyList();
-            }
-        }
-
         return outputs;
     }
 
@@ -99,22 +129,47 @@ public class TransformConfig {
      *
      * @return
      */
-    public TransformType type() throws IllegalArgumentException {
-        if (type == null) {
-            type = TransformType.fromString(name);
-        }
-
-        return type;
+    public TransformType type() {
+        return lazyType;
     }
 
     @Override
-    public String toString() {
-        return name;
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(type);
+        out.writeGenericValue(inputs);
+        out.writeGenericValue(arguments);
+        out.writeGenericValue(outputs);
+        if (condition != null) {
+            out.writeBoolean(true);
+            condition.writeTo(out);
+        } else {
+            out.writeBoolean(false);
+        }
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(TYPE.getPreferredName(), type);
+        if (inputs != null) {
+            builder.field(INPUTS.getPreferredName(), inputs);
+        }
+        if (arguments != null) {
+            builder.field(ARGUMENTS.getPreferredName(), arguments);
+        }
+        if (outputs != null) {
+            builder.field(OUTPUTS.getPreferredName(), outputs);
+        }
+        if (condition != null) {
+            builder.field(CONDITION.getPreferredName(), condition);
+        }
+        builder.endObject();
+        return builder;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(inputs, name, outputs, type, arguments, condition);
+        return Objects.hash(inputs, type, outputs, arguments, condition);
     }
 
     @Override
@@ -133,7 +188,6 @@ public class TransformConfig {
         TransformConfig other = (TransformConfig) obj;
 
         return Objects.equals(this.type, other.type)
-                && Objects.equals(this.name, other.name)
                 && Objects.equals(this.inputs, other.inputs)
                 && Objects.equals(this.outputs, other.outputs)
                 && Objects.equals(this.arguments, other.arguments)

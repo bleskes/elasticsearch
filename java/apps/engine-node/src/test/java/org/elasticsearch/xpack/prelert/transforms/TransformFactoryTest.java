@@ -22,10 +22,9 @@ import org.elasticsearch.xpack.prelert.transforms.Transform.TransformIndex;
 public class TransformFactoryTest extends ESTestCase {
 
     public void testIndexesMapping() {
-        TransformConfig conf = new TransformConfig();
+        TransformConfig conf = new TransformConfig(TransformType.CONCAT.prettyName());
         conf.setInputs(Arrays.asList("field1", "field2"));
         conf.setOutputs(Arrays.asList("concatted"));
-        conf.setTransform(TransformType.CONCAT.prettyName());
 
         Map<String, Integer> inputMap = new HashMap<>();
         inputMap.put("field1", 5);
@@ -49,8 +48,7 @@ public class TransformFactoryTest extends ESTestCase {
     }
 
     public void testConcatWithOptionalArgs() {
-        TransformConfig conf = new TransformConfig();
-        conf.setTransform(TransformType.CONCAT.prettyName());
+        TransformConfig conf = new TransformConfig(TransformType.CONCAT.prettyName());
         conf.setInputs(Arrays.asList("field1", "field2"));
         conf.setOutputs(Arrays.asList("concatted"));
 
@@ -99,10 +97,9 @@ public class TransformFactoryTest extends ESTestCase {
         Map<String, Integer> outputIndexes = new HashMap<>();
 
 
-        TransformConfig conf = new TransformConfig();
-        conf.setInputs(new ArrayList<String>());
-        conf.setOutputs(new ArrayList<String>());
-        conf.setTransform(TransformType.EXCLUDE.prettyName());
+        TransformConfig conf = new TransformConfig(TransformType.EXCLUDE.prettyName());
+        conf.setInputs(new ArrayList<>());
+        conf.setOutputs(new ArrayList<>());
         conf.setCondition(new Condition(Operator.LT, "2000"));
 
 

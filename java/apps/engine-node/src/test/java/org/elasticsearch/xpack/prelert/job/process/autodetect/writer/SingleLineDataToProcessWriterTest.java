@@ -77,10 +77,9 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
 
     public void testWrite_GivenDataIsValid() throws MissingFieldException,
     HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
-        TransformConfig transformConfig = new TransformConfig();
+        TransformConfig transformConfig = new TransformConfig("extract");
         transformConfig.setInputs(Arrays.asList("raw"));
         transformConfig.setOutputs(Arrays.asList("time", "message"));
-        transformConfig.setTransform("extract");
         transformConfig.setArguments(Arrays.asList("(.{20}) (.*)"));
         transformConfigs.add(transformConfig);
 
@@ -114,10 +113,9 @@ public class SingleLineDataToProcessWriterTest extends ESTestCase {
 
     public void testWrite_GivenDataContainsInvalidRecords() throws MissingFieldException,
     HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
-        TransformConfig transformConfig = new TransformConfig();
+        TransformConfig transformConfig = new TransformConfig("extract");
         transformConfig.setInputs(Arrays.asList("raw"));
         transformConfig.setOutputs(Arrays.asList("time", "message"));
-        transformConfig.setTransform("extract");
         transformConfig.setArguments(Arrays.asList("(.{20}) (.*)"));
         transformConfigs.add(transformConfig);
 

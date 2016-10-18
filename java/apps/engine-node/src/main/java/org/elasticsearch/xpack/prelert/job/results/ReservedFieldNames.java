@@ -243,10 +243,10 @@ public final class ReservedFieldNames
         SchedulerConfig.SCRIPT_FIELDS.getPreferredName(),
         SchedulerConfig.SCROLL_SIZE.getPreferredName(),
 
-        TransformConfig.TRANSFORM,
-        TransformConfig.ARGUMENTS,
-        TransformConfig.INPUTS,
-        TransformConfig.OUTPUTS,
+            TransformConfig.TRANSFORM.getPreferredName(),
+            TransformConfig.ARGUMENTS.getPreferredName(),
+            TransformConfig.INPUTS.getPreferredName(),
+            TransformConfig.OUTPUTS.getPreferredName(),
 
         JOB_ID_NAME,
         ES_TIMESTAMP

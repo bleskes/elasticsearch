@@ -287,8 +287,7 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
     public void testWrite_GivenDateTimeFieldIsOutputOfTransform() throws MissingFieldException,
     HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
     MalformedJsonException {
-        TransformConfig transform = new TransformConfig();
-        transform.setTransform("concat");
+        TransformConfig transform = new TransformConfig("concat");
         transform.setInputs(Arrays.asList("date", "time-of-day"));
         transform.setOutputs(Arrays.asList("datetime"));
 
@@ -323,13 +322,11 @@ public class JsonDataToProcessWriterTest extends ESTestCase {
     public void testWrite_GivenChainedTransforms_SortsByDependencies() throws MissingFieldException,
     HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
     MalformedJsonException {
-        TransformConfig tc1 = new TransformConfig();
-        tc1.setTransform(TransformType.Names.UPPERCASE_NAME);
+        TransformConfig tc1 = new TransformConfig(TransformType.Names.UPPERCASE_NAME);
         tc1.setInputs(Arrays.asList("dns"));
         tc1.setOutputs(Arrays.asList("dns_upper"));
 
-        TransformConfig tc2 = new TransformConfig();
-        tc2.setTransform(TransformType.Names.CONCAT_NAME);
+        TransformConfig tc2 = new TransformConfig(TransformType.Names.CONCAT_NAME);
         tc2.setInputs(Arrays.asList("dns1", "dns2"));
         tc2.setArguments(Arrays.asList("."));
         tc2.setOutputs(Arrays.asList("dns"));

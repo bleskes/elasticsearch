@@ -19,21 +19,23 @@ public class TransformSerialisationTest extends ESTestCase {
         ObjectReader reader = mapper.readerFor(TransformConfig.class)
                 .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
-        String json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\"}";
+        String json = "{\"inputs\":\"dns\", \"transform\":\"domain_split\"}";
         TransformConfig tr = reader.readValue(json);
 
         assertEquals(1, tr.getInputs().size());
         assertEquals("dns", tr.getInputs().get(0));
-        assertEquals("highest_registered_domain", tr.getTransform());
-        assertEquals(0, tr.getOutputs().size());
+        assertEquals("domain_split", tr.getTransform());
+        assertEquals(2, tr.getOutputs().size());
+        assertEquals("subDomain", tr.getOutputs().get(0));
+        assertEquals("hrd", tr.getOutputs().get(1));
 
 
-        json = "{\"inputs\":\"dns\", \"transform\":\"highest_registered_domain\", \"outputs\":\"catted\"}";
+        json = "{\"inputs\":\"dns\", \"transform\":\"domain_split\", \"outputs\":\"catted\"}";
         tr = reader.readValue(json);
 
         assertEquals(1, tr.getInputs().size());
         assertEquals("dns", tr.getInputs().get(0));
-        assertEquals("highest_registered_domain", tr.getTransform());
+        assertEquals("domain_split", tr.getTransform());
         assertEquals(1, tr.getOutputs().size());
         assertEquals("catted", tr.getOutputs().get(0));
     }
@@ -44,12 +46,12 @@ public class TransformSerialisationTest extends ESTestCase {
         ObjectReader reader = mapper.readerFor(TransformConfig.class)
                 .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
-        String json = "{\"inputs\":[\"dns\"], \"transform\":\"highest_registered_domain\"}";
+        String json = "{\"inputs\":[\"dns\"], \"transform\":\"domain_split\"}";
         TransformConfig tr = reader.readValue(json);
 
         assertEquals(1, tr.getInputs().size());
         assertEquals("dns", tr.getInputs().get(0));
-        assertEquals("highest_registered_domain", tr.getTransform());
+        assertEquals("domain_split", tr.getTransform());
 
         json = "{\"inputs\":[\"a\", \"b\", \"c\"], \"transform\":\"concat\", \"outputs\":[\"catted\"]}";
         tr = reader.readValue(json);

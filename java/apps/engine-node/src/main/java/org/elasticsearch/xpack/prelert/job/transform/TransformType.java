@@ -1,5 +1,11 @@
 package org.elasticsearch.xpack.prelert.job.transform;
 
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -10,8 +16,7 @@ import java.util.Set;
  * with functions for converting between the enum and its
  * pretty name i.e. human readable string.
  */
-public enum TransformType
-{
+public enum TransformType implements ToXContent, Writeable {
     // Name, arity, arguments, outputs, default output names, has condition
     DOMAIN_SPLIT(Names.DOMAIN_SPLIT_NAME, IntRange.singleton(1), IntRange.singleton(0),
             IntRange.closed(1, 2), Arrays.asList("subDomain", "hrd")),
@@ -38,8 +43,7 @@ public enum TransformType
      * Having the static fields in nested class means they are created
      * when required.
      */
-    public class Names
-    {
+    public class Names {
         public static final String DOMAIN_SPLIT_NAME = "domain_split";
         public static final String CONCAT_NAME = "concat";
         public static final String EXTRACT_NAME = "extract";
@@ -49,8 +53,7 @@ public enum TransformType
         public static final String UPPERCASE_NAME = "uppercase";
         public static final String TRIM_NAME = "trim";
 
-        private Names()
-        {
+        private Names() {
         }
     }
 
@@ -61,15 +64,15 @@ public enum TransformType
     private final List<String> defaultOutputNames;
     private final boolean hasCondition;
 
-    private TransformType(String prettyName, IntRange arityIntRange,
-                          IntRange argumentsIntRange, IntRange outputsIntRange,
-                          List<String> defaultOutputNames) {
+    TransformType(String prettyName, IntRange arityIntRange,
+                  IntRange argumentsIntRange, IntRange outputsIntRange,
+                  List<String> defaultOutputNames) {
         this(prettyName, arityIntRange, argumentsIntRange, outputsIntRange, defaultOutputNames, false);
     }
 
-    private TransformType(String prettyName, IntRange arityIntRange,
-                          IntRange argumentsIntRange, IntRange outputsIntRange,
-                          List<String> defaultOutputNames, boolean hasCondition) {
+    TransformType(String prettyName, IntRange arityIntRange,
+                  IntRange argumentsIntRange, IntRange outputsIntRange,
+                  List<String> defaultOutputNames, boolean hasCondition) {
         this.arityRange = arityIntRange;
         this.argumentsRange = argumentsIntRange;
         this.outputsRange = outputsIntRange;
@@ -105,25 +108,32 @@ public enum TransformType
         return this.outputsRange;
     }
 
-    public String prettyName()
-    {
+    public String prettyName() {
         return prettyName;
     }
 
-    public List<String> defaultOutputNames()
-    {
+    public List<String> defaultOutputNames() {
         return defaultOutputNames;
     }
 
-    public boolean hasCondition()
-    {
+    public boolean hasCondition() {
         return hasCondition;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return prettyName();
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeVInt(ordinal());
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.value(prettyName);
+        return builder;
     }
 
     /**
@@ -135,14 +145,11 @@ public enum TransformType
      * @param prettyName
      * @return
      */
-    public static TransformType fromString(String prettyName) throws IllegalArgumentException
-    {
+    public static TransformType fromString(String prettyName) throws IllegalArgumentException {
         Set<TransformType> all = EnumSet.allOf(TransformType.class);
 
-        for (TransformType type : all)
-        {
-            if (type.prettyName().equals(prettyName))
-            {
+        for (TransformType type : all) {
+            if (type.prettyName().equals(prettyName)) {
                 return type;
             }
         }

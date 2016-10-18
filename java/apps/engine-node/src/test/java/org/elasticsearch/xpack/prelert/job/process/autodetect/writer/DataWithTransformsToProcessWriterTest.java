@@ -127,9 +127,8 @@ public class DataWithTransformsToProcessWriterTest extends ESTestCase {
         detector.setByFieldName("concat");
         ac.setDetectors(Arrays.asList(detector));
 
-        TransformConfig tc = new TransformConfig();
+        TransformConfig tc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         tc.setInputs(Arrays.asList("host", "metric"));
-        tc.setTransform(TransformType.Names.CONCAT_NAME);
 
         TransformConfigs tcs = new TransformConfigs(Arrays.asList(tc));
 

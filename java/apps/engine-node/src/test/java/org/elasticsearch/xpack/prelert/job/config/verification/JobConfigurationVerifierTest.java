@@ -183,8 +183,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     public void testCheckTransformOutputIsUsed_throws() {
         JobConfiguration jc = buildJobConfigurationNoTransforms();
 
-        TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
+        TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("dns"));
 
         jc.setTransforms(Arrays.asList(tc));
@@ -216,8 +215,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         JobConfiguration jc = buildJobConfigurationNoTransforms();
         jc.getAnalysisConfig().setSummaryCountFieldName("summaryCountField");
 
-        TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.DOMAIN_SPLIT_NAME);
+        TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("dns"));
         tc.setOutputs(Arrays.asList("summaryCountField"));
 
@@ -250,8 +248,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         JobConfiguration jc = buildJobConfigurationNoTransforms();
 
         // The exclude filter has no output
-        TransformConfig tc = new TransformConfig();
-        tc.setTransform(TransformType.Names.EXCLUDE_NAME);
+        TransformConfig tc = new TransformConfig(TransformType.Names.EXCLUDE_NAME);
         tc.setCondition(new Condition(Operator.MATCH, "whitelisted_host"));
         tc.setInputs(Arrays.asList("dns"));
 
@@ -296,8 +293,7 @@ public class JobConfigurationVerifierTest extends ESTestCase {
 
     public void testVerify_GivenDataFormatIsSingleLineAndNonEmptyTransforms() {
         ArrayList<TransformConfig> transforms = new ArrayList<>();
-        TransformConfig transform = new TransformConfig();
-        transform.setTransform("trim");
+        TransformConfig transform = new TransformConfig("trim");
         transform.setInputs(Arrays.asList("raw"));
         transform.setOutputs(Arrays.asList("time"));
         transforms.add(transform);

@@ -253,16 +253,14 @@ public class DependencySorterTest extends ESTestCase {
     }
 
     private TransformConfig createConcatTransform(List<String> inputs, List<String> outputs) {
-        TransformConfig concat = new TransformConfig();
-        concat.setTransform(TransformType.CONCAT.prettyName());
+        TransformConfig concat = new TransformConfig(TransformType.CONCAT.prettyName());
         concat.setInputs(inputs);
         concat.setOutputs(outputs);
         return concat;
     }
 
     private TransformConfig createHrdTransform(List<String> inputs, List<String> outputs) {
-        TransformConfig concat = new TransformConfig();
-        concat.setTransform(TransformType.DOMAIN_SPLIT.prettyName());
+        TransformConfig concat = new TransformConfig(TransformType.DOMAIN_SPLIT.prettyName());
         concat.setInputs(inputs);
         concat.setOutputs(outputs);
         return concat;
