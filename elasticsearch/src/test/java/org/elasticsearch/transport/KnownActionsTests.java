@@ -60,6 +60,11 @@ public class KnownActionsTests extends SecurityIntegTestCase {
     private static Set<String> knownHandlers;
     private static Set<String> codeActions;
 
+    @Override
+    protected boolean addMockZenPings() {
+        return false; // make sure unicasthost zen ping actions are loaded
+    }
+
     @BeforeClass
     public static void init() throws Exception {
         knownActions = loadKnownActions();
