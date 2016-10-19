@@ -213,8 +213,7 @@ public class WatchTests extends ESTestCase {
 
         BytesReference bytes = XContentFactory.jsonBuilder().value(watch).bytes();
         logger.info("{}", bytes.utf8ToString());
-        Watch.Parser watchParser = new Watch.Parser(settings, conditionRegistry, triggerService, transformRegistry, actionRegistry,
-                inputRegistry, null, clock);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, clock);
 
         Watch parsedWatch = watchParser.parse("_name", includeStatus, bytes);
 
@@ -250,8 +249,7 @@ public class WatchTests extends ESTestCase {
                 .startObject()
                     .startArray("actions").endArray()
                 .endObject();
-        Watch.Parser watchParser = new Watch.Parser(settings, conditionRegistry, triggerService, transformRegistry, actionRegistry,
-                inputRegistry, null, clock);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, clock);
         try {
             watchParser.parse("failure", false, jsonBuilder.bytes());
             fail("This watch should fail to parse as actions is an array");
@@ -277,8 +275,7 @@ public class WatchTests extends ESTestCase {
                 .field(ScheduleTrigger.TYPE, schedule(schedule).build())
                 .endObject();
         builder.endObject();
-        Watch.Parser watchParser = new Watch.Parser(settings, conditionRegistry, triggerService, transformRegistry, actionRegistry,
-                inputRegistry, null, SystemClock.INSTANCE);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, SystemClock.INSTANCE);
         Watch watch = watchParser.parse("failure", false, builder.bytes());
         assertThat(watch, notNullValue());
         assertThat(watch.trigger(), instanceOf(ScheduleTrigger.class));
@@ -299,8 +296,7 @@ public class WatchTests extends ESTestCase {
         InputRegistry inputRegistry = registry(SearchInput.TYPE);
         TransformRegistry transformRegistry = transformRegistry();
         ActionRegistry actionRegistry = registry(Collections.emptyList(), conditionRegistry, transformRegistry);
-        Watch.Parser watchParser = new Watch.Parser(settings, conditionRegistry, triggerService, transformRegistry, actionRegistry,
-                inputRegistry, null, SystemClock.INSTANCE);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, SystemClock.INSTANCE);
 
         IndicesQueriesRegistry queryRegistry = new IndicesQueriesRegistry();
         QueryParser<MatchAllQueryBuilder> queryParser1 = MatchAllQueryBuilder::fromXContent;

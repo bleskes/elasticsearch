@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.watcher.transform.script;
 
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -32,7 +31,6 @@ public class ScriptTransformFactory extends TransformFactory<ScriptTransform, Sc
     private final Settings settings;
     private final ScriptService scriptService;
 
-    @Inject
     public ScriptTransformFactory(Settings settings, ScriptService scriptService) {
         super(Loggers.getLogger(ExecutableScriptTransform.class, settings));
         this.settings = settings;
