@@ -21,7 +21,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 
 import java.io.IOException;
@@ -105,7 +104,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                ThreadPool threadPool, ActionFilters actionFilters,
-                               IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
+                               IndexNameExpressionResolver indexNameExpressionResolver) {
             super(settings, PostDataAction.NAME, false, threadPool, transportService, actionFilters,
                     indexNameExpressionResolver, Request::new);
         }

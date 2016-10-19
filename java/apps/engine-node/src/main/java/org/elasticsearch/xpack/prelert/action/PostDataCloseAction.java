@@ -15,7 +15,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 
 public class PostDataCloseAction extends Action<PostDataCloseAction.Request, PostDataCloseAction.Response,
         PostDataCloseAction.RequestBuilder> {
@@ -63,7 +62,7 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                ThreadPool threadPool, ActionFilters actionFilters,
-                               IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
+                               IndexNameExpressionResolver indexNameExpressionResolver) {
             super(settings, PostDataCloseAction.NAME, false, threadPool, transportService, actionFilters,
                     indexNameExpressionResolver, Request::new);
         }

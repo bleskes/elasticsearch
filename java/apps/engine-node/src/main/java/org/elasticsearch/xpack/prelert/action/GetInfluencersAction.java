@@ -36,7 +36,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -215,20 +215,19 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobProvider jobProvider;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                PrelertServices prelertServices) {
+                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                               ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobProvider = jobProvider;
         }
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            JobProvider provider = prelertServices.getJobProvider();
             InfluencersQueryBuilder.InfluencersQuery query =
                     new InfluencersQueryBuilder()
                     .includeInterim(request.includeInterim)
@@ -242,7 +241,7 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
                     .build();
 
             try {
-                QueryPage<Influencer> page = provider.influencers(request.jobId, query);
+                QueryPage<Influencer> page = jobProvider.influencers(request.jobId, query);
                 listener.onResponse(new Response(page, objectMapper));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);

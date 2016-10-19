@@ -42,8 +42,8 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;
@@ -146,16 +146,16 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
 
     public static class TransportAction extends TransportMasterNodeReadAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobManager jobManager;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                     ThreadPool threadPool, ActionFilters actionFilters,
-                                     IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
+                               ThreadPool threadPool, ActionFilters actionFilters,
+                               IndexNameExpressionResolver indexNameExpressionResolver, JobManager jobManager) {
             super(settings, GetJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobManager = jobManager;
         }
 
         @Override
@@ -171,7 +171,7 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
             logger.debug("Get job '" + request.getJobId() + "'");
-            Optional<JobDetails> optionalJob = prelertServices.getJobManager().getJob(request.getJobId(), state);
+            Optional<JobDetails> optionalJob = jobManager.getJob(request.getJobId(), state);
             SingleDocument jobDocument = optionalJob.isPresent() ? createJobDocument(optionalJob.get()) : SingleDocument.empty(JobDetails.TYPE);
             if (jobDocument.isExists()) {
                 logger.debug("Returning job '" + optionalJob.get().getJobId() + "'");

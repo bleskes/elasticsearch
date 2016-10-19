@@ -35,13 +35,12 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.StatusToXContent;
-import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketQueryBuilder;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
@@ -192,27 +191,26 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobProvider jobProvider;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
                                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               PrelertServices prelertServices) {
+                               ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobProvider = jobProvider;
         }
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            JobProvider provider = prelertServices.getJobProvider();
             BucketQueryBuilder.BucketQuery query =
                     new BucketQueryBuilder(request.timestamp).expand(request.expand)
                             .includeInterim(request.includeInterim)
                             .partitionValue(request.partitionValue)
                             .build();
 
-            Optional<Bucket> b = provider.bucket(request.jobId, query);
+            Optional<Bucket> b = jobProvider.bucket(request.jobId, query);
             if (b.isPresent()) {
                 try {
                     BytesReference document = new BytesArray(objectMapper.writeValueAsBytes(b.get()));

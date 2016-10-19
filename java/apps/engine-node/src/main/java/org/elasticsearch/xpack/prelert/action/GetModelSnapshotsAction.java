@@ -18,7 +18,6 @@ package org.elasticsearch.xpack.prelert.action;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -38,9 +37,9 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -218,15 +217,15 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobProvider jobProvider;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool,
-                               ActionFilters actionFilters,IndexNameExpressionResolver indexNameExpressionResolver,
-                               PrelertServices prelertServices) {
+                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                               ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobProvider = jobProvider;
         }
 
         @Override
@@ -236,10 +235,9 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
                     request.getJobId(), request.getSkip(), request.getTake(), request.getStart(), request.getEnd(),
                     request.getSort(), request.getDescOrder(), request.getDescriptionString()));
 
-            JobProvider provider = prelertServices.getJobProvider();
             QueryPage<ModelSnapshot> page;
             try {
-                page = doGetPage(provider, request);
+                page = doGetPage(jobProvider, request);
             } catch (JobException e) {
                 throw ExceptionsHelper.missingException(request.getJobId());
             }

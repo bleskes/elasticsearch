@@ -36,7 +36,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
+import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -126,15 +126,15 @@ public class UpdateJobAction extends Action<UpdateJobAction.Request, UpdateJobAc
 
     public static class TransportAction extends TransportMasterNodeAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobManager jobManager;
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               PrelertServices prelertServices) {
+                               JobManager jobManager) {
             super(settings, UpdateJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobManager = jobManager;
         }
 
         @Override
@@ -149,7 +149,7 @@ public class UpdateJobAction extends Action<UpdateJobAction.Request, UpdateJobAc
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            prelertServices.getJobManager().updateJob(request, listener);
+            jobManager.updateJob(request, listener);
         }
 
         @Override

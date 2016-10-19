@@ -36,8 +36,8 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -227,20 +227,19 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobProvider jobProvider;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
                                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               PrelertServices prelertServices) {
+                               ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobProvider = jobProvider;
         }
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            JobProvider provider = prelertServices.getJobProvider();
             BucketsQueryBuilder.BucketsQuery query =
                     new BucketsQueryBuilder().expand(request.expand)
                             .includeInterim(request.includeInterim)
@@ -254,7 +253,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                             .build();
 
             try {
-                QueryPage<Bucket> page = provider.buckets(request.jobId, query);
+                QueryPage<Bucket> page = jobProvider.buckets(request.jobId, query);
                 listener.onResponse(new Response(page, objectMapper));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);

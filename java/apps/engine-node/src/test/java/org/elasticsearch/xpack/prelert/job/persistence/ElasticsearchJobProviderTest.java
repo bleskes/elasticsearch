@@ -219,7 +219,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
                 .addClusterStatusYellowResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX);
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
-        provider.doStart();
+        provider.initialize();
         try
         {
             clientBuilder.verifyIndexCreated(ElasticsearchJobProvider.PRELERT_USAGE_INDEX);

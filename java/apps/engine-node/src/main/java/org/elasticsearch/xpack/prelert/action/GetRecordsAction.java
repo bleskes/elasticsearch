@@ -36,7 +36,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.persistence.RecordsQueryBuilder;
@@ -238,20 +238,19 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobProvider jobProvider;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                PrelertServices prelertServices) {
+                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                               ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobProvider = jobProvider;
         }
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            JobProvider provider = prelertServices.getJobProvider();
             RecordsQueryBuilder.RecordsQuery query = new RecordsQueryBuilder()
                     .includeInterim(request.includeInterim)
                     .epochStart(request.start)
@@ -264,7 +263,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
                     .build();
 
             try {
-                QueryPage<AnomalyRecord> page = provider.records(request.jobId, query);
+                QueryPage<AnomalyRecord> page = jobProvider.records(request.jobId, query);
                 listener.onResponse(new Response(page, objectMapper));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);

@@ -35,51 +35,29 @@ import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
-import org.elasticsearch.xpack.prelert.action.CreateListAction;
-import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
-import org.elasticsearch.xpack.prelert.action.GetBucketAction;
-import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
-import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
-import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
-import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
-import org.elasticsearch.xpack.prelert.action.GetJobAction;
-import org.elasticsearch.xpack.prelert.action.GetJobsAction;
-import org.elasticsearch.xpack.prelert.action.GetListAction;
-import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
-import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
-import org.elasticsearch.xpack.prelert.action.PostDataAction;
-import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
-import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
-import org.elasticsearch.xpack.prelert.action.PutJobAction;
-import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
-import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
-import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
-import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
+import org.elasticsearch.xpack.prelert.action.*;
+import org.elasticsearch.xpack.prelert.job.manager.JobManager;
+import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
+import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
+import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
+import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
 import org.elasticsearch.xpack.prelert.rest.influencers.RestGetInfluencersAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestUpdateJobAction;
+import org.elasticsearch.xpack.prelert.rest.job.*;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketsAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoriesAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoryAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetRecordsAction;
+import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.rest.results.*;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
-import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -118,6 +96,10 @@ public class ServerBootstrap {
             }
         });
         node.start();
+        // Verifies that we're good to go (at least yellow state and prelert-usage exists.
+        // NORELEASE: when moving to be a plugin verifying prelert-usage index exists (and create one if it isn;t there)
+        // should be triggered via a cluster state listener.
+        node.injector().getInstance(ElasticsearchJobProvider.class).initialize();
         latch.await();
     }
 
@@ -145,11 +127,24 @@ public class ServerBootstrap {
         public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
                 ResourceWatcherService resourceWatcherService, ScriptService scriptService,
                 SearchRequestParsers searchRequestParsers) {
+
+            ActionGuardian<Action> processActionGuardian =
+                    new LocalActionGuardian<>(Action.startingState());
+            ActionGuardian<ScheduledAction> schedulerActionGuardian =
+                    new LocalActionGuardian<>(ScheduledAction.STOPPED);
+            // All components get binded in the guice context to the instances returned here
+            // and interfaces are not bound to their concrete classes.
+            // instead of `bind(Interface.class).to(Implementation.class);` this happens:
+            //  `bind(Implementation.class).toInstance(INSTANCE);`
+            // For this reason we can't use interfaces in the constructor of transport actions.
+            // This ok for now as we will remove Guice soon
+            ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(null, client, 0);
             return Arrays.asList(
-                    new PrelertServices(client, clusterService),
+                    jobProvider,
+                    new JobManager(jobProvider, clusterService, processActionGuardian, schedulerActionGuardian),
                     new JobAllocator(settings, clusterService, threadPool),
                     new JobLifeCycleService(settings, clusterService)
-                    );
+            );
         }
 
         @Override

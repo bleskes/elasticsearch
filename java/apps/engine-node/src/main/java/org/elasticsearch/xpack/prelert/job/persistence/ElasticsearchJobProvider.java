@@ -95,7 +95,7 @@ import java.util.stream.Collectors;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-public class ElasticsearchJobProvider extends AbstractLifecycleComponent implements JobProvider
+public class ElasticsearchJobProvider implements JobProvider
 {
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchJobProvider.class);
 
@@ -139,7 +139,6 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
     private final ObjectMapper objectMapper;
 
     public ElasticsearchJobProvider(Node node, Client client, int numberOfReplicas) {
-        super(Settings.EMPTY);
         this.node = node;
         this.client = Objects.requireNonNull(client);
         this.numberOfReplicas = numberOfReplicas;
@@ -152,8 +151,7 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
         objectMapper.setConfig(objectMapper.getSerializationConfig().withView(JsonViews.DatastoreView.class));
     }
 
-    @Override
-    protected void doStart() {
+    public void initialize() {
         LOGGER.info("Connecting to Elasticsearch cluster '" + client.settings().get("cluster.name")
                 + "'");
 
@@ -180,14 +178,6 @@ public class ElasticsearchJobProvider extends AbstractLifecycleComponent impleme
 
 
         createUsageMeteringIndex();
-    }
-
-    @Override
-    protected void doStop() {
-    }
-
-    @Override
-    protected void doClose() {
     }
 
     /*

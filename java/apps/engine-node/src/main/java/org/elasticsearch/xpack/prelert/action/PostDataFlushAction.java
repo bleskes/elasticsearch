@@ -15,7 +15,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 
 public class PostDataFlushAction extends Action<PostDataFlushAction.Request, PostDataFlushAction.Response,
         PostDataFlushAction.RequestBuilder> {
@@ -63,7 +62,7 @@ public class PostDataFlushAction extends Action<PostDataFlushAction.Request, Pos
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                ThreadPool threadPool, ActionFilters actionFilters,
-                               IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
+                               IndexNameExpressionResolver indexNameExpressionResolver) {
             super(settings, PostDataFlushAction.NAME, false, threadPool, transportService, actionFilters,
                     indexNameExpressionResolver, PostDataFlushAction.Request::new);
         }

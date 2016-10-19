@@ -40,8 +40,8 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.PrelertServices;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
 
@@ -142,16 +142,16 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
 
     public static class TransportAction extends TransportMasterNodeReadAction<Request, Response> {
 
-        private final PrelertServices prelertServices;
+        private final JobManager jobManager;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                ThreadPool threadPool, ActionFilters actionFilters,
-                IndexNameExpressionResolver indexNameExpressionResolver, PrelertServices prelertServices) {
+                               ThreadPool threadPool, ActionFilters actionFilters,
+                               IndexNameExpressionResolver indexNameExpressionResolver, JobManager jobManager) {
             super(settings, GetJobsAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
-            this.prelertServices = prelertServices;
+            this.jobManager = jobManager;
         }
 
         @Override
@@ -166,7 +166,7 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            QueryPage<JobDetails> jobsPage = prelertServices.getJobManager().getJobs(request.getSkip(), request.getTake(), state);
+            QueryPage<JobDetails> jobsPage = jobManager.getJobs(request.getSkip(), request.getTake(), state);
             listener.onResponse(new Response(jobsPage, objectMapper));
         }
 
