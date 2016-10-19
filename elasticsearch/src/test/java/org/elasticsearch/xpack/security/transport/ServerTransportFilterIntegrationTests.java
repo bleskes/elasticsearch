@@ -37,6 +37,7 @@ import org.elasticsearch.xpack.ssl.SSLClientAuth;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -46,6 +47,7 @@ import static java.util.Collections.singletonMap;
 import static org.elasticsearch.test.SecuritySettingsSource.getSSLSettingsForStore;
 import static org.elasticsearch.xpack.security.test.SecurityTestUtils.writeFile;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.instanceOf;
 
 public class ServerTransportFilterIntegrationTests extends SecurityIntegTestCase {
     private static int randomClientPort;
