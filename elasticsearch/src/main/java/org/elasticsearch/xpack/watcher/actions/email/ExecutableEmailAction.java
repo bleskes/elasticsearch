@@ -32,6 +32,7 @@ import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.xpack.watcher.support.Variables;
 import org.elasticsearch.xpack.watcher.watch.Payload;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,7 +70,7 @@ public class ExecutableEmailAction extends ExecutableAction<EmailAction> {
                 try {
                     Attachment attachment = parser.toAttachment(ctx, payload, emailAttachment);
                     attachments.put(attachment.id(), attachment);
-                } catch (ElasticsearchException e) {
+                } catch (ElasticsearchException | IOException e) {
                     return new EmailAction.Result.Failure(action.type(), e.getMessage());
                 }
             }

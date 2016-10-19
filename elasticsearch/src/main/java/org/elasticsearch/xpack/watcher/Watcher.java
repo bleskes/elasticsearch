@@ -259,6 +259,7 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
         settings.add(Setting.simpleString("xpack.watcher.trigger.schedule.ticker.tick_interval", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.execution.scroll.timeout", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.start_immediately", Setting.Property.NodeScope));
+
         return settings;
     }
 

@@ -17,12 +17,11 @@
 
 package org.elasticsearch.xpack.notification.email.attachment;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.notification.email.Attachment;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.xpack.watcher.watch.Payload;
-import org.elasticsearch.xpack.notification.email.Attachment;
 
 import java.io.IOException;
 
@@ -74,6 +73,6 @@ public interface EmailAttachmentParser<T extends EmailAttachmentParser.EmailAtta
      * @param attachment The typed attachment
      * @return An attachment that is ready to be used in a MimeMessage
      */
-    Attachment toAttachment(WatchExecutionContext context, Payload payload, T attachment) throws ElasticsearchException;
+    Attachment toAttachment(WatchExecutionContext context, Payload payload, T attachment) throws IOException;
 
 }

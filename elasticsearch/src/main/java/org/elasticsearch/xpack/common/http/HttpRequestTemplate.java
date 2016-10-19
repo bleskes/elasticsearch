@@ -264,6 +264,10 @@ public class HttpRequestTemplate implements ToXContent {
         return new Builder(host, port);
     }
 
+    public static Builder builder(String url) {
+        return new Builder(url);
+    }
+
     static Builder builder() {
         return new Builder();
     }
@@ -402,6 +406,10 @@ public class HttpRequestTemplate implements ToXContent {
         private HttpProxy proxy;
 
         private Builder() {
+        }
+
+        private Builder(String url) {
+            fromUrl(url);
         }
 
         private Builder(String host, int port) {
