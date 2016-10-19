@@ -4,12 +4,20 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.DotNotationReverser;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,29 +26,49 @@ import java.util.Objects;
  * Used as a nested level inside population anomaly records.
  */
 @JsonInclude(Include.NON_NULL)
-public class AnomalyCause implements StorageSerialisable
+public class AnomalyCause extends ToXContentToBytes implements Writeable, StorageSerialisable
 {
+    public static final ParseField ANOMALY_CAUSE = new ParseField("anomalyCause");
     /**
      * Result fields
      */
-    public static final String PROBABILITY = "probability";
-    public static final String OVER_FIELD_NAME = "overFieldName";
-    public static final String OVER_FIELD_VALUE = "overFieldValue";
-    public static final String BY_FIELD_NAME = "byFieldName";
-    public static final String BY_FIELD_VALUE = "byFieldValue";
-    public static final String CORRELATED_BY_FIELD_VALUE = "correlatedByFieldValue";
-    public static final String PARTITION_FIELD_NAME = "partitionFieldName";
-    public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
-    public static final String FUNCTION = "function";
-    public static final String FUNCTION_DESCRIPTION = "functionDescription";
-    public static final String TYPICAL = "typical";
-    public static final String ACTUAL = "actual";
-    public static final String INFLUENCERS = "influencers";
+    public static final ParseField PROBABILITY = new ParseField("probability");
+    public static final ParseField OVER_FIELD_NAME = new ParseField("overFieldName");
+    public static final ParseField OVER_FIELD_VALUE = new ParseField("overFieldValue");
+    public static final ParseField BY_FIELD_NAME = new ParseField("byFieldName");
+    public static final ParseField BY_FIELD_VALUE = new ParseField("byFieldValue");
+    public static final ParseField CORRELATED_BY_FIELD_VALUE = new ParseField("correlatedByFieldValue");
+    public static final ParseField PARTITION_FIELD_NAME = new ParseField("partitionFieldName");
+    public static final ParseField PARTITION_FIELD_VALUE = new ParseField("partitionFieldValue");
+    public static final ParseField FUNCTION = new ParseField("function");
+    public static final ParseField FUNCTION_DESCRIPTION = new ParseField("functionDescription");
+    public static final ParseField TYPICAL = new ParseField("typical");
+    public static final ParseField ACTUAL = new ParseField("actual");
+    public static final ParseField INFLUENCERS = new ParseField("influencers");
 
     /**
      * Metric Results
      */
-    public static final String FIELD_NAME = "fieldName";
+    public static final ParseField FIELD_NAME = new ParseField("fieldName");
+
+    public static final ObjectParser<AnomalyCause, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(ANOMALY_CAUSE.getPreferredName(),
+            AnomalyCause::new);
+    static {
+        PARSER.declareDouble(AnomalyCause::setProbability, PROBABILITY);
+        PARSER.declareString(AnomalyCause::setByFieldName, BY_FIELD_NAME);
+        PARSER.declareString(AnomalyCause::setByFieldValue, BY_FIELD_VALUE);
+        PARSER.declareString(AnomalyCause::setCorrelatedByFieldValue, CORRELATED_BY_FIELD_VALUE);
+        PARSER.declareString(AnomalyCause::setPartitionFieldName, PARTITION_FIELD_NAME);
+        PARSER.declareString(AnomalyCause::setPartitionFieldValue, PARTITION_FIELD_VALUE);
+        PARSER.declareString(AnomalyCause::setFunction, FUNCTION);
+        PARSER.declareString(AnomalyCause::setFunctionDescription, FUNCTION_DESCRIPTION);
+        PARSER.declareDoubleArray(AnomalyCause::setTypical, TYPICAL);
+        PARSER.declareDoubleArray(AnomalyCause::setActual, ACTUAL);
+        PARSER.declareString(AnomalyCause::setFieldName, FIELD_NAME);
+        PARSER.declareString(AnomalyCause::setOverFieldName, OVER_FIELD_NAME);
+        PARSER.declareString(AnomalyCause::setOverFieldValue, OVER_FIELD_VALUE);
+        PARSER.declareObjectArray(AnomalyCause::setInfluencers, Influence.PARSER, INFLUENCERS);
+    }
 
     private double probability;
     private String byFieldName;
@@ -50,8 +78,8 @@ public class AnomalyCause implements StorageSerialisable
     private String partitionFieldValue;
     private String function;
     private String functionDescription;
-    private double[] typical;
-    private double[] actual;
+    private List<Double> typical;
+    private List<Double> actual;
 
     private String fieldName;
 
@@ -59,6 +87,110 @@ public class AnomalyCause implements StorageSerialisable
     private String overFieldValue;
 
     private List<Influence> influencers;
+
+    public AnomalyCause() {
+    }
+
+    @SuppressWarnings("unchecked")
+    public AnomalyCause(StreamInput in) throws IOException {
+        probability = in.readDouble();
+        byFieldName = in.readOptionalString();
+        byFieldValue = in.readOptionalString();
+        correlatedByFieldValue = in.readOptionalString();
+        partitionFieldName = in.readOptionalString();
+        partitionFieldValue = in.readOptionalString();
+        function = in.readOptionalString();
+        functionDescription = in.readOptionalString();
+        if (in.readBoolean()) {
+            typical = (List<Double>) in.readGenericValue();
+        }
+        if (in.readBoolean()) {
+            actual = (List<Double>) in.readGenericValue();
+        }
+        fieldName = in.readOptionalString();
+        overFieldName = in.readOptionalString();
+        overFieldValue = in.readOptionalString();
+        if (in.readBoolean()) {
+            influencers = in.readList(Influence::new);
+        }
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeDouble(probability);
+        out.writeOptionalString(byFieldName);
+        out.writeOptionalString(byFieldValue);
+        out.writeOptionalString(correlatedByFieldValue);
+        out.writeOptionalString(partitionFieldName);
+        out.writeOptionalString(partitionFieldValue);
+        out.writeOptionalString(function);
+        out.writeOptionalString(functionDescription);
+        boolean hasTypical = typical != null;
+        out.writeBoolean(hasTypical);
+        if (hasTypical) {
+            out.writeGenericValue(typical);
+        }
+        boolean hasActual = actual != null;
+        out.writeBoolean(hasActual);
+        if (hasActual) {
+            out.writeGenericValue(actual);
+        }
+        out.writeOptionalString(fieldName);
+        out.writeOptionalString(overFieldName);
+        out.writeOptionalString(overFieldValue);
+        boolean hasInfluencers = influencers != null;
+        out.writeBoolean(hasInfluencers);
+        if (hasInfluencers) {
+            out.writeList(influencers);
+        }
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(PROBABILITY.getPreferredName(), probability);
+        if (byFieldName != null) {
+            builder.field(BY_FIELD_NAME.getPreferredName(), byFieldName);
+        }
+        if (byFieldValue != null) {
+            builder.field(BY_FIELD_VALUE.getPreferredName(), byFieldValue);
+        }
+        if (correlatedByFieldValue != null) {
+            builder.field(CORRELATED_BY_FIELD_VALUE.getPreferredName(), correlatedByFieldValue);
+        }
+        if (partitionFieldName != null) {
+            builder.field(PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
+        }
+        if (partitionFieldValue != null) {
+            builder.field(PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
+        }
+        if (function != null) {
+            builder.field(FUNCTION.getPreferredName(), function);
+        }
+        if (functionDescription != null) {
+            builder.field(FUNCTION_DESCRIPTION.getPreferredName(), functionDescription);
+        }
+        if (typical != null) {
+            builder.field(TYPICAL.getPreferredName(), typical);
+        }
+        if (actual != null) {
+            builder.field(ACTUAL.getPreferredName(), actual);
+        }
+        if (fieldName != null) {
+            builder.field(FIELD_NAME.getPreferredName(), fieldName);
+        }
+        if (overFieldName != null) {
+            builder.field(OVER_FIELD_NAME.getPreferredName(), overFieldName);
+        }
+        if (overFieldValue != null) {
+            builder.field(OVER_FIELD_VALUE.getPreferredName(), overFieldValue);
+        }
+        if (influencers != null) {
+            builder.field(INFLUENCERS.getPreferredName(), influencers);
+        }
+        builder.endObject();
+        return builder;
+    }
 
 
     public double getProbability()
@@ -143,23 +275,23 @@ public class AnomalyCause implements StorageSerialisable
     }
 
     @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
-    public double[] getTypical()
+    public List<Double> getTypical()
     {
         return typical;
     }
 
-    public void setTypical(double[] typical)
+    public void setTypical(List<Double> typical)
     {
         this.typical = typical;
     }
 
     @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
-    public double[] getActual()
+    public List<Double> getActual()
     {
         return actual;
     }
 
-    public void setActual(double[] actual)
+    public void setActual(List<Double> actual)
     {
         this.actual = actual;
     }
@@ -208,8 +340,8 @@ public class AnomalyCause implements StorageSerialisable
     public int hashCode()
     {
         return Objects.hash(probability,
-                Arrays.hashCode(actual),
-                Arrays.hashCode(typical),
+                actual,
+                typical,
                 byFieldName,
                 byFieldValue,
                 correlatedByFieldValue,
@@ -257,28 +389,28 @@ public class AnomalyCause implements StorageSerialisable
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.add(PROBABILITY, probability);
+        serialiser.add(PROBABILITY.getPreferredName(), probability);
 
         if (typical != null)
         {
-            if (typical.length == 1)
+            if (typical.size() == 1)
             {
-                serialiser.add(AnomalyCause.TYPICAL, typical[0]);
+                serialiser.add(AnomalyCause.TYPICAL.getPreferredName(), typical.get(0));
             }
             else
             {
-                serialiser.add(AnomalyCause.TYPICAL, typical);
+                serialiser.add(AnomalyCause.TYPICAL.getPreferredName(), typical);
             }
         }
         if (actual != null)
         {
-            if (actual.length == 1)
+            if (actual.size() == 1)
             {
-                serialiser.add(ACTUAL, actual[0]);
+                serialiser.add(ACTUAL.getPreferredName(), actual.get(0));
             }
             else
             {
-                serialiser.add(ACTUAL, actual);
+                serialiser.add(ACTUAL.getPreferredName(), actual);
             }
         }
 
@@ -286,7 +418,7 @@ public class AnomalyCause implements StorageSerialisable
 
         if (byFieldName != null)
         {
-            serialiser.add(AnomalyCause.BY_FIELD_NAME, byFieldName);
+            serialiser.add(AnomalyCause.BY_FIELD_NAME.getPreferredName(), byFieldName);
             if (byFieldValue != null)
             {
                 reverser.add(byFieldName, byFieldValue);
@@ -294,27 +426,27 @@ public class AnomalyCause implements StorageSerialisable
         }
         if (byFieldValue != null)
         {
-            serialiser.add(AnomalyCause.BY_FIELD_VALUE, byFieldValue);
+            serialiser.add(AnomalyCause.BY_FIELD_VALUE.getPreferredName(), byFieldValue);
         }
         if (correlatedByFieldValue != null)
         {
-            serialiser.add(AnomalyCause.CORRELATED_BY_FIELD_VALUE, correlatedByFieldValue);
+            serialiser.add(AnomalyCause.CORRELATED_BY_FIELD_VALUE.getPreferredName(), correlatedByFieldValue);
         }
         if (fieldName != null)
         {
-            serialiser.add(AnomalyCause.FIELD_NAME, fieldName);
+            serialiser.add(AnomalyCause.FIELD_NAME.getPreferredName(), fieldName);
         }
         if (function != null)
         {
-            serialiser.add(AnomalyCause.FUNCTION, function);
+            serialiser.add(AnomalyCause.FUNCTION.getPreferredName(), function);
         }
         if (functionDescription != null)
         {
-            serialiser.add(AnomalyCause.FUNCTION_DESCRIPTION, functionDescription);
+            serialiser.add(AnomalyCause.FUNCTION_DESCRIPTION.getPreferredName(), functionDescription);
         }
         if (partitionFieldName != null)
         {
-            serialiser.add(AnomalyCause.PARTITION_FIELD_NAME, partitionFieldName);
+            serialiser.add(AnomalyCause.PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
             if (partitionFieldValue != null)
             {
                 reverser.add(partitionFieldName, partitionFieldValue);
@@ -322,11 +454,11 @@ public class AnomalyCause implements StorageSerialisable
         }
         if (partitionFieldValue != null)
         {
-            serialiser.add(AnomalyCause.PARTITION_FIELD_VALUE, partitionFieldValue);
+            serialiser.add(AnomalyCause.PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
         }
         if (overFieldName != null)
         {
-            serialiser.add(AnomalyCause.OVER_FIELD_NAME, overFieldName);
+            serialiser.add(AnomalyCause.OVER_FIELD_NAME.getPreferredName(), overFieldName);
             if (overFieldValue != null)
             {
                 reverser.add(overFieldName, overFieldValue);
@@ -334,7 +466,7 @@ public class AnomalyCause implements StorageSerialisable
         }
         if (overFieldValue != null)
         {
-            serialiser.add(AnomalyCause.OVER_FIELD_VALUE, overFieldValue);
+            serialiser.add(AnomalyCause.OVER_FIELD_VALUE.getPreferredName(), overFieldValue);
         }
 
         serialiser.addReverserResults(reverser);

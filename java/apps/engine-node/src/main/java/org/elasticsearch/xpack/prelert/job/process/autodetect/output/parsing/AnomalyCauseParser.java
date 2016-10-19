@@ -1,14 +1,17 @@
 
 package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyCause;
 import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 final class AnomalyCauseParser extends FieldNameParser<AnomalyCause> {
     private static final Logger LOGGER = Loggers.getLogger(AnomalyCauseParser.class);
@@ -26,46 +29,56 @@ final class AnomalyCauseParser extends FieldNameParser<AnomalyCause> {
     protected void handleFieldName(String fieldName, AnomalyCause cause) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case AnomalyCause.PROBABILITY:
+            case "probability":
                 cause.setProbability(parseAsDoubleOrZero(fieldName));
                 break;
-            case AnomalyCause.BY_FIELD_NAME:
+            case "byFieldName":
                 cause.setByFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.BY_FIELD_VALUE:
+            case "byFieldValue":
                 cause.setByFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.CORRELATED_BY_FIELD_VALUE:
+            case "correlatedByFieldValue":
                 cause.setCorrelatedByFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.PARTITION_FIELD_NAME:
+            case "partitionFieldName":
                 cause.setPartitionFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.PARTITION_FIELD_VALUE:
+            case "partitionFieldValue":
                 cause.setPartitionFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.FUNCTION:
+            case "function":
                 cause.setFunction(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.FUNCTION_DESCRIPTION:
+            case "functionDescription":
                 cause.setFunctionDescription(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.TYPICAL:
-                cause.setTypical(parsePrimitiveDoubleArray(fieldName));
+            case "typical":
+                double[] typicalArray = parsePrimitiveDoubleArray(fieldName);
+                List<Double> typicalList = new ArrayList<>(typicalArray.length);
+                for (double value : typicalArray) {
+                    typicalList.add(value);
+                }
+                cause.setTypical(typicalList);
                 break;
-            case AnomalyCause.ACTUAL:
-                cause.setActual(parsePrimitiveDoubleArray(fieldName));
+            case "actual":
+                double[] actualArray = parsePrimitiveDoubleArray(fieldName);
+                List<Double> actualList = new ArrayList<>(actualArray.length);
+                for (double value : actualArray) {
+                    actualList.add(value);
+                }
+                cause.setActual(actualList);
                 break;
-            case AnomalyCause.FIELD_NAME:
+            case "fieldName":
                 cause.setFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.OVER_FIELD_NAME:
+            case "overFieldName":
                 cause.setOverFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.OVER_FIELD_VALUE:
+            case "overFieldValue":
                 cause.setOverFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyCause.INFLUENCERS:
+            case "influencers":
                 cause.setInfluencers(new InfluenceParser(parser).parseJson());
                 break;
             default:

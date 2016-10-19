@@ -1,38 +1,70 @@
 
 package org.elasticsearch.xpack.prelert.job.results;
 
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Influence field name and list of influence field values/score pairs
  */
-public class Influence implements StorageSerialisable
+public class Influence extends ToXContentToBytes implements Writeable, StorageSerialisable
 {
     /**
      * Note all publicly exposed field names are "influencer" not "influence"
      */
-    public static final String INFLUENCER_FIELD_NAME = "influencerFieldName";
-    public static final String INFLUENCER_FIELD_VALUES = "influencerFieldValues";
+    public static final ParseField INFLUENCER = new ParseField("influencer");
+    public static final ParseField INFLUENCER_FIELD_NAME = new ParseField("influencerFieldName");
+    public static final ParseField INFLUENCER_FIELD_VALUES = new ParseField("influencerFieldValues");
 
+    @SuppressWarnings("unchecked")
+    public static final ConstructingObjectParser<Influence, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            INFLUENCER.getPreferredName(), a -> new Influence((String) a[0], (List<String>) a[1]));
+
+    static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), INFLUENCER_FIELD_NAME);
+        PARSER.declareStringArray(ConstructingObjectParser.constructorArg(), INFLUENCER_FIELD_VALUES);
+    }
 
     private String field;
     private List<String> fieldValues;
 
-    public Influence()
+    public Influence(String field, List<String> fieldValues)
     {
-        fieldValues = new ArrayList<String>();
+        this.field = field;
+        this.fieldValues = fieldValues;
     }
 
-    public Influence(String field)
-    {
-        this();
-        this.field = field;
+    public Influence(StreamInput in) throws IOException {
+        this.field = in.readString();
+        this.fieldValues = Arrays.asList(in.readStringArray());
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(field);
+        out.writeStringArray(fieldValues.toArray(new String[fieldValues.size()]));
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(INFLUENCER_FIELD_NAME.getPreferredName(), field);
+        builder.field(INFLUENCER_FIELD_VALUES.getPreferredName(), fieldValues);
+        builder.endObject();
+        return builder;
     }
 
     public String getInfluencerFieldName()
@@ -40,24 +72,9 @@ public class Influence implements StorageSerialisable
         return field;
     }
 
-    public void setInfluencerFieldName(String field)
-    {
-        this.field = field;
-    }
-
     public List<String> getInfluencerFieldValues()
     {
         return fieldValues;
-    }
-
-    public void setInfluencerFieldValues(List<String> values)
-    {
-        this.fieldValues = values;
-    }
-
-    public void addInfluenceFieldValue(String value)
-    {
-        fieldValues.add(value);
     }
 
     @Override
@@ -93,6 +110,6 @@ public class Influence implements StorageSerialisable
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
-        serialiser.add(INFLUENCER_FIELD_NAME, field).add(INFLUENCER_FIELD_VALUES, fieldValues);
+        serialiser.add(INFLUENCER_FIELD_NAME.getPreferredName(), field).add(INFLUENCER_FIELD_VALUES.getPreferredName(), fieldValues);
     }
 }

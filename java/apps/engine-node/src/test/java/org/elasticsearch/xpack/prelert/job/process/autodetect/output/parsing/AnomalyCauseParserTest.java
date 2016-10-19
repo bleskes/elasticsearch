@@ -50,8 +50,8 @@ public class AnomalyCauseParserTest extends ESTestCase {
         assertEquals("A321", cause.getPartitionFieldValue());
         assertEquals("low_mean", cause.getFunction());
         assertEquals("mean", cause.getFunctionDescription());
-        assertEquals(442.616, cause.getTypical()[0], 0.001);
-        assertEquals(10.0, cause.getActual()[0], 0.0001);
+        assertEquals(442.616, cause.getTypical().get(0), 0.001);
+        assertEquals(10.0, cause.getActual().get(0), 0.0001);
         assertEquals("callsign", cause.getOverFieldName());
         assertEquals("HVN600", cause.getOverFieldValue());
 

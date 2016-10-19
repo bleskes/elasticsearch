@@ -26,11 +26,8 @@ final class InfluenceParser extends FieldNameParser<List<Influence>> {
 
     @Override
     protected void handleFieldName(String fieldName, List<Influence> influences) throws IOException {
-        Influence influence = new Influence();
-        influence.setInfluencerFieldName(fieldName);
         parser.nextToken();
-        influence.setInfluencerFieldValues(parseValues(fieldName));
-
+        Influence influence = new Influence(fieldName, parseValues(fieldName));
         influences.add(influence);
     }
 
