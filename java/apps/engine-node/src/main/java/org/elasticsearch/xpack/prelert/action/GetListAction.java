@@ -164,9 +164,9 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                      ThreadPool threadPool, ActionFilters actionFilters,
-                                      IndexNameExpressionResolver indexNameExpressionResolver,
-                                      TransportGetAction transportGetAction) {
+                ThreadPool threadPool, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver,
+                TransportGetAction transportGetAction) {
             super(settings, GetListAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.transportGetAction = transportGetAction;
@@ -185,15 +185,15 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
             final String listId = request.getListId();
-            GetRequest getRequest = new GetRequest(PRELERT_INFO_INDEX, ListDocument.TYPE, listId);
+            GetRequest getRequest = new GetRequest(PRELERT_INFO_INDEX, ListDocument.TYPE.getPreferredName(), listId);
             transportGetAction.execute(getRequest, new ActionListener<GetResponse>() {
                 @Override
                 public void onResponse(GetResponse getDocResponse) {
                     SingleDocument responseBody;
                     if (getDocResponse.isExists()) {
-                        responseBody = new SingleDocument(ListDocument.TYPE, getDocResponse.getSourceAsBytesRef());
+                        responseBody = new SingleDocument(ListDocument.TYPE.getPreferredName(), getDocResponse.getSourceAsBytesRef());
                     } else {
-                        responseBody = SingleDocument.empty(ListDocument.TYPE);
+                        responseBody = SingleDocument.empty(ListDocument.TYPE.getPreferredName());
                     }
 
                     try {

@@ -128,9 +128,9 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                         ThreadPool threadPool, ActionFilters actionFilters,
-                                         IndexNameExpressionResolver indexNameExpressionResolver,
-                                         TransportIndexAction transportIndexAction) {
+                ThreadPool threadPool, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver,
+                TransportIndexAction transportIndexAction) {
             super(settings, CreateListAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.transportIndexAction = transportIndexAction;
@@ -155,7 +155,7 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
                 throw new ElasticsearchParseException("Missing required properties for List", e);
             }
             final String listId = listDocument.getId();
-            IndexRequest indexRequest = new IndexRequest(PRELERT_INFO_INDEX, ListDocument.TYPE, listId);
+            IndexRequest indexRequest = new IndexRequest(PRELERT_INFO_INDEX, ListDocument.TYPE.getPreferredName(), listId);
             indexRequest.source(request.getRequest());
             transportIndexAction.execute(indexRequest, new ActionListener<IndexResponse>() {
                 @Override

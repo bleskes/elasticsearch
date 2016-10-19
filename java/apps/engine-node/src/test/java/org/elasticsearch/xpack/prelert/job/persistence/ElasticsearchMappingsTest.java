@@ -48,15 +48,15 @@ public class ElasticsearchMappingsTest extends ESTestCase {
             JsonToken token = parser.nextToken();
             while (token != null && token != JsonToken.END_OBJECT) {
                 switch (token) {
-                    case START_OBJECT:
-                        parseJson(parser, expected);
-                        break;
-                    case FIELD_NAME:
-                        String fieldName = parser.getCurrentName();
-                        expected.add(fieldName);
-                        break;
-                    default:
-                        break;
+                case START_OBJECT:
+                    parseJson(parser, expected);
+                    break;
+                case FIELD_NAME:
+                    String fieldName = parser.getCurrentName();
+                    expected.add(fieldName);
+                    break;
+                default:
+                    break;
                 }
                 token = parser.nextToken();
             }
@@ -96,7 +96,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(CategoryDefinition.TYPE);
         overridden.add(Influencer.TYPE);
         overridden.add(JobDetails.TYPE);
-        overridden.add(ListDocument.TYPE);
+        overridden.add(ListDocument.TYPE.getPreferredName());
         overridden.add(ModelDebugOutput.TYPE);
         overridden.add(ModelState.TYPE);
         overridden.add(ModelSnapshot.TYPE);
@@ -105,8 +105,8 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(Usage.TYPE);
 
         // These are not reserved because they're in the prelert-int index, not prelertresults-*
-        overridden.add(ListDocument.ID);
-        overridden.add(ListDocument.ITEMS);
+        overridden.add(ListDocument.ID.getPreferredName());
+        overridden.add(ListDocument.ITEMS.getPreferredName());
 
         // These are not reserved because they're analyzed strings, i.e. the same type as user-specified fields
         overridden.add(JobDetails.DESCRIPTION);
