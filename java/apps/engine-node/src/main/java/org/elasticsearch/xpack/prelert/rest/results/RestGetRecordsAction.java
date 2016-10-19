@@ -52,7 +52,7 @@ public class RestGetRecordsAction extends BaseRestHandler {
         request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
         request.setPagination(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100));
         request.setAnomalyScore(Double.parseDouble(restRequest.param("anomalyScore", "0.0")));
-        request.setSort(restRequest.param("sort", AnomalyRecord.NORMALIZED_PROBABILITY));
+        request.setSort(restRequest.param("sort", AnomalyRecord.NORMALIZED_PROBABILITY.getPreferredName()));
         request.setDecending(restRequest.paramAsBoolean("desc", false));
         request.setMaxNormalizedProbability(Double.parseDouble(restRequest.param("normalizedProbability", "0.0")));
         String partitionValue = restRequest.param("partitionValue");

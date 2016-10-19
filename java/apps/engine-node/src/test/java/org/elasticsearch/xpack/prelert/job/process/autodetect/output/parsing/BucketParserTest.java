@@ -62,12 +62,12 @@ public class BucketParserTest extends ESTestCase {
         assertEquals(2, records.size());
         assertEquals(0, records.get(0).getDetectorIndex());
         assertEquals(0.03, records.get(0).getProbability(), EPSILON);
-        assertEquals(42.0, records.get(0).getTypical()[0], EPSILON);
-        assertEquals(0.2, records.get(0).getActual()[0], EPSILON);
+        assertEquals(42.0, records.get(0).getTypical().get(0), EPSILON);
+        assertEquals(0.2, records.get(0).getActual().get(0), EPSILON);
         assertEquals(1, records.get(1).getDetectorIndex());
         assertEquals(0.01, records.get(1).getProbability(), EPSILON);
-        assertEquals(60.0, records.get(1).getTypical()[0], EPSILON);
-        assertEquals(0.01, records.get(1).getActual()[0], EPSILON);
+        assertEquals(60.0, records.get(1).getTypical().get(0), EPSILON);
+        assertEquals(0.01, records.get(1).getActual().get(0), EPSILON);
 
         List<BucketInfluencer> bucketInfluencers = b.getBucketInfluencers();
         assertEquals(2, bucketInfluencers.size());

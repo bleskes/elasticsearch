@@ -1,7 +1,5 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -16,7 +14,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
@@ -45,7 +42,7 @@ public class ElasticsearchPersisterTest extends ESTestCase {
         String responseId = "abcXZY54321";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .prepareIndex("prelertresults-" + JOB_ID, Bucket.TYPE, responseId, captor)
-                .prepareIndex("prelertresults-" + JOB_ID, AnomalyRecord.TYPE, "", captor)
+                .prepareIndex("prelertresults-" + JOB_ID, AnomalyRecord.TYPE.getPreferredName(), "", captor)
                 .prepareIndex("prelertresults-" + JOB_ID, BucketInfluencer.TYPE, "", captor)
                 .prepareIndex("prelertresults-" + JOB_ID, Influencer.TYPE, "", captor)
                 .prepareBulk(response);
@@ -80,7 +77,9 @@ public class ElasticsearchPersisterTest extends ESTestCase {
         bucket.setInfluencers(Arrays.asList(inf));
 
         AnomalyRecord record = bucket.getRecords().get(0);
-        double actuals[] = {5.0, 5.1};
+        List<Double> actuals = new ArrayList<>();
+        actuals.add(5.0);
+        actuals.add(5.1);
         record.setActual(actuals);
         record.setAnomalyScore(99.8);
         record.setBucketSpan(42);
@@ -98,7 +97,9 @@ public class ElasticsearchPersisterTest extends ESTestCase {
         record.setPartitionFieldName("partName");
         record.setPartitionFieldValue("partValue");
         record.setProbability(0.1);
-        double typicals[] = {0.44, 998765.3};
+        List<Double> typicals = new ArrayList<>();
+        typicals.add(0.44);
+        typicals.add(998765.3);
         record.setTypical(typicals);
 
         ElasticsearchPersister persister = new ElasticsearchPersister(JOB_ID, client);

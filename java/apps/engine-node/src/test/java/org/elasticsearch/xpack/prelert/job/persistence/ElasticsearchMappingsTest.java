@@ -86,7 +86,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(ElasticsearchMappings.WHITESPACE);
 
         // These are not reserved because they're data types, not field names
-        overridden.add(AnomalyRecord.TYPE);
+        overridden.add(AnomalyRecord.TYPE.getPreferredName());
         overridden.add(AuditActivity.TYPE);
         overridden.add(AuditMessage.TYPE);
         overridden.add(Bucket.TYPE);

@@ -651,7 +651,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE, skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -668,11 +668,11 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
         assertEquals(2L, recordPage.hitCount());
         List<AnomalyRecord> records = recordPage.hits();
-        assertEquals(22.4, records.get(0).getTypical()[0], 0.000001);
-        assertEquals(33.3, records.get(0).getActual()[0], 0.000001);
+        assertEquals(22.4, records.get(0).getTypical().get(0), 0.000001);
+        assertEquals(33.3, records.get(0).getActual().get(0), 0.000001);
         assertEquals("irritable", records.get(0).getFunction());
-        assertEquals(1122.4, records.get(1).getTypical()[0], 0.000001);
-        assertEquals(933.3, records.get(1).getActual()[0], 0.000001);
+        assertEquals(1122.4, records.get(1).getTypical().get(0), 0.000001);
+        assertEquals(933.3, records.get(1).getActual().get(0), 0.000001);
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
@@ -706,7 +706,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE, skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -724,11 +724,11 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
         assertEquals(2L, recordPage.hitCount());
         List<AnomalyRecord> records = recordPage.hits();
-        assertEquals(22.4, records.get(0).getTypical()[0], 0.000001);
-        assertEquals(33.3, records.get(0).getActual()[0], 0.000001);
+        assertEquals(22.4, records.get(0).getTypical().get(0), 0.000001);
+        assertEquals(33.3, records.get(0).getActual().get(0), 0.000001);
         assertEquals("irritable", records.get(0).getFunction());
-        assertEquals(1122.4, records.get(1).getTypical()[0], 0.000001);
-        assertEquals(933.3, records.get(1).getActual()[0], 0.000001);
+        assertEquals(1122.4, records.get(1).getTypical().get(0), 0.000001);
+        assertEquals(933.3, records.get(1).getActual().get(0), 0.000001);
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
@@ -765,7 +765,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE, skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -774,11 +774,11 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
         assertEquals(2L, recordPage.hitCount());
         List<AnomalyRecord> records = recordPage.hits();
-        assertEquals(22.4, records.get(0).getTypical()[0], 0.000001);
-        assertEquals(33.3, records.get(0).getActual()[0], 0.000001);
+        assertEquals(22.4, records.get(0).getTypical().get(0), 0.000001);
+        assertEquals(33.3, records.get(0).getActual().get(0), 0.000001);
         assertEquals("irritable", records.get(0).getFunction());
-        assertEquals(1122.4, records.get(1).getTypical()[0], 0.000001);
-        assertEquals(933.3, records.get(1).getActual()[0], 0.000001);
+        assertEquals(1122.4, records.get(1).getTypical().get(0), 0.000001);
+        assertEquals(933.3, records.get(1).getActual().get(0), 0.000001);
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
@@ -805,7 +805,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearchAnySize("prelertresults-" + jobId, AnomalyRecord.TYPE, response, queryBuilder);
+                .prepareSearchAnySize("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -837,7 +837,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearchAnySize("prelertresults-" + jobId, AnomalyRecord.TYPE, response, queryBuilder);
+                .prepareSearchAnySize("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);

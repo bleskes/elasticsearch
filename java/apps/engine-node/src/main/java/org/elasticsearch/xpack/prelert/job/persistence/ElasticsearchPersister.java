@@ -29,8 +29,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br>
  *
@@ -141,7 +139,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     LOGGER.trace("ES BULK ACTION: index type " + AnomalyRecord.TYPE +
                             " to index " + jobId.getIndex() + " with auto-generated ID, for bucket "
                             + bucket.getId());
-                    addRecordsRequest.add(client.prepareIndex(jobId.getIndex(), AnomalyRecord.TYPE)
+                    addRecordsRequest.add(client.prepareIndex(jobId.getIndex(), AnomalyRecord.TYPE.getPreferredName())
                             .setSource(content)
                             .setParent(bucket.getId()));
                 }
@@ -183,7 +181,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             for (Entry<String, Double> entry : bucket.getPerPartitionMaxProbability().entrySet())
             {
                 serialiser.startObject()
-                .add(AnomalyRecord.PARTITION_FIELD_VALUE, entry.getKey())
+                        .add(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), entry.getKey())
                 .add(Bucket.MAX_NORMALIZED_PROBABILITY, entry.getValue())
                 .endObject();
             }
@@ -192,9 +190,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             LOGGER.trace("ES API CALL: index type " + PartitionNormalisedProb.TYPE +
                     " to index " + jobId.getIndex() + " at epoch " + bucket.getEpoch());
             client.prepareIndex(jobId.getIndex(), PartitionNormalisedProb.TYPE)
-                                                .setSource(builder)
-                                                .setId(bucket.getId())
-                                                .execute().actionGet();
+            .setSource(builder)
+            .setId(bucket.getId())
+            .execute().actionGet();
         }
         catch (IOException e)
         {
@@ -363,7 +361,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
                     " to index " + jobId.getIndex() + " with ID " + bucket.getId());
             client.prepareIndex(jobId.getIndex(), Bucket.TYPE, bucket.getId())
-                    .setSource(serialiseWithJobId(bucket)).execute().actionGet();
+            .setSource(serialiseWithJobId(bucket)).execute().actionGet();
         }
         catch (IOException e)
         {
@@ -434,10 +432,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                         bucketId);
 
                 bulkRequest.add(
-                        client.prepareIndex(jobId.getIndex(), AnomalyRecord.TYPE, recordId)
-                                .setSource(serialiseWithJobId(record))
-                                 // Need to specify the parent ID when updating a child
-                                .setParent(bucketId));
+                        client.prepareIndex(jobId.getIndex(), AnomalyRecord.TYPE.getPreferredName(), recordId)
+                        .setSource(serialiseWithJobId(record))
+                        // Need to specify the parent ID when updating a child
+                        .setParent(bucketId));
 
                 addedAny = true;
             }
@@ -510,8 +508,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             try
             {
                 client.prepareIndex(jobId.getIndex(), type, idSupplier.get())
-                        .setSource(serialiser.serialise())
-                        .execute().actionGet();
+                .setSource(serialiser.serialise())
+                .execute().actionGet();
                 return true;
             }
             catch (IOException e)
@@ -540,10 +538,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         XContentBuilder builder = jsonBuilder();
         new ElasticsearchStorageSerialiser(builder)
-                .startObject()
-                .add(JOB_ID_NAME, jobId.getId())
-                .serialise(obj)
-                .endObject();
+        .startObject()
+        .add(JOB_ID_NAME, jobId.getId())
+        .serialise(obj)
+        .endObject();
         return builder;
     }
 
@@ -552,11 +550,11 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         XContentBuilder builder = jsonBuilder();
         new ElasticsearchStorageSerialiser(builder)
-                .startObject()
-                .add(JOB_ID_NAME, jobId.getId())
-                .addTimestamp(new Date())
-                .serialise(categoryDefinition)
-                .endObject();
+        .startObject()
+        .add(JOB_ID_NAME, jobId.getId())
+        .addTimestamp(new Date())
+        .serialise(categoryDefinition)
+        .endObject();
         return builder;
     }
 
@@ -565,10 +563,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         XContentBuilder builder = jsonBuilder();
         new ElasticsearchStorageSerialiser(builder)
-                .startObject()
-                .add(JOB_ID_NAME, jobId.getId())
-                .addTimestamp(bucketTime)
-                .serialise(bucketInfluencer);
+        .startObject()
+        .add(JOB_ID_NAME, jobId.getId())
+        .addTimestamp(bucketTime)
+        .serialise(bucketInfluencer);
 
         if (isInterim)
         {

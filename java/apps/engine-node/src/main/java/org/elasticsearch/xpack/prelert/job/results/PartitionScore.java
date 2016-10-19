@@ -102,12 +102,12 @@ public class PartitionScore implements StorageSerialisable
 
     @Override
     public void serialise(StorageSerialiser serialiser)
-    throws IOException
+            throws IOException
     {
-        serialiser.add(AnomalyRecord.PARTITION_FIELD_NAME, partitionFieldName);
-        serialiser.add(AnomalyRecord.PARTITION_FIELD_VALUE, partitionFieldValue);
-        serialiser.add(AnomalyRecord.PROBABILITY, probability);
-        serialiser.add(AnomalyRecord.ANOMALY_SCORE, anomalyScore);
+        serialiser.add(AnomalyRecord.PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
+        serialiser.add(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
+        serialiser.add(AnomalyRecord.PROBABILITY.getPreferredName(), probability);
+        serialiser.add(AnomalyRecord.ANOMALY_SCORE.getPreferredName(), anomalyScore);
     }
 
     public boolean hadBigNormalisedUpdate()

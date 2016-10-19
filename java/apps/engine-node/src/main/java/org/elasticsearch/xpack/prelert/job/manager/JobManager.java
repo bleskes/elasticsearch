@@ -76,7 +76,7 @@ public class JobManager {
      */
     public static final String APP_VER_FIELDNAME = "appVer";
 
-    public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY;
+    public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY.getPreferredName();
 
     private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
 

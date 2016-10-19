@@ -119,12 +119,12 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final String KEYWORD = "keyword";
 
     private static final List<String> SECONDARY_SORT = Arrays.asList(
-            AnomalyRecord.ANOMALY_SCORE,
-            AnomalyRecord.OVER_FIELD_VALUE,
-            AnomalyRecord.PARTITION_FIELD_VALUE,
-            AnomalyRecord.BY_FIELD_VALUE,
-            AnomalyRecord.FIELD_NAME,
-            AnomalyRecord.FUNCTION
+            AnomalyRecord.ANOMALY_SCORE.getPreferredName(),
+            AnomalyRecord.OVER_FIELD_VALUE.getPreferredName(),
+            AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(),
+            AnomalyRecord.BY_FIELD_VALUE.getPreferredName(),
+            AnomalyRecord.FIELD_NAME.getPreferredName(),
+            AnomalyRecord.FUNCTION.getPreferredName()
             );
 
     private static final int UPDATE_JOB_RETRY_COUNT = 3;
@@ -403,7 +403,7 @@ public class ElasticsearchJobProvider implements JobProvider
             .addMapping(BucketInfluencer.TYPE, bucketInfluencerMapping)
             .addMapping(CategorizerState.TYPE, categorizerStateMapping)
             .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
-            .addMapping(AnomalyRecord.TYPE, recordMapping)
+                    .addMapping(AnomalyRecord.TYPE.getPreferredName(), recordMapping)
             .addMapping(Quantiles.TYPE, quantilesMapping)
             .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
             .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
@@ -726,7 +726,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         QueryPage<AnomalyRecord> page = bucketRecords(
                 jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
-                AnomalyRecord.PROBABILITY, false, partitionFieldValue);
+                AnomalyRecord.PROBABILITY.getPreferredName(), false, partitionFieldValue);
         bucket.setRecords(page.hits());
 
         while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
@@ -734,7 +734,7 @@ public class ElasticsearchJobProvider implements JobProvider
             skip += RECORDS_TAKE_PARAM;
             page = bucketRecords(
                     jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
-                    AnomalyRecord.PROBABILITY, false, partitionFieldValue);
+                    AnomalyRecord.PROBABILITY.getPreferredName(), false, partitionFieldValue);
             bucket.getRecords().addAll(page.hits());
         }
 
@@ -754,7 +754,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         QueryPage<AnomalyRecord> page = bucketRecords(
                 jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
-                AnomalyRecord.PROBABILITY, false, null);
+                AnomalyRecord.PROBABILITY.getPreferredName(), false, null);
         bucket.setRecords(page.hits());
 
         while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
@@ -762,7 +762,7 @@ public class ElasticsearchJobProvider implements JobProvider
             skip += RECORDS_TAKE_PARAM;
             page = bucketRecords(
                     jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
-                    AnomalyRecord.PROBABILITY, false, null);
+                    AnomalyRecord.PROBABILITY.getPreferredName(), false, null);
             bucket.getRecords().addAll(page.hits());
         }
 
@@ -783,8 +783,8 @@ public class ElasticsearchJobProvider implements JobProvider
                 bucket.getTimestamp().getTime());
 
         recordFilter = new ResultsFilterBuilder(recordFilter)
-                .interim(AnomalyRecord.IS_INTERIM, includeInterim)
-                .term(AnomalyRecord.PARTITION_FIELD_VALUE, partitionFieldValue)
+                .interim(AnomalyRecord.IS_INTERIM.getPreferredName(), includeInterim)
+                .term(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue)
                 .build();
 
         FieldSortBuilder sb = null;
@@ -846,10 +846,10 @@ public class ElasticsearchJobProvider implements JobProvider
     public QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query) {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
-                .score(AnomalyRecord.ANOMALY_SCORE, query.getAnomalyScoreThreshold())
-                .score(AnomalyRecord.NORMALIZED_PROBABILITY, query.getNormalizedProbabilityThreshold())
-                .interim(AnomalyRecord.IS_INTERIM, query.isIncludeInterim())
-                .term(AnomalyRecord.PARTITION_FIELD_VALUE, query.getPartitionFieldValue()).build();
+                .score(AnomalyRecord.ANOMALY_SCORE.getPreferredName(), query.getAnomalyScoreThreshold())
+                .score(AnomalyRecord.NORMALIZED_PROBABILITY.getPreferredName(), query.getNormalizedProbabilityThreshold())
+                .interim(AnomalyRecord.IS_INTERIM.getPreferredName(), query.isIncludeInterim())
+                .term(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), query.getPartitionFieldValue()).build();
 
         return records(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb, query.getSortField(), query.isSortDescending());
     }
@@ -879,7 +879,7 @@ public class ElasticsearchJobProvider implements JobProvider
             QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
             boolean descending) throws ResourceNotFoundException {
         SearchRequestBuilder searchBuilder = client.prepareSearch(jobId.getIndex())
-                .setTypes(AnomalyRecord.TYPE)
+                .setTypes(AnomalyRecord.TYPE.getPreferredName())
                 .setPostFilter(recordFilter)
                 .setFrom(skip).setSize(take)
                 .addSort(sb == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC) : sb)
@@ -908,7 +908,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Map<String, Object> m  = hit.getSource();
 
             // replace logstash timestamp name with timestamp
-            m.put(AnomalyRecord.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+            m.put(AnomalyRecord.TIMESTAMP.getPreferredName(), m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 
             AnomalyRecord record = objectMapper.convertValue(
                     m, AnomalyRecord.class);

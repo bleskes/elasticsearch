@@ -29,65 +29,75 @@ final class AnomalyRecordParser extends FieldNameParser<AnomalyRecord> {
     protected void handleFieldName(String fieldName, AnomalyRecord record) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case AnomalyRecord.DETECTOR_INDEX:
+            case "detectorIndex":
                 record.setDetectorIndex(parseAsIntOrZero(fieldName));
                 break;
-            case AnomalyRecord.PROBABILITY:
+            case "probability":
                 record.setProbability(parseAsDoubleOrZero(fieldName));
                 break;
-            case AnomalyRecord.ANOMALY_SCORE:
+            case "anomalyScore":
                 record.setAnomalyScore(parseAsDoubleOrZero(fieldName));
                 break;
-            case AnomalyRecord.NORMALIZED_PROBABILITY:
+            case "normalizedProbability":
                 record.setNormalizedProbability(parseAsDoubleOrZero(fieldName));
                 record.setInitialNormalizedProbability(record.getNormalizedProbability());
                 break;
-            case AnomalyRecord.BY_FIELD_NAME:
+            case "byFieldName":
                 record.setByFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.BY_FIELD_VALUE:
+            case "byFieldValue":
                 record.setByFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.CORRELATED_BY_FIELD_VALUE:
+            case "correlatedByFieldValue":
                 record.setCorrelatedByFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.PARTITION_FIELD_NAME:
+            case "partitionFieldName":
                 record.setPartitionFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.PARTITION_FIELD_VALUE:
+            case "partitionFieldValue":
                 record.setPartitionFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.FUNCTION:
+            case "function":
                 record.setFunction(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.FUNCTION_DESCRIPTION:
+            case "functionDescription":
                 record.setFunctionDescription(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.TYPICAL:
-                record.setTypical(parsePrimitiveDoubleArray(fieldName));
+            case "typical":
+                double[] typicalArray = parsePrimitiveDoubleArray(fieldName);
+                List<Double> typicalList = new ArrayList<>(typicalArray.length);
+                for (double value : typicalArray) {
+                    typicalList.add(value);
+                }
+                record.setTypical(typicalList);
                 break;
-            case AnomalyRecord.ACTUAL:
-                record.setActual(parsePrimitiveDoubleArray(fieldName));
+            case "actual":
+                double[] actualArray = parsePrimitiveDoubleArray(fieldName);
+                List<Double> actualList = new ArrayList<>(actualArray.length);
+                for (double value : actualArray) {
+                    actualList.add(value);
+                }
+                record.setActual(actualList);
                 break;
-            case AnomalyRecord.FIELD_NAME:
+            case "fieldName":
                 record.setFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.OVER_FIELD_NAME:
+            case "overFieldName":
                 record.setOverFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.OVER_FIELD_VALUE:
+            case "overFieldValue":
                 record.setOverFieldValue(parseAsStringOrNull(fieldName));
                 break;
-            case AnomalyRecord.IS_INTERIM:
+            case "isInterim":
                 record.setInterim(parseAsBooleanOrNull(fieldName));
                 break;
-            case AnomalyRecord.INFLUENCERS:
+            case "influencers":
                 record.setInfluencers(new InfluenceParser(parser).parseJson());
                 break;
-            case AnomalyRecord.CAUSES:
+            case "causes":
                 record.setCauses(parseCauses(fieldName));
                 break;
-            case AnomalyRecord.BUCKET_SPAN:
+            case "bucketSpan":
                 record.setBucketSpan(parseAsLongOrZero(fieldName));
                 break;
             default:

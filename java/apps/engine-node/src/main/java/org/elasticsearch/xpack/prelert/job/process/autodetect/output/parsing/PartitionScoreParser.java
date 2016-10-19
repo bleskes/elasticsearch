@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.PartitionScore;
 import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
@@ -33,16 +32,16 @@ public class PartitionScoreParser extends FieldNameParser<PartitionScore>
         JsonToken token = parser.nextToken();
         switch (fieldName)
         {
-        case AnomalyRecord.PROBABILITY:
+        case "probability":
             score.setProbability(parseAsDoubleOrZero( fieldName));
             break;
-        case AnomalyRecord.NORMALIZED_PROBABILITY:
+        case "normalizedProbability":
             score.setAnomalyScore(parseAsDoubleOrZero(fieldName));
             break;
-        case AnomalyRecord.PARTITION_FIELD_NAME:
+        case "partitionFieldName":
             score.setPartitionFieldName(parseAsStringOrNull(fieldName));
             break;
-        case AnomalyRecord.PARTITION_FIELD_VALUE:
+        case "partitionFieldValue":
             score.setPartitionFieldValue(parseAsStringOrNull(fieldName));
             break;
         default:

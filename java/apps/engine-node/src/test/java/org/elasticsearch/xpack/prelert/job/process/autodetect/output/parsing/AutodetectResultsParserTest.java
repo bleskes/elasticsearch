@@ -62,7 +62,7 @@ public class AutodetectResultsParserTest extends ESTestCase {
         private volatile boolean gotAcknowledgement;
 
         public FlushWaiterThread(AutodetectResultsParser resultsParser,
-                                 String flushId) {
+                String flushId) {
             this.resultsParser = resultsParser;
             this.flushId = flushId;
         }
@@ -245,8 +245,8 @@ public class AutodetectResultsParserTest extends ESTestCase {
         assertEquals(0.0637541, secondBucket.getRecords().get(0).getProbability(), EPSILON);
         assertEquals("airline", secondBucket.getRecords().get(0).getByFieldName());
         assertEquals("JZA", secondBucket.getRecords().get(0).getByFieldValue());
-        assertEquals(1020.08, secondBucket.getRecords().get(0).getTypical()[0], EPSILON);
-        assertEquals(1042.14, secondBucket.getRecords().get(0).getActual()[0], EPSILON);
+        assertEquals(1020.08, secondBucket.getRecords().get(0).getTypical().get(0), EPSILON);
+        assertEquals(1042.14, secondBucket.getRecords().get(0).getActual().get(0), EPSILON);
         assertEquals("responsetime", secondBucket.getRecords().get(0).getFieldName());
         assertEquals("max", secondBucket.getRecords().get(0).getFunction());
         assertEquals("", secondBucket.getRecords().get(0).getPartitionFieldName());
@@ -255,8 +255,8 @@ public class AutodetectResultsParserTest extends ESTestCase {
         assertEquals(0.00748292, secondBucket.getRecords().get(1).getProbability(), EPSILON);
         assertEquals("airline", secondBucket.getRecords().get(1).getByFieldName());
         assertEquals("AMX", secondBucket.getRecords().get(1).getByFieldValue());
-        assertEquals(20.2137, secondBucket.getRecords().get(1).getTypical()[0], EPSILON);
-        assertEquals(22.8855, secondBucket.getRecords().get(1).getActual()[0], EPSILON);
+        assertEquals(20.2137, secondBucket.getRecords().get(1).getTypical().get(0), EPSILON);
+        assertEquals(22.8855, secondBucket.getRecords().get(1).getActual().get(0), EPSILON);
         assertEquals("responsetime", secondBucket.getRecords().get(1).getFieldName());
         assertEquals("max", secondBucket.getRecords().get(1).getFunction());
         assertEquals("", secondBucket.getRecords().get(1).getPartitionFieldName());
@@ -265,8 +265,8 @@ public class AutodetectResultsParserTest extends ESTestCase {
         assertEquals(0.023494, secondBucket.getRecords().get(2).getProbability(), EPSILON);
         assertEquals("airline", secondBucket.getRecords().get(2).getByFieldName());
         assertEquals("DAL", secondBucket.getRecords().get(2).getByFieldValue());
-        assertEquals(382.177, secondBucket.getRecords().get(2).getTypical()[0], EPSILON);
-        assertEquals(358.934, secondBucket.getRecords().get(2).getActual()[0], EPSILON);
+        assertEquals(382.177, secondBucket.getRecords().get(2).getTypical().get(0), EPSILON);
+        assertEquals(358.934, secondBucket.getRecords().get(2).getActual().get(0), EPSILON);
         assertEquals("responsetime", secondBucket.getRecords().get(2).getFieldName());
         assertEquals("min", secondBucket.getRecords().get(2).getFunction());
         assertEquals("", secondBucket.getRecords().get(2).getPartitionFieldName());
@@ -275,8 +275,8 @@ public class AutodetectResultsParserTest extends ESTestCase {
         assertEquals(0.0473552, secondBucket.getRecords().get(3).getProbability(), EPSILON);
         assertEquals("airline", secondBucket.getRecords().get(3).getByFieldName());
         assertEquals("SWA", secondBucket.getRecords().get(3).getByFieldValue());
-        assertEquals(152.148, secondBucket.getRecords().get(3).getTypical()[0], EPSILON);
-        assertEquals(96.6425, secondBucket.getRecords().get(3).getActual()[0], EPSILON);
+        assertEquals(152.148, secondBucket.getRecords().get(3).getTypical().get(0), EPSILON);
+        assertEquals(96.6425, secondBucket.getRecords().get(3).getActual().get(0), EPSILON);
         assertEquals("responsetime", secondBucket.getRecords().get(3).getFieldName());
         assertEquals("min", secondBucket.getRecords().get(3).getFunction());
         assertEquals("", secondBucket.getRecords().get(3).getPartitionFieldName());
@@ -509,7 +509,7 @@ public class AutodetectResultsParserTest extends ESTestCase {
 
 
     public void testParse_GivenInterimBucket_ShouldNotNotifyObserver() throws ElasticsearchParseException,
-            IOException {
+    IOException {
         String json = "{\"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":true}";
 
 

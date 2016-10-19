@@ -81,7 +81,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         // the scenes, and Elasticsearch documentation claims it's significantly
         // slower.  Here we rely on the record timestamps being identical to the
         // bucket timestamp.
-        deleteTypeByBucket(bucket, AnomalyRecord.TYPE, () -> ++deletedRecordCount);
+        deleteTypeByBucket(bucket, AnomalyRecord.TYPE.getPreferredName(), () -> ++deletedRecordCount);
     }
 
     private void deleteTypeByBucket(Bucket bucket, String type, LongSupplier deleteCounter)
@@ -155,8 +155,8 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         if (id == null)
         {
             LOGGER.error("Cannot delete specific influencer without an ID",
-                // This means we get a stack trace to show where the request came from
-                new NullPointerException());
+                    // This means we get a stack trace to show where the request came from
+                    new NullPointerException());
             return;
         }
         bulkRequestBuilder.add(
@@ -207,7 +207,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM, true);
 
         SearchResponse searchResponse = client.prepareSearch(jobId.getIndex())
-                .setTypes(Bucket.TYPE, AnomalyRecord.TYPE, Influencer.TYPE, BucketInfluencer.TYPE)
+                .setTypes(Bucket.TYPE, AnomalyRecord.TYPE.getPreferredName(), Influencer.TYPE, BucketInfluencer.TYPE)
                 .setQuery(qb)
                 .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                 .setScroll(SCROLL_CONTEXT_DURATION)
@@ -273,13 +273,13 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         if (!quiet)
         {
             LOGGER.debug("Requesting deletion of "
-                     + deletedBucketCount + " buckets, "
-                     + deletedRecordCount + " records, "
-                     + deletedBucketInfluencerCount + " bucket influencers, "
-                     + deletedInfluencerCount + " influencers, "
-                     + deletedModelSnapshotCount + " model snapshots, "
-                     + " and "
-                     + deletedModelStateCount + " model state documents");
+                    + deletedBucketCount + " buckets, "
+                    + deletedRecordCount + " records, "
+                    + deletedBucketInfluencerCount + " bucket influencers, "
+                    + deletedInfluencerCount + " influencers, "
+                    + deletedModelSnapshotCount + " model snapshots, "
+                    + " and "
+                    + deletedModelStateCount + " model state documents");
         }
 
         try
