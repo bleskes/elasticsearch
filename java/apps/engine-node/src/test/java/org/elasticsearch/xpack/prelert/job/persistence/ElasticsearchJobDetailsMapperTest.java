@@ -12,6 +12,7 @@ import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -58,7 +59,7 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
         Date now = new Date();
         modelSizeStats.setTimestamp(now);
 
-        JobDetails originalJob = new JobDetails();
+        JobDetails originalJob = new JobConfiguration().build();
         originalJob.setId("foo");
 
         Map<String, Object> source = objectMapper.convertValue(originalJob,
@@ -102,7 +103,7 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
     }
 
     public void testMap_GivenModelSizeStatsDoesNotExist() {
-        JobDetails originalJob = new JobDetails();
+        JobDetails originalJob = new JobConfiguration().build();
         originalJob.setId("foo");
 
         Map<String, Object> source = objectMapper.convertValue(originalJob,

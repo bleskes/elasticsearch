@@ -7,6 +7,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.junit.Before;
@@ -26,7 +27,7 @@ public class CategorizationFiltersUpdaterTest extends ESTestCase {
 
     @Before
     public void setJob() {
-        job = new JobDetails();
+        job = new JobConfiguration().build();
         Detector detector = new Detector("count");
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setDetectors(Arrays.asList(detector));

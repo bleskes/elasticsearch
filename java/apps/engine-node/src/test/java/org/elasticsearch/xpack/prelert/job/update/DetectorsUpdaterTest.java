@@ -7,6 +7,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
@@ -35,7 +36,7 @@ public class DetectorsUpdaterTest extends ESTestCase {
 
     @Before
     public void setJob() throws UnknownJobException {
-        m_Job = new JobDetails();
+        m_Job = new JobConfiguration().build();
         m_Job.setId(JOB_ID);
         m_ConfigWriter = new StringWriter();
     }

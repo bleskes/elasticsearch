@@ -39,9 +39,9 @@ public class PrelertMetadataTest extends ESTestCase {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
 
         // NORELEASE: randomize jobs once it is moved over to ES' xcontent:
-        builder.putJob(new Job(new JobDetails("job1", new JobConfiguration())), false);
-        builder.putJob(new Job(new JobDetails("job2", new JobConfiguration())), false);
-        builder.putJob(new Job(new JobDetails("job3", new JobConfiguration())), false);
+        builder.putJob(new Job(new JobConfiguration("job1").build()), false);
+        builder.putJob(new Job(new JobConfiguration("job2").build()), false);
+        builder.putJob(new Job(new JobConfiguration("job3").build()), false);
 
         builder.putAllocation("job1", "node1");
         builder.putAllocation("job2", "node1");
@@ -60,9 +60,9 @@ public class PrelertMetadataTest extends ESTestCase {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
 
         // NORELEASE: randomize jobs once it is moved over to ES' xcontent:
-        builder.putJob(new Job(new JobDetails("job1", new JobConfiguration())), false);
-        builder.putJob(new Job(new JobDetails("job2", new JobConfiguration())), false);
-        builder.putJob(new Job(new JobDetails("job3", new JobConfiguration())), false);
+        builder.putJob(new Job(new JobConfiguration("job1").build()), false);
+        builder.putJob(new Job(new JobConfiguration("job2").build()), false);
+        builder.putJob(new Job(new JobConfiguration("job3").build()), false);
 
         builder.putAllocation("job1", "node1");
         builder.putAllocation("job2", "node1");
@@ -85,15 +85,15 @@ public class PrelertMetadataTest extends ESTestCase {
 
     public void testPutJob() {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
-        builder.putJob(new Job(new JobDetails("1", new JobConfiguration())), false);
-        builder.putJob(new Job(new JobDetails("2", new JobConfiguration())), false);
+        builder.putJob(new Job(new JobConfiguration("1").build()), false);
+        builder.putJob(new Job(new JobConfiguration("2").build()), false);
 
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
-                () -> builder.putJob(new Job(new JobDetails("2", new JobConfiguration())), false));
+                () -> builder.putJob(new Job(new JobConfiguration("2").build()), false));
         assertThat(e.status(), equalTo(RestStatus.BAD_REQUEST));
         assertThat(e.getHeader("errorCode").get(0), equalTo("10110"));
 
-        builder.putJob(new Job(new JobDetails("2", new JobConfiguration())), true);
+        builder.putJob(new Job(new JobConfiguration("2").build()), true);
 
         PrelertMetadata result = builder.build();
         assertThat(result.getJobs().size(), equalTo(2));

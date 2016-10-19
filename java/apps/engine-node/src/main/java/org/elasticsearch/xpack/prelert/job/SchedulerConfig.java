@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 
 
 /**
@@ -89,6 +90,10 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
     public static final ConstructingObjectParser<SchedulerConfig.Builder, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
             "schedule_config", a -> new SchedulerConfig.Builder((DataSource) a[0]));
+
+    public static BiFunction<XContentParser, ParseFieldMatcherSupplier, SchedulerConfig> getSchedulerConfigParser() {
+        return (p, c) -> PARSER.apply(p, c).build();
+    }
 
     static {
         PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> {

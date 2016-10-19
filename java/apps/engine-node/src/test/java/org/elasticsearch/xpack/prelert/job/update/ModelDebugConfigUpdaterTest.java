@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -26,7 +27,7 @@ public class ModelDebugConfigUpdaterTest extends ESTestCase {
 
     @Before
     public void setJob() {
-        job = new JobDetails();
+        job = new JobConfiguration().build();
         job.setModelDebugConfig(null);
         m_ConfigWriter = new StringWriter();
     }

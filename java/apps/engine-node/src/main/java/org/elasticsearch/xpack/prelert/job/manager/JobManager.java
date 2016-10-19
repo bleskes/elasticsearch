@@ -33,7 +33,6 @@ import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
@@ -87,7 +86,6 @@ public class JobManager {
     private final ActionGuardian<Action> processActionGuardian;
     private final ActionGuardian<ScheduledAction> schedulerActionGuardian;
     private final JobProvider jobProvider;
-    private final JobFactory jobFactory;
     private final ClusterService clusterService;
 
     /**
@@ -100,8 +98,6 @@ public class JobManager {
         this.clusterService = clusterService;
         this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
         this.schedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
-
-        jobFactory = new JobFactory();
     }
 
     /**
@@ -193,7 +189,7 @@ public class JobManager {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        JobDetails jobDetails = jobFactory.create(jobConfiguration);
+        JobDetails jobDetails = jobConfiguration.build();
         jobProvider.createJob(jobDetails);
         clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(), new AckedClusterStateUpdateTask<PutJobAction.Response>(request, actionListener) {
 

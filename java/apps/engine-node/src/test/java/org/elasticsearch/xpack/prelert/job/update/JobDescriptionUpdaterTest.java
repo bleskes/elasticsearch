@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
@@ -20,7 +21,7 @@ public class JobDescriptionUpdaterTest extends ESTestCase {
 
     @Before
     public void setJob() {
-        job = new JobDetails();
+        job = new JobConfiguration().build();
         job.setId(JOB_ID);
         job.setDescription("Before");
     }

@@ -15,11 +15,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.JobStatus;
-import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.SchedulerState;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -334,7 +330,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testCreateJob() throws InterruptedException, ExecutionException {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setJobId("marscapone");
         job.setDescription("This is a very cheesy job");
         job.setStatus(JobStatus.FAILED);
@@ -361,7 +357,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testCreateJob_ElasticsearchException() throws InterruptedException, ExecutionException {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setJobId("gorgonzola");
         ElasticsearchException ex = new ElasticsearchException("blah");
 
@@ -382,7 +378,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testCreateJob_IOException() throws InterruptedException, ExecutionException {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setJobId("gorgonzola");
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)

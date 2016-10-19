@@ -38,7 +38,9 @@ public class DataCountsTest extends AbstractSerializingTestCase<DataCounts> {
         dataCounts.setInputBytes(randomPositiveLong());
         dataCounts.setInputFieldCount(randomPositiveLong());
         dataCounts.setInvalidDateCount(randomPositiveLong());
-        dataCounts.setLatestRecordTimeStamp(new Date(randomIntBetween(0, Integer.MAX_VALUE)));
+        if (randomBoolean()) {
+            dataCounts.setLatestRecordTimeStamp(new Date(randomIntBetween(0, Integer.MAX_VALUE)));
+        }
         dataCounts.setMissingFieldCount(randomPositiveLong());
         dataCounts.setOutOfOrderTimeStampCount(randomPositiveLong());
         dataCounts.setProcessedFieldCount(randomPositiveLong());

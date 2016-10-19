@@ -141,7 +141,9 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         outOfOrderTimeStampCount = in.readVLong();
         failedTransformCount = in.readVLong();
         excludedRecordCount = in.readVLong();
-        latestRecordTimeStamp = new Date(in.readVLong());
+        if (in.readBoolean()) {
+            latestRecordTimeStamp = new Date(in.readVLong());
+        }
     }
 
 
@@ -402,7 +404,12 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         out.writeVLong(outOfOrderTimeStampCount);
         out.writeVLong(failedTransformCount);
         out.writeVLong(excludedRecordCount);
-        out.writeVLong(latestRecordTimeStamp.getTime());
+        if (latestRecordTimeStamp != null) {
+            out.writeBoolean(true);
+            out.writeVLong(latestRecordTimeStamp.getTime());
+        } else {
+            out.writeBoolean(false);
+        }
     }
 
     @Override
@@ -418,7 +425,9 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         builder.field(OUT_OF_ORDER_TIME_COUNT.getPreferredName(), outOfOrderTimeStampCount);
         builder.field(FAILED_TRANSFORM_COUNT.getPreferredName(), failedTransformCount);
         builder.field(EXCLUDED_RECORD_COUNT.getPreferredName(), excludedRecordCount);
-        builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
+        if (latestRecordTimeStamp != null) {
+            builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
+        }
         builder.endObject();
         return builder;
     }

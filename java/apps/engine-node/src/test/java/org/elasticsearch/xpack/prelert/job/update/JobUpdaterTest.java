@@ -3,14 +3,7 @@ package org.elasticsearch.xpack.prelert.job.update;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.JobStatus;
-import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
-import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
@@ -33,7 +26,7 @@ public class JobUpdaterTest extends ESTestCase {
 
     @Before
     public void setJob() throws UnknownJobException {
-        m_Job = new JobDetails();
+        m_Job = new JobConfiguration().build();
         m_Job.setId(JOB_ID);
     }
 

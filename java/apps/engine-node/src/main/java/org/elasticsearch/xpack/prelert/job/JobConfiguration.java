@@ -17,10 +17,17 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
+import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -33,10 +40,26 @@ import java.util.Map;
  * values.
  */
 public class JobConfiguration {
+
+    public static final long DEFAULT_TIMEOUT = 600;
+    private static final int MIN_SEQUENCE_LENGTH = 5;
+    private static final int HOSTNAME_ID_SEPARATORS_LENGTH = 2;
+    static final AtomicLong ID_SEQUENCE = new AtomicLong();
+    private static final DateTimeFormatter ID_DATEFORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final String HOSTNAME;
+
+    static {
+        String hostname = System.getenv("HOSTNAME");
+        if (hostname == null) {
+            hostname = System.getenv("COMPUTERNAME");
+        }
+        HOSTNAME = hostname != null ? hostname.toLowerCase(Locale.ROOT) : null;
+    }
+
     private String iD;
     private String description;
 
-    private AnalysisConfig analysisConfig;
+    private AnalysisConfig analysisConfig = new AnalysisConfig();
     private AnalysisLimits analysisLimits;
     private SchedulerConfig.Builder schedulerConfig;
     private List<TransformConfig> transforms;
@@ -53,9 +76,8 @@ public class JobConfiguration {
     public JobConfiguration() {
     }
 
-    public JobConfiguration(AnalysisConfig analysisConfig) {
-        this();
-        this.analysisConfig = analysisConfig;
+    public JobConfiguration(String jobId) {
+        this.iD = jobId;
     }
 
     /**
@@ -244,4 +266,51 @@ public class JobConfiguration {
     public void setIgnoreDowntime(IgnoreDowntime ignoreDowntime) {
         this.ignoreDowntime = ignoreDowntime;
     }
+
+    public JobDetails build() {
+        String id = iD == null ? generateJobId(HOSTNAME) : iD;
+        // Setting a default description should be done in Detector class itself:
+        for (Detector detector : analysisConfig.getDetectors()) {
+            if (detector.getDetectorDescription() == null ||
+                    detector.getDetectorDescription().isEmpty()) {
+                detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
+            }
+        }
+        SchedulerConfig schedulerConfig = this.schedulerConfig != null ? this.schedulerConfig.build() : null;
+        return new JobDetails(
+                id, description, JobStatus.CLOSED, JobSchedulerStatus.STOPPED, new Date(), null, null, DEFAULT_TIMEOUT, analysisConfig,
+                analysisLimits, schedulerConfig, dataDescription, null, transforms, modelDebugConfig, new DataCounts(),
+                ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
+                resultsRetentionDays, customSettings, null
+        );
+    }
+
+    /**
+     * If hostname is null the job Id is a concatenation of the date in
+     * 'yyyyMMddHHmmss' format and a sequence number that is a minimum of
+     * 5 digits wide left padded with zeros<br>
+     * If hostname is not null the Id is the concatenation of the date in
+     * 'yyyyMMddHHmmss' format the hostname and a sequence number that is a
+     * minimum of 5 digits wide left padded with zeros. If hostname is long
+     * and it is truncated so the job Id does not exceed the maximum length<br>
+     * <p>
+     * e.g. the first Id created 23rd November 2013 at 11am
+     * '20131125110000-serverA-00001'
+     *
+     * @return The new unique job Id
+     */
+    static String generateJobId(String hostName) {
+        String dateStr = ID_DATEFORMAT.format(LocalDateTime.now());
+        long sequence = ID_SEQUENCE.incrementAndGet();
+        if (hostName == null) {
+            return String.format(Locale.ROOT, "%s-%05d", dateStr, sequence);
+        } else {
+            int formattedSequenceLen = Math.max(String.valueOf(sequence).length(), MIN_SEQUENCE_LENGTH);
+            int hostnameMaxLen = JobConfigurationVerifier.MAX_JOB_ID_LENGTH - dateStr.length() -
+                    formattedSequenceLen - HOSTNAME_ID_SEPARATORS_LENGTH;
+            String trimmedHostName = hostName.substring(0, Math.min(hostName.length(), hostnameMaxLen));
+            return String.format(Locale.ROOT, "%s-%s-%05d", dateStr, trimmedHostName, sequence);
+        }
+    }
+
 }

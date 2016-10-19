@@ -111,7 +111,7 @@ public class JobManagerTest extends ESTestCase {
     public void testGetJob() throws UnknownJobException {
         JobManager jobManager = createJobManager();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
-        builder.putJob(new Job(new JobDetails("foo", new JobConfiguration())), false);
+        builder.putJob(new Job(new JobConfiguration("foo").build()), false);
         ClusterState clusterState = ClusterState.builder(new ClusterName("name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, builder.build()))
                 .build();
@@ -169,7 +169,7 @@ public class JobManagerTest extends ESTestCase {
     public void testRemoveJobFromClusterState_GivenExistingMetadata()  {
         JobManager jobManager = createJobManager();
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
-        JobDetails jobDetails = new JobDetails();
+        JobDetails jobDetails = new JobConfiguration().build();
         jobDetails.setJobId("foo");
         clusterState = jobManager.innerPutJob(jobDetails, false, clusterState);
 
@@ -182,7 +182,7 @@ public class JobManagerTest extends ESTestCase {
     public void testRemoveJobFromClusterState_GivenNoMetadata()  {
         JobManager jobManager = createJobManager();
         ClusterState clusterStateBefore = ClusterState.builder(new ClusterName("_name")).build();
-        JobDetails jobDetails = new JobDetails();
+        JobDetails jobDetails = new JobConfiguration().build();
         jobDetails.setJobId("foo");
 
         ClusterState clusterStateAfter = jobManager.removeJobFromClusterState("foo", clusterStateBefore);
@@ -201,7 +201,7 @@ public class JobManagerTest extends ESTestCase {
     public void testGetJobOrThrowIfUnknown_GivenKnownJob() throws UnknownJobException
     {
         JobManager jobManager = createJobManager();
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setId("foo");
         PrelertMetadata prelertMetadata = new PrelertMetadata.Builder().putJob(new Job(job), false).build();
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
@@ -213,7 +213,7 @@ public class JobManagerTest extends ESTestCase {
     public void testGetJobs() {
         PrelertMetadata.Builder prelertMetadata = new PrelertMetadata.Builder();
         for (int i = 0; i < 10; i++) {
-            prelertMetadata.putJob(new Job(new JobDetails(Integer.toString(i), new JobConfiguration())), false);
+            prelertMetadata.putJob(new Job(new JobConfiguration(Integer.toString(i)).build()), false);
         }
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata.build()))
@@ -262,12 +262,12 @@ public class JobManagerTest extends ESTestCase {
         JobManager jobManager = createJobManager();
         ClusterState cs = ClusterState.builder(new ClusterName("_name")).build();
 
-        JobDetails jobDetails1 = new JobDetails("_id", new JobConfiguration());
+        JobDetails jobDetails1 = new JobConfiguration("_id").build();
         ClusterState result1 = jobManager.innerPutJob(jobDetails1, false, cs);
         PrelertMetadata pm = result1.getMetaData().custom(PrelertMetadata.TYPE);
         assertThat(pm.getJobs().get("_id").getJobDetails(), sameInstance(jobDetails1));
 
-        JobDetails jobDetails2 = new JobDetails("_id", new JobConfiguration());
+        JobDetails jobDetails2 = new JobConfiguration("_id").build();
         expectThrows(ElasticsearchStatusException.class, () -> jobManager.innerPutJob(jobDetails2, false, result1));
 
         ClusterState result2 = jobManager.innerPutJob(jobDetails2, true, result1);

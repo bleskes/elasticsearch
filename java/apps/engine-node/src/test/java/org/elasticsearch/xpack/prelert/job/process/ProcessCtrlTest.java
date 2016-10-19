@@ -3,10 +3,7 @@ package org.elasticsearch.xpack.prelert.job.process;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
-import org.elasticsearch.xpack.prelert.job.DataDescription;
-import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 import org.junit.Before;
 import org.mockito.Mock;
@@ -35,7 +32,7 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand() {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -84,7 +81,7 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand_defaultTimeField() {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
@@ -93,7 +90,7 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand_givenPersistModelState() {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
         System.setProperty(ProcessCtrl.DONT_PERSIST_MODEL_STATE, "true");
@@ -110,7 +107,7 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand_GivenNoIgnoreDowntime() {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setId("foo");
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
@@ -119,7 +116,7 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand_GivenIgnoreDowntimeParam() {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setId("foo");
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, true);

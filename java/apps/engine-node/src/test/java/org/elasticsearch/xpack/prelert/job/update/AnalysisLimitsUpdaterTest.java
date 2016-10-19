@@ -6,6 +6,7 @@ import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -88,7 +89,7 @@ public class AnalysisLimitsUpdaterTest extends ESTestCase {
     }
 
     private static JobDetails createJob(String jobId, JobStatus jobStatus, Long memoryLimit) {
-        JobDetails job = new JobDetails();
+        JobDetails job = new JobConfiguration().build();
         job.setId(jobId);
         job.setStatus(jobStatus);
         if (memoryLimit != null) {

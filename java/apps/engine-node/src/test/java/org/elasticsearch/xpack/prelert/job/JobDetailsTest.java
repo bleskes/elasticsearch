@@ -1,28 +1,78 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+import org.elasticsearch.xpack.prelert.job.transform.TransformType;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class JobDetailsTest extends ESTestCase {
+public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
+
+    @Override
+    protected JobDetails createTestInstance() {
+        String jobId = randomAsciiOfLength(10);
+        String description = randomBoolean() ? randomAsciiOfLength(10) : null;
+        JobStatus jobStatus = randomFrom(JobStatus.values());
+        JobSchedulerStatus jobSchedulerStatus = randomFrom(JobSchedulerStatus.values());
+        Date createTime = new Date(randomPositiveLong());
+        Date finishedTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
+        Date lastDataTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
+        long timeout = randomPositiveLong();
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        AnalysisLimits analysisLimits = new AnalysisLimits(randomPositiveLong(), randomPositiveLong());
+        SchedulerConfig schedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH).build();
+        DataDescription dataDescription = randomBoolean() ? new DataDescription() : null;
+        ModelSizeStats modelSizeStats = randomBoolean() ? new ModelSizeStats() : null;
+        int numTransformers = randomIntBetween(0, 32);
+        List<TransformConfig> transformConfigList = new ArrayList<>(numTransformers);
+        for (int i = 0; i < numTransformers; i++) {
+            transformConfigList.add(new TransformConfig(TransformType.UPPERCASE.prettyName()));
+        }
+        ModelDebugConfig modelDebugConfig = randomBoolean() ? new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)) : null;
+        DataCounts counts = randomBoolean() ? new DataCounts() : null;
+        IgnoreDowntime ignoreDowntime = randomFrom(IgnoreDowntime.values());
+        Long normalizationWindowDays = randomBoolean() ? randomLong() : null;
+        Long backgroundPersistInterval = randomBoolean() ? randomLong() : null;
+        Long modelSnapshotRetentionDays = randomBoolean() ? randomLong() : null;
+        Long resultsRetentionDays = randomBoolean() ? randomLong() : null;
+        Map<String, Object> customConfig =
+                randomBoolean() ? Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)) : null;
+        Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
+        return new JobDetails(
+                jobId, description, jobStatus, jobSchedulerStatus, createTime, finishedTime, lastDataTime, timeout,
+                analysisConfig, analysisLimits, schedulerConfig, dataDescription, modelSizeStats, transformConfigList,
+                modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
+                modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs
+
+        );
+    }
+
+    @Override
+    protected Writeable.Reader<JobDetails> instanceReader() {
+        return JobDetails::new;
+    }
+
+    @Override
+    protected JobDetails parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return JobDetails.PARSER.apply(parser, () -> matcher);
+    }
 
     public void testConstructor_GivenEmptyJobConfiguration() {
-        JobConfiguration jobConfiguration = new JobConfiguration();
-
-        JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
+        JobDetails jobDetails = new JobConfiguration("foo").build();
 
         assertEquals("foo", jobDetails.getId());
         assertEquals(JobStatus.CLOSED, jobDetails.getStatus());
         assertNotNull(jobDetails.getCreateTime());
         assertEquals(600L, jobDetails.getTimeout());
-        assertNull(jobDetails.getSchedulerStatus());
-        assertNull(jobDetails.getAnalysisConfig());
+        assertNotNull(jobDetails.getSchedulerStatus());
+        assertNotNull(jobDetails.getAnalysisConfig());
         assertNull(jobDetails.getAnalysisLimits());
         assertNull(jobDetails.getCustomSettings());
         assertNull(jobDetails.getDataDescription());
@@ -44,10 +94,9 @@ public class JobDetailsTest extends ESTestCase {
 
 
     public void testConstructor_GivenJobConfigurationWithIgnoreDowntime() {
-        JobConfiguration jobConfiguration = new JobConfiguration();
+        JobConfiguration jobConfiguration = new JobConfiguration("foo");
         jobConfiguration.setIgnoreDowntime(IgnoreDowntime.ONCE);
-
-        JobDetails jobDetails = new JobDetails("foo", jobConfiguration);
+        JobDetails jobDetails = jobConfiguration.build();
 
         assertEquals("foo", jobDetails.getId());
         assertEquals(IgnoreDowntime.ONCE, jobDetails.getIgnoreDowntime());
@@ -61,13 +110,13 @@ public class JobDetailsTest extends ESTestCase {
 
 
     public void testEquals_GivenSameReference() {
-        JobDetails jobDetails = new JobDetails();
+        JobDetails jobDetails = new JobConfiguration().build();
         assertTrue(jobDetails.equals(jobDetails));
     }
 
 
     public void testEquals_GivenDifferentClass() {
-        JobDetails jobDetails = new JobDetails();
+        JobDetails jobDetails = new JobConfiguration().build();
         assertFalse(jobDetails.equals("a string"));
     }
 
@@ -77,7 +126,7 @@ public class JobDetailsTest extends ESTestCase {
         Map<String, URI> endpoints = new HashMap<>();
         endpoints.put("buckets", new URI("http://localhost:8080/buckets"));
 
-        JobDetails jobDetails1 = new JobDetails();
+        JobDetails jobDetails1 = new JobConfiguration().build();
         jobDetails1.setId("foo");
         jobDetails1.setAnalysisConfig(new AnalysisConfig());
         jobDetails1.setAnalysisLimits(new AnalysisLimits(0L, null));
@@ -102,7 +151,7 @@ public class JobDetailsTest extends ESTestCase {
         jobDetails1.setTransforms(Collections.emptyList());
 
 
-        JobDetails jobDetails2 = new JobDetails();
+        JobDetails jobDetails2 = new JobConfiguration().build();
         jobDetails2.setId("foo");
         jobDetails2.setAnalysisConfig(new AnalysisConfig());
         jobDetails2.setAnalysisLimits(new AnalysisLimits(0L, null));
@@ -133,9 +182,10 @@ public class JobDetailsTest extends ESTestCase {
 
 
     public void testEquals_GivenDifferentIds() {
-        JobConfiguration jobConfiguration = new JobConfiguration();
-        JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
-        JobDetails jobDetails2 = new JobDetails("bar", jobConfiguration);
+        JobConfiguration jobConfiguration = new JobConfiguration("foo");
+        JobDetails jobDetails1 = jobConfiguration.build();
+        jobConfiguration.setId("bar");
+        JobDetails jobDetails2 = jobConfiguration.build();
         Date createTime = new Date();
         jobDetails1.setCreateTime(createTime);
         jobDetails2.setCreateTime(createTime);
@@ -145,10 +195,11 @@ public class JobDetailsTest extends ESTestCase {
 
 
     public void testEquals_GivenDifferentSchedulerStatus() {
-        JobConfiguration jobConfiguration = new JobConfiguration();
-        JobDetails jobDetails1 = new JobDetails("foo", jobConfiguration);
+        JobConfiguration jobConfiguration = new JobConfiguration("foo");
+        JobDetails jobDetails1 = jobConfiguration.build();
         jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
-        JobDetails jobDetails2 = new JobDetails("bar", jobConfiguration);
+        jobConfiguration.setId("bar");
+        JobDetails jobDetails2 = jobConfiguration.build();
         jobDetails2.setSchedulerStatus(JobSchedulerStatus.STARTED);
 
         assertFalse(jobDetails1.equals(jobDetails2));
@@ -210,30 +261,12 @@ public class JobDetailsTest extends ESTestCase {
 
 
     public void testEquals_GivenDifferentIgnoreDowntime() {
-        JobDetails job1 = new JobDetails();
+        JobDetails job1 = new JobConfiguration().build();
         job1.setIgnoreDowntime(IgnoreDowntime.NEVER);
-        JobDetails job2 = new JobDetails();
+        JobDetails job2 = new JobConfiguration().build();
         job2.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         assertFalse(job1.equals(job2));
         assertFalse(job2.equals(job1));
-    }
-
-
-    public void testToString() {
-        Date createTime = new Date(1443410000);
-        Date lastDataTime = new Date(1443420000);
-
-        JobDetails jobDetails = new JobDetails();
-        jobDetails.setId("foo");
-        jobDetails.setDescription("blah blah");
-        jobDetails.setStatus(JobStatus.RUNNING);
-        jobDetails.setCreateTime(createTime);
-        jobDetails.setLastDataTime(lastDataTime);
-
-        String expected = "{id:foo description:blah blah status:RUNNING createTime:" + createTime
-                + " lastDataTime:" + lastDataTime + "}";
-
-        assertEquals(expected, jobDetails.toString());
     }
 }

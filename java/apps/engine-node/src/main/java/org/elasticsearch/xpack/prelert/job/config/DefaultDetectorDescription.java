@@ -1,13 +1,11 @@
-
 package org.elasticsearch.xpack.prelert.job.config;
 
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.utils.Strings;
 import org.elasticsearch.xpack.prelert.utils.PrelertStrings;
+import org.elasticsearch.xpack.prelert.utils.Strings;
 
 
-public final class DefaultDetectorDescription
-{
+public final class DefaultDetectorDescription {
     private static final String BY_TOKEN = " by ";
     private static final String OVER_TOKEN = " over ";
 
@@ -15,18 +13,17 @@ public final class DefaultDetectorDescription
     private static final String PARTITION_FIELD_OPTION = " partitionfield=";
     private static final String EXCLUDE_FREQUENT_OPTION = " excludefrequent=";
 
-    private DefaultDetectorDescription()
-    {
+    private DefaultDetectorDescription() {
         // do nothing
     }
 
     /**
      * Returns the default description for the given {@code detector}
+     *
      * @param detector the {@code Detector} for which a default description is requested
      * @return the default description
      */
-    public static String of(Detector detector)
-    {
+    public static String of(Detector detector) {
         StringBuilder sb = new StringBuilder();
         appendOn(detector, sb);
         return sb.toString();
@@ -35,60 +32,49 @@ public final class DefaultDetectorDescription
     /**
      * Appends to the given {@code StringBuilder} the default description
      * for the given {@code detector}
+     *
      * @param detector the {@code Detector} for which a default description is requested
-     * @param sb the {@code StringBuilder} to append to
+     * @param sb       the {@code StringBuilder} to append to
      */
-    public static void appendOn(Detector detector, StringBuilder sb)
-    {
-        if (isNotNullOrEmpty(detector.getFunction()))
-        {
+    public static void appendOn(Detector detector, StringBuilder sb) {
+        if (isNotNullOrEmpty(detector.getFunction())) {
             sb.append(detector.getFunction());
-            if (isNotNullOrEmpty(detector.getFieldName()))
-            {
+            if (isNotNullOrEmpty(detector.getFieldName())) {
                 sb.append('(').append(quoteField(detector.getFieldName()))
-                .append(')');
+                        .append(')');
             }
-        }
-        else if (isNotNullOrEmpty(detector.getFieldName()))
-        {
+        } else if (isNotNullOrEmpty(detector.getFieldName())) {
             sb.append(quoteField(detector.getFieldName()));
         }
 
-        if (isNotNullOrEmpty(detector.getByFieldName()))
-        {
+        if (isNotNullOrEmpty(detector.getByFieldName())) {
             sb.append(BY_TOKEN).append(quoteField(detector.getByFieldName()));
         }
 
-        if (isNotNullOrEmpty(detector.getOverFieldName()))
-        {
+        if (isNotNullOrEmpty(detector.getOverFieldName())) {
             sb.append(OVER_TOKEN).append(quoteField(detector.getOverFieldName()));
         }
 
-        if (detector.isUseNull())
-        {
+        if (detector.isUseNull()) {
             sb.append(USE_NULL_OPTION).append(detector.isUseNull());
         }
 
-        if (isNotNullOrEmpty(detector.getPartitionFieldName()))
-        {
+        if (isNotNullOrEmpty(detector.getPartitionFieldName())) {
             sb.append(PARTITION_FIELD_OPTION)
-            .append(quoteField(detector.getPartitionFieldName()));
+                    .append(quoteField(detector.getPartitionFieldName()));
         }
 
-        if (isNotNullOrEmpty(detector.getExcludeFrequent()))
-        {
+        if (isNotNullOrEmpty(detector.getExcludeFrequent())) {
             sb.append(EXCLUDE_FREQUENT_OPTION)
-            .append(detector.getExcludeFrequent());
+                    .append(detector.getExcludeFrequent());
         }
     }
 
-    private static String quoteField(String field)
-    {
+    private static String quoteField(String field) {
         return PrelertStrings.doubleQuoteIfNotAlphaNumeric(field);
     }
 
-    private static boolean isNotNullOrEmpty(String arg)
-    {
+    private static boolean isNotNullOrEmpty(String arg) {
         return !Strings.isNullOrEmpty(arg);
     }
 }

@@ -109,8 +109,8 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(ListDocument.ITEMS.getPreferredName());
 
         // These are not reserved because they're analyzed strings, i.e. the same type as user-specified fields
-        overridden.add(JobDetails.DESCRIPTION);
-        overridden.add(JobDetails.STATUS);
+        overridden.add(JobDetails.DESCRIPTION.getPreferredName());
+        overridden.add(JobDetails.STATUS.getPreferredName());
         overridden.add(ModelSnapshot.DESCRIPTION);
         overridden.add(SchedulerConfig.USERNAME.getPreferredName());
 

@@ -6,8 +6,17 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
@@ -21,8 +30,8 @@ import java.util.function.Consumer;
  * FileUrls will be a non-empty list else the expects data to be streamed to it.
  */
 @JsonInclude(Include.NON_NULL)
-public class JobDetails {
-    public static final long DEFAULT_TIMEOUT = 600;
+public class JobDetails extends ToXContentToBytes implements Writeable {
+
     public static final long DEFAULT_BUCKETSPAN = 300;
 
     public static final String TYPE = "job";
@@ -30,26 +39,29 @@ public class JobDetails {
     /*
      * Field names used in serialization
      */
-    public static final String ANALYSIS_CONFIG = "analysisConfig";
-    public static final String ANALYSIS_LIMITS = "analysisLimits";
-    public static final String COUNTS = "counts";
-    public static final String CREATE_TIME = "createTime";
-    public static final String CUSTOM_SETTINGS = "customSettings";
-    public static final String DATA_DESCRIPTION = "dataDescription";
-    public static final String DESCRIPTION = "description";
-    public static final String FINISHED_TIME = "finishedTime";
-    public static final String IGNORE_DOWNTIME = "ignoreDowntime";
-    public static final String LAST_DATA_TIME = "lastDataTime";
-    public static final String MODEL_DEBUG_CONFIG = "modelDebugConfig";
-    public static final String SCHEDULER_CONFIG = "schedulerConfig";
-    public static final String RENORMALIZATION_WINDOW_DAYS = "renormalizationWindowDays";
-    public static final String BACKGROUND_PERSIST_INTERVAL = "backgroundPersistInterval";
-    public static final String MODEL_SNAPSHOT_RETENTION_DAYS = "modelSnapshotRetentionDays";
-    public static final String RESULTS_RETENTION_DAYS = "resultsRetentionDays";
-    public static final String STATUS = "status";
-    public static final String SCHEDULER_STATUS = "schedulerStatus";
-    public static final String TIMEOUT = "timeout";
-    public static final String TRANSFORMS = "transforms";
+    public static final ParseField ID = new ParseField("jobId");
+    public static final ParseField ANALYSIS_CONFIG = new ParseField("analysisConfig");
+    public static final ParseField ANALYSIS_LIMITS = new ParseField("analysisLimits");
+    public static final ParseField COUNTS = new ParseField("counts");
+    public static final ParseField CREATE_TIME = new ParseField("createTime");
+    public static final ParseField CUSTOM_SETTINGS = new ParseField("customSettings");
+    public static final ParseField DATA_DESCRIPTION = new ParseField("dataDescription");
+    public static final ParseField DESCRIPTION = new ParseField("description");
+    public static final ParseField FINISHED_TIME = new ParseField("finishedTime");
+    public static final ParseField IGNORE_DOWNTIME = new ParseField("ignoreDowntime");
+    public static final ParseField LAST_DATA_TIME = new ParseField("lastDataTime");
+    public static final ParseField MODEL_DEBUG_CONFIG = new ParseField("modelDebugConfig");
+    public static final ParseField SCHEDULER_CONFIG = new ParseField("schedulerConfig");
+    public static final ParseField RENORMALIZATION_WINDOW_DAYS = new ParseField("renormalizationWindowDays");
+    public static final ParseField BACKGROUND_PERSIST_INTERVAL = new ParseField("backgroundPersistInterval");
+    public static final ParseField MODEL_SNAPSHOT_RETENTION_DAYS = new ParseField("modelSnapshotRetentionDays");
+    public static final ParseField RESULTS_RETENTION_DAYS = new ParseField("resultsRetentionDays");
+    public static final ParseField STATUS = new ParseField("status");
+    public static final ParseField SCHEDULER_STATUS = new ParseField("schedulerStatus");
+    public static final ParseField TIMEOUT = new ParseField("timeout");
+    public static final ParseField TRANSFORMS = new ParseField("transforms");
+    public static final ParseField MODEL_SIZE_STATS = new ParseField("modelSizeStats");
+    public static final ParseField AVERAGE_BUCKET_PROCESSING_TIME = new ParseField("averageBucketProcessingTimeMs");
 
     /**
      * Endpoints key names
@@ -62,11 +74,45 @@ public class JobDetails {
     public static final String RECORDS_ENDPOINT_KEY = "records";
     public static final String MODEL_SNAPSHOTS_ENDPOINT_KEY = "modelSnapshots";
 
+    public static final ObjectParser<JobDetails, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>("job_details", JobDetails::new);
+
+    static {
+        PARSER.declareString(JobDetails::setId, ID);
+        PARSER.declareStringOrNull(JobDetails::setDescription, DESCRIPTION);
+        PARSER.declareField(JobDetails::setStatus, (p, c) -> JobStatus.fromString(p.text()), STATUS, ValueType.STRING);
+        PARSER.declareField(
+                JobDetails::setSchedulerStatus,
+                (p, c) -> JobSchedulerStatus.fromString(p.text()),
+                SCHEDULER_STATUS,
+                ValueType.STRING
+        );
+        PARSER.declareField(JobDetails::setCreateTime, (p, c) -> new Date(p.longValue()), CREATE_TIME, ValueType.LONG);
+        PARSER.declareField(JobDetails::setFinishedTime, (p, c) -> new Date(p.longValue()), FINISHED_TIME, ValueType.LONG);
+        PARSER.declareField(JobDetails::setLastDataTime, (p, c) -> new Date(p.longValue()), LAST_DATA_TIME, ValueType.LONG);
+        PARSER.declareLong(JobDetails::setTimeout, TIMEOUT);
+        PARSER.declareObject(JobDetails::setAnalysisConfig, AnalysisConfig.PARSER, ANALYSIS_CONFIG);
+        PARSER.declareObject(JobDetails::setAnalysisLimits, AnalysisLimits.PARSER, ANALYSIS_LIMITS);
+        PARSER.declareObject(JobDetails::setSchedulerConfig, SchedulerConfig.getSchedulerConfigParser(), SCHEDULER_CONFIG);
+        PARSER.declareObject(JobDetails::setDataDescription, DataDescription.PARSER, DATA_DESCRIPTION);
+        PARSER.declareObject(JobDetails::setModelSizeStats, ModelSizeStats.PARSER, MODEL_SIZE_STATS);
+        PARSER.declareObjectArray(JobDetails::setTransforms, TransformConfig.PARSER, TRANSFORMS);
+        PARSER.declareObject(JobDetails::setModelDebugConfig, ModelDebugConfig.PARSER, MODEL_DEBUG_CONFIG);
+        PARSER.declareObject(JobDetails::setCounts, DataCounts.PARSER, COUNTS);
+        PARSER.declareField(JobDetails::setIgnoreDowntime, (p, c) -> IgnoreDowntime.fromString(p.text()), IGNORE_DOWNTIME, ValueType.STRING);
+        PARSER.declareLong(JobDetails::setRenormalizationWindowDays, RENORMALIZATION_WINDOW_DAYS);
+        PARSER.declareLong(JobDetails::setBackgroundPersistInterval, BACKGROUND_PERSIST_INTERVAL);
+        PARSER.declareLong(JobDetails::setResultsRetentionDays, RESULTS_RETENTION_DAYS);
+        PARSER.declareLong(JobDetails::setModelSnapshotRetentionDays, MODEL_SNAPSHOT_RETENTION_DAYS);
+        PARSER.declareField(JobDetails::setCustomSettings, (p, c) -> p.map(), CUSTOM_SETTINGS, ValueType.OBJECT);
+        PARSER.declareDouble(JobDetails::setAverageBucketProcessingTimeMs, AVERAGE_BUCKET_PROCESSING_TIME);
+    }
+
     private String jobId;
     private String description;
     private JobStatus status;
     private JobSchedulerStatus schedulerStatus;
 
+    // NORELEASE: Use Jodatime instead
     private Date createTime;
     private Date finishedTime;
     private Date lastDataTime;
@@ -89,54 +135,69 @@ public class JobDetails {
     private Map<String, Object> customSettings;
     private Double averageBucketProcessingTimeMs;
 
-
-    /**
-     * Default constructor required for serialisation
-     */
-    public JobDetails() {
-        counts = new DataCounts();
-        status = JobStatus.CLOSED;
-        createTime = new Date();
+    private JobDetails() {
     }
 
-    /**
-     * Create a new Job with the passed <code>jobId</code> and the
-     * configuration parameters, where fields are not set in the
-     * JobConfiguration defaults will be used.
-     *
-     * @param jobId     the job id
-     * @param jobConfig the job configuration
-     */
-    public JobDetails(String jobId, JobConfiguration jobConfig) {
-        this();
-
+    public JobDetails(String jobId, String description, JobStatus status, JobSchedulerStatus schedulerStatus, Date createTime,
+                      Date finishedTime, Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits,
+                      SchedulerConfig schedulerConfig, DataDescription dataDescription, ModelSizeStats modelSizeStats,
+                      List<TransformConfig> transforms, ModelDebugConfig modelDebugConfig, DataCounts counts,
+                      IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays, Long backgroundPersistInterval,
+                      Long modelSnapshotRetentionDays, Long resultsRetentionDays, Map<String, Object> customSettings,
+                      Double averageBucketProcessingTimeMs) {
         this.jobId = jobId;
-        description = jobConfig.getDescription();
-        timeout = (jobConfig.getTimeout() != null) ? jobConfig.getTimeout() : DEFAULT_TIMEOUT;
-
-        analysisConfig = jobConfig.getAnalysisConfig();
-        analysisLimits = jobConfig.getAnalysisLimits();
-        SchedulerConfig.Builder builder;
-        if (jobConfig.getSchedulerConfig() != null) {
-            builder = jobConfig.getSchedulerConfig();
-            schedulerConfig = builder.build();
-        }
-        transforms = jobConfig.getTransforms();
-        modelDebugConfig = jobConfig.getModelDebugConfig();
-
-        invokeIfNotNull(jobConfig.getDataDescription(), dd -> dataDescription = dd);
-        ignoreDowntime = jobConfig.getIgnoreDowntime();
-        renormalizationWindowDays = jobConfig.getRenormalizationWindowDays();
-        backgroundPersistInterval = jobConfig.getBackgroundPersistInterval();
-        modelSnapshotRetentionDays = jobConfig.getModelSnapshotRetentionDays();
-        resultsRetentionDays = jobConfig.getResultsRetentionDays();
-        customSettings = jobConfig.getCustomSettings();
+        this.description = description;
+        this.status = status;
+        this.schedulerStatus = schedulerStatus;
+        this.createTime = createTime;
+        this.finishedTime = finishedTime;
+        this.lastDataTime = lastDataTime;
+        this.timeout = timeout;
+        this.analysisConfig = analysisConfig;
+        this.analysisLimits = analysisLimits;
+        this.schedulerConfig = schedulerConfig;
+        this.dataDescription = dataDescription;
+        this.modelSizeStats = modelSizeStats;
+        this.transforms = transforms;
+        this.modelDebugConfig = modelDebugConfig;
+        this.counts = counts;
+        this.ignoreDowntime = ignoreDowntime;
+        this.renormalizationWindowDays = renormalizationWindowDays;
+        this.backgroundPersistInterval = backgroundPersistInterval;
+        this.modelSnapshotRetentionDays = modelSnapshotRetentionDays;
+        this.resultsRetentionDays = resultsRetentionDays;
+        this.customSettings = customSettings;
+        this.averageBucketProcessingTimeMs = averageBucketProcessingTimeMs;
     }
 
-    private <T> void invokeIfNotNull(T obj, Consumer<T> consumer) {
-        if (obj != null) {
-            consumer.accept(obj);
+    public JobDetails(StreamInput in) throws IOException {
+        jobId = in.readString();
+        description = in.readOptionalString();
+        status = JobStatus.fromStream(in);
+        schedulerStatus = JobSchedulerStatus.fromStream(in);
+        createTime = new Date(in.readVLong());
+        if (in.readBoolean()) {
+            finishedTime = new Date(in.readVLong());
         }
+        if (in.readBoolean()) {
+            lastDataTime = new Date(in.readVLong());
+        }
+        timeout = in.readVLong();
+        analysisConfig = new AnalysisConfig(in);
+        analysisLimits = in.readOptionalWriteable(AnalysisLimits::new);
+        schedulerConfig = in.readOptionalWriteable(SchedulerConfig::new);
+        dataDescription = in.readOptionalWriteable(DataDescription::new);
+        modelSizeStats = in.readOptionalWriteable(ModelSizeStats::new);
+        transforms = in.readList(TransformConfig::new);
+        modelDebugConfig = in.readOptionalWriteable(ModelDebugConfig::new);
+        counts = in.readOptionalWriteable(DataCounts::new);
+        ignoreDowntime = IgnoreDowntime.fromStream(in);
+        renormalizationWindowDays = in.readOptionalLong();
+        backgroundPersistInterval = in.readOptionalLong();
+        modelSnapshotRetentionDays = in.readOptionalLong();
+        resultsRetentionDays = in.readOptionalLong();
+        customSettings = in.readMap();
+        averageBucketProcessingTimeMs = in.readOptionalDouble();
     }
 
     /**
@@ -504,29 +565,104 @@ public class JobDetails {
         // remove empty strings
         allFields.remove("");
 
-        return new ArrayList<String>(allFields);
+        return new ArrayList<>(allFields);
     }
 
-    /**
-     * Prints the more salient fields in a JSON-like format suitable for logging.
-     * If every field was written it would spam the log file.
-     */
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("{");
-        sb.append("id:").append(getId())
-                .append(" description:").append(getDescription())
-                .append(" status:").append(getStatus())
-                .append(" createTime:").append(getCreateTime())
-                .append(" lastDataTime:").append(getLastDataTime())
-                .append("}");
-
-        return sb.toString();
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(jobId);
+        out.writeOptionalString(description);
+        status.writeTo(out);
+        schedulerStatus.writeTo(out);
+        out.writeVLong(createTime.getTime());
+        if (finishedTime != null) {
+            out.writeBoolean(true);
+            out.writeVLong(finishedTime.getTime());
+        } else {
+            out.writeBoolean(false);
+        }
+        if (lastDataTime != null) {
+            out.writeBoolean(true);
+            out.writeVLong(lastDataTime.getTime());
+        } else {
+            out.writeBoolean(false);
+        }
+        out.writeVLong(timeout);
+        analysisConfig.writeTo(out);
+        out.writeOptionalWriteable(analysisLimits);
+        out.writeOptionalWriteable(schedulerConfig);
+        out.writeOptionalWriteable(dataDescription);
+        out.writeOptionalWriteable(modelSizeStats);
+        out.writeList(transforms);
+        out.writeOptionalWriteable(modelDebugConfig);
+        out.writeOptionalWriteable(counts);
+        ignoreDowntime.writeTo(out);
+        out.writeOptionalLong(renormalizationWindowDays);
+        out.writeOptionalLong(backgroundPersistInterval);
+        out.writeOptionalLong(modelSnapshotRetentionDays);
+        out.writeOptionalLong(resultsRetentionDays);
+        out.writeMap(customSettings);
+        out.writeOptionalDouble(averageBucketProcessingTimeMs);
     }
 
-    /**
-     * Equality test
-     */
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(ID.getPreferredName(), jobId);
+        builder.field(DESCRIPTION.getPreferredName(), description);
+        builder.field(STATUS.getPreferredName(), status);
+        builder.field(SCHEDULER_STATUS.getPreferredName(), schedulerStatus);
+        builder.field(CREATE_TIME.getPreferredName(), createTime.getTime());
+        if (finishedTime != null) {
+            builder.field(FINISHED_TIME.getPreferredName(), finishedTime.getTime());
+        }
+        if (lastDataTime != null) {
+            builder.field(LAST_DATA_TIME.getPreferredName(), lastDataTime.getTime());
+        }
+        builder.field(TIMEOUT.getPreferredName(), timeout);
+        builder.field(ANALYSIS_CONFIG.getPreferredName(), analysisConfig);
+        if (analysisLimits != null) {
+            builder.field(ANALYSIS_LIMITS.getPreferredName(), analysisLimits);
+        }
+        if (schedulerConfig != null) {
+            builder.field(SCHEDULER_CONFIG.getPreferredName(), schedulerConfig);
+        }
+        if (dataDescription != null) {
+            builder.field(DATA_DESCRIPTION.getPreferredName(), dataDescription);
+        }
+        if (modelSizeStats != null) {
+            builder.field(MODEL_SIZE_STATS.getPreferredName(), modelSizeStats);
+        }
+        builder.field(TRANSFORMS.getPreferredName(), transforms);
+        if (modelDebugConfig != null) {
+            builder.field(MODEL_DEBUG_CONFIG.getPreferredName(), modelDebugConfig);
+        }
+        if (counts != null) {
+            builder.field(COUNTS.getPreferredName(), counts);
+        }
+        builder.field(IGNORE_DOWNTIME.getPreferredName(), ignoreDowntime);
+        if (renormalizationWindowDays != null) {
+            builder.field(RENORMALIZATION_WINDOW_DAYS.getPreferredName(), renormalizationWindowDays);
+        }
+        if (backgroundPersistInterval != null) {
+            builder.field(BACKGROUND_PERSIST_INTERVAL.getPreferredName(), backgroundPersistInterval);
+        }
+        if (modelSnapshotRetentionDays != null) {
+            builder.field(MODEL_SNAPSHOT_RETENTION_DAYS.getPreferredName(), modelSnapshotRetentionDays);
+        }
+        if (resultsRetentionDays != null) {
+            builder.field(RESULTS_RETENTION_DAYS.getPreferredName(), resultsRetentionDays);
+        }
+        if (customSettings != null) {
+            builder.field(CUSTOM_SETTINGS.getPreferredName(), customSettings);
+        }
+        if (averageBucketProcessingTimeMs != null) {
+            builder.field(AVERAGE_BUCKET_PROCESSING_TIME.getPreferredName(), averageBucketProcessingTimeMs);
+        }
+        builder.endObject();
+        return builder;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -538,7 +674,6 @@ public class JobDetails {
         }
 
         JobDetails that = (JobDetails) other;
-
         return Objects.equals(this.jobId, that.jobId) &&
                 Objects.equals(this.description, that.description) &&
                 (this.status == that.status) &&

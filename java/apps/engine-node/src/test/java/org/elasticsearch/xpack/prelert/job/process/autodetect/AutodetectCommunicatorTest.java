@@ -2,10 +2,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.core.Logger;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
-import org.elasticsearch.xpack.prelert.job.DataDescription;
-import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
@@ -84,7 +81,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
     }
 
     private JobDetails createJobDetails() {
-        JobDetails jobDetails = new JobDetails();
+        JobDetails jobDetails = new JobConfiguration().build();
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");
