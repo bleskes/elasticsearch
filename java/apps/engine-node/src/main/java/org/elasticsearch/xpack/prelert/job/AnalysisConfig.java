@@ -20,7 +20,16 @@ package org.elasticsearch.xpack.prelert.job;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.*;
 
+import java.io.IOException;
+import java.io.ObjectStreamClass;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,23 +49,24 @@ import java.util.stream.Collectors;
  * <code>null</code> values.
  */
 @JsonInclude(Include.NON_NULL)
-public class AnalysisConfig {
+public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     /**
      * Serialisation names
      */
-    public static final String BUCKET_SPAN = "bucketSpan";
-    public static final String BATCH_SPAN = "batchSpan";
-    public static final String CATEGORIZATION_FIELD_NAME = "categorizationFieldName";
-    public static final String CATEGORIZATION_FILTERS = "categorizationFilters";
-    public static final String LATENCY = "latency";
-    public static final String PERIOD = "period";
-    public static final String SUMMARY_COUNT_FIELD_NAME = "summaryCountFieldName";
-    public static final String DETECTORS = "detectors";
-    public static final String INFLUENCERS = "influencers";
-    public static final String OVERLAPPING_BUCKETS = "overlappingBuckets";
-    public static final String RESULT_FINALIZATION_WINDOW = "resultFinalizationWindow";
-    public static final String MULTIVARIATE_BY_FIELDS = "multivariateByFields";
-    public static final String MULTIPLE_BUCKET_SPANS = "multipleBucketSpans";
+    public static final ParseField BUCKET_SPAN = new ParseField("bucketSpan");
+    public static final ParseField BATCH_SPAN = new ParseField("batchSpan");
+    public static final ParseField CATEGORIZATION_FIELD_NAME = new ParseField("categorizationFieldName");
+    public static final ParseField CATEGORIZATION_FILTERS = new ParseField("categorizationFilters");
+    public static final ParseField LATENCY = new ParseField("latency");
+    public static final ParseField PERIOD = new ParseField("period");
+    public static final ParseField SUMMARY_COUNT_FIELD_NAME = new ParseField("summaryCountFieldName");
+    public static final ParseField DETECTORS = new ParseField("detectors");
+    public static final ParseField INFLUENCERS = new ParseField("influencers");
+    public static final ParseField OVERLAPPING_BUCKETS = new ParseField("overlappingBuckets");
+    public static final ParseField RESULT_FINALIZATION_WINDOW = new ParseField("resultFinalizationWindow");
+    public static final ParseField MULTIVARIATE_BY_FIELDS = new ParseField("multivariateByFields");
+    public static final ParseField MULTIPLE_BUCKET_SPANS = new ParseField("multipleBucketSpans");
+    public static final ParseField USER_PER_PARTITION_NORMALIZATION = new ParseField("usePerPartitionNormalization");
 
     public static final long DEFAULT_BUCKET_SPAN = 300;
 
@@ -66,6 +76,26 @@ public class AnalysisConfig {
 
     public static final long DEFAULT_RESULT_FINALIZATION_WINDOW = 2L;
 
+    public static final ObjectParser<AnalysisConfig, ParseFieldMatcherSupplier> PARSER =
+            new ObjectParser<>("schedule_config", AnalysisConfig::new);
+
+    static {
+        PARSER.declareLong(AnalysisConfig::setBucketSpan, BUCKET_SPAN);
+        PARSER.declareLong(AnalysisConfig::setBatchSpan, BATCH_SPAN);
+        PARSER.declareString(AnalysisConfig::setCategorizationFieldName, CATEGORIZATION_FIELD_NAME);
+        PARSER.declareStringArray(AnalysisConfig::setCategorizationFilters, CATEGORIZATION_FILTERS);
+        PARSER.declareLong(AnalysisConfig::setLatency, LATENCY);
+        PARSER.declareLong(AnalysisConfig::setPeriod, PERIOD);
+        PARSER.declareString(AnalysisConfig::setSummaryCountFieldName, SUMMARY_COUNT_FIELD_NAME);
+        PARSER.declareObjectArray(AnalysisConfig::setDetectors, Detector.PARSER, DETECTORS);
+        PARSER.declareStringArray(AnalysisConfig::setInfluencers, INFLUENCERS);
+        PARSER.declareBoolean(AnalysisConfig::setOverlappingBuckets, OVERLAPPING_BUCKETS);
+        PARSER.declareLong(AnalysisConfig::setResultFinalizationWindow, RESULT_FINALIZATION_WINDOW);
+        PARSER.declareBoolean(AnalysisConfig::setMultivariateByFields, MULTIVARIATE_BY_FIELDS);
+        PARSER.declareLongArray(AnalysisConfig::setMultipleBucketSpans, MULTIPLE_BUCKET_SPANS);
+        PARSER.declareBoolean(AnalysisConfig::setUsePerPartitionNormalization, USER_PER_PARTITION_NORMALIZATION);
+    }
+
     /**
      * These values apply to all detectors
      */
@@ -73,24 +103,39 @@ public class AnalysisConfig {
     private Long batchSpan;
     private String categorizationFieldName;
     private List<String> categorizationFilters;
-    private Long latency = 0L;
+    private long latency = 0L;
     private Long period;
     private String summaryCountFieldName;
-    private List<Detector> detectors;
-    private List<String> influencers;
+    private List<Detector> detectors = new ArrayList<>();
+    private List<String> influencers = new ArrayList<>();
     private Boolean overlappingBuckets;
     private Long resultFinalizationWindow;
     private Boolean multivariateByFields;
     private List<Long> multipleBucketSpans;
-    private boolean usePerPartitionNormalization;
+    private boolean usePerPartitionNormalization = false;
 
-    /**
-     * Default constructor
-     */
     public AnalysisConfig() {
-        detectors = new ArrayList<>();
-        influencers = new ArrayList<>();
-        usePerPartitionNormalization = false;
+    }
+
+    public AnalysisConfig(StreamInput in) throws IOException {
+        bucketSpan = in.readOptionalLong();
+        batchSpan = in.readOptionalLong();
+        categorizationFieldName = in.readOptionalString();
+        if (in.readBoolean()) {
+            categorizationFilters = in.readList(StreamInput::readString);
+        }
+        latency = in.readLong();
+        period = in.readOptionalLong();
+        summaryCountFieldName = in.readOptionalString();
+        detectors = in.readList(Detector::new);
+        influencers = in.readList(StreamInput::readString);
+        overlappingBuckets = in.readOptionalBoolean();
+        resultFinalizationWindow = in.readOptionalLong();
+        multivariateByFields = in.readOptionalBoolean();
+        if (in.readBoolean()) {
+            multipleBucketSpans = in.readList(StreamInput::readLong);
+        }
+        usePerPartitionNormalization = in.readBoolean();
     }
 
     /**
@@ -103,7 +148,7 @@ public class AnalysisConfig {
         return bucketSpan;
     }
 
-    public void setBucketSpan(Long bucketSpan) {
+    public void setBucketSpan(long bucketSpan) {
         this.bucketSpan = bucketSpan;
     }
 
@@ -121,7 +166,7 @@ public class AnalysisConfig {
         return batchSpan;
     }
 
-    public void setBatchSpan(Long batchSpan) {
+    public void setBatchSpan(long batchSpan) {
         this.batchSpan = batchSpan;
     }
 
@@ -130,7 +175,7 @@ public class AnalysisConfig {
     }
 
     public void setCategorizationFieldName(String categorizationFieldName) {
-        this.categorizationFieldName = categorizationFieldName;
+        this.categorizationFieldName = Objects.requireNonNull(categorizationFieldName);
     }
 
     public List<String> getCategorizationFilters() {
@@ -138,7 +183,7 @@ public class AnalysisConfig {
     }
 
     public void setCategorizationFilters(List<String> filters) {
-        categorizationFilters = filters;
+        categorizationFilters = Objects.requireNonNull(filters);
     }
 
     /**
@@ -155,7 +200,7 @@ public class AnalysisConfig {
      *
      * @param latency the latency interval in seconds
      */
-    public void setLatency(Long latency) {
+    public void setLatency(long latency) {
         this.latency = latency;
     }
 
@@ -169,7 +214,7 @@ public class AnalysisConfig {
         return period;
     }
 
-    public void setPeriod(Long period) {
+    public void setPeriod(long period) {
         this.period = period;
     }
 
@@ -183,7 +228,7 @@ public class AnalysisConfig {
     }
 
     public void setSummaryCountFieldName(String summaryCountFieldName) {
-        this.summaryCountFieldName = summaryCountFieldName;
+        this.summaryCountFieldName = Objects.requireNonNull(summaryCountFieldName);
     }
 
     /**
@@ -197,7 +242,7 @@ public class AnalysisConfig {
     }
 
     public void setDetectors(List<Detector> detectors) {
-        this.detectors = detectors;
+        this.detectors = Objects.requireNonNull(detectors);
     }
 
     /**
@@ -208,7 +253,7 @@ public class AnalysisConfig {
     }
 
     public void setInfluencers(List<String> influencers) {
-        this.influencers = influencers;
+        this.influencers = Objects.requireNonNull(influencers);
     }
 
     /**
@@ -248,7 +293,7 @@ public class AnalysisConfig {
         return overlappingBuckets;
     }
 
-    public void setOverlappingBuckets(Boolean b) {
+    public void setOverlappingBuckets(boolean b) {
         overlappingBuckets = b;
     }
 
@@ -256,7 +301,7 @@ public class AnalysisConfig {
         return resultFinalizationWindow;
     }
 
-    public void setResultFinalizationWindow(Long l) {
+    public void setResultFinalizationWindow(long l) {
         resultFinalizationWindow = l;
     }
 
@@ -264,7 +309,7 @@ public class AnalysisConfig {
         return multivariateByFields;
     }
 
-    public void setMultivariateByFields(Boolean multivariateByFields) {
+    public void setMultivariateByFields(boolean multivariateByFields) {
         this.multivariateByFields = multivariateByFields;
     }
 
@@ -272,8 +317,8 @@ public class AnalysisConfig {
         return multipleBucketSpans;
     }
 
-    public void setMultipleBucketSpans(List<Long> l) {
-        multipleBucketSpans = l;
+    public void setMultipleBucketSpans(List<Long> multipleBucketSpans) {
+        this.multipleBucketSpans = Objects.requireNonNull(multipleBucketSpans);
     }
 
     public boolean getUsePerPartitionNormalization() {
@@ -347,54 +392,105 @@ public class AnalysisConfig {
         return collectNonNullAndNonEmptyDetectorFields(d -> d.getPartitionFieldName());
     }
 
-    /**
-     * The array of detectors are compared for equality but they are not sorted
-     * first so this test could fail simply because the detector arrays are in
-     * different orders.
-     */
     @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeOptionalLong(bucketSpan);
+        out.writeOptionalLong(batchSpan);
+        out.writeOptionalString(categorizationFieldName);
+        if (categorizationFilters != null) {
+            out.writeBoolean(true);
+            out.writeStringList(categorizationFilters);
+        } else {
+            out.writeBoolean(false);
         }
-
-        if (other instanceof AnalysisConfig == false) {
-            return false;
-        }
-
-        AnalysisConfig that = (AnalysisConfig) other;
-
-        if (this.detectors.size() != that.detectors.size()) {
-            return false;
-        }
-
-        for (int i = 0; i < detectors.size(); i++) {
-            if (!this.detectors.get(i).equals(that.detectors.get(i))) {
-                return false;
+        out.writeLong(latency);
+        out.writeOptionalLong(period);
+        out.writeOptionalString(summaryCountFieldName);
+        out.writeList(detectors);
+        out.writeStringList(influencers);
+        out.writeOptionalBoolean(overlappingBuckets);
+        out.writeOptionalLong(resultFinalizationWindow);
+        out.writeOptionalBoolean(multivariateByFields);
+        if (multipleBucketSpans != null) {
+            out.writeBoolean(true);
+            out.writeVInt(multipleBucketSpans.size());
+            for (Long bucketSpan : multipleBucketSpans) {
+                out.writeLong(bucketSpan);
             }
+        } else {
+            out.writeBoolean(false);
         }
+        out.writeBoolean(usePerPartitionNormalization);
+    }
 
-        return Objects.equals(this.bucketSpan, that.bucketSpan) &&
-                Objects.equals(this.batchSpan, that.batchSpan) &&
-                Objects.equals(this.categorizationFieldName, that.categorizationFieldName) &&
-                Objects.equals(this.categorizationFilters, that.categorizationFilters) &&
-                Objects.equals(this.latency, that.latency) &&
-                Objects.equals(this.period, that.period) &&
-                Objects.equals(this.summaryCountFieldName, that.summaryCountFieldName) &&
-                Objects.equals(this.influencers, that.influencers) &&
-                Objects.equals(this.overlappingBuckets, that.overlappingBuckets) &&
-                Objects.equals(this.resultFinalizationWindow, that.resultFinalizationWindow) &&
-                Objects.equals(this.multivariateByFields, that.multivariateByFields) &&
-                Objects.equals(this.multipleBucketSpans, that.multipleBucketSpans) &&
-                Objects.equals(this.usePerPartitionNormalization, that.usePerPartitionNormalization);
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        if (bucketSpan != null) {
+            builder.field(BUCKET_SPAN.getPreferredName(), bucketSpan);
+        }
+        if (batchSpan != null) {
+            builder.field(BATCH_SPAN.getPreferredName(), batchSpan);
+        }
+        if (categorizationFieldName != null) {
+            builder.field(CATEGORIZATION_FIELD_NAME.getPreferredName(), categorizationFieldName);
+        }
+        if (categorizationFilters != null) {
+            builder.field(CATEGORIZATION_FILTERS.getPreferredName(), categorizationFilters);
+        }
+        builder.field(LATENCY.getPreferredName(), latency);
+        if (period != null) {
+            builder.field(PERIOD.getPreferredName(), period);
+        }
+        if (summaryCountFieldName != null) {
+            builder.field(SUMMARY_COUNT_FIELD_NAME.getPreferredName(), summaryCountFieldName);
+        }
+        builder.field(DETECTORS.getPreferredName(), detectors);
+        builder.field(INFLUENCERS.getPreferredName(), influencers);
+        if (overlappingBuckets != null) {
+            builder.field(OVERLAPPING_BUCKETS.getPreferredName(), overlappingBuckets);
+        }
+        if (resultFinalizationWindow != null) {
+            builder.field(RESULT_FINALIZATION_WINDOW.getPreferredName(), resultFinalizationWindow);
+        }
+        if (multivariateByFields != null) {
+            builder.field(MULTIVARIATE_BY_FIELDS.getPreferredName(), multivariateByFields);
+        }
+        if (multipleBucketSpans != null) {
+            builder.field(MULTIPLE_BUCKET_SPANS.getPreferredName(), multipleBucketSpans);
+        }
+        builder.field(USER_PER_PARTITION_NORMALIZATION.getPreferredName(), usePerPartitionNormalization);
+        builder.endObject();
+        return builder;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AnalysisConfig that = (AnalysisConfig) o;
+        return latency == that.latency &&
+                usePerPartitionNormalization == that.usePerPartitionNormalization &&
+                Objects.equals(bucketSpan, that.bucketSpan) &&
+                Objects.equals(batchSpan, that.batchSpan) &&
+                Objects.equals(categorizationFieldName, that.categorizationFieldName) &&
+                Objects.equals(categorizationFilters, that.categorizationFilters) &&
+                Objects.equals(period, that.period) &&
+                Objects.equals(summaryCountFieldName, that.summaryCountFieldName) &&
+                Objects.equals(detectors, that.detectors) &&
+                Objects.equals(influencers, that.influencers) &&
+                Objects.equals(overlappingBuckets, that.overlappingBuckets) &&
+                Objects.equals(resultFinalizationWindow, that.resultFinalizationWindow) &&
+                Objects.equals(multivariateByFields, that.multivariateByFields) &&
+                Objects.equals(multipleBucketSpans, that.multipleBucketSpans);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(detectors, bucketSpan, batchSpan, categorizationFieldName,
-                categorizationFilters, latency, period, summaryCountFieldName,
-                influencers, overlappingBuckets, resultFinalizationWindow,
-                multivariateByFields, multipleBucketSpans, usePerPartitionNormalization);
+        return Objects.hash(
+                bucketSpan, batchSpan, categorizationFieldName, categorizationFilters, latency, period,
+                summaryCountFieldName, detectors, influencers, overlappingBuckets, resultFinalizationWindow,
+                multivariateByFields, multipleBucketSpans, usePerPartitionNormalization
+        );
     }
-
 }

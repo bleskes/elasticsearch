@@ -372,7 +372,6 @@ public class JobConfigurationVerifierTest extends ESTestCase {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
-        jobConfig.getAnalysisConfig().setBucketSpan(null);
 
         ElasticsearchStatusException e =
                 ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> JobConfigurationVerifier.verify(jobConfig));
@@ -411,13 +410,12 @@ public class JobConfigurationVerifierTest extends ESTestCase {
     }
 
 
-    public void testVerify_GivenElasticsearchSchedulerAndNullLatency() {
+    public void testVerify_GivenElasticsearchSchedulerAndNoLatency() {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         JobConfiguration jobConfig = buildJobConfigurationNoTransforms();
         jobConfig.setSchedulerConfig(schedulerConfig);
         jobConfig.getDataDescription().setFormat(DataFormat.ELASTICSEARCH);
         jobConfig.getAnalysisConfig().setBucketSpan(1800L);
-        jobConfig.getAnalysisConfig().setLatency(null);
 
         assertTrue(JobConfigurationVerifier.verify(jobConfig));
     }

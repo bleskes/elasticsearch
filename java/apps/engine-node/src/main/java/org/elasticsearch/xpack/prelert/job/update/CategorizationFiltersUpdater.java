@@ -9,6 +9,7 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,7 +19,7 @@ class CategorizationFiltersUpdater extends AbstractUpdater {
 
     public CategorizationFiltersUpdater(JobDetails job, String updateKey) {
         super(job, updateKey);
-        newCategorizationFilters = null;
+        newCategorizationFilters = Collections.emptyList();
     }
 
     @Override
@@ -36,7 +37,7 @@ class CategorizationFiltersUpdater extends AbstractUpdater {
 
     private void parseStringArray(JsonNode arrayNode) {
         Iterator<JsonNode> iterator = arrayNode.elements();
-        newCategorizationFilters = iterator.hasNext() ? new ArrayList<>() : null;
+        newCategorizationFilters = iterator.hasNext() ? new ArrayList<>() : Collections.emptyList();
         while (iterator.hasNext()) {
             JsonNode elementNode = iterator.next();
             if (elementNode.isTextual()) {

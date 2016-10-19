@@ -13,6 +13,7 @@ import org.junit.Before;
 
 import java.util.Arrays;
 
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -29,7 +30,6 @@ public class CategorizationFiltersUpdaterTest extends ESTestCase {
         Detector detector = new Detector("count");
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setDetectors(Arrays.asList(detector));
-        analysisConfig.setCategorizationFilters(null);
         job.setAnalysisConfig(analysisConfig);
     }
 
@@ -82,7 +82,7 @@ public class CategorizationFiltersUpdaterTest extends ESTestCase {
         givenCategorizationFieldName();
         createUpdater("myJob").update(node);
 
-        assertThat(job.getAnalysisConfig().getCategorizationFilters(), is(nullValue()));
+        assertThat(job.getAnalysisConfig().getCategorizationFilters(), is(empty()));
     }
 
     public void testCommit_GivenEmptyArray() throws Exception {
@@ -93,7 +93,7 @@ public class CategorizationFiltersUpdaterTest extends ESTestCase {
         CategorizationFiltersUpdater updater = createUpdater("myJob");
         updater.update(node);
 
-        assertThat(job.getAnalysisConfig().getCategorizationFilters(), is(nullValue()));
+        assertThat(job.getAnalysisConfig().getCategorizationFilters(), is(empty()));
     }
 
     private CategorizationFiltersUpdater createUpdater(String jobId) {

@@ -1,13 +1,79 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
 import java.util.*;
 
 
-public class AnalysisConfigTest extends ESTestCase {
+public class AnalysisConfigTest extends AbstractSerializingTestCase<AnalysisConfig> {
+
+    @Override
+    protected AnalysisConfig createTestInstance() {
+        AnalysisConfig analysisConfig = new AnalysisConfig();
+        if (randomBoolean()) {
+            analysisConfig.setBatchSpan(randomLong());
+        }
+        if (randomBoolean()) {
+            analysisConfig.setBucketSpan(randomLong());
+        }
+        if (randomBoolean()) {
+            analysisConfig.setCategorizationFieldName(randomAsciiOfLength(10));
+        }
+        if (randomBoolean()) {
+            analysisConfig.setCategorizationFilters(Arrays.asList(generateRandomStringArray(10, 10, false)));
+        }
+        if (randomBoolean()) {
+            List<Detector> detectors = new ArrayList<>();
+            int numDetectors = randomIntBetween(0, 10);
+            for (int i = 0; i < numDetectors; i++) {
+                detectors.add(new Detector("_function" + i));
+            }
+            analysisConfig.setDetectors(detectors);
+        }
+        if (randomBoolean()) {
+            analysisConfig.setInfluencers(Arrays.asList(generateRandomStringArray(10, 10, false)));
+        }
+        if (randomBoolean()) {
+            analysisConfig.setLatency(randomLong());
+        }
+        if (randomBoolean()) {
+            int numBucketSpans = randomIntBetween(0, 10);
+            List<Long> multipleBucketSpans = new ArrayList<>();
+            for (int i = 0; i < numBucketSpans; i++) {
+                multipleBucketSpans.add(randomLong());
+            }
+            analysisConfig.setMultipleBucketSpans(multipleBucketSpans);
+        }
+        if (randomBoolean()) {
+            analysisConfig.setMultivariateByFields(randomBoolean());
+        }
+        if (randomBoolean()) {
+            analysisConfig.setOverlappingBuckets(randomBoolean());
+        }
+        if (randomBoolean()) {
+            analysisConfig.setResultFinalizationWindow(randomLong());
+        }
+        if (randomBoolean()) {
+            analysisConfig.setUsePerPartitionNormalization(randomBoolean());
+        }
+        return analysisConfig;
+    }
+
+    @Override
+    protected Writeable.Reader<AnalysisConfig> instanceReader() {
+        return AnalysisConfig::new;
+    }
+
+    @Override
+    protected AnalysisConfig parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return AnalysisConfig.PARSER.apply(parser, () -> matcher);
+    }
 
     public void testFieldConfiguration() {
         // Single detector, not pre-summarised
