@@ -256,18 +256,12 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         final HttpClient httpClient = new HttpClient(settings, httpAuthRegistry, sslService);
         components.add(httpClient);
 
-<<<<<<< HEAD
-        components.addAll(createNotificationComponents(clusterService.getClusterSettings(), httpClient,
-            httpTemplateParser, scriptService));
-=======
         Collection<Object> notificationComponents = createNotificationComponents(clusterService.getClusterSettings(), httpClient,
-                httpTemplateParser, scriptService, httpAuthRegistry);
+                httpTemplateParser, scriptService);
         components.addAll(notificationComponents);
 
         components.addAll(watcher.createComponents(getClock(), scriptService, internalClient, searchRequestParsers, licenseState,
                 httpClient, components));
-
->>>>>>> 558257d... Deguice Watcher Actions and Transformations (#3818)
 
         // just create the reloader as it will pull all of the loaded ssl configurations and start watching them
         new SSLConfigurationReloader(settings, env, sslService, resourceWatcherService);
