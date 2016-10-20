@@ -1,4 +1,3 @@
-
 package org.elasticsearch.xpack.prelert.job;
 
 import org.elasticsearch.common.ParseFieldMatcher;
@@ -27,7 +26,8 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         long timeout = randomPositiveLong();
         AnalysisConfig analysisConfig = new AnalysisConfig();
         AnalysisLimits analysisLimits = new AnalysisLimits(randomPositiveLong(), randomPositiveLong());
-        SchedulerConfig schedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH).build();
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
+        schedulerConfig.setFilePath("/file/path");
         DataDescription dataDescription = randomBoolean() ? new DataDescription() : null;
         ModelSizeStats modelSizeStats = randomBoolean() ? new ModelSizeStats() : null;
         int numTransformers = randomIntBetween(0, 32);
@@ -44,14 +44,13 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         Long resultsRetentionDays = randomBoolean() ? randomLong() : null;
         Map<String, Object> customConfig =
                 randomBoolean() ? Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)) : null;
-                Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
-                return new JobDetails(
-                        jobId, description, jobStatus, jobSchedulerStatus, createTime, finishedTime, lastDataTime, timeout,
-                        analysisConfig, analysisLimits, schedulerConfig, dataDescription, modelSizeStats, transformConfigList,
-                        modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
-                        modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs
-
-                        );
+        Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
+        return new JobDetails(
+                jobId, description, jobStatus, jobSchedulerStatus, createTime, finishedTime, lastDataTime, timeout,
+                analysisConfig, analysisLimits, schedulerConfig.build(), dataDescription, modelSizeStats, transformConfigList,
+                modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
+                modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs
+        );
     }
 
     @Override
@@ -105,7 +104,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
 
     public void testConstructor_GivenJobConfigurationWithElasticsearchScheduler_ShouldFillDefaults() {
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
-        expectThrows(NullPointerException.class, () ->schedulerConfig.setQuery(null));
+        expectThrows(NullPointerException.class, () -> schedulerConfig.setQuery(null));
     }
 
 
@@ -144,7 +143,9 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         jobDetails1.setBackgroundPersistInterval(10000L);
         jobDetails1.setModelSnapshotRetentionDays(10L);
         jobDetails1.setResultsRetentionDays(30L);
-        jobDetails1.setSchedulerConfig(new SchedulerConfig.Builder(DataSource.FILE).build());
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
+        schedulerConfig.setFilePath("/file/path");
+        jobDetails1.setSchedulerConfig(schedulerConfig.build());
         jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
         jobDetails1.setStatus(JobStatus.RUNNING);
         jobDetails1.setTimeout(3600L);
@@ -169,7 +170,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         jobDetails2.setBackgroundPersistInterval(10000L);
         jobDetails2.setModelSnapshotRetentionDays(10L);
         jobDetails2.setResultsRetentionDays(30L);
-        jobDetails2.setSchedulerConfig(new SchedulerConfig.Builder(DataSource.FILE).build());
+        jobDetails2.setSchedulerConfig(schedulerConfig.build());
         jobDetails2.setSchedulerStatus(JobSchedulerStatus.STOPPED);
         jobDetails2.setStatus(JobStatus.RUNNING);
         jobDetails2.setTimeout(3600L);

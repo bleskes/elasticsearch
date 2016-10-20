@@ -41,7 +41,6 @@ public final class JobConfigurationVerifier {
      * <li>Either an AnalysisConfig or Job reference must be set</li>
      * <li>Verify {@link AnalysisConfigVerifier#verify(AnalysisConfig) AnalysisConfig}</li>
      * <li>Verify {@link AnalysisLimitsVerifier#verify(AnalysisLimits) AnalysisLimits}</li>
-     * <li>Verify {@link SchedulerConfigVerifier#verify(SchedulerConfig) SchedulerConfig}</li>
      * <li>Verify {@link DataDescriptionVerifier#verify(DataDescription) DataDescription}</li>
      * <li>Verify {@link TransformConfigsVerifier#verify(List<TransformConfig>) Transforms}</li>
      * <li>Verify {@link ModelDebugConfigVerifier#verify(ModelDebugConfig) ModelDebugConfig}</li>
@@ -100,9 +99,7 @@ public final class JobConfigurationVerifier {
 
     private static void verifySchedulerConfig(JobConfiguration config) {
         // NORELEASE move all scheduler validation to SchedulerConfig.Builder
-        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(config.getSchedulerConfig());
-        SchedulerConfigVerifier.verify(schedulerConfig);
-
+        SchedulerConfig schedulerConfig = config.getSchedulerConfig();
         AnalysisConfig analysisConfig = config.getAnalysisConfig();
         if (analysisConfig.getBucketSpan() == null) {
             throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN),

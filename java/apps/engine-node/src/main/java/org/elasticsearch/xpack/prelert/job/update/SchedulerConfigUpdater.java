@@ -1,9 +1,10 @@
 package org.elasticsearch.xpack.prelert.job.update;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
-import org.elasticsearch.xpack.prelert.job.config.verification.SchedulerConfigVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -20,7 +21,6 @@ class SchedulerConfigUpdater extends AbstractUpdater {
         SchedulerConfig.Builder newConfig = parseSchedulerConfig(node);
         checkNotNull(newConfig);
         checkDataSourceHasNotChanged(newConfig);
-        SchedulerConfigVerifier.verify(newConfig);
         job().setSchedulerConfig(newConfig.build());
     }
 
@@ -35,8 +35,7 @@ class SchedulerConfigUpdater extends AbstractUpdater {
         try {
             return JSON_MAPPER.convertValue(node, SchedulerConfig.Builder.class);
         } catch (IllegalArgumentException e) {
-            throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_UPDATE_SCHEDULE_CONFIG_PARSE_ERROR),
-                    ErrorCodes.INVALID_VALUE);
+            throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_UPDATE_SCHEDULE_CONFIG_PARSE_ERROR), ErrorCodes.INVALID_VALUE);
         }
     }
 

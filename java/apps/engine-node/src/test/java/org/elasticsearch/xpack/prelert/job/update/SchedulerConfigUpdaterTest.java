@@ -13,6 +13,7 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenNull() throws IOException {
-        givenJobWithSchedulerConfig("foo", new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH));
+        givenJobWithSchedulerConfig("foo", createSchedulerBuilder());
         String update = "null";
         JsonNode node = new ObjectMapper().readTree(update);
 
@@ -43,7 +44,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenInvalidJson() throws IOException {
-        givenJobWithSchedulerConfig("foo", new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH));
+        givenJobWithSchedulerConfig("foo", createSchedulerBuilder());
         String update = "{\"dataSour!!ce\":\"whatever\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
@@ -53,7 +54,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenDifferentDataSource() throws IOException {
-        givenJobWithSchedulerConfig("foo", new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH));
+        givenJobWithSchedulerConfig("foo", createSchedulerBuilder());
 
         String update = "{\"dataSource\":\"FILE\"}";
         JsonNode node = new ObjectMapper().readTree(update);
@@ -64,17 +65,19 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     }
 
     public void testUpdate_GivenValidationError() throws IOException {
-        givenJobWithSchedulerConfig("foo", new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH));
+        givenJobWithSchedulerConfig("foo", createSchedulerBuilder());
         String update = "{\"dataSource\":\"ELASTICSEARCH\", \"queryDelay\":\"-10\"}";
         JsonNode node = new ObjectMapper().readTree(update);
 
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> createUpdater().update(node));
-        assertEquals("Invalid queryDelay value '-10' in scheduler configuration", e.getMessage());
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        // Original message gets swallowed by jackson-databind when it tries to invoke setQueryDelay(...) via reflection
+        // and a valid exception is thrown because the provided value is negative. It is ok, we remove jackson-databind soon...
+        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class, () -> createUpdater().update(node));
+        assertEquals("JSON parse error reading the update value for schedulerConfig", e.getMessage());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testUpdate_GivenValid() throws JobException, IOException {
-        givenJobWithSchedulerConfig("foo", new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH));
+        givenJobWithSchedulerConfig("foo", createSchedulerBuilder());
         String update = "{"
                 + "\"dataSource\":\"ELASTICSEARCH\","
                 + "\"baseUrl\":\"http://localhost:9200\","
@@ -87,7 +90,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
 
         createUpdater().update(node);
 
-        SchedulerConfig.Builder expected = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
+        SchedulerConfig.Builder expected = createSchedulerBuilder();
         expected.setBaseUrl("http://localhost:9200");
         expected.setIndexes(Arrays.asList("index1", "index2"));
         expected.setTypes(Arrays.asList("type1", "type2"));
@@ -118,5 +121,13 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
             jobConfiguration.setSchedulerConfig(schedulerConfig);
         }
         job = jobConfiguration.build();
+    }
+
+    private static SchedulerConfig.Builder createSchedulerBuilder() {
+        SchedulerConfig.Builder builder = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
+        builder.setBaseUrl("http://localhost");
+        builder.setIndexes(Collections.singletonList("index"));
+        builder.setTypes(Collections.singletonList("type"));
+        return builder;
     }
 }

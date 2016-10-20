@@ -22,18 +22,18 @@ public class JobUpdaterTest extends ESTestCase {
 
     private static final String JOB_ID = "foo";
 
-    private JobDetails m_Job;
+    private JobDetails job;
 
     @Before
     public void setJob() throws UnknownJobException {
-        m_Job = new JobConfiguration().build();
-        m_Job.setId(JOB_ID);
+        job = new JobConfiguration().build();
+        job.setId(JOB_ID);
     }
 
     public void testUpdate_GivenEmptyString() {
         String update = "";
 
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class, () -> new JobUpdater(m_Job).update(update));
+        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class, () -> new JobUpdater(job).update(update));
         assertEquals("JSON parse error reading the job update", e.getMessage());
         assertEquals(ErrorCodes.JOB_CONFIG_PARSE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
@@ -41,7 +41,7 @@ public class JobUpdaterTest extends ESTestCase {
     public void testUpdate_GivenEmptyObject() {
         String update = "{}";
 
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> new JobUpdater(m_Job).update(update));
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> new JobUpdater(job).update(update));
         assertEquals("Update requires JSON that contains a non-empty object", e.getMessage());
         assertEquals(ErrorCodes.JOB_CONFIG_PARSE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
@@ -49,7 +49,7 @@ public class JobUpdaterTest extends ESTestCase {
     public void testUpdate_GivenNoObject() {
         String update = "\"description\":\"foobar\"";
 
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> new JobUpdater(m_Job).update(update));
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> new JobUpdater(job).update(update));
         assertEquals("Update requires JSON that contains a non-empty object", e.getMessage());
         assertEquals(ErrorCodes.JOB_CONFIG_PARSE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
@@ -57,7 +57,7 @@ public class JobUpdaterTest extends ESTestCase {
     public void testUpdate_GivenInvalidKey() {
         String update = "{\"dimitris\":\"foobar\"}";
 
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> new JobUpdater(m_Job).update(update));
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> new JobUpdater(job).update(update));
         assertEquals("Invalid key 'dimitris'", e.getMessage());
         assertEquals(ErrorCodes.INVALID_UPDATE_KEY.getValueString(), e.getHeader("errorCode").get(0));
     }
@@ -65,9 +65,9 @@ public class JobUpdaterTest extends ESTestCase {
     public void testUpdate_GivenValidDescriptionUpdate() throws JobException {
         String update = "{\"description\":\"foobar\"}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getDescription(), equalTo("foobar"));
+        assertThat(job.getDescription(), equalTo("foobar"));
         // TODO verify nothing was written to process
         // TODO verify update audit: verify(m_Auditor).info("Job updated: [description]");
     }
@@ -75,10 +75,10 @@ public class JobUpdaterTest extends ESTestCase {
     public void testUpdate_GivenTwoValidUpdates() throws JobException {
         String update = "{\"description\":\"foobar\", \"modelDebugConfig\":{\"boundsPercentile\":33.9}}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getDescription(), equalTo("foobar"));
-        assertThat(m_Job.getModelDebugConfig(), equalTo(new ModelDebugConfig(null, 33.9, null)));
+        assertThat(job.getDescription(), equalTo("foobar"));
+        assertThat(job.getModelDebugConfig(), equalTo(new ModelDebugConfig(null, 33.9, null)));
 
         String expectedConfig = "[modelDebugConfig]\nboundspercentile = 33.9\nterms = \n";
         // TODO verify config written ^^
@@ -87,57 +87,57 @@ public class JobUpdaterTest extends ESTestCase {
     public void testUpdate_GivenValidBackgroundPersistIntervalUpdate() throws JobException {
         String update = "{\"backgroundPersistInterval\": 7200}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getBackgroundPersistInterval(), equalTo(7200L));
+        assertThat(job.getBackgroundPersistInterval(), equalTo(7200L));
         // TODO verify nothing was written to process
     }
 
     public void testUpdate_GivenValidCustomSettingsUpdate() throws JobException {
         String update = "{\"customSettings\": {\"radio\":\"head\"}}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
         Map<String, Object> expected = new HashMap<>();
         expected.put("radio", "head");
-        assertThat(m_Job.getCustomSettings().size(), equalTo(1));
-        assertThat(m_Job.getCustomSettings().get("radio"), equalTo("head"));
+        assertThat(job.getCustomSettings().size(), equalTo(1));
+        assertThat(job.getCustomSettings().get("radio"), equalTo("head"));
         // TODO verify nothing was written to process
     }
 
     public void testUpdate_GivenValidIgnoreDowntimeUpdate() throws JobException {
         String update = "{\"ignoreDowntime\": \"always\"}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getIgnoreDowntime(), equalTo(IgnoreDowntime.ALWAYS));
+        assertThat(job.getIgnoreDowntime(), equalTo(IgnoreDowntime.ALWAYS));
         // TODO verify nothing was written to process
     }
 
     public void testUpdate_GivenValidRenormalizationWindowDaysUpdate() throws JobException {
         String update = "{\"renormalizationWindowDays\": 3}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getRenormalizationWindowDays(), equalTo(3L));
+        assertThat(job.getRenormalizationWindowDays(), equalTo(3L));
         // TODO verify nothing was written to process
     }
 
     public void testUpdate_GivenValidModelSnapshotRetentionDaysUpdate() throws JobException {
         String update = "{\"modelSnapshotRetentionDays\": 9}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getModelSnapshotRetentionDays(), equalTo(9L));
+        assertThat(job.getModelSnapshotRetentionDays(), equalTo(9L));
         // TODO verify nothing was written to process
     }
 
     public void testUpdate_GivenValidResultsRetentionDaysUpdate() throws JobException {
         String update = "{\"resultsRetentionDays\": 3}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getResultsRetentionDays(), equalTo(3L));
+        assertThat(job.getResultsRetentionDays(), equalTo(3L));
         // TODO verify nothing was written to process
     }
 
@@ -149,11 +149,11 @@ public class JobUpdaterTest extends ESTestCase {
         detector.setByFieldName("prelertCategory");
         analysisConfig.setDetectors(Arrays.asList(detector));
         analysisConfig.setCategorizationFieldName("myCategory");
-        m_Job.setAnalysisConfig(analysisConfig);
+        job.setAnalysisConfig(analysisConfig);
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getAnalysisConfig().getCategorizationFilters(), equalTo(Arrays.asList("SQL.*")));
+        assertThat(job.getAnalysisConfig().getCategorizationFilters(), equalTo(Arrays.asList("SQL.*")));
     }
 
     public void testUpdate_GivenValidDetectorDescriptionUpdate() throws JobException {
@@ -161,11 +161,11 @@ public class JobUpdaterTest extends ESTestCase {
 
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setDetectors(Arrays.asList(new Detector("count")));
-        m_Job.setAnalysisConfig(analysisConfig);
+        job.setAnalysisConfig(analysisConfig);
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription(), equalTo("the A train"));
+        assertThat(job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription(), equalTo("the A train"));
     }
 
     public void testUpdate_GivenValidDetectorRulesUpdate() throws JobException {
@@ -174,17 +174,20 @@ public class JobUpdaterTest extends ESTestCase {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         Detector detector = new Detector("count");
         analysisConfig.setDetectors(Arrays.asList(detector));
-        m_Job.setAnalysisConfig(analysisConfig);
+        job.setAnalysisConfig(analysisConfig);
         List<DetectionRule> rules = new ArrayList<>();
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(0).getDetectorRules(), equalTo(rules));
+        assertThat(job.getAnalysisConfig().getDetectors().get(0).getDetectorRules(), equalTo(rules));
     }
 
     public void testUpdate_GivenValidSchedulerConfigUpdate() throws JobException {
-        SchedulerConfig schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH).build();
-        m_Job.setSchedulerConfig(schedulerConfig);
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost:9200");
+        schedulerConfig.setIndexes(Arrays.asList("index1"));
+        schedulerConfig.setTypes(Arrays.asList("type1"));
+        job.setSchedulerConfig(schedulerConfig.build());
         String update = "{\"schedulerConfig\": {"
                 + "\"dataSource\":\"ELASTICSEARCH\","
                 + "\"baseUrl\":\"http://localhost:9200\","
@@ -192,7 +195,7 @@ public class JobUpdaterTest extends ESTestCase {
                 + "\"types\":[\"type1\", \"type2\"]"
                 + "}}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
         SchedulerConfig.Builder expected = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
         expected.setBaseUrl("http://localhost:9200");
@@ -206,22 +209,22 @@ public class JobUpdaterTest extends ESTestCase {
         expected.setRetrieveWholeSource(false);
         expected.setScrollSize(1000);
 
-        assertThat(m_Job.getSchedulerConfig(), equalTo(expected.build()));
+        assertThat(job.getSchedulerConfig(), equalTo(expected.build()));
     }
 
     public void testUpdate_GivenValidAnalysisLimitsUpdate() throws JobException {
         AnalysisLimits analysisLimits = new AnalysisLimits(100L, 4L);
-        m_Job.setStatus(JobStatus.CLOSED);
-        m_Job.setAnalysisLimits(analysisLimits);
+        job.setStatus(JobStatus.CLOSED);
+        job.setAnalysisLimits(analysisLimits);
 
         String update = "{\"analysisLimits\": {"
                 + "\"modelMemoryLimit\":1000,"
                 + "\"categorizationExamplesLimit\":10"
                 + "}}";
 
-        new JobUpdater(m_Job).update(update);
+        new JobUpdater(job).update(update);
 
         AnalysisLimits newLimits = new AnalysisLimits(1000L, 10L);
-        assertThat(m_Job.getAnalysisLimits(), equalTo(newLimits));
+        assertThat(job.getAnalysisLimits(), equalTo(newLimits));
     }
 }

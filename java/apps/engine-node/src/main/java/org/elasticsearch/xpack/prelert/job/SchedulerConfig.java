@@ -21,9 +21,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -31,8 +33,13 @@ import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,7 +49,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.function.BiFunction;
 
 
 /**
@@ -675,6 +681,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         private List<String> indexes = null;
         private List<String> types = null;
         // NORELEASE: use Collections.emptyMap() instead of null as initial value:
+        // NORELEASE: Use SearchSourceBuilder
         private Map<String, Object> query = null;
         private Map<String, Object> aggregations = null;
         private Map<String, Object> aggs = null;
@@ -724,10 +731,20 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         }
 
         public void setQueryDelay(long queryDelay) {
+            if (queryDelay < 0) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
+                        SchedulerConfig.QUERY_DELAY.getPreferredName(), queryDelay);
+                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+            }
             this.queryDelay = queryDelay;
         }
 
         public void setFrequency(long frequency) {
+            if (frequency < 0) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
+                        SchedulerConfig.FREQUENCY.getPreferredName(), frequency);
+                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+            }
             this.frequency = frequency;
         }
 
@@ -791,6 +808,11 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         }
 
         public void setScrollSize(int scrollSize) {
+            if (scrollSize < 0) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
+                        SchedulerConfig.SCROLL_SIZE.getPreferredName(), scrollSize);
+                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+            }
             this.scrollSize = scrollSize;
         }
 
@@ -874,10 +896,100 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         }
 
         public SchedulerConfig build() {
+            switch (dataSource) {
+                case FILE:
+                    if (Strings.hasLength(filePath) == false) {
+                        throw invalidOptionValue(FILE_PATH.getPreferredName(), filePath);
+                    }
+                    if (baseUrl != null) {
+                        throw notSupportedValue(BASE_URL, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (username != null) {
+                        throw notSupportedValue(USERNAME, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (password != null) {
+                        throw notSupportedValue(PASSWORD, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (encryptedPassword != null) {
+                        throw notSupportedValue(ENCRYPTED_PASSWORD, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (indexes != null) {
+                        throw notSupportedValue(INDEXES, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (types != null) {
+                        throw notSupportedValue(TYPES, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (retrieveWholeSource != null) {
+                        throw notSupportedValue(RETRIEVE_WHOLE_SOURCE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (aggregations != null) {
+                        throw notSupportedValue(AGGREGATIONS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (query != null) {
+                        throw notSupportedValue(QUERY, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (scriptFields != null) {
+                        throw notSupportedValue(SCRIPT_FIELDS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (scrollSize != null) {
+                        throw notSupportedValue(SCROLL_SIZE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    break;
+                case ELASTICSEARCH:
+                    try {
+                        new URL(baseUrl);
+                    } catch (MalformedURLException e) {
+                        throw invalidOptionValue(BASE_URL.getPreferredName(), baseUrl);
+                    }
+                    boolean isNoPasswordSet = password == null && encryptedPassword == null;
+                    boolean isMultiplePasswordSet = password != null && encryptedPassword != null;
+                    if ((username != null && isNoPasswordSet) || (isNoPasswordSet == false && username == null)) {
+                        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
+                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
+                    }
+                    if (isMultiplePasswordSet) {
+                        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
+                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
+                    }
+                    if (indexes == null || indexes.isEmpty() || indexes.contains(null) || indexes.contains("")) {
+                        throw invalidOptionValue(INDEXES.getPreferredName(), indexes);
+                    }
+                    if (types == null || types.isEmpty() || types.contains(null) || types.contains("")) {
+                        throw invalidOptionValue(TYPES.getPreferredName(), types);
+                    }
+                    if (aggregations != null && aggs != null) {
+                        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS);
+                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);
+                    }
+                    if (Boolean.TRUE.equals(retrieveWholeSource)) {
+                        if (scriptFields != null) {
+                            throw notSupportedValue(SCRIPT_FIELDS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                        }
+                    }
+                    if (filePath != null) {
+                        throw notSupportedValue(FILE_PATH, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    if (tailFile != null) {
+                        throw notSupportedValue(TAIL_FILE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected datasource [" + dataSource + "]");
+            }
             return new SchedulerConfig(
                     dataSource, queryDelay, frequency, filePath, tailFile, username, password, encryptedPassword, baseUrl,
                     indexes, types, query, aggregations, aggs, scriptFields, retrieveWholeSource, scrollSize
             );
+        }
+
+        private static ElasticsearchException invalidOptionValue(String fieldName, Object value) {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, fieldName, value);
+            return ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+        }
+
+        private static ElasticsearchException notSupportedValue(ParseField field, DataSource dataSource, String key) {
+            String msg = Messages.getMessage(key, field.getPreferredName(), dataSource.toString());
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE);
         }
 
     }

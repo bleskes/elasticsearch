@@ -28,7 +28,9 @@ public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfigu
             jobConfiguration.setAnalysisLimits(analysisLimits);
         }
         if (randomBoolean()) {
-            jobConfiguration.setSchedulerConfig(new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH));
+            SchedulerConfig.Builder builder = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
+            builder.setFilePath("/file/path");
+            jobConfiguration.setSchedulerConfig(builder);
         }
         if (randomBoolean()) {
             jobConfiguration.setDataDescription(new DataDescription());
