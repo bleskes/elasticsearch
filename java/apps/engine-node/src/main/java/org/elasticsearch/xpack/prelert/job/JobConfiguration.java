@@ -134,6 +134,30 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
         customSettings = in.readMap();
     }
 
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(iD);
+        out.writeOptionalString(description);
+        analysisConfig.writeTo(out);
+        out.writeOptionalWriteable(analysisLimits);
+        out.writeOptionalWriteable(schedulerConfig);
+        if (transforms != null) {
+            out.writeBoolean(true);
+            out.writeList(transforms);
+        } else {
+            out.writeBoolean(false);
+        }
+        out.writeOptionalWriteable(dataDescription);
+        out.writeOptionalLong(timeout);
+        out.writeOptionalWriteable(modelDebugConfig);
+        out.writeOptionalLong(renormalizationWindowDays);
+        out.writeOptionalLong(backgroundPersistInterval);
+        out.writeOptionalLong(modelSnapshotRetentionDays);
+        out.writeOptionalLong(resultsRetentionDays);
+        out.writeOptionalWriteable(ignoreDowntime);
+        out.writeMap(customSettings);
+    }
+
     /**
      * The human readable job Id
      *
@@ -336,30 +360,6 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
                 ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
                 resultsRetentionDays, customSettings, null
         );
-    }
-
-    @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        out.writeString(iD);
-        out.writeOptionalString(description);
-        analysisConfig.writeTo(out);
-        out.writeOptionalWriteable(analysisLimits);
-        out.writeOptionalWriteable(schedulerConfig);
-        if (transforms != null) {
-            out.writeBoolean(true);
-            out.writeList(transforms);
-        } else {
-            out.writeBoolean(false);
-        }
-        out.writeOptionalWriteable(dataDescription);
-        out.writeOptionalLong(timeout);
-        out.writeOptionalWriteable(modelDebugConfig);
-        out.writeOptionalLong(renormalizationWindowDays);
-        out.writeOptionalLong(backgroundPersistInterval);
-        out.writeOptionalLong(modelSnapshotRetentionDays);
-        out.writeOptionalLong(resultsRetentionDays);
-        out.writeOptionalWriteable(ignoreDowntime);
-        out.writeMap(customSettings);
     }
 
     @Override

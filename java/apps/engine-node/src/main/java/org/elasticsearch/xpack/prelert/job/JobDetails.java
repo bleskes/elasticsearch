@@ -92,7 +92,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         PARSER.declareLong(JobDetails::setTimeout, TIMEOUT);
         PARSER.declareObject(JobDetails::setAnalysisConfig, AnalysisConfig.PARSER, ANALYSIS_CONFIG);
         PARSER.declareObject(JobDetails::setAnalysisLimits, AnalysisLimits.PARSER, ANALYSIS_LIMITS);
-        PARSER.declareObject(JobDetails::setSchedulerConfig, SchedulerConfig.getSchedulerConfigParser(), SCHEDULER_CONFIG);
+        PARSER.declareObject(JobDetails::setSchedulerConfig, (p, c) -> SchedulerConfig.PARSER.apply(p, c).build(), SCHEDULER_CONFIG);
         PARSER.declareObject(JobDetails::setDataDescription, DataDescription.PARSER, DATA_DESCRIPTION);
         PARSER.declareObject(JobDetails::setModelSizeStats, ModelSizeStats.PARSER, MODEL_SIZE_STATS);
         PARSER.declareObjectArray(JobDetails::setTransforms, TransformConfig.PARSER, TRANSFORMS);

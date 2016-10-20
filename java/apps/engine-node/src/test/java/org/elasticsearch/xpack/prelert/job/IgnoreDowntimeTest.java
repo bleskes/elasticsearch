@@ -5,6 +5,18 @@ import org.elasticsearch.test.ESTestCase;
 
 public class IgnoreDowntimeTest extends ESTestCase {
 
+    public void testForString() {
+        assertEquals(IgnoreDowntime.fromString("always"), IgnoreDowntime.ALWAYS);
+        assertEquals(IgnoreDowntime.fromString("never"), IgnoreDowntime.NEVER);
+        assertEquals(IgnoreDowntime.fromString("once"), IgnoreDowntime.ONCE);
+    }
+
+    public void testValidOrdinals() {
+        assertEquals(0, IgnoreDowntime.NEVER.ordinal());
+        assertEquals(1, IgnoreDowntime.ONCE.ordinal());
+        assertEquals(2, IgnoreDowntime.ALWAYS.ordinal());
+    }
+
     public void testFromString_GivenLeadingWhitespace() {
         assertEquals(IgnoreDowntime.ALWAYS, IgnoreDowntime.fromString(" \t ALWAYS"));
     }

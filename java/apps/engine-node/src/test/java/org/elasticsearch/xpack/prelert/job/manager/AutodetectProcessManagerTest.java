@@ -1,10 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
-import org.elasticsearch.xpack.prelert.job.DataDescription;
-import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
@@ -224,8 +221,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         AnalysisConfig ac = new AnalysisConfig();
         ac.setDetectors(Collections.singletonList(d));
 
-        JobDetails jobDetails = new JobDetails();
-        jobDetails.setJobId(jobId);
+        JobDetails jobDetails = new JobConfiguration(jobId).build();
         jobDetails.setDataDescription(dd);
         jobDetails.setAnalysisConfig(ac);
 

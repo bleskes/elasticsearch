@@ -48,7 +48,7 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
             updates.put(DataCounts.LATEST_RECORD_TIME_STR, counts.getLatestRecordTimeStamp());
 
             Map<String, Object> countUpdates = new HashMap<>();
-            countUpdates.put(JobDetails.COUNTS, updates);
+            countUpdates.put(JobDetails.COUNTS.getPreferredName(), updates);
 
             updateBuilder.setDoc(countUpdates).setRefreshPolicy(RefreshPolicy.IMMEDIATE);
 
