@@ -58,7 +58,7 @@ public class JobLogs
 {
     private static final Logger LOGGER = Logger.getLogger(JobLogs.class);
 
-    private static final String DEFAULT_LOG_FILE = "autodetect_api.log";
+    private static final String DEFAULT_LOG_FILE = "autodetect.log";
     private static final String LOG_FILE_EXTENSION = ".log";
 
     /**

@@ -144,7 +144,7 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
     public static final ParseField QUOTE_CHARACTER_FIELD = new ParseField("quote_character");
 
     /**
-     * The default field delimiter expected by the native autodetect_api
+     * The default field delimiter expected by the native autodetect
      * program.
      */
     public static final char DEFAULT_DELIMITER = '\t';

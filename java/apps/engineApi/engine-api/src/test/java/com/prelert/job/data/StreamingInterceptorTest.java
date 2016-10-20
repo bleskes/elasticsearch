@@ -48,7 +48,7 @@ public class StreamingInterceptorTest
 	public static final String LOG_CONTENTS = 
 		"2014-02-03 16:47:24,665 GMT DEBUG [3506] CLogger.cc@385 Logger re-initialised using properties file /Source/prelert_home/config/log4cxx.properties\n"
 		+ "2014-02-03 16:47:24,666 GMT DEBUG [3506] CLogger.cc@389 uname -a : Darwin DKyles-MacBook-Pro 12.5.0 Darwin Kernel Version 12.5.0: Sun Sep 29 13:33:47 PDT 2013; root:xnu-2050.48.12~1/RELEASE_X86_64 x86_64\n"
-		+ "2014-02-03 16:47:24,666 GMT INFO  [3506] Main.cc@127 prelert_autodetect_api (64 bit): Version based on 4.2.1 (Build DEVELOPMENT BUILD by dkyle) Copyright (c) Prelert Ltd 2006-2014\n"
+		+ "2014-02-03 16:47:24,666 GMT INFO  [3506] Main.cc@127 prelert_autodetect (64 bit): Version based on 4.2.1 (Build DEVELOPMENT BUILD by dkyle) Copyright (c) Prelert Ltd 2006-2014\n"
 		+ "2014-02-03 16:47:24,666 GMT DEBUG [3506] CLicense.cc@1133 License expires at 2014-07-08T13:08:10+0100 : 1404821290|any|prelert|68a6bcad50afee56d91f160a485b2636f96f83bd\n"
 		+ "2014-02-03 16:47:24,667 GMT DEBUG [3506] CFieldConfig.cc@415 responsetime\n"
 		+ "2014-02-03 16:47:24,667 GMT DEBUG [3506] CFieldConfig.cc@415 by\n"

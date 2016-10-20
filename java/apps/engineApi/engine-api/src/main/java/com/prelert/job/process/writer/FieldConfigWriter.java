@@ -58,7 +58,7 @@ public class FieldConfigWriter
     private static final String LIST_PREFIX = "list.";
 
     // Note: for the Engine API summarycountfield is currently passed as a
-    // command line option to prelert_autodetect_api rather than in the field
+    // command line option to prelert_autodetect rather than in the field
     // config file
 
     private static final char NEW_LINE = '\n';

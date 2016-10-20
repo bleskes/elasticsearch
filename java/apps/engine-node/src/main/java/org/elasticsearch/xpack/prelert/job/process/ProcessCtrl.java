@@ -41,11 +41,11 @@ public class ProcessCtrl {
     /**
      * Autodetect API native program name
      */
-    public static final String AUTODETECT_API = "prelert_autodetect_api";
+    public static final String AUTODETECT = "prelert_autodetect";
     /**
      * The normalisation native program name
      */
-    public static final String NORMALIZE_API = "prelert_normalize_api";
+    public static final String NORMALIZE = "prelert_normalize";
     /**
      * The location of Prelert Home. Equivalent to $PRELERT_HOME
      */
@@ -114,7 +114,7 @@ public class ProcessCtrl {
     public static final String LOG_ID_ARG = "--logid=";
 
     /*
-     * Arguments used by both prelert_autodetect_api and prelert_normalize_api
+     * Arguments used by both prelert_autodetect and prelert_normalize
      */
     public static final String BUCKET_SPAN_ARG = "--bucketspan=";
     public static final String DELETE_STATE_FILES_ARG = "--deleteStateFiles";
@@ -126,7 +126,7 @@ public class ProcessCtrl {
     public static final String PER_PARTITION_NORMALIZATION = "--perPartitionNormalization";
 
     /*
-     * Arguments used by prelert_autodetect_api
+     * Arguments used by prelert_autodetect
      */
     public static final String BATCH_SPAN_ARG = "--batchspan=";
     public static final String INFO_ARG = "--info";
@@ -198,10 +198,10 @@ public class ProcessCtrl {
 
         PRELERT_HOME = prelertHome;
         BIN_DIR = new File(PRELERT_HOME, "bin").getPath();
-        File executable = new File(BIN_DIR, AUTODETECT_API);
+        File executable = new File(BIN_DIR, AUTODETECT);
         AUTODETECT_PATH = executable.getPath();
 
-        executable = new File(BIN_DIR, NORMALIZE_API);
+        executable = new File(BIN_DIR, NORMALIZE);
         NORMALIZE_PATH = executable.getPath();
 
         if (logPath != null) {

@@ -71,7 +71,7 @@ import com.prelert.job.results.ModelDebugOutput;
 import com.prelert.utils.json.AutoDetectParseException;
 
 /**
- * Tests for parsing the JSON output of autodetect_api
+ * Tests for parsing the JSON output of autodetect
  */
 public class AutoDetectResultsParserTest
 {

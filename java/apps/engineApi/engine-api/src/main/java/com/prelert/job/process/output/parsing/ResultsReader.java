@@ -72,7 +72,7 @@ public class ResultsReader implements Runnable
         }
         catch (AutoDetectParseException e)
         {
-            m_Logger.info("Error parsing autodetect_api output", e);
+            m_Logger.info("Error parsing autodetect output", e);
         }
         finally
         {

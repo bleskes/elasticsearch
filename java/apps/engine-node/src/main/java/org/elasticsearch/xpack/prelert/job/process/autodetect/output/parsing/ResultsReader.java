@@ -40,7 +40,7 @@ public class ResultsReader implements Runnable {
         try {
             parser.parseResults(stream, resultsPersister, renormaliser, logger);
         } catch (ElasticsearchParseException e) {
-            logger.info("Error parsing autodetect_api output", e);
+            logger.info("Error parsing autodetect output", e);
         } finally {
             try {
                 // read anything left in the stream before

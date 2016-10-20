@@ -108,7 +108,7 @@ public class DataDescription
     public static final String QUOTE_CHARACTER = "quoteCharacter";
 
     /**
-     * The default field delimiter expected by the native autodetect_api
+     * The default field delimiter expected by the native autodetect
      * program.
      */
     public static final char DEFAULT_DELIMITER = '\t';

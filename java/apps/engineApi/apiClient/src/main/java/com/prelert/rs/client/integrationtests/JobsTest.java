@@ -1680,7 +1680,7 @@ public class JobsTest implements Closeable
             test(entry != null);
             do
             {
-                if (entry.getName().equals(prefix + jobId + File.separator + "autodetect_api.log"))
+                if (entry.getName().equals(prefix + jobId + File.separator + "autodetect.log"))
                 {
                     gotJobAutodetectLog = true;
                 }
@@ -1688,7 +1688,7 @@ public class JobsTest implements Closeable
                 {
                     gotJobEngineLog = true;
                 }
-                else if (entry.getName().equals(prefix + jobId + File.separator + "normalize_api.log"))
+                else if (entry.getName().equals(prefix + jobId + File.separator + "normalize.log"))
                 {
                     gotJobNormalizeLog = true;
                 }

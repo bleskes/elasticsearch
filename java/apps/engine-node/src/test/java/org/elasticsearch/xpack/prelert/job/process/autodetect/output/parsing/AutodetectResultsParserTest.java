@@ -35,7 +35,7 @@ import java.util.TreeMap;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for parsing the JSON output of autodetect_api
+ * Tests for parsing the JSON output of autodetect
  */
 public class AutodetectResultsParserTest extends ESTestCase {
     private static final double EPSILON = 0.000001;
