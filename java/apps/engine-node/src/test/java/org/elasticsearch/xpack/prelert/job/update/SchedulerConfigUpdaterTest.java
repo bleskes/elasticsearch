@@ -114,7 +114,9 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
     private void givenJobWithSchedulerConfig(String jobId, SchedulerConfig.Builder schedulerConfig) {
         JobConfiguration jobConfiguration = new JobConfiguration();
         jobConfiguration.setId(jobId);
-        jobConfiguration.setSchedulerConfig(schedulerConfig);
+        if (schedulerConfig != null) {
+            jobConfiguration.setSchedulerConfig(schedulerConfig);
+        }
         job = jobConfiguration.build();
     }
 }

@@ -125,7 +125,7 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
         assertNotNull(jobConfig);
 
-        SchedulerConfig.Builder schedulerConfig = jobConfig.getSchedulerConfig();
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(jobConfig.getSchedulerConfig());
         assertNotNull(schedulerConfig);
 
         Map<String, Object> query = schedulerConfig.getQuery();
@@ -198,7 +198,7 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
         assertNotNull(jobConfig);
 
-        SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig().build();
+        SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();
         assertNotNull(schedulerConfig);
 
         Map<String, Object> aggs = schedulerConfig.getAggregationsOrAggs();

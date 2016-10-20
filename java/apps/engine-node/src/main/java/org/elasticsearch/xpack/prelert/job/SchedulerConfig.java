@@ -707,6 +707,26 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             }
         }
 
+        public Builder(SchedulerConfig config) {
+            this.dataSource = config.dataSource;
+            this.queryDelay = config.queryDelay;
+            this.frequency = config.frequency;
+            this.filePath = config.filePath;
+            this.tailFile = config.tailFile;
+            this.username = config.username;
+            this.password = config.password;
+            this.encryptedPassword = config.encryptedPassword;
+            this.baseUrl = config.baseUrl;
+            this.indexes = config.indexes;
+            this.types = config.types;
+            this.query = config.query;
+            this.aggregations = config.aggregations;
+            this.aggs = config.aggs;
+            this.scriptFields = config.scriptFields;
+            this.retrieveWholeSource = config.retrieveWholeSource;
+            this.scrollSize = config.scrollSize;
+        }
+
         public void setQueryDelay(long queryDelay) {
             this.queryDelay = queryDelay;
         }

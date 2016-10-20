@@ -1,13 +1,79 @@
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+import org.elasticsearch.xpack.prelert.job.transform.TransformType;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
-public class JobConfigurationTest extends ESTestCase {
+public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfiguration> {
+
+    @Override
+    protected JobConfiguration createTestInstance() {
+        JobConfiguration jobConfiguration = new JobConfiguration();
+        jobConfiguration.setId(randomAsciiOfLength(10));
+        if (randomBoolean()) {
+            jobConfiguration.setDescription(randomAsciiOfLength(10));
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setTimeout(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            AnalysisLimits analysisLimits = new AnalysisLimits(randomPositiveLong(), randomPositiveLong());
+            jobConfiguration.setAnalysisLimits(analysisLimits);
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setSchedulerConfig(new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH));
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setDataDescription(new DataDescription());
+        }
+        if (randomBoolean()) {
+            int numTransformers = randomIntBetween(0, 32);
+            List<TransformConfig> transformConfigList = new ArrayList<>(numTransformers);
+            for (int i = 0; i < numTransformers; i++) {
+                transformConfigList.add(new TransformConfig(TransformType.UPPERCASE.prettyName()));
+            }
+            jobConfiguration.setTransforms(transformConfigList);
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setModelDebugConfig(new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)));
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setIgnoreDowntime(randomFrom(IgnoreDowntime.values()));
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setRenormalizationWindowDays(randomLong());
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setBackgroundPersistInterval(randomLong());
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setModelSnapshotRetentionDays(randomLong());
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setResultsRetentionDays(randomLong());
+        }
+        if (randomBoolean()) {
+            jobConfiguration.setCustomSettings(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+        }
+        return jobConfiguration;
+    }
+
+    @Override
+    protected Writeable.Reader<JobConfiguration> instanceReader() {
+        return JobConfiguration::new;
+    }
+
+    @Override
+    protected JobConfiguration parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return JobConfiguration.PARSER.apply(parser, () -> matcher);
+    }
 
     /**
      * Test the {@link AnalysisConfig#analysisFields()} method which produces
