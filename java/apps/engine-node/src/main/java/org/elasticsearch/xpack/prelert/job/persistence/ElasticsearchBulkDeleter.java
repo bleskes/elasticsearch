@@ -26,8 +26,7 @@ import org.elasticsearch.xpack.prelert.job.results.*;
 import java.util.Objects;
 import java.util.function.LongSupplier;
 
-public class ElasticsearchBulkDeleter implements JobDataDeleter
-{
+public class ElasticsearchBulkDeleter implements JobDataDeleter {
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchBulkDeleter.class);
 
     private static final int SCROLL_SIZE = 1000;
@@ -44,8 +43,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     private long deletedModelStateCount;
     private boolean quiet;
 
-    public ElasticsearchBulkDeleter(Client client, ElasticsearchJobId jobId, boolean quiet)
-    {
+    public ElasticsearchBulkDeleter(Client client, ElasticsearchJobId jobId, boolean quiet) {
         this.client = Objects.requireNonNull(client);
         this.jobId = Objects.requireNonNull(jobId);
         bulkRequestBuilder = client.prepareBulk();
@@ -58,14 +56,12 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         this.quiet = quiet;
     }
 
-    public ElasticsearchBulkDeleter(Client client, String jobId)
-    {
+    public ElasticsearchBulkDeleter(Client client, String jobId) {
         this(client, new ElasticsearchJobId(jobId), false);
     }
 
     @Override
-    public void deleteBucket(Bucket bucket)
-    {
+    public void deleteBucket(Bucket bucket) {
         deleteRecords(bucket);
         deleteBucketInfluencers(bucket);
         bulkRequestBuilder.add(
@@ -74,8 +70,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     }
 
     @Override
-    public void deleteRecords(Bucket bucket)
-    {
+    public void deleteRecords(Bucket bucket) {
         // Find the records using the time stamp rather than a parent-child
         // relationship.  The parent-child filter involves two queries behind
         // the scenes, and Elasticsearch documentation claims it's significantly
@@ -84,15 +79,13 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         deleteTypeByBucket(bucket, AnomalyRecord.TYPE.getPreferredName(), () -> ++deletedRecordCount);
     }
 
-    private void deleteTypeByBucket(Bucket bucket, String type, LongSupplier deleteCounter)
-    {
+    private void deleteTypeByBucket(Bucket bucket, String type, LongSupplier deleteCounter) {
         QueryBuilder query = QueryBuilders.termQuery(ElasticsearchMappings.ES_TIMESTAMP,
                 bucket.getTimestamp().getTime());
 
         int done = 0;
         boolean finished = false;
-        while (finished == false)
-        {
+        while (finished == false) {
             SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(client)
                     .setIndices(jobId.getIndex())
                     .setTypes(type)
@@ -102,58 +95,49 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                     .setFrom(done)
                     .execute().actionGet();
 
-            for (SearchHit hit : searchResponse.getHits())
-            {
+            for (SearchHit hit : searchResponse.getHits()) {
                 ++done;
                 addDeleteRequest(hit);
                 deleteCounter.getAsLong();
             }
-            if (searchResponse.getHits().getTotalHits() == done)
-            {
+            if (searchResponse.getHits().getTotalHits() == done) {
                 finished = true;
             }
         }
     }
 
-    private void addDeleteRequest(SearchHit hit)
-    {
+    private void addDeleteRequest(SearchHit hit) {
         DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(client)
                 .setIndex(jobId.getIndex())
                 .setType(hit.getType())
                 .setId(hit.getId());
         SearchHitField parentField = hit.field(ElasticsearchMappings.PARENT);
-        if (parentField != null)
-        {
+        if (parentField != null) {
             deleteRequest.setParent(parentField.getValue().toString());
         }
         bulkRequestBuilder.add(deleteRequest);
     }
 
-    public void deleteBucketInfluencers(Bucket bucket)
-    {
+    public void deleteBucketInfluencers(Bucket bucket) {
         // Find the bucket influencers using the time stamp, relying on the
         // bucket influencer timestamps being identical to the bucket timestamp.
         deleteTypeByBucket(bucket, BucketInfluencer.TYPE, () -> ++deletedBucketInfluencerCount);
     }
 
-    public void deleteInfluencers(Bucket bucket)
-    {
+    public void deleteInfluencers(Bucket bucket) {
         // Find the influencers using the time stamp, relying on the influencer
         // timestamps being identical to the bucket timestamp.
         deleteTypeByBucket(bucket, Influencer.TYPE, () -> ++deletedInfluencerCount);
     }
 
-    public void deleteBucketByTime(Bucket bucket)
-    {
+    public void deleteBucketByTime(Bucket bucket) {
         deleteTypeByBucket(bucket, Bucket.TYPE, () -> ++deletedBucketCount);
     }
 
     @Override
-    public void deleteInfluencer(Influencer influencer)
-    {
+    public void deleteInfluencer(Influencer influencer) {
         String id = influencer.getId();
-        if (id == null)
-        {
+        if (id == null) {
             LOGGER.error("Cannot delete specific influencer without an ID",
                     // This means we get a stack trace to show where the request came from
                     new NullPointerException());
@@ -165,16 +149,14 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     }
 
     @Override
-    public void deleteModelSnapshot(ModelSnapshot modelSnapshot)
-    {
+    public void deleteModelSnapshot(ModelSnapshot modelSnapshot) {
         String snapshotId = modelSnapshot.getSnapshotId();
         int docCount = modelSnapshot.getSnapshotDocCount();
 
         // Deduce the document IDs of the state documents from the information
         // in the snapshot document - we cannot query the state itself as it's
         // too big and has no mappings
-        for (int i = 0; i < docCount; ++i)
-        {
+        for (int i = 0; i < docCount; ++i) {
             String stateId = snapshotId + '_' + i;
             bulkRequestBuilder.add(
                     client.prepareDelete(jobId.getIndex(), ModelState.TYPE, stateId));
@@ -187,23 +169,20 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     }
 
     @Override
-    public void deleteModelDebugOutput(ModelDebugOutput modelDebugOutput)
-    {
+    public void deleteModelDebugOutput(ModelDebugOutput modelDebugOutput) {
         String id = modelDebugOutput.getId();
         bulkRequestBuilder.add(
                 client.prepareDelete(jobId.getIndex(), ModelDebugOutput.TYPE, id));
     }
 
     @Override
-    public void deleteModelSizeStats(ModelSizeStats modelSizeStats)
-    {
+    public void deleteModelSizeStats(ModelSizeStats modelSizeStats) {
         String id = modelSizeStats.getModelSizeStatsId();
         bulkRequestBuilder.add(
                 client.prepareDelete(jobId.getIndex(), ModelSizeStats.TYPE, id));
     }
 
-    public void deleteInterimResults()
-    {
+    public void deleteInterimResults() {
         QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM, true);
 
         SearchResponse searchResponse = client.prepareSearch(jobId.getIndex())
@@ -217,26 +196,17 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
         String scrollId = searchResponse.getScrollId();
         long totalHits = searchResponse.getHits().totalHits();
         long totalDeletedCount = 0;
-        while (totalDeletedCount < totalHits)
-        {
-            for (SearchHit hit : searchResponse.getHits())
-            {
+        while (totalDeletedCount < totalHits) {
+            for (SearchHit hit : searchResponse.getHits()) {
                 LOGGER.trace("Search hit for bucket: " + hit.toString() + ", " + hit.getId());
                 String type = hit.getType();
-                if (type.equals(Bucket.TYPE))
-                {
+                if (type.equals(Bucket.TYPE)) {
                     ++deletedBucketCount;
-                }
-                else if (type.equals(AnomalyRecord.TYPE))
-                {
+                } else if (type.equals(AnomalyRecord.TYPE)) {
                     ++deletedRecordCount;
-                }
-                else if (type.equals(BucketInfluencer.TYPE))
-                {
+                } else if (type.equals(BucketInfluencer.TYPE)) {
                     ++deletedBucketInfluencerCount;
-                }
-                else if (type.equals(Influencer.TYPE))
-                {
+                } else if (type.equals(Influencer.TYPE)) {
                     ++deletedInfluencerCount;
                 }
                 ++totalDeletedCount;
@@ -248,14 +218,12 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
     }
 
     @Override
-    public void commitAndFreeDiskSpace()
-    {
+    public void commitAndFreeDiskSpace() {
         commit(true);
     }
 
     @Override
-    public void commit()
-    {
+    public void commit() {
         commit(false);
     }
 
@@ -263,15 +231,12 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
      * Commits the deletions and if {@code forceMerge} is {@code true}, it
      * forces a merge which removes the data from disk.
      */
-    private void commit(boolean forceMerge)
-    {
-        if (bulkRequestBuilder.numberOfActions() == 0)
-        {
+    private void commit(boolean forceMerge) {
+        if (bulkRequestBuilder.numberOfActions() == 0) {
             return;
         }
 
-        if (!quiet)
-        {
+        if (!quiet) {
             LOGGER.debug("Requesting deletion of "
                     + deletedBucketCount + " buckets, "
                     + deletedRecordCount + " records, "
@@ -282,38 +247,30 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter
                     + deletedModelStateCount + " model state documents");
         }
 
-        try
-        {
+        try {
             executeBulkRequest();
-            if (forceMerge)
-            {
+            if (forceMerge) {
                 forceMerge();
             }
-        }
-        catch (RuntimeException e)
-        {
+        } catch (RuntimeException e) {
             LOGGER.error("Failed to perform bulk delete", e);
         }
     }
 
-    private void executeBulkRequest()
-    {
+    private void executeBulkRequest() {
         BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet();
-        if (bulkResponse.hasFailures())
-        {
+        if (bulkResponse.hasFailures()) {
             LOGGER.error(bulkResponse.buildFailureMessage());
         }
     }
 
-    private void forceMerge()
-    {
+    private void forceMerge() {
         // We need to do a force-merge request to ACTUALLY delete the results from disk
         ForceMergeResponse forceMergeResponse = ForceMergeAction.INSTANCE.newRequestBuilder(client)
                 .setIndices(jobId.getIndex())
                 .setOnlyExpungeDeletes(true)
                 .get();
-        for (ShardOperationFailedException shardFailure: forceMergeResponse.getShardFailures())
-        {
+        for (ShardOperationFailedException shardFailure : forceMergeResponse.getShardFailures()) {
             LOGGER.error("Shard failed during force-merge: " + shardFailure.reason());
         }
     }

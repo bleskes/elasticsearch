@@ -44,6 +44,8 @@ import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleter;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
@@ -54,6 +56,7 @@ import org.elasticsearch.xpack.prelert.rest.job.*;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestRevertModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.rest.results.*;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
@@ -64,6 +67,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 
 public class ServerBootstrap {
 
@@ -146,7 +150,8 @@ public class ServerBootstrap {
                     jobProvider,
                     new JobManager(jobProvider, clusterService, processActionGuardian, schedulerActionGuardian),
                     new JobAllocator(settings, clusterService, threadPool),
-                    new JobLifeCycleService(settings, clusterService)
+                    new JobLifeCycleService(settings, clusterService),
+                    new ElasticsearchBulkDeleterFactory(client) //NORELEASE: this should use Delete-by-query
             );
         }
 
@@ -173,7 +178,8 @@ public class ServerBootstrap {
                     RestClearPrelertAction.class,
                     RestGetCategoriesAction.class,
                     RestGetCategoryAction.class,
-                    RestGetModelSnapshotsAction.class);
+                    RestGetModelSnapshotsAction.class,
+                    RestRevertModelSnapshotsAction.class);
         }
 
         @Override
@@ -199,7 +205,8 @@ public class ServerBootstrap {
                     new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class),
                     new ActionHandler<>(GetCategoryDefinitionsAction.INSTANCE, GetCategoryDefinitionsAction.TransportAction.class),
                     new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class),
-                    new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class));
+                    new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class),
+                    new ActionHandler<>(RevertModelSnapshotsAction.INSTANCE, RevertModelSnapshotsAction.TransportAction.class));
         }
     }
 }

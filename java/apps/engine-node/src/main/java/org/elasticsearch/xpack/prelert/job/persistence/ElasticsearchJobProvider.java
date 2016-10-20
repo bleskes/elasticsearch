@@ -44,6 +44,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
@@ -1099,6 +1100,10 @@ public class ElasticsearchJobProvider implements JobProvider
         FieldSortBuilder sb = new FieldSortBuilder(esSortField(sortField))
                 .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
 
+        // Wrap in a constant_score because we always want to
+        // run it as a filter
+        fb = new ConstantScoreQueryBuilder(fb);
+
         SearchResponse searchResponse;
         try
         {
@@ -1108,7 +1113,7 @@ public class ElasticsearchJobProvider implements JobProvider
             searchResponse = client.prepareSearch(jobId.getIndex())
                     .setTypes(ModelSnapshot.TYPE)
                     .addSort(sb)
-                    .setPostFilter(fb)
+                    .setQuery(fb)
                     .setFrom(skip).setSize(take)
                     .get();
         }

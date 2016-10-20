@@ -134,6 +134,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     private Long resultsRetentionDays;
     private Map<String, Object> customSettings;
     private Double averageBucketProcessingTimeMs;
+    private String modelSnapshotId;
 
     private JobDetails() {
     }
@@ -530,6 +531,14 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         averageBucketProcessingTimeMs = value;
     }
 
+    public String getModelSnapshotId() {
+        return modelSnapshotId;
+    }
+
+    public void setModelSnapshotId(String modelSnapshotId) {
+        this.modelSnapshotId = modelSnapshotId;
+    }
+
     /**
      * Get a list of all input data fields mentioned in the job configuration,
      * namely analysis fields, time field and transform input fields.
@@ -694,7 +703,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
                 Objects.equals(this.backgroundPersistInterval, that.backgroundPersistInterval) &&
                 Objects.equals(this.modelSnapshotRetentionDays, that.modelSnapshotRetentionDays) &&
                 Objects.equals(this.resultsRetentionDays, that.resultsRetentionDays) &&
-                Objects.equals(this.customSettings, that.customSettings);
+                Objects.equals(this.customSettings, that.customSettings) &&
+                Objects.equals(this.modelSnapshotId, that.modelSnapshotId);
     }
 
     @Override
@@ -703,6 +713,6 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
                 finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
                 dataDescription, modelDebugConfig, modelSizeStats, transforms, counts,
                 renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
-                resultsRetentionDays, ignoreDowntime, customSettings);
+                resultsRetentionDays, ignoreDowntime, customSettings, modelSnapshotId);
     }
 }

@@ -16,8 +16,7 @@ import java.util.Objects;
  * ModelSnapshot Result POJO
  */
 @JsonInclude(Include.NON_NULL)
-public class ModelSnapshot implements StorageSerialisable
-{
+public class ModelSnapshot implements StorageSerialisable {
     /**
      * Field Names
      */
@@ -44,99 +43,80 @@ public class ModelSnapshot implements StorageSerialisable
     private Date latestResultTimeStamp;
     private Quantiles quantiles;
 
-    public Date getTimestamp()
-    {
+    public Date getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp)
-    {
+    public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
 
-    public String getDescription()
-    {
+    public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description)
-    {
+    public void setDescription(String description) {
         this.description = description;
     }
 
-    public long getRestorePriority()
-    {
+    public long getRestorePriority() {
         return restorePriority;
     }
 
-    public void setRestorePriority(long restorePriority)
-    {
+    public void setRestorePriority(long restorePriority) {
         this.restorePriority = restorePriority;
     }
 
-    public String getSnapshotId()
-    {
+    public String getSnapshotId() {
         return snapshotId;
     }
 
-    public void setSnapshotId(String snapshotId)
-    {
+    public void setSnapshotId(String snapshotId) {
         this.snapshotId = snapshotId;
     }
 
-    public int getSnapshotDocCount()
-    {
+    public int getSnapshotDocCount() {
         return snapshotDocCount;
     }
 
-    public void setSnapshotDocCount(int snapshotDocCount)
-    {
+    public void setSnapshotDocCount(int snapshotDocCount) {
         this.snapshotDocCount = snapshotDocCount;
     }
 
-    public ModelSizeStats getModelSizeStats()
-    {
+    public ModelSizeStats getModelSizeStats() {
         return modelSizeStats;
     }
 
-    public void setModelSizeStats(ModelSizeStats modelSizeStats)
-    {
+    public void setModelSizeStats(ModelSizeStats modelSizeStats) {
         this.modelSizeStats = modelSizeStats;
     }
 
-    public Quantiles getQuantiles()
-    {
+    public Quantiles getQuantiles() {
         return quantiles;
     }
 
-    public void setQuantiles(Quantiles q)
-    {
+    public void setQuantiles(Quantiles q) {
         quantiles = q;
     }
 
-    public Date getLatestRecordTimeStamp()
-    {
+    public Date getLatestRecordTimeStamp() {
         return latestRecordTimeStamp;
     }
 
-    public void setLatestRecordTimeStamp(Date latestRecordTimeStamp)
-    {
+    public void setLatestRecordTimeStamp(Date latestRecordTimeStamp) {
         this.latestRecordTimeStamp = latestRecordTimeStamp;
     }
 
-    public Date getLatestResultTimeStamp()
-    {
+    public Date getLatestResultTimeStamp() {
         return latestResultTimeStamp;
     }
 
-    public void setLatestResultTimeStamp(Date latestResultTimeStamp)
-    {
+    public void setLatestResultTimeStamp(Date latestResultTimeStamp) {
         this.latestResultTimeStamp = latestResultTimeStamp;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return Objects.hash(timestamp, description, restorePriority, snapshotId, quantiles,
                 snapshotDocCount, modelSizeStats, latestRecordTimeStamp, latestResultTimeStamp);
     }
@@ -145,15 +125,12 @@ public class ModelSnapshot implements StorageSerialisable
      * Compare all the fields.
      */
     @Override
-    public boolean equals(Object other)
-    {
-        if (this == other)
-        {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
 
-        if (other instanceof ModelSnapshot == false)
-        {
+        if (other instanceof ModelSnapshot == false) {
             return false;
         }
 
@@ -165,38 +142,33 @@ public class ModelSnapshot implements StorageSerialisable
                 && Objects.equals(this.snapshotId, that.snapshotId)
                 && this.snapshotDocCount == that.snapshotDocCount
                 && Objects.equals(this.modelSizeStats, that.modelSizeStats)
-                && Objects.equals(this.quantiles,  that.quantiles)
+                && Objects.equals(this.quantiles, that.quantiles)
                 && Objects.equals(this.latestRecordTimeStamp, that.latestRecordTimeStamp)
                 && Objects.equals(this.latestResultTimeStamp, that.latestResultTimeStamp);
     }
 
     @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException
-    {
+    public void serialise(StorageSerialiser serialiser) throws IOException {
         serialiser.addTimestamp(timestamp)
-                  .add(DESCRIPTION, description)
-                  .add(RESTORE_PRIORITY, restorePriority)
-                  .add(SNAPSHOT_ID, snapshotId)
-                  .add(SNAPSHOT_DOC_COUNT, snapshotDocCount);
+                .add(DESCRIPTION, description)
+                .add(RESTORE_PRIORITY, restorePriority)
+                .add(SNAPSHOT_ID, snapshotId)
+                .add(SNAPSHOT_DOC_COUNT, snapshotDocCount);
 
-        if (modelSizeStats != null)
-        {
+        if (modelSizeStats != null) {
             serialiser.startObject(ModelSizeStats.TYPE);
             modelSizeStats.serialise(serialiser);
             serialiser.endObject();
         }
-        if (quantiles != null)
-        {
+        if (quantiles != null) {
             serialiser.startObject(Quantiles.TYPE);
             quantiles.serialise(serialiser);
             serialiser.endObject();
         }
-        if (latestRecordTimeStamp != null)
-        {
+        if (latestRecordTimeStamp != null) {
             serialiser.add(LATEST_RECORD_TIME, latestRecordTimeStamp);
         }
-        if (latestResultTimeStamp != null)
-        {
+        if (latestResultTimeStamp != null) {
             serialiser.add(LATEST_RESULT_TIME, latestResultTimeStamp);
         }
     }

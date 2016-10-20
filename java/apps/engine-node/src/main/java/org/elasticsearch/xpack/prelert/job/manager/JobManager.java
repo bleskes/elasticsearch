@@ -27,9 +27,13 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
@@ -47,6 +51,7 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -320,5 +325,56 @@ public class JobManager {
 
     public Auditor systemAudit() {
         return jobProvider.audit("");
+    }
+
+    public void revertSnapshot(RevertModelSnapshotsAction.Request request,
+                               ActionListener<RevertModelSnapshotsAction.Response> actionListener,
+                               ModelSnapshot modelSnapshot) {
+
+        clusterService.submitStateUpdateTask("revert-snapshot-" + request.getJobId(),
+                new AckedClusterStateUpdateTask<RevertModelSnapshotsAction.Response>(request, actionListener) {
+
+            @Override
+            protected RevertModelSnapshotsAction.Response newResponse(boolean acknowledged) {
+                RevertModelSnapshotsAction.Response response;
+
+                if (acknowledged) {
+                    try {
+                        response = new RevertModelSnapshotsAction.Response(modelSnapshot, objectMapper);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on the cluster state update task thread
+                    // and any action performed on that thread should be quick. (so no indexing documents)
+                    //audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
+                    //        modelSnapshot.getDescription()));
+
+                } else {
+                    response = new RevertModelSnapshotsAction.Response();
+                }
+                return response;
+            }
+
+            @Override
+            public ClusterState execute(ClusterState currentState) throws Exception {
+                JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, request.getJobId());
+                jobDetails.setModelSnapshotId(modelSnapshot.getSnapshotId());
+                if (request.getDeleteInterveningResults()) {
+                    jobDetails.setIgnoreDowntime(IgnoreDowntime.NEVER);
+
+                    Date latestRecordTime = modelSnapshot.getLatestResultTimeStamp();
+                    LOGGER.info("Resetting latest record time to '" +  latestRecordTime + "'");
+                    jobDetails.setLastDataTime(latestRecordTime);
+                    DataCounts counts = jobDetails.getCounts();
+                    counts.setLatestRecordTimeStamp(latestRecordTime);
+                    jobDetails.setCounts(counts);
+                } else {
+                    jobDetails.setIgnoreDowntime(IgnoreDowntime.ONCE);
+                }
+
+                return innerPutJob(jobDetails, true, currentState);
+            }
+        });
     }
 }
