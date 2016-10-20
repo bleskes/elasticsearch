@@ -52,6 +52,7 @@ import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
 import org.elasticsearch.test.NativeRealmIntegTestCase;
 import org.elasticsearch.test.SecuritySettingsSource;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.util.ArrayList;
@@ -75,6 +76,8 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
 
     private static boolean anonymousEnabled;
 
+    private boolean roleExists;
+
     @BeforeClass
     public static void init() {
         anonymousEnabled = randomBoolean();
@@ -84,10 +87,28 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
     public Settings nodeSettings(int nodeOrdinal) {
         if (anonymousEnabled) {
             return Settings.builder().put(super.nodeSettings(nodeOrdinal))
-                    .put(AnonymousUser.ROLES_SETTING.getKey(), SecuritySettingsSource.DEFAULT_ROLE)
+                    .put(AnonymousUser.ROLES_SETTING.getKey(), "native_anonymous")
                     .build();
         }
         return super.nodeSettings(nodeOrdinal);
+    }
+
+    @Before
+    public void setupAnonymousRoleIfNecessary() throws Exception {
+        roleExists = anonymousEnabled && randomBoolean();
+        if (anonymousEnabled) {
+            if (roleExists) {
+                logger.info("anonymous is enabled. creating [native_anonymous] role");
+                PutRoleResponse response = securityClient()
+                        .preparePutRole("native_anonymous")
+                        .cluster("ALL")
+                        .addIndices(new String[]{"*"}, new String[]{"ALL"}, new FieldPermissions(), null)
+                        .get();
+                assertTrue(response.isCreated());
+            } else {
+                logger.info("anonymous is enabled, but configured with a missing role");
+            }
+        }
     }
 
     public void testDeletingNonexistingUserAndRole() throws Exception {
@@ -329,7 +350,7 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
                     .addIndices(new String[]{"*"}, new String[]{"read"},
                             new FieldPermissions(new String[]{"body", "title"}, null), new BytesArray("{\"match_all\": {}}"))
                     .get();
-            if (anonymousEnabled) {
+            if (anonymousEnabled && roleExists) {
                 assertNoTimeout(client()
                         .filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster().prepareHealth().get());
             } else {
@@ -373,7 +394,7 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
                 .prepareHealth().get();
         assertFalse(response.isTimedOut());
         c.prepareDeleteRole("test_role").get();
-        if (anonymousEnabled) {
+        if (anonymousEnabled && roleExists) {
             assertNoTimeout(
                     client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster().prepareHealth().get());
         } else {
@@ -424,7 +445,7 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
         assertThat(joe.fullName(), is("Joe Smith"));
 
         // test that role change took effect if anonymous is disabled as anonymous grants monitoring permissions...
-        if (anonymousEnabled) {
+        if (anonymousEnabled && roleExists) {
             assertNoTimeout(
                     client().filterWithHeader(Collections.singletonMap("Authorization", token)).admin().cluster().prepareHealth().get());
         } else {
@@ -587,12 +608,12 @@ public class NativeRealmIntegTests extends NativeRealmIntegTestCase {
 
     public void testRolesUsageStats() throws Exception {
         NativeRolesStore rolesStore = internalCluster().getInstance(NativeRolesStore.class);
+        long roles = anonymousEnabled && roleExists ? 1L: 0L;
         Map<String, Object> usage = rolesStore.usageStats();
-        assertThat(usage.get("size"), is(0L));
+        assertEquals(roles, usage.get("size"));
         assertThat(usage.get("fls"), is(false));
         assertThat(usage.get("dls"), is(false));
 
-        long roles = 0;
         final boolean fls = randomBoolean();
         final boolean dls = randomBoolean();
         SecurityClient client = new SecurityClient(client());
