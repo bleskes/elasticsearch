@@ -79,6 +79,9 @@ public class ServerBootstrap {
         settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
         settings.put("http.port", System.getProperty(JETTY_PORT_PROPERTY, Integer.toString(JETTY_PORT)));
         settings.put("cluster.name", "prelert");
+        if (System.getProperty("network-host") != null) {
+            settings.put("network.host", System.getProperty("network-host"));
+        }
 
         CountDownLatch latch = new CountDownLatch(1);
         Node node = new PrelertNode(settings.build());
