@@ -280,6 +280,7 @@ public class AnomalyCause extends ToXContentToBytes implements Writeable, Storag
         return typical;
     }
 
+    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setTypical(List<Double> typical)
     {
         this.typical = typical;
@@ -291,6 +292,7 @@ public class AnomalyCause extends ToXContentToBytes implements Writeable, Storag
         return actual;
     }
 
+    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setActual(List<Double> actual)
     {
         this.actual = actual;
