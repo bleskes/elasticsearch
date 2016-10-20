@@ -349,7 +349,8 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
 
         SuperCsvException e = ESTestCase.expectThrows(SuperCsvException.class, () -> writer.write(inputStream));
-        assertEquals("max number of lines to read exceeded while reading quoted column beginning on line 2 and ending on line 10001",
+        assertEquals(
+                String.format("max number of lines to read exceeded while reading quoted column beginning on line %d and ending on line %d", 2, 10001),
                 e.getMessage());
     }
 

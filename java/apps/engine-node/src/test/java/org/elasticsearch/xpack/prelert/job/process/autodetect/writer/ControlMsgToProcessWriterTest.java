@@ -126,7 +126,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     public void testWriteResetBucketsMessage() throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
 
-        writer.writeResetBucketsMessage(new DataLoadParams(false, new TimeRange(0L, 600L)));
+        writer.writeResetBucketsMessage(new DataLoadParams(new TimeRange(0L, 600L)));
 
         InOrder inOrder = inOrder(lengthEncodedWriter);
         inOrder.verify(lengthEncodedWriter).writeNumFields(4);

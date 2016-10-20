@@ -18,7 +18,6 @@ public interface AutodetectProcess {
      *
      * @param record Plain array of strings, implementors of this class should
      *               encode the record appropriately
-     * @return True if successful
      * @throws IOException If the write failed
      */
     void writeRecord(String [] record) throws IOException;
@@ -45,6 +44,19 @@ public interface AutodetectProcess {
     void flushJob(InterimResultsParams params) throws IOException;
 
     /**
+     * Flush the output data stream
+     * @return
+     * @throws IOException
+     */
+    void flushStream() throws IOException;
+
+    /**
+     * Close
+     * @throws IOException
+     */
+    void close() throws IOException;
+
+    /**
      * Autodetect's error stream
      * @return error inputstream
      */
@@ -58,7 +70,7 @@ public interface AutodetectProcess {
 
     /**
      * The time the process was started
-     * @return Starttime
+     * @return Process start time
      */
     ZonedDateTime getProcessStartTime();
 }

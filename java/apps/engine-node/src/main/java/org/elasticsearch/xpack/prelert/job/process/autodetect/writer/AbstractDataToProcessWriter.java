@@ -311,6 +311,10 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         autodetectProcess.writeRecord(record);
     }
 
+    @Override
+    public void flush() throws IOException {
+        autodetectProcess.flushStream();
+    }
 
     /**
      * Get all the expected input fields i.e. all the fields we
@@ -510,4 +514,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
             outputIndex = out;
         }
     }
+
+
 }

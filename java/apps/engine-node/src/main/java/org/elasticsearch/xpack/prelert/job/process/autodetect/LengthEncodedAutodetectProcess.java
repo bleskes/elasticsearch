@@ -54,7 +54,18 @@ public class LengthEncodedAutodetectProcess implements AutodetectProcess {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, numberOfAnalysisFields);
         writer.writeCalcInterimMessage(params);
         writer.writeFlushMessage();
-     }
+    }
+
+    @Override
+    public void flushStream() throws IOException {
+        lengthEncodedWriter.flush();
+    }
+
+    @Override
+    public void close() throws IOException {
+        error.close();
+        output.close();
+    }
 
     @Override
     public InputStream error() {

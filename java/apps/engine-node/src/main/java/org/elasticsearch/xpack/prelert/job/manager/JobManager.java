@@ -159,6 +159,18 @@ public class JobManager {
      * @return the {@code JobDetails} if a job with the given {@code jobId} exists
      * @throws org.elasticsearch.ResourceNotFoundException if there is no job with matching the given {@code jobId}
      */
+    public JobDetails getJobOrThrowIfUnknown(String jobId) {
+        return getJobOrThrowIfUnknown(clusterService.state(), jobId);
+    }
+
+    /**
+     * Returns the non-null {@code JobDetails} object for the given {@code jobId}
+     * or throws {@link org.elasticsearch.ResourceNotFoundException}
+     *
+     * @param jobId
+     * @return the {@code JobDetails} if a job with the given {@code jobId} exists
+     * @throws org.elasticsearch.ResourceNotFoundException if there is no job with matching the given {@code jobId}
+     */
     public JobDetails getJobOrThrowIfUnknown(ClusterState clusterState, String jobId) {
         PrelertMetadata prelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
         if (prelertMetadata == null) {

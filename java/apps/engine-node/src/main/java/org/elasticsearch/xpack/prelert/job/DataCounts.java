@@ -26,18 +26,10 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.joda.FormatDateTimeFormatter;
-import org.elasticsearch.common.joda.Joda;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,18 +51,31 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class DataCounts extends ToXContentToBytes implements Writeable {
 
-    public static final ParseField BUCKET_COUNT = new ParseField("bucketCount");
-    public static final ParseField PROCESSED_RECORD_COUNT = new ParseField("processedRecordCount");
-    public static final ParseField PROCESSED_FIELD_COUNT = new ParseField("processedFieldCount");
-    public static final ParseField INPUT_BYTES = new ParseField("inputBytes");
-    public static final ParseField INPUT_RECORD_COUNT = new ParseField("inputRecordCount");
-    public static final ParseField INPUT_FIELD_COUNT = new ParseField("inputFieldCount");
-    public static final ParseField INVALID_DATE_COUNT = new ParseField("invalidDateCount");
-    public static final ParseField MISSING_FIELD_COUNT = new ParseField("missingFieldCount");
-    public static final ParseField OUT_OF_ORDER_TIME_COUNT = new ParseField("outOfOrderTimeStampCount");
-    public static final ParseField FAILED_TRANSFORM_COUNT = new ParseField("failedTransformCount");
-    public static final ParseField EXCLUDED_RECORD_COUNT = new ParseField("excludedRecordCount");
-    public static final ParseField LATEST_RECORD_TIME = new ParseField("latestRecordTimeStamp");
+    public static final String BUCKET_COUNT_STR = "bucketCount";
+    public static final String PROCESSED_RECORD_COUNT_STR = "processedRecordCount";
+    public static final String PROCESSED_FIELD_COUNT_STR = "processedFieldCount";
+    public static final String INPUT_BYTES_STR = "inputBytes";
+    public static final String INPUT_RECORD_COUNT_STR = "inputRecordCount";
+    public static final String INPUT_FIELD_COUNT_STR = "inputFieldCount";
+    public static final String INVALID_DATE_COUNT_STR = "invalidDateCount";
+    public static final String MISSING_FIELD_COUNT_STR = "missingFieldCount";
+    public static final String OUT_OF_ORDER_TIME_COUNT_STR = "outOfOrderTimeStampCount";
+    public static final String FAILED_TRANSFORM_COUNT_STR = "failedTransformCount";
+    public static final String EXCLUDED_RECORD_COUNT_STR = "excludedRecordCount";
+    public static final String LATEST_RECORD_TIME_STR = "latestRecordTimeStamp";
+
+    public static final ParseField BUCKET_COUNT = new ParseField(BUCKET_COUNT_STR);
+    public static final ParseField PROCESSED_RECORD_COUNT = new ParseField(PROCESSED_RECORD_COUNT_STR);
+    public static final ParseField PROCESSED_FIELD_COUNT = new ParseField(PROCESSED_FIELD_COUNT_STR);
+    public static final ParseField INPUT_BYTES = new ParseField(INPUT_BYTES_STR);
+    public static final ParseField INPUT_RECORD_COUNT = new ParseField(INPUT_RECORD_COUNT_STR);
+    public static final ParseField INPUT_FIELD_COUNT = new ParseField(INPUT_FIELD_COUNT_STR);
+    public static final ParseField INVALID_DATE_COUNT = new ParseField(INVALID_DATE_COUNT_STR);
+    public static final ParseField MISSING_FIELD_COUNT = new ParseField(MISSING_FIELD_COUNT_STR);
+    public static final ParseField OUT_OF_ORDER_TIME_COUNT = new ParseField(OUT_OF_ORDER_TIME_COUNT_STR);
+    public static final ParseField FAILED_TRANSFORM_COUNT = new ParseField(FAILED_TRANSFORM_COUNT_STR);
+    public static final ParseField EXCLUDED_RECORD_COUNT = new ParseField(EXCLUDED_RECORD_COUNT_STR);
+    public static final ParseField LATEST_RECORD_TIME = new ParseField(LATEST_RECORD_TIME_STR);
 
     public static final ObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
             new ObjectParser<>("data_counts", DataCounts::new);

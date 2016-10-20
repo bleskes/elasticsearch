@@ -16,6 +16,7 @@ import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonExcep
 abstract class AbstractJsonRecordReader implements JsonRecordReader {
     static final int PARSE_ERRORS_LIMIT = 100;
 
+    // NORELEASE - Remove direct dependency on Jackson
     protected final JsonParser parser;
     protected final Map<String, Integer> fieldMap;
     protected final String recordHoldingField;

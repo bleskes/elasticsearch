@@ -21,29 +21,27 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZonedDateTime;
 
 public class AutodetectCommunicator implements Closeable {
 
-    private final JobDetails jobDetails;
     private final AutodetectProcess autodetectProcess;
     private final Logger jobLogger;
     private final DataToProcessWriter autoDetectWriter;
     private final ResultsReader resultsReader;
     private final Thread outputParserThread;
-    private final StatusReporter statusReporter;
 
 
     public AutodetectCommunicator(JobDetails jobDetails, AutodetectProcess process, Logger jobLogger,
                                   JobResultsPersister resultsPersister, StatusReporter statusReporter) {
-        this.jobDetails = jobDetails;
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
-        this.statusReporter = statusReporter;
 
         // TODO get latest process manager code from the old engine-api project
         this.resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.out(), this.jobLogger,
-                this.jobDetails.getAnalysisConfig().getUsePerPartitionNormalization());
+                jobDetails.getAnalysisConfig().getUsePerPartitionNormalization());
 
+        // NORELEASE - use ES ThreadPool
         this.outputParserThread = new Thread(resultsReader, jobDetails.getId() + "-Bucket-Parser");
         this.outputParserThread.start();
 
@@ -52,25 +50,27 @@ public class AutodetectCommunicator implements Closeable {
                 statusReporter, jobLogger);
     }
 
-
     public DataCounts writeToJob(InputStream inputStream)
             throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, IOException {
-        return autoDetectWriter.write(inputStream);
+
+        DataCounts results = autoDetectWriter.write(inputStream);
+        autoDetectWriter.flush();
+        return results;
     }
 
     @Override
     public void close() throws IOException {
-        try {
-            joinResultsParserThread();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            jobLogger.error("Error joining parser thread", e);
-        }
+        autodetectProcess.close();
+        waitForResultsParser();
     }
 
-    private void joinResultsParserThread() throws InterruptedException {
-        outputParserThread.join();
+    private void waitForResultsParser() {
+        try {
+            outputParserThread.join();
+        } catch (InterruptedException e) {
+            jobLogger.error("Error joining parser thread", e);
+        }
     }
 
     public void writeResetBucketsControlMessage(DataLoadParams params) throws IOException {
@@ -85,15 +85,16 @@ public class AutodetectCommunicator implements Closeable {
         autodetectProcess.flushJob(params);
      }
 
-    public void addAlertObserver(AlertObserver alertObserver)
+    public void addAlertObserver(AlertObserver ao)
     {
-        resultsReader.addAlertObserver(alertObserver);
+        resultsReader.addAlertObserver(ao);
     }
 
-    public boolean removeAlertObserver(AlertObserver alertObserver)
+    public boolean removeAlertObserver(AlertObserver ao)
     {
-        return resultsReader.removeAlertObserver(alertObserver);
+        return resultsReader.removeAlertObserver(ao);
     }
 
+    public ZonedDateTime getProcessStartTime() { return autodetectProcess.getProcessStartTime(); }
 
 }

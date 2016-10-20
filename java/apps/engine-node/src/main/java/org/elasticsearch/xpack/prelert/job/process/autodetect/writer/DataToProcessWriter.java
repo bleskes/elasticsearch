@@ -33,4 +33,9 @@ public interface DataToProcessWriter {
     DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
             HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
             MalformedJsonException;
+
+    /**
+     * Flush the outputstream
+     */
+    void flush() throws IOException;
 }
