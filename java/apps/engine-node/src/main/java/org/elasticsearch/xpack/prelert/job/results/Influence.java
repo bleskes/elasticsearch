@@ -1,6 +1,8 @@
 
 package org.elasticsearch.xpack.prelert.job.results;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -41,7 +43,9 @@ public class Influence extends ToXContentToBytes implements Writeable, StorageSe
     private String field;
     private List<String> fieldValues;
 
-    public Influence(String field, List<String> fieldValues)
+    @JsonCreator
+    public Influence(@JsonProperty("influencerFieldName") String field,
+                     @JsonProperty("influencerFieldValues") List<String> fieldValues)
     {
         this.field = field;
         this.fieldValues = fieldValues;
