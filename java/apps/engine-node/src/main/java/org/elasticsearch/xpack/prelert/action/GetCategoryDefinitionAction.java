@@ -42,10 +42,10 @@ import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Optional;
 
 public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response, GetCategoryDefinitionAction.RequestBuilder> {
@@ -73,8 +73,8 @@ public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAct
         private String categoryId;
 
         public Request(String jobId, String categoryId) {
-            this.jobId = Objects.requireNonNull(jobId);
-            this.categoryId = Objects.requireNonNull(categoryId);
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
+            this.categoryId = ExceptionsHelper.requireNonNull(categoryId, "categoryId");
         }
 
         private Request() {

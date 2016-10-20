@@ -60,7 +60,6 @@ import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
@@ -96,10 +95,7 @@ public class RevertModelSnapshotsAction extends Action<RevertModelSnapshotsActio
         }
 
         public Request(String jobId) {
-            if (jobId == null) {
-                throw new IllegalArgumentException("jobId must not be null");
-            }
-            this.jobId = jobId;
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
         }
 
         public String getJobId() {

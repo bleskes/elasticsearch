@@ -41,9 +41,9 @@ import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucketsAction.Response, GetBucketsAction.RequestBuilder> {
 
@@ -81,9 +81,9 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         }
 
         public Request(String jobId, String start, String end) {
-            this.jobId = Objects.requireNonNull(jobId);
-            this.start = Objects.requireNonNull(start);
-            this.end = Objects.requireNonNull(end);
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
+            this.start = ExceptionsHelper.requireNonNull(start, "start");
+            this.end = ExceptionsHelper.requireNonNull(end, "end");
         }
 
         public String getJobId() {
@@ -151,7 +151,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         }
 
         public void setPartitionValue(String partitionValue) {
-            this.partitionValue = Objects.requireNonNull(partitionValue);
+            this.partitionValue = ExceptionsHelper.requireNonNull(partitionValue, "partitionValue");
         }
 
         @Override

@@ -46,7 +46,6 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response, GetModelSnapshotsAction.RequestBuilder> {
 
@@ -82,7 +81,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         }
 
         public Request(String jobId) {
-            this.jobId = Objects.requireNonNull(jobId);
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
         }
 
         public String getJobId() {

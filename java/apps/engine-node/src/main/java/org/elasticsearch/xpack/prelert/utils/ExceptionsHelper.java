@@ -57,4 +57,14 @@ public class ExceptionsHelper {
         return e;
     }
 
+    /**
+     * A more REST-friendly Object.requireNonNull()
+     */
+    public static <T> T requireNonNull(T obj, String paramName) {
+        if (obj == null) {
+            throw new IllegalArgumentException("[" + paramName + "] must not be null.");
+        }
+        return obj;
+    }
+
 }

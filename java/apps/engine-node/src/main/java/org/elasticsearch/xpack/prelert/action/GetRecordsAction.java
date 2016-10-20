@@ -42,10 +42,10 @@ import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.persistence.RecordsQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecordsAction.Response, GetRecordsAction.RequestBuilder> {
 
@@ -84,9 +84,9 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         }
 
         public Request(String jobId, String start, String end) {
-            this.jobId = Objects.requireNonNull(jobId);
-            this.start = Objects.requireNonNull(start);
-            this.end = Objects.requireNonNull(end);
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
+            this.start = ExceptionsHelper.requireNonNull(start, "start");
+            this.end = ExceptionsHelper.requireNonNull(end, "end");
         }
 
         public String getJobId() {
@@ -144,7 +144,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         }
 
         public void setSort(String sort) {
-            this.sort = Objects.requireNonNull(sort);
+            this.sort = ExceptionsHelper.requireNonNull(sort, "sort");
         }
 
         public double getMaxNormalizedProbability() {
@@ -160,7 +160,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         }
 
         public void setPartitionValue(String partitionValue) {
-            this.partitionValue = Objects.requireNonNull(partitionValue);
+            this.partitionValue = ExceptionsHelper.requireNonNull(partitionValue, "partitionValue");
         }
 
         @Override

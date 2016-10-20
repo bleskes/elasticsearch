@@ -37,9 +37,9 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAction.Response, DeleteJobAction.RequestBuilder> {
 
@@ -65,7 +65,7 @@ public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAc
         private String jobId;
 
         public Request(String jobId) {
-            this.jobId = Objects.requireNonNull(jobId);
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
         }
 
         private Request() {}

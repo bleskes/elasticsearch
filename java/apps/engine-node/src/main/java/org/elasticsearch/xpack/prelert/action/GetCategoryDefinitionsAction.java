@@ -40,10 +40,10 @@ import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsAction.Request, GetCategoryDefinitionsAction.Response, GetCategoryDefinitionsAction.RequestBuilder> {
 
@@ -71,7 +71,7 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
         private int take = 100;
 
         public Request(String jobId) {
-            this.jobId = Objects.requireNonNull(jobId);
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
         }
 
         private Request() {

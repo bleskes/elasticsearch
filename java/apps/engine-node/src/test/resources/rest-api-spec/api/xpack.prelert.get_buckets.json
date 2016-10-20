@@ -26,10 +26,12 @@
           "description": "specifies a max number of buckets to get"
         },
         "start": {
-          "type": "string"
+          "type": "string",
+          "required": true
         },
         "end": {
-          "type": "string"
+          "type": "string",
+          "required": true
         },
         "anomalyScore": {
           "type": "double"

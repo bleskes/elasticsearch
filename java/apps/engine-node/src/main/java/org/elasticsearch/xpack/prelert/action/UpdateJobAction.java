@@ -37,9 +37,9 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class UpdateJobAction extends Action<UpdateJobAction.Request, UpdateJobAction.Response, UpdateJobAction.RequestBuilder> {
 
@@ -66,8 +66,8 @@ public class UpdateJobAction extends Action<UpdateJobAction.Request, UpdateJobAc
         private String updateJson;
 
         public Request(String jobId, String updateJson) {
-            this.jobId = Objects.requireNonNull(jobId);
-            this.updateJson = Objects.requireNonNull(updateJson);
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
+            this.updateJson = ExceptionsHelper.requireNonNull(updateJson, "updateJson");
         }
 
         private Request() {}
