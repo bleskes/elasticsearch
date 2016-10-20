@@ -162,9 +162,9 @@ public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAct
                 SingleDocument singleDocument;
                 if (result.isPresent()) {
                     BytesReference document = new BytesArray(objectMapper.writeValueAsBytes(result.get()));
-                    singleDocument = new SingleDocument(CategoryDefinition.TYPE, document);
+                    singleDocument = new SingleDocument(CategoryDefinition.TYPE.getPreferredName(), document);
                 } else {
-                    singleDocument = SingleDocument.empty(CategoryDefinition.TYPE);
+                    singleDocument = SingleDocument.empty(CategoryDefinition.TYPE.getPreferredName());
                 }
                 listener.onResponse(new Response(singleDocument));
             } catch (JsonProcessingException e) {

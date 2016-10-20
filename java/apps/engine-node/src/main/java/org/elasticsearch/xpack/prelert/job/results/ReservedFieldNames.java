@@ -118,11 +118,11 @@ public final class ReservedFieldNames
         PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS,
         PartitionNormalisedProb.TYPE,
 
-        CategoryDefinition.CATEGORY_ID,
-        CategoryDefinition.TERMS,
-        CategoryDefinition.REGEX,
-        CategoryDefinition.MAX_MATCHING_LENGTH,
-        CategoryDefinition.EXAMPLES,
+            CategoryDefinition.CATEGORY_ID.getPreferredName(),
+            CategoryDefinition.TERMS.getPreferredName(),
+            CategoryDefinition.REGEX.getPreferredName(),
+            CategoryDefinition.MAX_MATCHING_LENGTH.getPreferredName(),
+            CategoryDefinition.EXAMPLES.getPreferredName(),
 
             DataCounts.BUCKET_COUNT.getPreferredName(),
             DataCounts.PROCESSED_RECORD_COUNT.getPreferredName(),

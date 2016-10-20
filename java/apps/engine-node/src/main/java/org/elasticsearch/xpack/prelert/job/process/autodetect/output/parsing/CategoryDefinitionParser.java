@@ -28,19 +28,19 @@ final class CategoryDefinitionParser extends FieldNameParser<CategoryDefinition>
     protected void handleFieldName(String fieldName, CategoryDefinition category) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case CategoryDefinition.TYPE:
+            case "categoryDefinition":
                 category.setCategoryId(parseAsLongOrZero(fieldName));
                 break;
-            case CategoryDefinition.TERMS:
+            case "terms":
                 category.setTerms(parseAsStringOrNull(fieldName));
                 break;
-            case CategoryDefinition.REGEX:
+            case "regex":
                 category.setRegex(parseAsStringOrNull(fieldName));
                 break;
-            case CategoryDefinition.MAX_MATCHING_LENGTH:
+            case "maxMatchingLength":
                 category.setMaxMatchingLength(parseAsLongOrZero(fieldName));
                 break;
-            case CategoryDefinition.EXAMPLES:
+            case "examples":
                 category.setExamples(parseExamples(fieldName));
                 break;
             default:

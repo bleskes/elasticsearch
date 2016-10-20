@@ -93,7 +93,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(BucketProcessingTime.TYPE);
         overridden.add(BucketInfluencer.TYPE);
         overridden.add(CategorizerState.TYPE);
-        overridden.add(CategoryDefinition.TYPE);
+        overridden.add(CategoryDefinition.TYPE.getPreferredName());
         overridden.add(Influencer.TYPE);
         overridden.add(JobDetails.TYPE);
         overridden.add(ListDocument.TYPE.getPreferredName());

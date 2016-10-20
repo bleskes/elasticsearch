@@ -866,7 +866,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, CategoryDefinition.TYPE, skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -889,7 +889,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, CategoryDefinition.TYPE, categoryId, getResponse);
+                .prepareGet("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), categoryId, getResponse);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);

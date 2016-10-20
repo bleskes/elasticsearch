@@ -204,7 +204,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistCategoryDefinition(CategoryDefinition category)
     {
-        Persistable persistable = new Persistable(category, () -> CategoryDefinition.TYPE,
+        Persistable persistable = new Persistable(category, () -> CategoryDefinition.TYPE.getPreferredName(),
                 () -> String.valueOf(category.getCategoryId()),
                 () -> serialiseCategoryDefinition(category));
         persistable.persist();

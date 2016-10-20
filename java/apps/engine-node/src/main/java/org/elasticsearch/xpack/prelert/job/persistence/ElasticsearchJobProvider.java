@@ -402,7 +402,7 @@ public class ElasticsearchJobProvider implements JobProvider
             .addMapping(Bucket.TYPE, bucketMapping)
             .addMapping(BucketInfluencer.TYPE, bucketInfluencerMapping)
             .addMapping(CategorizerState.TYPE, categorizerStateMapping)
-            .addMapping(CategoryDefinition.TYPE, categoryDefinitionMapping)
+                    .addMapping(CategoryDefinition.TYPE.getPreferredName(), categoryDefinitionMapping)
                     .addMapping(AnomalyRecord.TYPE.getPreferredName(), recordMapping)
             .addMapping(Quantiles.TYPE, quantilesMapping)
             .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
@@ -806,9 +806,9 @@ public class ElasticsearchJobProvider implements JobProvider
                 " from index " + elasticJobId.getIndex() + " sort ascending " + CategoryDefinition.CATEGORY_ID +
                 " skip " + skip + " take " + take);
         SearchRequestBuilder searchBuilder = client.prepareSearch(elasticJobId.getIndex())
-                .setTypes(CategoryDefinition.TYPE)
+                .setTypes(CategoryDefinition.TYPE.getPreferredName())
                 .setFrom(skip).setSize(take)
-                .addSort(new FieldSortBuilder(CategoryDefinition.CATEGORY_ID).order(SortOrder.ASC));
+                .addSort(new FieldSortBuilder(CategoryDefinition.CATEGORY_ID.getPreferredName()).order(SortOrder.ASC));
 
         SearchResponse searchResponse;
         try {
@@ -833,7 +833,7 @@ public class ElasticsearchJobProvider implements JobProvider
         try {
             LOGGER.trace("ES API CALL: get ID " + categoryId + " type " + CategoryDefinition.TYPE +
                     " from index " + elasticJobId.getIndex());
-            response = client.prepareGet(elasticJobId.getIndex(), CategoryDefinition.TYPE, categoryId).get();
+            response = client.prepareGet(elasticJobId.getIndex(), CategoryDefinition.TYPE.getPreferredName(), categoryId).get();
         } catch (IndexNotFoundException e) {
             throw ExceptionsHelper.missingException(jobId);
         }

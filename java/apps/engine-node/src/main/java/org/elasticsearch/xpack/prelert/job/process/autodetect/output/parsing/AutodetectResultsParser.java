@@ -246,7 +246,7 @@ public class AutodetectResultsParser {
                         // deleted when the next finalized results come through
                         deleteInterimRequired = true;
                         break;
-                    case CategoryDefinition.TYPE:
+                        case "categoryDefinition":
                         CategoryDefinition category = new CategoryDefinitionParser(parser).parseJsonAfterStartObject();
                         persister.persistCategoryDefinition(category);
                         break;
