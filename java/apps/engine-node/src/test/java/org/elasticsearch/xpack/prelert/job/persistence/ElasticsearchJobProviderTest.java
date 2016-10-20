@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -25,6 +26,7 @@ import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -39,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -337,59 +341,25 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         AnalysisLimits limits = new AnalysisLimits(9878695309134L, null);
         job.setAnalysisLimits(limits);
 
-        ArgumentCaptor<String> getSource = ArgumentCaptor.forClass(String.class);
-
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .addClusterStatusYellowResponse("prelertresults-" + job.getJobId())
-                .prepareCreate("prelertresults-" + job.getJobId())
-                .prepareIndex("prelertresults-" + job.getJobId(), getSource);
+                .createIndexRequest("prelertresults-" + job.getJobId());
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
-        assertTrue(provider.createJob(job));
-        String result = getSource.getValue();
-        assertTrue(result.matches(".*This is a very cheesy job.*"));
-        assertTrue(result.matches(".*marscapone.*"));
-        assertTrue(result.matches(".*9878695309134.*"));
-        assertTrue(result.matches(".*FAILED.*"));
-    }
+        AtomicReference<Boolean> resultHolder = new AtomicReference<>();
+        provider.createJob(job, new ActionListener<Boolean>() {
+            @Override
+            public void onResponse(Boolean aBoolean) {
+                resultHolder.set(aBoolean);
+            }
 
-    public void testCreateJob_ElasticsearchException() throws InterruptedException, ExecutionException {
-        JobDetails job = new JobConfiguration().build();
-        job.setJobId("gorgonzola");
-        ElasticsearchException ex = new ElasticsearchException("blah");
+            @Override
+            public void onFailure(Exception e) {
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .addClusterStatusYellowResponse("prelertresults-" + job.getJobId())
-                .prepareCreate("prelertresults-" + job.getJobId(), ex);
-
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        try {
-            provider.createJob(job);
-            assertTrue(false);
-        } catch (ElasticsearchException e) {
-            assertEquals(e, ex);
-        }
-    }
-
-    public void testCreateJob_IOException() throws InterruptedException, ExecutionException {
-        JobDetails job = new JobConfiguration().build();
-        job.setJobId("gorgonzola");
-
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .addClusterStatusYellowResponse("prelertresults-" + job.getJobId())
-                .prepareCreate("prelertresults-" + job.getJobId(), new IOException());
-
-        Client client = clientBuilder.build();
-        ElasticsearchJobProvider provider = createProvider(client);
-        assertFalse(provider.createJob(job));
+            }
+        });
+        assertNotNull(resultHolder.get());
+        assertTrue(resultHolder.get());
     }
 
     public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, DataStoreException, IOException {

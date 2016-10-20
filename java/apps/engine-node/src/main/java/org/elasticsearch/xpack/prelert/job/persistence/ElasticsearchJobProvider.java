@@ -16,13 +16,17 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
@@ -30,6 +34,7 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRespon
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
@@ -372,12 +377,10 @@ public class ElasticsearchJobProvider implements JobProvider
      * @throws
      */
     @Override
-    public boolean createJob(JobDetails job)
-    {
+    public void createJob(JobDetails job, ActionListener<Boolean> listener) {
         Collection<String> termFields = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().termFields() : null;
         Collection<String> influencers = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().getInfluencers() : null;
-        try
-        {
+        try {
             XContentBuilder bucketMapping = ElasticsearchMappings.bucketMapping();
             XContentBuilder bucketInfluencerMapping = ElasticsearchMappings.bucketInfluencerMapping();
             XContentBuilder categorizerStateMapping = ElasticsearchMappings.categorizerStateMapping();
@@ -392,57 +395,37 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder processingTimeMapping = ElasticsearchMappings.processingTimeMapping();
             XContentBuilder partitionScoreMapping = ElasticsearchMappings.bucketPartitionMaxNormalizedScores();
 
-
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
-
             LOGGER.trace("ES API CALL: create index " + job.getId());
-            client.admin().indices()
-            .prepareCreate(elasticJobId.getIndex())
-            .setSettings(prelertIndexSettings())
-            .addMapping(Bucket.TYPE.getPreferredName(), bucketMapping)
-            .addMapping(BucketInfluencer.TYPE.getPreferredName(), bucketInfluencerMapping)
-            .addMapping(CategorizerState.TYPE, categorizerStateMapping)
-                    .addMapping(CategoryDefinition.TYPE.getPreferredName(), categoryDefinitionMapping)
-                    .addMapping(AnomalyRecord.TYPE.getPreferredName(), recordMapping)
-            .addMapping(Quantiles.TYPE, quantilesMapping)
-            .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
-            .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
-            .addMapping(Influencer.TYPE.getPreferredName(), influencerMapping)
-            .addMapping(ModelDebugOutput.TYPE, modelDebugMapping)
-            .addMapping(BucketProcessingTime.TYPE, processingTimeMapping)
-            .addMapping(PartitionNormalisedProb.TYPE, partitionScoreMapping)
-            .get();
-            LOGGER.trace("ES API CALL: wait for yellow status " + elasticJobId.getId());
-            client.admin().cluster().prepareHealth(elasticJobId.getIndex())
-            .setWaitForYellowStatus().execute().actionGet();
+            CreateIndexRequest createIndexRequest = new CreateIndexRequest(elasticJobId.getIndex());
+            createIndexRequest.settings(prelertIndexSettings());
+            createIndexRequest.mapping(Bucket.TYPE.getPreferredName(), bucketMapping);
+            createIndexRequest.mapping(BucketInfluencer.TYPE.getPreferredName(), bucketInfluencerMapping);
+            createIndexRequest.mapping(CategorizerState.TYPE, categorizerStateMapping);
+            createIndexRequest.mapping(CategoryDefinition.TYPE.getPreferredName(), categoryDefinitionMapping);
+            createIndexRequest.mapping(AnomalyRecord.TYPE.getPreferredName(), recordMapping);
+            createIndexRequest.mapping(Quantiles.TYPE, quantilesMapping);
+            createIndexRequest.mapping(ModelSnapshot.TYPE, modelSnapshotMapping);
+            createIndexRequest.mapping(ModelSizeStats.TYPE, modelSizeStatsMapping);
+            createIndexRequest.mapping(Influencer.TYPE.getPreferredName(), influencerMapping);
+            createIndexRequest.mapping(ModelDebugOutput.TYPE, modelDebugMapping);
+            createIndexRequest.mapping(BucketProcessingTime.TYPE, processingTimeMapping);
+            createIndexRequest.mapping(PartitionNormalisedProb.TYPE, partitionScoreMapping);
 
-            if (job.getModelSizeStats() != null)
-            {
-                LOGGER.warn("Initial job model size stats non-null on job creation - removed them");
-                job.setModelSizeStats(null);
-            }
-            String json = objectMapper.writeValueAsString(job);
+            client.admin().indices().create(createIndexRequest, new ActionListener<CreateIndexResponse>() {
+                @Override
+                public void onResponse(CreateIndexResponse createIndexResponse) {
+                    listener.onResponse(true);
+                }
 
-            LOGGER.trace("ES API CALL: index " + JobDetails.TYPE +
-                    " to index " + elasticJobId.getIndex() + " with ID " + elasticJobId.getId());
-            client.prepareIndex(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
-            .setSource(json)
-            .setRefreshPolicy(RefreshPolicy.IMMEDIATE)
-            .get();
-
-            return true;
+                @Override
+                public void onFailure(Exception e) {
+                    listener.onFailure(e);
+                }
+            });
+        } catch (Exception e) {
+            listener.onFailure(e);
         }
-        catch (ElasticsearchException e)
-        {
-            LOGGER.error("Error writing Elasticsearch mappings", e);
-            throw e;
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error writing Elasticsearch mappings", e);
-        }
-
-        return false;
     }
 
     @Override

@@ -146,12 +146,16 @@ class ElasticsearchDotNotationReverser implements DotNotationReverser
             }
             else
             {
+                String fieldType = value.getClass().getSimpleName().toLowerCase(Locale.ROOT);
+                if ("string".equals(fieldType)) {
+                    fieldType = "keyword";
+                }
                 typeMap.put(ElasticsearchMappings.TYPE,
                         // Even though the add() method currently only supports
                         // strings, this way of getting the type would work for
                         // many Elasticsearch types, e.g. date, int, long,
                         // double and boolean
-                        value.getClass().getSimpleName().toLowerCase(Locale.ROOT));
+                        fieldType);
                 mappingsMap.put(name, typeMap);
             }
         }

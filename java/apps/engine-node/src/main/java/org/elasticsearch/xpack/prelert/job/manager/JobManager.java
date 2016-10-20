@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -195,22 +196,46 @@ public class JobManager {
             throw new RuntimeException(e);
         }
         JobDetails jobDetails = jobConfiguration.build();
-        jobProvider.createJob(jobDetails);
-        clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(), new AckedClusterStateUpdateTask<PutJobAction.Response>(request, actionListener) {
+        ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
+            @Override
+            public void onResponse(Boolean acked) {
+                try {
+                    jobProvider.createJob(jobDetails, new ActionListener<Boolean>() {
+                        @Override
+                        public void onResponse(Boolean aBoolean) {
+                            // NORELEASE: make auditing async too (we can't do blocking stuff here):
+                            // audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
+
+                            // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
+                            // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
+                            try {
+                                actionListener.onResponse(new PutJobAction.Response(jobDetails, objectMapper));
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            actionListener.onFailure(e);
+
+                        }
+                    });
+                } catch (JobIdAlreadyExistsException e) {
+                    actionListener.onFailure(e);
+                }
+            }
 
             @Override
-            protected PutJobAction.Response newResponse(boolean acknowledged) {
-                // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on the cluster state update task thread
-                // and any action performed on that thread should be quick. (so no indexing documents)
-                // audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
+            public void onFailure(Exception e) {
+                actionListener.onFailure(e);
+            }
+        };
+        clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(), new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
 
-                // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
-                // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
-                try {
-                    return new PutJobAction.Response(jobDetails, objectMapper);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
+            @Override
+            protected Boolean newResponse(boolean acknowledged) {
+                return acknowledged;
             }
 
             @Override

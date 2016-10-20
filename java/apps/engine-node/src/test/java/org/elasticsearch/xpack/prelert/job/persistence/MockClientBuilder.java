@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -15,9 +16,11 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexAction;
@@ -29,6 +32,7 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -51,7 +55,10 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class MockClientBuilder {
     @Mock
@@ -217,6 +224,22 @@ public class MockClientBuilder {
         when(createIndexRequestBuilder.addMapping(any(String.class), any(XContentBuilder.class))).thenReturn(createIndexRequestBuilder);
         when(createIndexRequestBuilder.get()).thenReturn(response);
         when(indicesAdminClient.prepareCreate(eq(index))).thenReturn(createIndexRequestBuilder);
+        return this;
+    }
+
+    public MockClientBuilder createIndexRequest(String index) {
+        ArgumentMatcher<CreateIndexRequest> argumentMatcher = new ArgumentMatcher<CreateIndexRequest>() {
+            @Override
+            public boolean matches(Object o) {
+                return index.equals(((CreateIndexRequest) o).index());
+            }
+        };
+        doAnswer(
+                invocation -> {
+                    ((ActionListener) invocation.getArguments()[1]).onResponse(mock(CreateIndexResponse.class));
+                    return null;
+                }
+        ).when(indicesAdminClient).create(argThat(argumentMatcher), any(ActionListener.class));
         return this;
     }
 

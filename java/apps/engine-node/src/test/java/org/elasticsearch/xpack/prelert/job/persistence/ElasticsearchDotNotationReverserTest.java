@@ -24,13 +24,13 @@ public class ElasticsearchDotNotationReverserTest extends ESTestCase {
         ElasticsearchDotNotationReverser reverser = createReverser();
 
         String expected = "{\"complex\":{\"properties\":{\"nested\":{\"properties\":" +
-                "{\"structure\":{\"properties\":{\"first\":{\"type\":\"string\"}," +
-                "\"second\":{\"type\":\"string\"}},\"type\":\"object\"}," +
-                "\"value\":{\"type\":\"string\"}},\"type\":\"object\"}}," +
+                "{\"structure\":{\"properties\":{\"first\":{\"type\":\"keyword\"}," +
+                "\"second\":{\"type\":\"keyword\"}},\"type\":\"object\"}," +
+                "\"value\":{\"type\":\"keyword\"}},\"type\":\"object\"}}," +
                 "\"type\":\"object\"},\"cpu\":{\"properties\":{\"system\":" +
-                "{\"type\":\"string\"},\"user\":{\"type\":\"string\"}," +
-                "\"wait\":{\"type\":\"string\"}},\"type\":\"object\"}," +
-                "\"simple\":{\"type\":\"string\"}}";
+                "{\"type\":\"keyword\"},\"user\":{\"type\":\"keyword\"}," +
+                "\"wait\":{\"type\":\"keyword\"}},\"type\":\"object\"}," +
+                "\"simple\":{\"type\":\"keyword\"}}";
 
         String actual = new ObjectMapper().writeValueAsString(reverser.getMappingsMap());
         assertEquals(expected, actual);

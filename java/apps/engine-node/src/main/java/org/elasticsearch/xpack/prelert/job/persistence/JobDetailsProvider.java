@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
@@ -57,7 +58,8 @@ public interface JobDetailsProvider
      * @return True
      * @throws JobIdAlreadyExistsException
      */
-    boolean createJob(JobDetails job) throws JobIdAlreadyExistsException;
+    // TODO: rename and move?
+    void createJob(JobDetails job, ActionListener<Boolean> listener) throws JobIdAlreadyExistsException;
 
     /**
      * Delete all the job related documents from the database.
