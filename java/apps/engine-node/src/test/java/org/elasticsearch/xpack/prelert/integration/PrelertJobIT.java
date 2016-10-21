@@ -172,7 +172,8 @@ public class PrelertJobIT extends ESRestTestCase {
                 "    \"dataDescription\" : {\n" +
                 "        \"fieldDelimiter\":\",\",\n" +
                 "        \"timeField\":\"time\",\n" +
-                "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"\n" +
+                "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\",\n" +
+                "        \"format\":\"ELASTICSEARCH\"\n" +
                 "    },\n" +
                 "    \"analysisLimits\":{\"modelMemoryLimit\":1024},\n" +
                 "    \"backgroundPersistInterval\":4000,\n" +

@@ -36,6 +36,7 @@ import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
+import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
@@ -195,6 +196,8 @@ public class JobManager {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        JobConfigurationVerifier.verify(jobConfiguration);
+        // TODO: Remove once all validation happens in JobConfiguration#build() method:
         JobDetails jobDetails = jobConfiguration.build();
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
