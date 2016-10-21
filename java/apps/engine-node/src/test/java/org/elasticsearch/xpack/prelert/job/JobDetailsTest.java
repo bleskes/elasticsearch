@@ -44,14 +44,14 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         Long resultsRetentionDays = randomBoolean() ? randomLong() : null;
         Map<String, Object> customConfig =
                 randomBoolean() ? Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)) : null;
-        Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
-        return new JobDetails(
-                jobId, description, jobStatus, jobSchedulerStatus, createTime, finishedTime, lastDataTime, timeout,
-                analysisConfig, analysisLimits, schedulerConfig, dataDescription, modelSizeStats, transformConfigList,
-                modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
-                modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs
+                Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
+                return new JobDetails(
+                        jobId, description, jobStatus, jobSchedulerStatus, createTime, finishedTime, lastDataTime, timeout,
+                        analysisConfig, analysisLimits, schedulerConfig, dataDescription, modelSizeStats, transformConfigList,
+                        modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
+                        modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs
 
-        );
+                        );
     }
 
     @Override
@@ -87,7 +87,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertNull(jobDetails.getModelSnapshotRetentionDays());
         assertNull(jobDetails.getResultsRetentionDays());
         assertNull(jobDetails.getSchedulerConfig());
-        assertNull(jobDetails.getTransforms());
+        assertEquals(Collections.emptyList(), jobDetails.getTransforms());
         assertNotNull(jobDetails.allFields());
         assertTrue(jobDetails.allFields().isEmpty());
     }

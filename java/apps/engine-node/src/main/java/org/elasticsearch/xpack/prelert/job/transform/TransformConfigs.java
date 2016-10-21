@@ -1,51 +1,75 @@
 
 package org.elasticsearch.xpack.prelert.job.transform;
 
-import java.util.Collections;
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * Utility class for methods involving arrays of transforms
  */
-public class TransformConfigs
-{
+public class TransformConfigs extends ToXContentToBytes implements Writeable {
+
+    public static final ParseField TRANSFORMS = new ParseField("transforms");
+
+    @SuppressWarnings("unchecked")
+    public static final ConstructingObjectParser<TransformConfigs, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            TRANSFORMS.getPreferredName(), a -> new TransformConfigs((List<TransformConfig>) a[0]));
+
+    static {
+        PARSER.declareObjectArray(ConstructingObjectParser.constructorArg(), TransformConfig.PARSER, TRANSFORMS);
+    }
+
     private List<TransformConfig> transforms;
 
-    public TransformConfigs() {
-        this(null);
+    @JsonCreator
+    public TransformConfigs(@JsonProperty("transforms") List<TransformConfig> transforms) {
+        this.transforms = Objects.requireNonNull(transforms);
     }
 
-    public TransformConfigs(List<TransformConfig> transforms)
-    {
-        this.transforms = transforms;
-        if (transforms == null)
-        {
-            this.transforms = Collections.emptyList();
-        }
+    public TransformConfigs(StreamInput in) throws IOException {
+        transforms = in.readList(TransformConfig::new);
     }
 
-    public void setTransforms(List<TransformConfig> transforms) {
-        this.transforms = transforms;
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeList(transforms);
     }
 
-    public List<TransformConfig> getTransforms()
-    {
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        builder.field(TRANSFORMS.getPreferredName(), transforms);
+        builder.endObject();
+        return builder;
+    }
+
+    public List<TransformConfig> getTransforms() {
         return transforms;
     }
 
-
     /**
-     * Set of all the field names that are required as inputs to
-     * transforms
+     * Set of all the field names that are required as inputs to transforms
+     *
      * @return
      */
-    public Set<String> inputFieldNames()
-    {
+    public Set<String> inputFieldNames() {
         Set<String> fields = new HashSet<>();
-        for (TransformConfig t : transforms)
-        {
+        for (TransformConfig t : transforms) {
             fields.addAll(t.getInputs());
         }
 
@@ -53,8 +77,9 @@ public class TransformConfigs
     }
 
     /**
-     * Set of all the field names that are outputted (i.e. created)
-     * by transforms
+     * Set of all the field names that are outputted (i.e. created) by
+     * transforms
+     *
      * @return
      */
     public Set<String> outputFieldNames() {
@@ -64,5 +89,24 @@ public class TransformConfigs
         }
 
         return fields;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(transforms);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        TransformConfigs other = (TransformConfigs) obj;
+        return Objects.equals(transforms, other.transforms);
     }
 }

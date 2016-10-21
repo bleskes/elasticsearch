@@ -24,11 +24,9 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
-import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
-import org.elasticsearch.xpack.prelert.job.metadata.Job;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 
 import java.io.IOException;
@@ -96,7 +94,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
     private AnalysisConfig analysisConfig = new AnalysisConfig();
     private AnalysisLimits analysisLimits;
     private SchedulerConfig schedulerConfig;
-    private List<TransformConfig> transforms;
+    private List<TransformConfig> transforms = new ArrayList<>();
     private DataDescription dataDescription;
     private Long timeout;
     private ModelDebugConfig modelDebugConfig;
@@ -359,7 +357,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
                 analysisLimits, schedulerConfig, dataDescription, null, transforms, modelDebugConfig, new DataCounts(),
                 ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
                 resultsRetentionDays, customSettings, null
-        );
+                );
     }
 
     @Override
@@ -438,7 +436,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
                 iD, description, analysisConfig, analysisLimits, schedulerConfig, transforms, dataDescription, timeout,
                 modelDebugConfig, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
                 resultsRetentionDays, ignoreDowntime, customSettings
-        );
+                );
     }
 
     /**
