@@ -56,7 +56,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
     private static final int MIN_SEQUENCE_LENGTH = 5;
     private static final int HOSTNAME_ID_SEPARATORS_LENGTH = 2;
     static final AtomicLong ID_SEQUENCE = new AtomicLong(); // package protected for testing
-    private static final DateTimeFormatter ID_DATEFORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final DateTimeFormatter ID_DATEFORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss", Locale.ROOT);
     private static final String HOSTNAME;
 
     static {
