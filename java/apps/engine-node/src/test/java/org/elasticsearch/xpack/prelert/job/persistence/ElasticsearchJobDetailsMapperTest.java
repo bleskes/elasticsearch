@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JsonViews;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
-import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
+import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 
 public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
     @Mock
@@ -80,15 +80,15 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
 
 
         Map<String, Object> procTimeSource = new HashMap<>();
-        procTimeSource.put(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, 20.2);
+        procTimeSource.put(ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS, 20.2);
 
         GetResponse getProcTimeResponse = mock(GetResponse.class);
         when(getProcTimeResponse.isExists()).thenReturn(true);
         when(getProcTimeResponse.getSource()).thenReturn(procTimeSource);
         GetRequestBuilder getProcTimeRequestBuilder = mock(GetRequestBuilder.class);
         when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
-        when(client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE,
-                BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS))
+        when(client.prepareGet("prelertresults-foo", ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE,
+                ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS))
         .thenReturn(getProcTimeRequestBuilder);
 
 
@@ -121,8 +121,8 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
         when(getProcTimeResponse.isExists()).thenReturn(false);
         GetRequestBuilder getProcTimeRequestBuilder = mock(GetRequestBuilder.class);
         when(getProcTimeRequestBuilder.get()).thenReturn(getProcTimeResponse);
-        when(client.prepareGet("prelertresults-foo", BucketProcessingTime.TYPE,
-                BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS))
+        when(client.prepareGet("prelertresults-foo", ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE,
+                ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS))
         .thenReturn(getProcTimeRequestBuilder);
 
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(client, objectMapper);

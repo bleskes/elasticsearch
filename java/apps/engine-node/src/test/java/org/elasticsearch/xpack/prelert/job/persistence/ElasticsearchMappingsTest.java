@@ -32,7 +32,6 @@ import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
-import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
@@ -90,7 +89,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(AuditActivity.TYPE);
         overridden.add(AuditMessage.TYPE);
         overridden.add(Bucket.TYPE.getPreferredName());
-        overridden.add(BucketProcessingTime.TYPE);
+        overridden.add(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE);
         overridden.add(BucketInfluencer.TYPE.getPreferredName());
         overridden.add(CategorizerState.TYPE);
         overridden.add(CategoryDefinition.TYPE.getPreferredName());

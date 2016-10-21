@@ -9,7 +9,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
-import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
+import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 
 import java.util.Map;
 import java.util.Objects;
@@ -83,11 +83,11 @@ class ElasticsearchJobDetailsMapper
     private void addBucketProcessingTime(JobDetails job, ElasticsearchJobId elasticJobId)
     {
         // Pull out the modelSizeStats document, and add this to the JobDetails
-        LOGGER.trace("ES API CALL: get ID " + BucketProcessingTime.TYPE +
-                " type " + BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS + " from index " + elasticJobId.getIndex());
+        LOGGER.trace("ES API CALL: get ID " + ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE +
+                " type " + ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS + " from index " + elasticJobId.getIndex());
         GetResponse procTimeResponse = client.prepareGet(
-                elasticJobId.getIndex(), BucketProcessingTime.TYPE,
-                BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS).get();
+                elasticJobId.getIndex(), ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE,
+                ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS).get();
 
         if (!procTimeResponse.isExists())
         {
@@ -97,7 +97,7 @@ class ElasticsearchJobDetailsMapper
         else
         {
             Object averageTime = procTimeResponse.getSource()
-                    .get(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS);
+                    .get(ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS);
             if (averageTime instanceof Double)
             {
                 job.setAverageBucketProcessingTimeMs((Double)averageTime);

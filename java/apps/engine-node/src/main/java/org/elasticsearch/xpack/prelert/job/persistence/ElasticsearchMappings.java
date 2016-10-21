@@ -878,7 +878,7 @@ public class ElasticsearchMappings
     {
         return jsonBuilder()
                 .startObject()
-                .startObject(BucketProcessingTime.TYPE)
+                .startObject(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE)
                 .startObject(ALL)
                 .field(ENABLED, false)
                 // analyzer must be specified even though _all is disabled
@@ -887,7 +887,7 @@ public class ElasticsearchMappings
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS)
+                .startObject(ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS)
                 .field(TYPE, DOUBLE)
                 .endObject()
                 .endObject()

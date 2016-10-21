@@ -77,11 +77,11 @@ import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
-import org.elasticsearch.xpack.prelert.job.results.BucketProcessingTime;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
+import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 import org.elasticsearch.xpack.prelert.job.usage.Usage;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
@@ -409,7 +409,7 @@ public class ElasticsearchJobProvider implements JobProvider
             createIndexRequest.mapping(ModelSizeStats.TYPE, modelSizeStatsMapping);
             createIndexRequest.mapping(Influencer.TYPE.getPreferredName(), influencerMapping);
             createIndexRequest.mapping(ModelDebugOutput.TYPE, modelDebugMapping);
-            createIndexRequest.mapping(BucketProcessingTime.TYPE, processingTimeMapping);
+            createIndexRequest.mapping(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE, processingTimeMapping);
             createIndexRequest.mapping(PartitionNormalisedProb.TYPE, partitionScoreMapping);
 
             client.admin().indices().create(createIndexRequest, new ActionListener<CreateIndexResponse>() {

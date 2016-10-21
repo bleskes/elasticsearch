@@ -313,25 +313,25 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void updateAverageBucketProcessingTime(long timeMs) throws JobException, UnknownJobException
     {
-        LOGGER.trace("ES API CALL: update ID " + jobId.getId() + " type " + BucketProcessingTime.TYPE +
+        LOGGER.trace("ES API CALL: update ID " + jobId.getId() + " type " + ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE +
                 " in index " + jobId.getIndex() + " update last bucket processing time");
 
 
         Map<String, Object> upsertMap = new HashMap<>();
-        upsertMap.put(BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS, new Long(timeMs));
+        upsertMap.put(ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS, new Long(timeMs));
 
         try
         {
             ElasticsearchScripts.upsertViaScript(client,
                     jobId.getIndex(),
-                    BucketProcessingTime.TYPE,  BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS,
+                    ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE, ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS,
                     ElasticsearchScripts.updateProcessingTime(timeMs),
                     upsertMap);
         }
         catch (VersionConflictEngineException e)
         {
             LOGGER.error("Failed to update the bucket processing time document " +
-                    BucketProcessingTime.AVERAGE_PROCESSING_TIME_MS + " in index " + jobId.getIndex(), e);
+                    ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS + " in index " + jobId.getIndex(), e);
         }
     }
 
