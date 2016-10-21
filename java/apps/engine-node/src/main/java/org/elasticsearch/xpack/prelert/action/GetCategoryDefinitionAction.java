@@ -138,7 +138,7 @@ public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAct
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(result.getType());
-            out.writeOptionalBytesReference(result.getDocument());
+            out.writeOptionalBytesReference(result.getDocumentBytes());
         }
     }
 
@@ -149,8 +149,8 @@ public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAct
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               ElasticsearchJobProvider jobProvider) {
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }

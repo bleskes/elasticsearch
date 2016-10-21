@@ -201,7 +201,7 @@ public class RevertModelSnapshotsAction extends Action<RevertModelSnapshotsActio
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(response.getType());
-            out.writeBytesReference(response.getDocument());
+            out.writeBytesReference(response.getDocumentBytes());
         }
 
         @Override

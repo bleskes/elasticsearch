@@ -129,7 +129,7 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(result.getType());
-            out.writeBytesReference(result.getDocument());
+            out.writeBytesReference(result.getDocumentBytes());
         }
 
         @Override
@@ -151,8 +151,8 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                               ThreadPool threadPool, ActionFilters actionFilters,
-                               IndexNameExpressionResolver indexNameExpressionResolver, JobManager jobManager) {
+                ThreadPool threadPool, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver, JobManager jobManager) {
             super(settings, GetJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;

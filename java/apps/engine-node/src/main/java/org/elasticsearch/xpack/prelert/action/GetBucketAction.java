@@ -185,7 +185,7 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(result.getType());
-            out.writeBytesReference(result.getDocument());
+            out.writeBytesReference(result.getDocumentBytes());
         }
     }
 
