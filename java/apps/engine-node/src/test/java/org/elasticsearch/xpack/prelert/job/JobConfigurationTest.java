@@ -164,8 +164,11 @@ public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfigu
 
     public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname() {
         String id = JobConfiguration.generateJobId("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
-        assertEquals(JobConfigurationVerifier.MAX_JOB_ID_LENGTH, id.length());
-        assertTrue(id.endsWith(String.format("%05d", JobConfiguration.ID_SEQUENCE.get())));
+        assertEquals("Unexpected id length: " + id, JobConfigurationVerifier.MAX_JOB_ID_LENGTH, id.length());
+        assertTrue(
+                "Unexpected id ending: " + id + ", expected ending: "
+                        + String.format(Locale.ROOT, "%05d", JobConfiguration.ID_SEQUENCE.get()),
+                        id.endsWith(String.format(Locale.ROOT, "%05d", JobConfiguration.ID_SEQUENCE.get())));
     }
 
     public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname_andSixDigitSequence() {
