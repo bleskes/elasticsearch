@@ -27,7 +27,10 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -222,8 +225,17 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
         return analysisLimits;
     }
 
-    public void setAnalysisLimits(AnalysisLimits options) {
-        analysisLimits = options;
+    public void setAnalysisLimits(AnalysisLimits analysisLimits) {
+        if (this.analysisLimits != null) {
+            long oldMemoryLimit = this.analysisLimits.getModelMemoryLimit();
+            long newMemoryLimit = analysisLimits.getModelMemoryLimit();
+            if (newMemoryLimit < oldMemoryLimit) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED,
+                                oldMemoryLimit, newMemoryLimit), ErrorCodes.INVALID_VALUE);
+            }
+        }
+        this.analysisLimits = analysisLimits;
     }
 
     /**

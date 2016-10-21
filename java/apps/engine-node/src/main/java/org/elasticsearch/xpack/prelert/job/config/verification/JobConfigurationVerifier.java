@@ -40,7 +40,6 @@ public final class JobConfigurationVerifier {
      * <ol>
      * <li>Either an AnalysisConfig or Job reference must be set</li>
      * <li>Verify {@link AnalysisConfigVerifier#verify(AnalysisConfig) AnalysisConfig}</li>
-     * <li>Verify {@link AnalysisLimitsVerifier#verify(AnalysisLimits) AnalysisLimits}</li>
      * <li>Verify {@link DataDescriptionVerifier#verify(DataDescription) DataDescription}</li>
      * <li>Verify {@link TransformConfigsVerifier#verify(List<TransformConfig>) Transforms}</li>
      * <li>Verify {@link ModelDebugConfigVerifier#verify(ModelDebugConfig) ModelDebugConfig}</li>
@@ -61,10 +60,6 @@ public final class JobConfigurationVerifier {
 
         checkAnalysisConfigIsPresent(config);
         AnalysisConfigVerifier.verify(config.getAnalysisConfig());
-
-        if (config.getAnalysisLimits() != null) {
-            AnalysisLimitsVerifier.verify(config.getAnalysisLimits());
-        }
 
         if (config.getSchedulerConfig() != null) {
             verifySchedulerConfig(config);

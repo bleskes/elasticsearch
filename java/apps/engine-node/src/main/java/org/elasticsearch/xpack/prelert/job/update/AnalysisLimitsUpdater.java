@@ -3,7 +3,6 @@ package org.elasticsearch.xpack.prelert.job.update;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.config.verification.AnalysisLimitsVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -19,8 +18,6 @@ class AnalysisLimitsUpdater extends AbstractUpdater {
         checkJobIsClosed();
         AnalysisLimits newLimits = parseAnalysisLimits(node);
         checkNotNull(newLimits);
-        AnalysisLimitsVerifier.verify(newLimits);
-        checkModelMemoryLimitIsNotDecreased(newLimits);
         job().setAnalysisLimits(newLimits);
     }
 
@@ -41,17 +38,4 @@ class AnalysisLimitsUpdater extends AbstractUpdater {
         }
     }
 
-    private void checkModelMemoryLimitIsNotDecreased(AnalysisLimits newLimits) {
-        AnalysisLimits analysisLimits = job().getAnalysisLimits();
-        if (analysisLimits == null) {
-            return;
-        }
-        long oldMemoryLimit = analysisLimits.getModelMemoryLimit();
-        long newMemoryLimit = newLimits.getModelMemoryLimit();
-        if (newMemoryLimit < oldMemoryLimit) {
-            throw ExceptionsHelper.invalidRequestException(
-                    Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED,
-                            oldMemoryLimit, newMemoryLimit), ErrorCodes.INVALID_VALUE);
-        }
-    }
 }

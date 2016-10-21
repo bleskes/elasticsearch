@@ -1,9 +1,11 @@
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
@@ -178,5 +180,14 @@ public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfigu
         }
         assertTrue(id.endsWith("-" + JobConfiguration.ID_SEQUENCE.get()));
         assertEquals(JobConfigurationVerifier.MAX_JOB_ID_LENGTH, id.length());
+    }
+
+    public void testUpdate_GivenModelMemoryLimitLessIsDecreased() {
+        JobConfiguration jobConfiguration = new JobConfiguration();
+        jobConfiguration.setAnalysisLimits(new AnalysisLimits(42L, null));
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
+                () -> jobConfiguration.setAnalysisLimits(new AnalysisLimits(41L, null)));
+        assertEquals("Invalid update value for analysisLimits: modelMemoryLimit cannot be decreased; existing is 42, update had 41", e.getMessage());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 }

@@ -51,8 +51,11 @@ public class AnalysisLimitsUpdaterTest extends ESTestCase {
         String update = "{\"categorizationExamplesLimit\":-1}";
         JsonNode node = new ObjectMapper().readTree(update);
 
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> createUpdater(job).update(node));
-        assertEquals("categorizationExamplesLimit cannot be less than 0. Value = -1", e.getMessage());
+        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class, () -> createUpdater(job).update(node));
+        assertEquals("JSON parse error reading the update value for analysisLimits", e.getMessage());
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        // Original message gets swallowed by jackson-databind when it tries to invoke constructor via reflection
+        // and a valid exception is thrown because the provided value is negative. It is ok, we remove jackson-databind soon...
         assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 

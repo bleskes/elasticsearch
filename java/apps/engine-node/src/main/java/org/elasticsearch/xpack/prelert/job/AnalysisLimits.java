@@ -13,6 +13,9 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -61,6 +64,11 @@ public class AnalysisLimits extends ToXContentToBytes implements Writeable {
             this.modelMemoryLimit = -1;
         } else {
             this.modelMemoryLimit = modelMemoryLimit;
+        }
+        if (categorizationExamplesLimit != null && categorizationExamplesLimit < 0) {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, CATEGORIZATION_EXAMPLES_LIMIT, 0,
+                    categorizationExamplesLimit);
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.INVALID_VALUE);
         }
         this.categorizationExamplesLimit = categorizationExamplesLimit;
     }
