@@ -453,6 +453,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable, Stora
         return typical;
     }
 
+    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setTypical(List<Double> typical)
     {
         this.typical = typical;
@@ -464,6 +465,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable, Stora
         return actual;
     }
 
+    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setActual(List<Double> actual)
     {
         this.actual = actual;
