@@ -30,7 +30,7 @@ public class InfluencersQueryBuilderTest extends ESTestCase {
         assertEquals(0.0, query.getAnomalyScoreFilter(), 0.0001);
         assertNull(query.getEpochStart());
         assertNull(query.getEpochEnd());
-        assertEquals(Influencer.ANOMALY_SCORE, query.getSortField());
+        assertEquals(Influencer.ANOMALY_SCORE.getPreferredName(), query.getSortField());
         assertFalse(query.isSortDescending());
     }
 

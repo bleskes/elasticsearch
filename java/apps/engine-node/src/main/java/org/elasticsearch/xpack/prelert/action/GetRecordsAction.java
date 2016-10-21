@@ -75,7 +75,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         private int skip = 0;
         private int take = 100;
         private double anomalyScoreFilter = 0.0;
-        private String sort = Influencer.ANOMALY_SCORE;
+        private String sort = Influencer.ANOMALY_SCORE.getPreferredName();
         private boolean decending = false;
         private double maxNormalizedProbability = 0.0;
         private String partitionValue;
@@ -243,8 +243,8 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               ElasticsearchJobProvider jobProvider) {
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }

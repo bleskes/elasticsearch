@@ -41,10 +41,10 @@ public class ElasticsearchPersisterTest extends ESTestCase {
         BulkResponse response = mock(BulkResponse.class);
         String responseId = "abcXZY54321";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .prepareIndex("prelertresults-" + JOB_ID, Bucket.TYPE, responseId, captor)
+                .prepareIndex("prelertresults-" + JOB_ID, Bucket.TYPE.getPreferredName(), responseId, captor)
                 .prepareIndex("prelertresults-" + JOB_ID, AnomalyRecord.TYPE.getPreferredName(), "", captor)
-                .prepareIndex("prelertresults-" + JOB_ID, BucketInfluencer.TYPE, "", captor)
-                .prepareIndex("prelertresults-" + JOB_ID, Influencer.TYPE, "", captor)
+                .prepareIndex("prelertresults-" + JOB_ID, BucketInfluencer.TYPE.getPreferredName(), "", captor)
+                .prepareIndex("prelertresults-" + JOB_ID, Influencer.TYPE.getPreferredName(), "", captor)
                 .prepareBulk(response);
 
         Client client = clientBuilder.build();

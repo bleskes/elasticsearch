@@ -17,7 +17,7 @@ public class PartitionScoreParser extends FieldNameParser<PartitionScore>
 
     public PartitionScoreParser(JsonParser jsonParser)
     {
-        super(Bucket.PARTITION_SCORES, jsonParser, LOGGER);
+        super(Bucket.PARTITION_SCORES.getPreferredName(), jsonParser, LOGGER);
     }
 
     @Override

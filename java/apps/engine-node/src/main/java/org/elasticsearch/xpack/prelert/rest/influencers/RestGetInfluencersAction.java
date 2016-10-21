@@ -48,7 +48,7 @@ public class RestGetInfluencersAction extends BaseRestHandler {
         request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
         request.setPagination(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100));
         request.setAnomalyScore(Double.parseDouble(restRequest.param("anomalyScore", "0.0")));
-        request.setSort(restRequest.param("sort", Influencer.ANOMALY_SCORE));
+        request.setSort(restRequest.param("sort", Influencer.ANOMALY_SCORE.getPreferredName()));
         request.setDecending(restRequest.paramAsBoolean("desc", false));
 
         return channel -> transportAction.execute(request, new RestBuilderListener<GetInfluencersAction.Response>(channel) {

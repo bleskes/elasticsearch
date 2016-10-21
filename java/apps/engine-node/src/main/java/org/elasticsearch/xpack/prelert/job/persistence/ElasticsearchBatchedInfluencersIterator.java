@@ -19,7 +19,7 @@ class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocume
     @Override
     protected String getType()
     {
-        return Influencer.TYPE;
+        return Influencer.TYPE.getPreferredName();
     }
 
     @Override
@@ -28,7 +28,7 @@ class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocume
         // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
         // and replace using the API 'timestamp' key.
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(Bucket.TIMESTAMP, timestamp);
+        hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), timestamp);
 
         Influencer influencer = objectMapper.convertValue(hit.getSource(), Influencer.class);
         influencer.setId(hit.getId());

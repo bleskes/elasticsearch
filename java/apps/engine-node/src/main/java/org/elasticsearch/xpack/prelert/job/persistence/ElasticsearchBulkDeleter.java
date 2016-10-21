@@ -65,7 +65,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
         deleteRecords(bucket);
         deleteBucketInfluencers(bucket);
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), Bucket.TYPE, bucket.getId()));
+                client.prepareDelete(jobId.getIndex(), Bucket.TYPE.getPreferredName(), bucket.getId()));
         ++deletedBucketCount;
     }
 
@@ -121,17 +121,17 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     public void deleteBucketInfluencers(Bucket bucket) {
         // Find the bucket influencers using the time stamp, relying on the
         // bucket influencer timestamps being identical to the bucket timestamp.
-        deleteTypeByBucket(bucket, BucketInfluencer.TYPE, () -> ++deletedBucketInfluencerCount);
+        deleteTypeByBucket(bucket, BucketInfluencer.TYPE.getPreferredName(), () -> ++deletedBucketInfluencerCount);
     }
 
     public void deleteInfluencers(Bucket bucket) {
         // Find the influencers using the time stamp, relying on the influencer
         // timestamps being identical to the bucket timestamp.
-        deleteTypeByBucket(bucket, Influencer.TYPE, () -> ++deletedInfluencerCount);
+        deleteTypeByBucket(bucket, Influencer.TYPE.getPreferredName(), () -> ++deletedInfluencerCount);
     }
 
     public void deleteBucketByTime(Bucket bucket) {
-        deleteTypeByBucket(bucket, Bucket.TYPE, () -> ++deletedBucketCount);
+        deleteTypeByBucket(bucket, Bucket.TYPE.getPreferredName(), () -> ++deletedBucketCount);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
             return;
         }
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), Influencer.TYPE, id));
+                client.prepareDelete(jobId.getIndex(), Influencer.TYPE.getPreferredName(), id));
         ++deletedInfluencerCount;
     }
 
@@ -183,10 +183,11 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     }
 
     public void deleteInterimResults() {
-        QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM, true);
+        QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM.getPreferredName(), true);
 
         SearchResponse searchResponse = client.prepareSearch(jobId.getIndex())
-                .setTypes(Bucket.TYPE, AnomalyRecord.TYPE.getPreferredName(), Influencer.TYPE, BucketInfluencer.TYPE)
+                .setTypes(Bucket.TYPE.getPreferredName(), AnomalyRecord.TYPE.getPreferredName(), Influencer.TYPE.getPreferredName(),
+                        BucketInfluencer.TYPE.getPreferredName())
                 .setQuery(qb)
                 .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                 .setScroll(SCROLL_CONTEXT_DURATION)

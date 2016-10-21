@@ -89,12 +89,12 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(AnomalyRecord.TYPE.getPreferredName());
         overridden.add(AuditActivity.TYPE);
         overridden.add(AuditMessage.TYPE);
-        overridden.add(Bucket.TYPE);
+        overridden.add(Bucket.TYPE.getPreferredName());
         overridden.add(BucketProcessingTime.TYPE);
-        overridden.add(BucketInfluencer.TYPE);
+        overridden.add(BucketInfluencer.TYPE.getPreferredName());
         overridden.add(CategorizerState.TYPE);
         overridden.add(CategoryDefinition.TYPE.getPreferredName());
-        overridden.add(Influencer.TYPE);
+        overridden.add(Influencer.TYPE.getPreferredName());
         overridden.add(JobDetails.TYPE);
         overridden.add(ListDocument.TYPE.getPreferredName());
         overridden.add(ModelDebugOutput.TYPE);

@@ -154,7 +154,7 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         private SingleDocument result;
 
         private Response() {
-            result = SingleDocument.empty(Bucket.TYPE);
+            result = SingleDocument.empty(Bucket.TYPE.getPreferredName());
         }
 
         Response(SingleDocument result) {
@@ -196,8 +196,8 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               ElasticsearchJobProvider jobProvider) {
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }
@@ -206,15 +206,15 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         protected void doExecute(Request request, ActionListener<Response> listener) {
             BucketQueryBuilder.BucketQuery query =
                     new BucketQueryBuilder(request.timestamp).expand(request.expand)
-                            .includeInterim(request.includeInterim)
-                            .partitionValue(request.partitionValue)
-                            .build();
+                    .includeInterim(request.includeInterim)
+                    .partitionValue(request.partitionValue)
+                    .build();
 
             Optional<Bucket> b = jobProvider.bucket(request.jobId, query);
             if (b.isPresent()) {
                 try {
                     BytesReference document = new BytesArray(objectMapper.writeValueAsBytes(b.get()));
-                    listener.onResponse(new Response(new SingleDocument(Bucket.TYPE, document)));
+                    listener.onResponse(new Response(new SingleDocument(Bucket.TYPE.getPreferredName(), document)));
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }

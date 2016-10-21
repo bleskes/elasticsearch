@@ -26,17 +26,17 @@ final class InfluencerParser extends FieldNameParser<Influencer> {
     protected void handleFieldName(String fieldName, Influencer influencer) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case Influencer.PROBABILITY:
+            case "probability":
                 influencer.setProbability(parseAsDoubleOrZero(fieldName));
                 break;
-            case Influencer.INITIAL_ANOMALY_SCORE:
+            case "initialAnomalyScore":
                 influencer.setInitialAnomalyScore(parseAsDoubleOrZero(fieldName));
                 influencer.setAnomalyScore(influencer.getInitialAnomalyScore());
                 break;
-            case Influencer.INFLUENCER_FIELD_NAME:
+            case "influencerFieldName":
                 influencer.setInfluencerFieldName(parseAsStringOrNull(fieldName));
                 break;
-            case Influencer.INFLUENCER_FIELD_VALUE:
+            case "influencerFieldValue":
                 influencer.setInfluencerFieldValue(parseAsStringOrNull(fieldName));
                 break;
             default:

@@ -140,7 +140,7 @@ public final class BucketsQueryBuilder {
         private String epochStart;
         private String epochEnd;
         private String partitionValue = null;
-        private String sortField = Bucket.TIMESTAMP;
+        private String sortField = Bucket.TIMESTAMP.getPreferredName();
         private boolean sortDescending = false;
 
         public int getSkip() {

@@ -115,7 +115,7 @@ public final class InfluencersQueryBuilder {
         private double anomalyScoreFilter = 0.0d;
         private String epochStart;
         private String epochEnd;
-        private String sortField = Influencer.ANOMALY_SCORE;
+        private String sortField = Influencer.ANOMALY_SCORE.getPreferredName();
         private boolean sortDescending = false;
 
         public int getSkip() {

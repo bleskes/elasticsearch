@@ -33,41 +33,41 @@ final class BucketParser extends FieldNameParser<Bucket> {
     protected void handleFieldName(String fieldName, Bucket bucket) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case Bucket.TIMESTAMP:
+            case "timestamp":
                 parseTimestamp(bucket, token);
                 break;
-            case Bucket.ANOMALY_SCORE:
+            case "anomalyScore":
                 bucket.setAnomalyScore(parseAsDoubleOrZero(fieldName));
                 bucket.setInitialAnomalyScore(bucket.getAnomalyScore());
                 break;
-            case Bucket.MAX_NORMALIZED_PROBABILITY:
+            case "maxNormalizedProbability":
                 bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(fieldName));
                 break;
-            case Bucket.RECORD_COUNT:
+            case "recordCount":
                 bucket.setRecordCount(parseAsIntOrZero(fieldName));
                 break;
-            case Bucket.EVENT_COUNT:
+            case "eventCount":
                 bucket.setEventCount(parseAsLongOrZero(fieldName));
                 break;
-            case Bucket.IS_INTERIM:
+            case "isInterim":
                 bucket.setInterim(parseAsBooleanOrNull(fieldName));
                 break;
-            case Bucket.RECORDS:
+            case "records":
                 bucket.setRecords(parseRecords(fieldName));
                 break;
-            case Bucket.BUCKET_INFLUENCERS:
+            case "bucketInfluencers":
                 bucket.setBucketInfluencers(parseBucketInfluencers(fieldName));
                 break;
-            case Bucket.INFLUENCERS:
+            case "influencers":
                 bucket.setInfluencers(parseInfluencers(fieldName));
                 break;
-            case Bucket.BUCKET_SPAN:
+            case "bucketSpan":
                 bucket.setBucketSpan(parseAsLongOrZero(fieldName));
                 break;
-            case Bucket.PROCESSING_TIME_MS:
+            case "processingTimeMs":
                 bucket.setProcessingTimeMs(parseAsLongOrZero(fieldName));
                 break;
-            case Bucket.PARTITION_SCORES:
+            case "partitionScores":
                 bucket.setPartitionScores(parsePartitionScores(fieldName));
                 break;
             default:

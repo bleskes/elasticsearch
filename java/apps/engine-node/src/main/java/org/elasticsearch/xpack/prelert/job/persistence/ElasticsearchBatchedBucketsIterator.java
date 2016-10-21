@@ -18,7 +18,7 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedDocumentsI
     @Override
     protected String getType()
     {
-        return Bucket.TYPE;
+        return Bucket.TYPE.getPreferredName();
     }
 
     @Override
@@ -27,7 +27,7 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedDocumentsI
         // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
         // and replace using the API 'timestamp' key.
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(Bucket.TIMESTAMP, timestamp);
+        hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), timestamp);
 
         Bucket bucket = objectMapper.convertValue(hit.getSource(), Bucket.class);
         bucket.setId(hit.getId());

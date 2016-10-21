@@ -26,17 +26,17 @@ final class BucketInfluencerParser extends FieldNameParser<BucketInfluencer> {
     protected void handleFieldName(String fieldName, BucketInfluencer influencer) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case BucketInfluencer.PROBABILITY:
+            case "probability":
                 influencer.setProbability(parseAsDoubleOrZero(fieldName));
                 break;
-            case BucketInfluencer.INITIAL_ANOMALY_SCORE:
+            case "initialAnomalyScore":
                 influencer.setInitialAnomalyScore(parseAsDoubleOrZero(fieldName));
                 influencer.setAnomalyScore(influencer.getInitialAnomalyScore());
                 break;
-            case BucketInfluencer.RAW_ANOMALY_SCORE:
+            case "rawAnomalyScore":
                 influencer.setRawAnomalyScore(parseAsDoubleOrZero(fieldName));
                 break;
-            case BucketInfluencer.INFLUENCER_FIELD_NAME:
+            case "influencerFieldName":
                 influencer.setInfluencerFieldName(parseAsStringOrNull(fieldName));
                 break;
             default:

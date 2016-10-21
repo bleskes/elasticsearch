@@ -37,7 +37,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
@@ -400,15 +399,15 @@ public class ElasticsearchJobProvider implements JobProvider
             client.admin().indices()
             .prepareCreate(elasticJobId.getIndex())
             .setSettings(prelertIndexSettings())
-            .addMapping(Bucket.TYPE, bucketMapping)
-            .addMapping(BucketInfluencer.TYPE, bucketInfluencerMapping)
+            .addMapping(Bucket.TYPE.getPreferredName(), bucketMapping)
+            .addMapping(BucketInfluencer.TYPE.getPreferredName(), bucketInfluencerMapping)
             .addMapping(CategorizerState.TYPE, categorizerStateMapping)
                     .addMapping(CategoryDefinition.TYPE.getPreferredName(), categoryDefinitionMapping)
                     .addMapping(AnomalyRecord.TYPE.getPreferredName(), recordMapping)
             .addMapping(Quantiles.TYPE, quantilesMapping)
             .addMapping(ModelSnapshot.TYPE, modelSnapshotMapping)
             .addMapping(ModelSizeStats.TYPE, modelSizeStatsMapping)
-            .addMapping(Influencer.TYPE, influencerMapping)
+            .addMapping(Influencer.TYPE.getPreferredName(), influencerMapping)
             .addMapping(ModelDebugOutput.TYPE, modelDebugMapping)
             .addMapping(BucketProcessingTime.TYPE, processingTimeMapping)
             .addMapping(PartitionNormalisedProb.TYPE, partitionScoreMapping)
@@ -482,9 +481,9 @@ public class ElasticsearchJobProvider implements JobProvider
     {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
-                .score(Bucket.ANOMALY_SCORE, query.getAnomalyScoreFilter())
-                .score(Bucket.MAX_NORMALIZED_PROBABILITY, query.getNormalizedProbability())
-                .interim(Bucket.IS_INTERIM, query.isIncludeInterim())
+                .score(Bucket.ANOMALY_SCORE.getPreferredName(), query.getAnomalyScoreFilter())
+                .score(Bucket.MAX_NORMALIZED_PROBABILITY.getPreferredName(), query.getNormalizedProbability())
+                .interim(Bucket.IS_INTERIM.getPreferredName(), query.isIncludeInterim())
                 .build();
 
         SortBuilder sortBuilder = new FieldSortBuilder(esSortField(query.getSortField()))
@@ -564,7 +563,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " from index " + jobId.getIndex() + " sort ascending " + ElasticsearchMappings.ES_TIMESTAMP +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = client.prepareSearch(jobId.getIndex())
-                    .setTypes(Bucket.TYPE)
+                    .setTypes(Bucket.TYPE.getPreferredName())
                     .addSort(sb)
                     .setPostFilter(fb)
                     .setFrom(skip).setSize(take)
@@ -581,7 +580,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
             Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            hit.getSource().put(Bucket.TIMESTAMP, timestamp);
+            hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), timestamp);
 
             Bucket bucket = objectMapper.convertValue(hit.getSource(), Bucket.class);
             bucket.setId(hit.getId());
@@ -607,7 +606,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     query.getTimestamp());
 
             SearchResponse searchResponse = client.prepareSearch(elasticJobId.getIndex())
-                    .setTypes(Bucket.TYPE)
+                    .setTypes(Bucket.TYPE.getPreferredName())
                     .setQuery(qb)
                     .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
                     .get();
@@ -622,7 +621,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
             Object ts = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            hit.getSource().put(Bucket.TIMESTAMP, ts);
+            hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), ts);
 
             Bucket bucket = objectMapper.convertValue(hit.getSource(), Bucket.class);
             bucket.setId(hit.getId());
@@ -930,8 +929,8 @@ public class ElasticsearchJobProvider implements JobProvider
 
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
-                .score(Bucket.ANOMALY_SCORE, query.getAnomalyScoreFilter())
-                .interim(Bucket.IS_INTERIM, query.isIncludeInterim())
+                .score(Bucket.ANOMALY_SCORE.getPreferredName(), query.getAnomalyScoreFilter())
+                .interim(Bucket.IS_INTERIM.getPreferredName(), query.isIncludeInterim())
                 .build();
 
         return influencers(new ElasticsearchJobId(jobId), query.getSkip(), query.getTake(), fb, query.getSortField(),
@@ -946,7 +945,7 @@ public class ElasticsearchJobProvider implements JobProvider
         + " with filter after sort skip " + skip + " take " + take);
 
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(jobId.getIndex())
-                .setTypes(Influencer.TYPE)
+                .setTypes(Influencer.TYPE.getPreferredName())
                 .setPostFilter(filterBuilder)
                 .setFrom(skip).setSize(take);
 
@@ -970,7 +969,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Map<String, Object> m = hit.getSource();
 
             // replace logstash timestamp name with timestamp
-            m.put(Influencer.TIMESTAMP, m.remove(ElasticsearchMappings.ES_TIMESTAMP));
+            m.put(Influencer.TIMESTAMP.getPreferredName(), m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 
             Influencer influencer = objectMapper.convertValue(m, Influencer.class);
             influencer.setId(hit.getId());
@@ -1319,6 +1318,6 @@ public class ElasticsearchJobProvider implements JobProvider
         // Beware: There's an assumption here that Bucket.TIMESTAMP,
         // AnomalyRecord.TIMESTAMP, Influencer.TIMESTAMP and
         // ModelSnapshot.TIMESTAMP are all the same
-        return sortField.equals(Bucket.TIMESTAMP) ? ElasticsearchMappings.ES_TIMESTAMP : sortField;
+        return sortField.equals(Bucket.TIMESTAMP.getPreferredName()) ? ElasticsearchMappings.ES_TIMESTAMP : sortField;
     }
 }
