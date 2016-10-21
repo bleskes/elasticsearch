@@ -400,9 +400,9 @@ public class ElasticsearchJobProvider implements JobProvider
             createIndexRequest.mapping(CategorizerState.TYPE, categorizerStateMapping);
             createIndexRequest.mapping(CategoryDefinition.TYPE.getPreferredName(), categoryDefinitionMapping);
             createIndexRequest.mapping(AnomalyRecord.TYPE.getPreferredName(), recordMapping);
-            createIndexRequest.mapping(Quantiles.TYPE, quantilesMapping);
-            createIndexRequest.mapping(ModelSnapshot.TYPE, modelSnapshotMapping);
-            createIndexRequest.mapping(ModelSizeStats.TYPE, modelSizeStatsMapping);
+            createIndexRequest.mapping(Quantiles.TYPE.getPreferredName(), quantilesMapping);
+            createIndexRequest.mapping(ModelSnapshot.TYPE.getPreferredName(), modelSnapshotMapping);
+            createIndexRequest.mapping(ModelSizeStats.TYPE.getPreferredName(), modelSizeStatsMapping);
             createIndexRequest.mapping(Influencer.TYPE.getPreferredName(), influencerMapping);
             createIndexRequest.mapping(ModelDebugOutput.TYPE.getPreferredName(), modelDebugMapping);
             createIndexRequest.mapping(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE, processingTimeMapping);
@@ -1017,7 +1017,7 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.trace("ES API CALL: get ID " + Quantiles.QUANTILES_ID +
                     " type " + Quantiles.TYPE + " from index " + elasticJobId.getIndex());
             GetResponse response = client.prepareGet(
-                    elasticJobId.getIndex(), Quantiles.TYPE, Quantiles.QUANTILES_ID).get();
+                    elasticJobId.getIndex(), Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID).get();
             if (!response.isExists())
             {
                 LOGGER.info("There are currently no quantiles for job " + jobId);
@@ -1052,11 +1052,11 @@ public class ElasticsearchJobProvider implements JobProvider
             BoolQueryBuilder query = QueryBuilders.boolQuery();
             if (haveId)
             {
-                query.must(QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID, snapshotId));
+                query.must(QueryBuilders.termQuery(ModelSnapshot.SNAPSHOT_ID.getPreferredName(), snapshotId));
             }
             if (haveDescription)
             {
-                query.must(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION, description));
+                query.must(QueryBuilders.termQuery(ModelSnapshot.DESCRIPTION.getPreferredName(), description));
             }
 
             fb = new ResultsFilterBuilder(query);
@@ -1067,7 +1067,7 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         return modelSnapshots(new ElasticsearchJobId(jobId), skip, take,
-                (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY : sortField,
+                (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY.getPreferredName() : sortField,
                         sortDescending, fb.timeRange(
                                 ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
     }
@@ -1089,7 +1089,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " from index " + jobId.getIndex() + " sort ascending " + esSortField(sortField) +
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = client.prepareSearch(jobId.getIndex())
-                    .setTypes(ModelSnapshot.TYPE)
+                    .setTypes(ModelSnapshot.TYPE.getPreferredName())
                     .addSort(sb)
                     .setQuery(fb)
                     .setFrom(skip).setSize(take)
@@ -1107,7 +1107,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
             Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            hit.getSource().put(ModelSnapshot.TIMESTAMP, timestamp);
+            hit.getSource().put(ModelSnapshot.TIMESTAMP.getPreferredName(), timestamp);
 
             Object o = hit.getSource().get(ModelSizeStats.TYPE);
             if (o instanceof Map)
@@ -1193,7 +1193,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
 
             GetResponse modelSizeStatsResponse = client.prepareGet(
-                    elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
+                    elasticJobId.getIndex(), ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()).get();
 
             if (!modelSizeStatsResponse.isExists())
             {

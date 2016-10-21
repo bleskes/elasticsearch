@@ -222,7 +222,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistQuantiles(Quantiles quantiles)
     {
-        Persistable persistable = new Persistable(quantiles, () -> Quantiles.TYPE,
+        Persistable persistable = new Persistable(quantiles, () -> Quantiles.TYPE.getPreferredName(),
                 () -> Quantiles.QUANTILES_ID, () -> serialiseWithJobId(quantiles));
         if (persistable.persist())
         {
@@ -243,7 +243,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistModelSnapshot(ModelSnapshot modelSnapshot)
     {
-        Persistable persistable = new Persistable(modelSnapshot, () -> ModelSnapshot.TYPE,
+        Persistable persistable = new Persistable(modelSnapshot, () -> ModelSnapshot.TYPE.getPreferredName(),
                 () -> modelSnapshot.getSnapshotId(), () -> serialiseWithJobId(modelSnapshot));
         persistable.persist();
     }
@@ -256,14 +256,14 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public void persistModelSizeStats(ModelSizeStats modelSizeStats)
     {
         LOGGER.trace("Persisting model size stats, for size " + modelSizeStats.getModelBytes());
-        Persistable persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
+        Persistable persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE.getPreferredName(),
                 () -> modelSizeStats.getModelSizeStatsId(),
                 () -> serialiseWithJobId(modelSizeStats));
         persistable.persist();
 
         modelSizeStats.setModelSizeStatsId(null);
 
-        persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE,
+        persistable = new Persistable(modelSizeStats, () -> ModelSizeStats.TYPE.getPreferredName(),
                 () -> modelSizeStats.getModelSizeStatsId(),
                 () -> serialiseWithJobId(modelSizeStats));
         persistable.persist();

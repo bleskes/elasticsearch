@@ -3,6 +3,16 @@ package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -16,22 +26,36 @@ import java.util.Objects;
  * ModelSnapshot Result POJO
  */
 @JsonInclude(Include.NON_NULL)
-public class ModelSnapshot implements StorageSerialisable {
+public class ModelSnapshot extends ToXContentToBytes implements Writeable, StorageSerialisable {
     /**
      * Field Names
      */
-    public static final String TIMESTAMP = "timestamp";
-    public static final String DESCRIPTION = "description";
-    public static final String RESTORE_PRIORITY = "restorePriority";
-    public static final String SNAPSHOT_ID = "snapshotId";
-    public static final String SNAPSHOT_DOC_COUNT = "snapshotDocCount";
-    public static final String LATEST_RECORD_TIME = "latestRecordTimeStamp";
-    public static final String LATEST_RESULT_TIME = "latestResultTimeStamp";
+    public static final ParseField TIMESTAMP = new ParseField("timestamp");
+    public static final ParseField DESCRIPTION = new ParseField("description");
+    public static final ParseField RESTORE_PRIORITY = new ParseField("restorePriority");
+    public static final ParseField SNAPSHOT_ID = new ParseField("snapshotId");
+    public static final ParseField SNAPSHOT_DOC_COUNT = new ParseField("snapshotDocCount");
+    public static final ParseField LATEST_RECORD_TIME = new ParseField("latestRecordTimeStamp");
+    public static final ParseField LATEST_RESULT_TIME = new ParseField("latestResultTimeStamp");
 
     /**
      * Elasticsearch type
      */
-    public static final String TYPE = "modelSnapshot";
+    public static final ParseField TYPE = new ParseField("modelSnapshot");
+
+    public static final ObjectParser<ModelSnapshot, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
+            ModelSnapshot::new);
+    static {
+        PARSER.declareField(ModelSnapshot::setTimestamp, p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
+        PARSER.declareString(ModelSnapshot::setDescription, DESCRIPTION);
+        PARSER.declareLong(ModelSnapshot::setRestorePriority, RESTORE_PRIORITY);
+        PARSER.declareString(ModelSnapshot::setSnapshotId, SNAPSHOT_ID);
+        PARSER.declareInt(ModelSnapshot::setSnapshotDocCount, SNAPSHOT_DOC_COUNT);
+        PARSER.declareObject(ModelSnapshot::setModelSizeStats, ModelSizeStats.PARSER, ModelSizeStats.TYPE);
+        PARSER.declareField(ModelSnapshot::setLatestRecordTimeStamp, p -> new Date(p.longValue()), LATEST_RECORD_TIME, ValueType.LONG);
+        PARSER.declareField(ModelSnapshot::setLatestResultTimeStamp, p -> new Date(p.longValue()), LATEST_RESULT_TIME, ValueType.LONG);
+        PARSER.declareObject(ModelSnapshot::setQuantiles, Quantiles.PARSER, Quantiles.TYPE);
+    }
 
     private Date timestamp;
     private String description;
@@ -42,6 +66,78 @@ public class ModelSnapshot implements StorageSerialisable {
     private Date latestRecordTimeStamp;
     private Date latestResultTimeStamp;
     private Quantiles quantiles;
+
+    public ModelSnapshot() {
+    }
+
+    public ModelSnapshot(StreamInput in) throws IOException {
+        if (in.readBoolean()) {
+            timestamp = new Date(in.readLong());
+        }
+        description = in.readOptionalString();
+        restorePriority = in.readLong();
+        snapshotId = in.readOptionalString();
+        snapshotDocCount = in.readInt();
+        modelSizeStats = new ModelSizeStats(in);
+        if (in.readBoolean()) {
+            latestRecordTimeStamp = new Date(in.readLong());
+        }
+        if (in.readBoolean()) {
+            latestResultTimeStamp = new Date(in.readLong());
+        }
+        quantiles = new Quantiles(in);
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        boolean hasTimestamp = timestamp != null;
+        out.writeBoolean(hasTimestamp);
+        if (hasTimestamp) {
+            out.writeLong(timestamp.getTime());
+        }
+        out.writeOptionalString(description);
+        out.writeLong(restorePriority);
+        out.writeOptionalString(snapshotId);
+        out.writeInt(snapshotDocCount);
+        modelSizeStats.writeTo(out);
+        boolean hasLatestRecordTimeStamp = latestRecordTimeStamp != null;
+        out.writeBoolean(hasLatestRecordTimeStamp);
+        if (hasLatestRecordTimeStamp) {
+            out.writeLong(latestRecordTimeStamp.getTime());
+        }
+        boolean hasLatestResultTimeStamp = latestResultTimeStamp != null;
+        out.writeBoolean(hasLatestResultTimeStamp);
+        if (hasLatestResultTimeStamp) {
+            out.writeLong(latestResultTimeStamp.getTime());
+        }
+        quantiles.writeTo(out);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        if (timestamp != null) {
+            builder.field(TIMESTAMP.getPreferredName(), timestamp.getTime());
+        }
+        if (description != null) {
+            builder.field(DESCRIPTION.getPreferredName(), description);
+        }
+        builder.field(RESTORE_PRIORITY.getPreferredName(), restorePriority);
+        if (snapshotId != null) {
+            builder.field(SNAPSHOT_ID.getPreferredName(), snapshotId);
+        }
+        builder.field(SNAPSHOT_DOC_COUNT.getPreferredName(), snapshotDocCount);
+        builder.field(ModelSizeStats.TYPE.getPreferredName(), modelSizeStats);
+        if (latestRecordTimeStamp != null) {
+            builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
+        }
+        if (latestResultTimeStamp != null) {
+            builder.field(LATEST_RESULT_TIME.getPreferredName(), latestResultTimeStamp.getTime());
+        }
+        builder.field(Quantiles.TYPE.getPreferredName(), quantiles);
+        builder.endObject();
+        return builder;
+    }
 
     public Date getTimestamp() {
         return timestamp;
@@ -150,26 +246,24 @@ public class ModelSnapshot implements StorageSerialisable {
     @Override
     public void serialise(StorageSerialiser serialiser) throws IOException {
         serialiser.addTimestamp(timestamp)
-                .add(DESCRIPTION, description)
-                .add(RESTORE_PRIORITY, restorePriority)
-                .add(SNAPSHOT_ID, snapshotId)
-                .add(SNAPSHOT_DOC_COUNT, snapshotDocCount);
+        .add(DESCRIPTION.getPreferredName(), description).add(RESTORE_PRIORITY.getPreferredName(), restorePriority)
+        .add(SNAPSHOT_ID.getPreferredName(), snapshotId).add(SNAPSHOT_DOC_COUNT.getPreferredName(), snapshotDocCount);
 
         if (modelSizeStats != null) {
-            serialiser.startObject(ModelSizeStats.TYPE);
+            serialiser.startObject(ModelSizeStats.TYPE.getPreferredName());
             modelSizeStats.serialise(serialiser);
             serialiser.endObject();
         }
         if (quantiles != null) {
-            serialiser.startObject(Quantiles.TYPE);
+            serialiser.startObject(Quantiles.TYPE.getPreferredName());
             quantiles.serialise(serialiser);
             serialiser.endObject();
         }
         if (latestRecordTimeStamp != null) {
-            serialiser.add(LATEST_RECORD_TIME, latestRecordTimeStamp);
+            serialiser.add(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp);
         }
         if (latestResultTimeStamp != null) {
-            serialiser.add(LATEST_RESULT_TIME, latestResultTimeStamp);
+            serialiser.add(LATEST_RESULT_TIME.getPreferredName(), latestResultTimeStamp);
         }
     }
 }

@@ -198,7 +198,7 @@ public class AutodetectResultsParser {
 
                         logger.trace("Bucket number " + ++bucketCount + " parsed from output");
                         break;
-                    case Quantiles.QUANTILE_STATE:
+                    case "quantileState":
                         Quantiles quantiles = new QuantilesParser(parser).parseJsonAfterStartObject();
                         persister.persistQuantiles(quantiles);
 
@@ -210,7 +210,7 @@ public class AutodetectResultsParser {
                             renormaliser.renormalise(quantiles, logger);
                         }
                         break;
-                    case ModelSnapshot.SNAPSHOT_ID:
+                    case "snapshotId":
                         ModelSnapshot modelSnapshot = new ModelSnapshotParser(parser).parseJsonAfterStartObject();
                         persister.persistModelSnapshot(modelSnapshot);
                         break;

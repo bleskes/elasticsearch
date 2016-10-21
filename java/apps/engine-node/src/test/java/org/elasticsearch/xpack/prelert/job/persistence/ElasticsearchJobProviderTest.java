@@ -2,7 +2,6 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -26,7 +25,6 @@ import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -41,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Matchers.any;
@@ -83,7 +80,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .throwMissingIndexOnPrepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID);
+                .throwMissingIndexOnPrepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
@@ -99,7 +96,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
@@ -111,13 +108,13 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     public void testGetQuantiles_GivenQuantilesHaveNonEmptyState()
             throws InterruptedException, ExecutionException, UnknownJobException {
         Map<String, Object> source = new HashMap<>();
-        source.put(Quantiles.QUANTILE_STATE, "state");
+        source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "state");
         GetResponse getResponse = createGetResponse(true, source);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
@@ -134,7 +131,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE, Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
@@ -1029,7 +1026,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE, skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -1083,7 +1080,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE, skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);

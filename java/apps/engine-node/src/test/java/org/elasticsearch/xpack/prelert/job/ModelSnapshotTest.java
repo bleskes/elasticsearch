@@ -1,15 +1,18 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.io.IOException;
 import java.util.Date;
 
-public class ModelSnapshotTest extends ESTestCase {
+public class ModelSnapshotTest extends AbstractSerializingTestCase<ModelSnapshot> {
     private static final Date DEFAULT_TIMESTAMP = new Date();
     private static final String DEFAULT_DESCRIPTION = "a snapshot";
     private static final String DEFAULT_ID = "my_id";
@@ -225,5 +228,65 @@ public class ModelSnapshotTest extends ESTestCase {
         modelSnapshot.setLatestRecordTimeStamp(DEFAULT_LATEST_RECORD_TIMESTAMP);
         modelSnapshot.setQuantiles(new Quantiles());
         return modelSnapshot;
+    }
+
+    @Override
+    protected ModelSnapshot createTestInstance() {
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setTimestamp(new Date(randomLong()));
+        modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
+        modelSnapshot.setRestorePriority(randomLong());
+        modelSnapshot.setSnapshotId(randomAsciiOfLengthBetween(1, 20));
+        modelSnapshot.setSnapshotDocCount(randomInt());
+        ModelSizeStats stats = new ModelSizeStats();
+        if (randomBoolean()) {
+            stats.setBucketAllocationFailuresCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setModelBytes(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setTotalByFieldCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setTotalOverFieldCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setTotalPartitionFieldCount(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            stats.setLogTime(new Date(randomLong()));
+        }
+        if (randomBoolean()) {
+            stats.setTimestamp(new Date(randomLong()));
+        }
+        if (randomBoolean()) {
+            stats.setMemoryStatus(randomFrom(MemoryStatus.values()));
+        }
+        if (randomBoolean()) {
+            stats.setModelSizeStatsId(randomAsciiOfLengthBetween(1, 20));
+        }
+        modelSnapshot.setModelSizeStats(stats);
+        modelSnapshot.setLatestResultTimeStamp(new Date(randomLong()));
+        modelSnapshot.setLatestRecordTimeStamp(new Date(randomLong()));
+        Quantiles quantiles = new Quantiles();
+        if (randomBoolean()) {
+            quantiles.setTimestamp(new Date(randomLong()));
+        }
+        if (randomBoolean()) {
+            quantiles.setQuantileState(randomAsciiOfLengthBetween(0, 1000));
+        }
+        modelSnapshot.setQuantiles(quantiles);
+        return modelSnapshot;
+    }
+
+    @Override
+    protected Reader<ModelSnapshot> instanceReader() {
+        return ModelSnapshot::new;
+    }
+
+    @Override
+    protected ModelSnapshot parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return ModelSnapshot.PARSER.apply(parser, () -> matcher);
     }
 }

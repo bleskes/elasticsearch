@@ -27,12 +27,12 @@ final class QuantilesParser extends FieldNameParser<Quantiles> {
     protected void handleFieldName(String fieldName, Quantiles quantiles) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case Quantiles.TIMESTAMP:
+            case "timestamp":
                 long seconds = parseAsLongOrZero(fieldName);
                 // convert seconds to ms
                 quantiles.setTimestamp(new Date(seconds * 1000));
                 break;
-            case Quantiles.QUANTILE_STATE:
+            case "quantileState":
                 quantiles.setQuantileState(parseAsStringOrNull(fieldName));
                 break;
             default:

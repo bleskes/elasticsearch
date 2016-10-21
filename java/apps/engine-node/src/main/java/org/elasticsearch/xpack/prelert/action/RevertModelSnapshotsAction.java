@@ -178,13 +178,13 @@ public class RevertModelSnapshotsAction extends Action<RevertModelSnapshotsActio
 
         public Response() {
             super(false);
-            response = SingleDocument.empty(ModelSnapshot.TYPE);
+            response = SingleDocument.empty(ModelSnapshot.TYPE.getPreferredName());
         }
 
         public Response(ModelSnapshot modelSnapshot, ObjectMapper objectMapper) throws JsonProcessingException {
             super(true);
             byte[] asBytes = objectMapper.writeValueAsBytes(modelSnapshot);
-            response = new SingleDocument(ModelSnapshot.TYPE, new BytesArray(asBytes));
+            response = new SingleDocument(ModelSnapshot.TYPE.getPreferredName(), new BytesArray(asBytes));
         }
 
         public SingleDocument getResponse() {
@@ -223,9 +223,9 @@ public class RevertModelSnapshotsAction extends Action<RevertModelSnapshotsActio
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               JobManager jobManager, ElasticsearchJobProvider jobProvider, ClusterService clusterService,
-                               ElasticsearchBulkDeleterFactory bulkDeleterFactory) {
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                JobManager jobManager, ElasticsearchJobProvider jobProvider, ClusterService clusterService,
+                ElasticsearchBulkDeleterFactory bulkDeleterFactory) {
             super(settings, NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;
@@ -274,7 +274,7 @@ public class RevertModelSnapshotsAction extends Action<RevertModelSnapshotsActio
             List<ModelSnapshot> revertCandidates;
             try {
                 revertCandidates = provider.modelSnapshots(request.getJobId(), 0, 1,
-                        null, request.getTime(), ModelSnapshot.TIMESTAMP, true,
+                        null, request.getTime(), ModelSnapshot.TIMESTAMP.getPreferredName(), true,
                         request.getSnapshotId(), request.getDescription()).hits();
             } catch (UnknownJobException e) {
                 throw ExceptionsHelper.missingException(request.getJobId());

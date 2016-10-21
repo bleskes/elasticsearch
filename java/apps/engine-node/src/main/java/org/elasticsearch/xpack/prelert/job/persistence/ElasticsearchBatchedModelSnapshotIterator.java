@@ -18,7 +18,7 @@ class ElasticsearchBatchedModelSnapshotIterator extends ElasticsearchBatchedDocu
     @Override
     protected String getType()
     {
-        return ModelSnapshot.TYPE;
+        return ModelSnapshot.TYPE.getPreferredName();
     }
 
     @Override
@@ -27,7 +27,7 @@ class ElasticsearchBatchedModelSnapshotIterator extends ElasticsearchBatchedDocu
         // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
         // and replace using the API 'timestamp' key.
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(ModelSnapshot.TIMESTAMP, timestamp);
+        hit.getSource().put(ModelSnapshot.TIMESTAMP.getPreferredName(), timestamp);
 
         return objectMapper.convertValue(hit.getSource(), ModelSnapshot.class);
     }

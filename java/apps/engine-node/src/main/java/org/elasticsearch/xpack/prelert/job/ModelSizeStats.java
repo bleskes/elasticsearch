@@ -55,7 +55,7 @@ public class ModelSizeStats extends ToXContentToBytes implements StorageSerialis
     /**
      * Elasticsearch type
      */
-    public static final String TYPE = "modelSizeStats";
+    public static final ParseField TYPE = new ParseField("modelSizeStats");
 
     /**
      * The status of the memory monitored by the ResourceMonitor. OK is default,
@@ -107,7 +107,7 @@ public class ModelSizeStats extends ToXContentToBytes implements StorageSerialis
     private MemoryStatus memoryStatus = MemoryStatus.OK;
     private Date timestamp;
     private Date logTime;
-    private String id = TYPE;
+    private String id = TYPE.getPreferredName();
 
     public ModelSizeStats() {
         this.logTime = new Date();

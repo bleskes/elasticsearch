@@ -60,7 +60,7 @@ class ElasticsearchJobDetailsMapper
         LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
                 " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
         GetResponse modelSizeStatsResponse = client.prepareGet(
-                elasticJobId.getIndex(), ModelSizeStats.TYPE, ModelSizeStats.TYPE).get();
+                elasticJobId.getIndex(), ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()).get();
 
         if (!modelSizeStatsResponse.isExists())
         {

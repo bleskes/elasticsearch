@@ -1,13 +1,16 @@
 
 package org.elasticsearch.xpack.prelert.job.quantiles;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialiser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.io.IOException;
 import java.util.Date;
 
-public class QuantilesTest extends ESTestCase {
+public class QuantilesTest extends AbstractSerializingTestCase<Quantiles> {
 
     public void testEquals_GivenSameObject() {
         Quantiles quantiles = new Quantiles();
@@ -71,5 +74,27 @@ public class QuantilesTest extends ESTestCase {
                 + "\"quantileState\":\"foo\""
                 + "}";
         assertEquals(expected, serialiser.toJson());
+    }
+
+    @Override
+    protected Quantiles createTestInstance() {
+        Quantiles quantiles = new Quantiles();
+        if (randomBoolean()) {
+            quantiles.setTimestamp(new Date(randomLong()));
+        }
+        if (randomBoolean()) {
+            quantiles.setQuantileState(randomAsciiOfLengthBetween(0, 1000));
+        }
+        return quantiles;
+    }
+
+    @Override
+    protected Reader<Quantiles> instanceReader() {
+        return Quantiles::new;
+    }
+
+    @Override
+    protected Quantiles parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return Quantiles.PARSER.apply(parser, () -> matcher);
     }
 }

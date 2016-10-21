@@ -46,7 +46,8 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
         when(getResponse.isExists()).thenReturn(false);
         GetRequestBuilder getRequestBuilder = mock(GetRequestBuilder.class);
         when(getRequestBuilder.get()).thenReturn(getResponse);
-        when(client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE, ModelSizeStats.TYPE)).thenReturn(getRequestBuilder);
+        when(client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()))
+        .thenReturn(getRequestBuilder);
 
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
 
@@ -76,7 +77,8 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
         when(getModelSizeResponse.getSource()).thenReturn(modelSizeStatsSource);
         GetRequestBuilder getModelSizeRequestBuilder = mock(GetRequestBuilder.class);
         when(getModelSizeRequestBuilder.get()).thenReturn(getModelSizeResponse);
-        when(client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE, ModelSizeStats.TYPE)).thenReturn(getModelSizeRequestBuilder);
+        when(client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()))
+        .thenReturn(getModelSizeRequestBuilder);
 
 
         Map<String, Object> procTimeSource = new HashMap<>();
@@ -114,7 +116,8 @@ public class ElasticsearchJobDetailsMapperTest extends ESTestCase {
         when(getResponse.isExists()).thenReturn(false);
         GetRequestBuilder getRequestBuilder = mock(GetRequestBuilder.class);
         when(getRequestBuilder.get()).thenReturn(getResponse);
-        when(client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE, ModelSizeStats.TYPE)).thenReturn(getRequestBuilder);
+        when(client.prepareGet("prelertresults-foo", ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()))
+                .thenReturn(getRequestBuilder);
 
 
         GetResponse getProcTimeResponse = mock(GetResponse.class);

@@ -18,7 +18,7 @@ public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBat
     @Override
     protected String getType()
     {
-        return ModelSizeStats.TYPE;
+        return ModelSizeStats.TYPE.getPreferredName();
     }
 
     @Override

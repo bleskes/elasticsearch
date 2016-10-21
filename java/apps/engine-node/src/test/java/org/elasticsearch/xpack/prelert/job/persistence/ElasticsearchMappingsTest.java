@@ -98,9 +98,9 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(ListDocument.TYPE.getPreferredName());
         overridden.add(ModelDebugOutput.TYPE.getPreferredName());
         overridden.add(ModelState.TYPE);
-        overridden.add(ModelSnapshot.TYPE);
-        overridden.add(ModelSizeStats.TYPE);
-        overridden.add(Quantiles.TYPE);
+        overridden.add(ModelSnapshot.TYPE.getPreferredName());
+        overridden.add(ModelSizeStats.TYPE.getPreferredName());
+        overridden.add(Quantiles.TYPE.getPreferredName());
         overridden.add(Usage.TYPE);
 
         // These are not reserved because they're in the prelert-int index, not prelertresults-*
@@ -110,7 +110,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         // These are not reserved because they're analyzed strings, i.e. the same type as user-specified fields
         overridden.add(JobDetails.DESCRIPTION.getPreferredName());
         overridden.add(JobDetails.STATUS.getPreferredName());
-        overridden.add(ModelSnapshot.DESCRIPTION);
+        overridden.add(ModelSnapshot.DESCRIPTION.getPreferredName());
         overridden.add(SchedulerConfig.USERNAME.getPreferredName());
 
         Set<String> expected = new HashSet<>();

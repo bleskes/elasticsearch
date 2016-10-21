@@ -164,7 +164,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
         }
 
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), ModelSnapshot.TYPE, snapshotId));
+                client.prepareDelete(jobId.getIndex(), ModelSnapshot.TYPE.getPreferredName(), snapshotId));
         ++deletedModelSnapshotCount;
     }
 
@@ -179,7 +179,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     public void deleteModelSizeStats(ModelSizeStats modelSizeStats) {
         String id = modelSizeStats.getModelSizeStatsId();
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), ModelSizeStats.TYPE, id));
+                client.prepareDelete(jobId.getIndex(), ModelSizeStats.TYPE.getPreferredName(), id));
     }
 
     public void deleteInterimResults() {
