@@ -18,7 +18,7 @@ class ElasticsearchBatchedModelDebugOutputIterator extends ElasticsearchBatchedD
     @Override
     protected String getType()
     {
-        return ModelDebugOutput.TYPE;
+        return ModelDebugOutput.TYPE.getPreferredName();
     }
 
     @Override
@@ -27,7 +27,7 @@ class ElasticsearchBatchedModelDebugOutputIterator extends ElasticsearchBatchedD
         // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
         // and replace using the API 'timestamp' key.
         Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(ModelDebugOutput.TIMESTAMP, timestamp);
+        hit.getSource().put(ModelDebugOutput.TIMESTAMP.getPreferredName(), timestamp);
         ModelDebugOutput result = objectMapper.convertValue(hit.getSource(), ModelDebugOutput.class);
         result.setId(hit.getId());
         return result;

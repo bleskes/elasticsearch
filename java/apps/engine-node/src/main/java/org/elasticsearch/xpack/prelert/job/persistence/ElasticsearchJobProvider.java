@@ -16,12 +16,10 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -34,10 +32,8 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRespon
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.support.WriteRequest.RefreshPolicy;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
@@ -408,7 +404,7 @@ public class ElasticsearchJobProvider implements JobProvider
             createIndexRequest.mapping(ModelSnapshot.TYPE, modelSnapshotMapping);
             createIndexRequest.mapping(ModelSizeStats.TYPE, modelSizeStatsMapping);
             createIndexRequest.mapping(Influencer.TYPE.getPreferredName(), influencerMapping);
-            createIndexRequest.mapping(ModelDebugOutput.TYPE, modelDebugMapping);
+            createIndexRequest.mapping(ModelDebugOutput.TYPE.getPreferredName(), modelDebugMapping);
             createIndexRequest.mapping(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE, processingTimeMapping);
             createIndexRequest.mapping(PartitionNormalisedProb.TYPE, partitionScoreMapping);
 

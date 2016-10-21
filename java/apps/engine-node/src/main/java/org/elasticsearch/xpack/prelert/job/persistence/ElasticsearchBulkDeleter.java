@@ -172,7 +172,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     public void deleteModelDebugOutput(ModelDebugOutput modelDebugOutput) {
         String id = modelDebugOutput.getId();
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), ModelDebugOutput.TYPE, id));
+                client.prepareDelete(jobId.getIndex(), ModelDebugOutput.TYPE.getPreferredName(), id));
     }
 
     @Override

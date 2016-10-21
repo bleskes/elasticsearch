@@ -226,7 +226,7 @@ public class AutodetectResultsParser {
 
                         persister.persistModelSizeStats(modelSizeStats);
                         break;
-                    case ModelDebugOutput.DEBUG_FEATURE:
+                    case "debugFeature":
                         ModelDebugOutput modelDebugOutput = new ModelDebugOutputParser(parser).parseJsonAfterStartObject();
                         persister.persistModelDebugOutput(modelDebugOutput);
                         break;
@@ -246,7 +246,7 @@ public class AutodetectResultsParser {
                         // deleted when the next finalized results come through
                         deleteInterimRequired = true;
                         break;
-                        case "categoryDefinition":
+                    case "categoryDefinition":
                         CategoryDefinition category = new CategoryDefinitionParser(parser).parseJsonAfterStartObject();
                         persister.persistCategoryDefinition(category);
                         break;

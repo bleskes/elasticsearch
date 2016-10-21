@@ -279,7 +279,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public void persistModelDebugOutput(ModelDebugOutput modelDebugOutput)
     {
-        Persistable persistable = new Persistable(modelDebugOutput, () -> ModelDebugOutput.TYPE,
+        Persistable persistable = new Persistable(modelDebugOutput, () -> ModelDebugOutput.TYPE.getPreferredName(),
                 () -> null, () -> serialiseWithJobId(modelDebugOutput));
         persistable.persist();
 

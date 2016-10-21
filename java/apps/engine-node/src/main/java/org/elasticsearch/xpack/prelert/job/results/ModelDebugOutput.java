@@ -4,6 +4,16 @@ package org.elasticsearch.xpack.prelert.job.results;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.DotNotationReverser;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
@@ -20,21 +30,39 @@ import java.util.Objects;
  */
 @JsonIgnoreProperties({"id"})
 @JsonInclude(Include.NON_NULL)
-public class ModelDebugOutput implements StorageSerialisable
+public class ModelDebugOutput extends ToXContentToBytes implements Writeable, StorageSerialisable
 {
-    public static final String TYPE = "modelDebugOutput";
-    public static final String TIMESTAMP = "timestamp";
-    public static final String PARTITION_FIELD_NAME = "partitionFieldName";
-    public static final String PARTITION_FIELD_VALUE = "partitionFieldValue";
-    public static final String OVER_FIELD_NAME = "overFieldName";
-    public static final String OVER_FIELD_VALUE = "overFieldValue";
-    public static final String BY_FIELD_NAME = "byFieldName";
-    public static final String BY_FIELD_VALUE = "byFieldValue";
-    public static final String DEBUG_FEATURE = "debugFeature";
-    public static final String DEBUG_LOWER = "debugLower";
-    public static final String DEBUG_UPPER = "debugUpper";
-    public static final String DEBUG_MEDIAN = "debugMedian";
-    public static final String ACTUAL = "actual";
+    public static final ParseField TYPE = new ParseField("modelDebugOutput");
+    public static final ParseField TIMESTAMP = new ParseField("timestamp");
+    public static final ParseField PARTITION_FIELD_NAME = new ParseField("partitionFieldName");
+    public static final ParseField PARTITION_FIELD_VALUE = new ParseField("partitionFieldValue");
+    public static final ParseField OVER_FIELD_NAME = new ParseField("overFieldName");
+    public static final ParseField OVER_FIELD_VALUE = new ParseField("overFieldValue");
+    public static final ParseField BY_FIELD_NAME = new ParseField("byFieldName");
+    public static final ParseField BY_FIELD_VALUE = new ParseField("byFieldValue");
+    public static final ParseField DEBUG_FEATURE = new ParseField("debugFeature");
+    public static final ParseField DEBUG_LOWER = new ParseField("debugLower");
+    public static final ParseField DEBUG_UPPER = new ParseField("debugUpper");
+    public static final ParseField DEBUG_MEDIAN = new ParseField("debugMedian");
+    public static final ParseField ACTUAL = new ParseField("actual");
+
+    public static final ObjectParser<ModelDebugOutput, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
+            ModelDebugOutput::new);
+
+    static {
+        PARSER.declareField(ModelDebugOutput::setTimestamp, p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
+        PARSER.declareString(ModelDebugOutput::setPartitionFieldName, PARTITION_FIELD_NAME);
+        PARSER.declareString(ModelDebugOutput::setPartitionFieldValue, PARTITION_FIELD_VALUE);
+        PARSER.declareString(ModelDebugOutput::setOverFieldName, OVER_FIELD_NAME);
+        PARSER.declareString(ModelDebugOutput::setOverFieldValue, OVER_FIELD_VALUE);
+        PARSER.declareString(ModelDebugOutput::setByFieldName, BY_FIELD_NAME);
+        PARSER.declareString(ModelDebugOutput::setByFieldValue, BY_FIELD_VALUE);
+        PARSER.declareString(ModelDebugOutput::setDebugFeature, DEBUG_FEATURE);
+        PARSER.declareDouble(ModelDebugOutput::setDebugLower, DEBUG_LOWER);
+        PARSER.declareDouble(ModelDebugOutput::setDebugUpper, DEBUG_UPPER);
+        PARSER.declareDouble(ModelDebugOutput::setDebugMedian, DEBUG_MEDIAN);
+        PARSER.declareDouble(ModelDebugOutput::setActual, ACTUAL);
+    }
 
     private Date timestamp;
     private String id;
@@ -49,6 +77,83 @@ public class ModelDebugOutput implements StorageSerialisable
     private double debugUpper;
     private double debugMedian;
     private double actual;
+
+    public ModelDebugOutput() {
+    }
+
+    public ModelDebugOutput(StreamInput in) throws IOException {
+        if (in.readBoolean()) {
+            timestamp = new Date(in.readLong());
+        }
+        id = in.readOptionalString();
+        partitionFieldName = in.readOptionalString();
+        partitionFieldValue = in.readOptionalString();
+        overFieldName = in.readOptionalString();
+        overFieldValue = in.readOptionalString();
+        byFieldName = in.readOptionalString();
+        byFieldValue = in.readOptionalString();
+        debugFeature = in.readOptionalString();
+        debugLower = in.readDouble();
+        debugUpper = in.readDouble();
+        debugMedian = in.readDouble();
+        actual = in.readDouble();
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        boolean hasTimestamp = timestamp != null;
+        out.writeBoolean(hasTimestamp);
+        if (hasTimestamp) {
+            out.writeLong(timestamp.getTime());
+        }
+        out.writeOptionalString(id);
+        out.writeOptionalString(partitionFieldName);
+        out.writeOptionalString(partitionFieldValue);
+        out.writeOptionalString(overFieldName);
+        out.writeOptionalString(overFieldValue);
+        out.writeOptionalString(byFieldName);
+        out.writeOptionalString(byFieldValue);
+        out.writeOptionalString(debugFeature);
+        out.writeDouble(debugLower);
+        out.writeDouble(debugUpper);
+        out.writeDouble(debugMedian);
+        out.writeDouble(actual);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        if (timestamp != null) {
+            builder.field(TIMESTAMP.getPreferredName(), timestamp.getTime());
+        }
+        if (partitionFieldName != null) {
+            builder.field(PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
+        }
+        if (partitionFieldValue != null) {
+            builder.field(PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
+        }
+        if (overFieldName != null) {
+            builder.field(OVER_FIELD_NAME.getPreferredName(), overFieldName);
+        }
+        if (overFieldValue != null) {
+            builder.field(OVER_FIELD_VALUE.getPreferredName(), overFieldValue);
+        }
+        if (byFieldName != null) {
+            builder.field(BY_FIELD_NAME.getPreferredName(), byFieldName);
+        }
+        if (byFieldValue != null) {
+            builder.field(BY_FIELD_VALUE.getPreferredName(), byFieldValue);
+        }
+        if (debugFeature != null) {
+            builder.field(DEBUG_FEATURE.getPreferredName(), debugFeature);
+        }
+        builder.field(DEBUG_LOWER.getPreferredName(), debugLower);
+        builder.field(DEBUG_UPPER.getPreferredName(), debugUpper);
+        builder.field(DEBUG_MEDIAN.getPreferredName(), debugMedian);
+        builder.field(ACTUAL.getPreferredName(), actual);
+        builder.endObject();
+        return builder;
+    }
 
     public String getId()
     {
@@ -220,17 +325,17 @@ public class ModelDebugOutput implements StorageSerialisable
     public void serialise(StorageSerialiser serialiser) throws IOException
     {
         serialiser.addTimestamp(timestamp)
-                  .add(DEBUG_FEATURE, debugFeature)
-                  .add(DEBUG_LOWER, debugLower)
-                  .add(DEBUG_UPPER, debugUpper)
-                  .add(DEBUG_MEDIAN, debugMedian)
-                  .add(ACTUAL, actual);
+        .add(DEBUG_FEATURE.getPreferredName(), debugFeature)
+        .add(DEBUG_LOWER.getPreferredName(), debugLower)
+        .add(DEBUG_UPPER.getPreferredName(), debugUpper)
+        .add(DEBUG_MEDIAN.getPreferredName(), debugMedian)
+        .add(ACTUAL.getPreferredName(), actual);
 
         DotNotationReverser reverser = serialiser.newDotNotationReverser();
 
         if (byFieldName != null)
         {
-            serialiser.add(BY_FIELD_NAME, byFieldName);
+            serialiser.add(BY_FIELD_NAME.getPreferredName(), byFieldName);
             if (byFieldValue != null)
             {
                 reverser.add(byFieldName, byFieldValue);
@@ -238,11 +343,11 @@ public class ModelDebugOutput implements StorageSerialisable
         }
         if (byFieldValue != null)
         {
-            serialiser.add(BY_FIELD_VALUE, byFieldValue);
+            serialiser.add(BY_FIELD_VALUE.getPreferredName(), byFieldValue);
         }
         if (overFieldName != null)
         {
-            serialiser.add(OVER_FIELD_NAME, overFieldName);
+            serialiser.add(OVER_FIELD_NAME.getPreferredName(), overFieldName);
             if (overFieldValue != null)
             {
                 reverser.add(overFieldName, overFieldValue);
@@ -250,11 +355,11 @@ public class ModelDebugOutput implements StorageSerialisable
         }
         if (overFieldValue != null)
         {
-            serialiser.add(OVER_FIELD_VALUE, overFieldValue);
+            serialiser.add(OVER_FIELD_VALUE.getPreferredName(), overFieldValue);
         }
         if (partitionFieldName != null)
         {
-            serialiser.add(PARTITION_FIELD_NAME, partitionFieldName);
+            serialiser.add(PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
             if (partitionFieldValue != null)
             {
                 reverser.add(partitionFieldName, partitionFieldValue);
@@ -262,7 +367,7 @@ public class ModelDebugOutput implements StorageSerialisable
         }
         if (partitionFieldValue != null)
         {
-            serialiser.add(PARTITION_FIELD_VALUE, partitionFieldValue);
+            serialiser.add(PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
         }
 
         serialiser.addReverserResults(reverser);

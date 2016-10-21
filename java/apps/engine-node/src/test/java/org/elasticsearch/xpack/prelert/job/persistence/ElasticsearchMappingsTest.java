@@ -96,7 +96,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(Influencer.TYPE.getPreferredName());
         overridden.add(JobDetails.TYPE);
         overridden.add(ListDocument.TYPE.getPreferredName());
-        overridden.add(ModelDebugOutput.TYPE);
+        overridden.add(ModelDebugOutput.TYPE.getPreferredName());
         overridden.add(ModelState.TYPE);
         overridden.add(ModelSnapshot.TYPE);
         overridden.add(ModelSizeStats.TYPE);
