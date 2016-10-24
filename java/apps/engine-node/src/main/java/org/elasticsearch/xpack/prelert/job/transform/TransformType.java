@@ -65,14 +65,14 @@ public enum TransformType implements ToXContent, Writeable {
     private final boolean hasCondition;
 
     TransformType(String prettyName, IntRange arityIntRange,
-                  IntRange argumentsIntRange, IntRange outputsIntRange,
-                  List<String> defaultOutputNames) {
+            IntRange argumentsIntRange, IntRange outputsIntRange,
+            List<String> defaultOutputNames) {
         this(prettyName, arityIntRange, argumentsIntRange, outputsIntRange, defaultOutputNames, false);
     }
 
     TransformType(String prettyName, IntRange arityIntRange,
-                  IntRange argumentsIntRange, IntRange outputsIntRange,
-                  List<String> defaultOutputNames, boolean hasCondition) {
+            IntRange argumentsIntRange, IntRange outputsIntRange,
+            List<String> defaultOutputNames, boolean hasCondition) {
         this.arityRange = arityIntRange;
         this.argumentsRange = argumentsIntRange;
         this.outputsRange = outputsIntRange;
@@ -154,7 +154,7 @@ public enum TransformType implements ToXContent, Writeable {
             }
         }
 
-        throw new IllegalArgumentException(prettyName);
+        throw new IllegalArgumentException("Unknown [transformType]: [" + prettyName + "]");
     }
 
 }

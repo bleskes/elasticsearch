@@ -34,8 +34,7 @@ public class TransformConfig extends ToXContentToBytes implements Writeable {
     public static final ParseField OUTPUTS = new ParseField("outputs");
 
     public static final ConstructingObjectParser<TransformConfig, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
-            "schedule_config", objects -> new TransformConfig((String) objects[0])
-    );
+            TYPE.getPreferredName(), objects -> new TransformConfig((String) objects[0]));
 
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), TYPE);

@@ -2,15 +2,19 @@
 package org.elasticsearch.xpack.prelert.job.transform;
 
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;
 
 public class TransformConfigTest extends AbstractSerializingTestCase<TransformConfig> {
 
@@ -170,5 +174,18 @@ public class TransformConfigTest extends AbstractSerializingTestCase<TransformCo
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
+    }
+
+    public void testInvalidTransformName() throws Exception {
+        String json = "{ \"transform\":\"\" }";
+        XContentParser parser = XContentFactory.xContent(json.getBytes()).createParser(json.getBytes());
+        ParsingException ex = expectThrows(ParsingException.class,
+                () -> TransformConfig.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
+        assertThat(ex.getMessage(), containsString("[transform] failed to parse field [transform]"));
+        Throwable cause = ex.getRootCause();
+        assertNotNull(cause);
+        assertThat(cause, instanceOf(IllegalArgumentException.class));
+        assertThat(cause.getMessage(),
+                containsString("Unknown [transformType]: []"));
     }
 }

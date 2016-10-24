@@ -3,8 +3,11 @@ package org.elasticsearch.xpack.prelert.job.condition;
 
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
+import static org.hamcrest.Matchers.containsString;
 
 public class ConditionTest extends AbstractSerializingTestCase<Condition> {
 
@@ -65,5 +68,13 @@ public class ConditionTest extends AbstractSerializingTestCase<Condition> {
     @Override
     protected Condition parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
         return Condition.PARSER.apply(parser, () -> matcher);
+    }
+
+    public void testInvalidTransformName() throws Exception {
+        String json = "{ \"value\":\"someValue\" }";
+        XContentParser parser = XContentFactory.xContent(json.getBytes()).createParser(json.getBytes());
+        IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
+                () -> Condition.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
+        assertThat(ex.getMessage(), containsString("Required [operator]"));
     }
 }

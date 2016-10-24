@@ -2,10 +2,15 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;;
 
 public class DataDescriptionTest extends AbstractSerializingTestCase<DataDescription> {
 
@@ -197,6 +202,44 @@ public class DataDescriptionTest extends AbstractSerializingTestCase<DataDescrip
         dataDescription2.setFieldDelimiter(',');
 
         assertEquals(dataDescription1.hashCode(), dataDescription2.hashCode());
+    }
+
+    public void testInvalidDataFormat() throws Exception {
+        String json = "{ \"format\":\"INEXISTENT_FORMAT\" }";
+        XContentParser parser = XContentFactory.xContent(json.getBytes()).createParser(json.getBytes());
+        ParsingException ex = expectThrows(ParsingException.class,
+                () -> DataDescription.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
+        assertThat(ex.getMessage(), containsString("[dataDescription] failed to parse field [format]"));
+        Throwable cause = ex.getCause();
+        assertNotNull(cause);
+        assertThat(cause, instanceOf(IllegalArgumentException.class));
+        assertThat(cause.getMessage(),
+                containsString("No enum constant org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat.INEXISTENT_FORMAT"));
+    }
+
+    public void testInvalidFieldDelimiter() throws Exception {
+        String json = "{ \"fieldDelimiter\":\",,\" }";
+        XContentParser parser = XContentFactory.xContent(json.getBytes()).createParser(json.getBytes());
+        ParsingException ex = expectThrows(ParsingException.class,
+                () -> DataDescription.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
+        assertThat(ex.getMessage(), containsString("[dataDescription] failed to parse field [fieldDelimiter]"));
+        Throwable cause = ex.getCause();
+        assertNotNull(cause);
+        assertThat(cause, instanceOf(IllegalArgumentException.class));
+        assertThat(cause.getMessage(),
+                containsString("String must be a single character, found [,,]"));
+    }
+
+    public void testInvalidQuoteCharacter() throws Exception {
+        String json = "{ \"quoteCharacter\":\"''\" }";
+        XContentParser parser = XContentFactory.xContent(json.getBytes()).createParser(json.getBytes());
+        ParsingException ex = expectThrows(ParsingException.class,
+                () -> DataDescription.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
+        assertThat(ex.getMessage(), containsString("[dataDescription] failed to parse field [quoteCharacter]"));
+        Throwable cause = ex.getCause();
+        assertNotNull(cause);
+        assertThat(cause, instanceOf(IllegalArgumentException.class));
+        assertThat(cause.getMessage(), containsString("String must be a single character, found ['']"));
     }
 
     @Override

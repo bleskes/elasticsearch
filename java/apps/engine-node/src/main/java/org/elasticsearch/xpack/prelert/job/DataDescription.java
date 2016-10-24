@@ -104,7 +104,7 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
         }
     }
 
-    public static final ParseField DATA_DESCRIPTION_FIELD = new ParseField("data_description");
+    public static final ParseField DATA_DESCRIPTION_FIELD = new ParseField("dataDescription");
 
     /**
      * Special time format string for epoch times (seconds)
@@ -114,7 +114,7 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
     /**
      * Special time format string for epoch times (milli-seconds)
      */
-    public static final String EPOCH_MS = "epoch_ms";
+    public static final String EPOCH_MS = "epochMs";
 
     /**
      * The format field name
@@ -123,7 +123,7 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
     /**
      * The time field name
      */
-    public static final ParseField TIME_FIELD_NAME_FIELD = new ParseField("time_field");
+    public static final ParseField TIME_FIELD_NAME_FIELD = new ParseField("timeField");
 
     /**
      * By default autodetect expects the timestamp in a field with this name
@@ -133,15 +133,15 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
     /**
      * The timeFormat field name
      */
-    public static final ParseField TIME_FORMAT_FIELD = new ParseField("time_format");
+    public static final ParseField TIME_FORMAT_FIELD = new ParseField("timeFormat");
     /**
      * The field delimiter field name
      */
-    public static final ParseField FIELD_DELIMITER_FIELD = new ParseField("field_delimiter");
+    public static final ParseField FIELD_DELIMITER_FIELD = new ParseField("fieldDelimiter");
     /**
      * The quote char field name
      */
-    public static final ParseField QUOTE_CHARACTER_FIELD = new ParseField("quote_character");
+    public static final ParseField QUOTE_CHARACTER_FIELD = new ParseField("quoteCharacter");
 
     /**
      * The default field delimiter expected by the native autodetect
