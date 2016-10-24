@@ -39,6 +39,7 @@ public class ModelSnapshotTest extends AbstractSerializingTestCase<ModelSnapshot
     public void testEquals_GivenEqualModelSnapshots() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
+        modelSnapshot2.setTimestamp(modelSnapshot1.getTimestamp());
 
         assertTrue(modelSnapshot1.equals(modelSnapshot2));
         assertTrue(modelSnapshot2.equals(modelSnapshot1));
