@@ -76,7 +76,6 @@ import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
-import org.elasticsearch.xpack.prelert.job.results.PartitionNormalisedProb;
 import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 import org.elasticsearch.xpack.prelert.job.usage.Usage;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -406,7 +405,7 @@ public class ElasticsearchJobProvider implements JobProvider
             createIndexRequest.mapping(Influencer.TYPE.getPreferredName(), influencerMapping);
             createIndexRequest.mapping(ModelDebugOutput.TYPE.getPreferredName(), modelDebugMapping);
             createIndexRequest.mapping(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE, processingTimeMapping);
-            createIndexRequest.mapping(PartitionNormalisedProb.TYPE, partitionScoreMapping);
+            createIndexRequest.mapping(ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE, partitionScoreMapping);
 
             client.admin().indices().create(createIndexRequest, new ActionListener<CreateIndexResponse>() {
                 @Override
@@ -665,7 +664,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 .prepareSearch(jobId.getIndex())
                 .setPostFilter(qb)
                 .addSort(sb)
-                .setTypes(PartitionNormalisedProb.TYPE);
+                .setTypes(ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE);
 
         SearchResponse searchResponse;
         try {
@@ -683,7 +682,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> probs = (List<Map<String, Object>>)
-            m.get(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS);
+            m.get(ReservedFieldNames.PARTITION_NORMALIZED_PROBS);
             for (Map<String, Object> prob : probs)
             {
                 if (partitionFieldValue.equals(prob.get(AnomalyRecord.PARTITION_FIELD_VALUE)))

@@ -34,6 +34,9 @@ public final class ReservedFieldNames
     public static final String BUCKET_PROCESSING_TIME_TYPE = "bucketProcessingTime";
     public static final String AVERAGE_PROCESSING_TIME_MS = "averageProcessingTimeMs";
 
+    public static final String PARTITION_NORMALIZED_PROB_TYPE = "partitionNormalizedProb";
+    public static final String PARTITION_NORMALIZED_PROBS = "partitionNormalizedProbs";
+
     /**
      * This array should be updated to contain all the field names that appear
      * in any documents we store in our results index.  (The reason it's any
@@ -115,8 +118,8 @@ public final class ReservedFieldNames
 
             AVERAGE_PROCESSING_TIME_MS,
 
-            PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS,
-            PartitionNormalisedProb.TYPE,
+            PARTITION_NORMALIZED_PROBS,
+            PARTITION_NORMALIZED_PROB_TYPE,
 
             CategoryDefinition.CATEGORY_ID.getPreferredName(),
             CategoryDefinition.TERMS.getPreferredName(),
@@ -212,14 +215,14 @@ public final class ReservedFieldNames
             ModelSizeStats.LOG_TIME_FIELD.getPreferredName(),
 
             // ModelSnapshot.DESCRIPTION is not reserved because it is an analyzed string
-        ModelSnapshot.RESTORE_PRIORITY.getPreferredName(),
-        ModelSnapshot.SNAPSHOT_ID.getPreferredName(),
-        ModelSnapshot.SNAPSHOT_DOC_COUNT.getPreferredName(),
-        ModelSizeStats.TYPE.getPreferredName(),
-        ModelSnapshot.LATEST_RECORD_TIME.getPreferredName(),
-        ModelSnapshot.LATEST_RESULT_TIME.getPreferredName(),
+            ModelSnapshot.RESTORE_PRIORITY.getPreferredName(),
+            ModelSnapshot.SNAPSHOT_ID.getPreferredName(),
+            ModelSnapshot.SNAPSHOT_DOC_COUNT.getPreferredName(),
+            ModelSizeStats.TYPE.getPreferredName(),
+            ModelSnapshot.LATEST_RECORD_TIME.getPreferredName(),
+            ModelSnapshot.LATEST_RESULT_TIME.getPreferredName(),
 
-        Quantiles.QUANTILE_STATE.getPreferredName(),
+            Quantiles.QUANTILE_STATE.getPreferredName(),
 
             SchedulerConfig.DATA_SOURCE.getPreferredName(),
             SchedulerConfig.QUERY_DELAY.getPreferredName(),

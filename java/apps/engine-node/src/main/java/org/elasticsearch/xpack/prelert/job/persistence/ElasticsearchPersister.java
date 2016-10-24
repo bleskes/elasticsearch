@@ -177,7 +177,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             serialiser.startObject()
             .addTimestamp(bucket.getTimestamp())
             .add(JOB_ID_NAME, jobId.getId());
-            serialiser.startList(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS);
+            serialiser.startList(ReservedFieldNames.PARTITION_NORMALIZED_PROBS);
             for (Entry<String, Double> entry : bucket.getPerPartitionMaxProbability().entrySet())
             {
                 serialiser.startObject()
@@ -187,9 +187,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             }
             serialiser.endList().endObject();
 
-            LOGGER.trace("ES API CALL: index type " + PartitionNormalisedProb.TYPE +
+            LOGGER.trace("ES API CALL: index type " + ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE +
                     " to index " + jobId.getIndex() + " at epoch " + bucket.getEpoch());
-            client.prepareIndex(jobId.getIndex(), PartitionNormalisedProb.TYPE)
+            client.prepareIndex(jobId.getIndex(), ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE)
             .setSource(builder)
             .setId(bucket.getId())
             .execute().actionGet();

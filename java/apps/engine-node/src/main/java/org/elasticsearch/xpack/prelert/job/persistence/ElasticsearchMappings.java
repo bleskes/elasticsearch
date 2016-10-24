@@ -236,7 +236,7 @@ public class ElasticsearchMappings
     {
         return jsonBuilder()
                 .startObject()
-                .startObject(PartitionNormalisedProb.TYPE)
+                .startObject(ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE)
                 .startObject(ALL)
                 .field(ENABLED, false)
                 // analyzer must be specified even though _all is disabled
@@ -251,7 +251,7 @@ public class ElasticsearchMappings
                 .startObject(ES_TIMESTAMP)
                 .field(TYPE, DATE)
                 .endObject()
-                .startObject(PartitionNormalisedProb.PARTITION_NORMALIZED_PROBS)
+                .startObject(ReservedFieldNames.PARTITION_NORMALIZED_PROBS)
                 .field(TYPE, NESTED)
                 .startObject(PROPERTIES)
                 .startObject(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName())
