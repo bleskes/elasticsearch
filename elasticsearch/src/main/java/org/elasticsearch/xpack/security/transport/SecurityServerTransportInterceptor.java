@@ -110,7 +110,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
     }
 
     @Override
-    public <T extends TransportRequest> TransportRequestHandler<T> interceptHandler(String action,
+    public <T extends TransportRequest> TransportRequestHandler<T> interceptHandler(String action, String executor,
                                                                                     TransportRequestHandler<T> actualHandler) {
         return new ProfileSecuredRequestHandler<>(action, actualHandler, profileFilters,
                 licenseState, threadPool.getThreadContext());

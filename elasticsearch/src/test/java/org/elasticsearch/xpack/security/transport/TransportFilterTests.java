@@ -320,9 +320,9 @@ public class TransportFilterTests extends ESIntegTestCase {
             public List<TransportInterceptor> getTransportInterceptors() {
                 return Collections.singletonList(new TransportInterceptor() {
                     @Override
-                    public <T extends TransportRequest> TransportRequestHandler<T> interceptHandler(String action,
+                    public <T extends TransportRequest> TransportRequestHandler<T> interceptHandler(String action, String executor,
                                                                                                 TransportRequestHandler<T> actualHandler) {
-                        return interceptor.interceptHandler(action, actualHandler);
+                        return interceptor.interceptHandler(action, executor, actualHandler);
                     }
 
                     @Override
