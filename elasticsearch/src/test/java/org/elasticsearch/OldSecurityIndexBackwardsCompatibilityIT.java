@@ -18,6 +18,7 @@
 
 package org.elasticsearch;
 
+import org.apache.lucene.util.LuceneTestCase.AwaitsFix;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -77,6 +78,7 @@ import static org.hamcrest.Matchers.equalTo;
  *  <li>This document in {@code index3}: {@code {"title": "bwc_test_user should not see this index"}}</li>
  * </ul>
  **/
+@AwaitsFix(bugUrl="https://github.com/elastic/x-plugins/issues/3858")
 public class OldSecurityIndexBackwardsCompatibilityIT extends AbstractOldXPackIndicesBackwardsCompatibilityTestCase {
     @Override
     protected boolean shouldTestVersion(Version version) {
