@@ -63,6 +63,11 @@
       xpack.prelert.get_job:
         job_id: "farequote"
 
+  - do:
+      indices.exists:
+        index: "prelertresults-farequote"
+  - is_false: ''
+
 ---
 "Test get job API with non existing job id":
   - do:

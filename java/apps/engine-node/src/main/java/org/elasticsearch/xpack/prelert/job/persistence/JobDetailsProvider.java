@@ -65,11 +65,10 @@ public interface JobDetailsProvider
      * Delete all the job related documents from the database.
      *
      * @param jobId
-     * @return
-     * @throws UnknownJobException If the jobId is not recognised
-     * @throws DataStoreException If there is a datastore error
+     * @param listener
      */
-    boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException;
+    // TODO: should live together with createJob (in case it moves)?
+    void deleteJob(String jobId, ActionListener<Boolean> listener);
 
     /**
      * Updates the scheduler state for the given job
@@ -78,8 +77,7 @@ public interface JobDetailsProvider
      * @return {@code true} if update was successful
      * @throws UnknownJobException If there is no job with id <code>jobId</code>
      */
-    boolean updateSchedulerState(String jobId, SchedulerState schedulerState)
-            throws UnknownJobException;
+    boolean updateSchedulerState(String jobId, SchedulerState schedulerState) throws UnknownJobException;
 
     /**
      * Retrieves the state of the scheduler for the given job

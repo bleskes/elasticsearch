@@ -290,28 +290,53 @@ public class JobManager {
         // NORELEASE: Should also handle scheduled jobs
 
         try (ActionGuardian<Action>.ActionTicket actionTicket = processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
-            // NORELEASE: Index/Logs deletion should be done after job is removed from state in a forked thread
-            if (jobProvider.deleteJob(jobId)) {
-                new JobLogs().deleteLogs(jobId);
-                clusterService.submitStateUpdateTask("delete-job-" + jobId, new AckedClusterStateUpdateTask<DeleteJobAction.Response>(request, actionListener) {
 
-                    @Override
-                    protected DeleteJobAction.Response newResponse(boolean acknowledged) {
-                        // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on the cluster state update task thread
-                        // and any action performed on that thread should be quick. (so no indexing documents)
-                        // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+            ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
+                @Override
+                public void onResponse(Boolean aBoolean) {
+                    jobProvider.deleteJob(request.getJobId(), new ActionListener<Boolean>() {
+                        @Override
+                        public void onResponse(Boolean aBoolean) {
 
-                        // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
-                        // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
-                        return new DeleteJobAction.Response(acknowledged);
-                    }
+                            try {
+                                new JobLogs().deleteLogs(jobId);
+                                // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on
+                                // the cluster state update task thread  and any action performed on that thread should be quick.
+                                // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
 
-                    @Override
-                    public ClusterState execute(ClusterState currentState) throws Exception {
-                        return removeJobFromClusterState(jobId, currentState);
-                    }
-                });
-            }
+                                // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
+                                // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
+                            } catch (JobException e) {
+                                actionListener.onFailure(e);
+                            }
+                            actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            actionListener.onFailure(e);
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    actionListener.onFailure(e);
+                }
+            };
+
+            clusterService.submitStateUpdateTask("delete-job-" + jobId, new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
+
+                @Override
+                protected Boolean newResponse(boolean acknowledged) {
+                    return acknowledged;
+                }
+
+                @Override
+                public ClusterState execute(ClusterState currentState) throws Exception {
+                    return removeJobFromClusterState(jobId, currentState);
+                }
+            });
         }
     }
 

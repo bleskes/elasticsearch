@@ -424,32 +424,29 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean deleteJob(String jobId) throws UnknownJobException, DataStoreException
-    {
+    public void deleteJob(String jobId, ActionListener<Boolean> listener) {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
-        if (indexExists(elasticJobId) == false)
-        {
-            throw new UnknownJobException(elasticJobId.getId());
+        if (indexExists(elasticJobId) == false) {
+            listener.onFailure(ExceptionsHelper.missingException(jobId));
+            return;
         }
         LOGGER.trace("ES API CALL: delete index " + elasticJobId.getIndex());
 
-        try
-        {
-            DeleteIndexResponse response = client.admin()
-                    .indices().delete(new DeleteIndexRequest(elasticJobId.getIndex())).get();
-            return response.isAcknowledged();
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-            String msg = "Error deleting index '" + elasticJobId.getIndex() + "'";
-            ErrorCodes errorCode = ErrorCodes.DATA_STORE_ERROR;
-            if (e.getCause() instanceof IndexNotFoundException)
-            {
-                msg = "Cannot delete job - no index with id '" + elasticJobId.getIndex() + " in the database";
-                errorCode = ErrorCodes.MISSING_JOB_ERROR;
-            }
-            LOGGER.warn(msg);
-            throw new UnknownJobException(jobId, msg, errorCode);
+        try {
+            DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(elasticJobId.getIndex());
+            client.admin().indices().delete(deleteIndexRequest, new ActionListener<DeleteIndexResponse>() {
+                @Override
+                public void onResponse(DeleteIndexResponse deleteIndexResponse) {
+                    listener.onResponse(deleteIndexResponse.isAcknowledged());
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    listener.onFailure(e);
+                }
+            });
+        } catch (Exception e) {
+            listener.onFailure(e);
         }
     }
 

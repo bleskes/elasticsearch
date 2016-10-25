@@ -19,21 +19,16 @@ package org.elasticsearch.xpack.prelert.job.manager;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
-import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
-import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
-import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
@@ -71,11 +66,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.AdditionalMatchers.not;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class JobManagerTest extends ESTestCase {
@@ -135,22 +130,12 @@ public class JobManagerTest extends ESTestCase {
             DataStoreException, InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
 
-        doAnswerSleep(200).when(jobProvider).deleteJob("foo");
+        doAnswerSleep(200).when(clusterService).submitStateUpdateTask(eq("delete-job-foo"), any(AckedClusterStateUpdateTask.class));
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         DeleteJobAction.Request request = new DeleteJobAction.Request("foo");
         request.setJobId("foo");
-        ActionListener<DeleteJobAction.Response> actionListener = new ActionListener<DeleteJobAction.Response>() {
-            @Override
-            public void onResponse(DeleteJobAction.Response response) {
-
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-
-            }
-        };
+        ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         Future<Throwable> task_1_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
         Future<Throwable> task_2_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
         executor.shutdown();
@@ -162,8 +147,6 @@ public class JobManagerTest extends ESTestCase {
         assertTrue(exception instanceof JobInUseException);
         assertEquals("Cannot delete job foo while another connection is deleting the job",
                 exception.getMessage());
-
-        verify(jobProvider).deleteJob("foo");
     }
 
     public void testRemoveJobFromClusterState_GivenExistingMetadata()  {

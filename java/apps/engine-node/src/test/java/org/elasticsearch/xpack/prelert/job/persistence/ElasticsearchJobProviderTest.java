@@ -15,7 +15,12 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -41,6 +46,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -360,6 +366,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, DataStoreException, IOException {
+        ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
@@ -368,14 +375,16 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
         clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-        .addIndicesDeleteResponse("prelertresults-" + jobId, true, false);
-        client = clientBuilder.build();
+                .addIndicesDeleteResponse("prelertresults-" + jobId, true, false, actionListener);
+        clientBuilder.build();
 
+        provider.deleteJob(jobId, actionListener);
 
-        assertTrue(provider.deleteJob(jobId));
+        verify(actionListener).onResponse(true);
     }
 
     public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, UnknownJobException, DataStoreException, IOException {
+        ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
                 .addClusterStatusYellowResponse()
@@ -384,15 +393,15 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
         clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-        .addIndicesDeleteResponse("prelertresults-" + jobId, true, true);
-        client = clientBuilder.build();
+                .addIndicesDeleteResponse("prelertresults-" + jobId, true, true, actionListener);
+        clientBuilder.build();
 
-        try {
-            provider.deleteJob(jobId);
-            assertTrue(false);
-        } catch (UnknownJobException ex) {
-            assertEquals(jobId, ex.getJobId());
-        }
+
+        provider.deleteJob(jobId, actionListener);
+
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        verify(actionListener).onFailure(exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue(), instanceOf(InterruptedException.class));
     }
 
     public void testBuckets_OneBucketNoInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {

@@ -1,6 +1,8 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
@@ -158,43 +160,24 @@ public class MockClientBuilder {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public MockClientBuilder addIndicesExistsResponse2(String index, boolean exists) throws InterruptedException, ExecutionException {
-        ActionFuture actionFuture = mock(ActionFuture.class);
-        ArgumentCaptor<IndicesExistsRequest> requestCaptor = ArgumentCaptor.forClass(IndicesExistsRequest.class);
-
-        when(indicesAdminClient.exists(requestCaptor.capture())).thenReturn(actionFuture);
-        doAnswer(invocation ->
-        {
-            IndicesExistsRequest request = (IndicesExistsRequest) invocation.getArguments()[0];
-            return request.indices()[0].equals(index) ? actionFuture : null;
-        }).when(indicesAdminClient).exists(any(IndicesExistsRequest.class));
-        when(actionFuture.get()).thenReturn(new IndicesExistsResponse(exists));
-
-        return this;
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public MockClientBuilder addIndicesDeleteResponse(String index, boolean exists, boolean exception) throws InterruptedException, ExecutionException, IOException {
+    public MockClientBuilder addIndicesDeleteResponse(String index, boolean exists, boolean exception, ActionListener<Boolean> actionListener)
+            throws InterruptedException, ExecutionException, IOException {
         DeleteIndexResponse response = DeleteIndexAction.INSTANCE.newResponse();
         StreamInput si = mock(StreamInput.class);
         when(si.readByte()).thenReturn((byte) 0x41);
         when(si.readMap()).thenReturn(mock(Map.class));
         response.readFrom(si);
 
-        ActionFuture actionFuture = mock(ActionFuture.class);
-        ArgumentCaptor<DeleteIndexRequest> requestCaptor = ArgumentCaptor.forClass(DeleteIndexRequest.class);
-
-        when(indicesAdminClient.delete(requestCaptor.capture())).thenReturn(actionFuture);
-        doAnswer(invocation ->
-        {
+        doAnswer(invocation -> {
+            DeleteIndexRequest deleteIndexRequest = (DeleteIndexRequest) invocation.getArguments() [0];
+            assertArrayEquals(new String[] { index }, deleteIndexRequest.indices());
             if (exception) {
-                throw new InterruptedException();
+                actionListener.onFailure(new InterruptedException());
+            } else {
+                actionListener.onResponse(true);
             }
-            DeleteIndexRequest request = (DeleteIndexRequest) invocation.getArguments()[0];
-            return request.indices()[0].equals(index) ? actionFuture : null;
-        }).when(indicesAdminClient).delete(any(DeleteIndexRequest.class));
-        when(actionFuture.get()).thenReturn(response);
-        when(actionFuture.actionGet()).thenReturn(response);
+            return null;
+        }).when(indicesAdminClient).delete(any(DeleteIndexRequest.class), any(ActionListener.class));
         return this;
     }
 

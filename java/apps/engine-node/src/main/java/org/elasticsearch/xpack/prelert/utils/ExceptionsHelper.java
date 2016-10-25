@@ -16,6 +16,7 @@
  */
 package org.elasticsearch.xpack.prelert.utils;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ResourceNotFoundException;
@@ -54,6 +55,12 @@ public class ExceptionsHelper {
 
     public static ElasticsearchParseException parseException(String msg, ErrorCodes errorCode) {
         ElasticsearchParseException e = new ElasticsearchParseException(msg);
+        e.addHeader("errorCode", errorCode.getValueString());
+        return e;
+    }
+
+    public static ElasticsearchException serverError(String msg, Throwable cause, ErrorCodes errorCode) {
+        ElasticsearchException e = new ElasticsearchException(msg, cause);
         e.addHeader("errorCode", errorCode.getValueString());
         return e;
     }
