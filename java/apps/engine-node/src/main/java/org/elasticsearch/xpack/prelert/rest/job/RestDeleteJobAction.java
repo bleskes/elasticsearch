@@ -24,12 +24,11 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 
 import java.io.IOException;
 
 public class RestDeleteJobAction extends BaseRestHandler {
-
-    private static final String JOB_ID = "jobId";
 
     private final DeleteJobAction.TransportAction transportDeleteJobAction;
 
@@ -37,12 +36,12 @@ public class RestDeleteJobAction extends BaseRestHandler {
     public RestDeleteJobAction(Settings settings, RestController controller, DeleteJobAction.TransportAction transportDeleteJobAction) {
         super(settings);
         this.transportDeleteJobAction = transportDeleteJobAction;
-        controller.registerHandler(RestRequest.Method.DELETE, "/engine/v2/jobs/{jobId}", this);
+        controller.registerHandler(RestRequest.Method.DELETE, "/engine/v2/jobs/{" + JobDetails.ID.getPreferredName() + "}", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        DeleteJobAction.Request deleteJobRequest = new DeleteJobAction.Request(restRequest.param(JOB_ID));
+        DeleteJobAction.Request deleteJobRequest = new DeleteJobAction.Request(restRequest.param(JobDetails.ID.getPreferredName()));
         return channel -> transportDeleteJobAction.execute(deleteJobRequest, new AcknowledgedRestListener<>(channel));
     }
 }
