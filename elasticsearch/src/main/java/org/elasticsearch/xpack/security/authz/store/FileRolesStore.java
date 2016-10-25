@@ -55,7 +55,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableMap;
 
-public class FileRolesStore extends AbstractLifecycleComponent implements RolesStore {
+public class FileRolesStore extends AbstractLifecycleComponent {
 
     private static final Pattern IN_SEGMENT_LINE = Pattern.compile("^\\s+.+");
     private static final Pattern SKIP_LINE = Pattern.compile("(^#.*|^\\s*)");
@@ -98,12 +98,10 @@ public class FileRolesStore extends AbstractLifecycleComponent implements RolesS
     protected void doClose() throws ElasticsearchException {
     }
 
-    @Override
     public Role role(String role) {
         return permissions.get(role);
     }
 
-    @Override
     public Map<String, Object> usageStats() {
         Map<String, Object> usageStats = new HashMap<>();
         usageStats.put("size", permissions.size());
