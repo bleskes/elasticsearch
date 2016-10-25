@@ -67,6 +67,7 @@ import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -290,7 +291,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public void checkJobExists(String jobId) throws UnknownJobException
+    public void checkJobExists(String jobId) throws ResourceNotFoundException
     {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
@@ -303,17 +304,17 @@ public class ElasticsearchJobProvider implements JobProvider
 
             if (response.isExists() == false)
             {
-                String msg = "No job document with id " + elasticJobId.getId();
-                LOGGER.warn(msg);
-                throw new UnknownJobException(elasticJobId.getId());
+                LOGGER.info("No job document with id {}", elasticJobId.getId());
+                String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
+                throw ExceptionsHelper.missingException(message);
             }
         }
         catch (IndexNotFoundException e)
         {
             // the job does not exist
-            String msg = "Missing Index: no job with id " + elasticJobId.getId();
-            LOGGER.warn(msg);
-            throw new UnknownJobException(elasticJobId.getId());
+            LOGGER.info("Missing Index: no job with id {}", elasticJobId.getId());
+            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
+            throw ExceptionsHelper.missingException(message);
         }
     }
 

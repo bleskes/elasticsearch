@@ -65,6 +65,12 @@ public class ExceptionsHelper {
         return e;
     }
 
+    public static ElasticsearchStatusException nativeProcessException(String msg, ErrorCodes errorCode) {
+        ElasticsearchStatusException e =  new ElasticsearchStatusException(msg, RestStatus.INTERNAL_SERVER_ERROR);
+        e.addHeader("errorCode", errorCode.getValueString());
+        return e;
+    }
+
     /**
      * A more REST-friendly Object.requireNonNull()
      */
@@ -74,5 +80,4 @@ public class ExceptionsHelper {
         }
         return obj;
     }
-
 }

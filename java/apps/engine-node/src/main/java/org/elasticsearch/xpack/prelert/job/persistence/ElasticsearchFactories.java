@@ -1,9 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.logging.Loggers;
 
 import java.util.Objects;
 
@@ -12,23 +10,10 @@ import java.util.Objects;
  */
 public class ElasticsearchFactories implements AutoCloseable
 {
-    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchFactories.class);
-
-    protected static final String CLUSTER_NAME_KEY = "cluster.name";
-
-    private static final String ES_INDEX_NUMBER_OF_REPLICAS = "es.index.number_of_replicas";
-    private static final Integer DEFAULT_NUMBER_OF_REPLICAS = 0;
-    private static final int MIN_NUMBER_OF_REPLICAS = 0;
-    private static final int MAX_NUMBER_OF_REPLICAS = 10;
-
     private final Client client;
 
     public ElasticsearchFactories(Client client) {
         this.client = Objects.requireNonNull(client);
-    }
-
-    public JobProvider newJobProvider() {
-        return new ElasticsearchJobProvider(null, client, numberOfReplicas());
     }
 
     public JobDataCountsPersisterFactory newJobDataCountsPersisterFactory() {
@@ -55,9 +40,5 @@ public class ElasticsearchFactories implements AutoCloseable
     protected Client getClient()
     {
         return client;
-    }
-
-    private static int numberOfReplicas() {
-        return 0;
     }
 }

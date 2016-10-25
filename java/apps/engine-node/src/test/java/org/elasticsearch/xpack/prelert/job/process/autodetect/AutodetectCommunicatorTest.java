@@ -1,14 +1,19 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.core.Logger;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.ResultsReader;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,13 +22,14 @@ import java.util.Collections;
 import static org.elasticsearch.mock.orig.Mockito.mock;
 import static org.elasticsearch.mock.orig.Mockito.verify;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 public class AutodetectCommunicatorTest extends ESTestCase {
 
     public void testAddRemoveAlertObserver() throws IOException {
         AutodetectCommunicator communicator =
-                new AutodetectCommunicator(createJobDetails(), mockAutodetectProcess(), mock(Logger.class),
+                new AutodetectCommunicator(createJobDetails(), mockAutodetectProcessWithOutputStream(), mock(Logger.class),
                         mock(JobResultsPersister.class), mock(StatusReporter.class));
 
         AlertObserver ao = mock(AlertObserver.class);
@@ -34,8 +40,8 @@ public class AutodetectCommunicatorTest extends ESTestCase {
     }
 
     public void testWriteResetBucketsControlMessage() throws IOException {
-        DataLoadParams params = new DataLoadParams(new TimeRange(0l, 1l));
-        AutodetectProcess process = mockAutodetectProcess();
+        DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1").endTime("2").build());
+        AutodetectProcess process = mockAutodetectProcessWithOutputStream();
 
         AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class),
@@ -46,7 +52,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
     }
 
     public void tesWriteUpdateConfigMessage() throws IOException {
-        AutodetectProcess process = mockAutodetectProcess();
+        AutodetectProcess process = mockAutodetectProcessWithOutputStream();
 
         AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class),
@@ -58,19 +64,53 @@ public class AutodetectCommunicatorTest extends ESTestCase {
     }
 
     public void testFlushJob() throws IOException {
-        AutodetectProcess process = mockAutodetectProcess();
+        AutodetectProcess process = mockAutodetectProcessWithOutputStream();
+        when(process.isProcessAlive()).thenReturn(true);
 
         AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class),
                         mock(JobResultsPersister.class), mock(StatusReporter.class));
 
-        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+        InterimResultsParams params = InterimResultsParams.builder().build();
         communicator.flushJob(params);
         verify(process).flushJob(params);
     }
 
+    public void testFlushJob_throwsIfProcessIsDead() throws IOException {
+        AutodetectProcess process = mockAutodetectProcessWithOutputStream();
+        when(process.isProcessAlive()).thenReturn(false);
+        when(process.readError()).thenReturn("Mock process is dead");
+
+        AutodetectCommunicator communicator =
+                new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class),
+                        mock(JobResultsPersister.class), mock(StatusReporter.class));
+
+        InterimResultsParams params = InterimResultsParams.builder().build();
+        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> communicator.flushJob(params));
+        assertEquals("Flush failed: Unexpected death of the Autodetect process flushing job. Mock process is dead", e.getMessage());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_ERROR.getValueString(), e.getHeader("errorCode").get(0));
+    }
+
+    public void testFlushJob_throwsOnTimeout() throws IOException {
+        AutodetectProcess process = mockAutodetectProcessWithOutputStream();
+        when(process.isProcessAlive()).thenReturn(true);
+        when(process.readError()).thenReturn("Mock process has stalled");
+
+        ResultsReader resultsReader = mock(ResultsReader.class);
+        when(resultsReader.waitForFlushAcknowledgement(anyString(), any())).thenReturn(false);
+
+        AutodetectCommunicator communicator =
+                new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class),
+                        mock(JobResultsPersister.class), mock(StatusReporter.class), resultsReader);
+
+        InterimResultsParams params = InterimResultsParams.builder().build();
+        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> communicator.flushJob(params, 1, 1));
+        assertEquals("Timed out flushing job. Mock process has stalled", e.getMessage());
+        assertEquals(ErrorCodes.NATIVE_PROCESS_ERROR.getValueString(), e.getHeader("errorCode").get(0));
+    }
+
     public void testClose() throws IOException {
-        AutodetectProcess process = mockAutodetectProcess();
+        AutodetectProcess process = mockAutodetectProcessWithOutputStream();
 
         AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class),
@@ -96,7 +136,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
         return jobDetails;
     }
 
-    private AutodetectProcess mockAutodetectProcess() throws IOException {
+    private AutodetectProcess mockAutodetectProcessWithOutputStream() throws IOException {
         InputStream io = mock(InputStream.class);
         when(io.read(any(byte [].class))).thenReturn(-1);
         AutodetectProcess process = mock(AutodetectProcess.class);

@@ -1,6 +1,7 @@
 package org.elasticsearch.xpack.prelert.rest.data;
 
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -14,6 +15,8 @@ import java.io.IOException;
 
 public class RestPostDataCloseAction extends BaseRestHandler {
 
+    private static final ParseField JOB_ID = new ParseField("jobId");
+
     private final PostDataCloseAction.TransportAction transportPostDataCloseAction;
 
     @Inject
@@ -24,8 +27,8 @@ public class RestPostDataCloseAction extends BaseRestHandler {
     }
 
     @Override
-    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
-        PostDataCloseAction.Request postDataCloseRequest = new PostDataCloseAction.Request();
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        PostDataCloseAction.Request postDataCloseRequest = new PostDataCloseAction.Request(restRequest.param(JOB_ID.getPreferredName()));
         return channel -> transportPostDataCloseAction.execute(postDataCloseRequest, new AcknowledgedRestListener<>(channel));
     }
 }

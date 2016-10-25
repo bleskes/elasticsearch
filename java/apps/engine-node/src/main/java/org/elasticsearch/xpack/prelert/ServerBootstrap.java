@@ -24,6 +24,7 @@ import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
@@ -36,6 +37,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.prelert.action.*;
+import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
@@ -45,7 +47,10 @@ import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterFactory;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchFactories;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.BlackHoleAutodetectProcess;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
@@ -131,8 +136,8 @@ public class ServerBootstrap {
 
         @Override
         public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
-                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
-                SearchRequestParsers searchRequestParsers) {
+                                                   ResourceWatcherService resourceWatcherService, ScriptService scriptService,
+                                                   SearchRequestParsers searchRequestParsers) {
 
             ActionGuardian<Action> processActionGuardian =
                     new LocalActionGuardian<>(Action.startingState());
@@ -145,13 +150,28 @@ public class ServerBootstrap {
             // For this reason we can't use interfaces in the constructor of transport actions.
             // This ok for now as we will remove Guice soon
             ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(null, client, 0);
+            ElasticsearchFactories elasticsearchFactories = new ElasticsearchFactories(client);
+            AutodetectCommunicatorFactory autodetectCommunicatorFactory =
+                                    createAutodetectCommunicatorFactory(elasticsearchFactories);
+
+            JobManager jobManager = new JobManager(jobProvider, clusterService, processActionGuardian, schedulerActionGuardian);
             return Arrays.asList(
                     jobProvider,
-                    new JobManager(jobProvider, clusterService, processActionGuardian, schedulerActionGuardian),
+                    jobManager,
                     new JobAllocator(settings, clusterService, threadPool),
                     new JobLifeCycleService(settings, clusterService),
-                    new ElasticsearchBulkDeleterFactory(client) //NORELEASE: this should use Delete-by-query
+                    new ElasticsearchBulkDeleterFactory(client), //NORELEASE: this should use Delete-by-query
+                    new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager)
             );
+        }
+
+        private AutodetectCommunicatorFactory createAutodetectCommunicatorFactory(ElasticsearchFactories esFactory) {
+            return new AutodetectCommunicatorFactory(
+                    (JobDetails, ingnoreDowntime) -> new BlackHoleAutodetectProcess(),
+                    esFactory.newJobResultsPersisterFactory(),
+                    esFactory.newJobDataCountsPersisterFactory(),
+                    esFactory.newUsagePersisterFactory(),
+                    jobId -> Loggers.getLogger(jobId));
         }
 
         @Override

@@ -2,15 +2,11 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.xpack.prelert.job.*;
-import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -30,7 +26,7 @@ public interface JobDetailsProvider
      * Ensures a given {@code jobId} corresponds to an existing job
      * @throws UnknownJobException if there is no job with {@code jobId}
      */
-    void checkJobExists(String jobId) throws UnknownJobException;
+    void checkJobExists(String jobId) throws ResourceNotFoundException;
 
     /**
      * Return true if the job id is unique else if it is already used

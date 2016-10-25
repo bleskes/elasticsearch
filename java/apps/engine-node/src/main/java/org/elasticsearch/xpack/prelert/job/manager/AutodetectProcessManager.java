@@ -1,6 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
@@ -20,6 +21,7 @@ import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldExcept
 import org.elasticsearch.xpack.prelert.job.process.exceptions.NativeProcessRunException;
 import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
 import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,7 +85,7 @@ public class AutodetectProcessManager implements DataProcessor {
     }
 
     @Override
-    public void flushJob(String jobId, InterimResultsParams params) throws NativeProcessRunException {
+    public void flushJob(String jobId, InterimResultsParams params) {
         LOGGER.debug("Flushing job {}", jobId);
 
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
@@ -100,7 +102,7 @@ public class AutodetectProcessManager implements DataProcessor {
         {
             String msg = String.format("Exception flushing process for job %s", jobId);
             LOGGER.warn(msg);
-            throw new NativeProcessRunException(msg, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+            throw ExceptionsHelper.nativeProcessException(msg, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
         }
     }
 

@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -268,7 +269,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
         try {
             provider.checkJobExists(jobId);
-        } catch (UnknownJobException e) {
+        } catch (ResourceNotFoundException e) {
             assertTrue(false);
         }
     }
@@ -287,7 +288,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         try {
             provider.checkJobExists(jobId);
             assertTrue(false);
-        } catch (UnknownJobException e) {
+        } catch (ResourceNotFoundException e) {
         }
     }
 
@@ -302,7 +303,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         try {
             provider.checkJobExists(jobId);
             assertTrue(false);
-        } catch (UnknownJobException e) {
+        } catch (ResourceNotFoundException e) {
         }
     }
 

@@ -8,13 +8,14 @@
 ---
 "Test POST data close job api":
   - do:
-      catch: request
       xpack.prelert.data.close:
         jobId: foo
+  - match: { acknowledged: true }
 
 ---
 "Test POST data flush job api":
   - do:
-      catch: request
       xpack.prelert.data.flush:
         jobId: foo
+  - match: { acknowledged: true }
+

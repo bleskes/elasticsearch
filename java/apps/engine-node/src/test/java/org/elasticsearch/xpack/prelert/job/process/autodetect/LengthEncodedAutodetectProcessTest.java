@@ -80,7 +80,7 @@ public class LengthEncodedAutodetectProcessTest extends ESTestCase {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ControlMsgToProcessWriter.FLUSH_SPACES_LENGTH + 1024);
         LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(bos, NUMBER_ANALYSIS_FIELDS);
 
-        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+        InterimResultsParams params = InterimResultsParams.builder().build();
         process.flushJob(params);
 
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
@@ -91,7 +91,7 @@ public class LengthEncodedAutodetectProcessTest extends ESTestCase {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
         LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(bos, NUMBER_ANALYSIS_FIELDS);
 
-        DataLoadParams params = new DataLoadParams(new TimeRange(0l, 86400l), true);
+        DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1").endTime("86400").build(), true);
         process.writeResetBucketsControlMessage(params);
 
         String message = new String(bos.toByteArray(), StandardCharsets.UTF_8);

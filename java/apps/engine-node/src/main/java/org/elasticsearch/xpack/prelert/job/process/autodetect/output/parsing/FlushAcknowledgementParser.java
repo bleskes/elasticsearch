@@ -10,7 +10,7 @@ import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
 
 import java.io.IOException;
 
-final class FlushAcknowledgementParser extends FieldNameParser<FlushAcknowledgement> {
+public final class FlushAcknowledgementParser extends FieldNameParser<FlushAcknowledgement> {
     private static final Logger LOGGER = Loggers.getLogger(FlushAcknowledgementParser.class);
 
     public FlushAcknowledgementParser(JsonParser jsonParser) {

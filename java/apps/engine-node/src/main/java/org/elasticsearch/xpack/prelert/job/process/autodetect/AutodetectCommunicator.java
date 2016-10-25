@@ -4,6 +4,8 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.ResultsReader;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
@@ -17,13 +19,18 @@ import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsE
 import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 
 public class AutodetectCommunicator implements Closeable {
+
+    private static final int DEFAULT_TRY_COUNT = 5;
+    private static final int DEFAULT_TRY_TIMEOUT_SECS = 6;
 
     private final AutodetectProcess autodetectProcess;
     private final Logger jobLogger;
@@ -37,7 +44,7 @@ public class AutodetectCommunicator implements Closeable {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
 
-        // TODO get latest process manager code from the old engine-api project
+        // TODO Port the normalizer from the old project
         this.resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.out(), this.jobLogger,
                 jobDetails.getAnalysisConfig().getUsePerPartitionNormalization());
 
@@ -45,7 +52,23 @@ public class AutodetectCommunicator implements Closeable {
         this.outputParserThread = new Thread(resultsReader, jobDetails.getId() + "-Bucket-Parser");
         this.outputParserThread.start();
 
-        this.autoDetectWriter = DataToProcessWriterFactory.create(true, process, jobDetails.getDataDescription(),
+        this.autoDetectWriter = createProcessWriter(jobDetails, process, statusReporter);
+    }
+
+    AutodetectCommunicator(JobDetails jobDetails, AutodetectProcess process, Logger jobLogger,
+                                  JobResultsPersister resultsPersister, StatusReporter statusReporter, ResultsReader resultsReader) {
+        this.autodetectProcess = process;
+        this.jobLogger = jobLogger;
+        this.resultsReader = resultsReader;
+        // NORELEASE - use ES ThreadPool
+        this.outputParserThread = new Thread(resultsReader, jobDetails.getId() + "-Bucket-Parser");
+        this.outputParserThread.start();
+
+        this.autoDetectWriter = createProcessWriter(jobDetails, process, statusReporter);
+    }
+
+    private DataToProcessWriter createProcessWriter(JobDetails jobDetails, AutodetectProcess process, StatusReporter statusReporter) {
+        return DataToProcessWriterFactory.create(true, process, jobDetails.getDataDescription(),
                 jobDetails.getAnalysisConfig(), jobDetails.getSchedulerConfig(), new TransformConfigs(jobDetails.getTransforms()),
                 statusReporter, jobLogger);
     }
@@ -82,19 +105,46 @@ public class AutodetectCommunicator implements Closeable {
     }
 
     public void flushJob(InterimResultsParams params) throws IOException {
-        autodetectProcess.flushJob(params);
-     }
+        flushJob(params, DEFAULT_TRY_COUNT, DEFAULT_TRY_TIMEOUT_SECS);
+    }
 
-    public void addAlertObserver(AlertObserver ao)
-    {
+    void flushJob(InterimResultsParams params, int tryCount, int tryTimeoutSecs) throws IOException {
+        String flushId = autodetectProcess.flushJob(params);
+
+        Duration intermittentTimeout = Duration.ofSeconds(tryTimeoutSecs);
+        boolean isFlushComplete = false;
+        while (isFlushComplete == false && --tryCount >= 0) {
+            // Check there wasn't an error in the flush
+            if (!autodetectProcess.isProcessAlive()) {
+
+                String msg = Messages.getMessage(Messages.AUTODETECT_FLUSH_UNEXPTECTED_DEATH) + " " + autodetectProcess.readError();
+                jobLogger.error(msg);
+                throw ExceptionsHelper.nativeProcessException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
+            }
+            isFlushComplete = resultsReader.waitForFlushAcknowledgement(flushId, intermittentTimeout);
+        }
+
+        if (!isFlushComplete) {
+            String msg = Messages.getMessage(Messages.AUTODETECT_FLUSH_TIMEOUT) + " " + autodetectProcess.readError();
+            jobLogger.error(msg);
+            throw ExceptionsHelper.nativeProcessException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
+        }
+
+        // We also have to wait for the normaliser to become idle so that we block
+        // clients from querying results in the middle of normalisation.
+        resultsReader.waitUntilRenormaliserIsIdle();
+    }
+
+    public void addAlertObserver(AlertObserver ao) {
         resultsReader.addAlertObserver(ao);
     }
 
-    public boolean removeAlertObserver(AlertObserver ao)
-    {
+    public boolean removeAlertObserver(AlertObserver ao) {
         return resultsReader.removeAlertObserver(ao);
     }
 
-    public ZonedDateTime getProcessStartTime() { return autodetectProcess.getProcessStartTime(); }
+    public ZonedDateTime getProcessStartTime() {
+        return autodetectProcess.getProcessStartTime();
+    }
 
 }

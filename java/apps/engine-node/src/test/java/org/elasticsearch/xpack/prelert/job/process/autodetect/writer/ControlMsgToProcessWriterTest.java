@@ -4,24 +4,20 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.IntStream;
 
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
 import org.junit.Before;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
 
 public class ControlMsgToProcessWriterTest extends ESTestCase {
     @Mock
@@ -34,8 +30,8 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
 
     public void testWriteCalcInterimMessage_GivenAdvanceTime() throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
-        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
-                .advanceTime(1234567890L).build();
+        InterimResultsParams interimResultsParams = InterimResultsParams.builder()
+                .advanceTime("1234567890").build();
 
         writer.writeCalcInterimMessage(interimResultsParams);
 
@@ -48,7 +44,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
 
     public void testWriteCalcInterimMessage_GivenCalcInterimResultsWithNoTimeParams() throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
-        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
+        InterimResultsParams interimResultsParams = InterimResultsParams.builder()
                 .calcInterim(true).build();
 
         writer.writeCalcInterimMessage(interimResultsParams);
@@ -62,7 +58,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
 
     public void testWriteCalcInterimMessage_GivenNeitherCalcInterimNorAdvanceTime() throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
-        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder().build();
+        InterimResultsParams interimResultsParams = InterimResultsParams.builder().build();
 
         writer.writeCalcInterimMessage(interimResultsParams);
 
@@ -71,8 +67,10 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
 
     public void testWriteCalcInterimMessage_GivenCalcInterimResultsWithTimeParams() throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
-        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
-                .calcInterim(true).forTimeRange(120L, 180L).build();
+        InterimResultsParams interimResultsParams = InterimResultsParams.builder()
+                .calcInterim(true)
+                .forTimeRange(TimeRange.builder().startTime("120").endTime("180").build())
+                .build();
 
         writer.writeCalcInterimMessage(interimResultsParams);
 
@@ -85,8 +83,11 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
 
     public void testWriteCalcInterimMessage_GivenCalcInterimAndAdvanceTime() throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
-        InterimResultsParams interimResultsParams = InterimResultsParams.newBuilder()
-                .calcInterim(true).forTimeRange(50L, 100L).advanceTime(180L).build();
+        InterimResultsParams interimResultsParams = InterimResultsParams.builder()
+                .calcInterim(true)
+                .forTimeRange(TimeRange.builder().startTime("50").endTime("100").build())
+                .advanceTime("180")
+                .build();
 
         writer.writeCalcInterimMessage(interimResultsParams);
 
@@ -126,7 +127,7 @@ public class ControlMsgToProcessWriterTest extends ESTestCase {
     public void testWriteResetBucketsMessage() throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, 2);
 
-        writer.writeResetBucketsMessage(new DataLoadParams(new TimeRange(0L, 600L)));
+        writer.writeResetBucketsMessage(new DataLoadParams(TimeRange.builder().startTime("0").endTime("600").build()));
 
         InOrder inOrder = inOrder(lengthEncodedWriter);
         inOrder.verify(lengthEncodedWriter).writeNumFields(4);

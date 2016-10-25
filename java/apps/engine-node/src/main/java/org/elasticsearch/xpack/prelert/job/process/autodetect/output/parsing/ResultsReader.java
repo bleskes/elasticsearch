@@ -79,9 +79,8 @@ public class ResultsReader implements Runnable {
      * @param timeout the timeout
      * @return {@code true} if the flush has completed or the parsing finished; {@code false} if the timeout expired
      */
-    public void waitForFlushAcknowledgement(String flushId, Duration timeout)
-            throws InterruptedException {
-        parser.waitForFlushAcknowledgement(flushId, timeout);
+    public boolean waitForFlushAcknowledgement(String flushId, Duration timeout) {
+        return parser.waitForFlushAcknowledgement(flushId, timeout);
     }
 
     public void waitUntilRenormaliserIsIdle() {

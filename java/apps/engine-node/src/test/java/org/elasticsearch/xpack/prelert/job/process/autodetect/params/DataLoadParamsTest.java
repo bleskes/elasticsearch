@@ -5,17 +5,17 @@ import org.elasticsearch.test.ESTestCase;
 
 public class DataLoadParamsTest extends ESTestCase {
     public void testGetStart() {
-        assertEquals("", new DataLoadParams(new TimeRange(null, null)).getStart());
-        assertEquals("3", new DataLoadParams(new TimeRange(3L, null)).getStart());
+        assertEquals("", new DataLoadParams(TimeRange.builder().build()).getStart());
+        assertEquals("3", new DataLoadParams(TimeRange.builder().startTime("3").build()).getStart());
     }
 
     public void testGetEnd() {
-        assertEquals("", new DataLoadParams(new TimeRange(null, null)).getEnd());
-        assertEquals("1", new DataLoadParams(new TimeRange(null, 1L)).getEnd());
+        assertEquals("", new DataLoadParams(TimeRange.builder().build()).getEnd());
+        assertEquals("1", new DataLoadParams(TimeRange.builder().endTime("1").build()).getEnd());
     }
 
     public void testIsResettingBuckets() {
-        assertFalse(new DataLoadParams(new TimeRange(null, null)).isResettingBuckets());
-        assertTrue(new DataLoadParams(new TimeRange(5L, null)).isResettingBuckets());
+        assertFalse(new DataLoadParams(TimeRange.builder().build()).isResettingBuckets());
+        assertTrue(new DataLoadParams(TimeRange.builder().startTime("5").build()).isResettingBuckets());
     }
 }

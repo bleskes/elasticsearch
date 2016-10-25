@@ -1,11 +1,12 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicator;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Optional;
 
 import static org.elasticsearch.mock.orig.Mockito.doThrow;
 import static org.elasticsearch.mock.orig.Mockito.mock;
@@ -47,7 +47,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         AutodetectProcessManager manager = createManager(communicator);
         assertEquals(0, manager.numberOfRunningJobs());
 
-        DataLoadParams params = new DataLoadParams(new TimeRange(null, null));
+        DataLoadParams params = new DataLoadParams(TimeRange.builder().build());
         manager.processData("foo", createInputStream(""), params);
         assertEquals(1, manager.numberOfRunningJobs());
     }
@@ -91,7 +91,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
 
-        DataLoadParams params = new DataLoadParams(new TimeRange(1000L, 2000L), true);
+        DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1000").endTime("2000").build(), true);
         InputStream inputStream = createInputStream("");
         manager.processData("foo", inputStream, params);
 
@@ -112,7 +112,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         InputStream inputStream = createInputStream("");
         manager.processData("foo", inputStream, mock(DataLoadParams.class));
 
-        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+        InterimResultsParams params = InterimResultsParams.builder().build();
         manager.flushJob("foo", params);
 
         verify(communicator).flushJob(params);
@@ -124,10 +124,11 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
 
-        InterimResultsParams params = InterimResultsParams.newBuilder().build();
+        InterimResultsParams params = InterimResultsParams.builder().build();
         doThrow(new IOException("blah")).when(communicator).flushJob(params);
 
-        ESTestCase.expectThrows(NativeProcessRunException.class, () -> manager.flushJob("foo", params));
+        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> manager.flushJob("foo", params));
+        assertEquals(ErrorCodes.NATIVE_PROCESS_WRITE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testWriteUpdateConfigMessage() throws MalformedJsonException, MissingFieldException,

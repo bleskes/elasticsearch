@@ -50,10 +50,10 @@ public class LengthEncodedAutodetectProcess implements AutodetectProcess {
     }
 
     @Override
-    public void flushJob(InterimResultsParams params) throws IOException {
+    public String flushJob(InterimResultsParams params) throws IOException {
         ControlMsgToProcessWriter writer = new ControlMsgToProcessWriter(lengthEncodedWriter, numberOfAnalysisFields);
         writer.writeCalcInterimMessage(params);
-        writer.writeFlushMessage();
+        return writer.writeFlushMessage();
     }
 
     @Override
@@ -80,5 +80,17 @@ public class LengthEncodedAutodetectProcess implements AutodetectProcess {
     @Override
     public ZonedDateTime getProcessStartTime() {
         return startTime;
+    }
+
+    @Override
+    public boolean isProcessAlive() {
+        // NORELEASE Need a way to test if the process is still running
+        return false;
+    }
+
+    @Override
+    public String readError() {
+        // NORELEASE
+        return "";
     }
 }
