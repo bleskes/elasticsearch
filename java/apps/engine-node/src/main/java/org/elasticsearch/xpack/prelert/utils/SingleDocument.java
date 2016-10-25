@@ -162,7 +162,7 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
             builder.rawField(DOCUMENT.getPreferredName(), documentBytes);
         }
         if (document != null) {
-            builder.field(DOCUMENT.getPreferredName(), documentBytes);
+            builder.field(DOCUMENT.getPreferredName(), document);
         }
         return builder;
     }
