@@ -182,7 +182,7 @@ public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfigu
         assertEquals(JobConfigurationVerifier.MAX_JOB_ID_LENGTH, id.length());
     }
 
-    public void testUpdate_GivenModelMemoryLimitLessIsDecreased() {
+    public void testSetAnalysisLimits() {
         JobConfiguration jobConfiguration = new JobConfiguration();
         jobConfiguration.setAnalysisLimits(new AnalysisLimits(42L, null));
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,

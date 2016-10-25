@@ -273,7 +273,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertFalse(job2.equals(job1));
     }
 
-    public void testUpdate_GivenModelMemoryLimitLessIsDecreased() {
+    public void testSetAnalysisLimits() {
         JobDetails jobDetails = new JobConfiguration().build();
         jobDetails.setAnalysisLimits(new AnalysisLimits(42L, null));
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
