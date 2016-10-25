@@ -346,7 +346,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         ipFilter.set(new IPFilter(settings, auditTrailService, clusterService.getClusterSettings(), licenseState));
         components.add(ipFilter.get());
         securityIntercepter.set(new SecurityServerTransportInterceptor(settings, threadPool, authcService, authzService, licenseState,
-                sslService));
+                sslService, securityContext));
         return components;
     }
 
