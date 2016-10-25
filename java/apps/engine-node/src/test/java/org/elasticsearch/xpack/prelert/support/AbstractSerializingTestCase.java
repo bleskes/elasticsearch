@@ -48,24 +48,6 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
         assertNotSame(testInstance, deserializedInstance);
     }
 
-    public void TestJacksonXContentMixedSerialisation() throws Exception {
-        T testInstance = createTestInstance();
-
-        // First try to deserialise using jackson and then serialise using XContent
-        ObjectMapper objectMapper = new ObjectMapper();
-        String instanceStr = objectMapper.writeValueAsString(testInstance);
-        assertParsedInstance(new BytesArray(instanceStr), testInstance);
-
-        // Now try to deserialise using XContent and then serialise using jackson
-        XContentBuilder builder = toXContent(testInstance, randomFrom(XContentType.values()));
-        XContentBuilder shuffled = shuffleXContent(builder, shuffleProtectedFields());
-        ObjectReader objectReader = objectMapper.readerFor(testInstance.getClass());
-        T deserializedInstance = objectReader.readValue(shuffled.bytes().utf8ToString());
-        assertEquals(testInstance, deserializedInstance);
-        assertEquals(testInstance.hashCode(), deserializedInstance.hashCode());
-        assertNotSame(testInstance, deserializedInstance);
-    }
-
     private void assertParsedInstance(BytesReference queryAsBytes, T expectedInstance)
             throws IOException {
         XContentParser parser = XContentFactory.xContent(queryAsBytes).createParser(queryAsBytes);
