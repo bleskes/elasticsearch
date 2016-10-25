@@ -114,7 +114,7 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
     /**
      * Special time format string for epoch times (milli-seconds)
      */
-    public static final String EPOCH_MS = "epochMs";
+    public static final String EPOCH_MS = "epoch_ms";
 
     /**
      * The format field name
