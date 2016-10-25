@@ -18,8 +18,11 @@
 package org.elasticsearch.xpack.prelert.rest.list;
 
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
@@ -42,7 +45,9 @@ public class RestCreateListAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        CreateListAction.Request createListRequest = new CreateListAction.Request(RestActions.getRestContent(restRequest));
+        BytesReference bodyBytes = RestActions.getRestContent(restRequest);
+        XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
+        CreateListAction.Request createListRequest = CreateListAction.Request.parseRequest(parser, () -> parseFieldMatcher);
         return channel -> transportCreateListAction.execute(createListRequest, new AcknowledgedRestListener<>(channel));
     }
 

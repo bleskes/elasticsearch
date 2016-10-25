@@ -35,7 +35,7 @@ public class DataDescriptionVerifierTest extends ESTestCase {
 
     public void testVerify_GivenTimeFormatIsEpochMs() {
         DataDescription description = new DataDescription();
-        description.setTimeFormat("epoch_ms");
+        description.setTimeFormat("epochMs");
 
         assertTrue(DataDescriptionVerifier.verify(description));
     }

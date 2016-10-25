@@ -17,9 +17,7 @@
 
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
@@ -38,16 +36,22 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.util.Objects;
 
 
 public class CreateListAction extends Action<CreateListAction.Request, CreateListAction.Response, CreateListAction.RequestBuilder> {
@@ -69,20 +73,25 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
         return new Response();
     }
 
-    public static class Request extends MasterNodeReadRequest<Request> {
+    public static class Request extends MasterNodeReadRequest<Request> implements ToXContent {
 
-        private BytesReference request;
+        public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier matcherSupplier) {
+            ListDocument listDocument = ListDocument.PARSER.apply(parser, matcherSupplier);
+            return new Request(listDocument);
+        }
 
-        public Request() {
+        private ListDocument listDocument;
+
+        Request() {
 
         }
 
-        public Request(BytesReference request) {
-            this.request = request;
+        public Request(ListDocument listDocument) {
+            this.listDocument = ExceptionsHelper.requireNonNull(listDocument, "listDocument");
         }
 
-        public BytesReference getRequest() {
-            return this.request;
+        public ListDocument getListDocument() {
+            return this.listDocument;
         }
 
         @Override
@@ -93,13 +102,36 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            request = in.readBytesReference();
+            listDocument = new ListDocument(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(request);
+            listDocument.writeTo(out);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            listDocument.toXContent(builder, params);
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(listDocument);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(listDocument, other.listDocument);
         }
     }
 
@@ -148,15 +180,11 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            ListDocument listDocument;
-            try {
-                listDocument = objectMapper.readValue(request.getRequest().toBytesRef().bytes, ListDocument.class);
-            } catch (JsonMappingException e) {
-                throw new ElasticsearchParseException("Missing required properties for List", e);
-            }
+            ListDocument listDocument = request.getListDocument();
             final String listId = listDocument.getId();
             IndexRequest indexRequest = new IndexRequest(PRELERT_INFO_INDEX, ListDocument.TYPE.getPreferredName(), listId);
-            indexRequest.source(request.getRequest());
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            indexRequest.source(listDocument.toXContent(builder, ToXContent.EMPTY_PARAMS));
             transportIndexAction.execute(indexRequest, new ActionListener<IndexResponse>() {
                 @Override
                 public void onResponse(IndexResponse indexResponse) {
