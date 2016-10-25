@@ -44,7 +44,6 @@ import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
-import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleter;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
@@ -56,6 +55,7 @@ import org.elasticsearch.xpack.prelert.rest.job.*;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestPutModelSnapshotDescriptionAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestRevertModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.rest.results.*;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
@@ -67,7 +67,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Function;
 
 public class ServerBootstrap {
 
@@ -179,7 +178,8 @@ public class ServerBootstrap {
                     RestGetCategoriesAction.class,
                     RestGetCategoryAction.class,
                     RestGetModelSnapshotsAction.class,
-                    RestRevertModelSnapshotsAction.class);
+                    RestRevertModelSnapshotsAction.class,
+                    RestPutModelSnapshotDescriptionAction.class);
         }
 
         @Override
@@ -206,7 +206,8 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetCategoryDefinitionsAction.INSTANCE, GetCategoryDefinitionsAction.TransportAction.class),
                     new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class),
                     new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class),
-                    new ActionHandler<>(RevertModelSnapshotsAction.INSTANCE, RevertModelSnapshotsAction.TransportAction.class));
+                    new ActionHandler<>(RevertModelSnapshotsAction.INSTANCE, RevertModelSnapshotsAction.TransportAction.class),
+                    new ActionHandler<>(PutModelSnapshotDescriptionAction.INSTANCE, PutModelSnapshotDescriptionAction.TransportAction.class));
         }
     }
 }
