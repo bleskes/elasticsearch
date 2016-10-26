@@ -416,7 +416,6 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         // authentication settings
         AnonymousUser.addSettings(settingsList);
         Realms.addSettings(settingsList);
-        NativeUsersStore.addSettings(settingsList);
         NativeRolesStore.addSettings(settingsList);
         AuthenticationService.addSettings(settingsList);
         AuthorizationService.addSettings(settingsList);
