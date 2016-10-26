@@ -69,9 +69,14 @@ public final class QueryPage<T extends ToXContent & Writeable> extends ToXConten
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        doXContentBody(builder, params);
+        builder.endObject();
+        return builder;
+    }
+
+    public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         builder.field(HITS.getPreferredName(), hits);
         builder.field(HIT_COUNT.getPreferredName(), hitCount);
-        builder.endObject();
         return builder;
     }
 

@@ -17,17 +17,18 @@
 package org.elasticsearch.xpack.prelert.rest.results;
 
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.*;
-import org.elasticsearch.rest.action.RestBuilderListener;
+import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketsAction.Response;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 
 import java.io.IOException;
-
-import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestGetBucketsAction extends BaseRestHandler {
 
@@ -37,29 +38,33 @@ public class RestGetBucketsAction extends BaseRestHandler {
     public RestGetBucketsAction(Settings settings, RestController controller, GetBucketsAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/buckets", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + JobDetails.ID.getPreferredName() + "}/buckets", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetBucketsAction.Request request =
-                new GetBucketsAction.Request(restRequest.param("jobId"), restRequest.param("start"), restRequest.param("end"));
-        request.setExpand(restRequest.paramAsBoolean("expand", false));
-        request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
-        request.setSkip(restRequest.paramAsInt("skip", 0));
-        request.setTake(restRequest.paramAsInt("take", 100));
-        request.setAnomalyScore(Double.parseDouble(restRequest.param("anomalyScore", "0.0")));
-        request.setMaxNormalizedProbability(Double.parseDouble(restRequest.param("maxNormalizedProbability", "0.0")));
-        if (restRequest.hasParam("partitionValue")) {
-            request.setPartitionValue(restRequest.param("partitionValue"));
+        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        BytesReference bodyBytes = restRequest.content();
+        final GetBucketsAction.Request request;
+        if (bodyBytes != null && bodyBytes.length() > 0) {
+            XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
+            request = GetBucketsAction.Request.parseRequest(jobId, parser, () -> parseFieldMatcher);
+        } else {
+            request = new GetBucketsAction.Request(jobId, restRequest.param(GetBucketsAction.Request.START.getPreferredName()),
+                    restRequest.param(GetBucketsAction.Request.END.getPreferredName()));
+            request.setExpand(restRequest.paramAsBoolean(GetBucketsAction.Request.EXPAND.getPreferredName(), false));
+            request.setIncludeInterim(restRequest.paramAsBoolean(GetBucketsAction.Request.INCLUDE_INTERIM.getPreferredName(), false));
+            request.setSkip(restRequest.paramAsInt(GetBucketsAction.Request.SKIP.getPreferredName(), 0));
+            request.setTake(restRequest.paramAsInt(GetBucketsAction.Request.TAKE.getPreferredName(), 100));
+            request.setAnomalyScore(
+                    Double.parseDouble(restRequest.param(GetBucketsAction.Request.ANOMALY_SCORE.getPreferredName(), "0.0")));
+            request.setMaxNormalizedProbability(
+                    Double.parseDouble(restRequest.param(GetBucketsAction.Request.MAX_NORMALIZED_PROBABILITY.getPreferredName(), "0.0")));
+            if (restRequest.hasParam(GetBucketsAction.Request.PARTITION_VALUE.getPreferredName())) {
+                request.setPartitionValue(restRequest.param(GetBucketsAction.Request.PARTITION_VALUE.getPreferredName()));
+            }
         }
 
-        return channel -> transportAction.execute(request, new RestBuilderListener<GetBucketsAction.Response>(channel) {
-
-            @Override
-            public RestResponse buildResponse(GetBucketsAction.Response response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
-            }
-        });
+        return channel -> transportAction.execute(request, new RestToXContentListener<Response>(channel));
     }
 }
