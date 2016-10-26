@@ -64,12 +64,12 @@ import java.util.Optional;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class RevertModelSnapshotsAction extends Action<RevertModelSnapshotsAction.Request, RevertModelSnapshotsAction.Response, RevertModelSnapshotsAction.RequestBuilder> {
+public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Response, RevertModelSnapshotAction.RequestBuilder> {
 
-    public static final RevertModelSnapshotsAction INSTANCE = new RevertModelSnapshotsAction();
+    public static final RevertModelSnapshotAction INSTANCE = new RevertModelSnapshotAction();
     public static final String NAME = "indices:admin/prelert/modelsnapshots/revert";
 
-    private RevertModelSnapshotsAction() {
+    private RevertModelSnapshotAction() {
         super(NAME);
     }
 
@@ -292,8 +292,8 @@ public class RevertModelSnapshotsAction extends Action<RevertModelSnapshotsActio
             return modelSnapshot;
         }
 
-        private ActionListener<RevertModelSnapshotsAction.Response> wrapListener(
-                ActionListener<RevertModelSnapshotsAction.Response> listener, ModelSnapshot modelSnapshot, String jobId) {
+        private ActionListener<RevertModelSnapshotAction.Response> wrapListener(
+                ActionListener<RevertModelSnapshotAction.Response> listener, ModelSnapshot modelSnapshot, String jobId) {
 
             // If we need to delete buckets that occurred after the snapshot, we wrap
             // the listener with one that invokes the OldDataRemover on acknowledged responses

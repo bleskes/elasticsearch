@@ -74,14 +74,14 @@ setup:
 "Test revert model with only jobId":
   - do:
       catch: request
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
 
 ---
 "Test revert model with invalid time":
   - do:
       catch: request
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         time: "foo"
 
@@ -89,7 +89,7 @@ setup:
 "Test revert model with invalid snapshotId":
   - do:
       catch: request
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         snapshotId: "not_exist"
 
@@ -97,14 +97,14 @@ setup:
 "Test revert model with invalid description":
   - do:
       catch: request
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         description: "foo"
 
 ---
 "Test revert model with valid snapshotId":
   - do:
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         snapshotId: "foo1"
 
@@ -116,7 +116,7 @@ setup:
   - match: { document.snapshotDocCount: 0 }
 
   - do:
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         snapshotId: "foo2"
 
@@ -130,7 +130,7 @@ setup:
 ---
 "Test revert model with valid time":
   - do:
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         time: "2016-06-02T01:00:00Z"
 
@@ -142,7 +142,7 @@ setup:
   - match: { document.snapshotDocCount: 0 }
 
   - do:
-        xpack.prelert.revert_model_snapshots:
+        xpack.prelert.revert_model_snapshot:
           jobId: "foo"
           time: "2016-06-01T01:00:00Z"
 
@@ -156,7 +156,7 @@ setup:
 ---
 "Test revert model with valid description":
   - do:
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         description: "first"
 
@@ -168,7 +168,7 @@ setup:
   - match: { document.snapshotDocCount: 0 }
 
   - do:
-        xpack.prelert.revert_model_snapshots:
+        xpack.prelert.revert_model_snapshot:
           jobId: "foo"
           description: "second"
 
@@ -190,7 +190,7 @@ setup:
   - match: { hitCount: 3 }
 
   - do:
-      xpack.prelert.revert_model_snapshots:
+      xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         snapshotId: "foo2"
         deleteInterveningResults: true

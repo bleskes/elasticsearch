@@ -20,21 +20,15 @@ import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.*;
-import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
-import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
-import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 
 import java.io.IOException;
 
-import static org.elasticsearch.rest.RestStatus.OK;
+public class RestRevertModelSnapshotAction extends BaseRestHandler {
 
-public class RestRevertModelSnapshotsAction extends BaseRestHandler {
-
-    private final RevertModelSnapshotsAction.TransportAction transportAction;
+    private final RevertModelSnapshotAction.TransportAction transportAction;
 
     private final ParseField JOB_ID = new ParseField("jobId");
     private final ParseField TIME = new ParseField("time");
@@ -48,8 +42,8 @@ public class RestRevertModelSnapshotsAction extends BaseRestHandler {
     private final boolean DELETE_INTERVENING_DEFAULT = false;
 
     @Inject
-    public RestRevertModelSnapshotsAction(Settings settings, RestController controller,
-                                          RevertModelSnapshotsAction.TransportAction transportAction) {
+    public RestRevertModelSnapshotAction(Settings settings, RestController controller,
+                                         RevertModelSnapshotAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
         controller.registerHandler(RestRequest.Method.POST, "/engine/v2/modelsnapshots/{jobId}/revert", this);
@@ -57,8 +51,8 @@ public class RestRevertModelSnapshotsAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        RevertModelSnapshotsAction.Request request =
-                new RevertModelSnapshotsAction.Request(restRequest.param(JOB_ID.getPreferredName()));
+        RevertModelSnapshotAction.Request request =
+                new RevertModelSnapshotAction.Request(restRequest.param(JOB_ID.getPreferredName()));
         request.setTime(restRequest.param(TIME.getPreferredName(), TIME_DEFAULT));
         request.setSnapshotId(restRequest.param(SNAPSHOT_ID.getPreferredName(), SNAPSHOT_ID_DEFAULT));
         request.setDescription(restRequest.param(DESCRIPTION.getPreferredName(), DESCRIPTION_DEFAULT));

@@ -61,7 +61,7 @@ import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestPutModelSnapshotDescriptionAction;
-import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestRevertModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestRevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.rest.results.*;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
@@ -198,7 +198,7 @@ public class ServerBootstrap {
                     RestGetCategoriesAction.class,
                     RestGetCategoryAction.class,
                     RestGetModelSnapshotsAction.class,
-                    RestRevertModelSnapshotsAction.class,
+                    RestRevertModelSnapshotAction.class,
                     RestPutModelSnapshotDescriptionAction.class);
         }
 
@@ -226,7 +226,7 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetCategoryDefinitionsAction.INSTANCE, GetCategoryDefinitionsAction.TransportAction.class),
                     new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class),
                     new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class),
-                    new ActionHandler<>(RevertModelSnapshotsAction.INSTANCE, RevertModelSnapshotsAction.TransportAction.class),
+                    new ActionHandler<>(RevertModelSnapshotAction.INSTANCE, RevertModelSnapshotAction.TransportAction.class),
                     new ActionHandler<>(PutModelSnapshotDescriptionAction.INSTANCE, PutModelSnapshotDescriptionAction.TransportAction.class));
         }
     }

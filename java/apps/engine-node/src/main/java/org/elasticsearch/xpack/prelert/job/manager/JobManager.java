@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -28,7 +27,7 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
-import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
@@ -380,20 +379,20 @@ public class JobManager {
         return jobProvider.audit("");
     }
 
-    public void revertSnapshot(RevertModelSnapshotsAction.Request request,
-                               ActionListener<RevertModelSnapshotsAction.Response> actionListener,
+    public void revertSnapshot(RevertModelSnapshotAction.Request request,
+                               ActionListener<RevertModelSnapshotAction.Response> actionListener,
                                ModelSnapshot modelSnapshot) {
 
         clusterService.submitStateUpdateTask("revert-snapshot-" + request.getJobId(),
-                new AckedClusterStateUpdateTask<RevertModelSnapshotsAction.Response>(request, actionListener) {
+                new AckedClusterStateUpdateTask<RevertModelSnapshotAction.Response>(request, actionListener) {
 
             @Override
-            protected RevertModelSnapshotsAction.Response newResponse(boolean acknowledged) {
-                RevertModelSnapshotsAction.Response response;
+            protected RevertModelSnapshotAction.Response newResponse(boolean acknowledged) {
+                RevertModelSnapshotAction.Response response;
 
                 if (acknowledged) {
                     try {
-                        response = new RevertModelSnapshotsAction.Response(modelSnapshot, objectMapper);
+                        response = new RevertModelSnapshotAction.Response(modelSnapshot, objectMapper);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
@@ -404,7 +403,7 @@ public class JobManager {
                     //        modelSnapshot.getDescription()));
 
                 } else {
-                    response = new RevertModelSnapshotsAction.Response();
+                    response = new RevertModelSnapshotAction.Response();
                 }
                 return response;
             }
