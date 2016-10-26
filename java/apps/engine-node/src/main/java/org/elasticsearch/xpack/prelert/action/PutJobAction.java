@@ -16,8 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -32,18 +30,22 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Response, PutJobAction.RequestBuilder> {
 
@@ -64,17 +66,25 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
         return new Response();
     }
 
-    public static class Request extends AcknowledgedRequest<Request> {
+    public static class Request extends AcknowledgedRequest<Request> implements ToXContent {
 
-        private BytesReference jobConfiguration;
-        private boolean overwrite;
-
-        public BytesReference getJobConfiguration() {
-            return jobConfiguration;
+        public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier matcherSupplier) {
+            JobConfiguration jobConfiguration = JobConfiguration.PARSER.apply(parser, matcherSupplier);
+            return new Request(jobConfiguration);
         }
 
-        public void setJobConfiguration(BytesReference jobConfiguration) {
+        private JobConfiguration jobConfiguration;
+        private boolean overwrite;
+
+        public Request(JobConfiguration jobConfiguration) {
             this.jobConfiguration = jobConfiguration;
+        }
+
+        Request() {
+        }
+
+        public JobConfiguration getJobConfiguration() {
+            return jobConfiguration;
         }
 
         public boolean isOverwrite() {
@@ -93,15 +103,35 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            jobConfiguration = in.readBytesReference();
+            jobConfiguration = new JobConfiguration(in);
             overwrite = in.readBoolean();
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(jobConfiguration);
+            jobConfiguration.writeTo(out);
             out.writeBoolean(overwrite);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            jobConfiguration.toXContent(builder, params);
+            return builder;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Request request = (Request) o;
+            return overwrite == request.overwrite &&
+                    Objects.equals(jobConfiguration, request.jobConfiguration);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobConfiguration, overwrite);
         }
     }
 
@@ -112,36 +142,55 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
         }
     }
 
-    public static class Response extends AcknowledgedResponse {
+    public static class Response extends AcknowledgedResponse implements ToXContent {
 
-        private BytesReference response;
+        private JobDetails jobDetails;
 
-        public Response(JobDetails jobDetails, ObjectMapper objectMapper) throws JsonProcessingException {
+        public Response(JobDetails jobDetails) {
             super(true);
-            this.response = new BytesArray(objectMapper.writeValueAsString(jobDetails));
+            this.jobDetails = jobDetails;
         }
 
-        public Response() {
+        Response() {
         }
 
-        public BytesReference getResponse() {
-            return response;
+        public JobDetails getResponse() {
+            return jobDetails;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = in.readBytesReference();
+            jobDetails = new JobDetails(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(response);
+            jobDetails.writeTo(out);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            // Don't serialize acknowledged because current api directly serializes the job details
+            jobDetails.doXContentBody(builder, params);
+            return builder;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Response response = (Response) o;
+            return Objects.equals(jobDetails, response.jobDetails);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobDetails);
         }
     }
 
-    // extends TransportMasterNodeAction, because we will store in cluster state.
     public static class TransportAction extends TransportMasterNodeAction<Request, Response> {
 
         private final JobManager jobManager;

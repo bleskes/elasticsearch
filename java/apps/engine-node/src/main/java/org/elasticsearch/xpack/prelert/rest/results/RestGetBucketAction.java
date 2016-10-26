@@ -49,8 +49,7 @@ public class RestGetBucketAction extends BaseRestHandler {
         String jobId = restRequest.param(JobDetails.ID.getPreferredName());
         String timestamp = restRequest.param(Bucket.TIMESTAMP.getPreferredName());
         final GetBucketAction.Request request;
-        if (restRequest.hasParam(JobDetails.ID.getPreferredName()))
-        {
+        if (jobId != null) {
             request = new GetBucketAction.Request(jobId, timestamp);
             request.setExpand(restRequest.paramAsBoolean(GetBucketAction.Request.EXPAND.getPreferredName(), false));
             request.setIncludeInterim(restRequest.paramAsBoolean(GetBucketAction.Request.INCLUDE_INTERIM.getPreferredName(), false));

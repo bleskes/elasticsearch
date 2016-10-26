@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -71,8 +72,10 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
     public static final ObjectParser<JobConfiguration, ParseFieldMatcherSupplier> PARSER =
             new ObjectParser<>("job_configuration", JobConfiguration::new);
 
+    public static final ParseField ID = new ParseField("id");
+
     static {
-        PARSER.declareString(JobConfiguration::setId, JobDetails.ID);
+        PARSER.declareString(JobConfiguration::setId, ID);
         PARSER.declareStringOrNull(JobConfiguration::setDescription, JobDetails.DESCRIPTION);
         PARSER.declareLong(JobConfiguration::setTimeout, JobDetails.TIMEOUT);
         PARSER.declareObject(JobConfiguration::setAnalysisConfig, AnalysisConfig.PARSER, JobDetails.ANALYSIS_CONFIG);
@@ -375,7 +378,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(JobDetails.ID.getPreferredName(), iD);
+        builder.field(ID.getPreferredName(), iD);
         if (description != null) {
             builder.field(JobDetails.DESCRIPTION.getPreferredName(), description);
         }

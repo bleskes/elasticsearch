@@ -189,12 +189,7 @@ public class JobManager {
      * Stores a job in the cluster state
      */
     public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) throws JobIdAlreadyExistsException {
-        JobConfiguration jobConfiguration;
-        try {
-            jobConfiguration = objectMapper.readValue(request.getJobConfiguration().toBytesRef().bytes, JobConfiguration.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        JobConfiguration jobConfiguration = request.getJobConfiguration();
         JobConfigurationVerifier.verify(jobConfiguration);
         // TODO: Remove once all validation happens in JobConfiguration#build() method:
         JobDetails jobDetails = jobConfiguration.build();
@@ -210,11 +205,7 @@ public class JobManager {
 
                             // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
                             // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
-                            try {
-                                actionListener.onResponse(new PutJobAction.Response(jobDetails, objectMapper));
-                            } catch (JsonProcessingException e) {
-                                throw new RuntimeException(e);
-                            }
+                            actionListener.onResponse(new PutJobAction.Response(jobDetails));
                         }
 
                         @Override

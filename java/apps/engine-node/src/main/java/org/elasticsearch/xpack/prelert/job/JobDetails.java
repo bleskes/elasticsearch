@@ -631,6 +631,12 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        doXContentBody(builder, params);
+        builder.endObject();
+        return builder;
+    }
+
+    public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         builder.field(ID.getPreferredName(), jobId);
         builder.field(DESCRIPTION.getPreferredName(), description);
         builder.field(STATUS.getPreferredName(), status);
@@ -682,7 +688,6 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         if (averageBucketProcessingTimeMs != null) {
             builder.field(AVERAGE_BUCKET_PROCESSING_TIME.getPreferredName(), averageBucketProcessingTimeMs);
         }
-        builder.endObject();
         return builder;
     }
 
