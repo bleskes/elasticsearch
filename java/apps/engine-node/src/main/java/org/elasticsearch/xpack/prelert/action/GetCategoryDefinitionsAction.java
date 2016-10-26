@@ -16,8 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -28,12 +26,12 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
@@ -44,6 +42,7 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsAction.Request, GetCategoryDefinitionsAction.Response, GetCategoryDefinitionsAction.RequestBuilder> {
 
@@ -74,7 +73,7 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
             this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
         }
 
-        private Request() {
+        Request() {
         }
 
         public String getJobId() {
@@ -115,6 +114,21 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
             out.writeInt(skip);
             out.writeInt(take);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Request request = (Request) o;
+            return skip == request.skip &&
+                    take == request.take &&
+                    Objects.equals(jobId, request.jobId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId, skip, take);
+        }
     }
 
     public static class RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder> {
@@ -124,38 +138,56 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
         }
     }
 
-    public static class Response extends ActionResponse {
+    public static class Response extends ActionResponse implements ToXContent {
 
-        private BytesReference response;
+        private QueryPage<CategoryDefinition> result;
 
-        public Response(ObjectMapper objectMapper, QueryPage<CategoryDefinition> result) throws JsonProcessingException {
-            this.response = new BytesArray(objectMapper.writeValueAsBytes(result));
+        public Response(QueryPage<CategoryDefinition> result) {
+            this.result = result;
         }
 
-        private Response() {
+        Response() {
         }
 
-        public BytesReference getResponse() {
-            return response;
+        public QueryPage<CategoryDefinition> getResult() {
+            return result;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = in.readBytesReference();
+            result = new QueryPage<>(in, CategoryDefinition::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(response);
+            result.writeTo(out);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            result.doXContentBody(builder, params);
+            return builder;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Response response = (Response) o;
+            return Objects.equals(result, response.result);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(result);
         }
     }
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
         private final JobProvider jobProvider;
-        private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
@@ -168,11 +200,7 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
             QueryPage<CategoryDefinition> result = jobProvider.categoryDefinitions(request.jobId, request.skip, request.take);
-            try {
-                listener.onResponse(new Response(objectMapper, result));
-            } catch (JsonProcessingException e) {
-                listener.onFailure(e);
-            }
+            listener.onResponse(new Response(result));
         }
     }
 }

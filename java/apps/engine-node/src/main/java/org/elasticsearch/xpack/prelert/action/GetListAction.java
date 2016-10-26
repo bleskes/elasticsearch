@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.prelert.action;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
@@ -155,7 +154,6 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
 
     public static class TransportAction extends TransportMasterNodeReadAction<Request, Response> {
 
-        private final ObjectMapper objectMapper = new ObjectMapper();
         private final TransportGetAction transportGetAction;
 
         // TODO these need to be moved to a settings object later

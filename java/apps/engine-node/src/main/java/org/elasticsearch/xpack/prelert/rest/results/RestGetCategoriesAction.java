@@ -19,15 +19,13 @@ package org.elasticsearch.xpack.prelert.rest.results;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.rest.*;
-import org.elasticsearch.rest.action.RestBuilderListener;
+import org.elasticsearch.rest.BaseRestHandler;
+import org.elasticsearch.rest.RestController;
+import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
 
 import java.io.IOException;
-
-import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestGetCategoriesAction extends BaseRestHandler {
 
@@ -44,13 +42,7 @@ public class RestGetCategoriesAction extends BaseRestHandler {
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetCategoryDefinitionsAction.Request request = new GetCategoryDefinitionsAction.Request(restRequest.param("jobId"));
         request.setPagination(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100));
-        return channel -> transportAction.execute(request, new RestBuilderListener<GetCategoryDefinitionsAction.Response>(channel) {
-
-            @Override
-            public RestResponse buildResponse(GetCategoryDefinitionsAction.Response response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
-            }
-        });
+        return channel -> transportAction.execute(request, new RestToXContentListener<>(channel));
     }
 
 }
