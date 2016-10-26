@@ -67,8 +67,8 @@ public class InterimResultsParams {
             return this;
         }
 
-        public Builder advanceTime(String targetSeconds) {
-            advanceTime = targetSeconds;
+        public Builder advanceTime(String timestamp) {
+            advanceTime = timestamp;
             return this;
         }
 

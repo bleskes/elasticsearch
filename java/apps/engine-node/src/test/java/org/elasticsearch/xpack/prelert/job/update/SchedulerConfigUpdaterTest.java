@@ -7,7 +7,9 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 
@@ -31,6 +33,21 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> createUpdater().update(node));
         assertEquals("There is no job 'foo' with a scheduler configured", e.getMessage());
         assertEquals(ErrorCodes.NO_SUCH_SCHEDULED_JOB.getValueString(), e.getHeader("errorCode").get(0));
+    }
+
+    public void testUpdate_GivenJobSchedulerIsStarted() throws IOException {
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
+        schedulerConfig.setBaseUrl("http://localhost:8080");
+        schedulerConfig.setIndexes(Arrays.asList("myIndex"));
+        schedulerConfig.setTypes(Arrays.asList("myType"));
+        givenJobWithSchedulerConfig("foo", schedulerConfig);
+        job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
+        String update = "{}";
+        JsonNode node = new ObjectMapper().readTree(update);
+
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> createUpdater().update(node));
+        assertEquals("Cannot update scheduler for job 'foo' while its status is STARTED", e.getMessage());
+        assertEquals(ErrorCodes.CANNOT_UPDATE_JOB_SCHEDULER.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testUpdate_GivenNull() throws IOException {
@@ -121,6 +138,7 @@ public class SchedulerConfigUpdaterTest extends ESTestCase {
             jobConfiguration.setSchedulerConfig(schedulerConfig);
         }
         job = jobConfiguration.build();
+        job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPED, 0, null));
     }
 
     private static SchedulerConfig.Builder createSchedulerBuilder() {

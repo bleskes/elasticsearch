@@ -1,4 +1,3 @@
-
 package org.elasticsearch.xpack.prelert.job.logging;
 
 import org.apache.logging.log4j.Logger;
@@ -13,4 +12,7 @@ public interface JobLoggerFactory {
      * @return A new logger
      */
     Logger newLogger(String jobId);
+
+    default void close(String jobId, Logger logger) {
+    }
 }

@@ -604,6 +604,13 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "queryDelay", -10L), e.getMessage());
     }
 
+    public void testCheckValidElasticsearch_GivenZeroFrequency() throws IOException {
+        SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
+        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> conf.setFrequency(0L));
+        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "frequency", 0L), e.getMessage());
+    }
+
     public void testCheckValidElasticsearch_GivenNegativeFrequency() throws IOException {
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> conf.setFrequency(-600L));

@@ -22,18 +22,81 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.SchedulerState;
+import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class JobLifeCycleService extends AbstractComponent implements ClusterStateListener {
 
     volatile Set<String> localAllocatedJobs = Collections.emptySet();
+    private final JobScheduledService jobScheduledService;
 
-    public JobLifeCycleService(Settings settings, ClusterService clusterService) {
+    public JobLifeCycleService(Settings settings, ClusterService clusterService, JobScheduledService jobScheduledService) {
         super(settings);
         clusterService.add(this);
+        this.jobScheduledService = Objects.requireNonNull(jobScheduledService);
+    }
+
+    @Override
+    public void clusterChanged(ClusterChangedEvent event) {
+        // Single volatile read:
+        Set<String> localAllocatedJobs = this.localAllocatedJobs;
+
+        PrelertMetadata prelertMetadata = event.state().getMetaData().custom(PrelertMetadata.TYPE);
+        if (prelertMetadata == null) {
+            // if no prelert metadata then stop any allocated jobs:
+            for (String localAllocatedJob : localAllocatedJobs) {
+                stopJob(localAllocatedJob);
+            }
+            return;
+        }
+
+        DiscoveryNode localNode = event.state().nodes().getLocalNode();
+        for (Allocation allocation : prelertMetadata.getAllocations().values()) {
+            if (localNode.getId().equals(allocation.getNodeId())) {
+                handleLocallyAllocatedJob(prelertMetadata, allocation, event);
+            }
+        }
+
+        for (String localAllocatedJob : localAllocatedJobs) {
+            Allocation allocation = prelertMetadata.getAllocations().get(localAllocatedJob);
+            if (allocation != null) {
+                if (localNode.getId().equals(allocation.getNodeId()) == false) {
+                    stopJob(localAllocatedJob);
+                }
+            } else {
+                stopJob(localAllocatedJob);
+            }
+        }
+    }
+
+    private void handleLocallyAllocatedJob(PrelertMetadata prelertMetadata, Allocation allocation, ClusterChangedEvent event) {
+        Job job = prelertMetadata.getJobs().get(allocation.getJobId());
+        if (localAllocatedJobs.contains(allocation.getJobId()) == false) {
+            startJob(job);
+        }
+
+        JobDetails jobDetails = job.getJobDetails();
+        SchedulerState schedulerState = jobDetails.getSchedulerState();
+        if (schedulerState != null) {
+            switch (schedulerState.getStatus()) {
+                case STARTED:
+                    jobScheduledService.start(jobDetails);
+                    break;
+                case STOPPING:
+                    jobScheduledService.stop(jobDetails.getId());
+                    break;
+                case STOPPED:
+                    break;
+                default:
+                    throw new IllegalStateException("Unhandled scheduler state [" + schedulerState.getStatus() + "]");
+            }
+        }
     }
 
     void startJob(Job job) {
@@ -54,39 +117,5 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         Set<String> newSet = new HashSet<>(localAllocatedJobs);
         newSet.remove(jobId);
         localAllocatedJobs = newSet;
-    }
-
-    @Override
-    public void clusterChanged(ClusterChangedEvent event) {
-        // Single volatile read:
-        Set<String> localAllocatedJobs = this.localAllocatedJobs;
-
-        PrelertMetadata prelertMetadata = event.state().getMetaData().custom(PrelertMetadata.TYPE);
-        if (prelertMetadata == null) {
-            // if no prelert metadata then stop any allocated jobs:
-            for (String localAllocatedJob : localAllocatedJobs) {
-                stopJob(localAllocatedJob);
-            }
-            return;
-        }
-
-        DiscoveryNode localNode = event.state().nodes().getLocalNode();
-        for (Allocation allocation : prelertMetadata.getAllocations().values()) {
-            if (localNode.getId().equals(allocation.getNodeId()) &&
-                    localAllocatedJobs.contains(allocation.getJobId()) == false) {
-                startJob(prelertMetadata.getJobs().get(allocation.getJobId()));
-            }
-        }
-
-        for (String localAllocatedJob : localAllocatedJobs) {
-            Allocation allocation = prelertMetadata.getAllocations().get(localAllocatedJob);
-            if (allocation != null) {
-                if (localNode.getId().equals(allocation.getNodeId()) == false) {
-                    stopJob(localAllocatedJob);
-                }
-            } else {
-                stopJob(localAllocatedJob);
-            }
-        }
     }
 }

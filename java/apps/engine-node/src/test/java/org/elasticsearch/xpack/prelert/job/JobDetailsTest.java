@@ -12,7 +12,12 @@ import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
 
@@ -21,7 +26,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         String jobId = randomAsciiOfLength(10);
         String description = randomBoolean() ? randomAsciiOfLength(10) : null;
         JobStatus jobStatus = randomFrom(JobStatus.values());
-        JobSchedulerStatus jobSchedulerStatus = randomFrom(JobSchedulerStatus.values());
+        SchedulerState jobSchedulerState = new SchedulerState(randomFrom(JobSchedulerStatus.values()), randomPositiveLong(), randomPositiveLong());
         Date createTime = new Date(randomPositiveLong());
         Date finishedTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
         Date lastDataTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
@@ -48,7 +53,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
                 randomBoolean() ? Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)) : null;
         Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
         return new JobDetails(
-                jobId, description, jobStatus, jobSchedulerStatus, createTime, finishedTime, lastDataTime, timeout,
+                jobId, description, jobStatus, jobSchedulerState, createTime, finishedTime, lastDataTime, timeout,
                 analysisConfig, analysisLimits, schedulerConfig.build(), dataDescription, modelSizeStats, transformConfigList,
                 modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
                 modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs
@@ -72,7 +77,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertEquals(JobStatus.CLOSED, jobDetails.getStatus());
         assertNotNull(jobDetails.getCreateTime());
         assertEquals(600L, jobDetails.getTimeout());
-        assertNotNull(jobDetails.getSchedulerStatus());
+        assertNull(jobDetails.getSchedulerState());
         assertNotNull(jobDetails.getAnalysisConfig());
         assertNull(jobDetails.getAnalysisLimits());
         assertNull(jobDetails.getCustomSettings());
@@ -148,7 +153,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
         schedulerConfig.setFilePath("/file/path");
         jobDetails1.setSchedulerConfig(schedulerConfig.build());
-        jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+        jobDetails1.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPED, 0, null));
         jobDetails1.setStatus(JobStatus.RUNNING);
         jobDetails1.setTimeout(3600L);
         jobDetails1.setTransforms(Collections.emptyList());
@@ -173,7 +178,7 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         jobDetails2.setModelSnapshotRetentionDays(10L);
         jobDetails2.setResultsRetentionDays(30L);
         jobDetails2.setSchedulerConfig(schedulerConfig.build());
-        jobDetails2.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+        jobDetails2.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPED, 0, null));
         jobDetails2.setStatus(JobStatus.RUNNING);
         jobDetails2.setTimeout(3600L);
         jobDetails2.setTransforms(Collections.emptyList());
@@ -196,18 +201,16 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-
-    public void testEquals_GivenDifferentSchedulerStatus() {
+    public void testEquals_GivenDifferentSchedulerState() {
         JobConfiguration jobConfiguration = new JobConfiguration("foo");
         JobDetails jobDetails1 = jobConfiguration.build();
-        jobDetails1.setSchedulerStatus(JobSchedulerStatus.STOPPED);
+        jobDetails1.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPED, 0, null));
         jobConfiguration.setId("bar");
         JobDetails jobDetails2 = jobConfiguration.build();
-        jobDetails2.setSchedulerStatus(JobSchedulerStatus.STARTED);
+        jobDetails2.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPED, 1, null));
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }
-
 
     public void testEquals_GivenDifferentRenormalizationWindowDays() {
         JobConfiguration jobDetails1 = new JobConfiguration();

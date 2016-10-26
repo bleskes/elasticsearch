@@ -58,6 +58,7 @@ public final class Messages
     public static final String SYSTEM_AUDIT_STARTED = "system.audit.started";
     public static final String SYSTEM_AUDIT_SHUTDOWN = "system.audit.shutdown";
 
+    public static final String JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS = "job.cannot.delete.while.scheduler.runs";
     public static final String JOB_CANNOT_PAUSE = "job.cannot.pause";
     public static final String JOB_CANNOT_RESUME = "job.cannot.resume";
 
@@ -177,7 +178,6 @@ public final class Messages
     public static final String JOB_SCHEDULER_CANNOT_START = "job.scheduler.cannot.start";
     public static final String JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE = "job.scheduler.cannot.stop.in.current.state";
     public static final String JOB_SCHEDULER_CANNOT_UPDATE_IN_CURRENT_STATE = "job.scheduler.cannot.update.in.current.state";
-    public static final String JOB_SCHEDULER_CANNOT_DELETE_IN_CURRENT_STATE = "job.scheduler.cannot.delete.in.current.state";
     public static final String JOB_SCHEDULER_FAILED_TO_STOP = "job.scheduler.failed.to.stop";
     public static final String JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB = "job.scheduler.no.such.scheduled.job";
     public static final String JOB_SCHEDULER_STATUS_STARTED = "job.scheduler.status.started";

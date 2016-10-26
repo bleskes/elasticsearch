@@ -1,13 +1,11 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.ResourceNotFoundException;
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-
-import java.util.Optional;
 
 /**
  * General interface for classes that persist Jobs and job data
@@ -65,20 +63,4 @@ public interface JobDetailsProvider
      */
     // TODO: should live together with createJob (in case it moves)?
     void deleteJob(String jobId, ActionListener<Boolean> listener);
-
-    /**
-     * Updates the scheduler state for the given job
-     * @param jobId the job id
-     * @param schedulerState the new scheduler state
-     * @return {@code true} if update was successful
-     * @throws UnknownJobException If there is no job with id <code>jobId</code>
-     */
-    boolean updateSchedulerState(String jobId, SchedulerState schedulerState) throws UnknownJobException;
-
-    /**
-     * Retrieves the state of the scheduler for the given job
-     * @param jobId the job id
-     * @return the scheduler state or empty if none exists
-     */
-    Optional<SchedulerState> getSchedulerState(String jobId);
 }

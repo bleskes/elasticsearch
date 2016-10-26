@@ -368,7 +368,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
             }
         }
         return new JobDetails(
-                id, description, JobStatus.CLOSED, JobSchedulerStatus.STOPPED, new Date(), null, null, DEFAULT_TIMEOUT, analysisConfig,
+                id, description, JobStatus.CLOSED, null, new Date(), null, null, DEFAULT_TIMEOUT, analysisConfig,
                 analysisLimits, schedulerConfig, dataDescription, null, transforms, modelDebugConfig, new DataCounts(),
                 ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
                 resultsRetentionDays, customSettings, null

@@ -740,7 +740,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         }
 
         public void setFrequency(long frequency) {
-            if (frequency < 0) {
+            if (frequency <= 0) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
                         SchedulerConfig.FREQUENCY.getPreferredName(), frequency);
                 throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);

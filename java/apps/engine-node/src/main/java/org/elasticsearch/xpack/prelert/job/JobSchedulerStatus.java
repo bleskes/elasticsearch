@@ -6,9 +6,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 
 import java.io.IOException;
-import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Set;
 
 public enum JobSchedulerStatus implements Writeable {
 
@@ -31,5 +29,4 @@ public enum JobSchedulerStatus implements Writeable {
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(ordinal());
     }
-
 }

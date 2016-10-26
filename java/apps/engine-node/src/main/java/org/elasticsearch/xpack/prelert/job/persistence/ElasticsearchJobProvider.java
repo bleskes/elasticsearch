@@ -60,7 +60,6 @@ import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JsonViews;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -93,8 +92,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
@@ -1230,63 +1227,32 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public boolean updateSchedulerState(String jobId, SchedulerState schedulerState)
-            throws UnknownJobException
-    {
-        LOGGER.trace("ES API CALL: update scheduler state for job " + jobId);
-
-        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
-
-        try
-        {
-            client.prepareIndex(esJobId.getIndex(), SchedulerState.TYPE, SchedulerState.TYPE)
-            .setSource(jsonBuilder()
-                    .startObject()
-                    .field(SchedulerState.START_TIME_MILLIS, schedulerState.getStartTimeMillis())
-                    .field(SchedulerState.END_TIME_MILLIS, schedulerState.getEndTimeMillis())
-                    .endObject())
-            .execute().actionGet();
-        }
-        catch (IndexNotFoundException e)
-        {
-            throw new UnknownJobException(jobId);
-        }
-        catch (IOException e)
-        {
-            LOGGER.error("Error while updating schedulerState", e);
-        }
-
-        return true;
-    }
-
-    @Override
-    public Optional<SchedulerState> getSchedulerState(String jobId)
-    {
-        Optional<SchedulerState> result = Optional.empty();
-        ElasticsearchJobId esJobId = new ElasticsearchJobId(jobId);
-        GetResponse response = null;
-        try
-        {
-            response = client.prepareGet(esJobId.getIndex(), SchedulerState.TYPE, SchedulerState.TYPE).get();
-        }
-        catch (IndexNotFoundException e)
-        {
-            LOGGER.warn("No schedulerState could be retrieved for job: " + jobId, e);
-        }
-
-        if (response != null && response.isExists())
-        {
-            SchedulerState schedulerState = objectMapper.convertValue(response.getSource(),
-                    SchedulerState.class);
-            result = Optional.of(schedulerState);
-        }
-        return result;
-    }
-
-    @Override
     public Auditor audit(String jobId)
     {
-        return new ElasticsearchAuditor(client, PRELERT_INFO_INDEX, jobId);
+        // NORELEASE Create proper auditor or remove
+        // return new ElasticsearchAuditor(client, PRELERT_INFO_INDEX, jobId);
+        return new Auditor() {
+            @Override
+            public void info(String message) {
+            }
+
+            @Override
+            public void warning(String message) {
+            }
+
+            @Override
+            public void error(String message) {
+            }
+
+            @Override
+            public void activity(String message) {
+            }
+
+            @Override
+            public void activity(int totalJobs, int totalDetectors, int runningJobs, int runningDetectors) {
+            }
+        };
+
     }
 
     private String esSortField(String sortField)

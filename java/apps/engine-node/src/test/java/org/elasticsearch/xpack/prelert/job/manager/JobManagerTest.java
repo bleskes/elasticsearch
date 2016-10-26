@@ -33,7 +33,6 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
-import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
 import org.elasticsearch.xpack.prelert.job.metadata.Job;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
@@ -129,6 +128,11 @@ public class JobManagerTest extends ESTestCase {
     public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
             DataStoreException, InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
+        ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
+        JobDetails jobDetails = new JobConfiguration().build();
+        jobDetails.setJobId("foo");
+        clusterState = jobManager.innerPutJob(jobDetails, false, clusterState);
+        when(clusterService.state()).thenReturn(clusterState);
 
         doAnswerSleep(200).when(clusterService).submitStateUpdateTask(eq("delete-job-foo"), any(AckedClusterStateUpdateTask.class));
 
@@ -269,8 +273,7 @@ public class JobManagerTest extends ESTestCase {
     }
 
     private JobManager createJobManager() {
-        return new JobManager(jobProvider, clusterService, new LocalActionGuardian<>(Action.CLOSED),
-                new LocalActionGuardian<>(ScheduledAction.STOPPED));
+        return new JobManager(jobProvider, clusterService, new LocalActionGuardian<>(Action.CLOSED));
     }
 
     private static Stubber doAnswerSleep(long millis)

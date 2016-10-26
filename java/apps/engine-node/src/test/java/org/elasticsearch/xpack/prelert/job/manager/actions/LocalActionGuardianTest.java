@@ -4,11 +4,7 @@ package org.elasticsearch.xpack.prelert.job.manager.actions;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
-import org.junit.Test;
 import org.mockito.Mockito;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class LocalActionGuardianTest extends ESTestCase {
 
@@ -71,24 +67,5 @@ public class LocalActionGuardianTest extends ESTestCase {
                      actionGuardian.tryAcquiringAction("foo", Action.WRITING)) {
         }
         assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
-    }
-
-    @SuppressWarnings("unchecked")
-
-    public void testActionIsnotSetIfNextGuardianFails() throws JobInUseException {
-        ActionGuardian<ScheduledAction> next = Mockito.mock(ActionGuardian.class);
-        LocalActionGuardian<ScheduledAction> actionGuardian =
-                new LocalActionGuardian<>(ScheduledAction.startingState(), next);
-
-        Mockito.when(next.tryAcquiringAction("foo", ScheduledAction.STARTED))
-                .thenThrow(JobInUseException.class);
-
-        try {
-            actionGuardian.tryAcquiringAction("foo", ScheduledAction.STARTED);
-
-            fail("Expected JobInUseException to be thrown");
-        } catch (JobInUseException e) {
-        }
-        assertEquals(ScheduledAction.STOPPED, actionGuardian.currentAction("foo"));
     }
 }

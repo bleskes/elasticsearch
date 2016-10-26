@@ -22,41 +22,48 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
+import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
-import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.metadata.Job;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.scheduler.JobScheduler;
 import org.elasticsearch.xpack.prelert.job.update.JobUpdater;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -90,7 +97,6 @@ public class JobManager {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ActionGuardian<Action> processActionGuardian;
-    private final ActionGuardian<ScheduledAction> schedulerActionGuardian;
     private final JobProvider jobProvider;
     private final ClusterService clusterService;
 
@@ -98,12 +104,10 @@ public class JobManager {
      * Create a JobManager
      */
     public JobManager(JobProvider jobProvider,
-                      ClusterService clusterService, ActionGuardian<Action> processActionGuardian,
-                      ActionGuardian<ScheduledAction> schedulerActionGuardian) {
+                      ClusterService clusterService, ActionGuardian<Action> processActionGuardian) {
         this.jobProvider = Objects.requireNonNull(jobProvider);
         this.clusterService = clusterService;
         this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
-        this.schedulerActionGuardian = Objects.requireNonNull(schedulerActionGuardian);
     }
 
     /**
@@ -277,9 +281,9 @@ public class JobManager {
         LOGGER.debug("Deleting job '" + jobId + "'");
 
         // NORELEASE: Should also delete the running process
-        // NORELEASE: Should also handle scheduled jobs
 
         try (ActionGuardian<Action>.ActionTicket actionTicket = processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
+            checkJobHasNoRunningScheduler(jobId);
 
             ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
                 @Override
@@ -330,11 +334,21 @@ public class JobManager {
         }
     }
 
+    private void checkJobHasNoRunningScheduler(String jobId) {
+        JobDetails job = getJobOrThrowIfUnknown(jobId);
+        SchedulerState schedulerState = job.getSchedulerState();
+        if (schedulerState != null && schedulerState.getStatus() != JobSchedulerStatus.STOPPED) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS, jobId),
+                    ErrorCodes.CANNOT_DELETE_JOB_SCHEDULER);
+        }
+    }
+
     ClusterState removeJobFromClusterState(String jobId, ClusterState currentState) {
         PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
         if (currentPrelertMetadata == null) {
             return currentState;
         }
+
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
         builder.removeJob(jobId);
 
@@ -360,6 +374,103 @@ public class JobManager {
                 return innerPutJob(jobDetails, true, currentState);
             }
         });
+    }
+
+    public void startJobScheduler(StartJobSchedulerAction.Request request, ActionListener<StartJobSchedulerAction.Response> actionListener) {
+        clusterService.submitStateUpdateTask("start-scheduler-job-" + request.getJobId(),
+                new AckedClusterStateUpdateTask<StartJobSchedulerAction.Response>(request, actionListener) {
+
+                    @Override
+                    protected StartJobSchedulerAction.Response newResponse(boolean acknowledged) {
+                        return new StartJobSchedulerAction.Response(acknowledged);
+                    }
+
+                    @Override
+                    public ClusterState execute(ClusterState currentState) throws Exception {
+                        return innerUpdateSchedulerState(currentState, request.getJobId(), oldState -> request.getSchedulerState());
+                    }
+                });
+    }
+
+    public void stopJobScheduler(StopJobSchedulerAction.Request request, ActionListener<StopJobSchedulerAction.Response> actionListener) {
+        clusterService.submitStateUpdateTask("stop-scheduler-job-" + request.getJobId(),
+                new AckedClusterStateUpdateTask<StopJobSchedulerAction.Response>(request, actionListener) {
+
+                    @Override
+                    protected StopJobSchedulerAction.Response newResponse(boolean acknowledged) {
+                        return new StopJobSchedulerAction.Response(acknowledged);
+                    }
+
+                    @Override
+                    public ClusterState execute(ClusterState currentState) throws Exception {
+                        return innerUpdateSchedulerState(currentState, request.getJobId(), oldState -> new SchedulerState(
+                                JobSchedulerStatus.STOPPING, oldState.getStartTimeMillis(), oldState.getEndTimeMillis()));
+                    }
+                });
+    }
+
+    private void checkJobIsScheduled(JobDetails job) {
+        if (job.getSchedulerConfig() == null) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB, job.getId()),
+                    ErrorCodes.NO_SUCH_SCHEDULED_JOB);
+        }
+    }
+
+    private void validateSchedulerStateTransition(JobDetails jobDetails, SchedulerState newState) {
+        SchedulerState currentSchedulerState = jobDetails.getSchedulerState();
+        JobSchedulerStatus currentSchedulerStatus = currentSchedulerState == null ? JobSchedulerStatus.STOPPED
+                : currentSchedulerState.getStatus();
+        JobSchedulerStatus newSchedulerStatus = newState.getStatus();
+        switch (newSchedulerStatus) {
+            case STARTED:
+                if (currentSchedulerStatus != JobSchedulerStatus.STOPPED) {
+                    throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START,
+                            jobDetails.getId(), jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                }
+                break;
+            case STOPPING:
+                if (currentSchedulerStatus != JobSchedulerStatus.STARTED) {
+                    throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
+                            jobDetails.getId(), jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                }
+                break;
+            case STOPPED:
+                if (currentSchedulerStatus != JobSchedulerStatus.STOPPING) {
+                    throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
+                            jobDetails.getId(), jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid requested job scheduler status: " + newSchedulerStatus);
+        }
+    }
+
+    public void updateSchedulerStatus(String jobId, JobSchedulerStatus newSchedulerStatus) {
+        clusterService.submitStateUpdateTask("udpate-scheduler-status-job-" + jobId,
+                new ClusterStateUpdateTask() {
+
+                    @Override
+                    public ClusterState execute(ClusterState currentState) throws Exception {
+                        return innerUpdateSchedulerState(currentState, jobId, oldSchedulerState -> new SchedulerState(
+                                newSchedulerStatus, oldSchedulerState.getStartTimeMillis(), oldSchedulerState.getEndTimeMillis()));
+                    }
+
+                    @Override
+                    public void onFailure(String source, Exception e) {
+                        LOGGER.error("Error updating scheduler status: source=[" + source + "], status=[" + newSchedulerStatus + "]", e);
+                    }
+                });
+    }
+
+    private ClusterState innerUpdateSchedulerState(ClusterState currentState, String jobId,
+                                                   Function<SchedulerState, SchedulerState> stateUpdater) {
+        JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, jobId);
+        checkJobIsScheduled(jobDetails);
+        SchedulerState oldState = jobDetails.getSchedulerState();
+        SchedulerState newState = stateUpdater.apply(oldState);
+        validateSchedulerStateTransition(jobDetails, newState);
+        jobDetails.setSchedulerState(newState);
+        return innerPutJob(jobDetails, true, currentState);
     }
 
     public Auditor audit(String jobId) {

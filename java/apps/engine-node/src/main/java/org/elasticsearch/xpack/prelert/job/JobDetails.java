@@ -5,24 +5,28 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.net.URI;
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * This class represents a configured and created Job. The creation time is
@@ -60,7 +64,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     public static final ParseField MODEL_SNAPSHOT_RETENTION_DAYS = new ParseField("modelSnapshotRetentionDays");
     public static final ParseField RESULTS_RETENTION_DAYS = new ParseField("resultsRetentionDays");
     public static final ParseField STATUS = new ParseField("status");
-    public static final ParseField SCHEDULER_STATUS = new ParseField("schedulerStatus");
+    public static final ParseField SCHEDULER_STATE = new ParseField("schedulerState");
     public static final ParseField TIMEOUT = new ParseField("timeout");
     public static final ParseField TRANSFORMS = new ParseField("transforms");
     public static final ParseField MODEL_SIZE_STATS = new ParseField("modelSizeStats");
@@ -83,12 +87,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         PARSER.declareString(JobDetails::setId, ID);
         PARSER.declareStringOrNull(JobDetails::setDescription, DESCRIPTION);
         PARSER.declareField(JobDetails::setStatus, (p, c) -> JobStatus.fromString(p.text()), STATUS, ValueType.STRING);
-        PARSER.declareField(
-                JobDetails::setSchedulerStatus,
-                (p, c) -> JobSchedulerStatus.fromString(p.text()),
-                SCHEDULER_STATUS,
-                ValueType.STRING
-        );
+        PARSER.declareObject(JobDetails::setSchedulerState, SchedulerState.PARSER, SCHEDULER_STATE);
         PARSER.declareField(JobDetails::setCreateTime, (p, c) -> new Date(p.longValue()), CREATE_TIME, ValueType.LONG);
         PARSER.declareField(JobDetails::setFinishedTime, (p, c) -> new Date(p.longValue()), FINISHED_TIME, ValueType.LONG);
         PARSER.declareField(JobDetails::setLastDataTime, (p, c) -> new Date(p.longValue()), LAST_DATA_TIME, ValueType.LONG);
@@ -113,7 +112,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     private String jobId;
     private String description;
     private JobStatus status;
-    private JobSchedulerStatus schedulerStatus;
+    private SchedulerState schedulerState;
 
     // NORELEASE: Use Jodatime instead
     private Date createTime;
@@ -142,7 +141,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     private JobDetails() {
     }
 
-    public JobDetails(String jobId, String description, JobStatus status, JobSchedulerStatus schedulerStatus, Date createTime,
+    public JobDetails(String jobId, String description, JobStatus status, SchedulerState schedulerState, Date createTime,
                       Date finishedTime, Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits,
                       SchedulerConfig schedulerConfig, DataDescription dataDescription, ModelSizeStats modelSizeStats,
                       List<TransformConfig> transforms, ModelDebugConfig modelDebugConfig, DataCounts counts,
@@ -152,7 +151,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         this.jobId = jobId;
         this.description = description;
         this.status = status;
-        this.schedulerStatus = schedulerStatus;
+        this.schedulerState = schedulerState;
         this.createTime = createTime;
         this.finishedTime = finishedTime;
         this.lastDataTime = lastDataTime;
@@ -178,7 +177,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         jobId = in.readString();
         description = in.readOptionalString();
         status = JobStatus.fromStream(in);
-        schedulerStatus = JobSchedulerStatus.fromStream(in);
+        schedulerState = in.readOptionalWriteable(SchedulerState::new);
         createTime = new Date(in.readVLong());
         if (in.readBoolean()) {
             finishedTime = new Date(in.readVLong());
@@ -279,12 +278,12 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         this.status = status;
     }
 
-    public JobSchedulerStatus getSchedulerStatus() {
-        return schedulerStatus;
+    public SchedulerState getSchedulerState() {
+        return schedulerState;
     }
 
-    public void setSchedulerStatus(JobSchedulerStatus schedulerStatus) {
-        this.schedulerStatus = schedulerStatus;
+    public void setSchedulerState(SchedulerState schedulerState) {
+        this.schedulerState = schedulerState;
     }
 
     /**
@@ -596,7 +595,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         out.writeString(jobId);
         out.writeOptionalString(description);
         status.writeTo(out);
-        schedulerStatus.writeTo(out);
+        out.writeOptionalWriteable(schedulerState);
         out.writeVLong(createTime.getTime());
         if (finishedTime != null) {
             out.writeBoolean(true);
@@ -640,7 +639,9 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         builder.field(ID.getPreferredName(), jobId);
         builder.field(DESCRIPTION.getPreferredName(), description);
         builder.field(STATUS.getPreferredName(), status);
-        builder.field(SCHEDULER_STATUS.getPreferredName(), schedulerStatus);
+        if (schedulerState != null) {
+            builder.field(SCHEDULER_STATE.getPreferredName(), schedulerState);
+        }
         builder.field(CREATE_TIME.getPreferredName(), createTime.getTime());
         if (finishedTime != null) {
             builder.field(FINISHED_TIME.getPreferredName(), finishedTime.getTime());
@@ -705,7 +706,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         return Objects.equals(this.jobId, that.jobId) &&
                 Objects.equals(this.description, that.description) &&
                 (this.status == that.status) &&
-                (this.schedulerStatus == that.schedulerStatus) &&
+                Objects.equals(this.schedulerState, that.schedulerState) &&
                 Objects.equals(this.createTime, that.createTime) &&
                 Objects.equals(this.finishedTime, that.finishedTime) &&
                 Objects.equals(this.lastDataTime, that.lastDataTime) &&
@@ -728,7 +729,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(jobId, description, status, schedulerStatus, createTime,
+        return Objects.hash(jobId, description, status, schedulerState, createTime,
                 finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
                 dataDescription, modelDebugConfig, modelSizeStats, transforms, counts,
                 renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,

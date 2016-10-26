@@ -1,4 +1,3 @@
-
 package org.elasticsearch.xpack.prelert.utils.time;
 
 import org.elasticsearch.test.ESTestCase;

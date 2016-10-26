@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 
 import java.util.Objects;
 
@@ -21,7 +22,14 @@ public class ElasticsearchFactories implements AutoCloseable
     }
 
     public UsagePersisterFactory newUsagePersisterFactory() {
-        return logger -> new ElasticsearchUsagePersister(client, logger);
+        // NORELEASE Persist usage to an index
+//        return logger -> new ElasticsearchUsagePersister(client, logger);
+        return logger -> new UsagePersister() {
+            @Override
+            public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead) throws JobException {
+
+            }
+        };
     }
 
     public JobResultsPeristerFactory newJobResultsPersisterFactory() {

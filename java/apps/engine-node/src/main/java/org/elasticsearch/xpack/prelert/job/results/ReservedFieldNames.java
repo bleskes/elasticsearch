@@ -178,7 +178,7 @@ public final class ReservedFieldNames
             // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
             // JobDetails.STATUS is not reserved because it is an analyzed string
             JobDetails.DATA_DESCRIPTION.getPreferredName(),
-            JobDetails.SCHEDULER_STATUS.getPreferredName(),
+            JobDetails.SCHEDULER_STATE.getPreferredName(),
             JobDetails.SCHEDULER_CONFIG.getPreferredName(),
             JobDetails.FINISHED_TIME.getPreferredName(),
             JobDetails.LAST_DATA_TIME.getPreferredName(),

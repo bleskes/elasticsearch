@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.prelert;
 
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.bootstrap.JarHell;
@@ -36,13 +37,38 @@ import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.elasticsearch.xpack.prelert.action.*;
+import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
+import org.elasticsearch.xpack.prelert.action.CreateListAction;
+import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketAction;
+import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
+import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
+import org.elasticsearch.xpack.prelert.action.GetJobAction;
+import org.elasticsearch.xpack.prelert.action.GetJobsAction;
+import org.elasticsearch.xpack.prelert.action.GetListAction;
+import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
+import org.elasticsearch.xpack.prelert.action.PostDataAction;
+import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
+import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
+import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
+import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
+import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
+import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
+import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
+import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
+import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
+import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
-import org.elasticsearch.xpack.prelert.job.manager.actions.ScheduledAction;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
@@ -51,18 +77,29 @@ import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchFactories;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.BlackHoleAutodetectProcess;
+import org.elasticsearch.xpack.prelert.job.scheduler.http.HttpDataExtractorFactory;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
 import org.elasticsearch.xpack.prelert.rest.influencers.RestGetInfluencersAction;
-import org.elasticsearch.xpack.prelert.rest.job.*;
+import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestUpdateJobAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestPutModelSnapshotDescriptionAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestRevertModelSnapshotAction;
-import org.elasticsearch.xpack.prelert.rest.results.*;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketsAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoriesAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoryAction;
+import org.elasticsearch.xpack.prelert.rest.results.RestGetRecordsAction;
+import org.elasticsearch.xpack.prelert.rest.schedulers.RestStartJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.rest.schedulers.RestStopJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
@@ -80,6 +117,8 @@ public class ServerBootstrap {
     private static final String DEFAULT_JETTY_HOME = "cots/jetty";
 
     public static final int JETTY_PORT = 8080;
+
+    private static final Logger LOGGER = Loggers.getLogger(ServerBootstrap.class);
 
     public static void main(String[] args) throws Exception {
         JarHell.checkJarHell();
@@ -141,8 +180,6 @@ public class ServerBootstrap {
 
             ActionGuardian<Action> processActionGuardian =
                     new LocalActionGuardian<>(Action.startingState());
-            ActionGuardian<ScheduledAction> schedulerActionGuardian =
-                    new LocalActionGuardian<>(ScheduledAction.STOPPED);
             // All components get binded in the guice context to the instances returned here
             // and interfaces are not bound to their concrete classes.
             // instead of `bind(Interface.class).to(Implementation.class);` this happens:
@@ -154,14 +191,17 @@ public class ServerBootstrap {
             AutodetectCommunicatorFactory autodetectCommunicatorFactory =
                                     createAutodetectCommunicatorFactory(elasticsearchFactories);
 
-            JobManager jobManager = new JobManager(jobProvider, clusterService, processActionGuardian, schedulerActionGuardian);
+            JobManager jobManager = new JobManager(jobProvider, clusterService, processActionGuardian);
+            DataProcessor dataProcessor = new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager);
+            JobScheduledService jobScheduledService = new JobScheduledService(
+                    jobProvider, jobManager, dataProcessor, new HttpDataExtractorFactory(), jobId -> Loggers.getLogger(jobId));
             return Arrays.asList(
                     jobProvider,
                     jobManager,
                     new JobAllocator(settings, clusterService, threadPool),
-                    new JobLifeCycleService(settings, clusterService),
+                    new JobLifeCycleService(settings, clusterService, jobScheduledService),
                     new ElasticsearchBulkDeleterFactory(client), //NORELEASE: this should use Delete-by-query
-                    new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager)
+                    dataProcessor
             );
         }
 
@@ -199,7 +239,9 @@ public class ServerBootstrap {
                     RestGetCategoryAction.class,
                     RestGetModelSnapshotsAction.class,
                     RestRevertModelSnapshotAction.class,
-                    RestPutModelSnapshotDescriptionAction.class);
+                    RestPutModelSnapshotDescriptionAction.class,
+                    RestStartJobSchedulerAction.class,
+                    RestStopJobSchedulerAction.class);
         }
 
         @Override
@@ -227,7 +269,9 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class),
                     new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class),
                     new ActionHandler<>(RevertModelSnapshotAction.INSTANCE, RevertModelSnapshotAction.TransportAction.class),
-                    new ActionHandler<>(PutModelSnapshotDescriptionAction.INSTANCE, PutModelSnapshotDescriptionAction.TransportAction.class));
+                    new ActionHandler<>(PutModelSnapshotDescriptionAction.INSTANCE, PutModelSnapshotDescriptionAction.TransportAction.class),
+                    new ActionHandler<>(StartJobSchedulerAction.INSTANCE, StartJobSchedulerAction.TransportAction.class),
+                    new ActionHandler<>(StopJobSchedulerAction.INSTANCE, StopJobSchedulerAction.TransportAction.class));
         }
     }
 }

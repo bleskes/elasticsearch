@@ -188,6 +188,7 @@ public class JobUpdaterTest extends ESTestCase {
         schedulerConfig.setIndexes(Arrays.asList("index1"));
         schedulerConfig.setTypes(Arrays.asList("type1"));
         job.setSchedulerConfig(schedulerConfig.build());
+        job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPED, 0, null));
         String update = "{\"schedulerConfig\": {"
                 + "\"dataSource\":\"ELASTICSEARCH\","
                 + "\"baseUrl\":\"http://localhost:9200\","

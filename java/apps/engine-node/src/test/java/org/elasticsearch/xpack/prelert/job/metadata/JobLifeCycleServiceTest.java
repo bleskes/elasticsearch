@@ -30,6 +30,7 @@ import org.elasticsearch.mock.orig.Mockito;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
 import org.junit.Before;
 
 import java.util.HashSet;
@@ -37,12 +38,14 @@ import java.util.HashSet;
 public class JobLifeCycleServiceTest extends ESTestCase {
 
     private ClusterService clusterService;
+    private JobScheduledService jobScheduledService;
     private JobLifeCycleService jobLifeCycleService;
 
     @Before
     public void instantiateJobAllocator() {
         clusterService = Mockito.mock(ClusterService.class);
-        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, clusterService);
+        jobScheduledService = Mockito.mock(JobScheduledService.class);
+        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, clusterService, jobScheduledService);
     }
 
     public void testStartStop() {
