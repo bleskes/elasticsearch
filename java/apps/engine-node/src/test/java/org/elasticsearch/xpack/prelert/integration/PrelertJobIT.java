@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
@@ -214,6 +215,55 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, not(isEmptyString()));
+    }
+
+    public void testPauseAndResumeJob() throws Exception {
+        createFarequoteJob();
+
+        client().performRequest("post", "engine/v2/jobs/farequote/pause");
+
+        assertBusy(() -> {
+            try {
+                Response response = client().performRequest("get", "engine/v2/jobs/farequote");
+                String responseEntityToString = responseEntityToString(response);
+                assertThat(responseEntityToString, containsString("\"ignoreDowntime\":\"ONCE\""));
+            } catch (Exception e) {
+                fail();
+            }
+        }, 2, TimeUnit.SECONDS);
+
+        client().performRequest("post", "engine/v2/jobs/farequote/resume");
+
+        ResponseException e = expectThrows(ResponseException.class,
+                () -> client().performRequest("post", "engine/v2/jobs/farequote/resume"));
+
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
+        assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));
+        assertThat(e.getMessage(), containsString("\"errorCode\":\"60124"));
+    }
+
+    public void testPauseJob_GivenJobIsPaused() throws Exception {
+        createFarequoteJob();
+
+        client().performRequest("post", "engine/v2/jobs/farequote/pause");
+
+        ResponseException e = expectThrows(ResponseException.class,
+                () -> client().performRequest("post", "engine/v2/jobs/farequote/pause"));
+
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
+        assertThat(e.getMessage(), containsString("Cannot pause job 'farequote' while its status is PAUSED"));
+        assertThat(e.getMessage(), containsString("\"errorCode\":\"60123"));
+    }
+
+    public void testResumeJob_GivenJobIsClosed() throws Exception {
+        createFarequoteJob();
+
+        ResponseException e = expectThrows(ResponseException.class,
+                () -> client().performRequest("post", "engine/v2/jobs/farequote/resume"));
+
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
+        assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));
+        assertThat(e.getMessage(), containsString("\"errorCode\":\"60124"));
     }
 
     private Response addBucketResult(String jobId, String timestamp) throws Exception {

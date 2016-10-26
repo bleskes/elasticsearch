@@ -24,8 +24,8 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
-import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
@@ -50,14 +50,17 @@ import org.elasticsearch.xpack.prelert.action.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.GetListAction;
 import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
+import org.elasticsearch.xpack.prelert.action.PauseJobAction;
 import org.elasticsearch.xpack.prelert.action.PostDataAction;
 import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
 import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
+import org.elasticsearch.xpack.prelert.action.ResumeJobAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.action.UpdateJobStatusAction;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
@@ -91,7 +94,9 @@ import org.elasticsearch.xpack.prelert.rest.influencers.RestGetInfluencersAction
 import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestPauseJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
+import org.elasticsearch.xpack.prelert.rest.job.RestResumeJobAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestDeleteModelSnapshotAction;
@@ -108,6 +113,7 @@ import org.elasticsearch.xpack.prelert.rest.schedulers.RestStopJobSchedulerActio
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
+
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -177,7 +183,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 jobProvider,
                 jobManager,
                 new JobAllocator(settings, clusterService, threadPool),
-                new JobLifeCycleService(settings, clusterService, jobScheduledService, threadPool.generic()),
+                new JobLifeCycleService(settings, client, clusterService, jobScheduledService, dataProcessor, threadPool.generic()),
                 new ElasticsearchBulkDeleterFactory(client), //NORELEASE: this should use Delete-by-query
                 dataProcessor
                 );
@@ -204,6 +210,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 RestGetJobsAction.class,
                 RestPutJobsAction.class,
                 RestDeleteJobAction.class,
+                RestPauseJobAction.class,
+                RestResumeJobAction.class,
                 RestGetListAction.class,
                 RestCreateListAction.class,
                 RestGetBucketsAction.class,
@@ -234,6 +242,9 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),
                 new ActionHandler<>(PutJobAction.INSTANCE, PutJobAction.TransportAction.class),
                 new ActionHandler<>(DeleteJobAction.INSTANCE, DeleteJobAction.TransportAction.class),
+                new ActionHandler<>(PauseJobAction.INSTANCE, PauseJobAction.TransportAction.class),
+                new ActionHandler<>(ResumeJobAction.INSTANCE, ResumeJobAction.TransportAction.class),
+                new ActionHandler<>(UpdateJobStatusAction.INSTANCE, UpdateJobStatusAction.TransportAction.class),
                 new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
                 new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),
                 new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),

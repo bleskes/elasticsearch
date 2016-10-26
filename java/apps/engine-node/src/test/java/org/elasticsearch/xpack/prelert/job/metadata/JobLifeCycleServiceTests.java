@@ -14,7 +14,10 @@
  */
 package org.elasticsearch.xpack.prelert.job.metadata;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
@@ -25,6 +28,10 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.action.UpdateJobStatusAction;
+import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
+import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
 import org.junit.Before;
 import org.mockito.Mockito;
@@ -32,18 +39,27 @@ import org.mockito.Mockito;
 import java.util.HashSet;
 
 import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 public class JobLifeCycleServiceTests extends ESTestCase {
 
     private ClusterService clusterService;
     private JobScheduledService jobScheduledService;
+    private DataProcessor dataProcessor;
+    private Client client;
     private JobLifeCycleService jobLifeCycleService;
 
     @Before
     public void instantiateJobAllocator() {
         clusterService = Mockito.mock(ClusterService.class);
         jobScheduledService = Mockito.mock(JobScheduledService.class);
-        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, clusterService, jobScheduledService, Runnable::run);
+        dataProcessor = Mockito.mock(DataProcessor.class);
+        client = Mockito.mock(Client.class);
+        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, client, clusterService, jobScheduledService, dataProcessor,
+                Runnable::run);
     }
 
     public void testStartStop() {
@@ -88,4 +104,52 @@ public class JobLifeCycleServiceTests extends ESTestCase {
         assertTrue("If prelert metadata gets removed then stop any running job", jobLifeCycleService.localAllocatedJobs.isEmpty());
     }
 
+    public void testClusterChanged_GivenJobIsPausing() {
+        PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
+        Job.Builder job = buildJobBuilder("foo");
+        pmBuilder.putJob(job.build(), false);
+        pmBuilder.putAllocation("_node_id", "foo");
+        Allocation.Builder allocation = new Allocation.Builder();
+        allocation.setJobId("foo");
+        allocation.setNodeId("_node_id");
+        allocation.setStatus(JobStatus.PAUSING);
+        pmBuilder.updateAllocation("foo", allocation.build());
+        ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
+                .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
+                .nodes(DiscoveryNodes.builder()
+                        .add(new DiscoveryNode("_node_id", new LocalTransportAddress("_id"), Version.CURRENT))
+                        .localNodeId("_node_id"))
+                .build();
+
+        jobLifeCycleService.clusterChanged(new ClusterChangedEvent("_source", cs1, cs1));
+
+        verify(dataProcessor).closeJob("foo");
+        UpdateJobStatusAction.Request expectedRequest = new UpdateJobStatusAction.Request("foo", JobStatus.PAUSED);
+        verify(client).execute(eq(UpdateJobStatusAction.INSTANCE), eq(expectedRequest), any());
+    }
+
+    public void testClusterChanged_GivenJobIsPausingAndCloseJobThrows() {
+        PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
+        Job.Builder job = buildJobBuilder("foo");
+        pmBuilder.putJob(job.build(), false);
+        pmBuilder.putAllocation("_node_id", "foo");
+        Allocation.Builder allocation = new Allocation.Builder();
+        allocation.setJobId("foo");
+        allocation.setNodeId("_node_id");
+        allocation.setStatus(JobStatus.PAUSING);
+        pmBuilder.updateAllocation("foo", allocation.build());
+        ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
+                .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
+                .nodes(DiscoveryNodes.builder()
+                        .add(new DiscoveryNode("_node_id", new LocalTransportAddress("_id"), Version.CURRENT))
+                        .localNodeId("_node_id"))
+                .build();
+        doThrow(new ElasticsearchException("")).when(dataProcessor).closeJob("foo");
+
+        jobLifeCycleService.clusterChanged(new ClusterChangedEvent("_source", cs1, cs1));
+
+        verify(dataProcessor).closeJob("foo");
+        UpdateJobStatusAction.Request expectedRequest = new UpdateJobStatusAction.Request("foo", JobStatus.FAILED);
+        verify(client).execute(eq(UpdateJobStatusAction.INSTANCE), eq(expectedRequest), any());
+    }
 }

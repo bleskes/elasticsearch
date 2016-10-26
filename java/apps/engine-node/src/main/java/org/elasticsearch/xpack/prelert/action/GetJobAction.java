@@ -227,15 +227,14 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
                     : SingleDocument.empty(Job.TYPE);
             if (jobDocument.isExists()) {
                 logger.debug("Returning job '" + optionalJob.get().getJobId() + "'");
-            }
-            else {
+            } else {
                 logger.debug(String.format(Locale.ROOT, "Cannot find job '%s'", request.getJobId()));
             }
             listener.onResponse(new Response(jobDocument));
         }
 
         private SingleDocument<Job> createJobDocument(Job job) throws JsonProcessingException {
-            return new SingleDocument<Job>(Job.TYPE, job);
+            return new SingleDocument<>(Job.TYPE, job);
         }
 
         @Override

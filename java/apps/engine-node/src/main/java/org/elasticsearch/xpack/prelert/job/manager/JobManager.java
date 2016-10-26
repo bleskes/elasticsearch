@@ -25,7 +25,9 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.action.PauseJobAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
+import org.elasticsearch.xpack.prelert.action.ResumeJobAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
@@ -33,6 +35,7 @@ import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -514,5 +517,86 @@ public class JobManager {
                 return innerPutJob(builder.build(), true, currentState);
             }
         });
+    }
+
+    public void pauseJob(PauseJobAction.Request request, ActionListener<PauseJobAction.Response> actionListener) {
+        clusterService.submitStateUpdateTask("pause-job-" + request.getJobId(),
+                new AckedClusterStateUpdateTask<PauseJobAction.Response>(request, actionListener) {
+
+                    @Override
+                    protected PauseJobAction.Response newResponse(boolean acknowledged) {
+                        return new PauseJobAction.Response(acknowledged);
+                    }
+
+                    @Override
+                    public ClusterState execute(ClusterState currentState) throws Exception {
+                        Job job = getJobOrThrowIfUnknown(currentState, request.getJobId());
+                        Allocation allocation = getAllocation(currentState, job.getId());
+                        checkJobIsNotScheduled(job);
+                        if (!allocation.getStatus().isAnyOf(JobStatus.RUNNING, JobStatus.CLOSED)) {
+                            throw ExceptionsHelper.invalidRequestException(
+                                    Messages.getMessage(Messages.JOB_CANNOT_PAUSE, job.getId(), allocation.getStatus()),
+                                    ErrorCodes.CANNOT_PAUSE_JOB);
+                        }
+
+                        ClusterState newState = innerSetJobStatus(job.getId(), JobStatus.PAUSING, currentState);
+                        Job.Builder jobBuilder = new Job.Builder(job);
+                        jobBuilder.setIgnoreDowntime(IgnoreDowntime.ONCE);
+                        return innerPutJob(jobBuilder.build(), true, newState);
+                    }
+                });
+    }
+
+    public void resumeJob(ResumeJobAction.Request request, ActionListener<ResumeJobAction.Response> actionListener) {
+        clusterService.submitStateUpdateTask("resume-job-" + request.getJobId(),
+                new AckedClusterStateUpdateTask<ResumeJobAction.Response>(request, actionListener) {
+            @Override
+            public ClusterState execute(ClusterState currentState) throws Exception {
+                getJobOrThrowIfUnknown(request.getJobId());
+                Allocation allocation = getJobAllocation(request.getJobId());
+                if (allocation.getStatus() != JobStatus.PAUSED) {
+                    throw ExceptionsHelper.invalidRequestException(
+                            Messages.getMessage(Messages.JOB_CANNOT_RESUME, request.getJobId(), allocation.getStatus()),
+                            ErrorCodes.CANNOT_RESUME_JOB);
+                }
+                Allocation.Builder builder = new Allocation.Builder(allocation);
+                builder.setStatus(JobStatus.CLOSED);
+                return innerUpdateAllocation(builder.build(), currentState);
+            }
+
+            @Override
+            protected ResumeJobAction.Response newResponse(boolean acknowledged) {
+                return new ResumeJobAction.Response(acknowledged);
+            }
+        });
+    }
+
+    public void setJobStatus(String jobId, JobStatus newStatus) {
+        clusterService.submitStateUpdateTask("set-paused-status-job-" + jobId, new ClusterStateUpdateTask() {
+
+            @Override
+            public ClusterState execute(ClusterState currentState) throws Exception {
+                return innerSetJobStatus(jobId, newStatus, currentState);
+            }
+
+            @Override
+            public void onFailure(String source, Exception e) {
+                LOGGER.error("Error updating job status: source=[" + source + "], new status [" + newStatus + "]", e);
+            }
+        });
+    }
+
+    private ClusterState innerSetJobStatus(String jobId, JobStatus newStatus, ClusterState currentState) {
+        Allocation allocation = getJobAllocation(jobId);
+        Allocation.Builder builder = new Allocation.Builder(allocation);
+        builder.setStatus(newStatus);
+        return innerUpdateAllocation(builder.build(), currentState);
+    }
+
+    private void checkJobIsNotScheduled(Job job) {
+        if (job.getSchedulerConfig() != null) {
+            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB),
+                    ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB);
+        }
     }
 }

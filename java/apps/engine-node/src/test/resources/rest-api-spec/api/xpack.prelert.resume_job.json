@@ -1,0 +1,17 @@
+{
+  "xpack.prelert.resume_job": {
+    "methods": [ "POST" ],
+    "url": {
+      "path": "/engine/v2/jobs/{job_id}/resume",
+      "paths": [ "/engine/v2/jobs/{job_id}/resume" ],
+      "parts": {
+        "job_id": {
+          "type": "string",
+          "required": true,
+          "description": "The ID of the job to resume"
+        }
+      }
+    },
+    "body": null
+  }
+}
