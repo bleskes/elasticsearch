@@ -27,7 +27,8 @@ public class RuleConditionTest extends AbstractSerializingTestCase<RuleCondition
                 }
                 break;
             default:
-                condition = new Condition(randomFrom(RuleCondition.VALID_CONDITION_OPERATORS), Double.toString(randomDouble()));
+                // no need to randomize, it is properly randomily tested in ConditionTest
+                condition = new Condition(Operator.LT, Double.toString(randomDouble()));
                 if (randomBoolean()) {
                     fieldName = randomAsciiOfLengthBetween(1, 20);
                     fieldValue = randomAsciiOfLengthBetween(1, 20);
@@ -109,7 +110,7 @@ public class RuleConditionTest extends AbstractSerializingTestCase<RuleCondition
     }
 
     public void testVerify_GivenCategoricalWithCondition() {
-        Condition condition = new Condition(Operator.MATCH, null);
+        Condition condition = new Condition(Operator.MATCH, "text");
         ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
                 () -> new RuleCondition(RuleConditionType.CATEGORICAL, null, null, condition, null));
         assertEquals("Invalid detector rule: a categorical ruleCondition does not support condition", e.getMessage());
@@ -177,14 +178,6 @@ public class RuleConditionTest extends AbstractSerializingTestCase<RuleCondition
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_DIFF_ABS, null, null, null, null));
         assertEquals("Invalid detector rule: a numerical ruleCondition requires condition to be set", e.getMessage());
         assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD.getValueString(), e.getHeader("errorCode").get(0));
-    }
-
-    public void testVerify_GivenNumericalWithInvalidCondition() {
-        Condition condition = new Condition(Operator.LT, "a string");
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
-                () -> new RuleCondition(RuleConditionType.NUMERICAL_DIFF_ABS, null, null, condition, null));
-        assertEquals("Invalid condition value: cannot parse a double from string 'a string'", e.getMessage());
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenFieldValueWithoutFieldName() {

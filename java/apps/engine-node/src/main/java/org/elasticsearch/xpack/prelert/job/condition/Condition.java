@@ -3,6 +3,8 @@ package org.elasticsearch.xpack.prelert.job.condition;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
@@ -17,6 +19,9 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 /**
  * A class that describes a condition.
@@ -24,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * comparisons a condition can use.
  */
 public class Condition extends ToXContentToBytes implements Writeable {
-    public static final Condition NONE = new Condition(Operator.NONE, null);
     public static final ParseField CONDITION_FIELD = new ParseField("condition");
     public static final ParseField FILTER_VALUE_FIELD = new ParseField("value");
 
@@ -52,13 +56,6 @@ public class Condition extends ToXContentToBytes implements Writeable {
     private final Operator op;
     private final String filterValue;
 
-    /**
-     * Operation defaults to {@linkplain Operator#NONE} and the filter is an
-     * empty string
-     *
-     * @param
-     * @throws IOException
-     */
     public Condition(StreamInput in) throws IOException {
         op = Operator.readFromStream(in);
         filterValue = in.readOptionalString();
@@ -71,9 +68,29 @@ public class Condition extends ToXContentToBytes implements Writeable {
     }
 
     @JsonCreator
-    public Condition(@JsonProperty(value = "operator") Operator op, @JsonProperty(value = "value") String filterString) {
+    public Condition(@JsonProperty(value = "operator") Operator op, @JsonProperty(value = "value") String filterValue) {
+        if (filterValue == null) {
+            throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NULL),
+                    ErrorCodes.CONDITION_INVALID_ARGUMENT);
+        }
+
+        if (op.expectsANumericArgument()) {
+            try {
+                Double.parseDouble(filterValue);
+            } catch (NumberFormatException nfe) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, filterValue);
+                throw ExceptionsHelper.parseException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
+            }
+        } else {
+            try {
+                Pattern.compile(filterValue);
+            } catch (PatternSyntaxException e) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_REGEX, filterValue);
+                throw ExceptionsHelper.parseException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
+            }
+        }
         this.op = op;
-        filterValue = filterString;
+        this.filterValue = filterValue;
     }
 
     public Operator getOperator() {

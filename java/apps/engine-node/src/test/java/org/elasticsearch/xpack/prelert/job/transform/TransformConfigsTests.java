@@ -33,8 +33,8 @@ public class TransformConfigsTests extends AbstractSerializingTestCase<Transform
                 config.setArguments(Arrays.asList(generateRandomStringArray(0, 10, false)));
             }
             if (randomBoolean()) {
-                Operator op = randomFrom(Operator.values());
-                config.setCondition(new Condition(op, randomAsciiOfLength(10)));
+                // no need to randomize, it is properly randomily tested in ConditionTest
+                config.setCondition(new Condition(Operator.EQ, Double.toString(randomDouble())));
             }
             transforms.add(config);
         }

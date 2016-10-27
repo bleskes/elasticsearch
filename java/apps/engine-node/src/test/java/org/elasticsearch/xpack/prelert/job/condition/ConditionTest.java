@@ -1,10 +1,14 @@
 
 package org.elasticsearch.xpack.prelert.job.condition;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import static org.hamcrest.Matchers.containsString;
@@ -12,17 +16,10 @@ import static org.hamcrest.Matchers.containsString;
 public class ConditionTest extends AbstractSerializingTestCase<Condition> {
 
     public void testSetValues() {
-        // When the args can't be parsed the
-        // default is the < operator and 0.
-        Condition cond = Condition.NONE;
-        assertEquals(Operator.NONE, cond.getOperator());
-        assertEquals(null, cond.getValue());
-
-        cond = new Condition(Operator.EQ, "astring");
+        Condition cond = new Condition(Operator.EQ, "5");
         assertEquals(Operator.EQ, cond.getOperator());
-        assertEquals("astring", cond.getValue());
+        assertEquals("5", cond.getValue());
     }
-
 
     public void testHashCodeAndEquals() {
         Condition cond1 = new Condition(Operator.MATCH, "regex");
@@ -31,7 +28,7 @@ public class ConditionTest extends AbstractSerializingTestCase<Condition> {
         assertEquals(cond1, cond2);
         assertEquals(cond1.hashCode(), cond2.hashCode());
 
-        Condition cond3 = new Condition(Operator.EQ, "regex");
+        Condition cond3 = new Condition(Operator.EQ, "5");
         assertFalse(cond1.equals(cond3));
         assertFalse(cond1.hashCode() == cond3.hashCode());
     }
@@ -46,13 +43,10 @@ public class ConditionTest extends AbstractSerializingTestCase<Condition> {
         case GTE:
         case LT:
         case LTE:
-            condition = new Condition(op, randomAsciiOfLengthBetween(1, 20));
+            condition = new Condition(op, Double.toString(randomDouble()));
             break;
         case MATCH:
             condition = new Condition(op, randomAsciiOfLengthBetween(1, 20));
-            break;
-        case NONE:
-            condition = new Condition(op, null);
             break;
         default:
             throw new AssertionError("Unknown operator selected: " + op.getName());
@@ -76,5 +70,37 @@ public class ConditionTest extends AbstractSerializingTestCase<Condition> {
         IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
                 () -> Condition.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
         assertThat(ex.getMessage(), containsString("Required [operator]"));
+    }
+
+    public void testVerifyArgsNumericArgs() {
+        new Condition(Operator.LTE, "100");
+        new Condition(Operator.GT, "10.0");
+    }
+
+    public void testVerify_GivenEmptyValue() {
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> new Condition(Operator.LT, ""));
+
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, ""), e.getMessage());
+    }
+
+    public void testVerify_GivenInvalidRegex() {
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> new Condition(Operator.MATCH, "[*"));
+
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_REGEX, "[*"), e.getMessage());
+    }
+
+    public void testVerify_GivenNullRegex() {
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> new Condition(Operator.MATCH, null));
+
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NULL, "[*"), e.getMessage());
     }
 }

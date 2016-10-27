@@ -4,7 +4,6 @@ package org.elasticsearch.xpack.prelert.job.transform.verification;
 import java.util.List;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.xpack.prelert.job.condition.verification.ConditionVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.IntRange;
@@ -69,8 +68,6 @@ public final class TransformConfigVerifier
                                 type.prettyName()),
                         ErrorCodes.TRANSFORM_REQUIRES_CONDITION);
             }
-
-            ConditionVerifier.verify(tc.getCondition());
         }
     }
 

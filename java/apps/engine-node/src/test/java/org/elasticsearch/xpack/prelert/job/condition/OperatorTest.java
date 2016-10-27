@@ -1,9 +1,13 @@
 
 package org.elasticsearch.xpack.prelert.job.condition;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -13,15 +17,13 @@ import java.util.regex.Pattern;
 public class OperatorTest extends ESTestCase {
 
 
-    public void testFromString() throws UnknownOperatorException {
+    public void testFromString() {
         assertEquals(Operator.fromString("eq"), Operator.EQ);
         assertEquals(Operator.fromString("gt"), Operator.GT);
         assertEquals(Operator.fromString("gte"), Operator.GTE);
         assertEquals(Operator.fromString("lte"), Operator.LTE);
         assertEquals(Operator.fromString("lt"), Operator.LT);
         assertEquals(Operator.fromString("match"), Operator.MATCH);
-        assertEquals(Operator.fromString("none"), Operator.NONE);
-        assertEquals(Operator.fromString("gt"), Operator.GT);
         assertEquals(Operator.fromString("Gt"), Operator.GT);
         assertEquals(Operator.fromString("EQ"), Operator.EQ);
         assertEquals(Operator.fromString("GTE"), Operator.GTE);
@@ -72,7 +74,6 @@ public class OperatorTest extends ESTestCase {
         assertThat(Operator.LT.ordinal(), equalTo(3));
         assertThat(Operator.LTE.ordinal(), equalTo(4));
         assertThat(Operator.MATCH.ordinal(), equalTo(5));
-        assertThat(Operator.NONE.ordinal(), equalTo(6));
     }
 
     public void testwriteTo() throws Exception {
@@ -117,13 +118,6 @@ public class OperatorTest extends ESTestCase {
                 assertThat(in.readVInt(), equalTo(5));
             }
         }
-
-        try (BytesStreamOutput out = new BytesStreamOutput()) {
-            Operator.NONE.writeTo(out);
-            try (StreamInput in = out.bytes().streamInput()) {
-                assertThat(in.readVInt(), equalTo(6));
-            }
-        }
     }
 
     public void testReadFrom() throws Exception {
@@ -163,12 +157,6 @@ public class OperatorTest extends ESTestCase {
                 assertThat(Operator.readFromStream(in), equalTo(Operator.MATCH));
             }
         }
-        try (BytesStreamOutput out = new BytesStreamOutput()) {
-            out.writeVInt(6);
-            try (StreamInput in = out.bytes().streamInput()) {
-                assertThat(Operator.readFromStream(in), equalTo(Operator.NONE));
-            }
-        }
     }
 
     public void testInvalidReadFrom() throws Exception {
@@ -181,5 +169,13 @@ public class OperatorTest extends ESTestCase {
                 assertThat(e.getMessage(), containsString("Unknown Operator ordinal ["));
             }
         }
+    }
+
+    public void testVerify_unknownOp() {
+        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class, () -> Operator.fromString("bad_op"));
+
+        assertEquals(1, e.getHeader("errorCode").size());
+        assertEquals(ErrorCodes.CONDITION_UNKNOWN_OPERATOR.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, "bad_op"), e.getMessage());
     }
 }

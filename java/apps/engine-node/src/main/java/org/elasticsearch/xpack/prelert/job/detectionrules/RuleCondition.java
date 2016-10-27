@@ -19,7 +19,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.elasticsearch.xpack.prelert.job.condition.verification.ConditionVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -212,7 +211,6 @@ public class RuleCondition extends ToXContentToBytes implements Writeable {
             throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD);
         }
         checkNumericalConditionOparatorsAreValid(ruleCondition);
-        ConditionVerifier.verify(ruleCondition.getCondition());
     }
 
     private static void checkNumericalHasNoField(String fieldName, Object fieldValue) throws ElasticsearchParseException {

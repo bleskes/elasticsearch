@@ -32,8 +32,8 @@ public class TransformConfigTest extends AbstractSerializingTestCase<TransformCo
             config.setArguments(Arrays.asList(generateRandomStringArray(0, 10, false)));
         }
         if (randomBoolean()) {
-            Operator op = randomFrom(Operator.values());
-            config.setCondition(new Condition(op, randomAsciiOfLength(10)));
+            // no need to randomize, it is properly randomily tested in ConditionTest
+            config.setCondition(new Condition(Operator.LT, Double.toString(randomDouble())));
         }
         return config;
     }
@@ -96,13 +96,13 @@ public class TransformConfigTest extends AbstractSerializingTestCase<TransformCo
         config1.setInputs(Arrays.asList("input1", "input2"));
         config1.setOutputs(Arrays.asList("output"));
         config1.setArguments(Arrays.asList("-"));
-        config1.setCondition(Condition.NONE);
+        config1.setCondition(new Condition(Operator.EQ, "5"));
 
         TransformConfig config2 = new TransformConfig("concat");
         config2.setInputs(Arrays.asList("input1", "input2"));
         config2.setOutputs(Arrays.asList("output"));
         config2.setArguments(Arrays.asList("-"));
-        config2.setCondition(Condition.NONE);
+        config2.setCondition(new Condition(Operator.EQ, "5"));
 
         assertTrue(config1.equals(config2));
         assertTrue(config2.equals(config1));
@@ -164,13 +164,13 @@ public class TransformConfigTest extends AbstractSerializingTestCase<TransformCo
         config1.setInputs(Arrays.asList("input1", "input2"));
         config1.setOutputs(Arrays.asList("output"));
         config1.setArguments(Arrays.asList("-"));
-        config1.setCondition(new Condition(Operator.EQ, "foo"));
+        config1.setCondition(new Condition(Operator.MATCH, "foo"));
 
         TransformConfig config2 = new TransformConfig("concat");
         config2.setInputs(Arrays.asList("input1", "input2"));
         config2.setOutputs(Arrays.asList("output"));
         config2.setArguments(Arrays.asList("-"));
-        config2.setCondition(Condition.NONE);
+        config2.setCondition(new Condition(Operator.MATCH, "bar"));
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));

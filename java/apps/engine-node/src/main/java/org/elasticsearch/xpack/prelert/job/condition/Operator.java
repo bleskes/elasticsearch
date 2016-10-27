@@ -14,6 +14,9 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 /**
  * Enum representing logical comparisons on doubles
@@ -60,8 +63,7 @@ public enum Operator implements Writeable {
         public boolean expectsANumericArgument() {
             return false;
         }
-    },
-    NONE("none");
+    };
 
     public static final ParseField OPERATOR_FIELD = new ParseField("operator");
     private final String name;
@@ -96,7 +98,10 @@ public enum Operator implements Writeable {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Unknown Operator: " + name);
+        throw ExceptionsHelper.parseException(
+                Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, name),
+                ErrorCodes.CONDITION_UNKNOWN_OPERATOR
+        );
     }
 
     public static Operator readFromStream(StreamInput in) throws IOException {
