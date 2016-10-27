@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -49,8 +50,8 @@ public final class AnalysisConfigVerifier {
         checkFieldIsNotNegativeIfSpecified("batchSpan", config.getBatchSpan());
         checkFieldIsNotNegativeIfSpecified("latency", config.getLatency());
         checkFieldIsNotNegativeIfSpecified("period", config.getPeriod());
-        DetectorVerifier.verifyFieldName(config.getSummaryCountFieldName());
-        DetectorVerifier.verifyFieldName(config.getCategorizationFieldName());
+        verifyFieldName(config.getSummaryCountFieldName());
+        verifyFieldName(config.getCategorizationFieldName());
         verifyDetectors(config);
         verifyCategorizationFilters(config);
         verifyMultipleBucketSpans(config);
@@ -76,12 +77,6 @@ public final class AnalysisConfigVerifier {
                     ErrorCodes.INCOMPLETE_CONFIGURATION);
         }
 
-        boolean isSummarised = config.getSummaryCountFieldName() != null &&
-                !config.getSummaryCountFieldName().isEmpty();
-        for (Detector d : config.getDetectors())
-        {
-            DetectorVerifier.verify(d, isSummarised);
-        }
 
         verifyOverlappingBucketsConfig(config);
     }
@@ -214,6 +209,32 @@ public final class AnalysisConfigVerifier {
         }
 
         return true;
+    }
+
+    /**
+     * Check that the characters used in a field name will not cause problems.
+     *
+     * @param field
+     *            The field name to be validated
+     * @return true
+     */
+    public static boolean verifyFieldName(String field) throws ElasticsearchParseException {
+        if (field != null && containsInvalidChar(field)) {
+            throw ExceptionsHelper.parseException(
+                    Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS, field, Detector.PROHIBITED),
+                    ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+
+        }
+        return true;
+    }
+
+    private static boolean containsInvalidChar(String field) {
+        for (Character ch : Detector.PROHIBITED_FIELDNAME_CHARACTERS) {
+            if (field.indexOf(ch) >= 0) {
+                return true;
+            }
+        }
+        return field.chars().anyMatch(ch -> Character.isISOControl(ch));
     }
 
     private static boolean isValidRegex(String exp) {

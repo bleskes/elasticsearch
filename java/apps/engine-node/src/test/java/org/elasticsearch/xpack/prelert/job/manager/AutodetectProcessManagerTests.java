@@ -215,7 +215,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         dd.setFormat(DataDescription.DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
 
-        Detector d = new Detector("metric", "value");
+        Detector d = new Detector.Builder("metric", "value").build();
 
         AnalysisConfig ac = new AnalysisConfig();
         ac.setDetectors(Collections.singletonList(d));

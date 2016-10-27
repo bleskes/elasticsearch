@@ -364,13 +364,6 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
 
     public JobDetails build() {
         String id = iD == null ? generateJobId(HOSTNAME) : iD;
-        // Setting a default description should be done in Detector class itself:
-        for (Detector detector : analysisConfig.getDetectors()) {
-            if (detector.getDetectorDescription() == null ||
-                    detector.getDetectorDescription().isEmpty()) {
-                detector.setDetectorDescription(DefaultDetectorDescription.of(detector));
-            }
-        }
         return new JobDetails(
                 id, description, JobStatus.CLOSED, null, new Date(), null, null, DEFAULT_TIMEOUT, analysisConfig,
                 analysisLimits, schedulerConfig, dataDescription, null, transforms, modelDebugConfig, new DataCounts(),

@@ -104,15 +104,15 @@ public class JobConfigurationTests extends AbstractSerializingTestCase<JobConfig
      * list of analysis fields from the detectors
      */
     public void testAnalysisConfigRequiredFields() {
-        Detector d1 = new Detector("max", "field");
+        Detector.Builder d1 = new Detector.Builder("max", "field");
         d1.setByFieldName("by");
 
-        Detector d2 = new Detector("metric", "field2");
+        Detector.Builder d2 = new Detector.Builder("metric", "field2");
         d2.setOverFieldName("over");
 
         AnalysisConfig ac = new AnalysisConfig();
         ac.setSummaryCountFieldName("agg");
-        ac.setDetectors(Arrays.asList(d1, d2));
+        ac.setDetectors(Arrays.asList(d1.build(), d2.build()));
 
         List<String> analysisFields = ac.analysisFields();
         assertTrue(analysisFields.size() == 5);
@@ -127,12 +127,12 @@ public class JobConfigurationTests extends AbstractSerializingTestCase<JobConfig
         assertFalse(analysisFields.contains(""));
         assertFalse(analysisFields.contains(null));
 
-        Detector d3 = new Detector("count");
+        Detector.Builder d3 = new Detector.Builder("count", null);
         d3.setByFieldName("by2");
         d3.setPartitionFieldName("partition");
 
         ac = new AnalysisConfig();
-        ac.setDetectors(Arrays.asList(d1, d2, d3));
+        ac.setDetectors(Arrays.asList(d1.build(), d2.build(), d3.build()));
 
         analysisFields = ac.analysisFields();
         assertTrue(analysisFields.size() == 6);

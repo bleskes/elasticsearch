@@ -20,21 +20,26 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 @JsonInclude(Include.NON_NULL)
 public class DetectionRule extends ToXContentToBytes implements Writeable {
@@ -45,30 +50,35 @@ public class DetectionRule extends ToXContentToBytes implements Writeable {
     public static final ParseField CONDITIONS_CONNECTIVE_FIELD = new ParseField("conditions_connective");
     public static final ParseField RULE_CONDITIONS_FIELD = new ParseField("rule_conditions");
 
-    public static final ObjectParser<DetectionRule, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
-            DETECTION_RULE_FIELD.getPreferredName(), DetectionRule::new);
+    public static final ConstructingObjectParser<DetectionRule, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            DETECTION_RULE_FIELD.getPreferredName(),
+            arr -> {
+                @SuppressWarnings("unchecked")
+                List<RuleCondition> rules = (List<RuleCondition>) arr[3];
+                return new DetectionRule((String) arr[0], (String) arr[1], (Connective) arr[2], rules);
+            }
+    );
 
     static {
-        PARSER.declareField(DetectionRule::setConditionsConnective, p -> {
+        PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), TARGET_FIELD_NAME_FIELD);
+        PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), TARGET_FIELD_VALUE_FIELD);
+        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(), p -> {
             if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
                 return Connective.fromString(p.text());
             }
             throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
         }, CONDITIONS_CONNECTIVE_FIELD, ValueType.STRING);
-        PARSER.declareObjectArray(DetectionRule::setRuleConditions,
+        PARSER.declareObjectArray(ConstructingObjectParser.optionalConstructorArg(),
                 (parser, parseFieldMatcher) -> RuleCondition.PARSER.apply(parser, parseFieldMatcher), RULE_CONDITIONS_FIELD);
-        PARSER.declareString(DetectionRule::setTargetFieldName, TARGET_FIELD_NAME_FIELD);
-        PARSER.declareString(DetectionRule::setTargetFieldValue, TARGET_FIELD_VALUE_FIELD);
     }
 
-    private RuleAction ruleAction = RuleAction.FILTER_RESULTS;
-    private String targetFieldName;
-    private String targetFieldValue;
-    private Connective conditionsConnective = Connective.OR;
-    private List<RuleCondition> ruleConditions = new ArrayList<>();
+    private final RuleAction ruleAction = RuleAction.FILTER_RESULTS;
+    private final String targetFieldName;
+    private final String targetFieldValue;
+    private final Connective conditionsConnective;
+    private final List<RuleCondition> ruleConditions;
 
     public DetectionRule(StreamInput in) throws IOException {
-        ruleAction = RuleAction.FILTER_RESULTS;
         conditionsConnective = Connective.readFromStream(in);
         int size = in.readVInt();
         ruleConditions = new ArrayList<>(size);
@@ -106,39 +116,46 @@ public class DetectionRule extends ToXContentToBytes implements Writeable {
     }
 
     @JsonCreator
-    public DetectionRule() {
+    public DetectionRule(@JsonProperty("targetFieldName") String targetFieldName,
+                         @JsonProperty("targetFieldValue") String targetFieldValue,
+                         @JsonProperty(value = "conditionsConnective") Connective conditionsConnective,
+                         @JsonProperty("ruleConditions") List<RuleCondition> ruleConditions) {
+        if (targetFieldValue != null && targetFieldName == null) {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_MISSING_TARGET_FIELD_NAME, targetFieldValue);
+            throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_MISSING_FIELD);
+        }
+        if (ruleConditions == null || ruleConditions.isEmpty()) {
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_REQUIRES_AT_LEAST_ONE_CONDITION);
+            throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS);
+        }
+        for (RuleCondition condition : ruleConditions) {
+            if (condition.getConditionType() == RuleConditionType.CATEGORICAL && targetFieldName != null) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_INVALID_OPTION,
+                        DetectionRule.TARGET_FIELD_NAME_FIELD.getPreferredName());
+                throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
+            }
+        }
+
+        this.targetFieldName = targetFieldName;
+        this.targetFieldValue = targetFieldValue;
+        this.conditionsConnective = conditionsConnective != null ? conditionsConnective : Connective.OR;
+        this.ruleConditions = Collections.unmodifiableList(ruleConditions);
     }
 
     public RuleAction getRuleAction() {
         return ruleAction;
     }
 
-    public void setTargetFieldName(String targetFieldName) {
-        this.targetFieldName = targetFieldName;
-    }
-
     public String getTargetFieldName() {
         return targetFieldName;
-    }
-
-    public void setTargetFieldValue(String targetFieldValue) {
-        this.targetFieldValue = targetFieldValue;
     }
 
     public String getTargetFieldValue() {
         return targetFieldValue;
     }
 
-    public void setConditionsConnective(Connective conditionsConnective) {
-        this.conditionsConnective = conditionsConnective;
-    }
-
     public Connective getConditionsConnective() {
         return conditionsConnective;
-    }
-
-    public void setRuleConditions(List<RuleCondition> ruleConditions) {
-        this.ruleConditions = ruleConditions;
     }
 
     public List<RuleCondition> getRuleConditions() {

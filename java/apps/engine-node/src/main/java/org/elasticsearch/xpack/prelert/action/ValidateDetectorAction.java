@@ -39,7 +39,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.config.verification.DetectorVerifier;
 
 public class ValidateDetectorAction
 extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, ValidateDetectorAction.RequestBuilder> {
@@ -76,7 +75,7 @@ extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, 
         // NORELEASE this needs to change so the body is not directly the
         // detector but and object that contains a field for the detector
         public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
-            Detector detector = Detector.PARSER.apply(parser, parseFieldMatcherSupplier);
+            Detector detector = Detector.PARSER.apply(parser, parseFieldMatcherSupplier).build();
             return new Request(detector);
         }
 
@@ -156,7 +155,6 @@ extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, 
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            DetectorVerifier.verify(request.getDetector(), false);
             listener.onResponse(new Response(true));
         }
 

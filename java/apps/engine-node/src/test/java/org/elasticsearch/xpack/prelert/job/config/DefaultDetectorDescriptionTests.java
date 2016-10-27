@@ -21,21 +21,21 @@ public class DefaultDetectorDescriptionTests extends ESTestCase {
 
 
     public void testOf_GivenOnlyFunctionAndFieldName() {
-        Detector detector = new Detector("min", "value");
+        Detector detector = new Detector.Builder("min", "value").build();
 
         assertEquals("min(value)", DefaultDetectorDescription.of(detector));
     }
 
 
     public void testOf_GivenOnlyFunctionAndFieldNameWithNonWordChars() {
-        Detector detector = new Detector("min", "val-ue");
+        Detector detector = new Detector.Builder("min", "val-ue").build();
 
         assertEquals("min(\"val-ue\")", DefaultDetectorDescription.of(detector));
     }
 
 
     public void testOf_GivenFullyPopulatedDetector() {
-        Detector detector = new Detector("sum", "value");
+        Detector.Builder detector = new Detector.Builder("sum", "value");
         detector.setByFieldName("airline");
         detector.setOverFieldName("region");
         detector.setUseNull(true);
@@ -43,6 +43,6 @@ public class DefaultDetectorDescriptionTests extends ESTestCase {
         detector.setExcludeFrequent("true");
 
         assertEquals("sum(value) by airline over region usenull=true partitionfield=planet excludefrequent=true",
-                DefaultDetectorDescription.of(detector));
+                DefaultDetectorDescription.of(detector.build()));
     }
 }

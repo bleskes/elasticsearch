@@ -89,7 +89,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
         analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector detector = new Detector.Builder("metric", "value").build();
         analysisConfig.setDetectors(Arrays.asList(detector));
     }
 
@@ -123,15 +123,9 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         transforms.add(transform);
 
         Detector existingDetector = analysisConfig.getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getFunction(), "transformed");
-        newDetector.setByFieldName(existingDetector.getByFieldName());
-        newDetector.setOverFieldName(existingDetector.getOverFieldName());
-        newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
-        newDetector.setDetectorRules(existingDetector.getDetectorRules());
-        newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
-        newDetector.setUseNull(existingDetector.isUseNull());
-        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
-        analysisConfig.getDetectors().set(0, newDetector);
+        Detector.Builder newDetector = new Detector.Builder(existingDetector);
+        newDetector.setFieldName("transformed");
+        analysisConfig.getDetectors().set(0, newDetector.build());
 
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
@@ -319,9 +313,9 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         transforms.add(tc1);
         transforms.add(tc2);
 
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("dns_upper");
-        analysisConfig.setDetectors(Arrays.asList(detector));
+        analysisConfig.setDetectors(Arrays.asList(detector.build()));
 
         StringBuilder input = new StringBuilder();
         input.append("time,dns1,dns2,value\n");

@@ -29,75 +29,54 @@ import java.util.List;
 
 public class DetectionRuleTests extends AbstractSerializingTestCase<DetectionRule> {
 
-    public void testDefaultConstructor() {
-        DetectionRule rule = new DetectionRule();
-        assertEquals(RuleAction.FILTER_RESULTS, rule.getRuleAction());
-        assertEquals(Connective.OR, rule.getConditionsConnective());
-        assertEquals(Collections.emptyList(), rule.getRuleConditions());
-        assertNull(rule.getTargetFieldName());
-        assertNull(rule.getTargetFieldValue());
-    }
-
-
-    public void testExtractReferencedLists() {
-        DetectionRule rule = new DetectionRule();
+    public void testExtractReferoencedLists() {
         RuleCondition numericalCondition =
                 new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "field", "value", new Condition(Operator.GT, "5"), null);
-        rule.setRuleConditions(Arrays.asList(
+        List<RuleCondition> conditions = Arrays.asList(
                 numericalCondition,
                 RuleCondition.createCategorical("foo", "list1"),
-                RuleCondition.createCategorical("bar", "list2")));
+                RuleCondition.createCategorical("bar", "list2"));
+        DetectionRule rule = new DetectionRule(null, null, Connective.OR, conditions);
 
         assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), rule.extractReferencedLists());
     }
 
-
     public void testEqualsGivenSameObject() {
-        DetectionRule rule = new DetectionRule();
+        DetectionRule rule = createFullyPopulated();
         assertTrue(rule.equals(rule));
     }
 
-
     public void testEqualsGivenString() {
-        assertFalse(new DetectionRule().equals("a string"));
+        assertFalse(createFullyPopulated().equals("a string"));
     }
-
 
     public void testEqualsGivenDifferentTargetFieldName() {
         DetectionRule rule1 = createFullyPopulated();
-        DetectionRule rule2 = createFullyPopulated();
-        rule2.setTargetFieldName(rule2.getTargetFieldName() + "2");
+        DetectionRule rule2 = new DetectionRule("targetField2", "targetValue", Connective.AND, createRule("5"));
         assertFalse(rule1.equals(rule2));
         assertFalse(rule2.equals(rule1));
     }
-
 
     public void testEqualsGivenDifferentTargetFieldValue() {
         DetectionRule rule1 = createFullyPopulated();
-        DetectionRule rule2 = createFullyPopulated();
-        rule2.setTargetFieldValue(rule2.getTargetFieldValue() + "2");
+        DetectionRule rule2 = new DetectionRule("targetField", "targetValue2", Connective.AND, createRule("5"));
         assertFalse(rule1.equals(rule2));
         assertFalse(rule2.equals(rule1));
     }
-
 
     public void testEqualsGivenDifferentConjunction() {
         DetectionRule rule1 = createFullyPopulated();
-        DetectionRule rule2 = createFullyPopulated();
-        rule2.setConditionsConnective(Connective.OR);
+        DetectionRule rule2 = new DetectionRule("targetField", "targetValue", Connective.OR, createRule("5"));
         assertFalse(rule1.equals(rule2));
         assertFalse(rule2.equals(rule1));
     }
-
 
     public void testEqualsGivenRules() {
         DetectionRule rule1 = createFullyPopulated();
-        DetectionRule rule2 = createFullyPopulated();
-        rule2.setRuleConditions(Collections.emptyList());
+        DetectionRule rule2 = new DetectionRule("targetField", "targetValue", Connective.AND, createRule("10"));
         assertFalse(rule1.equals(rule2));
         assertFalse(rule2.equals(rule1));
     }
-
 
     public void testEqualsGivenEqual() {
         DetectionRule rule1 = createFullyPopulated();
@@ -108,38 +87,30 @@ public class DetectionRuleTests extends AbstractSerializingTestCase<DetectionRul
     }
 
     private static DetectionRule createFullyPopulated() {
-        DetectionRule rule = new DetectionRule();
-        rule.setTargetFieldName("targetField");
-        rule.setTargetFieldValue("targetValue");
-        rule.setConditionsConnective(Connective.AND);
-        rule.setRuleConditions(Arrays.asList(new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, "myList")));
-        return rule;
+        return new DetectionRule("targetField", "targetValue", Connective.AND, createRule("5"));
+    }
+
+    private static List<RuleCondition> createRule(String value) {
+        Condition condition = new Condition(Operator.GT, value);
+        return Collections.singletonList(new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, condition, null));
     }
 
     @Override
     protected DetectionRule createTestInstance() {
-        DetectionRule detectionRule = new DetectionRule();
+        String targetFieldName = null;
+        String targetFieldValue = null;
+        Connective connective = randomFrom(Connective.values());
         if (randomBoolean()) {
-            detectionRule.setConditionsConnective(randomFrom(Connective.values()));
+            targetFieldName = randomAsciiOfLengthBetween(1, 20);
+            targetFieldValue = randomAsciiOfLengthBetween(1, 20);
         }
-        if (randomBoolean()) {
-            int size = randomInt(20);
-            List<RuleCondition> ruleConditions = new ArrayList<>(size);
-            for (int i = 0; i < size; i++) {
-                // no need for random condition (it is already tested)
-                RuleCondition condition =
-                        new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, randomAsciiOfLengthBetween(1, 20));
-                ruleConditions.add(condition);
-            }
-            detectionRule.setRuleConditions(ruleConditions);
+        int size = 1 + randomInt(20);
+        List<RuleCondition> ruleConditions = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            // no need for random condition (it is already tested)
+            ruleConditions.addAll(createRule(Double.toString(randomDouble())));
         }
-        if (randomBoolean()) {
-            detectionRule.setTargetFieldName(randomAsciiOfLengthBetween(1, 20));
-        }
-        if (randomBoolean()) {
-            detectionRule.setTargetFieldValue(randomAsciiOfLengthBetween(1, 20));
-        }
-        return detectionRule;
+        return new DetectionRule(targetFieldName, targetFieldValue, connective, ruleConditions);
     }
 
     @Override

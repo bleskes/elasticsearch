@@ -146,9 +146,9 @@ public class JobConfigurationVerifierTests extends ESTestCase {
 
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector d = new Detector("max", "a");
+        Detector.Builder d = new Detector.Builder("max", "a");
         d.setByFieldName("b");
-        ac.setDetectors(Arrays.asList(new Detector[]{d}));
+        ac.setDetectors(Arrays.asList(new Detector[]{d.build()}));
 
         jc.setAnalysisConfig(ac);
         JobConfigurationVerifier.verify(jc); // ok
@@ -211,16 +211,9 @@ public class JobConfigurationVerifierTests extends ESTestCase {
 
 
         Detector existingDetector = jc.getAnalysisConfig().getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getFunction(),
-                TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-        newDetector.setByFieldName(existingDetector.getByFieldName());
-        newDetector.setOverFieldName(existingDetector.getOverFieldName());
-        newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
-        newDetector.setDetectorRules(existingDetector.getDetectorRules());
-        newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
-        newDetector.setUseNull(existingDetector.isUseNull());
-        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
-        jc.getAnalysisConfig().getDetectors().set(0, newDetector);
+        Detector.Builder newDetector = new Detector.Builder(existingDetector);
+        newDetector.setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
+        jc.getAnalysisConfig().getDetectors().set(0, newDetector.build());
         assertTrue(JobConfigurationVerifier.verify(jc));
     }
 
@@ -243,16 +236,9 @@ public class JobConfigurationVerifierTests extends ESTestCase {
         }
 
         Detector existingDetector = jc.getAnalysisConfig().getDetectors().get(0);
-        Detector newDetector = new Detector(existingDetector.getFunction(),
-                TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-        newDetector.setByFieldName(existingDetector.getByFieldName());
-        newDetector.setOverFieldName(existingDetector.getOverFieldName());
-        newDetector.setPartitionFieldName(existingDetector.getPartitionFieldName());
-        newDetector.setDetectorRules(existingDetector.getDetectorRules());
-        newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
-        newDetector.setUseNull(existingDetector.isUseNull());
-        newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
-        jc.getAnalysisConfig().getDetectors().set(0, newDetector);
+        Detector.Builder newDetector = new Detector.Builder(existingDetector);
+        newDetector.setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
+        jc.getAnalysisConfig().getDetectors().set(0, newDetector.build());
         tc.setOutputs(TransformType.DOMAIN_SPLIT.defaultOutputNames());
         assertTrue(JobConfigurationVerifier.verify(jc));
     }
@@ -488,13 +474,13 @@ public class JobConfigurationVerifierTests extends ESTestCase {
     private JobConfiguration buildJobConfigurationNoTransforms() {
         JobConfiguration jc = new JobConfiguration();
 
-        Detector d1 = new Detector("info_content", "domain");
+        Detector.Builder d1 = new Detector.Builder("info_content", "domain");
         d1.setOverFieldName("client");
 
-        Detector d2 = new Detector("count");
+        Detector.Builder d2 = new Detector.Builder("count", null);
 
         AnalysisConfig ac = new AnalysisConfig();
-        ac.setDetectors(Arrays.asList(new Detector[]{d1, d2}));
+        ac.setDetectors(Arrays.asList(new Detector[]{d1.build(), d2.build()}));
 
         DataDescription dc = new DataDescription();
 

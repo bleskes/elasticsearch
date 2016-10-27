@@ -86,7 +86,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
         analysisConfig = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector detector = new Detector.Builder("metric", "value").build();
         analysisConfig.setDetectors(Arrays.asList(detector));
     }
 
@@ -196,7 +196,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_GivenMalformedJsonWithNestedLevels()
             throws MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, IOException, MalformedJsonException {
-        Detector detector = new Detector("metric", "nested.value");
+        Detector detector = new Detector.Builder("metric", "nested.value").build();
         analysisConfig.setDetectors(Arrays.asList(detector));
         analysisConfig.setLatency(2L);
 
@@ -345,9 +345,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         transforms.add(tc1);
         transforms.add(tc2);
 
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("dns_upper");
-        analysisConfig.setDetectors(Arrays.asList(detector));
+        analysisConfig.setDetectors(Arrays.asList(detector.build()));
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"dns1\":\"www\", \"dns2\":\"foo.com\", \"value\":\"1.0\"}");

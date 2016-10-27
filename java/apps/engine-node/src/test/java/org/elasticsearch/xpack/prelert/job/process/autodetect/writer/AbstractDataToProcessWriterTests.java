@@ -79,10 +79,10 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("host-metric");
         detector.setDetectorDescription("metric(value) by host-metric");
-        ac.setDetectors(Arrays.asList(detector));
+        ac.setDetectors(Arrays.asList(detector.build()));
 
         TransformConfig tc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         tc.setInputs(Arrays.asList("host", "metric"));
@@ -139,10 +139,10 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         detector.setOverFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(1));
-        ac.setDetectors(Arrays.asList(detector));
+        ac.setDetectors(Arrays.asList(detector.build()));
 
         TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("domain"));
@@ -211,9 +211,9 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-        ac.setDetectors(Arrays.asList(detector));
+        ac.setDetectors(Arrays.asList(detector.build()));
 
         TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("domain"));
@@ -279,9 +279,9 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-        ac.setDetectors(Arrays.asList(detector));
+        ac.setDetectors(Arrays.asList(detector.build()));
 
         TransformConfig concatTc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         concatTc.setInputs(Arrays.asList("date", "time"));
@@ -333,9 +333,9 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("metric");
-        ac.setDetectors(Arrays.asList(detector));
+        ac.setDetectors(Arrays.asList(detector.build()));
 
         TransformConfig excludeConfig = new TransformConfig(TransformType.EXCLUDE.prettyName());
         excludeConfig.setInputs(Arrays.asList("metric"));
@@ -379,9 +379,9 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
-        Detector detector = new Detector("metric", "value");
+        Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("type");
-        ac.setDetectors(Arrays.asList(detector));
+        ac.setDetectors(Arrays.asList(detector.build()));
 
         TransformConfig concatTc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         concatTc.setInputs(Arrays.asList("DATE", "time"));

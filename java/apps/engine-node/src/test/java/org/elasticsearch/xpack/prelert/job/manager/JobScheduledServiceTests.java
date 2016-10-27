@@ -130,11 +130,10 @@ public class JobScheduledServiceTests extends ESTestCase {
         verify(dataProcessor, times(1)).closeJob("foo");
     }
 
-    private static JobDetails createScheduledJob()
-    {
+    private static JobDetails createScheduledJob() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(3600L);
-        analysisConfig.setDetectors(Arrays.asList(new Detector("metric")));
+        analysisConfig.setDetectors(Arrays.asList(new Detector.Builder("metric", "field").build()));
 
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
         schedulerConfig.setBaseUrl("http://localhost");

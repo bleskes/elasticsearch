@@ -24,13 +24,13 @@ public class ValidateDetectorActionRequestTests extends AbstractStreamableXConte
 
     @Override
     protected Request createTestInstance() {
-        Detector detector;
+        Detector.Builder detector;
         if (randomBoolean()) {
-            detector = new Detector(randomFrom(Detector.COUNT_WITHOUT_FIELD_FUNCTIONS));
+            detector = new Detector.Builder(randomFrom(Detector.COUNT_WITHOUT_FIELD_FUNCTIONS), null);
         } else {
-            detector = new Detector(randomFrom(Detector.FIELD_NAME_FUNCTIONS), randomAsciiOfLengthBetween(1, 20));
+            detector = new Detector.Builder(randomFrom(Detector.FIELD_NAME_FUNCTIONS), randomAsciiOfLengthBetween(1, 20));
         }
-        return new Request(detector);
+        return new Request(detector.build());
     }
 
     @Override

@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.job;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
@@ -50,7 +51,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
             List<Detector> detectors = new ArrayList<>();
             int numDetectors = randomIntBetween(0, 10);
             for (int i = 0; i < numDetectors; i++) {
-                detectors.add(new Detector("_function" + i));
+                detectors.add(new Detector.Builder("count", null).build());
             }
             analysisConfig.setDetectors(detectors);
         }
@@ -96,14 +97,14 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
     public void testFieldConfiguration() {
         // Single detector, not pre-summarised
         AnalysisConfig ac = new AnalysisConfig();
-        Detector det = new Detector("metric", "responsetime");
+        Detector.Builder det = new Detector.Builder("metric", "responsetime");
         det.setByFieldName("airline");
         det.setPartitionFieldName("sourcetype");
-        ac.setDetectors(Arrays.asList(det));
+        ac.setDetectors(Arrays.asList(det.build()));
 
-        Set<String> termFields = new TreeSet<String>(Arrays.asList(new String[]{
+        Set<String> termFields = new TreeSet<>(Arrays.asList(new String[]{
                 "airline", "sourcetype"}));
-        Set<String> analysisFields = new TreeSet<String>(Arrays.asList(new String[]{
+        Set<String> analysisFields = new TreeSet<>(Arrays.asList(new String[]{
                 "responsetime", "airline", "sourcetype"}));
 
         assertEquals(termFields.size(), ac.termFields().size());
@@ -155,27 +156,27 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         ac = new AnalysisConfig();
         ac.setInfluencers(Arrays.asList("Influencer_Field"));
-        det = new Detector("metric", "metric1");
+        det = new Detector.Builder("metric", "metric1");
         det.setByFieldName("by_one");
         det.setPartitionFieldName("partition_one");
-        detectors.add(det);
+        detectors.add(det.build());
 
-        det = new Detector("metric", "metric2");
+        det = new Detector.Builder("metric", "metric2");
         det.setByFieldName("by_two");
         det.setOverFieldName("over_field");
-        detectors.add(det);
+        detectors.add(det.build());
 
-        det = new Detector("metric", "metric2");
+        det = new Detector.Builder("metric", "metric2");
         det.setByFieldName("by_two");
         det.setPartitionFieldName("partition_two");
-        detectors.add(det);
+        detectors.add(det.build());
 
         ac.setDetectors(detectors);
 
-        termFields = new TreeSet<String>(Arrays.asList(new String[]{
+        termFields = new TreeSet<>(Arrays.asList(new String[]{
                 "by_one", "by_two", "over_field",
                 "partition_one", "partition_two", "Influencer_Field"}));
-        analysisFields = new TreeSet<String>(Arrays.asList(new String[]{
+        analysisFields = new TreeSet<>(Arrays.asList(new String[]{
                 "metric1", "metric2", "by_one", "by_two", "over_field",
                 "partition_one", "partition_two", "Influencer_Field"}));
 
@@ -302,11 +303,11 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
     public void testEquals_GivenDifferentDetector() {
         AnalysisConfig config1 = new AnalysisConfig();
-        Detector detector1 = new Detector("foo", "low_count");
+        Detector detector1 = new Detector.Builder("min", "low_count").build();
         config1.setDetectors(Arrays.asList(detector1));
 
         AnalysisConfig config2 = new AnalysisConfig();
-        Detector detector2 = new Detector("foo", "high_count");
+        Detector detector2 = new Detector.Builder("min", "high_count").build();
         config2.setDetectors(Arrays.asList(detector2));
 
         assertFalse(config1.equals(config2));
@@ -393,18 +394,18 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testExtractReferencedLists() {
-        DetectionRule rule1 = new DetectionRule();
-        rule1.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list1")));
-        DetectionRule rule2 = new DetectionRule();
-        rule2.setRuleConditions(Arrays.asList(RuleCondition.createCategorical("foo", "list2")));
-        Detector detector1 = new Detector("metric", "foo1");
+        DetectionRule rule1 = new DetectionRule(null, null, Connective.OR, Arrays.asList(RuleCondition.createCategorical("foo", "list1")));
+        DetectionRule rule2 = new DetectionRule(null, null, Connective.OR, Arrays.asList(RuleCondition.createCategorical("foo", "list2")));
+        Detector.Builder detector1 = new Detector.Builder("count", null);
+        detector1.setByFieldName("foo");
         detector1.setDetectorRules(Arrays.asList(rule1));
-        Detector detector2 = new Detector("metric", "foo2");
+        Detector.Builder detector2 = new Detector.Builder("count", null);
         detector2.setDetectorRules(Arrays.asList(rule2));
+        detector2.setByFieldName("foo");
         AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Arrays.asList(detector1, detector2, new Detector("metric", "foo3")));
+        config.setDetectors(Arrays.asList(detector1.build(), detector2.build(), new Detector.Builder("count", null).build()));
 
-        assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), config.extractReferencedLists());
+        assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), config.extractReferencedLists());
     }
 
     private static AnalysisConfig createFullyPopulatedConfig() {
@@ -413,7 +414,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         config.setBucketSpan(3600L);
         config.setCategorizationFieldName("cat");
         config.setCategorizationFilters(Arrays.asList("foo"));
-        Detector detector1 = new Detector("foo", "count");
+        Detector detector1 = new Detector.Builder("min", "count").build();
         config.setDetectors(Arrays.asList(detector1));
         config.setInfluencers(Arrays.asList("myInfluencer"));
         config.setLatency(3600L);

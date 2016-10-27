@@ -40,13 +40,13 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
         AnalysisConfig ac = new AnalysisConfig();
 
         // count works with no fields
-        Detector d = new Detector("count");
+        Detector d = new Detector.Builder("count", null).build();
         ac.setDetectors(Arrays.asList(new Detector[] { d }));
         AnalysisConfigVerifier.verify(ac);
 
-        d = new Detector("distinct_count");
-        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         try {
+            d = new Detector.Builder("distinct_count", null).build();
+            ac.setDetectors(Arrays.asList(new Detector[] { d }));
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
         } catch (ElasticsearchParseException e) {
@@ -55,24 +55,25 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
         }
 
         // should work now
-        d = new Detector("distinct_count", "somefield");
-        d.setOverFieldName("over");
-        ac.setDetectors(Arrays.asList(new Detector[] { d }));
+        Detector.Builder builder = new Detector.Builder("distinct_count", "somefield");
+        builder.setOverFieldName("over");
+        ac.setDetectors(Arrays.asList(new Detector[]{builder.build()}));
         AnalysisConfigVerifier.verify(ac);
 
-        d = new Detector("info_content", "somefield");
-        d.setOverFieldName("over");
-        ac.setDetectors(Arrays.asList(new Detector[] { d }));
+        builder = new Detector.Builder("info_content", "somefield");
+        builder.setOverFieldName("over");
+        d = builder.build();
+        ac.setDetectors(Arrays.asList(new Detector[]{builder.build()}));
         AnalysisConfigVerifier.verify(ac);
 
-        d.setByFieldName("by");
-        ac.setDetectors(Arrays.asList(new Detector[] { d }));
+        builder.setByFieldName("by");
+        ac.setDetectors(Arrays.asList(new Detector[]{builder.build()}));
         AnalysisConfigVerifier.verify(ac);
 
-        d = new Detector("made_up_function", "somefield");
-        d.setOverFieldName("over");
-        ac.setDetectors(Arrays.asList(new Detector[] { d }));
         try {
+            builder = new Detector.Builder("made_up_function", "somefield");
+            builder.setOverFieldName("over");
+            ac.setDetectors(Arrays.asList(new Detector[]{builder.build()}));
             AnalysisConfigVerifier.verify(ac);
             assertTrue(false); // shouldn't get here
         } catch (ElasticsearchParseException e) {
@@ -206,9 +207,9 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
             analysisConfig.setBucketSpan(5000L);
             analysisConfig.setBatchSpan(0L);
             detectors = new ArrayList<>();
-            detector = new Detector("count");
+            detector = new Detector.Builder("count", null).build();
             detectors.add(detector);
-            detector = new Detector("mean", "value");
+            detector = new Detector.Builder("mean", "value").build();
             detectors.add(detector);
             analysisConfig.setDetectors(detectors);
             assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -219,9 +220,9 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
             analysisConfig.setBucketSpan(5000L);
             analysisConfig.setBatchSpan(0L);
             detectors = new ArrayList<>();
-            detector = new Detector("count");
+            detector = new Detector.Builder("count", null).build();
             detectors.add(detector);
-            detector = new Detector("rare", "value");
+            detector = new Detector.Builder("rare", "value").build();
             detectors.add(detector);
             analysisConfig.setDetectors(detectors);
             assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -232,11 +233,11 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
             analysisConfig.setBucketSpan(5000L);
             analysisConfig.setBatchSpan(0L);
             detectors = new ArrayList<>();
-            detector = new Detector("count");
+            detector = new Detector.Builder("count", null).build();
             detectors.add(detector);
-            detector = new Detector("min", "value");
+            detector = new Detector.Builder("min", "value").build();
             detectors.add(detector);
-            detector = new Detector("max", "value");
+            detector = new Detector.Builder("max", "value").build();
             detectors.add(detector);
             analysisConfig.setDetectors(detectors);
             assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -248,11 +249,11 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
         analysisConfig.setBucketSpan(5000L);
         analysisConfig.setBatchSpan(0L);
         detectors = new ArrayList<>();
-        detector = new Detector("count");
+        detector = new Detector.Builder("count", null).build();
         detectors.add(detector);
-        detector = new Detector("rare");
-        detector.setByFieldName("value");
-        detectors.add(detector);
+        Detector.Builder builder = new Detector.Builder("rare", null);
+        builder.setByFieldName("value");
+        detectors.add(builder.build());
         analysisConfig.setOverlappingBuckets(false);
         analysisConfig.setDetectors(detectors);
         assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -264,11 +265,11 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
         analysisConfig.setBatchSpan(0L);
         analysisConfig.setOverlappingBuckets(true);
         detectors = new ArrayList<>();
-        detector = new Detector("count");
+        detector = new Detector.Builder("count", null).build();
         detectors.add(detector);
-        detector = new Detector("rare");
-        detector.setByFieldName("value");
-        detectors.add(detector);
+        builder = new Detector.Builder("rare", null);
+        builder.setByFieldName("value");
+        detectors.add(builder.build());
         analysisConfig.setDetectors(detectors);
         try {
             AnalysisConfigVerifier.verify(analysisConfig);
@@ -283,9 +284,9 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
         analysisConfig.setBatchSpan(0L);
         analysisConfig.setOverlappingBuckets(false);
         detectors = new ArrayList<>();
-        detector = new Detector("count");
+        detector = new Detector.Builder("count", null).build();
         detectors.add(detector);
-        detector = new Detector("mean", "value");
+        detector = new Detector.Builder("mean", "value").build();
         detectors.add(detector);
         analysisConfig.setDetectors(detectors);
         assertTrue(AnalysisConfigVerifier.verify(analysisConfig));
@@ -297,7 +298,7 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
         AnalysisConfig ac = new AnalysisConfig();
         ac.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
         List<Detector> detectors = new ArrayList<>();
-        Detector detector = new Detector("count");
+        Detector detector = new Detector.Builder("count", null).build();
         detectors.add(detector);
         ac.setDetectors(detectors);
         try {
@@ -407,7 +408,9 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
 
     public void testCheckDetectorsHavePartitionFields_doesntThrowWhenValid() {
         AnalysisConfig config = createValidConfig();
-        config.getDetectors().get(0).setPartitionFieldName("pField");
+        Detector.Builder builder = new Detector.Builder(config.getDetectors().get(0));
+        builder.setPartitionFieldName("pField");
+        config.getDetectors().set(0, builder.build());
         config.setUsePerPartitionNormalization(true);
 
         AnalysisConfigVerifier.verify(config);
@@ -417,7 +420,9 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
     public void testCheckNoInfluencersAreSet() {
 
         AnalysisConfig config = createValidConfig();
-        config.getDetectors().get(0).setPartitionFieldName("pField");
+        Detector.Builder builder = new Detector.Builder(config.getDetectors().get(0));
+        builder.setPartitionFieldName("pField");
+        config.getDetectors().set(0, builder.build());
         config.setInfluencers(Arrays.asList("inf1", "inf2"));
         config.setUsePerPartitionNormalization(true);
 
@@ -449,7 +454,7 @@ public class AnalysisConfigVerifierTests extends ESTestCase {
         analysisConfig.setLatency(0L);
         analysisConfig.setPeriod(0L);
         List<Detector> detectors = new ArrayList<>();
-        Detector detector = new Detector("count");
+        Detector detector = new Detector.Builder("count", null).build();
         detectors.add(detector);
         analysisConfig.setDetectors(detectors);
         return analysisConfig;

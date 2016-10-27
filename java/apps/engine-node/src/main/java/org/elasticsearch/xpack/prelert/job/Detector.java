@@ -14,30 +14,37 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
+import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
+import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.elasticsearch.action.support.ToXContentToBytes;
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ConstructingObjectParser;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 /**
@@ -58,27 +65,19 @@ public class Detector extends ToXContentToBytes implements Writeable {
     public static final ParseField EXCLUDE_FREQUENT_FIELD = new ParseField("excludeFrequent");
     public static final ParseField DETECTOR_RULES_FIELD = new ParseField("detectorRules");
 
-    public static final ConstructingObjectParser<Detector, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
-            DETECTOR_FIELD.getPreferredName(), a -> {
-                if (a.length == 1) {
-                    return new Detector((String) a[0]);
-                } else {
-                    return new Detector((String) a[0], (String) a[1]);
-                }
-            });
+    public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>("detector", Builder::new);
 
     static {
-        PARSER.declareString(ConstructingObjectParser.constructorArg(), FUNCTION_FIELD);
-        PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), FIELD_NAME_FIELD);
-        PARSER.declareString(Detector::setDetectorDescription, DETECTOR_DESCRIPTION_FIELD);
-        PARSER.declareString(Detector::setByFieldName, BY_FIELD_NAME_FIELD);
-        PARSER.declareString(Detector::setOverFieldName, OVER_FIELD_NAME_FIELD);
-        PARSER.declareString(Detector::setPartitionFieldName, PARTITION_FIELD_NAME_FIELD);
-        PARSER.declareString(Detector::setExcludeFrequent, EXCLUDE_FREQUENT_FIELD);
-        PARSER.declareBoolean(Detector::setUseNull, USE_NULL_FIELD);
-        PARSER.declareObjectArray(Detector::setDetectorRules, DetectionRule.PARSER, DETECTOR_RULES_FIELD);
+        PARSER.declareString(Builder::setDetectorDescription, DETECTOR_DESCRIPTION_FIELD);
+        PARSER.declareString(Builder::setFunction, FUNCTION_FIELD);
+        PARSER.declareString(Builder::setFieldName, FIELD_NAME_FIELD);
+        PARSER.declareString(Builder::setByFieldName, BY_FIELD_NAME_FIELD);
+        PARSER.declareString(Builder::setOverFieldName, OVER_FIELD_NAME_FIELD);
+        PARSER.declareString(Builder::setPartitionFieldName, PARTITION_FIELD_NAME_FIELD);
+        PARSER.declareBoolean(Builder::setUseNull, USE_NULL_FIELD);
+        PARSER.declareString(Builder::setExcludeFrequent, EXCLUDE_FREQUENT_FIELD);
+        PARSER.declareObjectArray(Builder::setDetectorRules, DetectionRule.PARSER, DETECTOR_RULES_FIELD);
     }
-
 
     public static final String COUNT = "count";
     public static final String HIGH_COUNT = "high_count";
@@ -166,7 +165,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     TIME_OF_DAY,
                     TIME_OF_WEEK,
                     LAT_LONG
-                    ));
+            ));
 
     /**
      * The set of functions that do not require a field, by field or over field
@@ -181,7 +180,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     HIGH_NON_ZERO_COUNT, HIGH_NZC,
                     TIME_OF_DAY,
                     TIME_OF_WEEK
-                    ));
+            ));
 
     /**
      * The set of functions that require a fieldname
@@ -211,7 +210,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     LOW_POPULATION_VARIANCE,
                     HIGH_POPULATION_VARIANCE,
                     LAT_LONG
-                    ));
+            ));
 
     /**
      * The set of functions that require a by fieldname
@@ -220,7 +219,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
             new HashSet<>(Arrays.asList(
                     RARE,
                     FREQ_RARE
-                    ));
+            ));
 
     /**
      * The set of functions that require a over fieldname
@@ -228,7 +227,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
     public static final Set<String> OVER_FIELD_NAME_FUNCTIONS =
             new HashSet<>(Arrays.asList(
                     FREQ_RARE
-                    ));
+            ));
 
     /**
      * The set of functions that cannot have a by fieldname
@@ -244,7 +243,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     NON_ZERO_COUNT, NZC,
                     LOW_NON_ZERO_COUNT, LOW_NZC,
                     HIGH_NON_ZERO_COUNT, HIGH_NZC
-                    ));
+            ));
 
     /**
      * The set of functions that must not be used with overlapping buckets
@@ -253,7 +252,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
             new HashSet<>(Arrays.asList(
                     RARE,
                     FREQ_RARE
-                    ));
+            ));
 
     /**
      * The set of functions that should not be used with overlapping buckets
@@ -265,7 +264,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     MAX,
                     TIME_OF_DAY,
                     TIME_OF_WEEK
-                    ));
+            ));
 
     /**
      * field names cannot contain any of these characters
@@ -277,18 +276,18 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     c -> Character.toString(c)).collect(Collectors.toList()));
 
 
-    private String detectorDescription;
+    private final String detectorDescription;
     private final String function;
     private final String fieldName;
-    private String byFieldName;
-    private String overFieldName;
-    private String partitionFieldName;
-    private boolean useNull = false;
-    private String excludeFrequent;
-    private List<DetectionRule> detectorRules = new ArrayList<>();
+    private final String byFieldName;
+    private final String overFieldName;
+    private final String partitionFieldName;
+    private final boolean useNull;
+    private final String excludeFrequent;
+    private final List<DetectionRule> detectorRules;
 
     public Detector(StreamInput in) throws IOException {
-        detectorDescription = in.readOptionalString();
+        detectorDescription = in.readString();
         function = in.readString();
         fieldName = in.readOptionalString();
         byFieldName = in.readOptionalString();
@@ -296,16 +295,12 @@ public class Detector extends ToXContentToBytes implements Writeable {
         partitionFieldName = in.readOptionalString();
         useNull = in.readBoolean();
         excludeFrequent = in.readOptionalString();
-        int size = in.readVInt();
-        detectorRules = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            detectorRules.add(new DetectionRule(in));
-        }
+        detectorRules = in.readList(DetectionRule::new);
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        out.writeOptionalString(detectorDescription);
+        out.writeString(detectorDescription);
         out.writeString(function);
         out.writeOptionalString(fieldName);
         out.writeOptionalString(byFieldName);
@@ -313,18 +308,13 @@ public class Detector extends ToXContentToBytes implements Writeable {
         out.writeOptionalString(partitionFieldName);
         out.writeBoolean(useNull);
         out.writeOptionalString(excludeFrequent);
-        out.writeVInt(detectorRules.size());
-        for (DetectionRule rule : detectorRules) {
-            rule.writeTo(out);
-        }
+        out.writeList(detectorRules);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        if (detectorDescription != null) {
-            builder.field(DETECTOR_DESCRIPTION_FIELD.getPreferredName(), detectorDescription);
-        }
+        builder.field(DETECTOR_DESCRIPTION_FIELD.getPreferredName(), detectorDescription);
         builder.field(FUNCTION_FIELD.getPreferredName(), function);
         if (fieldName != null) {
             builder.field(FIELD_NAME_FIELD.getPreferredName(), fieldName);
@@ -344,25 +334,28 @@ public class Detector extends ToXContentToBytes implements Writeable {
         if (excludeFrequent != null) {
             builder.field(EXCLUDE_FREQUENT_FIELD.getPreferredName(), excludeFrequent);
         }
-        if (detectorRules != null) {
-            builder.field(DETECTOR_RULES_FIELD.getPreferredName(), detectorRules);
-        }
+        builder.field(DETECTOR_RULES_FIELD.getPreferredName(), detectorRules);
         builder.endObject();
         return builder;
     }
 
-    public Detector(String function) {
-        this(function, null);
-    }
-
     @JsonCreator
-    public Detector(@JsonProperty("function") String function, @JsonProperty("field_name") String fieldName) {
+    private Detector(@JsonProperty("detectorDescription") String detectorDescription, @JsonProperty("function") String function,
+                     @JsonProperty("field_name") String fieldName, @JsonProperty("byFieldName") String byFieldName,
+                     @JsonProperty("overFieldName") String overFieldName, @JsonProperty("partitionFieldName") String partitionFieldName,
+                     @JsonProperty("useNull") boolean useNull, @JsonProperty("excludeFrequent") String excludeFrequent,
+                     @JsonProperty("detectorRules") List<DetectionRule> detectorRules) {
         this.function = function;
         this.fieldName = fieldName;
-    }
-
-    public void setDetectorDescription(String detectorDescription) {
-        this.detectorDescription = detectorDescription;
+        this.byFieldName = byFieldName;
+        this.overFieldName = overFieldName;
+        this.partitionFieldName = partitionFieldName;
+        this.useNull = useNull;
+        this.excludeFrequent = excludeFrequent;
+        // REMOVE THIS LINE WHEN REMOVING JACKSON_DATABIND:
+        detectorRules = detectorRules != null ? detectorRules : Collections.emptyList();
+        this.detectorRules = Collections.unmodifiableList(detectorRules);
+        this.detectorDescription = detectorDescription != null ? detectorDescription : DefaultDetectorDescription.of(this);
     }
 
     public String getDetectorDescription() {
@@ -397,10 +390,6 @@ public class Detector extends ToXContentToBytes implements Writeable {
         return byFieldName;
     }
 
-    public void setByFieldName(String byFieldName) {
-        this.byFieldName = byFieldName;
-    }
-
     /**
      * The 'over' field or <code>null</code> if not set.
      *
@@ -408,10 +397,6 @@ public class Detector extends ToXContentToBytes implements Writeable {
      */
     public String getOverFieldName() {
         return overFieldName;
-    }
-
-    public void setOverFieldName(String overFieldName) {
-        this.overFieldName = overFieldName;
     }
 
     /**
@@ -424,11 +409,6 @@ public class Detector extends ToXContentToBytes implements Writeable {
         return partitionFieldName;
     }
 
-    public void setPartitionFieldName(String partitionFieldName) {
-        this.partitionFieldName = partitionFieldName;
-    }
-
-
     /**
      * Where there isn't a value for the 'by' or 'over' field should a new
      * series be used as the 'null' series.
@@ -437,10 +417,6 @@ public class Detector extends ToXContentToBytes implements Writeable {
      */
     public boolean isUseNull() {
         return useNull;
-    }
-
-    public void setUseNull(boolean useNull) {
-        this.useNull = useNull;
     }
 
     /**
@@ -453,16 +429,8 @@ public class Detector extends ToXContentToBytes implements Writeable {
         return excludeFrequent;
     }
 
-    public void setExcludeFrequent(String v) {
-        excludeFrequent = v;
-    }
-
     public List<DetectionRule> getDetectorRules() {
         return detectorRules;
-    }
-
-    public void setDetectorRules(List<DetectionRule> detectorRules) {
-        this.detectorRules = detectorRules;
     }
 
     /**
@@ -510,5 +478,316 @@ public class Detector extends ToXContentToBytes implements Writeable {
         return Objects.hash(detectorDescription, function, fieldName, byFieldName,
                 overFieldName, partitionFieldName, useNull, excludeFrequent,
                 detectorRules);
+    }
+
+    public static class Builder {
+
+        /**
+         * Functions that do not support rules:
+         * <ul>
+         * <li>lat_long - because it is a multivariate feature
+         * <li>metric - because having the same conditions on min,max,mean is
+         * error-prone
+         * </ul>
+         */
+        static final Set<String> FUNCTIONS_WITHOUT_RULE_SUPPORT = new HashSet<>(Arrays.asList(Detector.LAT_LONG, Detector.METRIC));
+
+        private String detectorDescription;
+        private String function;
+        private String fieldName;
+        private String byFieldName;
+        private String overFieldName;
+        private String partitionFieldName;
+        private boolean useNull = false;
+        private String excludeFrequent;
+        private List<DetectionRule> detectorRules = Collections.emptyList();
+
+        public Builder() {
+        }
+
+        public Builder(Detector detector) {
+            detectorDescription = detector.detectorDescription;
+            function = detector.function;
+            fieldName = detector.fieldName;
+            byFieldName = detector.byFieldName;
+            overFieldName = detector.overFieldName;
+            partitionFieldName = detector.partitionFieldName;
+            useNull = detector.useNull;
+            excludeFrequent = detector.excludeFrequent;
+            detectorRules = new ArrayList<>(detector.detectorRules.size());
+            for (DetectionRule rule : detector.getDetectorRules()) {
+                detectorRules.add(rule);
+            }
+        }
+
+        public Builder(String function, String fieldName) {
+            this.function = function;
+            this.fieldName = fieldName;
+        }
+
+        public void setDetectorDescription(String detectorDescription) {
+            this.detectorDescription = detectorDescription;
+        }
+
+        public void setFunction(String function) {
+            this.function = function;
+        }
+
+        public void setFieldName(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        public void setByFieldName(String byFieldName) {
+            this.byFieldName = byFieldName;
+        }
+
+        public void setOverFieldName(String overFieldName) {
+            this.overFieldName = overFieldName;
+        }
+
+        public void setPartitionFieldName(String partitionFieldName) {
+            this.partitionFieldName = partitionFieldName;
+        }
+
+        public void setUseNull(boolean useNull) {
+            this.useNull = useNull;
+        }
+
+        public void setExcludeFrequent(String excludeFrequent) {
+            this.excludeFrequent = excludeFrequent;
+        }
+
+        public void setDetectorRules(List<DetectionRule> detectorRules) {
+            this.detectorRules = detectorRules;
+        }
+
+        public List<DetectionRule> getDetectorRules() {
+            return detectorRules;
+        }
+
+        public Detector build() {
+            return build(false);
+        }
+
+        public Detector build(boolean isSummarised) {
+            boolean emptyField = Strings.isEmpty(fieldName);
+            boolean emptyByField = Strings.isEmpty(byFieldName);
+            boolean emptyOverField = Strings.isEmpty(overFieldName);
+            if (Detector.ANALYSIS_FUNCTIONS.contains(function) == false) {
+                throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_UNKNOWN_FUNCTION, function),
+                        ErrorCodes.UNKNOWN_FUNCTION);
+            }
+
+            if (emptyField && emptyByField && emptyOverField) {
+                if (!Detector.COUNT_WITHOUT_FIELD_FUNCTIONS.contains(function)) {
+                    throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_NO_ANALYSIS_FIELD_NOT_COUNT),
+                            ErrorCodes.INVALID_FIELD_SELECTION);
+                }
+            }
+
+            if (isSummarised && Detector.METRIC.equals(function)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_INCOMPATIBLE_PRESUMMARIZED, Detector.METRIC),
+                        ErrorCodes.INVALID_FUNCTION);
+            }
+
+            // check functions have required fields
+
+            if (emptyField && Detector.FIELD_NAME_FUNCTIONS.contains(function)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_FIELDNAME, function),
+                        ErrorCodes.INVALID_FIELD_SELECTION);
+            }
+
+            if (!emptyField && (Detector.FIELD_NAME_FUNCTIONS.contains(function) == false)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_FIELDNAME_INCOMPATIBLE_FUNCTION, function),
+                        ErrorCodes.INVALID_FIELD_SELECTION);
+            }
+
+            if (emptyByField && Detector.BY_FIELD_NAME_FUNCTIONS.contains(function)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_BYFIELD, function),
+                        ErrorCodes.INVALID_FIELD_SELECTION);
+            }
+
+            if (!emptyByField && Detector.NO_BY_FIELD_NAME_FUNCTIONS.contains(function)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION, function),
+                        ErrorCodes.INVALID_FIELD_SELECTION);
+            }
+
+            if (emptyOverField && Detector.OVER_FIELD_NAME_FUNCTIONS.contains(function)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_REQUIRES_OVERFIELD, function),
+                        ErrorCodes.INVALID_FIELD_SELECTION);
+            }
+
+            if (!emptyOverField && Detector.NO_OVER_FIELD_NAME_FUNCTIONS.contains(function)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_OVERFIELD_INCOMPATIBLE_FUNCTION, function),
+                        ErrorCodes.INVALID_FIELD_SELECTION);
+            }
+
+            // field names cannot contain certain characters
+            String[] fields = { fieldName, byFieldName, overFieldName, partitionFieldName };
+            for (String field : fields) {
+                verifyFieldName(field);
+            }
+
+            verifyExcludeFrequent(excludeFrequent);
+
+            String function = this.function == null ? Detector.METRIC : this.function;
+            if (detectorRules.isEmpty() == false) {
+                if (FUNCTIONS_WITHOUT_RULE_SUPPORT.contains(function)) {
+                    String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_NOT_SUPPORTED_BY_FUNCTION, function);
+                    throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULES_NOT_SUPPORTED_BY_FUNCTION);
+                }
+                for (DetectionRule rule : detectorRules) {
+                    checkScoping(rule);
+                }
+            }
+
+            return new Detector(detectorDescription, function, fieldName, byFieldName, overFieldName, partitionFieldName,
+                    useNull, excludeFrequent, detectorRules);
+        }
+
+        public List<String> extractAnalysisFields() {
+            List<String> analysisFields = Arrays.asList(byFieldName,
+                    overFieldName, partitionFieldName);
+            return analysisFields.stream().filter(item -> item != null).collect(Collectors.toList());
+        }
+
+        static final String[] VALID_EXCLUDE_FREQUENT_SETTINGS = { "true", "false", "t", "f", "yes", "no", "y", "n", "on", "off", "by",
+                "over", "all" };
+
+        static boolean verifyExcludeFrequent(String excludeFrequent) throws ElasticsearchParseException {
+            // Not set is fine
+            if (excludeFrequent == null || excludeFrequent.isEmpty()) {
+                return true;
+            }
+
+            // Any of these words are fine
+            for (String word : VALID_EXCLUDE_FREQUENT_SETTINGS) {
+                if (word.equalsIgnoreCase(excludeFrequent)) {
+                    return true;
+                }
+            }
+
+            // Convertible to a number (which will then be interpreted as a boolean)
+            // is fine
+            try {
+                Long.parseLong(excludeFrequent);
+            } catch (NumberFormatException nfe) {
+                throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_EXCLUDEFREQUENT_SETTING,
+                        excludeFrequent), ErrorCodes.INVALID_EXCLUDEFREQUENT_SETTING);
+            }
+
+            return true;
+        }
+
+        /**
+         * Check that the characters used in a field name will not cause problems.
+         *
+         * @param field
+         *            The field name to be validated
+         * @return true
+         */
+        public static boolean verifyFieldName(String field) throws ElasticsearchParseException {
+            if (field != null && containsInvalidChar(field)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS, field, Detector.PROHIBITED),
+                        ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+
+            }
+            return true;
+        }
+
+        private static boolean containsInvalidChar(String field) {
+            for (Character ch : Detector.PROHIBITED_FIELDNAME_CHARACTERS) {
+                if (field.indexOf(ch) >= 0) {
+                    return true;
+                }
+            }
+            return field.chars().anyMatch(ch -> Character.isISOControl(ch));
+        }
+
+        private void checkScoping(DetectionRule rule) throws ElasticsearchParseException {
+            String targetFieldName = rule.getTargetFieldName();
+            checkTargetFieldNameIsValid(extractAnalysisFields(), targetFieldName);
+            List<String> validOptions = getValidFieldNameOptions(rule);
+            for (RuleCondition condition : rule.getRuleConditions()) {
+                if (!validOptions.contains(condition.getFieldName())) {
+                    String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME, validOptions,
+                            condition.getFieldName());
+                    throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME);
+                }
+            }
+        }
+
+        private void checkTargetFieldNameIsValid(List<String> analysisFields, String targetFieldName)
+                throws ElasticsearchParseException {
+            if (targetFieldName != null && !analysisFields.contains(targetFieldName)) {
+                String msg =
+                        Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD_NAME, analysisFields, targetFieldName);
+                throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD);
+            }
+        }
+
+        private List<String> getValidFieldNameOptions(DetectionRule rule) {
+            List<String> result = new ArrayList<>();
+            if (overFieldName != null) {
+                result.add(byFieldName == null ? overFieldName : byFieldName);
+            } else if (byFieldName != null) {
+                result.add(byFieldName);
+            }
+
+            if (rule.getTargetFieldName() != null) {
+                ScopingLevel targetLevel = ScopingLevel.from(this, rule.getTargetFieldName());
+                result = result.stream().filter(field -> targetLevel.isHigherThan(ScopingLevel.from(this, field)))
+                        .collect(Collectors.toList());
+            }
+
+            if (isEmptyFieldNameAllowed(rule)) {
+                result.add(null);
+            }
+            return result;
+        }
+
+        private boolean isEmptyFieldNameAllowed(DetectionRule rule) {
+            List<String> analysisFields = extractAnalysisFields();
+            return analysisFields.isEmpty() || (rule.getTargetFieldName() != null && analysisFields.size() == 1);
+        }
+
+        enum ScopingLevel {
+            PARTITION(3),
+            OVER(2),
+            BY(1);
+
+            int level;
+
+            ScopingLevel(int level) {
+                this.level = level;
+            }
+
+            boolean isHigherThan(ScopingLevel other) {
+                return level > other.level;
+            }
+
+            static ScopingLevel from(Detector.Builder detector, String fieldName) {
+                if (fieldName.equals(detector.partitionFieldName)) {
+                    return ScopingLevel.PARTITION;
+                }
+                if (fieldName.equals(detector.overFieldName)) {
+                    return ScopingLevel.OVER;
+                }
+                if (fieldName.equals(detector.byFieldName)) {
+                    return ScopingLevel.BY;
+                }
+                throw new IllegalArgumentException(
+                        "fieldName '" + fieldName + "' does not match an analysis field");
+            }
+        }
+
     }
 }

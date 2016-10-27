@@ -91,7 +91,7 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         PARSER.declareLong(AnalysisConfig::setLatency, LATENCY);
         PARSER.declareLong(AnalysisConfig::setPeriod, PERIOD);
         PARSER.declareString(AnalysisConfig::setSummaryCountFieldName, SUMMARY_COUNT_FIELD_NAME);
-        PARSER.declareObjectArray(AnalysisConfig::setDetectors, Detector.PARSER, DETECTORS);
+        PARSER.declareObjectArray(AnalysisConfig::setDetectors, (p, c) -> Detector.PARSER.apply(p, c).build(), DETECTORS);
         PARSER.declareStringArray(AnalysisConfig::setInfluencers, INFLUENCERS);
         PARSER.declareBoolean(AnalysisConfig::setOverlappingBuckets, OVERLAPPING_BUCKETS);
         PARSER.declareLong(AnalysisConfig::setResultFinalizationWindow, RESULT_FINALIZATION_WINDOW);

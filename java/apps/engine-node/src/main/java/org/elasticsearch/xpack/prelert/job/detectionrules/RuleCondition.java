@@ -102,6 +102,14 @@ public class RuleCondition extends ToXContentToBytes implements Writeable {
         verifyFieldValueRequiresFieldName(this);
     }
 
+    public RuleCondition(RuleCondition ruleCondition) {
+        this.conditionType = ruleCondition.conditionType;
+        this.fieldName = ruleCondition.fieldName;
+        this.fieldValue = ruleCondition.fieldValue;
+        this.condition = ruleCondition.condition;
+        this.valueList = ruleCondition.valueList;
+    }
+
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
