@@ -1,9 +1,14 @@
 
 package org.elasticsearch.xpack.prelert.job.data;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,23 +18,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
-import org.elasticsearch.xpack.prelert.job.exceptions.TooManyJobsException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.NativeProcessRunException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class DataStreamerTest extends ESTestCase {
 
@@ -38,11 +29,7 @@ public class DataStreamerTest extends ESTestCase {
         ESTestCase.expectThrows(NullPointerException.class, () -> new DataStreamer(null));
     }
 
-    public void testStreamData_GivenNoContentEncodingAndNoPersistBaseDir()
-            throws UnknownJobException, NativeProcessRunException,
-            MissingFieldException, JobInUseException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-            TooManyJobsException, IOException, MalformedJsonException, JobException {
+    public void testStreamData_GivenNoContentEncodingAndNoPersistBaseDir() throws JobException, IOException {
 
         DataProcessor dataProcessor = mock(DataProcessor.class);
         DataStreamer dataStreamer = new DataStreamer(dataProcessor);
@@ -57,11 +44,7 @@ public class DataStreamerTest extends ESTestCase {
         Mockito.verifyNoMoreInteractions(dataProcessor);
     }
 
-    public void testStreamData_ExpectsGzipButNotCompressed()
-            throws JsonParseException, UnknownJobException, NativeProcessRunException,
-            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException,
-            IOException, JobException {
+    public void testStreamData_ExpectsGzipButNotCompressed() throws JobException, IOException {
         DataProcessor dataProcessor = mock(DataProcessor.class);
         DataStreamer dataStreamer = new DataStreamer(dataProcessor);
         InputStream inputStream = mock(InputStream.class);
@@ -70,17 +53,12 @@ public class DataStreamerTest extends ESTestCase {
         try {
             dataStreamer.streamData("gzip", "foo", inputStream, params);
             fail("content encoding : gzip with uncompressed data should throw");
-        } catch (JobException e) {
-            assertEquals(ErrorCodes.UNCOMPRESSED_DATA, e.getErrorCode());
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.UNCOMPRESSED_DATA.getValueString(), e.getHeader("errorCode").get(0));
         }
     }
 
-    public void testStreamData_ExpectsGzipUsesGZipStream()
-            throws JsonParseException, UnknownJobException, NativeProcessRunException,
-            MissingFieldException, JobInUseException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, TooManyJobsException, MalformedJsonException,
-            IOException, JobException {
-
+    public void testStreamData_ExpectsGzipUsesGZipStream() throws JobException, IOException {
         PipedInputStream pipedIn = new PipedInputStream();
         PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
         try (GZIPOutputStream gzip = new GZIPOutputStream(pipedOut)) {

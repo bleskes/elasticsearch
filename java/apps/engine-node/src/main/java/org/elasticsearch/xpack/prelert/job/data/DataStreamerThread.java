@@ -1,16 +1,15 @@
 
 package org.elasticsearch.xpack.prelert.job.data;
 
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
-
-import org.apache.logging.log4j.Logger;
-
-import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 
 // NORELEASE - Use ES ThreadPool
 public final class DataStreamerThread extends Thread {
@@ -22,7 +21,7 @@ public final class DataStreamerThread extends Thread {
     private final DataLoadParams params;
     private final InputStream input;
     private final DataStreamer dataStreamer;
-    private JobException jobException;
+    private ElasticsearchException jobException;
     private IOException iOException;
 
     public DataStreamerThread(DataStreamer dataStreamer, String jobId, String contentEncoding,
@@ -40,7 +39,7 @@ public final class DataStreamerThread extends Thread {
     public void run() {
         try {
             stats = dataStreamer.streamData(contentEncoding, jobId, input, params);
-        } catch (JobException e) {
+        } catch (ElasticsearchException e) {
             jobException = e;
         } catch (IOException e) {
             iOException = e;
@@ -70,7 +69,7 @@ public final class DataStreamerThread extends Thread {
      *
      * @return
      */
-    public Optional<JobException> getJobException() {
+    public Optional<ElasticsearchException> getJobException() {
         return Optional.ofNullable(jobException);
     }
 

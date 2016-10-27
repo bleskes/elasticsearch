@@ -2,23 +2,22 @@ package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.elasticsearch.xpack.prelert.job.Detector;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
+import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicator;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
 import org.elasticsearch.xpack.prelert.job.process.exceptions.ClosedJobException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.NativeProcessRunException;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,8 +39,7 @@ import static org.mockito.Matchers.anyBoolean;
  */
 public class AutodetectProcessManagerTest extends ESTestCase {
 
-    public void testCreateProcessBySubmittingData() throws MalformedJsonException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, NativeProcessRunException {
+    public void testCreateProcessBySubmittingData()  {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
@@ -52,10 +50,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         assertEquals(1, manager.numberOfRunningJobs());
     }
 
-    public void testProcessDataThrowsElasticsearchStatusException_onIoException()
-            throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, NativeProcessRunException, UnknownJobException, IOException {
-
+    public void testProcessDataThrowsElasticsearchStatusException_onIoException() throws JobException, IOException {
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
 
@@ -65,8 +60,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> manager.processData("foo", inputStream, mock(DataLoadParams.class)));
     }
 
-    public void testCloseJob() throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, NativeProcessRunException, UnknownJobException {
+    public void testCloseJob() {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectCommunicatorFactory factory = mockCommunicatorFactory(communicator);
@@ -85,8 +79,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
 //        verify(jobManager).setJobFinishedTimeAndStatus(eq("foo"), any(), eq(JobStatus.CLOSED));
     }
 
-    public void testBucketResetMessageIsSent() throws MalformedJsonException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, NativeProcessRunException, IOException {
+    public void testBucketResetMessageIsSent() throws IOException, JobException {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
@@ -99,8 +92,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         verify(communicator).writeToJob(inputStream);
     }
 
-    public void testFlush() throws MalformedJsonException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, NativeProcessRunException, IOException {
+    public void testFlush() throws IOException {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectCommunicatorFactory factory = mockCommunicatorFactory(communicator);
@@ -118,8 +110,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         verify(communicator).flushJob(params);
     }
 
-    public void testFlushThrows() throws MalformedJsonException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, NativeProcessRunException, IOException {
+    public void testFlushThrows() throws JobException, IOException {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
@@ -131,8 +122,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         assertEquals(ErrorCodes.NATIVE_PROCESS_WRITE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
 
-    public void testWriteUpdateConfigMessage() throws MalformedJsonException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, NativeProcessRunException, IOException {
+    public void testWriteUpdateConfigMessage() throws IOException {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
@@ -140,8 +130,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         verify(communicator).writeUpdateConfigMessage("go faster");
     }
 
-    public void testJobHasActiveAutodetectProcess()throws MalformedJsonException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, NativeProcessRunException, IOException {
+    public void testJobHasActiveAutodetectProcess()throws JobException, IOException {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
@@ -161,8 +150,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         ESTestCase.expectThrows(ClosedJobException.class, () -> manager.addAlertObserver("foo", mock(AlertObserver.class)));
     }
 
-    public void testAddRemoveAlertObserver() throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, NativeProcessRunException, ClosedJobException {
+    public void testAddRemoveAlertObserver() throws JobException {
 
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
@@ -189,12 +177,9 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         return new AutodetectProcessManager(factory, jobManager);
     }
 
-    private AutodetectProcessManager createManagerAndCallProcessData(AutodetectCommunicator communicator, String jobId)
-            throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, NativeProcessRunException {
+    private AutodetectProcessManager createManagerAndCallProcessData(AutodetectCommunicator communicator, String jobId) {
         AutodetectProcessManager manager = createManager(communicator);
         manager.processData(jobId, createInputStream(""), mock(DataLoadParams.class));
-
         return manager;
     }
 

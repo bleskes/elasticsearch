@@ -1,8 +1,6 @@
 
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
-
 import java.util.Optional;
 
 /**
@@ -66,9 +64,8 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
      * @param jobId the job id
      * @param action the requested action
      * @return the {@code ActionTicket} granting permission to execute the action
-     * @throws JobInUseException If the job is in use by another action
      */
-    public abstract ActionTicket tryAcquiringAction(String jobId, T action) throws JobInUseException;
+    public abstract ActionTicket tryAcquiringAction(String jobId, T action);
 
     /**
      * Releases the action for the given job

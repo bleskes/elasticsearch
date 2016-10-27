@@ -1,22 +1,23 @@
 
 package org.elasticsearch.xpack.prelert.job.data;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.io.InputStream;
-
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class DataStreamerThreadTest extends ESTestCase {
     private static final String JOB_ID = "foo";
@@ -68,7 +69,7 @@ public class DataStreamerThreadTest extends ESTestCase {
 
     public void testRun_GivenJobException() throws Exception {
         when(dataStreamer.streamData(CONTENT_ENCODING, JOB_ID, inputStream, params))
-                .thenThrow(new JobException("job failed", ErrorCodes.JOB_ID_TAKEN));
+                .thenThrow(ExceptionsHelper.invalidRequestException("job failed", ErrorCodes.JOB_ID_TAKEN));
 
         dataStreamerThread.run();
 

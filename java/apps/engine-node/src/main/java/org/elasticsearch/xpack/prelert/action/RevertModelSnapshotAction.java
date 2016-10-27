@@ -46,7 +46,6 @@ import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -256,7 +255,7 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
 
             Optional<JobDetails> job = jobManager.getJob(request.getJobId(), clusterService.state());
             if (job.isPresent() && job.get().getStatus().equals(JobStatus.RUNNING)) {
-                throw new JobInUseException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT),
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT),
                         ErrorCodes.JOB_NOT_CLOSED);
             }
 

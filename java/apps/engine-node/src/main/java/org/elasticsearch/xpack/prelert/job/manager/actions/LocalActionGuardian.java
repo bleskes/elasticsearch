@@ -3,7 +3,7 @@ package org.elasticsearch.xpack.prelert.job.manager.actions;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,11 +54,9 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
      * @param jobId the job id
      * @param action the requested action
      * @return the {@code ActionTicket} granting permission to execute the action
-     * @throws JobInUseException If the job is in use by another action
      */
     @Override
-    public ActionTicket tryAcquiringAction(String jobId, T action) throws JobInUseException
-    {
+    public ActionTicket tryAcquiringAction(String jobId, T action) {
         synchronized (this)
         {
             T currentAction = actionsByJob.getOrDefault(jobId, noneAction);
@@ -78,7 +76,7 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
             {
                 String msg = action.getBusyActionError(jobId, currentAction);
                 LOGGER.warn(msg);
-                throw new JobInUseException(msg, action.getErrorCode());
+                throw ExceptionsHelper.invalidRequestException(msg, action.getErrorCode());
             }
         }
     }

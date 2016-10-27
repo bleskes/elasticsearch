@@ -7,9 +7,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.NativeProcessRunException;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -120,7 +118,7 @@ public class JobUpdater {
         return updaterPerKey.get(key).get();
     }
 
-    private void writeUpdateConfigMessage() throws JobInUseException, NativeProcessRunException {
+    private void writeUpdateConfigMessage() {
         String config = configWriter.toString();
         if (!config.isEmpty()) {
             // NORELEASE Write update config using new interface

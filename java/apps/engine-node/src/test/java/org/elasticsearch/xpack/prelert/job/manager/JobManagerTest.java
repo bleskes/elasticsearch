@@ -29,13 +29,11 @@ import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
 import org.elasticsearch.xpack.prelert.job.metadata.Job;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
-import org.elasticsearch.xpack.prelert.job.persistence.DataStoreException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataDeleterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -125,8 +123,7 @@ public class JobManagerTest extends ESTestCase {
         assertTrue(diff.contains("tom"));
     }
 
-    public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException,
-            DataStoreException, InterruptedException, ExecutionException {
+    public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException, InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
         JobDetails jobDetails = new JobConfiguration().build();
@@ -148,7 +145,7 @@ public class JobManagerTest extends ESTestCase {
         Throwable result2 = task_2_result.get();
         assertTrue(result1 == null || result2 == null);
         Throwable exception = result1 != null ? result1 : result2;
-        assertTrue(exception instanceof JobInUseException);
+        assertTrue(exception instanceof ElasticsearchStatusException);
         assertEquals("Cannot delete job foo while another connection is deleting the job",
                 exception.getMessage());
     }

@@ -2,8 +2,8 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -318,7 +318,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertTrue(resultHolder.get());
     }
 
-    public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, DataStoreException, IOException {
+    public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, IOException {
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
@@ -336,7 +336,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         verify(actionListener).onResponse(true);
     }
 
-    public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, UnknownJobException, DataStoreException, IOException {
+    public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, UnknownJobException, IOException {
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
