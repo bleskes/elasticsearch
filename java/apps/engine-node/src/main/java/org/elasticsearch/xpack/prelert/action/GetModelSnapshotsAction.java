@@ -160,7 +160,6 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
 
         public void setEnd(String end) {
             this.end = ExceptionsHelper.requireNonNull(end, END.getPreferredName());
-            ;
         }
 
         @Nullable
@@ -170,7 +169,6 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
 
         public void setDescriptionString(String description) {
             this.description = ExceptionsHelper.requireNonNull(description, DESCRIPTION.getPreferredName());
-            ;
         }
 
         @Override

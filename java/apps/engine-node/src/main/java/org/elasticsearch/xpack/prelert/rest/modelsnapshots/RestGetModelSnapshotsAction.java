@@ -73,9 +73,15 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
         } else {
             getModelSnapshots = new GetModelSnapshotsAction.Request(jobId);
             getModelSnapshots.setSort(restRequest.param(SORT.getPreferredName(), DEFAULT_SORT));
-            getModelSnapshots.setStart(restRequest.param(START.getPreferredName(), DEFAULT_START));
-            getModelSnapshots.setEnd(restRequest.param(END.getPreferredName(), DEFAULT_END));
-            getModelSnapshots.setDescriptionString(restRequest.param(DESCRIPTION.getPreferredName(), DEFAULT_DESCRIPTION));
+            if (restRequest.hasParam(START.getPreferredName())) {
+                getModelSnapshots.setStart(restRequest.param(START.getPreferredName(), DEFAULT_START));
+            }
+            if (restRequest.hasParam(END.getPreferredName())) {
+                getModelSnapshots.setEnd(restRequest.param(END.getPreferredName(), DEFAULT_END));
+            }
+            if (restRequest.hasParam(DESCRIPTION.getPreferredName())) {
+                getModelSnapshots.setDescriptionString(restRequest.param(DESCRIPTION.getPreferredName(), DEFAULT_DESCRIPTION));
+            }
             getModelSnapshots.setDescOrder(restRequest.paramAsBoolean(DESC_ORDER.getPreferredName(), DEFAULT_DESC_ORDER));
             getModelSnapshots.setPageParams(new PageParams(restRequest.paramAsInt(SKIP.getPreferredName(), DEFAULT_SKIP),
                     restRequest.paramAsInt(TAKE.getPreferredName(), DEFAULT_TAKE)));
