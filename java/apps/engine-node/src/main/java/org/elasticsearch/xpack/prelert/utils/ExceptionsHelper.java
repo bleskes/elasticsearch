@@ -59,6 +59,12 @@ public class ExceptionsHelper {
         return e;
     }
 
+    public static ElasticsearchParseException parseException(String msg, ErrorCodes errorCode, Exception cause) {
+        ElasticsearchParseException e = new ElasticsearchParseException(msg, cause);
+        e.addHeader("errorCode", errorCode.getValueString());
+        return e;
+    }
+
     public static ElasticsearchException serverError(String msg, Throwable cause, ErrorCodes errorCode) {
         ElasticsearchException e = new ElasticsearchException(msg, cause);
         e.addHeader("errorCode", errorCode.getValueString());
