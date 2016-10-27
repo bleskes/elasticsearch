@@ -49,8 +49,8 @@ public class Condition extends ToXContentToBytes implements Writeable {
         }, FILTER_VALUE_FIELD, ValueType.STRING_OR_NULL);
     }
 
-    private Operator op;
-    private String filterValue;
+    private final Operator op;
+    private final String filterValue;
 
     /**
      * Operation defaults to {@linkplain Operator#NONE} and the filter is an
