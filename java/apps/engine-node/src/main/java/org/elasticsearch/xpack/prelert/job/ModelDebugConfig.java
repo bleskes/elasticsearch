@@ -73,7 +73,13 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
     public static final ParseField TERMS_FIELD = new ParseField("terms");
 
     public static final ConstructingObjectParser<ModelDebugConfig, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
-            TYPE_FIELD.getPreferredName(), a -> new ModelDebugConfig((DebugDestination) a[0], (Double) a[1], (String) a[2]));
+            TYPE_FIELD.getPreferredName(), a -> {
+                if (a[0] == null) {
+                    return new ModelDebugConfig((Double) a[1], (String) a[2]);
+                } else {
+                    return new ModelDebugConfig((DebugDestination) a[0], (Double) a[1], (String) a[2]);
+                }
+            });
     static {
         PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> DebugDestination.forString(p.text()), WRITE_TO_FIELD,
                 ValueType.STRING);
@@ -104,24 +110,48 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
     }
 
     public ModelDebugConfig(StreamInput in) throws IOException {
-        writeTo = DebugDestination.readFromStream(in);
-        boundsPercentile = in.readDouble();
-        terms = in.readString();
+        if (in.readBoolean()) {
+            writeTo = DebugDestination.readFromStream(in);
+        }
+        if (in.readBoolean()) {
+            boundsPercentile = in.readDouble();
+        }
+        if (in.readBoolean()) {
+            terms = in.readString();
+        }
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        writeTo.writeTo(out);
-        out.writeDouble(boundsPercentile);
-        out.writeString(terms);
+        boolean hasWriteTo = writeTo != null;
+        out.writeBoolean(hasWriteTo);
+        if (hasWriteTo) {
+            writeTo.writeTo(out);
+        }
+        boolean hasBounds = boundsPercentile != null;
+        out.writeBoolean(hasBounds);
+        if (hasBounds) {
+            out.writeDouble(boundsPercentile);
+        }
+        boolean hasTerms = terms != null;
+        out.writeBoolean(hasTerms);
+        if (hasTerms) {
+            out.writeString(terms);
+        }
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(WRITE_TO_FIELD.getPreferredName(), writeTo.getName());
-        builder.field(BOUNDS_PERCENTILE_FIELD.getPreferredName(), boundsPercentile);
-        builder.field(TERMS_FIELD.getPreferredName(), terms);
+        if (writeTo != null) {
+            builder.field(WRITE_TO_FIELD.getPreferredName(), writeTo.getName());
+        }
+        if (boundsPercentile != null) {
+            builder.field(BOUNDS_PERCENTILE_FIELD.getPreferredName(), boundsPercentile);
+        }
+        if (terms != null) {
+            builder.field(TERMS_FIELD.getPreferredName(), terms);
+        }
         builder.endObject();
         return builder;
     }

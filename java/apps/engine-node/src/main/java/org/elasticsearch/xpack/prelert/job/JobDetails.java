@@ -142,12 +142,12 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     public JobDetails(String jobId, String description, JobStatus status, SchedulerState schedulerState, Date createTime,
-                      Date finishedTime, Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits,
-                      SchedulerConfig schedulerConfig, DataDescription dataDescription, ModelSizeStats modelSizeStats,
-                      List<TransformConfig> transforms, ModelDebugConfig modelDebugConfig, DataCounts counts,
-                      IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays, Long backgroundPersistInterval,
-                      Long modelSnapshotRetentionDays, Long resultsRetentionDays, Map<String, Object> customSettings,
-                      Double averageBucketProcessingTimeMs) {
+            Date finishedTime, Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits,
+            SchedulerConfig schedulerConfig, DataDescription dataDescription, ModelSizeStats modelSizeStats,
+            List<TransformConfig> transforms, ModelDebugConfig modelDebugConfig, DataCounts counts,
+            IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays, Long backgroundPersistInterval,
+            Long modelSnapshotRetentionDays, Long resultsRetentionDays, Map<String, Object> customSettings,
+            Double averageBucketProcessingTimeMs) {
         this.jobId = jobId;
         this.description = description;
         this.status = status;
@@ -194,7 +194,9 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         transforms = in.readList(TransformConfig::new);
         modelDebugConfig = in.readOptionalWriteable(ModelDebugConfig::new);
         counts = in.readOptionalWriteable(DataCounts::new);
-        ignoreDowntime = IgnoreDowntime.fromStream(in);
+        if (in.readBoolean()) {
+            ignoreDowntime = IgnoreDowntime.fromStream(in);
+        }
         renormalizationWindowDays = in.readOptionalLong();
         backgroundPersistInterval = in.readOptionalLong();
         modelSnapshotRetentionDays = in.readOptionalLong();
@@ -618,7 +620,11 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         out.writeList(transforms);
         out.writeOptionalWriteable(modelDebugConfig);
         out.writeOptionalWriteable(counts);
-        ignoreDowntime.writeTo(out);
+        boolean hasIgnoreDowntime = ignoreDowntime != null;
+        out.writeBoolean(hasIgnoreDowntime);
+        if (hasIgnoreDowntime) {
+            ignoreDowntime.writeTo(out);
+        }
         out.writeOptionalLong(renormalizationWindowDays);
         out.writeOptionalLong(backgroundPersistInterval);
         out.writeOptionalLong(modelSnapshotRetentionDays);
@@ -670,7 +676,9 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         if (counts != null) {
             builder.field(COUNTS.getPreferredName(), counts);
         }
-        builder.field(IGNORE_DOWNTIME.getPreferredName(), ignoreDowntime);
+        if (ignoreDowntime != null) {
+            builder.field(IGNORE_DOWNTIME.getPreferredName(), ignoreDowntime);
+        }
         if (renormalizationWindowDays != null) {
             builder.field(RENORMALIZATION_WINDOW_DAYS.getPreferredName(), renormalizationWindowDays);
         }

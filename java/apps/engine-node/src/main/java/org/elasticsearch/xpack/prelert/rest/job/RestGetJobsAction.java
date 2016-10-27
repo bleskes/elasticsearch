@@ -17,27 +17,23 @@
 package org.elasticsearch.xpack.prelert.rest.job;
 
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestResponse;
-import org.elasticsearch.rest.action.RestBuilderListener;
+import org.elasticsearch.rest.action.RestActions;
+import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
+import org.elasticsearch.xpack.prelert.action.GetJobsAction.Response;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
 
-import static org.elasticsearch.rest.RestStatus.OK;
-
 public class RestGetJobsAction extends BaseRestHandler {
-
-    private static final String SKIP = "skip";
-    private static final String TAKE = "take";
     private static final int DEFAULT_SKIP = 0;
     private static final int DEFAULT_TAKE = 100;
 
@@ -52,15 +48,16 @@ public class RestGetJobsAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetJobsAction.Request getJobsRequest = new GetJobsAction.Request();
-        getJobsRequest
-                .setPageParams(new PageParams(restRequest.paramAsInt(SKIP, DEFAULT_SKIP), restRequest.paramAsInt(TAKE, DEFAULT_TAKE)));
-        return channel -> transportGetJobsAction.execute(getJobsRequest, new RestBuilderListener<GetJobsAction.Response>(channel) {
-
-            @Override
-            public RestResponse buildResponse(GetJobsAction.Response response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
-            }
-        });
+        final GetJobsAction.Request request;
+        if (RestActions.hasBodyContent(restRequest)) {
+            BytesReference bodyBytes = RestActions.getRestContent(restRequest);
+            XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
+            request = GetJobsAction.Request.PARSER.apply(parser, () -> parseFieldMatcher);
+        } else {
+            request = new GetJobsAction.Request();
+            request.setPageParams(new PageParams(restRequest.paramAsInt(PageParams.SKIP.getPreferredName(), DEFAULT_SKIP),
+                    restRequest.paramAsInt(PageParams.TAKE.getPreferredName(), DEFAULT_TAKE)));
+        }
+        return channel -> transportGetJobsAction.execute(request, new RestToXContentListener<Response>(channel));
     }
 }
