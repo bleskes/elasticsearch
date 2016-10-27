@@ -379,36 +379,13 @@ public class DetectorVerifierTest extends ESTestCase {
         assertTrue(DetectorVerifier.verifyExcludeFrequent("-1"));
     }
 
-
-    public void testVerify_GivenInvalidDetectionRuleConditionFieldName() {
-        Detector detector = new Detector("mean", "metricVale");
-        detector.setByFieldName("metricName");
-        RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
-        ruleCondition.setFieldName("metricValue");
-        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
-        DetectionRule rule = new DetectionRule();
-        rule.setRuleConditions(Arrays.asList(ruleCondition));
-        detector.setDetectorRules(Arrays.asList(rule));
-
-        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
-                () -> DetectorVerifier.verify(detector, false));
-
-        assertEquals(1, e.getHeader("errorCode").size());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_FIELD_NAME.getValueString(), e.getHeader("errorCode").get(0));
-        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_INVALID_FIELD_NAME,
-                "[metricName]", "metricValue"),
-                e.getMessage());
-    }
-
-
     public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
             throws ElasticsearchParseException {
         Detector detector = new Detector("mean", "metricVale");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
-        RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
-        ruleCondition.setFieldName("metricName");
-        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        RuleCondition ruleCondition =
+                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "metricVale", new Condition(Operator.LT, "5"), null);
         DetectionRule rule = new DetectionRule();
         rule.setTargetFieldName("instancE");
         rule.setRuleConditions(Arrays.asList(ruleCondition));
@@ -424,37 +401,12 @@ public class DetectorVerifierTest extends ESTestCase {
                 e.getMessage());
     }
 
-
-    public void testVerify_GivenDetectionRuleWithInvalidCondition() {
-        Detector detector = new Detector("mean", "metricVale");
-        detector.setByFieldName("metricName");
-        detector.setPartitionFieldName("instance");
-        RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
-        ruleCondition.setFieldName("metricName");
-        ruleCondition.setFieldValue("CPU");
-        ruleCondition.setCondition(new Condition(Operator.LT, "invalid"));
-        DetectionRule rule = new DetectionRule();
-        rule.setTargetFieldName("instance");
-        rule.setRuleConditions(Arrays.asList(ruleCondition));
-        detector.setDetectorRules(Arrays.asList(rule));
-
-        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class,
-                () -> DetectorVerifier.verify(detector, false));
-
-        assertEquals(1, e.getHeader("errorCode").size());
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
-        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, "invalid"), e.getMessage());
-    }
-
-
     public void testVerify_GivenValidDetectionRule() throws ElasticsearchParseException {
         Detector detector = new Detector("mean", "metricVale");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
-        RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
-        ruleCondition.setFieldName("metricName");
-        ruleCondition.setFieldValue("CPU");
-        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        RuleCondition ruleCondition =
+                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "CPU", new Condition(Operator.LT, "5"), null);
         DetectionRule rule = new DetectionRule();
         rule.setTargetFieldName("instance");
         rule.setRuleConditions(Arrays.asList(ruleCondition));

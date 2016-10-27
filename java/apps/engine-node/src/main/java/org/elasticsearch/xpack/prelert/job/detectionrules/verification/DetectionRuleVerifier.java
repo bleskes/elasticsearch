@@ -114,7 +114,6 @@ public final class DetectionRuleVerifier {
     private static void verifyRuleConditions(DetectionRule rule) throws ElasticsearchParseException {
         for (RuleCondition condition : rule.getRuleConditions()) {
             checkNoTargetFieldWhenCategoricalConditionsExist(rule, condition);
-            RuleConditionVerifier.verify(condition);
         }
     }
 

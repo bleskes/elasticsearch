@@ -28,13 +28,14 @@ public class DetectionRuleTest extends AbstractSerializingTestCase<DetectionRule
 
     public void testExtractReferencedLists() {
         DetectionRule rule = new DetectionRule();
-        RuleCondition numericalCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
+        RuleCondition numericalCondition =
+                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "field", "value", new Condition(Operator.GT, "5"), null);
         rule.setRuleConditions(Arrays.asList(
                 numericalCondition,
                 RuleCondition.createCategorical("foo", "list1"),
                 RuleCondition.createCategorical("bar", "list2")));
 
-        assertEquals(new HashSet<String>(Arrays.asList("list1", "list2")), rule.extractReferencedLists());
+        assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), rule.extractReferencedLists());
     }
 
 
@@ -98,7 +99,7 @@ public class DetectionRuleTest extends AbstractSerializingTestCase<DetectionRule
         rule.setTargetFieldName("targetField");
         rule.setTargetFieldValue("targetValue");
         rule.setConditionsConnective(Connective.AND);
-        rule.setRuleConditions(Arrays.asList(new RuleCondition(RuleConditionType.CATEGORICAL)));
+        rule.setRuleConditions(Arrays.asList(new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, "myList")));
         return rule;
     }
 
@@ -112,11 +113,9 @@ public class DetectionRuleTest extends AbstractSerializingTestCase<DetectionRule
             int size = randomInt(20);
             List<RuleCondition> ruleConditions = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
-                RuleCondition condition = new RuleCondition(randomFrom(RuleConditionType.values()));
-                condition.setCondition(new Condition(randomFrom(Operator.values()), randomAsciiOfLengthBetween(1, 20)));
-                condition.setFieldName(randomAsciiOfLengthBetween(1, 20));
-                condition.setFieldValue(randomAsciiOfLengthBetween(1, 20));
-                condition.setValueList(randomAsciiOfLengthBetween(1, 20));
+                // no need for random condition (it is already tested)
+                RuleCondition condition =
+                        new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, randomAsciiOfLengthBetween(1, 20));
                 ruleConditions.add(condition);
             }
             detectionRule.setRuleConditions(ruleConditions);

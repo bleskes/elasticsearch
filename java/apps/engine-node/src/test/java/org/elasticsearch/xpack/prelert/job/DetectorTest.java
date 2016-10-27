@@ -141,7 +141,9 @@ public class DetectorTest extends AbstractSerializingTestCase<Detector> {
                     detectionRule.setTargetFieldValue(randomAsciiOfLengthBetween(1, 20));
                 }
                 if (randomBoolean()) {
-                    detectionRule.setRuleConditions(Collections.singletonList(new RuleCondition(randomFrom(RuleConditionType.values()))));
+                    detectionRule.setRuleConditions(
+                            Collections.singletonList(RuleCondition.createCategorical(randomAsciiOfLength(10), randomAsciiOfLength(10)))
+                    );
                 }
                 detectorRules.add(detectionRule);
             }

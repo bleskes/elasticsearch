@@ -170,9 +170,8 @@ public class FieldConfigWriterTest extends ESTestCase {
         Detector detector = new Detector("mean", "metricValue");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
-        RuleCondition ruleCondition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
-        ruleCondition.setFieldName("metricName");
-        ruleCondition.setCondition(new Condition(Operator.LT, "5"));
+        RuleCondition ruleCondition =
+                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "metricValue", new Condition(Operator.LT, "5"), null);
         DetectionRule rule = new DetectionRule();
         rule.setTargetFieldName("instance");
         rule.setRuleConditions(Arrays.asList(ruleCondition));

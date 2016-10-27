@@ -113,6 +113,7 @@ class DetectorsUpdater extends AbstractUpdater {
         try {
             return JSON_MAPPER.convertValue(rules, new TypeReference<List<DetectionRule>>() {});
         } catch (IllegalArgumentException e) {
+            e.printStackTrace();
             throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_UPDATE_DETECTOR_RULES_PARSE_ERROR),
                     ErrorCodes.INVALID_VALUE);
         }

@@ -31,14 +31,14 @@ public class DetectorsUpdaterTest extends ESTestCase {
 
     private static final String JOB_ID = "foo";
 
-    private StringWriter m_ConfigWriter;
-    private JobDetails m_Job;
+    private StringWriter configWriter;
+    private JobDetails job;
 
     @Before
     public void setJob() throws UnknownJobException {
-        m_Job = new JobConfiguration().build();
-        m_Job.setId(JOB_ID);
-        m_ConfigWriter = new StringWriter();
+        job = new JobConfiguration().build();
+        job.setId(JOB_ID);
+        configWriter = new StringWriter();
     }
 
     public void testUpdate_GivenParamIsNotArray() throws IOException {
@@ -160,7 +160,7 @@ public class DetectorsUpdaterTest extends ESTestCase {
         DetectorsUpdater updater = createUpdater();
         updater.update(node);
 
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription(), equalTo("Ipanema"));
+        assertThat(job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription(), equalTo("Ipanema"));
     }
 
     public void testUpdate_GivenRulesCannotBeParsed() throws IOException {
@@ -176,7 +176,7 @@ public class DetectorsUpdaterTest extends ESTestCase {
     public void testUpdate_GivenEmptyDescription() throws JobException, IOException {
         JsonNode node = new ObjectMapper().readTree("[{\"index\":1, \"description\":\"\"}]");
         givenJobHasNDetectors(3);
-        Detector existingDetector = m_Job.getAnalysisConfig().getDetectors().get(1);
+        Detector existingDetector = job.getAnalysisConfig().getDetectors().get(1);
         Detector newDetector = new Detector("mean", "responsetime");
         newDetector.setByFieldName("airline");
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
@@ -184,12 +184,12 @@ public class DetectorsUpdaterTest extends ESTestCase {
         newDetector.setExcludeFrequent(existingDetector.getExcludeFrequent());
         newDetector.setUseNull(existingDetector.isUseNull());
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
-        m_Job.getAnalysisConfig().getDetectors().set(1, newDetector);
+        job.getAnalysisConfig().getDetectors().set(1, newDetector);
 
         DetectorsUpdater updater = createUpdater();
         updater.update(node);
 
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription(), equalTo("mean(responsetime) by airline"));
+        assertThat(job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription(), equalTo("mean(responsetime) by airline"));
     }
 
     public void testUpdate_GivenMultipleValidParams() throws JobException, IOException {
@@ -200,17 +200,20 @@ public class DetectorsUpdaterTest extends ESTestCase {
         DetectorsUpdater updater = createUpdater();
         updater.update(node);
 
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription(), equalTo("A Train"));
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription(), equalTo("Ipanema"));
+        assertThat(job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription(), equalTo("A Train"));
+        assertThat(job.getAnalysisConfig().getDetectors().get(1).getDetectorDescription(), equalTo("Ipanema"));
     }
 
     public void testUpdate_GivenValidRules() throws JobException, IOException {
         JsonNode node = new ObjectMapper().readTree(
                 "[{\"index\":0, \"detectorRules\":[{\"ruleConditions\":["
                         + "{\"conditionType\":\"numerical_actual\","
-                        + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"}}]}]}]");
+                        + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"},"
+                        + "\"fieldName\":\"field\","
+                        + "\"fieldValue\":\"value\""
+                        + "}]}]}]");
         givenJobHasNDetectors(1);
-        Detector existingDetector = m_Job.getAnalysisConfig().getDetectors().get(0);
+        Detector existingDetector = job.getAnalysisConfig().getDetectors().get(0);
         Detector newDetector = new Detector("count");
         newDetector.setByFieldName(existingDetector.getByFieldName());
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
@@ -219,23 +222,23 @@ public class DetectorsUpdaterTest extends ESTestCase {
         newDetector.setUseNull(existingDetector.isUseNull());
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
         newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
-        m_Job.getAnalysisConfig().getDetectors().set(0, newDetector);
+        job.getAnalysisConfig().getDetectors().set(0, newDetector);
 
         List<DetectionRule> rules = new ArrayList<>();
         DetectionRule rule = new DetectionRule();
-        RuleCondition condition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
-        condition.setCondition(new Condition(Operator.LT, "3"));
+        RuleCondition condition =
+                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "field", "value", new Condition(Operator.LT, "3"), null);
         rule.setRuleConditions(Arrays.asList(condition));
         rules.add(rule);
 
         DetectorsUpdater updater = createUpdater();
         updater.update(node);
 
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(0).getDetectorRules(), equalTo(rules));
+        assertThat(job.getAnalysisConfig().getDetectors().get(0).getDetectorRules(), equalTo(rules));
         String expectedRulesJson = new ObjectMapper().writeValueAsString(rules);
         String expectedConfig = "[detectorRules]\ndetectorIndex = 0\nrulesJson = "
                 + expectedRulesJson + "\n";
-        assertEquals(expectedConfig, m_ConfigWriter.toString());
+        assertEquals(expectedConfig, configWriter.toString());
     }
 
     public void testUpdate_GivenValidDescriptionAndRules() throws JobException, IOException {
@@ -243,9 +246,12 @@ public class DetectorsUpdaterTest extends ESTestCase {
                 "[{\"index\":0, \"description\":\"Ipanema\","
                         + "\"detectorRules\":[{\"ruleConditions\":["
                         + "{\"conditionType\":\"numerical_actual\","
-                        + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"}}]}]}]");
+                        + "\"condition\":{\"operator\":\"LT\",\"value\":\"3\"},"
+                        + "\"fieldName\":\"field\","
+                        + "\"fieldValue\":\"value\""
+                        + "}]}]}]");
         givenJobHasNDetectors(1);
-        Detector existingDetector = m_Job.getAnalysisConfig().getDetectors().get(0);
+        Detector existingDetector = job.getAnalysisConfig().getDetectors().get(0);
         Detector newDetector = new Detector("count");
         newDetector.setByFieldName(existingDetector.getByFieldName());
         newDetector.setOverFieldName(existingDetector.getOverFieldName());
@@ -254,28 +260,28 @@ public class DetectorsUpdaterTest extends ESTestCase {
         newDetector.setUseNull(existingDetector.isUseNull());
         newDetector.setDetectorRules(existingDetector.getDetectorRules());
         newDetector.setDetectorDescription(existingDetector.getDetectorDescription());
-        m_Job.getAnalysisConfig().getDetectors().set(0, newDetector);
+        job.getAnalysisConfig().getDetectors().set(0, newDetector);
 
         List<DetectionRule> rules = new ArrayList<>();
         DetectionRule rule = new DetectionRule();
-        RuleCondition condition = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL);
-        condition.setCondition(new Condition(Operator.LT, "3"));
+        RuleCondition condition =
+                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "field", "value", new Condition(Operator.LT, "3"), null);
         rule.setRuleConditions(Arrays.asList(condition));
         rules.add(rule);
 
         DetectorsUpdater updater = createUpdater();
         updater.update(node);
 
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription(), equalTo("Ipanema"));
-        assertThat(m_Job.getAnalysisConfig().getDetectors().get(0).getDetectorRules(), equalTo(rules));
+        assertThat(job.getAnalysisConfig().getDetectors().get(0).getDetectorDescription(), equalTo("Ipanema"));
+        assertThat(job.getAnalysisConfig().getDetectors().get(0).getDetectorRules(), equalTo(rules));
         String expectedRulesJson = new ObjectMapper().writeValueAsString(rules);
         String expectedConfig = "[detectorRules]\ndetectorIndex = 0\nrulesJson = "
                 + expectedRulesJson + "\n";
-        assertEquals(expectedConfig, m_ConfigWriter.toString());
+        assertEquals(expectedConfig, configWriter.toString());
     }
 
     private DetectorsUpdater createUpdater() {
-        return new DetectorsUpdater(m_Job, "detectors", m_ConfigWriter);
+        return new DetectorsUpdater(job, "detectors", configWriter);
     }
 
     private void givenJobHasNDetectors(int n) {
@@ -283,9 +289,11 @@ public class DetectorsUpdaterTest extends ESTestCase {
         List<Detector> detectors = new ArrayList<>();
         for (int i = 0; i< n; i++)
         {
-            detectors.add(new Detector("count"));
+            Detector detector = new Detector("count");
+            detector.setByFieldName("field");
+            detectors.add(detector);
         }
         analysisConfig.setDetectors(detectors);
-        m_Job.setAnalysisConfig(analysisConfig);
+        job.setAnalysisConfig(analysisConfig);
     }
 }
