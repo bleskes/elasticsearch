@@ -52,7 +52,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         assertEquals(1, manager.numberOfRunningJobs());
     }
 
-    public void testProcessDataThrowsNativeProcessException_onIoException()
+    public void testProcessDataThrowsElasticsearchStatusException_onIoException()
             throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, NativeProcessRunException, UnknownJobException, IOException {
 
@@ -62,7 +62,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         InputStream inputStream = createInputStream("");
         doThrow(new IOException("blah")).when(communicator).writeToJob(inputStream);
 
-        ESTestCase.expectThrows(NativeProcessRunException.class, () -> manager.processData("foo", inputStream, mock(DataLoadParams.class)));
+        ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> manager.processData("foo", inputStream, mock(DataLoadParams.class)));
     }
 
     public void testCloseJob() throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,

@@ -77,6 +77,8 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     public static final ParseField EXCLUDED_RECORD_COUNT = new ParseField(EXCLUDED_RECORD_COUNT_STR);
     public static final ParseField LATEST_RECORD_TIME = new ParseField(LATEST_RECORD_TIME_STR);
 
+    public static final ParseField TYPE = new ParseField("dataCounts");
+
     public static final ObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
             new ObjectParser<>("data_counts", DataCounts::new);
 
@@ -111,6 +113,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     private long outOfOrderTimeStampCount;
     private long failedTransformCount;
     private long excludedRecordCount;
+    // NORELEASE: Use Jodatime instead
     private Date latestRecordTimeStamp;
 
     public DataCounts() {
@@ -415,6 +418,12 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        doXContentBody(builder, params);
+        builder.endObject();
+        return builder;
+    }
+
+    public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         builder.field(BUCKET_COUNT.getPreferredName(), bucketCount);
         builder.field(PROCESSED_RECORD_COUNT.getPreferredName(), processedRecordCount);
         builder.field(PROCESSED_FIELD_COUNT.getPreferredName(), processedFieldCount);
@@ -428,7 +437,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         if (latestRecordTimeStamp != null) {
             builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
         }
-        builder.endObject();
+
         return builder;
     }
 

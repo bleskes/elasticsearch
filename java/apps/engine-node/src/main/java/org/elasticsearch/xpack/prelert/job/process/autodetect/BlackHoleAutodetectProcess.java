@@ -78,6 +78,7 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
 
     @Override
     public void close() throws IOException {
+        pipedOutputStream.close();
         processError.close();
         processOut.close();
     }

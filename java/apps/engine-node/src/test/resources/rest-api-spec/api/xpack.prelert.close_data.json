@@ -1,5 +1,5 @@
 {
-  "xpack.prelert.data.close": {
+  "xpack.prelert.close_data": {
     "methods": [ "POST" ],
     "url": {
       "path": "/engine/v2/data/{jobId}/close",

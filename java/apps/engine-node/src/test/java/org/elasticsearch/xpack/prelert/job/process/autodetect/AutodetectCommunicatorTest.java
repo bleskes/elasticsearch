@@ -100,8 +100,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
         when(resultsReader.waitForFlushAcknowledgement(anyString(), any())).thenReturn(false);
 
         AutodetectCommunicator communicator =
-                new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class),
-                        mock(JobResultsPersister.class), mock(StatusReporter.class), resultsReader);
+                new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class), mock(StatusReporter.class), resultsReader);
 
         InterimResultsParams params = InterimResultsParams.builder().build();
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> communicator.flushJob(params, 1, 1));

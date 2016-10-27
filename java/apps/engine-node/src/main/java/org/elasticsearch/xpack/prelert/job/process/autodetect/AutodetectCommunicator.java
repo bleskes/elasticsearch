@@ -15,6 +15,7 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.DataToProce
 import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
 import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.noop.NoOpRenormaliser;
+import org.elasticsearch.xpack.prelert.job.status.CountingInputStream;
 import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
 import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
@@ -37,12 +38,14 @@ public class AutodetectCommunicator implements Closeable {
     private final DataToProcessWriter autoDetectWriter;
     private final ResultsReader resultsReader;
     private final Thread outputParserThread;
+    private final StatusReporter statusReporter;
 
 
     public AutodetectCommunicator(JobDetails jobDetails, AutodetectProcess process, Logger jobLogger,
                                   JobResultsPersister resultsPersister, StatusReporter statusReporter) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
+        this.statusReporter = statusReporter;
 
         // TODO Port the normalizer from the old project
         this.resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.out(), this.jobLogger,
@@ -56,9 +59,10 @@ public class AutodetectCommunicator implements Closeable {
     }
 
     AutodetectCommunicator(JobDetails jobDetails, AutodetectProcess process, Logger jobLogger,
-                                  JobResultsPersister resultsPersister, StatusReporter statusReporter, ResultsReader resultsReader) {
+                            StatusReporter statusReporter, ResultsReader resultsReader) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
+        this.statusReporter = statusReporter;
         this.resultsReader = resultsReader;
         // NORELEASE - use ES ThreadPool
         this.outputParserThread = new Thread(resultsReader, jobDetails.getId() + "-Bucket-Parser");
@@ -68,16 +72,16 @@ public class AutodetectCommunicator implements Closeable {
     }
 
     private DataToProcessWriter createProcessWriter(JobDetails jobDetails, AutodetectProcess process, StatusReporter statusReporter) {
-        return DataToProcessWriterFactory.create(true, process, jobDetails.getDataDescription(),
-                jobDetails.getAnalysisConfig(), jobDetails.getSchedulerConfig(), new TransformConfigs(jobDetails.getTransforms()),
-                statusReporter, jobLogger);
+        return DataToProcessWriterFactory.create(true, process, jobDetails.getDataDescription(), jobDetails.getAnalysisConfig(),
+                jobDetails.getSchedulerConfig(), new TransformConfigs(jobDetails.getTransforms()) , statusReporter, jobLogger);
     }
 
     public DataCounts writeToJob(InputStream inputStream)
             throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, IOException {
 
-        DataCounts results = autoDetectWriter.write(inputStream);
+        CountingInputStream countingStream = new CountingInputStream(inputStream, statusReporter);
+        DataCounts results = autoDetectWriter.write(countingStream);
         autoDetectWriter.flush();
         return results;
     }

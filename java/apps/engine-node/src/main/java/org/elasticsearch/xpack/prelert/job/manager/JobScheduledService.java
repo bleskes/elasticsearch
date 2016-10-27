@@ -1,13 +1,13 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.config.DefaultFrequency;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractorFactory;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -94,7 +94,7 @@ public class JobScheduledService {
                 try {
                     dataProcessor.closeJob(jobId);
                     jobToScheduler.remove(jobId);
-                } catch (JobException e) {
+                } catch (ElasticsearchException e) {
                     LOGGER.error(Messages.getMessage(Messages.JOB_SCHEDULER_FAILED_TO_STOP), e);
                 }
             }

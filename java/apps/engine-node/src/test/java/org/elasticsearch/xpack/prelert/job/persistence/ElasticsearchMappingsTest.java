@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
@@ -89,6 +90,7 @@ public class ElasticsearchMappingsTest extends ESTestCase {
         overridden.add(AuditActivity.TYPE);
         overridden.add(AuditMessage.TYPE);
         overridden.add(Bucket.TYPE.getPreferredName());
+        overridden.add(DataCounts.TYPE.getPreferredName());
         overridden.add(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE);
         overridden.add(BucketInfluencer.TYPE.getPreferredName());
         overridden.add(CategorizerState.TYPE);

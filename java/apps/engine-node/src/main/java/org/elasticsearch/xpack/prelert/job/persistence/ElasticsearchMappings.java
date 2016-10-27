@@ -2,7 +2,9 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
@@ -21,12 +23,12 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 /**
  * Static methods to create Elasticsearch mappings for the autodetect
  * persisted objects/documents
- *
+ * <p>
  * ElasticSearch automatically recognises array types so they are
  * not explicitly mapped as such. For arrays of objects the type
  * must be set to <i>nested</i> so the arrays are searched properly
  * see https://www.elastic.co/guide/en/elasticsearch/guide/current/nested-objects.html
- *
+ * <p>
  * It is expected that indexes to which these mappings are applied have their
  * default analyzer set to "keyword", which does not tokenise fields.  The
  * index-wide default analyzer cannot be set via these mappings, so needs to be
@@ -34,8 +36,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  * analyzer set to "whitespace" by these mappings, so that _all gets tokenised
  * using whitespace.
  */
-public class ElasticsearchMappings
-{
+public class ElasticsearchMappings {
     /**
      * String constants used in mappings
      */
@@ -78,8 +79,61 @@ public class ElasticsearchMappings
     static final String OBJECT = "object";
     static final String TEXT = "text";
 
-    private ElasticsearchMappings()
-    {
+    private ElasticsearchMappings() {
+    }
+
+
+    public static XContentBuilder dataCountsMapping() throws IOException {
+        return jsonBuilder()
+                .startObject()
+                    .startObject(DataCounts.TYPE.getPreferredName())
+                        .startObject(ALL)
+                        .field(ENABLED, false)
+                        // analyzer must be specified even though _all is disabled
+                        // because all types in the same index must have the same
+                        // analyzer for a given field
+                        .field(ANALYZER, WHITESPACE)
+                        .endObject()
+                        .startObject(PROPERTIES)
+                            .startObject(DataCounts.BUCKET_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.PROCESSED_RECORD_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.PROCESSED_FIELD_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.INPUT_BYTES.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.INPUT_RECORD_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.INPUT_FIELD_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.INVALID_DATE_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.MISSING_FIELD_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.OUT_OF_ORDER_TIME_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.FAILED_TRANSFORM_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.EXCLUDED_RECORD_COUNT.getPreferredName())
+                            .field(TYPE, LONG)
+                            .endObject()
+                            .startObject(DataCounts.LATEST_RECORD_TIME.getPreferredName())
+                            .field(TYPE, DATE)
+                            .endObject()
+                        .endObject()
+                    .endObject()
+                .endObject();
     }
 
     /**
@@ -89,9 +143,7 @@ public class ElasticsearchMappings
      * @return
      * @throws IOException
      */
-    public static XContentBuilder bucketMapping()
-            throws IOException
-    {
+    public static XContentBuilder bucketMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(Bucket.TYPE.getPreferredName())
@@ -181,9 +233,7 @@ public class ElasticsearchMappings
      * @return
      * @throws IOException
      */
-    public static XContentBuilder bucketInfluencerMapping()
-            throws IOException
-    {
+    public static XContentBuilder bucketInfluencerMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(BucketInfluencer.TYPE.getPreferredName())
@@ -228,12 +278,10 @@ public class ElasticsearchMappings
      * Partition normalized scores. There is one per bucket
      * so the timestamp is sufficient to uniquely identify
      * the document per bucket per job
-     *
+     * <p>
      * Partition field values and scores are nested objects.
      */
-    public static XContentBuilder bucketPartitionMaxNormalizedScores()
-            throws IOException
-    {
+    public static XContentBuilder bucketPartitionMaxNormalizedScores() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE)
@@ -267,8 +315,7 @@ public class ElasticsearchMappings
                 .endObject();
     }
 
-    public static XContentBuilder categorizerStateMapping() throws IOException
-    {
+    public static XContentBuilder categorizerStateMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(CategorizerState.TYPE)
@@ -284,8 +331,7 @@ public class ElasticsearchMappings
                 .endObject();
     }
 
-    public static XContentBuilder categoryDefinitionMapping() throws IOException
-    {
+    public static XContentBuilder categoryDefinitionMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(CategoryDefinition.TYPE.getPreferredName())
@@ -324,13 +370,11 @@ public class ElasticsearchMappings
      * Records have a _parent mapping to a {@linkplain org.elasticsearch.xpack.prelert.job.results.Bucket}.
      *
      * @param termFieldNames Optionally, other field names to include in the
-     * mappings.  Pass <code>null</code> if not required.
+     *                       mappings.  Pass <code>null</code> if not required.
      * @return
      * @throws IOException
      */
-    public static XContentBuilder recordMapping(Collection<String> termFieldNames)
-            throws IOException
-    {
+    public static XContentBuilder recordMapping(Collection<String> termFieldNames) throws IOException {
         XContentBuilder builder = jsonBuilder()
                 .startObject()
                 .startObject(AnomalyRecord.TYPE.getPreferredName())
@@ -455,15 +499,12 @@ public class ElasticsearchMappings
                 .endObject()
                 .endObject();
 
-        if (termFieldNames != null)
-        {
+        if (termFieldNames != null) {
             ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
-            for (String fieldName : termFieldNames)
-            {
+            for (String fieldName : termFieldNames) {
                 reverser.add(fieldName, "");
             }
-            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
-            {
+            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet()) {
                 builder.field(entry.getKey(), entry.getValue());
             }
         }
@@ -477,16 +518,14 @@ public class ElasticsearchMappings
     /**
      * Create the Elasticsearch mapping for {@linkplain Quantiles}.
      * The '_all' field is disabled as the document isn't meant to be searched.
-     *
+     * <p>
      * The quantile state string is not searchable (index = 'no') as it could be
      * very large.
      *
      * @return
      * @throws IOException
      */
-    public static XContentBuilder quantilesMapping()
-            throws IOException
-    {
+    public static XContentBuilder quantilesMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(Quantiles.TYPE.getPreferredName())
@@ -519,9 +558,7 @@ public class ElasticsearchMappings
      * @return
      * @throws IOException
      */
-    public static XContentBuilder modelStateMapping()
-            throws IOException
-    {
+    public static XContentBuilder modelStateMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(ModelState.TYPE)
@@ -547,9 +584,7 @@ public class ElasticsearchMappings
      * @return
      * @throws IOException
      */
-    public static XContentBuilder modelSnapshotMapping()
-            throws IOException
-    {
+    public static XContentBuilder modelSnapshotMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(ModelSnapshot.TYPE.getPreferredName())
@@ -636,17 +671,16 @@ public class ElasticsearchMappings
 
     /**
      * Create the Elasticsearch mapping for {@linkplain ModelSizeStats}.
+     *
      * @return
      * @throws IOException
      */
-    public static XContentBuilder modelSizeStatsMapping()
-            throws IOException
-    {
+    public static XContentBuilder modelSizeStatsMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(ModelSizeStats.TYPE.getPreferredName())
                 .startObject(ALL)
-                .field(ENABLED,  false)
+                .field(ENABLED, false)
                 // analyzer must be specified even though _all is disabled
                 // because all types in the same index must have the same
                 // analyzer for a given field
@@ -686,13 +720,11 @@ public class ElasticsearchMappings
      * Mapping for model debug output
      *
      * @param termFieldNames Optionally, other field names to include in the
-     * mappings.  Pass <code>null</code> if not required.
+     *                       mappings.  Pass <code>null</code> if not required.
      * @return
      * @throws IOException
      */
-    public static XContentBuilder modelDebugOutputMapping(Collection<String> termFieldNames)
-            throws IOException
-    {
+    public static XContentBuilder modelDebugOutputMapping(Collection<String> termFieldNames) throws IOException {
         XContentBuilder builder = jsonBuilder()
                 .startObject()
                 .startObject(ModelDebugOutput.TYPE.getPreferredName())
@@ -731,15 +763,12 @@ public class ElasticsearchMappings
                 .field(TYPE, DOUBLE).field(INCLUDE_IN_ALL, false)
                 .endObject();
 
-        if (termFieldNames != null)
-        {
+        if (termFieldNames != null) {
             ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
-            for (String fieldName : termFieldNames)
-            {
+            for (String fieldName : termFieldNames) {
                 reverser.add(fieldName, "");
             }
-            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
-            {
+            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet()) {
                 builder.field(entry.getKey(), entry.getValue());
             }
         }
@@ -752,14 +781,13 @@ public class ElasticsearchMappings
 
     /**
      * Influence results mapping
+     *
      * @param influencerFieldNames Optionally, other field names to include in the
-     * mappings.  Pass <code>null</code> if not required.
+     *                             mappings.  Pass <code>null</code> if not required.
      * @return
      * @throws IOException
      */
-    public static XContentBuilder influencerMapping(Collection<String> influencerFieldNames)
-            throws IOException
-    {
+    public static XContentBuilder influencerMapping(Collection<String> influencerFieldNames) throws IOException {
         XContentBuilder builder = jsonBuilder()
                 .startObject()
                 .startObject(Influencer.TYPE.getPreferredName())
@@ -792,15 +820,12 @@ public class ElasticsearchMappings
                 .field(TYPE, BOOLEAN).field(INCLUDE_IN_ALL, false)
                 .endObject();
 
-        if (influencerFieldNames != null)
-        {
+        if (influencerFieldNames != null) {
             ElasticsearchDotNotationReverser reverser = new ElasticsearchDotNotationReverser();
-            for (String fieldName : influencerFieldNames)
-            {
+            for (String fieldName : influencerFieldNames) {
                 reverser.add(fieldName, "");
             }
-            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet())
-            {
+            for (Map.Entry<String, Object> entry : reverser.getMappingsMap().entrySet()) {
                 builder.field(entry.getKey(), entry.getValue());
             }
         }
@@ -846,8 +871,7 @@ public class ElasticsearchMappings
                 .endObject();
     }
 
-    public static XContentBuilder auditMessageMapping() throws IOException
-    {
+    public static XContentBuilder auditMessageMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(AuditMessage.TYPE)
@@ -860,8 +884,7 @@ public class ElasticsearchMappings
                 .endObject();
     }
 
-    public static XContentBuilder auditActivityMapping() throws IOException
-    {
+    public static XContentBuilder auditActivityMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(AuditActivity.TYPE)
@@ -874,8 +897,7 @@ public class ElasticsearchMappings
                 .endObject();
     }
 
-    public static XContentBuilder processingTimeMapping() throws IOException
-    {
+    public static XContentBuilder processingTimeMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
                 .startObject(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE)

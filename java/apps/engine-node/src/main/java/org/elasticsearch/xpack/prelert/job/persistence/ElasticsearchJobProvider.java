@@ -56,6 +56,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JsonViews;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
@@ -387,6 +388,7 @@ public class ElasticsearchJobProvider implements JobProvider
             XContentBuilder modelDebugMapping = ElasticsearchMappings.modelDebugOutputMapping(termFields);
             XContentBuilder processingTimeMapping = ElasticsearchMappings.processingTimeMapping();
             XContentBuilder partitionScoreMapping = ElasticsearchMappings.bucketPartitionMaxNormalizedScores();
+            XContentBuilder dataCountsMapping = ElasticsearchMappings.dataCountsMapping();
 
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
             LOGGER.trace("ES API CALL: create index " + job.getId());
@@ -404,6 +406,7 @@ public class ElasticsearchJobProvider implements JobProvider
             createIndexRequest.mapping(ModelDebugOutput.TYPE.getPreferredName(), modelDebugMapping);
             createIndexRequest.mapping(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE, processingTimeMapping);
             createIndexRequest.mapping(ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE, partitionScoreMapping);
+            createIndexRequest.mapping(DataCounts.TYPE.getPreferredName(), dataCountsMapping);
 
             client.admin().indices().create(createIndexRequest, new ActionListener<CreateIndexResponse>() {
                 @Override

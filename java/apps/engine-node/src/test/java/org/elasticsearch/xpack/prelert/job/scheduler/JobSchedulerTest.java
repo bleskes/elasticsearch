@@ -1,6 +1,5 @@
 package org.elasticsearch.xpack.prelert.job.scheduler;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
@@ -11,8 +10,6 @@ import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
-import org.elasticsearch.xpack.prelert.job.exceptions.LicenseViolationException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
@@ -21,12 +18,8 @@ import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.NativeProcessRunException;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -63,7 +56,7 @@ public class JobSchedulerTest extends ESTestCase {
     private static final String JOB_ID = "foo";
     private static final Duration BUCKET_SPAN = Duration.ofSeconds(2);
 
-    private JobProvider m_JobProvider;
+    private JobProvider jobProvider;
     private JobLoggerFactory jobLoggerFactory;
     private Logger jobLogger;
     private Auditor auditor;
@@ -79,7 +72,7 @@ public class JobSchedulerTest extends ESTestCase {
     @Before
     public void setUpTests() throws UnknownJobException
     {
-        m_JobProvider = mock(JobProvider.class);
+        jobProvider = mock(JobProvider.class);
         jobLoggerFactory = mock(JobLoggerFactory.class);
         jobLogger = mock(Logger.class);
         auditor = mock(Auditor.class);
@@ -89,7 +82,7 @@ public class JobSchedulerTest extends ESTestCase {
         queryDelay = Duration.ofSeconds(0);
         when(jobLoggerFactory.newLogger(JOB_ID)).thenReturn(jobLogger);
         schedulerStoppedAuditedLatch = new CountDownLatch(1);
-        when(m_JobProvider.audit(anyString())).thenReturn(auditor);
+        when(jobProvider.audit(anyString())).thenReturn(auditor);
         recordSchedulerStatus();
         recordSchedulerStoppedAudited();
         givenNoExistingBuckets();
@@ -141,15 +134,15 @@ public class JobSchedulerTest extends ESTestCase {
         assertEquals("0-0", dataProcessor.getStream(0));
         assertEquals(1400000000000L, dataExtractor.getStart(0));
         assertEquals(1400000001000L, dataExtractor.getEnd(0));
-        assertFalse(dataExtractor.m_IsCancelled);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertFalse(dataExtractor.isCancelled);
+        assertEquals(1, dataExtractor.nCleared);
 
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
         assertEquals(1, flushParams.size());
         assertTrue(flushParams.get(0).shouldCalculateInterim());
         assertFalse(flushParams.get(0).shouldAdvanceTime());
 
-        verify(m_JobProvider, times(3)).audit(JOB_ID);
+        verify(jobProvider, times(3)).audit(JOB_ID);
         verify(auditor).info(startsWith("Scheduler started (from:"));
         verify(auditor).info(startsWith("Scheduler lookback completed"));
         verify(auditor).info(startsWith("Scheduler stopped"));
@@ -167,8 +160,8 @@ public class JobSchedulerTest extends ESTestCase {
         jobScheduler.start(job);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertFalse(dataExtractor.m_IsCancelled);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertFalse(dataExtractor.isCancelled);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(3, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -192,8 +185,8 @@ public class JobSchedulerTest extends ESTestCase {
         jobScheduler.start(job);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertFalse(dataExtractor.m_IsCancelled);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertFalse(dataExtractor.isCancelled);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
@@ -221,8 +214,8 @@ public class JobSchedulerTest extends ESTestCase {
         assertTrue(dataProcessor.awaitForCountDownLatch());
         jobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertTrue(dataExtractor.m_IsCancelled);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertTrue(dataExtractor.isCancelled);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
@@ -254,7 +247,7 @@ public class JobSchedulerTest extends ESTestCase {
             assertTrue(flushParams.get(i).shouldAdvanceTime());
         }
 
-        verify(m_JobProvider, times(4)).audit(JOB_ID);
+        verify(jobProvider, times(4)).audit(JOB_ID);
         verify(auditor).info(startsWith("Scheduler started (from:"));
         verify(auditor).info(startsWith("Scheduler lookback completed"));
         verify(auditor).info(startsWith("Scheduler continued in real-time"));
@@ -278,8 +271,8 @@ public class JobSchedulerTest extends ESTestCase {
         assertTrue(dataProcessor.awaitForCountDownLatch());
         jobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertTrue(dataExtractor.m_IsCancelled);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertTrue(dataExtractor.isCancelled);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         List<InterimResultsParams> flushParams = dataProcessor.getFlushParams();
@@ -318,8 +311,8 @@ public class JobSchedulerTest extends ESTestCase {
         assertTrue(dataProcessor.awaitForCountDownLatch());
         jobScheduler.stopManual();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertTrue(dataExtractor.m_IsCancelled);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertTrue(dataExtractor.isCancelled);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(numberOfSearches, dataProcessor.getNumberOfStreams());
         assertEquals(1400000000000L, dataExtractor.getStart(0));
@@ -353,7 +346,7 @@ public class JobSchedulerTest extends ESTestCase {
         jobScheduler.start(job);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(0, dataProcessor.getNumberOfStreams());
         assertEquals(1400000000000L, dataExtractor.getStart(0));
@@ -401,7 +394,7 @@ public class JobSchedulerTest extends ESTestCase {
         jobScheduler.start(job);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -427,7 +420,7 @@ public class JobSchedulerTest extends ESTestCase {
         jobScheduler.start(job);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -452,7 +445,7 @@ public class JobSchedulerTest extends ESTestCase {
         jobScheduler.start(job);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
-        assertEquals(1, dataExtractor.m_NCleared);
+        assertEquals(1, dataExtractor.nCleared);
 
         assertEquals(1, dataProcessor.getNumberOfStreams());
         assertEquals("0-0", dataProcessor.getStream(0));
@@ -564,7 +557,7 @@ public class JobSchedulerTest extends ESTestCase {
             bucket.setTimestamp(new Date(latestBucketTimeMs));
             buckets = new QueryPage<>(Arrays.asList(bucket), 1);
         }
-        when(m_JobProvider.buckets(JOB_ID, latestBucketQuery)).thenReturn(buckets);
+        when(jobProvider.buckets(JOB_ID, latestBucketQuery)).thenReturn(buckets);
     }
 
     private void waitUntilSchedulerStoppedIsAudited() {
@@ -577,7 +570,7 @@ public class JobSchedulerTest extends ESTestCase {
     }
 
     private JobScheduler createJobScheduler(DataExtractor dataExtractor, DataProcessor dataProcessor) {
-        return new JobScheduler(JOB_ID, BUCKET_SPAN, frequency, queryDelay, dataExtractor, dataProcessor, m_JobProvider,
+        return new JobScheduler(JOB_ID, BUCKET_SPAN, frequency, queryDelay, dataExtractor, dataProcessor, jobProvider,
                 jobLoggerFactory, () -> currentStatus, statusListener);
     }
 
@@ -595,22 +588,22 @@ public class JobSchedulerTest extends ESTestCase {
     }
 
     private static class MockDataExtractor implements DataExtractor {
-        private final List<Integer> m_BatchesPerSearch;
-        private final List<Long> m_Starts = new ArrayList<>();
-        private final List<Long> m_Ends = new ArrayList<>();
-        private int m_SearchCount = -1;
-        private int m_StreamCount = -1;
-        private int m_NCleared;
-        private boolean m_IsCancelled;
+        private final List<Integer> batchesPerSearch;
+        private final List<Long> starts = new ArrayList<>();
+        private final List<Long> ends = new ArrayList<>();
+        private int searchCount = -1;
+        private int streamCount = -1;
+        private int nCleared;
+        private boolean isCancelled;
 
         public MockDataExtractor(List<Integer> batchesPerSearch) {
-            m_BatchesPerSearch = batchesPerSearch;
-            m_NCleared = 0;
+            this.batchesPerSearch = batchesPerSearch;
+            nCleared = 0;
         }
 
         @Override
         public synchronized boolean hasNext() {
-            return m_StreamCount < m_BatchesPerSearch.get(m_SearchCount) - 1;
+            return streamCount < batchesPerSearch.get(searchCount) - 1;
         }
 
         @Override
@@ -618,59 +611,59 @@ public class JobSchedulerTest extends ESTestCase {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            m_StreamCount++;
-            String stream = "" + m_SearchCount + "-" + m_StreamCount;
+            streamCount++;
+            String stream = "" + searchCount + "-" + streamCount;
             return Optional.of(new ByteArrayInputStream(stream.getBytes()));
         }
 
         @Override
         public synchronized void newSearch(long start, long end, Logger logger) {
-            if (m_SearchCount == m_BatchesPerSearch.size() - 1) {
+            if (searchCount == batchesPerSearch.size() - 1) {
                 throw new IllegalStateException();
             }
-            m_SearchCount++;
-            m_StreamCount = -1;
-            m_Starts.add(start);
-            m_Ends.add(end);
-            m_IsCancelled = false;
+            searchCount++;
+            streamCount = -1;
+            starts.add(start);
+            ends.add(end);
+            isCancelled = false;
         }
 
         public synchronized long getStart(int searchCount) {
-            return m_Starts.get(searchCount);
+            return starts.get(searchCount);
         }
 
         public synchronized long getEnd(int searchCount) {
-            return m_Ends.get(searchCount);
+            return ends.get(searchCount);
         }
 
         @Override
         public synchronized void clear() {
-            m_NCleared++;
+            nCleared++;
         }
 
         @Override
         public synchronized void cancel() {
-            m_IsCancelled = true;
+            isCancelled = true;
         }
     }
 
     private static class MockDataProcessor implements DataProcessor {
 
-        private final List<DataCounts> m_CountsPerStream;
-        private final List<String> m_Streams = new ArrayList<>();
-        private final List<InterimResultsParams> m_FlushParams = new ArrayList<>();
-        private boolean m_ShouldThrow = false;
-        private boolean m_IsJobClosed = false;
-        private int m_StreamCount = 0;
-        private final CountDownLatch m_CountDownLatch;
+        private final List<DataCounts> countsPerStream;
+        private final List<String> streams = new ArrayList<>();
+        private final List<InterimResultsParams> flushParams = new ArrayList<>();
+        private boolean shouldThrow = false;
+        private boolean isJobClosed = false;
+        private int streamCount = 0;
+        private final CountDownLatch countDownLatch;
 
         MockDataProcessor(List<DataCounts> countsPerStream) {
             this(countsPerStream, new CountDownLatch(0));
         }
 
         MockDataProcessor(List<DataCounts> countsPerStream, CountDownLatch countDownLatch) {
-            m_CountsPerStream = countsPerStream;
-            m_CountDownLatch = countDownLatch;
+            this.countsPerStream = countsPerStream;
+            this.countDownLatch = countDownLatch;
         }
 
         /**
@@ -682,7 +675,7 @@ public class JobSchedulerTest extends ESTestCase {
          */
         private boolean awaitForCountDownLatch() {
             try {
-                m_CountDownLatch.await(10, TimeUnit.SECONDS);
+                countDownLatch.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 return false;
             }
@@ -690,55 +683,51 @@ public class JobSchedulerTest extends ESTestCase {
         }
 
         private synchronized void setShouldThrow(boolean value) {
-            m_ShouldThrow = value;
+            shouldThrow = value;
         }
 
         private synchronized String getStream(int index) {
-            return m_Streams.get(index);
+            return streams.get(index);
         }
 
         private synchronized int getNumberOfStreams() {
-            return m_Streams.size();
+            return streams.size();
         }
 
         private synchronized List<InterimResultsParams> getFlushParams() {
-            return m_FlushParams;
+            return flushParams;
         }
 
         private synchronized boolean isJobClosed() {
-            return m_IsJobClosed;
+            return isJobClosed;
         }
 
         @Override
-        public synchronized DataCounts processData(String jobId, InputStream input, DataLoadParams params)
-                throws UnknownJobException, NativeProcessRunException, MissingFieldException,
-                JsonParseException, JobInUseException, HighProportionOfBadTimestampsException,
-                OutOfOrderRecordsException, LicenseViolationException, MalformedJsonException {
+        public synchronized DataCounts processData(String jobId, InputStream input, DataLoadParams params) {
             assertEquals(JOB_ID, jobId);
             assertFalse(params.isResettingBuckets());
-            m_CountDownLatch.countDown();
-            if (m_ShouldThrow) {
-                throw new UnknownJobException(JOB_ID);
+            countDownLatch.countDown();
+            if (shouldThrow) {
+                throw ExceptionsHelper.missingException(jobId);
             }
             try {
-                m_Streams.add(streamToString(input));
+                streams.add(streamToString(input));
             } catch (IOException e) {
                 throw new IllegalStateException();
             }
-            return m_CountsPerStream.get(m_StreamCount++);
+            return countsPerStream.get(streamCount++);
         }
 
         @Override
-        public synchronized void flushJob(String jobId, InterimResultsParams params)
-                throws UnknownJobException, NativeProcessRunException, JobInUseException {
+        public synchronized void flushJob(String jobId, InterimResultsParams params) {
             if (jobId.equals(JOB_ID)) {
-                m_FlushParams.add(params);
+                flushParams.add(params);
             }
         }
 
         @Override
-        public synchronized void closeJob(String jobId) throws UnknownJobException, NativeProcessRunException, JobInUseException {
-            m_IsJobClosed = jobId.equals(JOB_ID);
+        public synchronized void closeJob(String jobId)  {
+            isJobClosed = jobId.equals(JOB_ID);
         }
     }
 

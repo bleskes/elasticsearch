@@ -1,7 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.scheduler;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.index.mapper.DateFieldMapper;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
@@ -9,10 +9,6 @@ import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobInUseException;
-import org.elasticsearch.xpack.prelert.job.exceptions.LicenseViolationException;
-import org.elasticsearch.xpack.prelert.job.exceptions.TooManyJobsException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -22,13 +18,7 @@ import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.DataUploadException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.NativeProcessRunException;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.utils.scheduler.TaskScheduler;
 
 import java.io.IOException;
@@ -193,7 +183,7 @@ public class JobScheduler {
             // case where we're searching specific time periods once and only
             // once
             dataProcessor.flushJob(jobId, flushParamsBuilder.build());
-        } catch (UnknownJobException | NativeProcessRunException | JobInUseException e) {
+        } catch (ElasticsearchException e) {
             logger.error("An error has occurred while flushing job '" + jobId + "'", e);
         }
     }
@@ -201,9 +191,7 @@ public class JobScheduler {
     private DataCounts submitData(InputStream stream) {
         try {
             return dataProcessor.processData(jobId, stream, DATA_LOAD_PARAMS);
-        } catch (JsonParseException | UnknownJobException | NativeProcessRunException | MissingFieldException | JobInUseException
-                | TooManyJobsException | HighProportionOfBadTimestampsException | OutOfOrderRecordsException | LicenseViolationException
-                | MalformedJsonException | DataUploadException e) {
+        } catch (ElasticsearchException e) {
             logger.error("An error has occurred while submitting data to job '" + jobId + "'", e);
             problemTracker.reportAnalysisProblem(e.getMessage());
         }
@@ -323,7 +311,7 @@ public class JobScheduler {
     private void closeJob() {
         try {
             dataProcessor.closeJob(jobId);
-        } catch (UnknownJobException | NativeProcessRunException | JobInUseException e) {
+        } catch (ElasticsearchException e) {
             logger.error("An error has occurred while closing the job", e);
         }
     }

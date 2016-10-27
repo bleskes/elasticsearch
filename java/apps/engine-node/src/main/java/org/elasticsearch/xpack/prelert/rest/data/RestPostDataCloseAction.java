@@ -29,6 +29,7 @@ public class RestPostDataCloseAction extends BaseRestHandler {
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         PostDataCloseAction.Request postDataCloseRequest = new PostDataCloseAction.Request(restRequest.param(JOB_ID.getPreferredName()));
+
         return channel -> transportPostDataCloseAction.execute(postDataCloseRequest, new AcknowledgedRestListener<>(channel));
     }
 }

@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 
@@ -22,11 +23,12 @@ public class ElasticsearchFactories implements AutoCloseable
     }
 
     public UsagePersisterFactory newUsagePersisterFactory() {
-        // NORELEASE Persist usage to an index
-//        return logger -> new ElasticsearchUsagePersister(client, logger);
-        return logger -> new UsagePersister() {
+        // NORELEASE Go back to ElasticsearchUsagePersister once issue
+        // #159 Scripting is not working in the new node project is resolved
+        return new UsagePersisterFactory() {
             @Override
-            public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead) throws JobException {
+            public UsagePersister getInstance(Logger logger) {
+                return (jobId, bytesRead, fieldsRead, recordsRead) -> {};
 
             }
         };
