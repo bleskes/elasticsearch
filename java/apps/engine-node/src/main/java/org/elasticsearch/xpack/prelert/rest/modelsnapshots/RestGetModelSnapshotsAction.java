@@ -18,18 +18,18 @@ package org.elasticsearch.xpack.prelert.rest.modelsnapshots;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.*;
-import org.elasticsearch.rest.action.RestBuilderListener;
+import org.elasticsearch.rest.action.RestActions;
+import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
-
-import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestGetModelSnapshotsAction extends BaseRestHandler {
 
@@ -64,22 +64,23 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetModelSnapshotsAction.Request getModelSnapshots = new GetModelSnapshotsAction.Request(restRequest.param(JOB_ID.getPreferredName()));
-        getModelSnapshots.setSort(restRequest.param(SORT.getPreferredName(), DEFAULT_SORT));
-        getModelSnapshots.setStart(restRequest.param(START.getPreferredName(), DEFAULT_START));
-        getModelSnapshots.setEnd(restRequest.param(END.getPreferredName(), DEFAULT_END));
-        getModelSnapshots.setDescriptionString(restRequest.param(DESCRIPTION.getPreferredName(), DEFAULT_DESCRIPTION));
-        getModelSnapshots.setDescOrder(restRequest.paramAsBoolean(DESC_ORDER.getPreferredName(), DEFAULT_DESC_ORDER));
-        getModelSnapshots.setPageParams(new PageParams(restRequest.paramAsInt(SKIP.getPreferredName(), DEFAULT_SKIP),
-                restRequest.paramAsInt(TAKE.getPreferredName(), DEFAULT_TAKE)));
+        String jobId = restRequest.param(JOB_ID.getPreferredName());
+        GetModelSnapshotsAction.Request getModelSnapshots;
+        if (RestActions.hasBodyContent(restRequest)) {
+            BytesReference bodyBytes = RestActions.getRestContent(restRequest);
+            XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
+            getModelSnapshots = GetModelSnapshotsAction.Request.parseRequest(jobId, parser, () -> parseFieldMatcher);
+        } else {
+            getModelSnapshots = new GetModelSnapshotsAction.Request(jobId);
+            getModelSnapshots.setSort(restRequest.param(SORT.getPreferredName(), DEFAULT_SORT));
+            getModelSnapshots.setStart(restRequest.param(START.getPreferredName(), DEFAULT_START));
+            getModelSnapshots.setEnd(restRequest.param(END.getPreferredName(), DEFAULT_END));
+            getModelSnapshots.setDescriptionString(restRequest.param(DESCRIPTION.getPreferredName(), DEFAULT_DESCRIPTION));
+            getModelSnapshots.setDescOrder(restRequest.paramAsBoolean(DESC_ORDER.getPreferredName(), DEFAULT_DESC_ORDER));
+            getModelSnapshots.setPageParams(new PageParams(restRequest.paramAsInt(SKIP.getPreferredName(), DEFAULT_SKIP),
+                    restRequest.paramAsInt(TAKE.getPreferredName(), DEFAULT_TAKE)));
+        }
 
-        return channel -> transportGetModelSnapshotsAction.execute(getModelSnapshots,
-                new RestBuilderListener<GetModelSnapshotsAction.Response>(channel) {
-
-            @Override
-            public RestResponse buildResponse(GetModelSnapshotsAction.Response response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
-            }
-        });
+        return channel -> transportGetModelSnapshotsAction.execute(getModelSnapshots, new RestToXContentListener<>(channel));
     }
 }

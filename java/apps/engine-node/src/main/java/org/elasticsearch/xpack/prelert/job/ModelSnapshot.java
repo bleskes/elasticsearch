@@ -78,14 +78,18 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable, Stora
         restorePriority = in.readLong();
         snapshotId = in.readOptionalString();
         snapshotDocCount = in.readInt();
-        modelSizeStats = new ModelSizeStats(in);
+        if (in.readBoolean()) {
+            modelSizeStats = new ModelSizeStats(in);
+        }
         if (in.readBoolean()) {
             latestRecordTimeStamp = new Date(in.readLong());
         }
         if (in.readBoolean()) {
             latestResultTimeStamp = new Date(in.readLong());
         }
-        quantiles = new Quantiles(in);
+        if (in.readBoolean()) {
+            quantiles = new Quantiles(in);
+        }
     }
 
     @Override
@@ -99,7 +103,11 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable, Stora
         out.writeLong(restorePriority);
         out.writeOptionalString(snapshotId);
         out.writeInt(snapshotDocCount);
-        modelSizeStats.writeTo(out);
+        boolean hasModelSizeStats = modelSizeStats != null;
+        out.writeBoolean(hasModelSizeStats);
+        if (hasModelSizeStats) {
+            modelSizeStats.writeTo(out);
+        }
         boolean hasLatestRecordTimeStamp = latestRecordTimeStamp != null;
         out.writeBoolean(hasLatestRecordTimeStamp);
         if (hasLatestRecordTimeStamp) {
@@ -110,7 +118,11 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable, Stora
         if (hasLatestResultTimeStamp) {
             out.writeLong(latestResultTimeStamp.getTime());
         }
-        quantiles.writeTo(out);
+        boolean hasQuantiles = quantiles != null;
+        out.writeBoolean(hasQuantiles);
+        if (hasQuantiles) {
+            quantiles.writeTo(out);
+        }
     }
 
     @Override
@@ -127,14 +139,18 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable, Stora
             builder.field(SNAPSHOT_ID.getPreferredName(), snapshotId);
         }
         builder.field(SNAPSHOT_DOC_COUNT.getPreferredName(), snapshotDocCount);
-        builder.field(ModelSizeStats.TYPE.getPreferredName(), modelSizeStats);
+        if (modelSizeStats != null) {
+            builder.field(ModelSizeStats.TYPE.getPreferredName(), modelSizeStats);
+        }
         if (latestRecordTimeStamp != null) {
             builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
         }
         if (latestResultTimeStamp != null) {
             builder.field(LATEST_RESULT_TIME.getPreferredName(), latestResultTimeStamp.getTime());
         }
-        builder.field(Quantiles.TYPE.getPreferredName(), quantiles);
+        if (quantiles != null) {
+            builder.field(Quantiles.TYPE.getPreferredName(), quantiles);
+        }
         builder.endObject();
         return builder;
     }

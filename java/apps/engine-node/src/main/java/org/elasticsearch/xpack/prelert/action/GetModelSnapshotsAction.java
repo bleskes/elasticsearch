@@ -16,8 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -29,14 +27,20 @@ import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.Nullable;
-import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
@@ -44,7 +48,9 @@ import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
 import java.io.IOException;
+import java.util.Objects;
 
 public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response, GetModelSnapshotsAction.RequestBuilder> {
 
@@ -65,7 +71,34 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest<Request> implements ToXContent {
+
+        public static final ParseField SORT = new ParseField("sort");
+        public static final ParseField DESCRIPTION = new ParseField("description");
+        public static final ParseField START = new ParseField("start");
+        public static final ParseField END = new ParseField("end");
+        public static final ParseField DESC = new ParseField("desc");
+
+        private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
+
+        static {
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString(Request::setDescriptionString, DESCRIPTION);
+            PARSER.declareString(Request::setStart, START);
+            PARSER.declareString(Request::setEnd, END);
+            PARSER.declareString(Request::setSort, SORT);
+            PARSER.declareBoolean(Request::setDescOrder, DESC);
+            PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
+        }
+
+        public static Request parseRequest(String jobId, XContentParser parser,
+                ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
+            if (jobId != null) {
+                request.jobId = jobId;
+            }
+            return request;
+        }
 
         private String jobId;
         private String sort;
@@ -73,13 +106,13 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         private String start;
         private String end;
         private boolean desc;
-        private PageParams pageParams;
+        private PageParams pageParams = new PageParams(0, 100);
 
-        private Request() {
+        Request() {
         }
 
         public Request(String jobId) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
         }
 
         public String getJobId() {
@@ -108,7 +141,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         }
 
         public void setPageParams(PageParams pageParams) {
-            this.pageParams = pageParams;
+            this.pageParams = ExceptionsHelper.requireNonNull(pageParams, PageParams.PAGE.getPreferredName());
         }
 
         @Nullable
@@ -117,7 +150,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         }
 
         public void setStart(String start) {
-            this.start = start;
+            this.start = ExceptionsHelper.requireNonNull(start, START.getPreferredName());
         }
 
         @Nullable
@@ -126,7 +159,8 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         }
 
         public void setEnd(String end) {
-            this.end = end;
+            this.end = ExceptionsHelper.requireNonNull(end, END.getPreferredName());
+            ;
         }
 
         @Nullable
@@ -135,7 +169,8 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         }
 
         public void setDescriptionString(String description) {
-            this.description = description;
+            this.description = ExceptionsHelper.requireNonNull(description, DESCRIPTION.getPreferredName());
+            ;
         }
 
         @Override
@@ -146,7 +181,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            jobId = in.readOptionalString();
+            jobId = in.readString();
             sort = in.readOptionalString();
             description = in.readOptionalString();
             start = in.readOptionalString();
@@ -158,7 +193,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeOptionalString(jobId);
+            out.writeString(jobId);
             out.writeOptionalString(sort);
             out.writeOptionalString(description);
             out.writeOptionalString(start);
@@ -166,34 +201,116 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
             out.writeBoolean(desc);
             pageParams.writeTo(out);
         }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            if (description != null) {
+                builder.field(DESCRIPTION.getPreferredName(), description);
+            }
+            if (start != null) {
+                builder.field(START.getPreferredName(), start);
+            }
+            if (end != null) {
+                builder.field(END.getPreferredName(), end);
+            }
+            if (sort != null) {
+                builder.field(SORT.getPreferredName(), sort);
+            }
+            builder.field(DESC.getPreferredName(), desc);
+            builder.field(PageParams.PAGE.getPreferredName(), pageParams);
+            builder.endObject();
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId, description, start, end, sort, desc);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId) &&
+                    Objects.equals(description, other.description) &&
+                    Objects.equals(start, other.start) &&
+                    Objects.equals(end, other.end) &&
+                    Objects.equals(sort, other.sort) &&
+                    Objects.equals(desc, other.desc);
+        }
     }
 
 
-    public static class Response extends ActionResponse {
+    public static class Response extends ActionResponse implements ToXContent {
 
-        private BytesReference response;
+        private QueryPage<ModelSnapshot> page;
 
-        public Response(QueryPage<ModelSnapshot> page, ObjectMapper objectMapper) throws JsonProcessingException {
-            this.response = new BytesArray(objectMapper.writeValueAsString(page));
+        public Response(QueryPage<ModelSnapshot> page) {
+            this.page = page;
         }
 
-        private Response() {
+        Response() {
         }
 
-        public BytesReference getResponse() {
-            return response;
+        public QueryPage<ModelSnapshot> getPage() {
+            return page;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = in.readBytesReference();
+            page = new QueryPage<>(in, ModelSnapshot::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(response);
+            page.writeTo(out);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            return page.doXContentBody(builder, params);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(page);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Response other = (Response) obj;
+            return Objects.equals(page, other.page);
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
+        public final String toString() {
+            try {
+                XContentBuilder builder = XContentFactory.jsonBuilder();
+                builder.prettyPrint();
+                builder.startObject();
+                toXContent(builder, EMPTY_PARAMS);
+                builder.endObject();
+                return builder.string();
+            } catch (Exception e) {
+                // So we have a stack trace logged somewhere
+                return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
+            }
         }
     }
 
@@ -207,7 +324,6 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
         private final JobProvider jobProvider;
-        private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool,
@@ -231,13 +347,8 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
                 throw ExceptionsHelper.missingException(request.getJobId());
             }
 
-            logger.debug(String.format("Return %d model snapshots for job %s",
-                    page.hitCount(), request.getJobId()));
-            try {
-                listener.onResponse(new Response(page, objectMapper));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            logger.debug(String.format("Return %d model snapshots for job %s", page.hitCount(), request.getJobId()));
+            listener.onResponse(new Response(page));
         }
 
         public static QueryPage<ModelSnapshot> doGetPage(JobProvider jobProvider, Request request) throws JobException {
