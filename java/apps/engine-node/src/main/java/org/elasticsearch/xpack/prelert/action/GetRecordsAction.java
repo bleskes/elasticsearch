@@ -42,8 +42,8 @@ import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.persistence.RecordsQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
 
 import java.io.IOException;
 
@@ -72,8 +72,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         private String start;
         private String end;
         private boolean includeInterim = false;
-        private int skip = 0;
-        private int take = 100;
+        private PageParams pageParams = new PageParams(0, 100);
         private double anomalyScoreFilter = 0.0;
         private String sort = Influencer.ANOMALY_SCORE.getPreferredName();
         private boolean decending = false;
@@ -117,18 +116,11 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
             this.includeInterim = includeInterim;
         }
 
-        public int getSkip() {
-            return skip;
+        public void setPageParams(PageParams pageParams) {
+            this.pageParams = pageParams;
         }
-
-        public int getTake() {
-            return take;
-        }
-
-        public void setPagination(int skip, int take) {
-            PaginationParamsValidator.validate(skip, take);
-            this.skip = skip;
-            this.take = take;
+        public PageParams getPageParams() {
+            return pageParams;
         }
 
         public double getAnomalyScoreFilter() {
@@ -173,8 +165,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
             super.readFrom(in);
             jobId = in.readString();
             includeInterim = in.readBoolean();
-            skip = in.readInt();
-            take = in.readInt();
+            pageParams = new PageParams(in);
             start = in.readString();
             end = in.readString();
             sort = in.readOptionalString();
@@ -189,8 +180,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
             super.writeTo(out);
             out.writeString(jobId);
             out.writeBoolean(includeInterim);
-            out.writeInt(skip);
-            out.writeInt(take);
+            pageParams.writeTo(out);
             out.writeString(start);
             out.writeString(end);
             out.writeOptionalString(sort);
@@ -255,8 +245,8 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
                     .includeInterim(request.includeInterim)
                     .epochStart(request.start)
                     .epochEnd(request.end)
-                    .skip(request.skip)
-                    .take(request.take)
+                    .skip(request.pageParams.getSkip())
+                    .take(request.pageParams.getTake())
                     .anomalyScoreThreshold(request.anomalyScoreFilter)
                     .sortField(request.sort)
                     .sortDescending(request.decending)

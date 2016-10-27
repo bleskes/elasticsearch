@@ -68,7 +68,7 @@ public class PrelertJobIT extends ESRestTestCase {
         ResponseException e = expectThrows(ResponseException.class, () -> client().performRequest("get", "engine/v2/jobs?skip=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
-        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter 'skip' cannot be < 0\""));
+        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [skip] cannot be < 0\""));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"60110"));
     }
 
@@ -76,7 +76,7 @@ public class PrelertJobIT extends ESRestTestCase {
         ResponseException e = expectThrows(ResponseException.class, () -> client().performRequest("get", "engine/v2/jobs?take=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
-        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter 'take' cannot be < 0\""));
+        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [take] cannot be < 0\""));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"60111"));
     }
 
@@ -85,8 +85,7 @@ public class PrelertJobIT extends ESRestTestCase {
                 () -> client().performRequest("get", "engine/v2/jobs?skip1000&take=11001"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
-        assertThat(e.getMessage(), containsString("\"reason\":\"The sum of parameters 'skip' and 'take' cannot be higher than 10,000. " +
-                "Please use filters to reduce the number of results.\""));
+        assertThat(e.getMessage(), containsString("\"reason\":\"The sum of parameters [skip] and [take] cannot be higher than 10000."));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"60111"));
     }
 
@@ -306,7 +305,7 @@ public class PrelertJobIT extends ESRestTestCase {
         params.put("end", "2016-06-04T00:00:00Z"); // exclusive
 
         ResponseException e = expectThrows(ResponseException.class, () ->
-                client().performRequest("get", "/engine/v2/results/1/buckets", params));
+        client().performRequest("get", "/engine/v2/results/1/buckets", params));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '1'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
@@ -326,7 +325,7 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"hitCount\":1"));
 
         e = expectThrows(ResponseException.class, () ->
-                client().performRequest("get", "/engine/v2/results/2/bucket/2016-06-01T00:00:00Z"));
+        client().performRequest("get", "/engine/v2/results/2/bucket/2016-06-01T00:00:00Z"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '2'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));

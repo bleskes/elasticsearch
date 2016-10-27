@@ -2,15 +2,15 @@ package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.action.GetBucketsAction.Request;
+import org.elasticsearch.xpack.prelert.action.GetInfluencersAction.Request;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
 
-public class GetBucketsActionRequestTests extends AbstractStreamableXContentTestCase<GetBucketsAction.Request> {
+public class GetInfluencersActionRequestTests extends AbstractStreamableXContentTestCase<GetInfluencersAction.Request> {
 
     @Override
     protected Request parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return GetBucketsAction.Request.parseRequest(null, parser, () -> matcher);
+        return GetInfluencersAction.Request.parseRequest(null, null, null, parser, () -> matcher);
     }
 
     @Override
@@ -21,16 +21,13 @@ public class GetBucketsActionRequestTests extends AbstractStreamableXContentTest
             request.setAnomalyScore(randomDouble());
         }
         if (randomBoolean()) {
-            request.setExpand(randomBoolean());
-        }
-        if (randomBoolean()) {
             request.setIncludeInterim(randomBoolean());
         }
         if (randomBoolean()) {
-            request.setMaxNormalizedProbability(randomDouble());
+            request.setSort(randomAsciiOfLengthBetween(1, 20));
         }
         if (randomBoolean()) {
-            request.setPartitionValue(randomAsciiOfLengthBetween(1, 20));
+            request.setDecending(randomBoolean());
         }
         if (randomBoolean()) {
             int skip = randomInt(PageParams.MAX_SKIP_TAKE_SUM);

@@ -16,8 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -28,23 +26,29 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
-
 import java.io.IOException;
+import java.util.Objects;
 
 public class GetInfluencersAction extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetInfluencersAction.RequestBuilder> {
 
@@ -65,25 +69,59 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest<Request> implements ToXContent {
+
+        public static final ParseField START = new ParseField("start");
+        public static final ParseField END = new ParseField("end");
+        public static final ParseField INCLUDE_INTERIM = new ParseField("includeInterim");
+        public static final ParseField ANOMALY_SCORE = new ParseField("anomalyScore");
+        public static final ParseField SORT_FIELD = new ParseField("sort");
+        public static final ParseField DESCENDING_SORT = new ParseField("desc");
+
+        private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
+
+        static {
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, start) -> request.start = start, START);
+            PARSER.declareString((request, end) -> request.end = end, END);
+            PARSER.declareBoolean(Request::setIncludeInterim, INCLUDE_INTERIM);
+            PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
+            PARSER.declareDouble(Request::setAnomalyScore, ANOMALY_SCORE);
+            PARSER.declareString(Request::setSort, SORT_FIELD);
+            PARSER.declareBoolean(Request::setDecending, DESCENDING_SORT);
+        }
+
+        public static Request parseRequest(String jobId, String start, String end, XContentParser parser,
+                ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
+            if (jobId != null) {
+                request.jobId = jobId;
+            }
+            if (start != null) {
+                request.start = start;
+            }
+            if (end != null) {
+                request.end = end;
+            }
+            return request;
+        }
 
         private String jobId;
         private String start;
         private String end;
         private boolean includeInterim = false;
-        private int skip = 0;
-        private int take = 100;
+        private PageParams pageParams = new PageParams(0, 100);
         private double anomalyScoreFilter = 0.0;
         private String sort = Influencer.ANOMALY_SCORE.getPreferredName();
         private boolean decending = false;
 
-        private Request() {
+        Request() {
         }
 
         public Request(String jobId, String start, String end) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
-            this.start = ExceptionsHelper.requireNonNull(start, "start");
-            this.end = ExceptionsHelper.requireNonNull(end, "end");
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.start = ExceptionsHelper.requireNonNull(start, START.getPreferredName());
+            this.end = ExceptionsHelper.requireNonNull(end, END.getPreferredName());
         }
 
         public String getJobId() {
@@ -114,18 +152,12 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
             this.includeInterim = includeInterim;
         }
 
-        public int getSkip() {
-            return skip;
+        public void setPageParams(PageParams pageParams) {
+            this.pageParams = pageParams;
         }
 
-        public int getTake() {
-            return take;
-        }
-
-        public void setPagination(int skip, int take) {
-            PaginationParamsValidator.validate(skip, take);
-            this.skip = skip;
-            this.take = take;
+        public PageParams getPageParams() {
+            return pageParams;
         }
 
         public double getAnomalyScoreFilter() {
@@ -141,7 +173,7 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
         }
 
         public void setSort(String sort) {
-            this.sort = ExceptionsHelper.requireNonNull(sort, "sort");
+            this.sort = ExceptionsHelper.requireNonNull(sort, SORT_FIELD.getPreferredName());
         }
 
         @Override
@@ -154,8 +186,7 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
             super.readFrom(in);
             jobId = in.readString();
             includeInterim = in.readBoolean();
-            skip = in.readInt();
-            take = in.readInt();
+            pageParams = new PageParams(in);
             start = in.readString();
             end = in.readString();
             sort = in.readOptionalString();
@@ -168,13 +199,51 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
             super.writeTo(out);
             out.writeString(jobId);
             out.writeBoolean(includeInterim);
-            out.writeInt(skip);
-            out.writeInt(take);
+            pageParams.writeTo(out);
             out.writeString(start);
             out.writeString(end);
             out.writeOptionalString(sort);
             out.writeBoolean(decending);
             out.writeDouble(anomalyScoreFilter);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(INCLUDE_INTERIM.getPreferredName(), includeInterim);
+            builder.field(PageParams.PAGE.getPreferredName(), pageParams);
+            builder.field(START.getPreferredName(), start);
+            builder.field(END.getPreferredName(), end);
+            builder.field(SORT_FIELD.getPreferredName(), sort);
+            builder.field(DESCENDING_SORT.getPreferredName(), decending);
+            builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScoreFilter);
+            builder.endObject();
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId, includeInterim, pageParams, start, end, sort, decending, anomalyScoreFilter);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId) &&
+                    Objects.equals(start, other.start) &&
+                    Objects.equals(end, other.end) &&
+                    Objects.equals(includeInterim, other.includeInterim) &&
+                    Objects.equals(pageParams, other.pageParams) &&
+                    Objects.equals(anomalyScoreFilter, other.anomalyScoreFilter) &&
+                    Objects.equals(decending, other.decending) &&
+                    Objects.equals(sort, other.sort);
         }
     }
 
@@ -185,38 +254,73 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
         }
     }
 
-    public static class Response extends ActionResponse {
+    public static class Response extends ActionResponse implements ToXContent {
 
-        private BytesReference response;
+        private QueryPage<Influencer> influencers;
 
         Response() {
         }
 
-        Response(QueryPage<Influencer> influencers, ObjectMapper objectMapper) throws JsonProcessingException {
-            response = new BytesArray(objectMapper.writeValueAsBytes(influencers));
+        Response(QueryPage<Influencer> influencers) {
+            this.influencers = influencers;
         }
 
-        public BytesReference getResponse() {
-            return response;
+        public QueryPage<Influencer> getInfluencers() {
+            return influencers;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = in.readBytesReference();
+            influencers = new QueryPage<>(in, Influencer::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(response);
+            influencers.writeTo(out);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            return influencers.doXContentBody(builder, params);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(influencers);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Response other = (Response) obj;
+            return Objects.equals(influencers, other.influencers);
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
+        public final String toString() {
+            try {
+                XContentBuilder builder = XContentFactory.jsonBuilder();
+                builder.prettyPrint();
+                toXContent(builder, ToXContent.EMPTY_PARAMS);
+                return builder.string();
+            } catch (Exception e) {
+                // So we have a stack trace logged somewhere
+                return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
+            }
         }
     }
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
         private final JobProvider jobProvider;
-        private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
@@ -233,19 +337,14 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
                     .includeInterim(request.includeInterim)
                     .epochStart(request.start)
                     .epochEnd(request.end)
-                    .skip(request.skip)
-                    .take(request.take)
+                    .skip(request.pageParams.getSkip()).take(request.pageParams.getTake())
                     .anomalyScoreThreshold(request.anomalyScoreFilter)
                     .sortField(request.sort)
                     .sortDescending(request.decending)
                     .build();
 
-            try {
-                QueryPage<Influencer> page = jobProvider.influencers(request.jobId, query);
-                listener.onResponse(new Response(page, objectMapper));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            QueryPage<Influencer> page = jobProvider.influencers(request.jobId, query);
+            listener.onResponse(new Response(page));
         }
     }
 

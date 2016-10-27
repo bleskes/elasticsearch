@@ -45,6 +45,7 @@ import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -75,8 +76,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         public static final ParseField END = new ParseField("end");
         public static final ParseField EXPAND = new ParseField("expand");
         public static final ParseField INCLUDE_INTERIM = new ParseField("includeInterim");
-        public static final ParseField SKIP = new ParseField("skip");
-        public static final ParseField TAKE = new ParseField("take");
         public static final ParseField ANOMALY_SCORE = new ParseField("anomalyScore");
         public static final ParseField MAX_NORMALIZED_PROBABILITY = new ParseField("maxNormalizedProbability");
         public static final ParseField PARTITION_VALUE = new ParseField("partitionValue");
@@ -89,8 +88,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             PARSER.declareString((request, end) -> request.end = end, END);
             PARSER.declareBoolean(Request::setExpand, EXPAND);
             PARSER.declareBoolean(Request::setIncludeInterim, INCLUDE_INTERIM);
-            PARSER.declareInt(Request::setSkip, SKIP);
-            PARSER.declareInt(Request::setTake, TAKE);
+            PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
             PARSER.declareDouble(Request::setAnomalyScore, ANOMALY_SCORE);
             PARSER.declareDouble(Request::setMaxNormalizedProbability, MAX_NORMALIZED_PROBABILITY);
             PARSER.declareString(Request::setPartitionValue, PARTITION_VALUE);
@@ -109,8 +107,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         private String end;
         private boolean expand = false;
         private boolean includeInterim = false;
-        private int skip = 0;
-        private int take = 100;
+        private PageParams pageParams = new PageParams(0, 100);
         private double anomalyScore = 0.0;
         private double maxNormalizedProbability = 0.0;
         private String partitionValue;
@@ -152,20 +149,12 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             this.includeInterim = includeInterim;
         }
 
-        public int getSkip() {
-            return skip;
+        public PageParams getPageParams() {
+            return pageParams;
         }
 
-        public void setSkip(int skip) {
-            this.skip = skip;
-        }
-
-        public int getTake() {
-            return take;
-        }
-
-        public void setTake(int take) {
-            this.take = take;
+        public void setPageParams(PageParams pageParams) {
+            this.pageParams = pageParams;
         }
 
         public double getAnomalyScore() {
@@ -203,8 +192,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             jobId = in.readString();
             expand = in.readBoolean();
             includeInterim = in.readBoolean();
-            skip = in.readInt();
-            take = in.readInt();
+            pageParams = new PageParams(in);
             start = in.readString();
             end = in.readString();
             anomalyScore = in.readDouble();
@@ -218,8 +206,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             out.writeString(jobId);
             out.writeBoolean(expand);
             out.writeBoolean(includeInterim);
-            out.writeInt(skip);
-            out.writeInt(take);
+            pageParams.writeTo(out);
             out.writeString(start);
             out.writeString(end);
             out.writeDouble(anomalyScore);
@@ -235,8 +222,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             builder.field(END.getPreferredName(), end);
             builder.field(EXPAND.getPreferredName(), expand);
             builder.field(INCLUDE_INTERIM.getPreferredName(), includeInterim);
-            builder.field(SKIP.getPreferredName(), skip);
-            builder.field(TAKE.getPreferredName(), take);
+            builder.field(PageParams.PAGE.getPreferredName(), pageParams);
             builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScore);
             builder.field(MAX_NORMALIZED_PROBABILITY.getPreferredName(), maxNormalizedProbability);
             if (partitionValue != null) {
@@ -248,7 +234,8 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId, start, end, expand, includeInterim, skip, take, anomalyScore, maxNormalizedProbability, partitionValue);
+            return Objects.hash(jobId, start, end, expand, includeInterim, pageParams, anomalyScore, maxNormalizedProbability,
+                    partitionValue);
         }
 
         @Override
@@ -265,8 +252,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                     Objects.equals(end, other.end) &&
                     Objects.equals(expand, other.expand) &&
                     Objects.equals(includeInterim, other.includeInterim) &&
-                    Objects.equals(skip, other.skip) &&
-                    Objects.equals(take, other.take) &&
+                    Objects.equals(pageParams, other.pageParams) &&
                     Objects.equals(anomalyScore, other.anomalyScore) &&
                     Objects.equals(maxNormalizedProbability, other.maxNormalizedProbability) &&
                     Objects.equals(partitionValue, other.partitionValue);
@@ -377,8 +363,8 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                     .includeInterim(request.includeInterim)
                     .epochStart(request.start)
                     .epochEnd(request.end)
-                    .skip(request.skip)
-                    .take(request.take)
+                    .skip(request.pageParams.getSkip())
+                    .take(request.pageParams.getTake())
                     .anomalyScoreThreshold(request.anomalyScore)
                     .normalizedProbabilityThreshold(request.maxNormalizedProbability)
                     .partitionValue(request.partitionValue)

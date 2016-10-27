@@ -24,6 +24,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
 
@@ -41,7 +42,7 @@ public class RestGetCategoriesAction extends BaseRestHandler {
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetCategoryDefinitionsAction.Request request = new GetCategoryDefinitionsAction.Request(restRequest.param("jobId"));
-        request.setPagination(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100));
+        request.setPageParams(new PageParams(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100)));
         return channel -> transportAction.execute(request, new RestToXContentListener<>(channel));
     }
 

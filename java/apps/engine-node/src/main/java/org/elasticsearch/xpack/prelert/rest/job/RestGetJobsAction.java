@@ -21,9 +21,14 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.rest.*;
+import org.elasticsearch.rest.BaseRestHandler;
+import org.elasticsearch.rest.BytesRestResponse;
+import org.elasticsearch.rest.RestController;
+import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
 
@@ -48,7 +53,8 @@ public class RestGetJobsAction extends BaseRestHandler {
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetJobsAction.Request getJobsRequest = new GetJobsAction.Request();
-        getJobsRequest.setPagination(restRequest.paramAsInt(SKIP, DEFAULT_SKIP), restRequest.paramAsInt(TAKE, DEFAULT_TAKE));
+        getJobsRequest
+                .setPageParams(new PageParams(restRequest.paramAsInt(SKIP, DEFAULT_SKIP), restRequest.paramAsInt(TAKE, DEFAULT_TAKE)));
         return channel -> transportGetJobsAction.execute(getJobsRequest, new RestBuilderListener<GetJobsAction.Response>(channel) {
 
             @Override

@@ -26,6 +26,7 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.util.Collections;
 
@@ -37,15 +38,15 @@ public class GetModelSnapshotsTest extends ESTestCase {
 
     public void testModelSnapshots_GivenNegativeSkip() {
         ElasticsearchException e = expectThrows(ElasticsearchException.class,
-                () -> new GetModelSnapshotsAction.Request("foo").setPagination(-5, 10));
-        assertEquals("Parameter 'skip' cannot be < 0", e.getMessage());
+                () -> new GetModelSnapshotsAction.Request("foo").setPageParams(new PageParams(-5, 10)));
+        assertEquals("Parameter [skip] cannot be < 0", e.getMessage());
         assertEquals(ErrorCodes.INVALID_SKIP_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testModelSnapshots_GivenNegativeTake() {
         ElasticsearchException e = expectThrows(ElasticsearchException.class,
-                () -> new GetModelSnapshotsAction.Request("foo").setPagination(10, -5));
-        assertEquals("Parameter 'take' cannot be < 0", e.getMessage());
+                () -> new GetModelSnapshotsAction.Request("foo").setPageParams(new PageParams(10, -5)));
+        assertEquals("Parameter [take] cannot be < 0", e.getMessage());
         assertEquals(ErrorCodes.INVALID_TAKE_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
@@ -57,7 +58,7 @@ public class GetModelSnapshotsTest extends ESTestCase {
         when(jobProvider.modelSnapshots("foo", 0, 100, null, null, null, true, null, null)).thenReturn(queryResult);
 
         GetModelSnapshotsAction.Request request = new GetModelSnapshotsAction.Request("foo");
-        request.setPagination(0, 100);
+        request.setPageParams(new PageParams(0, 100));
         request.setDescOrder(true);
 
         QueryPage<ModelSnapshot> page = GetModelSnapshotsAction.TransportAction.doGetPage(jobProvider, request);
@@ -72,7 +73,7 @@ public class GetModelSnapshotsTest extends ESTestCase {
         when(jobProvider.modelSnapshots("foo", 0, 100, "1", "2", null, true, null, null)).thenReturn(queryResult);
 
         GetModelSnapshotsAction.Request request = new GetModelSnapshotsAction.Request("foo");
-        request.setPagination(0, 100);
+        request.setPageParams(new PageParams(0, 100));
         request.setStart("1");
         request.setEnd("2");
         request.setDescOrder(true);
@@ -89,7 +90,7 @@ public class GetModelSnapshotsTest extends ESTestCase {
         when(jobProvider.modelSnapshots("foo", 0, 100, "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", null, true, null, null)).thenReturn(queryResult);
 
         GetModelSnapshotsAction.Request request = new GetModelSnapshotsAction.Request("foo");
-        request.setPagination(0, 100);
+        request.setPageParams(new PageParams(0, 100));
         request.setStart("2015-01-01T12:00:00.042Z");
         request.setEnd("2015-01-01T13:00:00.142+00:00");
         request.setDescOrder(true);
@@ -106,7 +107,7 @@ public class GetModelSnapshotsTest extends ESTestCase {
         when(jobProvider.modelSnapshots("foo", 0, 100, "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", null, true, null, null)).thenReturn(queryResult);
 
         GetModelSnapshotsAction.Request request = new GetModelSnapshotsAction.Request("foo");
-        request.setPagination(0, 100);
+        request.setPageParams(new PageParams(0, 100));
         request.setStart("2015-01-01T12:00:00Z");
         request.setEnd("2015-01-01T13:00:00Z");
         request.setDescOrder(true);

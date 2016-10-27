@@ -42,9 +42,8 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
-
 import java.io.IOException;
 
 public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response, GetModelSnapshotsAction.RequestBuilder> {
@@ -74,8 +73,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         private String start;
         private String end;
         private boolean desc;
-        private int take;
-        private int skip;
+        private PageParams pageParams;
 
         private Request() {
         }
@@ -105,18 +103,12 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
             this.desc = desc;
         }
 
-        public int getTake() {
-            return take;
+        public PageParams getPageParams() {
+            return pageParams;
         }
 
-        public int getSkip() {
-            return skip;
-        }
-
-        public void setPagination(int skip, int take) {
-            PaginationParamsValidator.validate(skip, take);
-            this.skip = skip;
-            this.take = take;
+        public void setPageParams(PageParams pageParams) {
+            this.pageParams = pageParams;
         }
 
         @Nullable
@@ -160,8 +152,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
             start = in.readOptionalString();
             end = in.readOptionalString();
             desc = in.readBoolean();
-            take = in.readVInt();
-            skip = in.readVInt();
+            pageParams = new PageParams(in);
         }
 
         @Override
@@ -173,8 +164,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
             out.writeOptionalString(start);
             out.writeOptionalString(end);
             out.writeBoolean(desc);
-            out.writeVInt(take);
-            out.writeVInt(skip);
+            pageParams.writeTo(out);
         }
     }
 
@@ -221,8 +211,8 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               ElasticsearchJobProvider jobProvider) {
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }
@@ -230,8 +220,8 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
             logger.debug(String.format("Get model snapshots for job %s. skip = %d, take = %d"
-                            + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
-                    request.getJobId(), request.getSkip(), request.getTake(), request.getStart(), request.getEnd(),
+                    + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
+                    request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
                     request.getSort(), request.getDescOrder(), request.getDescriptionString()));
 
             QueryPage<ModelSnapshot> page;
@@ -251,8 +241,8 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         }
 
         public static QueryPage<ModelSnapshot> doGetPage(JobProvider jobProvider, Request request) throws JobException {
-            QueryPage<ModelSnapshot> page = jobProvider.modelSnapshots(request.getJobId(), request.getSkip(),
-                    request.getTake(), request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(),
+            QueryPage<ModelSnapshot> page = jobProvider.modelSnapshots(request.getJobId(), request.pageParams.getSkip(),
+                    request.pageParams.getTake(), request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(),
                     null, request.getDescriptionString());
 
             // The quantiles can be large, and totally dominate the output - it's

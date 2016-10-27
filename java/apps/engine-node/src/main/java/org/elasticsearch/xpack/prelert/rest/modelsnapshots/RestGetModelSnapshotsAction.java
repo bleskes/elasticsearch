@@ -25,6 +25,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
 
@@ -55,7 +56,7 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
 
     @Inject
     public RestGetModelSnapshotsAction(Settings settings, RestController controller,
-                                       GetModelSnapshotsAction.TransportAction transportGetModelSnapshotsAction) {
+            GetModelSnapshotsAction.TransportAction transportGetModelSnapshotsAction) {
         super(settings);
         this.transportGetModelSnapshotsAction = transportGetModelSnapshotsAction;
         controller.registerHandler(RestRequest.Method.GET, "/engine/v2/modelsnapshots/{jobId}", this);
@@ -69,8 +70,8 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
         getModelSnapshots.setEnd(restRequest.param(END.getPreferredName(), DEFAULT_END));
         getModelSnapshots.setDescriptionString(restRequest.param(DESCRIPTION.getPreferredName(), DEFAULT_DESCRIPTION));
         getModelSnapshots.setDescOrder(restRequest.paramAsBoolean(DESC_ORDER.getPreferredName(), DEFAULT_DESC_ORDER));
-        getModelSnapshots.setPagination(restRequest.paramAsInt(SKIP.getPreferredName(), DEFAULT_SKIP),
-                restRequest.paramAsInt(TAKE.getPreferredName(), DEFAULT_TAKE));
+        getModelSnapshots.setPageParams(new PageParams(restRequest.paramAsInt(SKIP.getPreferredName(), DEFAULT_SKIP),
+                restRequest.paramAsInt(TAKE.getPreferredName(), DEFAULT_TAKE)));
 
         return channel -> transportGetModelSnapshotsAction.execute(getModelSnapshots,
                 new RestBuilderListener<GetModelSnapshotsAction.Response>(channel) {

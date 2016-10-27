@@ -16,10 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.rest.results;
 
-import static org.elasticsearch.rest.RestStatus.OK;
-
-import java.io.IOException;
-
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
@@ -33,6 +29,11 @@ import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
+
+import java.io.IOException;
+
+import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestGetRecordsAction extends BaseRestHandler {
 
@@ -50,7 +51,7 @@ public class RestGetRecordsAction extends BaseRestHandler {
         GetRecordsAction.Request request = new GetRecordsAction.Request(restRequest.param("jobId"), restRequest.param("start"),
                 restRequest.param("end"));
         request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
-        request.setPagination(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100));
+        request.setPageParams(new PageParams(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100)));
         request.setAnomalyScore(Double.parseDouble(restRequest.param("anomalyScore", "0.0")));
         request.setSort(restRequest.param("sort", AnomalyRecord.NORMALIZED_PROBABILITY.getPreferredName()));
         request.setDecending(restRequest.paramAsBoolean("desc", false));

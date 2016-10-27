@@ -17,18 +17,19 @@
 package org.elasticsearch.xpack.prelert.rest.influencers;
 
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.*;
-import org.elasticsearch.rest.action.RestBuilderListener;
+import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
-
-import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestGetInfluencersAction extends BaseRestHandler {
 
@@ -38,24 +39,32 @@ public class RestGetInfluencersAction extends BaseRestHandler {
     public RestGetInfluencersAction(Settings settings, RestController controller, GetInfluencersAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/influencers", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + JobDetails.ID.getPreferredName() + "}/influencers",
+                this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetInfluencersAction.Request request = new GetInfluencersAction.Request(restRequest.param("jobId"), restRequest.param("start"),
-                restRequest.param("end"));
-        request.setIncludeInterim(restRequest.paramAsBoolean("includeInterim", false));
-        request.setPagination(restRequest.paramAsInt("skip", 0), restRequest.paramAsInt("take", 100));
-        request.setAnomalyScore(Double.parseDouble(restRequest.param("anomalyScore", "0.0")));
-        request.setSort(restRequest.param("sort", Influencer.ANOMALY_SCORE.getPreferredName()));
-        request.setDecending(restRequest.paramAsBoolean("desc", false));
+        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        String start = restRequest.param(GetInfluencersAction.Request.START.getPreferredName());
+        String end = restRequest.param(GetInfluencersAction.Request.END.getPreferredName());
+        BytesReference bodyBytes = restRequest.content();
+        final GetInfluencersAction.Request request;
+        if (bodyBytes != null && bodyBytes.length() > 0) {
+            XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
+            request = GetInfluencersAction.Request.parseRequest(jobId, start, end, parser, () -> parseFieldMatcher);
+        } else {
+            request = new GetInfluencersAction.Request(jobId, start, end);
+            request.setIncludeInterim(restRequest.paramAsBoolean(GetInfluencersAction.Request.INCLUDE_INTERIM.getPreferredName(), false));
+            request.setPageParams(new PageParams(restRequest.paramAsInt(PageParams.SKIP.getPreferredName(), 0),
+                    restRequest.paramAsInt(PageParams.TAKE.getPreferredName(), 100)));
+            request.setAnomalyScore(
+                    Double.parseDouble(restRequest.param(GetInfluencersAction.Request.ANOMALY_SCORE.getPreferredName(), "0.0")));
+            request.setSort(restRequest.param(GetInfluencersAction.Request.SORT_FIELD.getPreferredName(),
+                    Influencer.ANOMALY_SCORE.getPreferredName()));
+            request.setDecending(restRequest.paramAsBoolean(GetInfluencersAction.Request.DESCENDING_SORT.getPreferredName(), false));
+        }
 
-        return channel -> transportAction.execute(request, new RestBuilderListener<GetInfluencersAction.Response>(channel) {
-            @Override
-            public RestResponse buildResponse(GetInfluencersAction.Response response, XContentBuilder builder) throws Exception {
-                return new BytesRestResponse(OK, XContentType.JSON.mediaType(), response.getResponse());
-            }
-        });
+        return channel -> transportAction.execute(request, new RestToXContentListener<GetInfluencersAction.Response>(channel));
     }
 }

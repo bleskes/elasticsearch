@@ -38,9 +38,8 @@ import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.prelert.validation.PaginationParamsValidator;
-
 import java.io.IOException;
 import java.util.Objects;
 
@@ -66,8 +65,7 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
     public static class Request extends ActionRequest<Request> {
 
         private String jobId;
-        private int skip = 0;
-        private int take = 100;
+        private PageParams pageParams = new PageParams(0, 100);
 
         public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
@@ -80,18 +78,12 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
             return jobId;
         }
 
-        public int getSkip() {
-            return skip;
+        public PageParams getPageParams() {
+            return pageParams;
         }
 
-        public int getTake() {
-            return take;
-        }
-
-        public void setPagination(int skip, int take) {
-            PaginationParamsValidator.validate(skip, take);
-            this.skip = skip;
-            this.take = take;
+        public void setPageParams(PageParams pageParams) {
+            this.pageParams = pageParams;
         }
 
         @Override
@@ -103,16 +95,14 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
             jobId = in.readString();
-            skip = in.readInt();
-            take = in.readInt();
+            pageParams = new PageParams(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
-            out.writeInt(skip);
-            out.writeInt(take);
+            pageParams.writeTo(out);
         }
 
         @Override
@@ -120,14 +110,13 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Request request = (Request) o;
-            return skip == request.skip &&
-                    take == request.take &&
+            return Objects.equals(pageParams, request.pageParams) &&
                     Objects.equals(jobId, request.jobId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId, skip, take);
+            return Objects.hash(jobId, pageParams);
         }
     }
 
@@ -191,15 +180,16 @@ public class GetCategoryDefinitionsAction extends Action<GetCategoryDefinitionsA
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               ElasticsearchJobProvider jobProvider) {
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            QueryPage<CategoryDefinition> result = jobProvider.categoryDefinitions(request.jobId, request.skip, request.take);
+            QueryPage<CategoryDefinition> result = jobProvider.categoryDefinitions(request.jobId, request.pageParams.getSkip(),
+                    request.pageParams.getTake());
             listener.onResponse(new Response(result));
         }
     }
