@@ -17,8 +17,6 @@
 
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -36,12 +34,15 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.StatusToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -49,6 +50,7 @@ import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
@@ -76,12 +78,15 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
 
         private String listId;
 
-        public String getListId() {
-            return listId;
+        Request() {
         }
 
-        public void setListId(String listId) {
+        public Request(String listId) {
             this.listId = listId;
+        }
+
+        public String getListId() {
+            return listId;
         }
 
         @Override
@@ -104,6 +109,23 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
             super.writeTo(out);
             out.writeOptionalString(listId);
         }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(listId);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(listId, other.listId);
+        }
     }
 
     public static class RequestBuilder extends MasterNodeReadOperationRequestBuilder<Request, Response, RequestBuilder> {
@@ -115,30 +137,29 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
 
     public static class Response extends ActionResponse implements StatusToXContent {
 
-        private SingleDocument response;
+        private SingleDocument<ListDocument> response;
 
-        public Response(SingleDocument document) throws JsonProcessingException {
+        public Response(SingleDocument<ListDocument> document) {
             this.response = document;
         }
 
-        public Response() {
+        Response() {
         }
 
-        public SingleDocument getResponse() {
+        public SingleDocument<ListDocument> getResponse() {
             return response;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = new SingleDocument(in.readString(), in.readBytesReference());
+            response = new SingleDocument<>(in, ListDocument::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeString(response.getType());
-            out.writeBytesReference(response.getDocumentBytes());
+            response.writeTo(out);
         }
 
         @Override
@@ -149,6 +170,39 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             return response.toXContent(builder, params);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(response);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Response other = (Response) obj;
+            return Objects.equals(response, other.response);
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
+        public final String toString() {
+            try {
+                XContentBuilder builder = XContentFactory.jsonBuilder();
+                builder.prettyPrint();
+                builder.startObject();
+                toXContent(builder, EMPTY_PARAMS);
+                builder.endObject();
+                return builder.string();
+            } catch (Exception e) {
+                // So we have a stack trace logged somewhere
+                return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
+            }
         }
     }
 
@@ -187,14 +241,17 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
             transportGetAction.execute(getRequest, new ActionListener<GetResponse>() {
                 @Override
                 public void onResponse(GetResponse getDocResponse) {
-                    SingleDocument responseBody;
-                    if (getDocResponse.isExists()) {
-                        responseBody = new SingleDocument(ListDocument.TYPE.getPreferredName(), getDocResponse.getSourceAsBytesRef());
-                    } else {
-                        responseBody = SingleDocument.empty(ListDocument.TYPE.getPreferredName());
-                    }
 
                     try {
+                        SingleDocument<ListDocument> responseBody;
+                        if (getDocResponse.isExists()) {
+                            BytesReference docSource = getDocResponse.getSourceAsBytesRef();
+                            XContentParser parser = XContentFactory.xContent(docSource).createParser(docSource);
+                            ListDocument listDocument = ListDocument.PARSER.apply(parser, () -> parseFieldMatcher);
+                            responseBody = new SingleDocument<>(ListDocument.TYPE.getPreferredName(), listDocument);
+                        } else {
+                            responseBody = SingleDocument.empty(ListDocument.TYPE.getPreferredName());
+                        }
                         Response listResponse = new Response(responseBody);
                         listener.onResponse(listResponse);
                     } catch (Exception e) {
@@ -204,7 +261,7 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
 
                 @Override
                 public void onFailure(Exception e) {
-                    throw new ResourceNotFoundException("List with id [" + listId + "] not found", e);
+                    listener.onFailure(e);
                 }
             });
         }

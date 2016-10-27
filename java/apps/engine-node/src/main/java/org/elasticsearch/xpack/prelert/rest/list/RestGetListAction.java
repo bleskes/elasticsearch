@@ -25,6 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetListAction;
+import org.elasticsearch.xpack.prelert.lists.ListDocument;
 
 import java.io.IOException;
 
@@ -36,13 +37,12 @@ public class RestGetListAction extends BaseRestHandler {
     public RestGetListAction(Settings settings, RestController controller, GetListAction.TransportAction transportGetListAction) {
         super(settings);
         this.transportGetListAction = transportGetListAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/lists/{listId}", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/lists/{" + ListDocument.ID.getPreferredName() + "}", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetListAction.Request getListRequest = new GetListAction.Request();
-        getListRequest.setListId(restRequest.param("listId"));
+        GetListAction.Request getListRequest = new GetListAction.Request(restRequest.param(ListDocument.ID.getPreferredName()));
         return channel -> transportGetListAction.execute(getListRequest, new RestStatusToXContentListener<>(channel));
     }
 
