@@ -34,6 +34,15 @@ test {
     systemProperty 'tests.security.manager', 'false'
 }
 
+task noBootstrapTest(type: Test,
+        dependsOn: test.dependsOn) {
+    classpath = project.test.classpath
+    testClassesDir = project.test.testClassesDir
+    include '**/*TestNoBootstrap.class'
+}
+check.dependsOn noBootstrapTest
+noBootstrapTest.mustRunAfter test
+
 task copyRestSpec(type: Copy) {
     from { zipTree(configurations.testCompile.files.find { it.name.contains('rest-api-spec')}) }
     include 'rest-api-spec/api/**'
@@ -85,4 +94,4 @@ task integTest(type: Test,
 integTest.dependsOn startPrelertInBackground
 startPrelertInBackground.dependsOn copyRestSpec
 check.dependsOn integTest
-integTest.mustRunAfter test
+integTest.mustRunAfter noBootstrapTest
