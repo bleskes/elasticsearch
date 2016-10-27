@@ -114,12 +114,14 @@ public class ElasticsearchMappingsTest
         overridden.add(ElasticsearchMappings.COPY_TO);
         overridden.add(ElasticsearchMappings.DYNAMIC);
         overridden.add(ElasticsearchMappings.ENABLED);
+        overridden.add(ElasticsearchMappings.FIELDS);
         overridden.add(ElasticsearchMappings.INCLUDE_IN_ALL);
         overridden.add(ElasticsearchMappings.INDEX);
         overridden.add(ElasticsearchMappings.NESTED);
         overridden.add(ElasticsearchMappings.NO);
         overridden.add(ElasticsearchMappings.PARENT);
         overridden.add(ElasticsearchMappings.PROPERTIES);
+        overridden.add(ElasticsearchMappings.RAW);
         overridden.add(ElasticsearchMappings.TYPE);
         overridden.add(ElasticsearchMappings.WHITESPACE);
 
@@ -150,6 +152,12 @@ public class ElasticsearchMappingsTest
         overridden.add(ElasticsearchJobDataPersister.PARTITION_FIELDS);
 
         // These are not reserved because they're in the prelert-int index, not prelertresults-*
+        overridden.add(AuditActivity.RUNNING_DETECTORS);
+        overridden.add(AuditActivity.RUNNING_JOBS);
+        overridden.add(AuditActivity.TOTAL_DETECTORS);
+        overridden.add(AuditActivity.TOTAL_JOBS);
+        overridden.add(AuditMessage.LEVEL);
+        overridden.add(AuditMessage.MESSAGE);
         overridden.add(ListDocument.ID);
         overridden.add(ListDocument.ITEMS);
 

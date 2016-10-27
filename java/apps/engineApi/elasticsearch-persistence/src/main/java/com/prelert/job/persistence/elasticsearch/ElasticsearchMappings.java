@@ -100,6 +100,8 @@ public class ElasticsearchMappings
     static final String PROPERTIES = "properties";
     static final String TYPE = "type";
     static final String DYNAMIC = "dynamic";
+    static final String FIELDS = "fields";
+    static final String RAW = "raw";
 
     /**
      * Name of the field used to store the timestamp in Elasticsearch.
@@ -1286,6 +1288,20 @@ public class ElasticsearchMappings
                             .startObject(ES_TIMESTAMP)
                                 .field(TYPE, DATE)
                             .endObject()
+                            .startObject(AuditMessage.JOB_ID)
+                                .field(TYPE, KEYWORD)
+                            .endObject()
+                            .startObject(AuditMessage.LEVEL)
+                                .field(TYPE, KEYWORD)
+                            .endObject()
+                            .startObject(AuditMessage.MESSAGE)
+                                .field(TYPE, TEXT)
+                                .startObject(FIELDS)
+                                    .startObject(RAW)
+                                        .field(TYPE, KEYWORD)
+                                    .endObject()
+                                .endObject()
+                            .endObject()
                         .endObject()
                     .endObject()
                 .endObject();
@@ -1299,6 +1315,18 @@ public class ElasticsearchMappings
                         .startObject(PROPERTIES)
                             .startObject(ES_TIMESTAMP)
                                 .field(TYPE, DATE)
+                            .endObject()
+                            .startObject(AuditActivity.RUNNING_DETECTORS)
+                                .field(TYPE, INTEGER)
+                            .endObject()
+                            .startObject(AuditActivity.RUNNING_JOBS)
+                                .field(TYPE, INTEGER)
+                            .endObject()
+                            .startObject(AuditActivity.TOTAL_DETECTORS)
+                                .field(TYPE, INTEGER)
+                            .endObject()
+                            .startObject(AuditActivity.TOTAL_JOBS)
+                                .field(TYPE, INTEGER)
                             .endObject()
                         .endObject()
                     .endObject()
