@@ -92,19 +92,22 @@ public class ProcessCtrl {
     /**
      * Host for the Elasticsearch we'll pass on to the Autodetect API program
      */
-    // NORELEASE
+    // NORELEASE This is for the process to write state directly to ES
+    // which won't happen in the final product. See #18
     public static final String ES_HOST = "localhost";
 
     /**
      * Default Elasticsearch HTTP port
      */
-    // NORELEASE
+    // NORELEASE This is for the process to write state directly to ES
+    // which won't happen in the final product. See #18
     public static final int ES_HTTP_PORT = 8080;
 
     /**
      * If this is changed, ElasticsearchJobId should also be changed
      */
-    // NORELEASE
+    // NORELEASE This is for the process to write state directly to ES
+    // which won't happen in the final product. See #18
     private static final String ES_INDEX_PREFIX = "prelertresults-";
 
 

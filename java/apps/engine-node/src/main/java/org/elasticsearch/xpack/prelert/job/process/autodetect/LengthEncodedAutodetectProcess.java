@@ -90,7 +90,7 @@ public class LengthEncodedAutodetectProcess implements AutodetectProcess {
 
     @Override
     public String readError() {
-        // NORELEASE
+        // NORELEASE implement reading errors from the process
         return "";
     }
 }
