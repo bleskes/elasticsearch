@@ -199,7 +199,7 @@ public class ServerBootstrap {
                     jobProvider,
                     jobManager,
                     new JobAllocator(settings, clusterService, threadPool),
-                    new JobLifeCycleService(settings, clusterService, jobScheduledService),
+                    new JobLifeCycleService(settings, clusterService, jobScheduledService, threadPool.generic()),
                     new ElasticsearchBulkDeleterFactory(client), //NORELEASE: this should use Delete-by-query
                     dataProcessor
             );

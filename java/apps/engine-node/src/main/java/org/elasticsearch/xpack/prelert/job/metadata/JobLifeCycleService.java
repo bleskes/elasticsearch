@@ -22,6 +22,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
@@ -30,16 +31,20 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 public class JobLifeCycleService extends AbstractComponent implements ClusterStateListener {
 
     volatile Set<String> localAllocatedJobs = Collections.emptySet();
     private final JobScheduledService jobScheduledService;
+    private final Executor executor;
 
-    public JobLifeCycleService(Settings settings, ClusterService clusterService, JobScheduledService jobScheduledService) {
+    public JobLifeCycleService(Settings settings, ClusterService clusterService, JobScheduledService jobScheduledService,
+                               Executor executor) {
         super(settings);
         clusterService.add(this);
         this.jobScheduledService = Objects.requireNonNull(jobScheduledService);
+        this.executor = Objects.requireNonNull(executor);
     }
 
     @Override
@@ -89,7 +94,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
                     jobScheduledService.start(jobDetails);
                     break;
                 case STOPPING:
-                    jobScheduledService.stop(jobDetails.getId());
+                    executor.execute(() -> jobScheduledService.stop(jobDetails.getId()));
                     break;
                 case STOPPED:
                     break;

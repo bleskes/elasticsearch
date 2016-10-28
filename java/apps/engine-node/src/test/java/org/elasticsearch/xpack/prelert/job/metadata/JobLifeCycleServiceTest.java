@@ -29,7 +29,6 @@ import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.mock.orig.Mockito;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
 import org.junit.Before;
 
@@ -45,7 +44,7 @@ public class JobLifeCycleServiceTest extends ESTestCase {
     public void instantiateJobAllocator() {
         clusterService = Mockito.mock(ClusterService.class);
         jobScheduledService = Mockito.mock(JobScheduledService.class);
-        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, clusterService, jobScheduledService);
+        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, clusterService, jobScheduledService, Runnable::run);
     }
 
     public void testStartStop() {
