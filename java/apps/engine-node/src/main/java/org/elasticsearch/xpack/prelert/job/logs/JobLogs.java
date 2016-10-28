@@ -56,20 +56,30 @@ public class JobLogs {
      * Delete all the log files and log directory associated with a job.
      *
      * @param jobId
+     *            the jobId
      * @return true if success.
-     * @throws JobException If the file path is invalid i.e. jobId = ../../etc
+     * @throws JobException
+     *             If the file path is invalid i.e. jobId = ../../etc
      */
     public boolean deleteLogs(String jobId) throws JobException {
         return deleteLogs(ProcessCtrl.LOG_DIR, jobId);
     }
 
     /**
-     * Delete all the files in the directory <pre>logDir/jobId</pre>.
+     * Delete all the files in the directory
+     * 
+     * <pre>
+     * logDir / jobId
+     * </pre>
+     * 
+     * .
      *
-     * @param logDir The base directory of the log files
+     * @param logDir
+     *            The base directory of the log files
      * @param jobId
-     * @return
-     * @throws JobException If the file path is invalid i.e. jobId = ../../etc
+     *            the jobId
+     * @throws JobException
+     *             If the file path is invalid i.e. jobId = ../../etc
      */
     public boolean deleteLogs(String logDir, String jobId) throws JobException {
         if (m_DontDelete) {
@@ -116,11 +126,6 @@ public class JobLogs {
      *
      * Throws an exception if the path is outside the logs directory
      * e.g. logs/../lic/license resolves to lic/license and would throw
-     *
-     * @param filePath
-     * @param rootDir
-     * @return
-     * @throws JobException
      */
     public Path sanitizePath(Path filePath, String rootDir) throws JobException
     {

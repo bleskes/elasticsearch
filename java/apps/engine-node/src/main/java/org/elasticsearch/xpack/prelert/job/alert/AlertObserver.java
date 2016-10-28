@@ -24,9 +24,6 @@ public abstract class AlertObserver {
 
     /**
      * Return true if the alert should be fired for these values.
-     *
-     * @param bucket
-     * @return
      */
     public boolean evaluate(Bucket bucket) {
         return triggeredAlerts(bucket).isEmpty() == false;
@@ -36,9 +33,6 @@ public abstract class AlertObserver {
     /**
      * The list of AlertTriggers that have been triggered by the
      * bucket
-     *
-     * @param bucket
-     * @return
      */
     public List<AlertTrigger> triggeredAlerts(Bucket bucket) {
         List<AlertTrigger> alerts = new ArrayList<>();
@@ -53,10 +47,6 @@ public abstract class AlertObserver {
     /**
      * Create the alert defined in the <code>trigger</code> based on
      * the bucket result
-     *
-     * @param bucket
-     * @param trigger
-     * @return
      */
     protected Alert createAlert(Bucket bucket, AlertTrigger trigger) {
         Alert alert = new Alert();
@@ -69,13 +59,13 @@ public abstract class AlertObserver {
 
         for (AlertTrigger at : triggeredAlerts(bucket)) {
             switch (at.getAlertType()) {
-                case INFLUENCER:
-                case BUCKETINFLUENCER:
-                    alert.setBucket(bucket);
-                    break;
-                case BUCKET:
-                    setTriggeredRecordsOnBucketAlert(at, bucket, alert);
-                    break;
+            case INFLUENCER:
+            case BUCKETINFLUENCER:
+                alert.setBucket(bucket);
+                break;
+            case BUCKET:
+                setTriggeredRecordsOnBucketAlert(at, bucket, alert);
+                break;
             }
         }
 
@@ -114,8 +104,6 @@ public abstract class AlertObserver {
 
     /**
      * The Job the observer is registered for
-     *
-     * @return
      */
     public String getJobId() {
         return jobId;
@@ -125,7 +113,9 @@ public abstract class AlertObserver {
      * Fire the alert with the bucket the alert came from
      *
      * @param bucket
-     * @param tigger The alert trigger that fired the alert
+     *            the bucket
+     * @param trigger
+     *            The alert trigger that fired the alert
      */
     public abstract void fire(Bucket bucket, AlertTrigger trigger);
 }

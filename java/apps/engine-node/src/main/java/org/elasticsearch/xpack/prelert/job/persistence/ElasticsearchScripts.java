@@ -13,7 +13,6 @@ import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,22 +71,29 @@ public final class ElasticsearchScripts
     /**
      * Updates the specified document via executing a script
      *
-     * @param client the Elasticsearch client
-     * @param index the index
-     * @param type the document type
-     * @param docId the document id
-     * @param script the script the performs the update
-     * @return {@code} true if successful, {@false) otherwise
-     * @throws UnknownJobException if no job does not exist
-     * @throws JobException if the update fails (e.g. the script does not exist)
+     * @param client
+     *            the Elasticsearch client
+     * @param index
+     *            the index
+     * @param type
+     *            the document type
+     * @param docId
+     *            the document id
+     * @param script
+     *            the script the performs the update
+     * @return {@code} true if successful, {@false} otherwise
+     * @throws UnknownJobException
+     *             if no job does not exist
+     * @throws JobException
+     *             if the update fails (e.g. the script does not exist)
      */
     public static boolean updateViaScript(Client client, String index, String type, String docId,
             Script script) throws JobException, UnknownJobException {
         try
         {
             client.prepareUpdate(index, type, docId)
-                            .setScript(script)
-                            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
+            .setScript(script)
+            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
         }
         catch (IndexNotFoundException e)
         {
@@ -103,24 +109,33 @@ public final class ElasticsearchScripts
     /**
      * Upserts the specified document via executing a script
      *
-     * @param client the Elasticsearch client
-     * @param index the index
-     * @param type the document type
-     * @param docId the document id
-     * @param script the script the performs the update
-     * @param upsertMap the doc source of the update request to be used when the document does not exists
-     * @return {@code} true if successful, {@false) otherwise
-     * @throws UnknownJobException if no job does not exist
-     * @throws JobException if the update fails (e.g. the script does not exist)
+     * @param client
+     *            the Elasticsearch client
+     * @param index
+     *            the index
+     * @param type
+     *            the document type
+     * @param docId
+     *            the document id
+     * @param script
+     *            the script the performs the update
+     * @param upsertMap
+     *            the doc source of the update request to be used when the
+     *            document does not exists
+     * @return {@code} true if successful, {@false} otherwise
+     * @throws UnknownJobException
+     *             if no job does not exist
+     * @throws JobException
+     *             if the update fails (e.g. the script does not exist)
      */
     public static boolean upsertViaScript(Client client, String index, String type, String docId,
             Script script, Map<String, Object> upsertMap) throws JobException, UnknownJobException {
         try
         {
             client.prepareUpdate(index, type, docId)
-                               .setScript(script)
-                               .setUpsert(upsertMap)
-                               .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
+            .setScript(script)
+            .setUpsert(upsertMap)
+            .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
         }
         catch (IndexNotFoundException e)
         {
@@ -134,7 +149,7 @@ public final class ElasticsearchScripts
     }
 
     private static void handleIllegalArgumentException(IllegalArgumentException e, Script script)
-    throws JobException
+            throws JobException
     {
         String msg = Messages.getMessage(Messages.DATASTORE_ERROR_EXECUTING_SCRIPT, script);
         LOGGER.warn(msg);

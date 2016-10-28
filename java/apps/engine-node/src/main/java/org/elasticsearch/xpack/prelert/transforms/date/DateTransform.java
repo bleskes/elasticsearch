@@ -23,8 +23,6 @@ public abstract class DateTransform extends Transform {
 
     /**
      * The epoch time from the last transform
-     *
-     * @return
      */
     public long epochMs() {
         return epochMs;

@@ -22,7 +22,7 @@ public class ElasticsearchQueryBuilder {
      *   <li> start time (String in date_time format)
      *   <li> end time (String in date_time format)
      *   <li> extra (may be empty or contain aggregations, fields, etc.)
-     * </ol
+     * </ol>
      */
     private static final String SEARCH_BODY_TEMPLATE_2_X = "{"
             + "\"sort\": ["

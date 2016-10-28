@@ -43,11 +43,12 @@ public enum ErrorCodes
      * is returned if the reference job id is not known
      * @deprecated since version 2.0.0, this functionality has been removed
      */
+    @Deprecated
     UNKNOWN_JOB_REFERENCE(10103),
 
     /**
-     * The value provided in one of the job configuration fields
-     * is not allowed for example some fields cannot be a number < 0.
+     * The value provided in one of the job configuration fields is not allowed
+     * for example some fields cannot be a number &lt; 0.
      */
     INVALID_VALUE(10104),
 
@@ -89,9 +90,8 @@ public enum ErrorCodes
     JOB_ID_TAKEN(10110),
 
     /**
-     * The job id contains an upper case character or one of the
-     * following invalid characters:
-     * [\\, /, *, ?, \", <, >, |,  , ,]
+     * The job id contains an upper case character or one of the following
+     * invalid characters: [\\, /, *, ?, \", &lt;, &gt;, |, , ,]
      */
     PROHIBITIED_CHARACTER_IN_JOB_ID(10111),
 
@@ -394,7 +394,7 @@ public enum ErrorCodes
      */
     TOO_MANY_OUT_OF_ORDER_RECORDS(30105),
 
-     /**
+    /**
      * User is trying to upload data for a job while there are too
      * many jobs running concurrently.
      */
@@ -504,12 +504,12 @@ public enum ErrorCodes
     BUCKET_RESET_NOT_SUPPORTED(60109),
 
     /**
-     * Pagination skip parameter cannot be < 0.
+     * Pagination skip parameter cannot be &lt; 0.
      */
     INVALID_SKIP_PARAM(60110),
 
     /**
-     * Pagination take parameter cannot be < 0.
+     * Pagination take parameter cannot be &lt; 0.
      */
     INVALID_TAKE_PARAM(60111),
 

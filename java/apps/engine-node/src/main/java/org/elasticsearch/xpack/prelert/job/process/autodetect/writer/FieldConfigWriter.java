@@ -53,8 +53,6 @@ public class FieldConfigWriter {
 
     /**
      * Write the Prelert autodetect field options to the outputIndex stream.
-     *
-     * @throws IOException
      */
     public void write() throws IOException {
         StringBuilder contents = new StringBuilder();

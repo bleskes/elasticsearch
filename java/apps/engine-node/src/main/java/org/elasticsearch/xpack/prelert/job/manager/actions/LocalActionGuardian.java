@@ -12,8 +12,6 @@ import java.util.Map;
  * Prevents concurrent actions on a job based on the contents of a local
  * map. If a job currently partaking in an action {@linkplain #tryAcquiringAction(String, Enum)}
  * will throw otherwise an ActionTicket is returned
- *
- * @param <T>
  */
 public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
                             extends ActionGuardian<T>
@@ -35,9 +33,6 @@ public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
     /**
      * Get the action the job is currently processing
      * or NoneAction if the job is not active
-     *
-     * @param jobId
-     * @return
      */
     public T currentAction(String jobId)
     {

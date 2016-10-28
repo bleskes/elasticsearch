@@ -105,7 +105,6 @@ public class AutodetectBuilder {
      * program from the PRELERT_HOME/bin directory.
      *
      * @return A Java Process object
-     * @throws IOException
      */
     public Process build() throws IOException {
         logger.info("PRELERT_HOME is set to " + ProcessCtrl.PRELERT_HOME);
@@ -138,9 +137,6 @@ public class AutodetectBuilder {
 
     /**
      * Write the Prelert autodetect model options to <code>emptyConfFile</code>.
-     *
-     * @param emptyConfFile
-     * @throws IOException
      */
     private static void writeLimits(AnalysisLimits options, File emptyConfFile) throws IOException {
         try (OutputStreamWriter osw = new OutputStreamWriter(

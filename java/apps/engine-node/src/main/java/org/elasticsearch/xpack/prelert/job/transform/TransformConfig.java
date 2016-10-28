@@ -65,6 +65,7 @@ public class TransformConfig extends ToXContentToBytes implements Writeable {
         arguments = Collections.emptyList();
     }
 
+    @SuppressWarnings("unchecked")
     public TransformConfig(StreamInput in) throws IOException {
         this(in.readString());
         inputs = (List<String>) in.readGenericValue();
@@ -85,8 +86,6 @@ public class TransformConfig extends ToXContentToBytes implements Writeable {
 
     /**
      * Transform type see {@linkplain TransformType.Names}
-     *
-     * @return
      */
     public String getTransform() {
         return type;
@@ -125,8 +124,6 @@ public class TransformConfig extends ToXContentToBytes implements Writeable {
     /**
      * This field shouldn't be serialised as its created dynamically
      * Type may be null when the class is constructed.
-     *
-     * @return
      */
     public TransformType type() {
         return lazyType;

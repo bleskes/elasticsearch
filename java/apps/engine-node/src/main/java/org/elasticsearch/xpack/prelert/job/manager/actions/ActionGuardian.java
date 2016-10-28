@@ -24,8 +24,6 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
      * noneAction is the enum value representing the state where
      * no action is taking place.
      * e.g. @
-     *
-     * @param noneAction
      */
     public ActionGuardian(T noneAction)
     {
@@ -38,9 +36,6 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
      * no action is taking place.
      * guardian is the next guard to check if this guard succeeds in
      * acquiring an action.
-     *
-     * @param noneAction
-     * @param guardian
      */
     public ActionGuardian(T noneAction, ActionGuardian<T> guardian)
     {
@@ -50,7 +45,6 @@ public abstract class ActionGuardian< T extends Enum<T> & ActionState<T>>
 
     /**
      * Set the next guardian in the chain
-     * @param guardian
      */
     public void setNextGuardian(ActionGuardian<T> guardian)
     {

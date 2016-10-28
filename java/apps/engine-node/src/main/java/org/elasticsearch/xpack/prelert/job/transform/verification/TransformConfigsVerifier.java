@@ -25,9 +25,6 @@ public class TransformConfigsVerifier
      * <li>Check all the transform output field names are unique</li>
      * <li>Check there are no circular dependencies in the transforms</li>
      * </ol>
-     *
-     * @param transforms
-     * @return boolean
      */
     public static boolean verify(List<TransformConfig> transforms) throws ElasticsearchParseException
     {
@@ -62,9 +59,6 @@ public class TransformConfigsVerifier
      * return null if all transform ouput names are
      * unique or the first duplicate name if there are
      * duplications
-     *
-     * @param transforms
-     * @return
      */
     private static  String outputNamesAreUnique(List<TransformConfig> transforms)
     {
@@ -95,7 +89,6 @@ public class TransformConfigsVerifier
      * in the <code>transforms</code> list at the start of the chain
      * is returned else -1
      *
-     * @param transforms
      * @return -1 if no circular dependencies else the index of the
      * transform at the start of the circular chain
      */

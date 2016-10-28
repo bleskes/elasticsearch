@@ -22,10 +22,9 @@ public interface DataProcessor {
      *     <li>If a high proportion of the records chronologically out of order</li>
      * </ol>
      *
-     * @param jobId
+     * @param jobId the jobId
      * @param input Data input stream
      * @param params Data processing parameters
-     * @throws ElasticsearchStatusException
      * @return Count of records, fields, bytes, etc written
      */
     DataCounts processData(String jobId, InputStream input, DataLoadParams params);
@@ -38,7 +37,6 @@ public interface DataProcessor {
      * @param jobId The job to flush
      * @param interimResultsParams Parameters about whether interim results calculation
      * should occur and for which period of time
-     * @throws ElasticsearchStatusException
      */
     void flushJob(String jobId, InterimResultsParams interimResultsParams);
 
@@ -46,7 +44,6 @@ public interface DataProcessor {
      * Stop the running job and mark it as finished.<br>
      *
      * @param jobId The job to stop
-     * @throws ElasticsearchStatusException
      */
     void closeJob(String jobId);
 }

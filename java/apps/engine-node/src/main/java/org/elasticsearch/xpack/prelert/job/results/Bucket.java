@@ -251,8 +251,6 @@ public class Bucket extends ToXContentToBytes implements Writeable, StorageSeria
 
     /**
      * The number of records (events) actually processed in this bucket.
-     *
-     * @return
      */
     public long getEventCount() {
         return eventCount;

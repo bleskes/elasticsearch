@@ -9,16 +9,16 @@ public final class TimeUtils {
     }
 
     /**
-     * First tries to parse the date first as a Long and convert that
-     * to an epoch time. If the long number has more than 10 digits
-     * it is considered a time in milliseconds else if 10 or less digits
-     * it is in seconds. If that fails it tries to parse the string
-     * using {@link DateFieldMapper#DEFAULT_DATE_TIME_FORMATTER}
-     * <p>
+     * First tries to parse the date first as a Long and convert that to an
+     * epoch time. If the long number has more than 10 digits it is considered a
+     * time in milliseconds else if 10 or less digits it is in seconds. If that
+     * fails it tries to parse the string using
+     * {@link DateFieldMapper#DEFAULT_DATE_TIME_FORMATTER}
+     *
      * If the date string cannot be parsed -1 is returned.
      *
-     * @param date
-     * @return The epoch time in milliseconds or -1 if the date cannot be parsed.
+     * @return The epoch time in milliseconds or -1 if the date cannot be
+     *         parsed.
      */
     public static long dateStringToEpoch(String date) {
         try {

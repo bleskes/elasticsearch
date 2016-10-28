@@ -7,7 +7,6 @@ public interface UsagePersisterFactory
 {
     /**
      * Get an instance of a {@linkplain UsagePersister}
-     * @return
      */
     UsagePersister getInstance(Logger logger);
 }

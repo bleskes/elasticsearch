@@ -15,9 +15,6 @@ import java.util.Optional;
 public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
     /**
      * Return true if the data store is accessible for the given job Id
-     *
-     * @param jobId
-     * @return
      */
     boolean isConnected(String jobId);
 
@@ -81,9 +78,6 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
 
     /**
      * Get the job's model size stats.
-     *
-     * @param jobId
-     * @return
      */
     Optional<ModelSizeStats> modelSizeStats(String jobId);
 
@@ -99,8 +93,6 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
      * Refresh the datastore index so that all recent changes are
      * available to search operations. This is a synchronous blocking
      * call that should not return until the index has been refreshed.
-     *
-     * @param jobId
      */
     void refreshIndex(String jobId);
 

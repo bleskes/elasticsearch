@@ -26,8 +26,6 @@ public class OutOfOrderRecordsException extends JobException {
 
     /**
      * The number of out of order records
-     *
-     * @return
      */
     public long getNumberOutOfOrder() {
         return numberBad;
@@ -35,8 +33,6 @@ public class OutOfOrderRecordsException extends JobException {
 
     /**
      * Total number of records (good + bad)
-     *
-     * @return
      */
     public long getTotalNumber() {
         return totalNumber;

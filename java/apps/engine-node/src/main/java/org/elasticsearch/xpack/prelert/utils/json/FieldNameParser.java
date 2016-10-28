@@ -5,8 +5,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.logging.Loggers;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,16 +34,13 @@ public abstract class FieldNameParser<T> {
     }
 
     /**
-     * Creates a new object T and populates it from the JSON parser.
-     * The parser must be pointing at the start of the object then all the object's
-     * fields are read and if they match the property names the appropriate
-     * members are set.
-     * <p>
+     * Creates a new object T and populates it from the JSON parser. The parser
+     * must be pointing at the start of the object then all the object's fields
+     * are read and if they match the property names the appropriate members are
+     * set.
+     *
      * Does not validate that all the properties (or any) have been set but if
      * parsing fails an exception will be thrown.
-     *
-     * @return The populated data
-     * @throws ElasticsearchParseException
      */
     public T parseJson() throws ElasticsearchParseException {
         T result = supply();
@@ -66,9 +61,6 @@ public abstract class FieldNameParser<T> {
      * <p>
      * Does not validate that all the properties (or any) have been set but if
      * parsing fails an exception will be thrown.
-     *
-     * @return The populated data
-     * @throws ElasticsearchParseException
      */
     public T parseJsonAfterStartObject() throws ElasticsearchParseException {
         T result = supply();
@@ -97,21 +89,21 @@ public abstract class FieldNameParser<T> {
         JsonToken token = parser.getCurrentToken();
         while (token != JsonToken.END_OBJECT) {
             switch (token) {
-                case START_OBJECT:
-                    logger.error(String.format("Start object parsed in %s", objectName));
-                    break;
-                case END_OBJECT:
-                    logger.error(String.format("End object parsed in %s", objectName));
-                    break;
-                case FIELD_NAME:
-                    String fieldName = parser.getCurrentName();
-                    handleFieldName(fieldName, data);
-                    break;
-                default:
-                    logger.warn(String.format(
-                            "Parsing error: Only simple fields expected in %s not %s",
-                            objectName, token));
-                    break;
+            case START_OBJECT:
+                logger.error(String.format("Start object parsed in %s", objectName));
+                break;
+            case END_OBJECT:
+                logger.error(String.format("End object parsed in %s", objectName));
+                break;
+            case FIELD_NAME:
+                String fieldName = parser.getCurrentName();
+                handleFieldName(fieldName, data);
+                break;
+            default:
+                logger.warn(String.format(
+                        "Parsing error: Only simple fields expected in %s not %s",
+                        objectName, token));
+                break;
             }
 
             token = parser.nextToken();
@@ -171,7 +163,7 @@ public abstract class FieldNameParser<T> {
     }
 
     protected <E> void parseArray(String fieldName, ElementParser<E> elementParser,
-                                  Collection<E> result) throws ElasticsearchParseException, IOException {
+            Collection<E> result) throws ElasticsearchParseException, IOException {
         JsonToken token = parser.getCurrentToken();
         if (token != JsonToken.START_ARRAY) {
             String msg = "Invalid value Expecting an array of " + fieldName;

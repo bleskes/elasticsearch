@@ -2,7 +2,6 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
@@ -139,9 +138,6 @@ public class ElasticsearchMappings {
     /**
      * Create the Elasticsearch mapping for {@linkplain org.elasticsearch.xpack.prelert.job.results.Bucket}.
      * The '_all' field is disabled as the document isn't meant to be searched.
-     *
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder bucketMapping() throws IOException {
         return jsonBuilder()
@@ -229,9 +225,6 @@ public class ElasticsearchMappings {
 
     /**
      * Create the Elasticsearch mapping for {@linkplain org.elasticsearch.xpack.prelert.job.results.BucketInfluencer}.
-     *
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder bucketInfluencerMapping() throws IOException {
         return jsonBuilder()
@@ -371,8 +364,6 @@ public class ElasticsearchMappings {
      *
      * @param termFieldNames Optionally, other field names to include in the
      *                       mappings.  Pass <code>null</code> if not required.
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder recordMapping(Collection<String> termFieldNames) throws IOException {
         XContentBuilder builder = jsonBuilder()
@@ -521,9 +512,6 @@ public class ElasticsearchMappings {
      * <p>
      * The quantile state string is not searchable (index = 'no') as it could be
      * very large.
-     *
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder quantilesMapping() throws IOException {
         return jsonBuilder()
@@ -554,9 +542,6 @@ public class ElasticsearchMappings {
      * so all analysis by Elasticsearch is disabled.  The only way to
      * retrieve the model state is by knowing the ID of a particular
      * document or by searching for all documents of this type.
-     *
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder modelStateMapping() throws IOException {
         return jsonBuilder()
@@ -580,9 +565,6 @@ public class ElasticsearchMappings {
      * so all analysis by Elasticsearch is disabled.  The only way to
      * retrieve the model state is by knowing the ID of a particular
      * document or by searching for all documents of this type.
-     *
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder modelSnapshotMapping() throws IOException {
         return jsonBuilder()
@@ -671,9 +653,6 @@ public class ElasticsearchMappings {
 
     /**
      * Create the Elasticsearch mapping for {@linkplain ModelSizeStats}.
-     *
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder modelSizeStatsMapping() throws IOException {
         return jsonBuilder()
@@ -721,8 +700,6 @@ public class ElasticsearchMappings {
      *
      * @param termFieldNames Optionally, other field names to include in the
      *                       mappings.  Pass <code>null</code> if not required.
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder modelDebugOutputMapping(Collection<String> termFieldNames) throws IOException {
         XContentBuilder builder = jsonBuilder()
@@ -784,8 +761,6 @@ public class ElasticsearchMappings {
      *
      * @param influencerFieldNames Optionally, other field names to include in the
      *                             mappings.  Pass <code>null</code> if not required.
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder influencerMapping(Collection<String> influencerFieldNames) throws IOException {
         XContentBuilder builder = jsonBuilder()
@@ -838,9 +813,6 @@ public class ElasticsearchMappings {
 
     /**
      * The Elasticsearch mappings for the usage documents
-     *
-     * @return
-     * @throws IOException
      */
     public static XContentBuilder usageMapping() throws IOException {
         return jsonBuilder()

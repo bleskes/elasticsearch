@@ -54,12 +54,11 @@ public class ElasticsearchUsagePersister implements UsagePersister {
      * Uses a script to update the volume field and 'upsert'
      * to create the doc if it doesn't exist.
      *
-     * @param index
+     * @param index the index to persist to
      * @param id                Doc id is also its timestamp
      * @param additionalBytes   Add this value to the running total
      * @param additionalFields  Add this value to the running total
      * @param additionalRecords Add this value to the running total
-     * @throws JobException
      */
     private void updateDocument(String index, String id, long additionalBytes, long additionalFields, long additionalRecords)
             throws JobException {

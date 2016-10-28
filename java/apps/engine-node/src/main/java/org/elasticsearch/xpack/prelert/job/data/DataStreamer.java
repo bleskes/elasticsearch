@@ -27,10 +27,6 @@ public class DataStreamer {
     /**
      * Stream the data to the native process.
      *
-     * @param contentEncoding
-     * @param jobId
-     * @param input
-     * @param params
      * @return Count of records, fields, bytes, etc written
      */
     public DataCounts streamData(String contentEncoding, String jobId, InputStream input, DataLoadParams params) throws IOException {
@@ -60,9 +56,6 @@ public class DataStreamer {
     /**
      * Pass the data stream to the native process.
      *
-     * @param jobId
-     * @param input
-     * @param params
      * @return Count of records, fields, bytes, etc written
      */
     private DataCounts handleStream(String jobId, InputStream input, DataLoadParams params) {

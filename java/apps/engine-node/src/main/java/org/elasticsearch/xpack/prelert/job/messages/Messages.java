@@ -253,8 +253,7 @@ public final class Messages
     /**
      * Look up the message string from the resource bundle.
      *
-     * @param key Must be one of the statics defined in this file
-     * @return
+     * @param key Must be one of the statics defined in this file]
      */
     public static String getMessage(String key)
     {
@@ -264,9 +263,8 @@ public final class Messages
     /**
      * Look up the message string from the resource bundle and format with
      * the supplied arguments
-     * @param key
-     * @param args MessageFormat arguments. See {@linkplain MessageFormat#format(Object)}
-     * @return
+     * @param key the key for the message
+     * @param args MessageFormat arguments. See {@linkplain MessageFormat#format(Object)}]
      */
     public static String getMessage(String key, Object...args)
     {

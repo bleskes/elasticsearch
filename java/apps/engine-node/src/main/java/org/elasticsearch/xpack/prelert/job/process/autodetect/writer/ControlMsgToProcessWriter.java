@@ -56,8 +56,12 @@ public class ControlMsgToProcessWriter {
 
     /**
      * Construct the control message writer with a LengthEncodedWriter
+     * 
      * @param lengthEncodedWriter
-     * @param numberOfAnalysisFields The number of fields configured for analysis not including the time field
+     *            the writer
+     * @param numberOfAnalysisFields
+     *            The number of fields configured for analysis not including the
+     *            time field
      */
     public ControlMsgToProcessWriter(LengthEncodedWriter lengthEncodedWriter, int numberOfAnalysisFields) {
         this.lengthEncodedWriter = Objects.requireNonNull(lengthEncodedWriter);
@@ -65,10 +69,14 @@ public class ControlMsgToProcessWriter {
     }
 
     /**
-     * Create the control message writer with a OutputStream. A LengthEncodedWriter is
-     * created on the OutputStream parameter
+     * Create the control message writer with a OutputStream. A
+     * LengthEncodedWriter is created on the OutputStream parameter
+     * 
      * @param os
-     * @param numberOfAnalysisFields The number of fields configured for analysis not including the time field
+     *            the output stream
+     * @param numberOfAnalysisFields
+     *            The number of fields configured for analysis not including the
+     *            time field
      */
     public static ControlMsgToProcessWriter create(OutputStream os, int numberOfAnalysisFields) {
         return new ControlMsgToProcessWriter(new LengthEncodedWriter(os), numberOfAnalysisFields);
@@ -79,7 +87,6 @@ public class ControlMsgToProcessWriter {
      *
      * @param params Parameters indicating whether interim results should be written
      *               and for which buckets
-     * @throws IOException
      */
     public void writeCalcInterimMessage(InterimResultsParams params) throws IOException {
         if (params.shouldAdvanceTime()) {
@@ -98,7 +105,6 @@ public class ControlMsgToProcessWriter {
      *
      * @return an ID for this flush that will be echoed back by the C++
      * autodetect process once it is complete.
-     * @throws IOException
      */
     public String writeFlushMessage() throws IOException {
         String flushId = Long.toString(ms_FlushNumber.getAndIncrement());
@@ -138,7 +144,6 @@ public class ControlMsgToProcessWriter {
      * <code>analysisConfig</code>.
      *
      * @param message The control message to write.
-     * @throws IOException
      */
     private void writeMessage(String message) throws IOException {
 

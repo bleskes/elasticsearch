@@ -23,11 +23,9 @@ public interface DataToProcessWriter {
      * a <code>MissingFieldException</code> is thrown
      *
      * @return Counts of the records processed, bytes read etc
-     * @throws IOException
      * @throws MissingFieldException                  If any fields are missing from the inputIndex
      * @throws HighProportionOfBadTimestampsException If a large proportion
      *                                                of the records read have missing fields
-     * @throws OutOfOrderRecordsException
      * @throws MalformedJsonException                 If JSON data is malformed and we cannot recover.
      */
     DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,

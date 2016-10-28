@@ -14,24 +14,18 @@ public interface JobDetailsProvider
 {
     /**
      * Store the Prelert info doc (version number etc)
-     *
-     * @param infoDoc
-     * @return
      */
     boolean savePrelertInfo(String infoDoc);
 
     /**
      * Ensures a given {@code jobId} corresponds to an existing job
-     * @throws UnknownJobException if there is no job with {@code jobId}
+     * @throws ResourceNotFoundException if there is no job with {@code jobId}
      */
     void checkJobExists(String jobId) throws ResourceNotFoundException;
 
     /**
      * Return true if the job id is unique else if it is already used
      * by another job false is returned
-     *
-     * @param jobId
-     * @return true or false
      */
     boolean jobIdIsUnique(String jobId);
 
@@ -47,19 +41,12 @@ public interface JobDetailsProvider
      * Save the details of the new job to the datastore.
      * Throws <code>JobIdAlreadyExistsException</code> if a job with the
      * same Id already exists.
-     *
-     * @param job
-     * @return True
-     * @throws JobIdAlreadyExistsException
      */
     // TODO: rename and move?
     void createJob(JobDetails job, ActionListener<Boolean> listener) throws JobIdAlreadyExistsException;
 
     /**
      * Delete all the job related documents from the database.
-     *
-     * @param jobId
-     * @param listener
      */
     // TODO: should live together with createJob (in case it moves)?
     void deleteJob(String jobId, ActionListener<Boolean> listener);

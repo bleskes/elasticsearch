@@ -25,10 +25,10 @@ public final class DefaultFrequency
      *
      * The default depends on the bucket span:
      * <ul>
-     *   <li> <= 2 mins -> 1 min
-     *   <li> <= 20 mins -> bucket span / 2
-     *   <li> <= 12 hours -> 10 mins
-     *   <li> > 12 hours -> 1 hour
+     *   <li> &lt;= 2 mins -&gt; 1 min</li>
+     *   <li> &lt;= 20 mins -&gt; bucket span / 2</li>
+     *   <li> &lt;= 12 hours -&gt; 10 mins</li>
+     *   <li> &gt; 12 hours -&gt; 1 hour</li>
      * </ul>
      *
      * @param bucketSpanSeconds the bucket span in seconds

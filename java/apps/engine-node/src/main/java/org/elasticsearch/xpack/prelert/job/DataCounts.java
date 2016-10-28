@@ -226,8 +226,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     /**
      * Only present to keep jackson serialisation happy.
      * This property should not be deserialised
-     *
-     * @param count
      */
     @JsonIgnore
     private void setInputRecordCount(long count) {

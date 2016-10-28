@@ -10,7 +10,6 @@ import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
@@ -73,13 +72,6 @@ public class AutodetectResultsParser {
      * <p>
      * Trigger renormalisation of past results when new quantiles
      * are seen.
-     *
-     * @param inputStream
-     * @param persister
-     * @param renormaliser
-     * @param logger
-     * @return
-     * @throws ElasticsearchParseException
      */
     public void parseResults(InputStream inputStream, JobResultsPersister persister,
             Renormaliser renormaliser, Logger logger) throws ElasticsearchParseException {

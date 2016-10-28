@@ -32,14 +32,11 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Generic wrapper class for a page of query results and the
- * total number of query hits.<br>
- * {@linkplain #hitCount()} is the total number of results
- * but that value may not be equal to the actual length of
- * the {@linkplain #hits()} list if skip & take or
- * some cursor was used in the database query.
- *
- * @param <T>
+ * Generic wrapper class for a page of query results and the total number of
+ * query hits.<br>
+ * {@linkplain #hitCount()} is the total number of results but that value may
+ * not be equal to the actual length of the {@linkplain #hits()} list if skip
+ * &amp; take or some cursor was used in the database query.
  */
 @JsonPropertyOrder({"hitCount", "hits"})
 public final class QueryPage<T extends ToXContent & Writeable> extends ToXContentToBytes implements Writeable {

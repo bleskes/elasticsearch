@@ -17,10 +17,8 @@ public final class ModelDebugConfigVerifier
     /**
      * Checks the ModelDebugConfig is valid
      * <ol>
-     * <li>If BoundsPercentile is set it must be $gt= 0.0 and &lt 100.0</li>
+     * <li>If BoundsPercentile is set it must be &gt;= 0.0 and &lt; 100.0</li>
      * </ol>
-     * @param config
-     * @return
      */
     public static boolean verify(ModelDebugConfig config) {
         if (config.isEnabled() && (config.getBoundsPercentile() < 0.0 || config.getBoundsPercentile() > MAX_PERCENTILE)) {

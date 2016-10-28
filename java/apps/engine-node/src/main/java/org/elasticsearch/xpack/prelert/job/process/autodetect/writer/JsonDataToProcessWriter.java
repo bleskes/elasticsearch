@@ -60,13 +60,9 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
      * If any of the fields in <code>analysisFields</code> or the
      * <code>DataDescription</code>s timeField is missing from the JOSN inputIndex
      * a <code>MissingFieldException</code> is thrown
-     *
-     * @throws IOException
      * @throws MissingFieldException                  If any fields are missing from the JSON records
      * @throws HighProportionOfBadTimestampsException If a large proportion
      *                                                of the records read have missing fields
-     * @throws OutOfOrderRecordsException
-     * @throws MalformedJsonException
      */
     @Override
     public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
@@ -156,9 +152,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
 
     /**
      * Return the number of missing fields
-     *
-     * @param gotFieldFlags
-     * @return
      */
     private static long missingFieldCount(boolean[] gotFieldFlags) {
         long count = 0;

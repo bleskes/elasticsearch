@@ -17,26 +17,16 @@ public interface RecordWriter {
 
     /**
      * Write each String in the record array
-     *
-     * @param record
-     * @throws IOException
-     * @see {@link #writeRecord(List)}
      */
     public abstract void writeRecord(String[] record) throws IOException;
 
     /**
      * Write each String in the record list
-     *
-     * @param record
-     * @throws IOException
-     * @see {@link #writeRecord(String[])}
      */
     public abstract void writeRecord(List<String> record) throws IOException;
 
     /**
      * Flush the outputIndex stream.
-     *
-     * @throws IOException
      */
     public abstract void flush() throws IOException;
 

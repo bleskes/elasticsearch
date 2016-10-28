@@ -20,8 +20,6 @@ public class CsvRecordWriter implements RecordWriter {
     /**
      * Create the writer on the OutputStream <code>os</code>.
      * This object will never close <code>os</code>.
-     *
-     * @param os
      */
     public CsvRecordWriter(OutputStream os) {
         writer = new CsvListWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8), CsvPreference.STANDARD_PREFERENCE);

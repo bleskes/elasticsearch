@@ -64,16 +64,15 @@ import java.util.stream.Collectors;
 
 /**
  * Allows interactions with jobs. The managed interactions include:
- * <p>
  * <ul>
- * <li>creation
- * <li>deletion
- * <li>flushing
- * <li>updating
- * <li>sending of data
- * <li>fetching jobs and results
- * <li>starting/stopping of scheduled jobs
- * </ul
+ * <li>creation</li>
+ * <li>deletion</li>
+ * <li>flushing</li>
+ * <li>updating</li>
+ * <li>sending of data</li>
+ * <li>fetching jobs and results</li>
+ * <li>starting/stopping of scheduled jobs</li>
+ * </ul>
  */
 public class JobManager {
 
@@ -110,8 +109,10 @@ public class JobManager {
      * Get the details of the specific job wrapped in a <code>Optional</code>
      *
      * @param jobId
-     * @return An {@code Optional} containing the {@code JobDetails} if a job with the given
-     * {@code jobId} exists, or an empty {@code Optional} otherwise
+     *            the jobId
+     * @return An {@code Optional} containing the {@code JobDetails} if a job
+     *         with the given {@code jobId} exists, or an empty {@code Optional}
+     *         otherwise
      */
     public Optional<JobDetails> getJob(String jobId, ClusterState clusterState) {
         PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
@@ -154,24 +155,32 @@ public class JobManager {
     }
 
     /**
-     * Returns the non-null {@code JobDetails} object for the given {@code jobId}
-     * or throws {@link org.elasticsearch.ResourceNotFoundException}
+     * Returns the non-null {@code JobDetails} object for the given
+     * {@code jobId} or throws
+     * {@link org.elasticsearch.ResourceNotFoundException}
      *
      * @param jobId
-     * @return the {@code JobDetails} if a job with the given {@code jobId} exists
-     * @throws org.elasticsearch.ResourceNotFoundException if there is no job with matching the given {@code jobId}
+     *            the jobId
+     * @return the {@code JobDetails} if a job with the given {@code jobId}
+     *         exists
+     * @throws org.elasticsearch.ResourceNotFoundException
+     *             if there is no job with matching the given {@code jobId}
      */
     public JobDetails getJobOrThrowIfUnknown(String jobId) {
         return getJobOrThrowIfUnknown(clusterService.state(), jobId);
     }
 
     /**
-     * Returns the non-null {@code JobDetails} object for the given {@code jobId}
-     * or throws {@link org.elasticsearch.ResourceNotFoundException}
+     * Returns the non-null {@code JobDetails} object for the given
+     * {@code jobId} or throws
+     * {@link org.elasticsearch.ResourceNotFoundException}
      *
      * @param jobId
-     * @return the {@code JobDetails} if a job with the given {@code jobId} exists
-     * @throws org.elasticsearch.ResourceNotFoundException if there is no job with matching the given {@code jobId}
+     *            the jobId
+     * @return the {@code JobDetails} if a job with the given {@code jobId}
+     *         exists
+     * @throws org.elasticsearch.ResourceNotFoundException
+     *             if there is no job with matching the given {@code jobId}
      */
     public JobDetails getJobOrThrowIfUnknown(ClusterState clusterState, String jobId) {
         PrelertMetadata prelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
@@ -278,56 +287,59 @@ public class JobManager {
 
         // NORELEASE: Should also delete the running process
 
-        try (ActionGuardian<Action>.ActionTicket actionTicket = processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
-            checkJobHasNoRunningScheduler(jobId);
+        checkJobHasNoRunningScheduler(jobId);
 
-            ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
-                @Override
-                public void onResponse(Boolean aBoolean) {
-                    jobProvider.deleteJob(request.getJobId(), new ActionListener<Boolean>() {
-                        @Override
-                        public void onResponse(Boolean aBoolean) {
+        ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
+            @Override
+            public void onResponse(Boolean aBoolean) {
+                jobProvider.deleteJob(request.getJobId(), new ActionListener<Boolean>() {
+                    @Override
+                    public void onResponse(Boolean aBoolean) {
 
-                            try {
-                                new JobLogs().deleteLogs(jobId);
-                                // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on
-                                // the cluster state update task thread  and any action performed on that thread should be quick.
-                                // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+                        try {
+                            new JobLogs().deleteLogs(jobId);
+                            // NORELEASE: This is not the place the audit log
+                            // (indexes a document), because this method is
+                            // executed on
+                            // the cluster state update task thread and any
+                            // action performed on that thread should be quick.
+                            // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
 
-                                // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
-                                // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
-                            } catch (JobException e) {
-                                actionListener.onFailure(e);
-                            }
-                            actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
-                        }
-
-                        @Override
-                        public void onFailure(Exception e) {
+                            // Also I wonder if we need to audit log infra
+                            // structure in prelert as when we merge into xpack
+                            // we can use its audit trailing. See:
+                            // https://github.com/elastic/prelert-legacy/issues/48
+                        } catch (JobException e) {
                             actionListener.onFailure(e);
                         }
-                    });
-                }
+                        actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
+                    }
 
-                @Override
-                public void onFailure(Exception e) {
-                    actionListener.onFailure(e);
-                }
-            };
+                    @Override
+                    public void onFailure(Exception e) {
+                        actionListener.onFailure(e);
+                    }
+                });
+            }
 
-            clusterService.submitStateUpdateTask("delete-job-" + jobId, new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
+            @Override
+            public void onFailure(Exception e) {
+                actionListener.onFailure(e);
+            }
+        };
 
-                @Override
-                protected Boolean newResponse(boolean acknowledged) {
-                    return acknowledged;
-                }
+        clusterService.submitStateUpdateTask("delete-job-" + jobId, new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
 
-                @Override
-                public ClusterState execute(ClusterState currentState) throws Exception {
-                    return removeJobFromClusterState(jobId, currentState);
-                }
-            });
-        }
+            @Override
+            protected Boolean newResponse(boolean acknowledged) {
+                return acknowledged;
+            }
+
+            @Override
+            public ClusterState execute(ClusterState currentState) throws Exception {
+                return removeJobFromClusterState(jobId, currentState);
+            }
+        });
     }
 
     private void checkJobHasNoRunningScheduler(String jobId) {

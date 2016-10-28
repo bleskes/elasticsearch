@@ -15,11 +15,14 @@ public interface StatusReporterFactory {
      * Return a new StatusReporter for the given job id.
      *
      * @param jobId
-     * @param counts        The persisted counts for the job
-     * @param usageReporter to be analysed in each record. This count does not include the
-     *                      time field
-     * @param logger        The job logger
-     * @return
+     *            the job id
+     * @param counts
+     *            The persisted counts for the job
+     * @param usageReporter
+     *            to be analysed in each record. This count does not include the
+     *            time field
+     * @param logger
+     *            The job logger
      */
     public StatusReporter newStatusReporter(String jobId, DataCounts
             counts, UsageReporter usageReporter, Logger logger);

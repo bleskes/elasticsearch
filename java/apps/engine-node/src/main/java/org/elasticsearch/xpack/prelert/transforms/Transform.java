@@ -76,8 +76,6 @@ public abstract class Transform {
 
     /**
      * The indexes for the inputs
-     *
-     * @return
      */
     public final List<TransformIndex> getReadIndexes() {
         return readIndexes;
@@ -85,8 +83,6 @@ public abstract class Transform {
 
     /**
      * The write output indexes
-     *
-     * @return
      */
     public final List<TransformIndex> getWriteIndexes() {
         return writeIndexes;
@@ -97,10 +93,6 @@ public abstract class Transform {
      * The read write array of arrays area typically contains an input array,
      * scratch area array and the output array. The scratch area is used in the
      * case where the transform is chained so reads/writes to an intermediate area
-     *
-     * @param readWriteArea
-     * @return
-     * @throws TransformException
      */
     public abstract TransformResult transform(String[][] readWriteArea)
             throws TransformException;

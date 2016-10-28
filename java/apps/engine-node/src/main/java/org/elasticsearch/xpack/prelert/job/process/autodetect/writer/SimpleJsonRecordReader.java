@@ -19,10 +19,14 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
     /**
      * Create a reader that parses the mapped fields from JSON.
      *
-     * @param parser             The JSON parser
-     * @param fieldMap           Map to field name to record array index position
+     * @param parser
+     *            The JSON parser
+     * @param fieldMap
+     *            Map to field name to record array index position
      * @param recordHoldingField
+     *            record field
      * @param logger
+     *            logger
      */
     SimpleJsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, String recordHoldingField, Logger logger) {
         super(parser, fieldMap, recordHoldingField, logger);
@@ -44,8 +48,6 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
      *                  was read
      * @return The number of fields in the JSON doc or -1 if nothing was read
      * because the end of the stream was reached
-     * @throws IOException
-     * @throws MalformedJsonException
      */
     @Override
     public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException {
@@ -80,6 +82,7 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
         return fieldCount;
     }
 
+    @Override
     protected void clearNestedLevel() {
         nestedLevel = 0;
         nestedFields = new ArrayDeque<String>();

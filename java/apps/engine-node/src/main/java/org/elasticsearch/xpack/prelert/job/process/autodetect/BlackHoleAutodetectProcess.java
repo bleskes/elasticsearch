@@ -63,7 +63,6 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
      * Accept the request do nothing with it but write the flush acknowledgement to {@link #out()}
      * @param params Should interim results be generated
      * @return {@link #FLUSH_ID}
-     * @throws IOException
      */
     @Override
     public String flushJob(InterimResultsParams params) throws IOException {

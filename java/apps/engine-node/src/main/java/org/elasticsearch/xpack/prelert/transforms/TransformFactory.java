@@ -22,14 +22,6 @@ public class TransformFactory {
     public static final int SCRATCH_ARRAY_INDEX = 1;
     public static final int OUTPUT_ARRAY_INDEX = 2;
 
-    /**
-     * @param transformConfig
-     * @param inputIndexesMap
-     * @param scratchAreaIndexesMap
-     * @param outputIndexesMap
-     * @param logger
-     * @return
-     */
     public Transform create(TransformConfig transformConfig,
                             Map<String, Integer> inputIndexesMap,
                             Map<String, Integer> scratchAreaIndexesMap,
@@ -113,10 +105,6 @@ public class TransformFactory {
     /**
      * For each <code>field</code> fill the <code>indexArray</code>
      * with the index from the <code>indexes</code> map.
-     *
-     * @param fields
-     * @param indexes
-     * @param indexArray
      */
     private static void fillIndexArray(List<String> fields, Map<String, Integer> indexes,
                                        int[] indexArray) {

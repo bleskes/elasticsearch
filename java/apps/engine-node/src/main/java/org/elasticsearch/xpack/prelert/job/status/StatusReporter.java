@@ -59,17 +59,17 @@ public class StatusReporter {
     private final AtomicLong lastRecordTimeEpochMs;
 
     public StatusReporter(String jobId, UsageReporter usageReporter,
-                          JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
+            JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
         this(jobId, usageReporter, dataCountsPersister, logger, new DataCounts(), bucketSpan);
     }
 
     public StatusReporter(String jobId, DataCounts counts, UsageReporter usageReporter,
-                          JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
+            JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
         this(jobId, usageReporter, dataCountsPersister, logger, new DataCounts(counts), bucketSpan);
     }
 
     private StatusReporter(String jobId, UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister,
-                           Logger logger, DataCounts totalCounts, long bucketSpan) {
+            Logger logger, DataCounts totalCounts, long bucketSpan) {
         this.jobId = jobId;
         this.usageReporter = usageReporter;
         this.dataCountsPersister = dataCountsPersister;
@@ -97,8 +97,6 @@ public class StatusReporter {
      *                           but the actual number of fields in the record
      * @param latestRecordTimeMs The time of the latest record written
      *                           in milliseconds from the epoch.
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     public void reportRecordWritten(long inputFieldCount, long latestRecordTimeMs)
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
@@ -146,8 +144,6 @@ public class StatusReporter {
     /**
      * Increment the excluded record count by 1 and the input field
      * count by <code>inputFieldCount</code>
-     *
-     * @param inputFieldCount
      */
     public void reportExcludedRecord(long inputFieldCount) {
         totalRecordStats.incrementExcludedRecordCount(1);
@@ -194,8 +190,6 @@ public class StatusReporter {
 
     /**
      * Add <code>newBytes</code> to the total volume processed
-     *
-     * @param newBytes
      */
     public void reportBytesRead(long newBytes) {
         totalRecordStats.incrementInputBytes(newBytes);
@@ -205,8 +199,6 @@ public class StatusReporter {
 
     /**
      * Increments the out of order record count
-     *
-     * @param
      */
     public void reportOutOfOrderRecord(long inputFieldCount) {
         totalRecordStats.incrementOutOfOrderTimeStampCount(1);
@@ -219,9 +211,9 @@ public class StatusReporter {
     }
 
     /**
-     * Total records seen = records written to the Engine (processed
-     * record count) + date parse error records count + out of order record count.
-     * <p>
+     * Total records seen = records written to the Engine (processed record
+     * count) + date parse error records count + out of order record count.
+     *
      * Records with missing fields are counted as they are still written.
      */
     public long getInputRecordCount() {
@@ -289,9 +281,6 @@ public class StatusReporter {
     /**
      * Report the the status now regardless of whether or
      * not we are at a reporting boundary.
-     *
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     public void finishReporting()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
@@ -310,8 +299,6 @@ public class StatusReporter {
      * Log the status.  This is done progressively less frequently as the job
      * processes more data.  Logging every 10000 records when the data rate is
      * 40000 per second quickly rolls the logs.
-     *
-     * @param totalRecords
      */
     private void logStatus(long totalRecords) {
         if (++logCount % logEvery != 0) {
@@ -319,7 +306,7 @@ public class StatusReporter {
         }
 
         String status = String.format("%d records written to autodetect; missingFieldCount=%d, "
-                        + "invalidDateCount=%d, outOfOrderCount=%d, failedTransformCount=%d",
+                + "invalidDateCount=%d, outOfOrderCount=%d, failedTransformCount=%d",
                 getProcessedRecordCount(), getMissingFieldErrorCount(), getDateParseErrorsCount(),
                 getOutOfOrderRecordCount(), getFailedTransformCount());
 
@@ -341,9 +328,6 @@ public class StatusReporter {
      * <li>After 1000 records update every 1000</li>
      * <li>After 20000 records update every 10000</li>
      * </ol>
-     *
-     * @param totalRecords
-     * @return
      */
     private boolean isReportingBoundary(long totalRecords) {
         // after 20,000 records update every 10,000
@@ -379,10 +363,6 @@ public class StatusReporter {
      * contains errors (bad dates, out of order). See
      * {@linkplain #ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS} and
      * {@linkplain #ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS}
-     *
-     * @param totalRecords
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
      */
     protected void checkStatus(long totalRecords)
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {

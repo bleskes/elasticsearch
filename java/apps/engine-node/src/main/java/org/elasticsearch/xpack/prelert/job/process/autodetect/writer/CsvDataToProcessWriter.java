@@ -62,11 +62,9 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
      * if the expected time field is missing from the CSV header
      * a <code>MissingFieldException</code> is thrown
      *
-     * @throws IOException
      * @throws MissingFieldException                  If any fields are missing from the CSV header
      * @throws HighProportionOfBadTimestampsException If a large proportion
      *                                                of the records read have missing fields
-     * @throws OutOfOrderRecordsException
      */
     @Override
     public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,

@@ -38,8 +38,6 @@ public class OldDataRemover {
 
     /**
      * Removes results between the time given and the current time
-     * @param jobId
-     * @param cutoffEpochMs
      */
     public void deleteResultsAfter(String jobId, long cutoffEpochMs) {
         Date now = new Date();

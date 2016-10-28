@@ -26,8 +26,6 @@ public class HighProportionOfBadTimestampsException extends JobException {
 
     /**
      * The number of bad records
-     *
-     * @return
      */
     public long getNumberBad() {
         return numberBad;
@@ -35,8 +33,6 @@ public class HighProportionOfBadTimestampsException extends JobException {
 
     /**
      * Total number of records (good + bad)
-     *
-     * @return
      */
     public long getTotalNumber() {
         return totalNumber;

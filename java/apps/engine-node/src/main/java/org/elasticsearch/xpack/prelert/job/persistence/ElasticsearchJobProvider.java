@@ -65,7 +65,6 @@ import org.elasticsearch.xpack.prelert.job.ModelState;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -128,9 +127,7 @@ public class ElasticsearchJobProvider implements JobProvider
             AnomalyRecord.FUNCTION.getPreferredName()
             );
 
-    private static final int UPDATE_JOB_RETRY_COUNT = 3;
     private static final int RECORDS_TAKE_PARAM = 500;
-    private static final long CLUSTER_INIT_TIMEOUT_MS = 30000;
 
 
     private final Node node;
@@ -370,7 +367,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
     /**
      * Create the Elasticsearch index and the mappings
-     * @throws
      */
     @Override
     public void createJob(JobDetails job, ActionListener<Boolean> listener) {
@@ -465,7 +461,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 .interim(Bucket.IS_INTERIM.getPreferredName(), query.isIncludeInterim())
                 .build();
 
-        SortBuilder sortBuilder = new FieldSortBuilder(esSortField(query.getSortField()))
+        SortBuilder<?> sortBuilder = new FieldSortBuilder(esSortField(query.getSortField()))
                 .order(query.isSortDescending() ? SortOrder.DESC : SortOrder.ASC);
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         QueryPage<Bucket> buckets = buckets(elasticJobId, query.isIncludeInterim(), query.getSkip(), query.getTake(), fb, sortBuilder);
@@ -534,7 +530,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     private QueryPage<Bucket> buckets(ElasticsearchJobId jobId, boolean includeInterim,
-            int skip, int take, QueryBuilder fb, SortBuilder sb) throws ResourceNotFoundException
+            int skip, int take, QueryBuilder fb, SortBuilder<?> sb) throws ResourceNotFoundException
     {
         SearchResponse searchResponse;
         try {

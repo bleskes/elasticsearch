@@ -20,8 +20,9 @@ public final class AnalysisConfigVerifier {
     /**
      * Checks the configuration is valid
      * <ol>
-     * <li>Check that if non-null BucketSpan, BatchSpan, Latency and Period are &gt= 0</li>
-     * <li>Check that if non-null Latency is &lt= MAX_LATENCY </li>
+     * <li>Check that if non-null BucketSpan, BatchSpan, Latency and Period are
+     * &gt;= 0</li>
+     * <li>Check that if non-null Latency is &lt;= MAX_LATENCY</li>
      * <li>Check there is at least one detector configured</li>
      * <li>Check all the detectors are configured correctly</li>
      * <li>Check that OVERLAPPING_BUCKETS is set appropriately</li>
@@ -96,7 +97,7 @@ public final class AnalysisConfigVerifier {
     }
 
     private static void setOverlappingBucketsConfig(AnalysisConfig config, boolean mustNotUse, boolean canUse,
-                                                    List<String> illegalFunctions, boolean defaultOn) {
+            List<String> illegalFunctions, boolean defaultOn) {
         if (config.getOverlappingBuckets() == null) {
             if (defaultOn == true) {
                 // Wasn't specified: turn on by default if detectors allow

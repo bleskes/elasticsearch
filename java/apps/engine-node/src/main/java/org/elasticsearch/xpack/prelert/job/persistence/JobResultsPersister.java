@@ -3,8 +3,6 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
@@ -19,7 +17,6 @@ public interface JobResultsPersister
 {
     /**
      * Persist the result bucket
-     * @param bucket
      */
     void persistBucket(Bucket bucket);
 
@@ -31,31 +28,26 @@ public interface JobResultsPersister
 
     /**
      * Persist the quantiles
-     * @param quantiles
      */
     void persistQuantiles(Quantiles quantiles);
 
     /**
      * Persist a model snapshot description
-     * @param modelSnapshot
      */
     void persistModelSnapshot(ModelSnapshot modelSnapshot);
 
     /**
      * Persist the memory usage data
-     * @param modelSizeStats
      */
     void persistModelSizeStats(ModelSizeStats modelSizeStats);
 
     /**
      * Persist model debug output
-     * @param modelDebugOutput
      */
     void persistModelDebugOutput(ModelDebugOutput modelDebugOutput);
 
     /**
      * Persist the influencer
-     * @param influencer
      */
     void persistInfluencer(Influencer influencer);
 

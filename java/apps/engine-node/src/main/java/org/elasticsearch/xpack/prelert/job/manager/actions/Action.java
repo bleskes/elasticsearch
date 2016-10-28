@@ -45,7 +45,6 @@ public enum Action implements ActionState<Action>
 
     /**
      * The initial action state
-     * @return
      */
     public static Action startingState()
     {

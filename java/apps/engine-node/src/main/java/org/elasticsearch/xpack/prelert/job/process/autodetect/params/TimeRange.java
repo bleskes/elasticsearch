@@ -84,10 +84,6 @@ public class TimeRange {
 
         /**
          * Returns epoch milli seconds
-         *
-         * @param paramName
-         * @param date
-         * @return
          */
         private long paramToEpochIfValidOrThrow(String paramName, String date) {
             if (NOW.equals(date)) {

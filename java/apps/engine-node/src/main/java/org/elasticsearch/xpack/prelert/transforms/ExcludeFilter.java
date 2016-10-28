@@ -14,16 +14,11 @@ public abstract class ExcludeFilter extends Transform {
     private final Condition condition;
 
     /**
-     * The condition should have been verified by now and it <i>must</i>
-     * have a valid value & operator
-     *
-     * @param condition
-     * @param readIndexes
-     * @param writeIndexes
-     * @param logger
+     * The condition should have been verified by now and it <i>must</i> have a
+     * valid value &amp; operator
      */
     public ExcludeFilter(Condition condition, List<TransformIndex> readIndexes,
-                         List<TransformIndex> writeIndexes, Logger logger) {
+            List<TransformIndex> writeIndexes, Logger logger) {
         super(readIndexes, writeIndexes, logger);
         this.condition = condition;
     }

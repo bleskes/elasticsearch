@@ -31,9 +31,6 @@ public final class DependencySorter {
      * Note if there is a circular dependency in the list of
      * transforms this will cause a stack overflow.
      * Check with {@linkplain org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigsVerifier#checkForCircularDependencies(List)} first.
-     *
-     * @param input
-     * @param transforms
      * @return List of transforms ordered by dependencies
      */
     public static List<TransformConfig> findDependencies(String input,
@@ -52,8 +49,6 @@ public final class DependencySorter {
      * transforms this will cause a stack overflow.
      * Check with {@linkplain org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigsVerifier#checkForCircularDependencies(List)} first.
      *
-     * @param inputs
-     * @param transforms
      * @return List of transforms ordered by dependencies
      */
     public static List<TransformConfig> findDependencies(List<String> inputs,
@@ -78,10 +73,6 @@ public final class DependencySorter {
      * Recursively find the transform dependencies and add them
      * to the dependency list
      *
-     * @param transform
-     * @param transforms
-     * @param dependencies Transform dependencies are added to this
-     *                     list in the order they should be executed
      */
     private static void findDependenciesRecursive(TransformConfig transform,
                                                   List<TransformConfig> transforms,
@@ -114,7 +105,6 @@ public final class DependencySorter {
      * transforms this will cause a stack overflow.
      * Check with {@linkplain org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigsVerifier#checkForCircularDependencies(List)} first.
      *
-     * @param transforms
      * @return List of transforms ordered by dependencies
      */
     public static List<TransformConfig> sortByDependency(List<TransformConfig> transforms) {
@@ -144,7 +134,6 @@ public final class DependencySorter {
      * To avoid concurrent modification of the transforms list a new
      * copy is made for each recursive call and a new modified list returned
      *
-     * @param transforms
      * @param dependencies Transforms are added to this list
      * @return As transforms are moved from <code>transforms</code> to
      * <code>dependencies</code> this list is a new copy of the

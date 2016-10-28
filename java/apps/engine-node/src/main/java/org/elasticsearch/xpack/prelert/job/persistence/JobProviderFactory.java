@@ -10,7 +10,6 @@ public interface JobProviderFactory
 {
     /**
      * Get a {@linkplain JobProvider}
-     * @return
      */
     JobProvider jobProvider();
 }

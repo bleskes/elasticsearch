@@ -23,7 +23,6 @@ public interface BatchedDocumentsIterator<T>
      * Include interim documents
      *
      * @param interimFieldName Name of the include interim field
-     * @return
      */
     BatchedDocumentsIterator<T> includeInterim(String interimFieldName);
 

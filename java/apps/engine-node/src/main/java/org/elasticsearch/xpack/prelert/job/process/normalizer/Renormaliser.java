@@ -8,9 +8,6 @@ public interface Renormaliser {
     /**
      * Update the anomaly score field on all previously persisted buckets
      * and all contained records
-     *
-     * @param quantiles
-     * @param logger
      */
     void renormalise(Quantiles quantiles, Logger logger);
 
@@ -18,9 +15,6 @@ public interface Renormaliser {
      * Update the anomaly score field on all previously persisted buckets
      * and all contained records and aggregate records to the partition
      * level
-     *
-     * @param quantiles
-     * @param logger
      */
     void renormaliseWithPartition(Quantiles quantiles, Logger logger);
 

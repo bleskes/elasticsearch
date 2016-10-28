@@ -28,10 +28,14 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
     /**
      * Create a reader that parses the mapped fields from JSON.
      *
-     * @param parser             The JSON parser
-     * @param fieldMap           Map to field name to record array index position
+     * @param parser
+     *            The JSON parser
+     * @param fieldMap
+     *            Map to field name to record array index position
      * @param recordHoldingField
+     *            record holding field
      * @param logger
+     *            the logger
      */
     AbstractJsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, String recordHoldingField, Logger logger) {
         this.parser = Objects.requireNonNull(parser);
@@ -65,10 +69,6 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
 
     /**
      * Returns null at the EOF or the next token
-     *
-     * @return
-     * @throws IOException
-     * @throws MalformedJsonException
      */
     protected JsonToken tryNextTokenOrReadToEndOnError() throws IOException, MalformedJsonException {
         try {
@@ -90,9 +90,6 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
      * In some cases the parser doesn't recognise the '}' of a badly formed
      * JSON document and so may skip to the end of the second document. In this
      * case we lose an extra record.
-     *
-     * @throws IOException
-     * @throws MalformedJsonException
      */
     protected void readToEndOfObject() throws IOException, MalformedJsonException {
         JsonToken token = null;

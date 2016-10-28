@@ -47,8 +47,6 @@ public class UsageReporter {
 
     /**
      * Add <code>bytesRead</code> to the running total
-     *
-     * @param bytesRead
      */
     public void addBytesRead(long bytesRead) {
         bytesReadSinceLastReport += bytesRead;

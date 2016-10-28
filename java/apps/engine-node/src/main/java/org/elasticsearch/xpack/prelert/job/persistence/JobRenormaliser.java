@@ -36,8 +36,6 @@ public interface JobRenormaliser
 
     /**
      * Update the influencer for a particular job
-     *
-     * @param influencer
      */
     void updateInfluencer(Influencer influencer);
 }

@@ -64,8 +64,6 @@ public class TransformConfigs extends ToXContentToBytes implements Writeable {
 
     /**
      * Set of all the field names that are required as inputs to transforms
-     *
-     * @return
      */
     public Set<String> inputFieldNames() {
         Set<String> fields = new HashSet<>();
@@ -79,8 +77,6 @@ public class TransformConfigs extends ToXContentToBytes implements Writeable {
     /**
      * Set of all the field names that are outputted (i.e. created) by
      * transforms
-     *
-     * @return
      */
     public Set<String> outputFieldNames() {
         Set<String> fields = new HashSet<>();

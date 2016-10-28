@@ -29,10 +29,6 @@ public final class TransformConfigVerifier
      * those outputs are not empty strings</li>
      * <li>If the transform has a condition verify it</li>
      * </ol>
-     *
-     * @param tc
-     * @return
-     * @throws ElasticsearchParseException
      */
     public static boolean verify(TransformConfig tc) throws ElasticsearchParseException
     {

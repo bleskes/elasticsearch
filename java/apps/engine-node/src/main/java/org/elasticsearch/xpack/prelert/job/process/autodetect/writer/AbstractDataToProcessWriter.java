@@ -104,10 +104,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * a scratch area which is input to another transform
      * <p>
      * Writes the header.
-     *
-     * @param header
-     * @throws MissingFieldException
-     * @throws IOException
      */
     public void buildTransformsAndWriteHeader(String[] header) throws MissingFieldException, IOException {
         Collection<String> inputFields = inputFields();
@@ -212,10 +208,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      *                           This should be the same size as the number of output (analysis fields) i.e.
      *                           the size of the map returned by {@linkplain #outputFieldIndexes()}
      * @param numberOfFieldsRead The total number read not just those included in the analysis
-     * @return
-     * @throws HighProportionOfBadTimestampsException
-     * @throws OutOfOrderRecordsException
-     * @throws IOException
      */
     protected boolean applyTransformsAndWrite(String[] input, String[] output, long numberOfFieldsRead)
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
@@ -266,9 +258,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
     /**
      * If false then the transform is excluded
-     *
-     * @param transforms
-     * @return
      */
     private boolean applyTransforms(List<Transform> transforms, long inputFieldCount) {
         for (Transform tr : transforms) {
@@ -293,8 +282,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * Write the header.
      * The header is created from the list of analysis input fields,
      * the time field and the control field
-     *
-     * @throws IOException
      */
     protected void writeHeader(Map<String, Integer> outFieldIndexes) throws IOException {
         //  header is all the analysis input fields + the time field + control field
@@ -321,8 +308,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * must see in the csv header.
      * = transform input fields + analysis fields that aren't a transform output
      * + the date field - the transform output field names
-     *
-     * @return
      */
     public final Collection<String> inputFields() {
         Set<String> requiredFields = new HashSet<>(analysisConfig.analysisFields());
@@ -336,10 +321,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
     /**
      * Find the indexes of the input fields from the header
-     *
-     * @param header
-     * @param inputFields The required input fields
-     * @return
      */
     protected final Map<String, Integer> inputFieldIndexes(String[] header, Collection<String> inputFields) {
         List<String> headerList = Arrays.asList(header);  // TODO header could be empty
@@ -363,8 +344,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     /**
      * This output fields are the time field and all the fields
      * configured for analysis
-     *
-     * @return
      */
     public final Collection<String> outputFields() {
         List<String> outputFields = new ArrayList<>(analysisConfig.analysisFields());
@@ -378,8 +357,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * This is the time field and all the fields configured for analysis
      * and the control field.
      * Time is the first field and the last is the control field
-     *
-     * @return
      */
     protected final Map<String, Integer> outputFieldIndexes() {
         Map<String, Integer> fieldIndexes = new HashMap<String, Integer>();
@@ -406,8 +383,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
     /**
      * The number of fields used in the analysis field,
      * the time field and (sometimes) the control field
-     *
-     * @return
      */
     public int outputFieldCount() {
         return analysisConfig.analysisFields().size() + (includeControlField ? 2 : 1);
@@ -426,8 +401,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      *
      * @param inputFields   Fields we expect in the header
      * @param outputFields  Fields that are written to the analytics
-     * @param dateTimeField
-     * @return
+     * @param dateTimeField date field
      */
     protected final Map<String, Integer> scratchAreaIndexes(Collection<String> inputFields, Collection<String> outputFields,
                                                             String dateTimeField) {
@@ -459,8 +433,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * For inputs that aren't transformed create a map of input index
      * to output index. This does not include the time or control fields
      *
-     * @param inFieldIndexes Map of field name -> index in the input array
-     * @return
+     * @param inFieldIndexes Map of field name -&gt; index in the input array
      */
     protected final List<InputOutputMap> createInputOutputMap(Map<String, Integer> inFieldIndexes) {
         // where no transform
@@ -490,12 +463,6 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * <p>
      * Every input field should have an entry in <code>inputFieldIndexes</code>
      * otherwise the field cannnot be found.
-     *
-     * @param inputFields
-     * @param inputFieldIndexes
-     * @param header
-     * @return True
-     * @throws MissingFieldException
      */
     protected abstract boolean checkForMissingFields(Collection<String> inputFields, Map<String, Integer> inputFieldIndexes,
                                                      String[] header)

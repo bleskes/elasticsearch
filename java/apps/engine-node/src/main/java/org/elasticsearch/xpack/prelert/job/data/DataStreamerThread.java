@@ -56,8 +56,6 @@ public final class DataStreamerThread extends Thread {
      * This method should only be called <b>after</b> the thread
      * has joined other wise the result could be <code>null</code>
      * (best case) or undefined.
-     *
-     * @return
      */
     public DataCounts getDataCounts() {
         return stats;
@@ -66,8 +64,6 @@ public final class DataStreamerThread extends Thread {
     /**
      * If a Job exception was thrown during the run of this thread it
      * is accessed here. Only call this method after the thread has joined.
-     *
-     * @return
      */
     public Optional<ElasticsearchException> getJobException() {
         return Optional.ofNullable(jobException);
@@ -76,8 +72,6 @@ public final class DataStreamerThread extends Thread {
     /**
      * If an IOException was thrown during the run of this thread it
      * is accessed here. Only call this method after the thread has joined.
-     *
-     * @return
      */
     public Optional<IOException> getIOException() {
         return Optional.ofNullable(iOException);

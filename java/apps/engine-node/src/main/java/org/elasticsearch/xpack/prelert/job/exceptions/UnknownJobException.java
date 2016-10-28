@@ -17,7 +17,7 @@ public class UnknownJobException extends JobException
     /**
      * Create with the default message and error code
      * set to ErrorCode.MISSING_JOB_ERROR
-     * @param jobId
+     * @param jobId the jobId
      */
     public UnknownJobException(String jobId)
     {
@@ -30,7 +30,7 @@ public class UnknownJobException extends JobException
      *
      * @param jobId The Job Id that could not be found
      * @param message Details of error explaining the context
-     * @param errorCode
+     * @param errorCode the error code
      */
     public UnknownJobException(String jobId, String message, ErrorCodes errorCode)
     {
@@ -47,7 +47,6 @@ public class UnknownJobException extends JobException
 
     /**
      * Get the unknown <i>JobId</i> that was the source of the error.
-     * @return
      */
     public String getJobId()
     {

@@ -14,8 +14,6 @@ public interface JobResultsProvider
 {
     /**
      * Search for buckets with the parameters in the {@link BucketsQueryBuilder}
-     * @param jobId
-     * @param query
      * @return QueryPage of Buckets
      * @throws ResourceNotFoundException If the job id is no recognised
      */
@@ -25,10 +23,10 @@ public interface JobResultsProvider
     /**
      * Get the bucket at time <code>timestampMillis</code> from the job.
      *
-     * @param jobId
+     * @param jobId the job id
      * @param query The bucket query
      * @return Optional Bucket
-     * @throws UnknownJobException If the job id is no recognised
+     * @throws ResourceNotFoundException If the job id is not recognised
      */
     Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query)
             throws ResourceNotFoundException;
@@ -45,7 +43,7 @@ public interface JobResultsProvider
     /**
      * Expand a bucket to include the associated records.
      *
-     * @param jobId
+     * @param jobId the job id
      * @param includeInterim Include interim results
      * @param bucket The bucket to be expanded
      * @return The number of records added to the bucket
@@ -56,7 +54,7 @@ public interface JobResultsProvider
     /**
      * Get a page of {@linkplain CategoryDefinition}s for the given <code>jobId</code>.
      *
-     * @param jobId
+     * @param jobId the job id
      * @param skip Skip the first N categories. This parameter is for paging
      * @param take Take only this number of categories
      * @return QueryPage of CategoryDefinition
@@ -66,7 +64,7 @@ public interface JobResultsProvider
     /**
      * Get the specific CategoryDefinition for the given job and category id.
      *
-     * @param jobId
+     * @param jobId the job id
      * @param categoryId Unique id
      * @return Optional CategoryDefinition
      */
@@ -75,8 +73,6 @@ public interface JobResultsProvider
     /**
      * Search for anomaly records with the parameters in the
      * {@link org.elasticsearch.xpack.prelert.job.persistence.RecordsQueryBuilder.RecordsQuery}
-     * @param jobId
-     * @param query
      * @return QueryPage of AnomalyRecords
      */
     QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query);
@@ -87,30 +83,9 @@ public interface JobResultsProvider
      *
      * @param jobId
      *            The job ID for which influencers are requested
-     * @param skip
-     *            Skip the first N Buckets. This parameter is for paging if not
-     *            required set to 0.
-     * @param take
-     *            Maximum number of influencers to insert in the page
-     * @param startEpochMs
-     *            The start influencer timestamp. An influencer with this
-     *            timestamp will be included in the results. If 0 all buckets up
-     *            to <code>endEpochMs</code> are returned
-     * @param endEpochMs
-     *            The end bucket timestamp buckets up to but NOT including this
-     *            timestamp are returned. If 0 all buckets from
-     *            <code>startEpochMs</code> are returned
-     * @param sortField
-     *            The field to sort influencers by. If <code>null</code> no sort
-     *            is applied
-     * @param sortDescending
-     *            Sort in descending order
-     * @param anomalyScoreFilter
-     *            Return only influencers with an anomalyScore >= this value
-     * @param includeInterim
-     *            Include interim results
+     * @param query
+     *            the query
      * @return QueryPage of Influencer
-     * @throws ResourceNotFoundException
      */
     QueryPage<Influencer> influencers(String jobId, InfluencersQuery query)
             throws ResourceNotFoundException;
@@ -118,7 +93,7 @@ public interface JobResultsProvider
     /**
      * Get the influencer for the given job for id
      *
-     * @param jobId
+     * @param jobId the job id
      * @param influencerId The unique influencer Id
      * @return Optional Influencer
      */

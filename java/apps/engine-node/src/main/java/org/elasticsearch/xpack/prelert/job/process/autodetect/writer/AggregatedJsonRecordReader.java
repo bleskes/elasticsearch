@@ -33,12 +33,6 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader {
     /**
      * Create a reader that simulates simple records given a hierarchical JSON
      * structure where each field is at a progressively deeper level of nesting.
-     *
-     * @param parser             The JSON parser
-     * @param fieldMap           Map to field name to record array index position
-     * @param recordHoldingField
-     * @param logger
-     * @param nestingOrder
      */
     AggregatedJsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, String recordHoldingField, Logger logger,
                                List<String> nestingOrder) {
@@ -61,8 +55,6 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader {
      *                  was read
      * @return The number of fields in the aggregated hierarchy, or -1 if nothing was read
      * because the end of the stream was reached
-     * @throws IOException
-     * @throws MalformedJsonException
      */
     @Override
     public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException {
@@ -130,6 +122,7 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader {
         return fieldCount;
     }
 
+    @Override
     protected void clearNestedLevel() {
         nestedLevel = 0;
     }

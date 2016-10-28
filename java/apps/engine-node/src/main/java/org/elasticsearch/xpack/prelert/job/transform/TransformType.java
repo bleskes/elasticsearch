@@ -83,8 +83,6 @@ public enum TransformType implements ToXContent, Writeable {
 
     /**
      * The count IntRange of inputs the transform expects.
-     *
-     * @return
      */
     public IntRange arityRange() {
         return this.arityRange;
@@ -92,8 +90,6 @@ public enum TransformType implements ToXContent, Writeable {
 
     /**
      * The count IntRange of arguments the transform expects.
-     *
-     * @return
      */
     public IntRange argumentsRange() {
         return this.argumentsRange;
@@ -101,8 +97,6 @@ public enum TransformType implements ToXContent, Writeable {
 
     /**
      * The count IntRange of outputs the transform expects.
-     *
-     * @return
      */
     public IntRange outputsRange() {
         return this.outputsRange;
@@ -141,9 +135,6 @@ public enum TransformType implements ToXContent, Writeable {
      * The static function valueOf() cannot be overridden so use
      * this method instead when converting from the pretty name
      * to enum.
-     *
-     * @param prettyName
-     * @return
      */
     public static TransformType fromString(String prettyName) throws IllegalArgumentException {
         Set<TransformType> all = EnumSet.allOf(TransformType.class);

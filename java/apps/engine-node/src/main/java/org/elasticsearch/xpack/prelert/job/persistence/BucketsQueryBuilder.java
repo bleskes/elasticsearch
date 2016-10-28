@@ -24,27 +24,28 @@ import java.util.Objects;
 /**
  * One time query builder for buckets.
  * <ul>
- * <li>Skip- Skip the first N Buckets. This parameter is for paging
- * if not required set to 0. Default = 0</li>
- * <li>Take- Take only this number of Buckets. Default = {@value DEFAULT_TAKE_SIZE}</li>
+ * <li>Skip- Skip the first N Buckets. This parameter is for paging if not
+ * required set to 0. Default = 0</li>
+ * <li>Take- Take only this number of Buckets. Default =
+ * {@value DEFAULT_TAKE_SIZE}</li>
  * <li>Expand- Include anomaly records. Default= false</li>
  * <li>IncludeInterim- Include interim results. Default = false</li>
- * <li>anomalyScoreThreshold- Return only buckets with an anomalyScore >=
+ * <li>anomalyScoreThreshold- Return only buckets with an anomalyScore &gt;=
  * this value. Default = 0.0</li>
- * <li>normalizedProbabilityThreshold- Return only buckets with a maxNormalizedProbability >=
- * this value. Default = 0.0</li>
+ * <li>normalizedProbabilityThreshold- Return only buckets with a
+ * maxNormalizedProbability &gt;= this value. Default = 0.0</li>
  * <li>epochStart- The start bucket time. A bucket with this timestamp will be
- * included in the results. If 0 all buckets up to <code>endEpochMs</code>
- * are returned. Default = -1</li>
+ * included in the results. If 0 all buckets up to <code>endEpochMs</code> are
+ * returned. Default = -1</li>
  * <li>epochEnd- The end bucket timestamp buckets up to but NOT including this
- * timestamp are returned. If 0 all buckets from <code>startEpochMs</code>
- * are returned. Default = -1</li>
+ * timestamp are returned. If 0 all buckets from <code>startEpochMs</code> are
+ * returned. Default = -1</li>
  * <li>partitionValue Set the bucket's max normalised probability to this
  * partition field value's max normalised probability. Default = null</li>
  * </ul>
  */
 public final class BucketsQueryBuilder {
-    public static int DEFAULT_TAKE_SIZE = 100;
+    public static final int DEFAULT_TAKE_SIZE = 100;
 
     private BucketsQuery bucketsQuery = new BucketsQuery();
 
@@ -80,7 +81,6 @@ public final class BucketsQueryBuilder {
 
     /**
      * @param partitionValue Not set if null or empty
-     * @return
      */
     public BucketsQueryBuilder partitionValue(String partitionValue) {
         if (!Strings.isNullOrEmpty(partitionValue)) {
@@ -100,10 +100,7 @@ public final class BucketsQueryBuilder {
     }
 
     /**
-     * If startTime <= 0 the parameter is not set
-     *
-     * @param startTime
-     * @return
+     * If startTime &lt;= 0 the parameter is not set
      */
     public BucketsQueryBuilder epochStart(String startTime) {
         bucketsQuery.epochStart = startTime;
@@ -111,10 +108,7 @@ public final class BucketsQueryBuilder {
     }
 
     /**
-     * If endTime <= 0 the parameter is not set
-     *
-     * @param endTime
-     * @return
+     * If endTime &lt;= 0 the parameter is not set
      */
     public BucketsQueryBuilder epochEnd(String endTime) {
         bucketsQuery.epochEnd = endTime;

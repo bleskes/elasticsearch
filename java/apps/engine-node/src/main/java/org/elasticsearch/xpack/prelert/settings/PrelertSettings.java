@@ -144,12 +144,12 @@ public final class PrelertSettings {
     /**
      * <p>
      * Looks up a setting in the following order:
+     * </p>
      * <ol>
      * <li> system properties
      * <li> environment variables (only for a set of pre-specified settings)
      * <li> settings YAML file
      * </ol>
-     * </p>
      * If a system property is found, it is converted using the {@code mapper}
      *
      * @param settingName Name of the setting to get

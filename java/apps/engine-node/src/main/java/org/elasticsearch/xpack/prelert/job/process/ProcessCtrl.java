@@ -9,8 +9,6 @@ import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 import org.elasticsearch.xpack.prelert.utils.Strings;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
-import org.apache.lucene.util.Constants;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -441,8 +439,6 @@ public class ProcessCtrl {
 
     /**
      * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
-     *
-     * @return
      */
     public static boolean modelConfigFilePresent() {
         File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
@@ -454,14 +450,6 @@ public class ProcessCtrl {
      * The process can be initialised with both sysChangeState and
      * unusualBehaviourState if either is <code>null</code> then is
      * is not used.
-     *
-     * @param jobId
-     * @param quantilesState            Set to <code>null</code> to be ignored
-     * @param bucketSpan                If <code>null</code> then use the program default
-     * @param perPartitionNormalization
-     * @param logger
-     * @return
-     * @throws IOException
      */
     public static Process buildNormaliser(String jobId, String quantilesState,
                                           Integer bucketSpan, boolean perPartitionNormalization, Logger logger)
@@ -510,11 +498,6 @@ public class ProcessCtrl {
 
     /**
      * Write the normaliser init state to file.
-     *
-     * @param jobId
-     * @param state
-     * @return The state file path
-     * @throws IOException
      */
     public static Path writeNormaliserInitState(String jobId, String state)
             throws IOException {

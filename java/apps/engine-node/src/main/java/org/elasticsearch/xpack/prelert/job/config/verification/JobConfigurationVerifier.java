@@ -41,7 +41,7 @@ public final class JobConfigurationVerifier {
      * <li>Either an AnalysisConfig or Job reference must be set</li>
      * <li>Verify {@link AnalysisConfigVerifier#verify(AnalysisConfig) AnalysisConfig}</li>
      * <li>Verify {@link DataDescriptionVerifier#verify(DataDescription) DataDescription}</li>
-     * <li>Verify {@link TransformConfigsVerifier#verify(List<TransformConfig>) Transforms}</li>
+     * <li>Verify {@link TransformConfigsVerifier#verify(List) Transforms}</li>
      * <li>Verify {@link ModelDebugConfigVerifier#verify(ModelDebugConfig) ModelDebugConfig}</li>
      * <li>Verify all the transform outputs are used</li>
      * <li>Check timeout is a +ve number</li>
@@ -138,7 +138,6 @@ public final class JobConfigurationVerifier {
     /**
      * Transform outputs should be used in either the date field,
      * as an analysis field or input to another transform
-     * @return
      */
     private static boolean checkTransformOutputIsUsed(JobConfiguration config) {
         Set<String> usedFields = new TransformConfigs(config.getTransforms()).inputFieldNames();

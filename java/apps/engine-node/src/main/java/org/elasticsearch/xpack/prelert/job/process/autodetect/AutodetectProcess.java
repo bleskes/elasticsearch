@@ -50,14 +50,11 @@ public interface AutodetectProcess {
 
     /**
      * Flush the output data stream
-     * @return
-     * @throws IOException
      */
     void flushStream() throws IOException;
 
     /**
      * Close
-     * @throws IOException
      */
     void close() throws IOException;
 

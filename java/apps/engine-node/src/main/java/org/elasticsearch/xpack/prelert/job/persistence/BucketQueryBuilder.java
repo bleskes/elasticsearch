@@ -52,9 +52,6 @@ public final class BucketQueryBuilder {
     /**
      * partitionValue must be non null and not empty else it
      * is not set
-     *
-     * @param partitionValue
-     * @return
      */
     public BucketQueryBuilder partitionValue(String partitionValue) {
         if (!Strings.isNullOrEmpty(partitionValue)) {

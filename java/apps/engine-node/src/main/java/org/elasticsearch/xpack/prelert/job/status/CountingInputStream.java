@@ -17,7 +17,9 @@ public class CountingInputStream extends FilterInputStream {
 
     /**
      * @param in
-     * @param statusReporter Write number of records, bytes etc.
+     *            input stream
+     * @param statusReporter
+     *            Write number of records, bytes etc.
      */
     public CountingInputStream(InputStream in, StatusReporter statusReporter) {
         super(in);

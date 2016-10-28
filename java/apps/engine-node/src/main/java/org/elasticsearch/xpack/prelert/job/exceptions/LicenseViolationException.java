@@ -15,7 +15,7 @@ public class LicenseViolationException extends JobException
      * Create a new LicenseViolationException with an error code
      *
      * @param message Details of error explaining the context
-     * @param errorCode
+     * @param errorCode the error code
      */
     public LicenseViolationException(String message, ErrorCodes errorCode)
     {

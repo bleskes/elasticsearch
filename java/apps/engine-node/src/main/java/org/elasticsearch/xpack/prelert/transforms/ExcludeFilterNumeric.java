@@ -16,32 +16,23 @@ public class ExcludeFilterNumeric extends ExcludeFilter {
     private final double filterValue;
 
     /**
-     * The condition should have been verified by now but if they are not
-     * valid then the default of < (less than) and filter of 0.0 are used
-     * meaning that no values are excluded.
-     *
-     * @param condition
-     * @param readIndexes
-     * @param writeIndexes
-     * @param logger
+     * The condition should have been verified by now but if they are not valid
+     * then the default of &lt; (less than) and filter of 0.0 are used meaning
+     * that no values are excluded.
      */
     public ExcludeFilterNumeric(Condition condition, List<TransformIndex> readIndexes,
-                                List<TransformIndex> writeIndexes, Logger logger) {
+            List<TransformIndex> writeIndexes, Logger logger) {
         super(condition, readIndexes, writeIndexes, logger);
 
         filterValue = parseFilterValue(getCondition().getValue());
     }
 
     /**
-     * If no condition then the default is < (less than) and filter
-     * value of 0.0 are used meaning that only -ve values are excluded.
-     *
-     * @param readIndexes
-     * @param writeIndexes
-     * @param logger
+     * If no condition then the default is &lt; (less than) and filter value of
+     * 0.0 are used meaning that only -ve values are excluded.
      */
     public ExcludeFilterNumeric(List<TransformIndex> readIndexes,
-                                List<TransformIndex> writeIndexes, Logger logger) {
+            List<TransformIndex> writeIndexes, Logger logger) {
         super(new Condition(Operator.LT, "0.0"),
                 readIndexes, writeIndexes, logger);
         filterValue = 0.0;
