@@ -19,6 +19,7 @@ import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.lucene.util.Constants;
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.monitor.jvm.JvmInfo;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,7 +27,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -59,22 +59,7 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
 
     private static final Pointer INVALID_HANDLE_VALUE = Pointer.createConstant(Pointer.SIZE == 8 ? -1 : 0xFFFFFFFFL);
 
-    /**
-     * Try to ensure we'll generate different pipe names if multiple invocations of this test
-     * run on the same machine at the same time.  The assumption is that the OS will cycle
-     * through ephemeral ports so different processes that run around the same time will get
-     * different numbers here.
-     */
-    private static final int TEST_ID;
     static {
-        int port;
-        try (ServerSocket sock = new ServerSocket(0)) {
-            port = sock.getLocalPort();
-        } catch (IOException e) {
-            port = -1;
-        }
-        TEST_ID = port;
-
         // Have to use JNA for Windows named pipes
         if (Constants.WINDOWS) {
             Native.register("kernel32");
@@ -280,7 +265,7 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     public void testOpenForInput() throws IOException, InterruptedException {
-        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "inputPipe" + TEST_ID;
+        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "inputPipe" + JvmInfo.jvmInfo().pid();
 
         PipeWriterServer server = new PipeWriterServer(pipeName, HELLO_WORLD);
         server.start();
@@ -300,7 +285,7 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     public void testOpenForOutput() throws IOException, InterruptedException {
-        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "outputPipe" + TEST_ID;
+        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "outputPipe" + JvmInfo.jvmInfo().pid();
 
         PipeReaderServer server = new PipeReaderServer(pipeName);
         server.start();
