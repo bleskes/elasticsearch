@@ -47,8 +47,8 @@ import org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfi
 public class ValidateTransformAction
 extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response, ValidateTransformAction.RequestBuilder> {
 
-    public final static ValidateTransformAction INSTANCE = new ValidateTransformAction();
-    public final static String NAME = "cluster:admin/prelert/validate/transform";
+    public static final ValidateTransformAction INSTANCE = new ValidateTransformAction();
+    public static final String NAME = "cluster:admin/prelert/validate/transform";
 
     protected ValidateTransformAction() {
         super(NAME);

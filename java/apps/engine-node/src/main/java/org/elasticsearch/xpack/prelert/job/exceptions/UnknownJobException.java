@@ -10,7 +10,6 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
  */
 public class UnknownJobException extends JobException
 {
-    private static final long serialVersionUID = 8603362038035845948L;
 
     private final String jobId;
 

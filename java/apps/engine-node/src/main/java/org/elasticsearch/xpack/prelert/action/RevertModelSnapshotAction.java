@@ -67,7 +67,8 @@ import java.util.Optional;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
-public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Response, RevertModelSnapshotAction.RequestBuilder> {
+public class RevertModelSnapshotAction
+        extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Response, RevertModelSnapshotAction.RequestBuilder> {
 
     public static final RevertModelSnapshotAction INSTANCE = new RevertModelSnapshotAction();
     public static final String NAME = "indices:admin/prelert/modelsnapshots/revert";
@@ -222,11 +223,9 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
                 return false;
             }
             Request other = (Request) obj;
-            return Objects.equals(jobId, other.jobId) &&
-                    Objects.equals(time, other.time) &&
-                    Objects.equals(snapshotId, other.snapshotId) &&
-                    Objects.equals(description, other.description) &&
-                    Objects.equals(deleteInterveningResults, other.deleteInterveningResults);
+            return Objects.equals(jobId, other.jobId) && Objects.equals(time, other.time) && Objects.equals(snapshotId, other.snapshotId)
+                    && Objects.equals(description, other.description)
+                    && Objects.equals(deleteInterveningResults, other.deleteInterveningResults);
         }
     }
 
@@ -318,12 +317,10 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
         private final ElasticsearchBulkDeleterFactory bulkDeleterFactory;
 
         @Inject
-        public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               JobManager jobManager, ElasticsearchJobProvider jobProvider, ClusterService clusterService,
-                               ElasticsearchBulkDeleterFactory bulkDeleterFactory) {
-            super(settings, NAME, transportService, clusterService, threadPool, actionFilters,
-                    indexNameExpressionResolver, Request::new);
+        public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver, JobManager jobManager, ElasticsearchJobProvider jobProvider,
+                ClusterService clusterService, ElasticsearchBulkDeleterFactory bulkDeleterFactory) {
+            super(settings, NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;
             this.jobProvider = jobProvider;
             this.bulkDeleterFactory = bulkDeleterFactory;
@@ -341,10 +338,9 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            logger.debug("Received request to revert to time '" + request.getTime() +
-                    "' description '" + request.getDescription() + "' snapshot id '" +
-                    request.getSnapshotId() + "' for job '" + request.getJobId() + "', deleting intervening " +
-                    " results: " + request.getDeleteInterveningResults());
+            logger.debug("Received request to revert to time '" + request.getTime() + "' description '" + request.getDescription()
+                    + "' snapshot id '" + request.getSnapshotId() + "' for job '" + request.getJobId() + "', deleting intervening "
+                    + " results: " + request.getDeleteInterveningResults());
 
             if (request.getTime() == null && request.getSnapshotId() == null && request.getDescription() == null) {
                 throw new IllegalStateException(Messages.getMessage(Messages.REST_INVALID_REVERT_PARAMS));
@@ -364,13 +360,11 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
         }
 
         private ModelSnapshot getModelSnapshot(Request request, JobProvider provider) {
-            logger.info("Reverting to snapshot '" + request.getSnapshotId() +
-                    "' for time '" + request.getTime() + "'");
+            logger.info("Reverting to snapshot '" + request.getSnapshotId() + "' for time '" + request.getTime() + "'");
 
             List<ModelSnapshot> revertCandidates;
-            revertCandidates = provider.modelSnapshots(request.getJobId(), 0, 1,
-                    null, request.getTime(), ModelSnapshot.TIMESTAMP.getPreferredName(), true,
-                    request.getSnapshotId(), request.getDescription()).hits();
+            revertCandidates = provider.modelSnapshots(request.getJobId(), 0, 1, null, request.getTime(),
+                    ModelSnapshot.TIMESTAMP.getPreferredName(), true, request.getSnapshotId(), request.getDescription()).hits();
 
             if (revertCandidates == null || revertCandidates.isEmpty()) {
                 throw ExceptionsHelper.invalidRequestException(
@@ -378,26 +372,30 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
             }
             ModelSnapshot modelSnapshot = revertCandidates.get(0);
 
-            // The quantiles can be large, and totally dominate the output - it's
+            // The quantiles can be large, and totally dominate the output -
+            // it's
             // clearer to remove them
             modelSnapshot.setQuantiles(null);
             return modelSnapshot;
         }
 
-        private ActionListener<RevertModelSnapshotAction.Response> wrapListener(
-                ActionListener<RevertModelSnapshotAction.Response> listener, ModelSnapshot modelSnapshot, String jobId) {
+        private ActionListener<RevertModelSnapshotAction.Response> wrapListener(ActionListener<RevertModelSnapshotAction.Response> listener,
+                ModelSnapshot modelSnapshot, String jobId) {
 
-            // If we need to delete buckets that occurred after the snapshot, we wrap
-            // the listener with one that invokes the OldDataRemover on acknowledged responses
+            // If we need to delete buckets that occurred after the snapshot, we
+            // wrap
+            // the listener with one that invokes the OldDataRemover on
+            // acknowledged responses
             return ActionListener.wrap(response -> {
                 if (response.isAcknowledged()) {
                     Date deleteAfter = modelSnapshot.getLatestRecordTimeStamp();
-                    logger.debug("Removing intervening records: last record: " + deleteAfter +
-                            ", last result: " + modelSnapshot.getLatestResultTimeStamp());
+                    logger.debug("Removing intervening records: last record: " + deleteAfter + ", last result: "
+                            + modelSnapshot.getLatestResultTimeStamp());
 
                     logger.info("Deleting buckets after '" + deleteAfter + "'");
 
-                    // NORELEASE: OldDataRemover is basically delete-by-query. We should replace this
+                    // NORELEASE: OldDataRemover is basically delete-by-query.
+                    // We should replace this
                     // whole abstraction with DBQ eventually
                     OldDataRemover remover = new OldDataRemover(jobProvider, bulkDeleterFactory);
                     remover.deleteResultsAfter(jobId, deleteAfter.getTime() + 1);

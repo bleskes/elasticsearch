@@ -159,7 +159,7 @@ public class MockClientBuilder {
         return this;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({"unchecked"})
     public MockClientBuilder addIndicesDeleteResponse(String index, boolean exists, boolean exception, ActionListener<Boolean> actionListener)
             throws InterruptedException, ExecutionException, IOException {
         DeleteIndexResponse response = DeleteIndexAction.INSTANCE.newResponse();
@@ -210,6 +210,7 @@ public class MockClientBuilder {
         return this;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public MockClientBuilder createIndexRequest(String index) {
         ArgumentMatcher<CreateIndexRequest> argumentMatcher = new ArgumentMatcher<CreateIndexRequest>() {
             @Override

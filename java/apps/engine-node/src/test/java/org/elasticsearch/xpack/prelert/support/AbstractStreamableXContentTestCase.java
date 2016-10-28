@@ -72,9 +72,8 @@ public abstract class AbstractStreamableXContentTestCase<T extends ToXContent & 
 
     /**
      * Returns alternate string representation of the query that need to be
-     * tested as they are never used as output of
-     * {@link QueryBuilder#toXContent(XContentBuilder, ToXContent.Params)}. By
-     * default there are no alternate versions.
+     * tested as they are never used as output of the test instance. By default
+     * there are no alternate versions.
      */
     protected Map<String, T> getAlternateVersions() {
         return Collections.emptyMap();

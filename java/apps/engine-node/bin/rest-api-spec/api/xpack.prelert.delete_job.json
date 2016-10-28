@@ -1,0 +1,17 @@
+{
+  "xpack.prelert.delete_job": {
+    "methods": [ "DELETE" ],
+    "url": {
+      "path": "/engine/v2/jobs/{job_id}",
+      "paths": [ "/engine/v2/jobs/{job_id}" ],
+      "parts": {
+        "job_id": {
+          "type": "string",
+          "required": true,
+          "description": "The ID of the job to delete"
+        }
+      }
+    },
+    "body": null
+  }
+}

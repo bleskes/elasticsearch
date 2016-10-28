@@ -17,7 +17,7 @@ public interface DotNotationReverser
     /**
      * Return the map representation of the field-value keys that have been added
      */
-    public Map<String, Object> getResultsMap();
+    Map<String, Object> getResultsMap();
 
     /**
      * Return the mappings (or schema) of the field-value keys that have been added

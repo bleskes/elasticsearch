@@ -13,5 +13,5 @@ public interface UsagePersister
      *
      * @throws JobException IF there was an error persisting
      */
-    public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead) throws JobException;
+    void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead) throws JobException;
 }

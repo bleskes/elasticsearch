@@ -50,7 +50,8 @@ public class RestValidateTransformAction extends BaseRestHandler {
         XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
         ValidateTransformAction.Request validateDetectorRequest = ValidateTransformAction.Request.parseRequest(parser,
                 () -> parseFieldMatcher);
-        return channel -> transportValidateAction.execute(validateDetectorRequest, new AcknowledgedRestListener<ValidateTransformAction.Response>(channel));
+        return channel -> transportValidateAction.execute(validateDetectorRequest,
+                new AcknowledgedRestListener<ValidateTransformAction.Response>(channel));
     }
 
 }

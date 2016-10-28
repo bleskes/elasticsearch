@@ -29,12 +29,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * This class represents a configured and created Job. The creation time is
- * set to the time the object was constructed, Status is set to
- * {@link JobStatus#RUNNING} and the finished time and last data time fields
- * are {@code null} until the job has seen some data or it is finished
- * respectively. If the job was created to read data from a list of files
- * FileUrls will be a non-empty list else the expects data to be streamed to it.
+ * This class represents a configured and created Job. The creation time is set
+ * to the time the object was constructed, Status is set to
+ * {@link JobStatus#RUNNING} and the finished time and last data time fields are
+ * {@code null} until the job has seen some data or it is finished respectively.
+ * If the job was created to read data from a list of files FileUrls will be a
+ * non-empty list else the expects data to be streamed to it.
  */
 @JsonInclude(Include.NON_NULL)
 public class JobDetails extends ToXContentToBytes implements Writeable {
@@ -100,7 +100,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         PARSER.declareObjectArray(JobDetails::setTransforms, TransformConfig.PARSER, TRANSFORMS);
         PARSER.declareObject(JobDetails::setModelDebugConfig, ModelDebugConfig.PARSER, MODEL_DEBUG_CONFIG);
         PARSER.declareObject(JobDetails::setCounts, DataCounts.PARSER, COUNTS);
-        PARSER.declareField(JobDetails::setIgnoreDowntime, (p, c) -> IgnoreDowntime.fromString(p.text()), IGNORE_DOWNTIME, ValueType.STRING);
+        PARSER.declareField(JobDetails::setIgnoreDowntime, (p, c) -> IgnoreDowntime.fromString(p.text()), IGNORE_DOWNTIME,
+                ValueType.STRING);
         PARSER.declareLong(JobDetails::setRenormalizationWindowDays, RENORMALIZATION_WINDOW_DAYS);
         PARSER.declareLong(JobDetails::setBackgroundPersistInterval, BACKGROUND_PERSIST_INTERVAL);
         PARSER.declareLong(JobDetails::setResultsRetentionDays, RESULTS_RETENTION_DAYS);
@@ -141,12 +142,11 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     private JobDetails() {
     }
 
-    public JobDetails(String jobId, String description, JobStatus status, SchedulerState schedulerState, Date createTime,
-            Date finishedTime, Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits,
-            SchedulerConfig schedulerConfig, DataDescription dataDescription, ModelSizeStats modelSizeStats,
-            List<TransformConfig> transforms, ModelDebugConfig modelDebugConfig, DataCounts counts,
-            IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays, Long backgroundPersistInterval,
-            Long modelSnapshotRetentionDays, Long resultsRetentionDays, Map<String, Object> customSettings,
+    public JobDetails(String jobId, String description, JobStatus status, SchedulerState schedulerState, Date createTime, Date finishedTime,
+            Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits, SchedulerConfig schedulerConfig,
+            DataDescription dataDescription, ModelSizeStats modelSizeStats, List<TransformConfig> transforms,
+            ModelDebugConfig modelDebugConfig, DataCounts counts, IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays,
+            Long backgroundPersistInterval, Long modelSnapshotRetentionDays, Long resultsRetentionDays, Map<String, Object> customSettings,
             Double averageBucketProcessingTimeMs) {
         this.jobId = jobId;
         this.description = description;
@@ -206,8 +206,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * Return the Job Id.
-     * This name is preferred when serialising to the REST API.
+     * Return the Job Id. This name is preferred when serialising to the REST
+     * API.
      *
      * @return The job Id string
      */
@@ -217,20 +217,20 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * Set the job's Id.
-     * In general this method should not be used as the Id does not change
-     * once set. This method is provided for the Jackson object mapper to
-     * de-serialise this class from Json.
+     * Set the job's Id. In general this method should not be used as the Id
+     * does not change once set. This method is provided for the Jackson object
+     * mapper to de-serialise this class from Json.
      *
-     * @param id the job id
+     * @param id
+     *            the job id
      */
     public void setId(String id) {
         jobId = id;
     }
 
     /**
-     * Return the Job Id.
-     * This name is preferred when serialising to the data store.
+     * Return the Job Id. This name is preferred when serialising to the data
+     * store.
      *
      * @return The job Id string
      */
@@ -240,12 +240,12 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * Set the job's Id.
-     * In general this method should not be used as the Id does not change
-     * once set. This method is provided for the Jackson object mapper to
-     * de-serialise this class from Json.
+     * Set the job's Id. In general this method should not be used as the Id
+     * does not change once set. This method is provided for the Jackson object
+     * mapper to de-serialise this class from Json.
      *
-     * @param jobId the job id
+     * @param jobId
+     *            the job id
      */
     public void setJobId(String jobId) {
         this.jobId = jobId;
@@ -267,8 +267,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     /**
      * Return the Job Status. Jobs are initialised to {@link JobStatus#CLOSED}
      * when created and move into the @link JobStatus#RUNNING} state when
-     * processing data. Once data has been processed the status will be
-     * either {@link JobStatus#CLOSED} or {@link JobStatus#FAILED}
+     * processing data. Once data has been processed the status will be either
+     * {@link JobStatus#CLOSED} or {@link JobStatus#FAILED}
      *
      * @return The job's status
      */
@@ -289,8 +289,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * The Job creation time.
-     * This name is preferred when serialising to the REST API.
+     * The Job creation time. This name is preferred when serialising to the
+     * REST API.
      *
      * @return The date the job was created
      */
@@ -304,8 +304,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * The Job creation time.
-     * This name is preferred when serialising to the data store.
+     * The Job creation time. This name is preferred when serialising to the
+     * data store.
      *
      * @return The date the job was created
      */
@@ -334,8 +334,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * The last time data was uploaded to the job or <code>null</code>
-     * if no data has been seen.
+     * The last time data was uploaded to the job or <code>null</code> if no
+     * data has been seen.
      *
      * @return The date at which the last data was processed
      */
@@ -349,8 +349,7 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
 
     /**
      * The job timeout setting in seconds. Jobs are retired if they do not
-     * receive data for this period of time.
-     * The default is 600 seconds
+     * receive data for this period of time. The default is 600 seconds
      *
      * @return The timeout period in seconds
      */
@@ -361,7 +360,6 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     public void setTimeout(long timeout) {
         this.timeout = timeout;
     }
-
 
     /**
      * The analysis configuration object
@@ -393,7 +391,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
             if (newMemoryLimit < oldMemoryLimit) {
                 throw ExceptionsHelper.invalidRequestException(
                         Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED,
-                                oldMemoryLimit, newMemoryLimit), ErrorCodes.INVALID_VALUE);
+                                oldMemoryLimit, newMemoryLimit),
+                        ErrorCodes.INVALID_VALUE);
             }
         }
 
@@ -438,8 +437,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * If not set the input data is assumed to be csv with a '_time' field
-     * in epoch format.
+     * If not set the input data is assumed to be csv with a '_time' field in
+     * epoch format.
      *
      * @return A DataDescription or <code>null</code>
      * @see DataDescription
@@ -472,7 +471,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     /**
      * Processed records count
      *
-     * @param counts the counts {@code DataCounts}
+     * @param counts
+     *            the counts {@code DataCounts}
      */
     public void setCounts(DataCounts counts) {
         this.counts = counts;
@@ -490,7 +490,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     /**
      * Set the renormalization window duration
      *
-     * @param renormalizationWindowDays the renormalization window in days
+     * @param renormalizationWindowDays
+     *            the renormalization window in days
      */
     public void setRenormalizationWindowDays(Long renormalizationWindowDays) {
         this.renormalizationWindowDays = renormalizationWindowDays;
@@ -508,7 +509,8 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
     /**
      * Set the background persistence interval
      *
-     * @param backgroundPersistInterval the persistence interval in seconds
+     * @param backgroundPersistInterval
+     *            the persistence interval in seconds
      */
     public void setBackgroundPersistInterval(Long backgroundPersistInterval) {
         this.backgroundPersistInterval = backgroundPersistInterval;
@@ -711,36 +713,26 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         }
 
         JobDetails that = (JobDetails) other;
-        return Objects.equals(this.jobId, that.jobId) &&
-                Objects.equals(this.description, that.description) &&
-                (this.status == that.status) &&
-                Objects.equals(this.schedulerState, that.schedulerState) &&
-                Objects.equals(this.createTime, that.createTime) &&
-                Objects.equals(this.finishedTime, that.finishedTime) &&
-                Objects.equals(this.lastDataTime, that.lastDataTime) &&
-                (this.timeout == that.timeout) &&
-                Objects.equals(this.analysisConfig, that.analysisConfig) &&
-                Objects.equals(this.analysisLimits, that.analysisLimits) &&
-                Objects.equals(this.dataDescription, that.dataDescription) &&
-                Objects.equals(this.modelDebugConfig, that.modelDebugConfig) &&
-                Objects.equals(this.modelSizeStats, that.modelSizeStats) &&
-                Objects.equals(this.transforms, that.transforms) &&
-                Objects.equals(this.counts, that.counts) &&
-                Objects.equals(this.ignoreDowntime, that.ignoreDowntime) &&
-                Objects.equals(this.renormalizationWindowDays, that.renormalizationWindowDays) &&
-                Objects.equals(this.backgroundPersistInterval, that.backgroundPersistInterval) &&
-                Objects.equals(this.modelSnapshotRetentionDays, that.modelSnapshotRetentionDays) &&
-                Objects.equals(this.resultsRetentionDays, that.resultsRetentionDays) &&
-                Objects.equals(this.customSettings, that.customSettings) &&
-                Objects.equals(this.modelSnapshotId, that.modelSnapshotId);
+        return Objects.equals(this.jobId, that.jobId) && Objects.equals(this.description, that.description) && (this.status == that.status)
+                && Objects.equals(this.schedulerState, that.schedulerState) && Objects.equals(this.createTime, that.createTime)
+                && Objects.equals(this.finishedTime, that.finishedTime) && Objects.equals(this.lastDataTime, that.lastDataTime)
+                && (this.timeout == that.timeout) && Objects.equals(this.analysisConfig, that.analysisConfig)
+                && Objects.equals(this.analysisLimits, that.analysisLimits) && Objects.equals(this.dataDescription, that.dataDescription)
+                && Objects.equals(this.modelDebugConfig, that.modelDebugConfig) && Objects.equals(this.modelSizeStats, that.modelSizeStats)
+                && Objects.equals(this.transforms, that.transforms) && Objects.equals(this.counts, that.counts)
+                && Objects.equals(this.ignoreDowntime, that.ignoreDowntime)
+                && Objects.equals(this.renormalizationWindowDays, that.renormalizationWindowDays)
+                && Objects.equals(this.backgroundPersistInterval, that.backgroundPersistInterval)
+                && Objects.equals(this.modelSnapshotRetentionDays, that.modelSnapshotRetentionDays)
+                && Objects.equals(this.resultsRetentionDays, that.resultsRetentionDays)
+                && Objects.equals(this.customSettings, that.customSettings) && Objects.equals(this.modelSnapshotId, that.modelSnapshotId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(jobId, description, status, schedulerState, createTime,
-                finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
-                dataDescription, modelDebugConfig, modelSizeStats, transforms, counts,
-                renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
-                resultsRetentionDays, ignoreDowntime, customSettings, modelSnapshotId);
+        return Objects.hash(jobId, description, status, schedulerState, createTime, finishedTime, lastDataTime, timeout, analysisConfig,
+                analysisLimits, dataDescription, modelDebugConfig, modelSizeStats, transforms, counts, renormalizationWindowDays,
+                backgroundPersistInterval, modelSnapshotRetentionDays, resultsRetentionDays, ignoreDowntime, customSettings,
+                modelSnapshotId);
     }
 }

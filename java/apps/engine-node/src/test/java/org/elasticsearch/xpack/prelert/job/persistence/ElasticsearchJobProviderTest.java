@@ -21,9 +21,7 @@ import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
@@ -317,6 +315,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, IOException {
+        @SuppressWarnings("unchecked")
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
@@ -326,7 +325,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
         clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-                .addIndicesDeleteResponse("prelertresults-" + jobId, true, false, actionListener);
+        .addIndicesDeleteResponse("prelertresults-" + jobId, true, false, actionListener);
         clientBuilder.build();
 
         provider.deleteJob(jobId, actionListener);
@@ -335,6 +334,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, UnknownJobException, IOException {
+        @SuppressWarnings("unchecked")
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
@@ -344,7 +344,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
         clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-                .addIndicesDeleteResponse("prelertresults-" + jobId, true, true, actionListener);
+        .addIndicesDeleteResponse("prelertresults-" + jobId, true, true, actionListener);
         clientBuilder.build();
 
 

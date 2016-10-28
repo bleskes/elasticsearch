@@ -17,8 +17,6 @@ public class LengthEncodedWriterTest extends ESTestCase {
      * Simple test push a list of records through the writer and
      * check the output
      * The writer accepts empty strings but not null strings
-     *
-     * @throws IOException
      */
     public void testLengthEncodedWriter() throws IOException {
         {

@@ -98,8 +98,7 @@ public class JobManager {
     /**
      * Create a JobManager
      */
-    public JobManager(JobProvider jobProvider,
-            ClusterService clusterService, ActionGuardian<Action> processActionGuardian) {
+    public JobManager(JobProvider jobProvider, ClusterService clusterService, ActionGuardian<Action> processActionGuardian) {
         this.jobProvider = Objects.requireNonNull(jobProvider);
         this.clusterService = clusterService;
         this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
@@ -131,13 +130,14 @@ public class JobManager {
     /**
      * Get details of all Jobs.
      *
-     * @param skip Skip the first N Jobs. This parameter is for paging
-     *             results if not required set to 0.
-     * @param take Take only this number of Jobs
-     * @return A query page object with hitCount set to the total number
-     * of jobs not the only the number returned here as determined by the
-     * <code>take</code>
-     * parameter.
+     * @param skip
+     *            Skip the first N Jobs. This parameter is for paging results if
+     *            not required set to 0.
+     * @param take
+     *            Take only this number of Jobs
+     * @return A query page object with hitCount set to the total number of jobs
+     *         not the only the number returned here as determined by the
+     *         <code>take</code> parameter.
      */
     public QueryPage<JobDetails> getJobs(int skip, int take, ClusterState clusterState) {
         PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
@@ -145,12 +145,8 @@ public class JobManager {
             return new QueryPage<>(Collections.emptyList(), 0);
         }
 
-        List<JobDetails> jobs = prelertMetadata.getJobs().entrySet().stream()
-                .skip(skip)
-                .limit(take)
-                .map(Map.Entry::getValue)
-                .map(Job::getJobDetails)
-                .collect(Collectors.toList());
+        List<JobDetails> jobs = prelertMetadata.getJobs().entrySet().stream().skip(skip).limit(take).map(Map.Entry::getValue)
+                .map(Job::getJobDetails).collect(Collectors.toList());
         return new QueryPage<>(jobs, prelertMetadata.getJobs().size());
     }
 
@@ -197,10 +193,12 @@ public class JobManager {
     /**
      * Stores a job in the cluster state
      */
-    public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) throws JobIdAlreadyExistsException {
+    public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener)
+            throws JobIdAlreadyExistsException {
         JobConfiguration jobConfiguration = request.getJobConfiguration();
         JobConfigurationVerifier.verify(jobConfiguration);
-        // TODO: Remove once all validation happens in JobConfiguration#build() method:
+        // TODO: Remove once all validation happens in JobConfiguration#build()
+        // method:
         JobDetails jobDetails = jobConfiguration.build();
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
@@ -209,11 +207,14 @@ public class JobManager {
                     jobProvider.createJob(jobDetails, new ActionListener<Boolean>() {
                         @Override
                         public void onResponse(Boolean aBoolean) {
-                            // NORELEASE: make auditing async too (we can't do blocking stuff here):
+                            // NORELEASE: make auditing async too (we can't do
+                            // blocking stuff here):
                             // audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
 
-                            // Also I wonder if we need to audit log infra structure in prelert as when we merge into xpack
-                            // we can use its audit trailing. See: https://github.com/elastic/prelert-legacy/issues/48
+                            // Also I wonder if we need to audit log infra
+                            // structure in prelert as when we merge into xpack
+                            // we can use its audit trailing. See:
+                            // https://github.com/elastic/prelert-legacy/issues/48
                             actionListener.onResponse(new PutJobAction.Response(jobDetails));
                         }
 
@@ -233,7 +234,8 @@ public class JobManager {
                 actionListener.onFailure(e);
             }
         };
-        clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(), new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
+        clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(),
+                new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
 
             @Override
             protected Boolean newResponse(boolean acknowledged) {
@@ -260,9 +262,7 @@ public class JobManager {
         builder.putJob(new Job(jobDetails), overwrite);
 
         ClusterState.Builder newState = ClusterState.builder(currentState);
-        newState.metaData(MetaData.builder(currentState.getMetaData())
-                .putCustom(PrelertMetadata.TYPE, builder.build())
-                .build());
+        newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
         return newState.build();
     }
 
@@ -270,15 +270,18 @@ public class JobManager {
      * Deletes a job.
      *
      * The clean-up involves:
-     *   <ul>
-     *       <li>Deleting the index containing job results</li>
-     *       <li>Deleting the job logs</li>
-     *       <li>Removing the job from the cluster state</li>
-     *   </ul>
+     * <ul>
+     * <li>Deleting the index containing job results</li>
+     * <li>Deleting the job logs</li>
+     * <li>Removing the job from the cluster state</li>
+     * </ul>
      *
-     * @param request the delete job request
-     * @param actionListener the action listener
-     * @throws JobException If the job could not be deleted
+     * @param request
+     *            the delete job request
+     * @param actionListener
+     *            the action listener
+     * @throws JobException
+     *             If the job could not be deleted
      */
     public void deleteJob(DeleteJobAction.Request request, ActionListener<DeleteJobAction.Response> actionListener) throws JobException {
         String jobId = request.getJobId();
@@ -361,13 +364,12 @@ public class JobManager {
         builder.removeJob(jobId);
 
         ClusterState.Builder newState = ClusterState.builder(currentState);
-        newState.metaData(MetaData.builder(currentState.getMetaData())
-                .putCustom(PrelertMetadata.TYPE, builder.build())
-                .build());
+        newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
         return newState.build();
     }
 
-    public void startJobScheduler(StartJobSchedulerAction.Request request, ActionListener<StartJobSchedulerAction.Response> actionListener) {
+    public void startJobScheduler(StartJobSchedulerAction.Request request,
+            ActionListener<StartJobSchedulerAction.Response> actionListener) {
         clusterService.submitStateUpdateTask("start-scheduler-job-" + request.getJobId(),
                 new AckedClusterStateUpdateTask<StartJobSchedulerAction.Response>(request, actionListener) {
 
@@ -394,8 +396,9 @@ public class JobManager {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                return innerUpdateSchedulerState(currentState, request.getJobId(), oldState -> new SchedulerState(
-                        JobSchedulerStatus.STOPPING, oldState.getStartTimeMillis(), oldState.getEndTimeMillis()));
+                return innerUpdateSchedulerState(currentState, request.getJobId(),
+                        oldState -> new SchedulerState(JobSchedulerStatus.STOPPING, oldState.getStartTimeMillis(),
+                                oldState.getEndTimeMillis()));
             }
         });
     }
@@ -415,8 +418,8 @@ public class JobManager {
         switch (newSchedulerStatus) {
         case STARTED:
             if (currentSchedulerStatus != JobSchedulerStatus.STOPPED) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START,
-                        jobDetails.getId(), jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobDetails.getId(),
+                        jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_START_JOB_SCHEDULER);
             }
             break;
         case STOPPING:
@@ -437,13 +440,12 @@ public class JobManager {
     }
 
     public void updateSchedulerStatus(String jobId, JobSchedulerStatus newSchedulerStatus) {
-        clusterService.submitStateUpdateTask("udpate-scheduler-status-job-" + jobId,
-                new ClusterStateUpdateTask() {
+        clusterService.submitStateUpdateTask("udpate-scheduler-status-job-" + jobId, new ClusterStateUpdateTask() {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                return innerUpdateSchedulerState(currentState, jobId, oldSchedulerState -> new SchedulerState(
-                        newSchedulerStatus, oldSchedulerState.getStartTimeMillis(), oldSchedulerState.getEndTimeMillis()));
+                return innerUpdateSchedulerState(currentState, jobId, oldSchedulerState -> new SchedulerState(newSchedulerStatus,
+                        oldSchedulerState.getStartTimeMillis(), oldSchedulerState.getEndTimeMillis()));
             }
 
             @Override
@@ -472,8 +474,7 @@ public class JobManager {
         return jobProvider.audit("");
     }
 
-    public void revertSnapshot(RevertModelSnapshotAction.Request request,
-            ActionListener<RevertModelSnapshotAction.Response> actionListener,
+    public void revertSnapshot(RevertModelSnapshotAction.Request request, ActionListener<RevertModelSnapshotAction.Response> actionListener,
             ModelSnapshot modelSnapshot) {
 
         clusterService.submitStateUpdateTask("revert-snapshot-" + request.getJobId(),
@@ -486,10 +487,13 @@ public class JobManager {
                 if (acknowledged) {
                     response = new RevertModelSnapshotAction.Response(modelSnapshot);
 
-                    // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on the cluster state update task thread
-                    // and any action performed on that thread should be quick. (so no indexing documents)
-                    //audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
-                    //        modelSnapshot.getDescription()));
+                    // NORELEASE: This is not the place the audit log
+                    // (indexes a document), because this method is
+                    // executed on the cluster state update task thread
+                    // and any action performed on that thread should be
+                    // quick. (so no indexing documents)
+                    // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_REVERTED,
+                    // modelSnapshot.getDescription()));
 
                 } else {
                     response = new RevertModelSnapshotAction.Response();
@@ -505,7 +509,7 @@ public class JobManager {
                     jobDetails.setIgnoreDowntime(IgnoreDowntime.NEVER);
 
                     Date latestRecordTime = modelSnapshot.getLatestResultTimeStamp();
-                    LOGGER.info("Resetting latest record time to '" +  latestRecordTime + "'");
+                    LOGGER.info("Resetting latest record time to '" + latestRecordTime + "'");
                     jobDetails.setLastDataTime(latestRecordTime);
                     DataCounts counts = jobDetails.getCounts();
                     counts.setLatestRecordTimeStamp(latestRecordTime);

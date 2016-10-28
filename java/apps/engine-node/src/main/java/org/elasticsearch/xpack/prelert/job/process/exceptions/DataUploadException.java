@@ -12,7 +12,6 @@ import org.elasticsearch.xpack.prelert.job.DataCounts;
  */
 public class DataUploadException extends RuntimeException {
 
-    private static final long serialVersionUID = -3753422525714929770L;
 
     private static final String MSG_FORMAT = "An error occurred after processing %d records. "
             + "(invalidDateCount = %d, missingFieldCount = %d, outOfOrderTimeStampCount = %d)";

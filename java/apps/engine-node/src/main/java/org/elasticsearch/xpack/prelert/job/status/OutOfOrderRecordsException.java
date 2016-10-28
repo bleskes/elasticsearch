@@ -11,7 +11,6 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
  * in temporal order.
  */
 public class OutOfOrderRecordsException extends JobException {
-    private static final long serialVersionUID = -7088347813900268191L;
 
     private final long numberBad;
     private final long totalNumber;

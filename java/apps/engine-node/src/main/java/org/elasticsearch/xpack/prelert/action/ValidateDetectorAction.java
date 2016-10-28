@@ -47,8 +47,8 @@ import org.elasticsearch.xpack.prelert.job.config.verification.DetectorVerifier;
 public class ValidateDetectorAction
 extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, ValidateDetectorAction.RequestBuilder> {
 
-    public final static ValidateDetectorAction INSTANCE = new ValidateDetectorAction();
-    public final static String NAME = "cluster:admin/prelert/validate/detector";
+    public static final ValidateDetectorAction INSTANCE = new ValidateDetectorAction();
+    public static final String NAME = "cluster:admin/prelert/validate/detector";
 
     protected ValidateDetectorAction() {
         super(NAME);

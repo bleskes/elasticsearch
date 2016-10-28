@@ -22,10 +22,9 @@ public class AutodetectCommunicatorFactory {
     private final UsagePersisterFactory usagePersisterFactory;
     private final JobLoggerFactory jobLoggerFactory;
 
-
     public AutodetectCommunicatorFactory(AutodetectProcessFactory autodetectProcessFactory, JobResultsPeristerFactory persisterFactory,
-                                         JobDataCountsPersisterFactory dataCountsPersisterFactory, UsagePersisterFactory usagePersisterFactory,
-                                         JobLoggerFactory loggerFactory) {
+            JobDataCountsPersisterFactory dataCountsPersisterFactory, UsagePersisterFactory usagePersisterFactory,
+            JobLoggerFactory loggerFactory) {
         this.autodetectProcessFactory = Objects.requireNonNull(autodetectProcessFactory);
         this.persisterFactory = Objects.requireNonNull(persisterFactory);
         this.dataCountsPersisterFactory = Objects.requireNonNull(dataCountsPersisterFactory);
@@ -39,12 +38,12 @@ public class AutodetectCommunicatorFactory {
         UsageReporter usageReporter = new UsageReporter(job.getJobId(), usagePersisterFactory.getInstance(jobLogger), jobLogger);
 
         StatusReporter statusReporter = new StatusReporter(job.getJobId(), job.getCounts(), usageReporter,
-                                                            dataCountsPersisterFactory.getInstance(jobLogger),
-                                                            jobLogger, job.getAnalysisConfig().getBucketSpanOrDefault());
+                dataCountsPersisterFactory.getInstance(jobLogger),
+                jobLogger, job.getAnalysisConfig().getBucketSpanOrDefault());
 
 
         return new AutodetectCommunicator(job, autodetectProcessFactory.createAutodetectProcess(job, ignoreDowntime),
-                                jobLogger, persisterFactory.jobResultsPersister(job.getJobId()), statusReporter);
+                jobLogger, persisterFactory.jobResultsPersister(job.getJobId()), statusReporter);
 
     }
 }

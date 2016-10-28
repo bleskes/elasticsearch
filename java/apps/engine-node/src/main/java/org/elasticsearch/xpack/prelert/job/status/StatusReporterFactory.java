@@ -2,7 +2,6 @@
 package org.elasticsearch.xpack.prelert.job.status;
 
 import org.apache.logging.log4j.Logger;
-
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
 
@@ -24,6 +23,6 @@ public interface StatusReporterFactory {
      * @param logger
      *            The job logger
      */
-    public StatusReporter newStatusReporter(String jobId, DataCounts
+    StatusReporter newStatusReporter(String jobId, DataCounts
             counts, UsageReporter usageReporter, Logger logger);
 }

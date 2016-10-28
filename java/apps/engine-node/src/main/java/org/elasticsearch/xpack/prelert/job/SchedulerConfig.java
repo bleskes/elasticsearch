@@ -50,24 +50,25 @@ import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-
 /**
- * Scheduler configuration options.  Describes where to proactively pull input
+ * Scheduler configuration options. Describes where to proactively pull input
  * data from.
  * <p>
- * If a value has not been set it will be <code>null</code>.
- * Object wrappers are used around integral types and booleans so they can take
- * <code>null</code> values.
+ * If a value has not been set it will be <code>null</code>. Object wrappers are
+ * used around integral types and booleans so they can take <code>null</code>
+ * values.
  */
 @JsonInclude(Include.NON_NULL)
 public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
     /**
-     * The field name used to specify aggregation fields in Elasticsearch aggregations
+     * The field name used to specify aggregation fields in Elasticsearch
+     * aggregations
      */
     private static final String FIELD = "field";
     /**
-     * The field name used to specify document counts in Elasticsearch aggregations
+     * The field name used to specify document counts in Elasticsearch
+     * aggregations
      */
     public static final String DOC_COUNT = "doc_count";
 
@@ -89,13 +90,13 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     public static final ParseField AGGREGATIONS = new ParseField("aggregations");
     public static final ParseField AGGS = new ParseField("aggs");
     /**
-     * Named to match Elasticsearch, hence lowercase_with_underscores instead
-     * of camelCase
+     * Named to match Elasticsearch, hence lowercase_with_underscores instead of
+     * camelCase
      */
     public static final ParseField SCRIPT_FIELDS = new ParseField("script_fields");
 
-    public static final ConstructingObjectParser<SchedulerConfig.Builder, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
-            "schedule_config", a -> new SchedulerConfig.Builder((DataSource) a[0]));
+    public static final ConstructingObjectParser<SchedulerConfig.Builder, ParseFieldMatcherSupplier> PARSER = 
+            new ConstructingObjectParser<>("schedule_config", a -> new SchedulerConfig.Builder((DataSource) a[0]));
 
     static {
         PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> {
@@ -166,8 +167,9 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     private final Boolean tailFile;
 
     /**
-     * Used for data sources that require credentials.  May be null in the case
-     * where credentials are sometimes needed and sometimes not (e.g. Elasticsearch).
+     * Used for data sources that require credentials. May be null in the case
+     * where credentials are sometimes needed and sometimes not (e.g.
+     * Elasticsearch).
      */
     private final String username;
     private final String password;
@@ -179,7 +181,8 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     private final String baseUrl;
     private final List<String> indexes;
     private final List<String> types;
-    // NORELEASE: I think these 4 fields can be reduced to a single BytesReference field holding the entire source:
+    // NORELEASE: I think these 4 fields can be reduced to a single
+    // BytesReference field holding the entire source:
     private final Map<String, Object> query;
     private final Map<String, Object> aggregations;
     private final Map<String, Object> aggs;
@@ -189,15 +192,14 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
     @JsonCreator
     public SchedulerConfig(@JsonProperty("dataSource") DataSource dataSource, @JsonProperty("queryDelay") Long queryDelay,
-                           @JsonProperty("frequency") Long frequency, @JsonProperty("filePath") String filePath,
-                           @JsonProperty("tailFile") Boolean tailFile, @JsonProperty("username") String username,
-                           @JsonProperty("password") String password, @JsonProperty("encryptedPassword") String encryptedPassword,
-                           @JsonProperty("baseUrl") String baseUrl, @JsonProperty("indexes") List<String> indexes,
-                           @JsonProperty("types") List<String> types, @JsonProperty("query")  Map<String, Object> query,
-                           @JsonProperty("aggregations") Map<String, Object> aggregations,
-                           @JsonProperty("aggs") Map<String, Object> aggs, @JsonProperty("script_fields") Map<String, Object> scriptFields,
-                           @JsonProperty("retrieveWholeSource") Boolean retrieveWholeSource,
-                           @JsonProperty("scrollSize") Integer scrollSize) {
+            @JsonProperty("frequency") Long frequency, @JsonProperty("filePath") String filePath,
+            @JsonProperty("tailFile") Boolean tailFile, @JsonProperty("username") String username,
+            @JsonProperty("password") String password, @JsonProperty("encryptedPassword") String encryptedPassword,
+            @JsonProperty("baseUrl") String baseUrl, @JsonProperty("indexes") List<String> indexes,
+            @JsonProperty("types") List<String> types, @JsonProperty("query") Map<String, Object> query,
+            @JsonProperty("aggregations") Map<String, Object> aggregations, @JsonProperty("aggs") Map<String, Object> aggs,
+            @JsonProperty("script_fields") Map<String, Object> scriptFields,
+            @JsonProperty("retrieveWholeSource") Boolean retrieveWholeSource, @JsonProperty("scrollSize") Integer scrollSize) {
         this.dataSource = dataSource;
         this.queryDelay = queryDelay;
         this.frequency = frequency;
@@ -288,10 +290,10 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * For the FILE data source only, should the file be tailed?  If not it will
+     * For the FILE data source only, should the file be tailed? If not it will
      * just be read from once.
      *
-     * @return Should the file be tailed?  (<code>null</code> if not set.)
+     * @return Should the file be tailed? (<code>null</code> if not set.)
      */
     public Boolean getTailFile() {
         return this.tailFile;
@@ -339,9 +341,9 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     /**
      * For the ELASTICSEARCH data source only, the Elasticsearch query DSL
      * representing the query to submit to Elasticsearch to get the input data.
-     * This should not include time bounds, as these are added separately.
-     * This class does not attempt to interpret the query.  The map will be
-     * converted back to an arbitrary JSON object.
+     * This should not include time bounds, as these are added separately. This
+     * class does not attempt to interpret the query. The map will be converted
+     * back to an arbitrary JSON object.
      *
      * @return The search query, or <code>null</code> if not set.
      */
@@ -353,25 +355,27 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
      * For the ELASTICSEARCH data source only, should the whole _source document
      * be retrieved for analysis, or just the analysis fields?
      *
-     * @return Should the whole of _source be retrieved?  (<code>null</code> if not set.)
+     * @return Should the whole of _source be retrieved? (<code>null</code> if
+     *         not set.)
      */
     public Boolean getRetrieveWholeSource() {
         return this.retrieveWholeSource;
     }
 
     /**
-     * For the ELASTICSEARCH data source only, get the size of documents to
-     * be retrieved from each shard via a scroll search
+     * For the ELASTICSEARCH data source only, get the size of documents to be
+     * retrieved from each shard via a scroll search
      *
-     * @return The size of documents to be retrieved from each shard via a scroll search
+     * @return The size of documents to be retrieved from each shard via a
+     *         scroll search
      */
     public Integer getScrollSize() {
         return this.scrollSize;
     }
 
     /**
-     * The encrypted password to use to connect to the data source (if any).
-     * A class outside this package is responsible for encrypting and decrypting
+     * The encrypted password to use to connect to the data source (if any). A
+     * class outside this package is responsible for encrypting and decrypting
      * the password.
      *
      * @return The password, or <code>null</code> if not set.
@@ -395,8 +399,8 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     /**
      * For the ELASTICSEARCH data source only, optional Elasticsearch
      * script_fields to add to the search to be submitted to Elasticsearch to
-     * get the input data.  This class does not attempt to interpret the
-     * script fields.  The map will be converted back to an arbitrary JSON object.
+     * get the input data. This class does not attempt to interpret the script
+     * fields. The map will be converted back to an arbitrary JSON object.
      *
      * @return The script fields, or <code>null</code> if not set.
      */
@@ -408,8 +412,8 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     /**
      * For the ELASTICSEARCH data source only, optional Elasticsearch
      * aggregations to apply to the search to be submitted to Elasticsearch to
-     * get the input data.  This class does not attempt to interpret the
-     * aggregations.  The map will be converted back to an arbitrary JSON object.
+     * get the input data. This class does not attempt to interpret the
+     * aggregations. The map will be converted back to an arbitrary JSON object.
      * Synonym for {@link #getAggs()} (like Elasticsearch).
      *
      * @return The aggregations, or <code>null</code> if not set.
@@ -421,8 +425,8 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     /**
      * For the ELASTICSEARCH data source only, optional Elasticsearch
      * aggregations to apply to the search to be submitted to Elasticsearch to
-     * get the input data.  This class does not attempt to interpret the
-     * aggregations.  The map will be converted back to an arbitrary JSON object.
+     * get the input data. This class does not attempt to interpret the
+     * aggregations. The map will be converted back to an arbitrary JSON object.
      * Synonym for {@link #getAggregations()} (like Elasticsearch).
      *
      * @return The aggregations, or <code>null</code> if not set.
@@ -434,8 +438,8 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     /**
      * Convenience method to get either aggregations or aggs.
      *
-     * @return The aggregations (whether initially specified in aggregations
-     * or aggs), or <code>null</code> if neither are set.
+     * @return The aggregations (whether initially specified in aggregations or
+     *         aggs), or <code>null</code> if neither are set.
      */
     @JsonIgnore
     public Map<String, Object> getAggregationsOrAggs() {
@@ -597,30 +601,21 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
         SchedulerConfig that = (SchedulerConfig) other;
 
-        return Objects.equals(this.dataSource, that.dataSource) &&
-                Objects.equals(this.frequency, that.frequency) &&
-                Objects.equals(this.queryDelay, that.queryDelay) &&
-                Objects.equals(this.filePath, that.filePath) &&
-                Objects.equals(this.tailFile, that.tailFile) &&
-                Objects.equals(this.baseUrl, that.baseUrl) &&
-                Objects.equals(this.username, that.username) &&
-                Objects.equals(this.password, that.password) &&
-                Objects.equals(this.encryptedPassword, that.encryptedPassword) &&
-                Objects.equals(this.indexes, that.indexes) &&
-                Objects.equals(this.types, that.types) &&
-                Objects.equals(this.query, that.query) &&
-                Objects.equals(this.retrieveWholeSource, that.retrieveWholeSource) &&
-                Objects.equals(this.scrollSize, that.scrollSize) &&
-                Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs()) &&
-                Objects.equals(this.scriptFields, that.scriptFields);
+        return Objects.equals(this.dataSource, that.dataSource) && Objects.equals(this.frequency, that.frequency)
+                && Objects.equals(this.queryDelay, that.queryDelay) && Objects.equals(this.filePath, that.filePath)
+                && Objects.equals(this.tailFile, that.tailFile) && Objects.equals(this.baseUrl, that.baseUrl)
+                && Objects.equals(this.username, that.username) && Objects.equals(this.password, that.password)
+                && Objects.equals(this.encryptedPassword, that.encryptedPassword) && Objects.equals(this.indexes, that.indexes)
+                && Objects.equals(this.types, that.types) && Objects.equals(this.query, that.query)
+                && Objects.equals(this.retrieveWholeSource, that.retrieveWholeSource) && Objects.equals(this.scrollSize, that.scrollSize)
+                && Objects.equals(this.getAggregationsOrAggs(), that.getAggregationsOrAggs())
+                && Objects.equals(this.scriptFields, that.scriptFields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.dataSource, frequency, queryDelay,
-                this.filePath, tailFile, baseUrl, username, password, encryptedPassword,
-                this.indexes, types, query, retrieveWholeSource, scrollSize,
-                getAggregationsOrAggs(), this.scriptFields);
+        return Objects.hash(this.dataSource, frequency, queryDelay, this.filePath, tailFile, baseUrl, username, password, encryptedPassword,
+                this.indexes, types, query, retrieveWholeSource, scrollSize, getAggregationsOrAggs(), this.scriptFields);
     }
 
     /**
@@ -631,10 +626,11 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         FILE, ELASTICSEARCH;
 
         /**
-         * Case-insensitive from string method.
-         * Works with ELASTICSEARCH, Elasticsearch, ElasticSearch, etc.
+         * Case-insensitive from string method. Works with ELASTICSEARCH,
+         * Elasticsearch, ElasticSearch, etc.
          *
-         * @param value String representation
+         * @param value
+         *            String representation
          * @return The data source
          */
         @JsonCreator
@@ -677,10 +673,12 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         private String password;
         private String encryptedPassword;
         private String baseUrl;
-        // NORELEASE: use Collections.emptyList() instead of null as initial value:
+        // NORELEASE: use Collections.emptyList() instead of null as initial
+        // value:
         private List<String> indexes = null;
         private List<String> types = null;
-        // NORELEASE: use Collections.emptyMap() instead of null as initial value:
+        // NORELEASE: use Collections.emptyMap() instead of null as initial
+        // value:
         // NORELEASE: Use SearchSourceBuilder
         private Map<String, Object> query = null;
         private Map<String, Object> aggregations = null;
@@ -689,24 +687,25 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         private Boolean retrieveWholeSource;
         private Integer scrollSize;
 
-        // NORELEASE: figure out what the required fields are and made part of the only public constructor
+        // NORELEASE: figure out what the required fields are and made part of
+        // the only public constructor
         @JsonCreator
         public Builder(@JsonProperty("dataSource") DataSource dataSource) {
             this.dataSource = Objects.requireNonNull(dataSource);
             switch (dataSource) {
-                case FILE:
-                    setTailFile(false);
-                    break;
-                case ELASTICSEARCH:
-                    Map<String, Object> query = new HashMap<>();
-                    query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
-                    setQuery(query);
-                    setQueryDelay(DEFAULT_ELASTICSEARCH_QUERY_DELAY);
-                    setRetrieveWholeSource(false);
-                    setScrollSize(DEFAULT_SCROLL_SIZE);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("unsupported datasource " + dataSource);
+            case FILE:
+                setTailFile(false);
+                break;
+            case ELASTICSEARCH:
+                Map<String, Object> query = new HashMap<>();
+                query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
+                setQuery(query);
+                setQueryDelay(DEFAULT_ELASTICSEARCH_QUERY_DELAY);
+                setRetrieveWholeSource(false);
+                setScrollSize(DEFAULT_SCROLL_SIZE);
+                break;
+            default:
+                throw new UnsupportedOperationException("unsupported datasource " + dataSource);
             }
         }
 
@@ -876,7 +875,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
          * Convenience method to get either aggregations or aggs.
          *
          * @return The aggregations (whether initially specified in aggregations
-         * or aggs), or <code>null</code> if neither are set.
+         *         or aggs), or <code>null</code> if neither are set.
          */
         @JsonIgnore
         public Map<String, Object> getAggregationsOrAggs() {
@@ -897,89 +896,87 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
         public SchedulerConfig build() {
             switch (dataSource) {
-                case FILE:
-                    if (Strings.hasLength(filePath) == false) {
-                        throw invalidOptionValue(FILE_PATH.getPreferredName(), filePath);
-                    }
-                    if (baseUrl != null) {
-                        throw notSupportedValue(BASE_URL, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (username != null) {
-                        throw notSupportedValue(USERNAME, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (password != null) {
-                        throw notSupportedValue(PASSWORD, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (encryptedPassword != null) {
-                        throw notSupportedValue(ENCRYPTED_PASSWORD, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (indexes != null) {
-                        throw notSupportedValue(INDEXES, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (types != null) {
-                        throw notSupportedValue(TYPES, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (retrieveWholeSource != null) {
-                        throw notSupportedValue(RETRIEVE_WHOLE_SOURCE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (aggregations != null) {
-                        throw notSupportedValue(AGGREGATIONS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (query != null) {
-                        throw notSupportedValue(QUERY, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
+            case FILE:
+                if (Strings.hasLength(filePath) == false) {
+                    throw invalidOptionValue(FILE_PATH.getPreferredName(), filePath);
+                }
+                if (baseUrl != null) {
+                    throw notSupportedValue(BASE_URL, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (username != null) {
+                    throw notSupportedValue(USERNAME, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (password != null) {
+                    throw notSupportedValue(PASSWORD, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (encryptedPassword != null) {
+                    throw notSupportedValue(ENCRYPTED_PASSWORD, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (indexes != null) {
+                    throw notSupportedValue(INDEXES, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (types != null) {
+                    throw notSupportedValue(TYPES, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (retrieveWholeSource != null) {
+                    throw notSupportedValue(RETRIEVE_WHOLE_SOURCE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (aggregations != null) {
+                    throw notSupportedValue(AGGREGATIONS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (query != null) {
+                    throw notSupportedValue(QUERY, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (scriptFields != null) {
+                    throw notSupportedValue(SCRIPT_FIELDS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (scrollSize != null) {
+                    throw notSupportedValue(SCROLL_SIZE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                break;
+            case ELASTICSEARCH:
+                try {
+                    new URL(baseUrl);
+                } catch (MalformedURLException e) {
+                    throw invalidOptionValue(BASE_URL.getPreferredName(), baseUrl);
+                }
+                boolean isNoPasswordSet = password == null && encryptedPassword == null;
+                boolean isMultiplePasswordSet = password != null && encryptedPassword != null;
+                if ((username != null && isNoPasswordSet) || (isNoPasswordSet == false && username == null)) {
+                    String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
+                }
+                if (isMultiplePasswordSet) {
+                    String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
+                }
+                if (indexes == null || indexes.isEmpty() || indexes.contains(null) || indexes.contains("")) {
+                    throw invalidOptionValue(INDEXES.getPreferredName(), indexes);
+                }
+                if (types == null || types.isEmpty() || types.contains(null) || types.contains("")) {
+                    throw invalidOptionValue(TYPES.getPreferredName(), types);
+                }
+                if (aggregations != null && aggs != null) {
+                    String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS);
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);
+                }
+                if (Boolean.TRUE.equals(retrieveWholeSource)) {
                     if (scriptFields != null) {
                         throw notSupportedValue(SCRIPT_FIELDS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
                     }
-                    if (scrollSize != null) {
-                        throw notSupportedValue(SCROLL_SIZE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    break;
-                case ELASTICSEARCH:
-                    try {
-                        new URL(baseUrl);
-                    } catch (MalformedURLException e) {
-                        throw invalidOptionValue(BASE_URL.getPreferredName(), baseUrl);
-                    }
-                    boolean isNoPasswordSet = password == null && encryptedPassword == null;
-                    boolean isMultiplePasswordSet = password != null && encryptedPassword != null;
-                    if ((username != null && isNoPasswordSet) || (isNoPasswordSet == false && username == null)) {
-                        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
-                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
-                    }
-                    if (isMultiplePasswordSet) {
-                        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
-                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
-                    }
-                    if (indexes == null || indexes.isEmpty() || indexes.contains(null) || indexes.contains("")) {
-                        throw invalidOptionValue(INDEXES.getPreferredName(), indexes);
-                    }
-                    if (types == null || types.isEmpty() || types.contains(null) || types.contains("")) {
-                        throw invalidOptionValue(TYPES.getPreferredName(), types);
-                    }
-                    if (aggregations != null && aggs != null) {
-                        String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS);
-                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);
-                    }
-                    if (Boolean.TRUE.equals(retrieveWholeSource)) {
-                        if (scriptFields != null) {
-                            throw notSupportedValue(SCRIPT_FIELDS, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                        }
-                    }
-                    if (filePath != null) {
-                        throw notSupportedValue(FILE_PATH, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    if (tailFile != null) {
-                        throw notSupportedValue(TAIL_FILE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
-                    }
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected datasource [" + dataSource + "]");
+                }
+                if (filePath != null) {
+                    throw notSupportedValue(FILE_PATH, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                if (tailFile != null) {
+                    throw notSupportedValue(TAIL_FILE, dataSource, Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED);
+                }
+                break;
+            default:
+                throw new IllegalStateException("Unexpected datasource [" + dataSource + "]");
             }
-            return new SchedulerConfig(
-                    dataSource, queryDelay, frequency, filePath, tailFile, username, password, encryptedPassword, baseUrl,
-                    indexes, types, query, aggregations, aggs, scriptFields, retrieveWholeSource, scrollSize
-            );
+            return new SchedulerConfig(dataSource, queryDelay, frequency, filePath, tailFile, username, password, encryptedPassword,
+                    baseUrl, indexes, types, query, aggregations, aggs, scriptFields, retrieveWholeSource, scrollSize);
         }
 
         private static ElasticsearchException invalidOptionValue(String fieldName, Object value) {

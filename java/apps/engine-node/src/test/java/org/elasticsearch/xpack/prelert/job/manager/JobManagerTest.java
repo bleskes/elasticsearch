@@ -79,6 +79,7 @@ public class JobManagerTest extends ESTestCase {
     private Auditor auditor;
     private JobDataDeleterFactory jobDataDeleter;
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Before
     public void setupMocks()
     {
@@ -116,8 +117,8 @@ public class JobManagerTest extends ESTestCase {
     {
         Set<String> running = new HashSet<String>(Arrays.asList("henry", "dim", "dave"));
         Set<String> diff = new HashSet<String>(Arrays.asList("dave", "tom")).stream()
-                                    .filter((s) -> !running.contains(s))
-                                    .collect(Collectors.toCollection(HashSet::new));
+                .filter((s) -> !running.contains(s))
+                .collect(Collectors.toCollection(HashSet::new));
 
         assertTrue(diff.size() == 1);
         assertTrue(diff.contains("tom"));
@@ -136,6 +137,7 @@ public class JobManagerTest extends ESTestCase {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         DeleteJobAction.Request request = new DeleteJobAction.Request("foo");
         request.setJobId("foo");
+        @SuppressWarnings("unchecked")
         ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         Future<Throwable> task_1_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
         Future<Throwable> task_2_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
@@ -313,7 +315,7 @@ public class JobManagerTest extends ESTestCase {
             return null;
         }
     }
-/*
+    /*
     private static MockBatchedDocumentsIterator<JobDetails> newBatchedJobsIterator(List<JobDetails> jobs)
     {
         Deque<JobDetails> batch1 = new ArrayDeque<>();
@@ -350,5 +352,5 @@ public class JobManagerTest extends ESTestCase {
             }
         };
     }
-    */
+     */
 }

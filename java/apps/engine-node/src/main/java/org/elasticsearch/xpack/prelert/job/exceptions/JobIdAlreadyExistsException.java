@@ -9,7 +9,6 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
  */
 public class JobIdAlreadyExistsException extends JobException
 {
-    private static final long serialVersionUID = 8656604180755905746L;
 
     private final String jobId;
 

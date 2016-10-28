@@ -315,10 +315,6 @@ public class AutodetectResultsParserTest extends ESTestCase {
 
     /**
      * Register an alert listener and test it is fired
-     *
-     * @throws ElasticsearchParseException
-     * @throws IOException
-     * @throws ElasticsearchParseException
      */
     public void testAlerting() throws IOException {
         Logger logger = Loggers.getLogger(AutodetectResultsParserTest.class);

@@ -50,7 +50,8 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.IOException;
 import java.util.Objects;
 
-public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Request, StartJobSchedulerAction.Response, StartJobSchedulerAction.RequestBuilder> {
+public class StartJobSchedulerAction
+        extends Action<StartJobSchedulerAction.Request, StartJobSchedulerAction.Response, StartJobSchedulerAction.RequestBuilder> {
 
     public static final StartJobSchedulerAction INSTANCE = new StartJobSchedulerAction();
     public static final String NAME = "cluster:admin/prelert/job/scheduler/start";
@@ -94,8 +95,8 @@ public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Requ
             this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
             this.schedulerState = ExceptionsHelper.requireNonNull(schedulerState, SchedulerState.TYPE_FIELD.getPreferredName());
             if (schedulerState.getStatus() != JobSchedulerStatus.STARTED) {
-                throw new IllegalStateException("Start job scheduler action requires the scheduler status to be ["
-                        + JobSchedulerStatus.STARTED + "]");
+                throw new IllegalStateException(
+                        "Start job scheduler action requires the scheduler status to be [" + JobSchedulerStatus.STARTED + "]");
             }
         }
 
@@ -152,8 +153,7 @@ public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Requ
                 return false;
             }
             Request other = (Request) obj;
-            return Objects.equals(jobId, other.jobId) &&
-                    Objects.equals(schedulerState, other.schedulerState);
+            return Objects.equals(jobId, other.jobId) && Objects.equals(schedulerState, other.schedulerState);
         }
     }
 
@@ -170,7 +170,8 @@ public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Requ
             super(acknowledged);
         }
 
-        private Response() {}
+        private Response() {
+        }
     }
 
     public static class TransportAction extends TransportMasterNodeAction<Request, Response> {
@@ -178,9 +179,8 @@ public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Requ
         private final JobManager jobManager;
 
         @Inject
-        public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                JobManager jobManager) {
+        public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService, ThreadPool threadPool,
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver, JobManager jobManager) {
             super(settings, StartJobSchedulerAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;

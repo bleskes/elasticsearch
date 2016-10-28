@@ -10,7 +10,15 @@ import org.elasticsearch.xpack.prelert.job.ModelState;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
-import org.elasticsearch.xpack.prelert.job.results.*;
+import org.elasticsearch.xpack.prelert.job.results.AnomalyCause;
+import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
+import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.job.results.Influence;
+import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
+import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 import org.elasticsearch.xpack.prelert.job.usage.Usage;
 
 import java.io.IOException;
@@ -85,53 +93,53 @@ public class ElasticsearchMappings {
     public static XContentBuilder dataCountsMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
-                    .startObject(DataCounts.TYPE.getPreferredName())
-                        .startObject(ALL)
-                        .field(ENABLED, false)
-                        // analyzer must be specified even though _all is disabled
-                        // because all types in the same index must have the same
-                        // analyzer for a given field
-                        .field(ANALYZER, WHITESPACE)
-                        .endObject()
-                        .startObject(PROPERTIES)
-                            .startObject(DataCounts.BUCKET_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.PROCESSED_RECORD_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.PROCESSED_FIELD_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.INPUT_BYTES.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.INPUT_RECORD_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.INPUT_FIELD_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.INVALID_DATE_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.MISSING_FIELD_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.OUT_OF_ORDER_TIME_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.FAILED_TRANSFORM_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.EXCLUDED_RECORD_COUNT.getPreferredName())
-                            .field(TYPE, LONG)
-                            .endObject()
-                            .startObject(DataCounts.LATEST_RECORD_TIME.getPreferredName())
-                            .field(TYPE, DATE)
-                            .endObject()
-                        .endObject()
-                    .endObject()
+                .startObject(DataCounts.TYPE.getPreferredName())
+                .startObject(ALL)
+                .field(ENABLED, false)
+                // analyzer must be specified even though _all is disabled
+                // because all types in the same index must have the same
+                // analyzer for a given field
+                .field(ANALYZER, WHITESPACE)
+                .endObject()
+                .startObject(PROPERTIES)
+                .startObject(DataCounts.BUCKET_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.PROCESSED_RECORD_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.PROCESSED_FIELD_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.INPUT_BYTES.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.INPUT_RECORD_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.INPUT_FIELD_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.INVALID_DATE_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.MISSING_FIELD_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.OUT_OF_ORDER_TIME_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.FAILED_TRANSFORM_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.EXCLUDED_RECORD_COUNT.getPreferredName())
+                .field(TYPE, LONG)
+                .endObject()
+                .startObject(DataCounts.LATEST_RECORD_TIME.getPreferredName())
+                .field(TYPE, DATE)
+                .endObject()
+                .endObject()
+                .endObject()
                 .endObject();
     }
 

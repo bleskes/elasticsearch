@@ -32,7 +32,8 @@ public class RestGetCategoryAction extends BaseRestHandler {
     private final GetCategoryDefinitionAction.TransportAction transportAction;
 
     @Inject
-    public RestGetCategoryAction(Settings settings, RestController controller, GetCategoryDefinitionAction.TransportAction transportAction) {
+    public RestGetCategoryAction(Settings settings, RestController controller,
+            GetCategoryDefinitionAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
         controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/categorydefinitions/{categoryId}", this);
@@ -40,9 +41,8 @@ public class RestGetCategoryAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetCategoryDefinitionAction.Request request = new GetCategoryDefinitionAction.Request(
-                restRequest.param("jobId"), restRequest.param("categoryId")
-        );
+        GetCategoryDefinitionAction.Request request = new GetCategoryDefinitionAction.Request(restRequest.param("jobId"),
+                restRequest.param("categoryId"));
         return channel -> transportAction.execute(request, new RestStatusToXContentListener<>(channel));
     }
 

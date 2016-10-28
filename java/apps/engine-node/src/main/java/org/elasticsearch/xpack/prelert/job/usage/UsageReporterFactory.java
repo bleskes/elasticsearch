@@ -11,7 +11,7 @@ public interface UsageReporterFactory {
     /**
      * Return a new UsageReporter for the given job id.
      */
-    public UsageReporter newUsageReporter(String jobId, Logger logger);
+    UsageReporter newUsageReporter(String jobId, Logger logger);
 }
 
 

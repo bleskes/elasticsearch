@@ -9,7 +9,6 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.HasErrorCode;
  */
 public class JobException extends Exception implements HasErrorCode
 {
-    private static final long serialVersionUID = -5289885963015348819L;
 
     private final ErrorCodes errorCode;
 

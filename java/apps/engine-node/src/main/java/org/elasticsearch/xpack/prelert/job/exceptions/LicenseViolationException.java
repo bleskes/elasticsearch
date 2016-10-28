@@ -9,7 +9,6 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
  */
 public class LicenseViolationException extends JobException
 {
-    private static final long serialVersionUID = 7225703980253532853L;
 
     /**
      * Create a new LicenseViolationException with an error code

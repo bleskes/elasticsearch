@@ -15,5 +15,5 @@ public interface JobDataCountsPersister
      * @param jobId Job to update
      * @param counts The counts
      */
-    public void persistDataCounts(String jobId, DataCounts counts);
+    void persistDataCounts(String jobId, DataCounts counts);
 }

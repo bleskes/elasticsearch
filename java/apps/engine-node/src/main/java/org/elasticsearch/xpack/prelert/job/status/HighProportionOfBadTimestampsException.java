@@ -11,7 +11,6 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
  * have a bad timestamp.
  */
 public class HighProportionOfBadTimestampsException extends JobException {
-    private static final long serialVersionUID = -7776085998658495251L;
 
     private final long numberBad;
     private final long totalNumber;

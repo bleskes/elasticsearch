@@ -1,0 +1,19 @@
+{
+  "xpack.prelert.get_jobs": {
+    "methods": [ "GET" ],
+    "url": {
+      "path": "/engine/v2/jobs",
+      "paths": [ "/engine/v2/jobs" ],
+      "params": {
+        "skip": {
+          "type": "int",
+          "description": "skips a number of jobs"
+        },
+        "take": {
+          "type": "int",
+          "description": "specifies a max number of jobs to get"
+        }
+      }
+    }
+  }
+}

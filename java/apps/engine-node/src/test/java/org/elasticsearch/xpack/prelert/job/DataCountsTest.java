@@ -21,11 +21,9 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
+
+import static org.hamcrest.Matchers.greaterThan;
 
 public class DataCountsTest extends AbstractSerializingTestCase<DataCounts> {
 
@@ -80,18 +78,17 @@ public class DataCountsTest extends AbstractSerializingTestCase<DataCounts> {
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
 
-    public void testCountCreatedZero() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+    public void testCountCreatedZero() throws Exception {
         DataCounts counts = new DataCounts();
-        testAllFieldsEqualZero(counts);
+        assertAllFieldsEqualZero(counts);
     }
 
-    public void testCountCopyCreatedFieldsNotZero()
-            throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public void testCountCopyCreatedFieldsNotZero() throws Exception {
         DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 9, 10);
-        testAllFieldsGreaterThanZero(counts1);
+        assertAllFieldsGreaterThanZero(counts1);
 
         DataCounts counts2 = new DataCounts(counts1);
-        testAllFieldsGreaterThanZero(counts2);
+        assertAllFieldsGreaterThanZero(counts2);
     }
 
     public void testIncrements() {
@@ -161,44 +158,43 @@ public class DataCountsTest extends AbstractSerializingTestCase<DataCounts> {
         assertFalse(counts1.equals(counts2));
     }
 
-    private void testAllFieldsEqualZero(DataCounts stats)
-            throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        for (PropertyDescriptor propertyDescriptor :
-                Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors()) {
-            if (propertyDescriptor.getDisplayName().equals("analysedFieldsPerRecord")) {
-                continue;
-            }
-
-            if (propertyDescriptor.getReadMethod().getName().equals("getLatestRecordTimeStamp")) {
-                Date val = (Date) propertyDescriptor.getReadMethod().invoke(stats);
-                assertEquals(val, null);
-                continue;
-            }
-
-            assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
-        }
+    private void assertAllFieldsEqualZero(DataCounts stats) throws Exception {
+        assertEquals(0L, stats.getBucketCount());
+        assertEquals(0L, stats.getProcessedRecordCount());
+        assertEquals(0L, stats.getProcessedFieldCount());
+        assertEquals(0L, stats.getInputBytes());
+        assertEquals(0L, stats.getInputFieldCount());
+        assertEquals(0L, stats.getInputRecordCount());
+        assertEquals(0L, stats.getInvalidDateCount());
+        assertEquals(0L, stats.getMissingFieldCount());
+        assertEquals(0L, stats.getOutOfOrderTimeStampCount());
+        assertEquals(0L, stats.getFailedTransformCount());
+        assertEquals(0L, stats.getExcludedRecordCount());
+        assertEquals(null, stats.getLatestRecordTimeStamp());
     }
 
-    private void testAllFieldsGreaterThanZero(DataCounts stats)
-            throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        for (PropertyDescriptor propertyDescriptor :
-                Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors()) {
-            if (propertyDescriptor.getReadMethod().getName().equals("getLatestRecordTimeStamp")) {
-                Date val = (Date) propertyDescriptor.getReadMethod().invoke(stats);
-                assertTrue("LastestRecordTimeStamp is not > 0", val.getTime() > 0);
-            } else {
-                Long val = (Long) propertyDescriptor.getReadMethod().invoke(stats);
-                assertTrue("Field " + propertyDescriptor.getReadMethod().toString() + " not > 0", val > 0);
-            }
-        }
+    private void assertAllFieldsGreaterThanZero(DataCounts stats) throws Exception {
+        assertThat(stats.getBucketCount(), greaterThan(0L));
+        assertThat(stats.getProcessedRecordCount(), greaterThan(0L));
+        assertThat(stats.getProcessedFieldCount(), greaterThan(0L));
+        assertThat(stats.getInputBytes(), greaterThan(0L));
+        assertThat(stats.getInputFieldCount(), greaterThan(0L));
+        assertThat(stats.getInputRecordCount(), greaterThan(0L));
+        assertThat(stats.getInputRecordCount(), greaterThan(0L));
+        assertThat(stats.getInvalidDateCount(), greaterThan(0L));
+        assertThat(stats.getMissingFieldCount(), greaterThan(0L));
+        assertThat(stats.getOutOfOrderTimeStampCount(), greaterThan(0L));
+        assertThat(stats.getFailedTransformCount(), greaterThan(0L));
+        assertThat(stats.getExcludedRecordCount(), greaterThan(0L));
+        assertThat(stats.getLatestRecordTimeStamp().getTime(), greaterThan(0L));
     }
 
     private static DataCounts createCounts(long bucketCount,
-                                           long processedRecordCount, long processedFieldCount,
-                                           long inputBytes, long inputFieldCount,
-                                           long invalidDateCount, long missingFieldCount,
-                                           long outOfOrderTimeStampCount, long failedTransformCount,
-                                           long excludedRecordCount, long latestRecordTime) {
+            long processedRecordCount, long processedFieldCount,
+            long inputBytes, long inputFieldCount,
+            long invalidDateCount, long missingFieldCount,
+            long outOfOrderTimeStampCount, long failedTransformCount,
+            long excludedRecordCount, long latestRecordTime) {
         DataCounts counts = new DataCounts();
         counts.setBucketCount(bucketCount);
         counts.setProcessedRecordCount(processedRecordCount);

@@ -202,9 +202,6 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
     /**
      * Only one output of the transform is used
-     *
-     * @throws MissingFieldException
-     * @throws IOException
      */
 
     public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed()
@@ -277,9 +274,6 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
     /**
      * Only one output of the transform is used
-     *
-     * @throws MissingFieldException
-     * @throws IOException
      */
 
     public void testBuildTransforms_ChainedTransforms()
@@ -337,11 +331,6 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
     /**
      * The exclude transform returns fail fatal meaning the record
      * shouldn't be processed.
-     *
-     * @throws MissingFieldException
-     * @throws IOException
-     * @throws OutOfOrderRecordsException
-     * @throws HighProportionOfBadTimestampsException
      */
 
     public void testApplyTransforms_transformReturnsExclude()

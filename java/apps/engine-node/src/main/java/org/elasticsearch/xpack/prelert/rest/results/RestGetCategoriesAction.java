@@ -33,7 +33,8 @@ public class RestGetCategoriesAction extends BaseRestHandler {
     private final GetCategoryDefinitionsAction.TransportAction transportAction;
 
     @Inject
-    public RestGetCategoriesAction(Settings settings, RestController controller, GetCategoryDefinitionsAction.TransportAction transportAction) {
+    public RestGetCategoriesAction(Settings settings, RestController controller,
+            GetCategoryDefinitionsAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
         controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/categorydefinitions", this);

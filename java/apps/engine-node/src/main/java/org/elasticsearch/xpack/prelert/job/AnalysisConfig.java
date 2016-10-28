@@ -17,20 +17,27 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import java.io.IOException;
-import java.io.ObjectStreamClass;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -491,6 +498,6 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
                 bucketSpan, batchSpan, categorizationFieldName, categorizationFilters, latency, period,
                 summaryCountFieldName, detectors, influencers, overlappingBuckets, resultFinalizationWindow,
                 multivariateByFields, multipleBucketSpans, usePerPartitionNormalization
-        );
+                );
     }
 }

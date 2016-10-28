@@ -54,7 +54,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDescriptionAction.Request, PutModelSnapshotDescriptionAction.Response, PutModelSnapshotDescriptionAction.RequestBuilder> {
+public class PutModelSnapshotDescriptionAction extends
+        Action<PutModelSnapshotDescriptionAction.Request, PutModelSnapshotDescriptionAction.Response, 
+        PutModelSnapshotDescriptionAction.RequestBuilder> {
 
     public static final PutModelSnapshotDescriptionAction INSTANCE = new PutModelSnapshotDescriptionAction();
     public static final String NAME = "cluster:admin/prelert/modelsnapshot/put/description";
@@ -165,12 +167,10 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
                 return false;
             }
             Request other = (Request) obj;
-            return Objects.equals(jobId, other.jobId) &&
-                    Objects.equals(snapshotId, other.snapshotId) &&
-                    Objects.equals(description, other.description);
+            return Objects.equals(jobId, other.jobId) && Objects.equals(snapshotId, other.snapshotId)
+                    && Objects.equals(description, other.description);
         }
     }
-
 
     public static class Response extends ActionResponse implements StatusToXContent {
 
@@ -257,9 +257,8 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
-        public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool,
-                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                ElasticsearchJobProvider jobProvider) {
+        public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver, ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }
@@ -267,16 +266,15 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
 
-            logger.debug("Received request to change model snapshot description using '"
-                    + request.getDescriptionString() + "' for snapshot ID '" + request.getSnapshotId() +
-                    "' for job '" + request.getJobId() + "'");
+            logger.debug("Received request to change model snapshot description using '" + request.getDescriptionString()
+            + "' for snapshot ID '" + request.getSnapshotId() + "' for job '" + request.getJobId() + "'");
 
             List<ModelSnapshot> changeCandidates = getChangeCandidates(request);
             checkForClashes(request);
 
             if (changeCandidates.size() > 1) {
-                logger.warn("More than one model found for [jobId: " + request.getJobId()
-                + ", snapshotId: " + request.getSnapshotId() + "] tuple.");
+                logger.warn("More than one model found for [jobId: " + request.getJobId() + ", snapshotId: " + request.getSnapshotId()
+                + "] tuple.");
             }
             ModelSnapshot modelSnapshot = changeCandidates.get(0);
             modelSnapshot.setDescription(request.getDescriptionString());
@@ -288,7 +286,8 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
 
             modelSnapshot.setDescription(request.getDescriptionString());
 
-            // The quantiles can be large, and totally dominate the output - it's
+            // The quantiles can be large, and totally dominate the output -
+            // it's
             // clearer to remove them
             modelSnapshot.setQuantiles(null);
 
@@ -299,8 +298,7 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
         private List<ModelSnapshot> getChangeCandidates(Request request) {
             List<ModelSnapshot> changeCandidates = getModelSnapshots(request.getJobId(), request.getSnapshotId(), null);
             if (changeCandidates == null || changeCandidates.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.REST_NO_SUCH_MODEL_SNAPSHOT, ErrorCodes.NO_SUCH_MODEL_SNAPSHOT);
+                throw ExceptionsHelper.invalidRequestException(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, ErrorCodes.NO_SUCH_MODEL_SNAPSHOT);
             }
             return changeCandidates;
         }
@@ -308,8 +306,7 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
         private void checkForClashes(Request request) {
             List<ModelSnapshot> clashCandidates = getModelSnapshots(request.getJobId(), null, request.getDescriptionString());
             if (clashCandidates != null && !clashCandidates.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.REST_DESCRIPTION_ALREADY_USED, ErrorCodes.DESCRIPTION_ALREADY_USED);
+                throw ExceptionsHelper.invalidRequestException(Messages.REST_DESCRIPTION_ALREADY_USED, ErrorCodes.DESCRIPTION_ALREADY_USED);
             }
         }
 

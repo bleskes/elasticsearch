@@ -45,7 +45,8 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response, GetCategoryDefinitionAction.RequestBuilder> {
+public class GetCategoryDefinitionAction extends
+Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response, GetCategoryDefinitionAction.RequestBuilder> {
 
     public static final GetCategoryDefinitionAction INSTANCE = new GetCategoryDefinitionAction();
     private static final String NAME = "cluster:admin/prelert/categorydefinition/get";
@@ -98,11 +99,12 @@ public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAct
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             Request request = (Request) o;
-            return Objects.equals(jobId, request.jobId) &&
-                    Objects.equals(categoryId, request.categoryId);
+            return Objects.equals(jobId, request.jobId) && Objects.equals(categoryId, request.categoryId);
         }
 
         @Override
@@ -153,8 +155,10 @@ public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAct
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             Response response = (Response) o;
             return Objects.equals(result, response.result);
         }
@@ -170,9 +174,8 @@ public class GetCategoryDefinitionAction extends Action<GetCategoryDefinitionAct
         private final JobProvider jobProvider;
 
         @Inject
-        public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                ElasticsearchJobProvider jobProvider) {
+        public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver, ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }

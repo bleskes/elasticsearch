@@ -1,20 +1,22 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Logger;
-
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
 
-import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T>
-{
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+
+abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T> {
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchBatchedDocumentsIterator.class);
 
     private static final String CONTEXT_ALIVE_DURATION = "5m";
@@ -29,8 +31,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     private volatile String scrollId;
     private volatile boolean isScrollInitialised;
 
-    public ElasticsearchBatchedDocumentsIterator(Client client, String index, ObjectMapper objectMapper)
-    {
+    public ElasticsearchBatchedDocumentsIterator(Client client, String index, ObjectMapper objectMapper) {
         this.client = Objects.requireNonNull(client);
         this.index = Objects.requireNonNull(index);
         this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -41,73 +42,58 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     }
 
     @Override
-    public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs)
-    {
+    public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs) {
         filterBuilder.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs);
         return this;
     }
 
     @Override
-    public BatchedDocumentsIterator<T> includeInterim(String interimFieldName)
-    {
+    public BatchedDocumentsIterator<T> includeInterim(String interimFieldName) {
         filterBuilder.interim(interimFieldName, true);
         return this;
     }
 
     @Override
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         return !isScrollInitialised || count != totalHits;
     }
 
     @Override
-    public Deque<T> next()
-    {
-        if (!hasNext())
-        {
+    public Deque<T> next() {
+        if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        SearchResponse searchResponse = (scrollId == null) ? initScroll() :
-                client.prepareSearchScroll(scrollId).setScroll(CONTEXT_ALIVE_DURATION).get();
+        SearchResponse searchResponse = (scrollId == null) ? initScroll()
+                : client.prepareSearchScroll(scrollId).setScroll(CONTEXT_ALIVE_DURATION).get();
         scrollId = searchResponse.getScrollId();
         return mapHits(searchResponse);
     }
 
-    private SearchResponse initScroll()
-    {
+    private SearchResponse initScroll() {
         LOGGER.trace("ES API CALL: search all of type " + getType() + " from index " + index);
 
         isScrollInitialised = true;
 
-        SearchResponse searchResponse = client.prepareSearch(index)
-                .setScroll(CONTEXT_ALIVE_DURATION)
-                .setSize(BATCH_SIZE)
-                .setTypes(getType())
-                .setQuery(filterBuilder.build())
-                .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
-                .get();
+        SearchResponse searchResponse = client.prepareSearch(index).setScroll(CONTEXT_ALIVE_DURATION).setSize(BATCH_SIZE)
+                .setTypes(getType()).setQuery(filterBuilder.build()).addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)).get();
         totalHits = searchResponse.getHits().getTotalHits();
         scrollId = searchResponse.getScrollId();
         return searchResponse;
     }
 
-    private Deque<T> mapHits(SearchResponse searchResponse)
-    {
+    private Deque<T> mapHits(SearchResponse searchResponse) {
         Deque<T> results = new ArrayDeque<>();
 
         SearchHit[] hits = searchResponse.getHits().getHits();
-        for (SearchHit hit : hits)
-        {
+        for (SearchHit hit : hits) {
             T mapped = map(objectMapper, hit);
-            if (mapped != null)
-            {
+            if (mapped != null) {
                 results.add(mapped);
             }
         }
         count += hits.length;
 
-        if (!hasNext() && scrollId != null)
-        {
+        if (!hasNext() && scrollId != null) {
             client.prepareClearScroll().setScrollIds(Arrays.asList(scrollId)).get();
         }
         return results;
@@ -118,8 +104,10 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
     /**
      * Maps the search hit to the document type
      *
-     * @param objectMapper the object mapper
-     * @param hit the search hit
+     * @param objectMapper
+     *            the object mapper
+     * @param hit
+     *            the search hit
      * @return The mapped document or {@code null} if the mapping failed
      */
     protected abstract T map(ObjectMapper objectMapper, SearchHit hit);

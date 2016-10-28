@@ -12,7 +12,6 @@ import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
 
 import java.io.IOException;
 
-
 public class RestPostDataCloseAction extends BaseRestHandler {
 
     private static final ParseField JOB_ID = new ParseField("jobId");
@@ -20,7 +19,8 @@ public class RestPostDataCloseAction extends BaseRestHandler {
     private final PostDataCloseAction.TransportAction transportPostDataCloseAction;
 
     @Inject
-    public RestPostDataCloseAction(Settings settings, RestController controller, PostDataCloseAction.TransportAction transportPostDataCloseAction) {
+    public RestPostDataCloseAction(Settings settings, RestController controller,
+            PostDataCloseAction.TransportAction transportPostDataCloseAction) {
         super(settings);
         this.transportPostDataCloseAction = transportPostDataCloseAction;
         controller.registerHandler(RestRequest.Method.POST, "/engine/v2/data/{jobId}/close", this);
@@ -33,4 +33,3 @@ public class RestPostDataCloseAction extends BaseRestHandler {
         return channel -> transportPostDataCloseAction.execute(postDataCloseRequest, new AcknowledgedRestListener<>(channel));
     }
 }
-

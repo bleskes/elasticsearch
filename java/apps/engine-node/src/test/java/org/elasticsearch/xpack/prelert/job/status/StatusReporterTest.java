@@ -8,10 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 import org.apache.logging.log4j.Logger;
@@ -61,24 +57,22 @@ public class StatusReporterTest extends ESTestCase {
         statusReporter = new StatusReporter(JOB_ID, usageReporter, jobDataCountsPersister, mockLogger, 10l);
     }
 
-    
+
     public void testSettingAcceptablePercentages() {
         assertEquals(statusReporter.getAcceptablePercentDateParseErrors(), MAX_PERCENT_DATE_PARSE_ERRORS);
         assertEquals(statusReporter.getAcceptablePercentOutOfOrderErrors(), MAX_PERCENT_OUT_OF_ORDER_ERRORS);
     }
 
-    
-    public void testSimpleConstructor()
-            throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+    public void testSimpleConstructor() throws Exception {
         DataCounts stats = statusReporter.incrementalStats();
         assertNotNull(stats);
 
-        testAllFieldsEqualZero(stats);
+        assertAllFieldsEqualZero(stats);
     }
 
-    
-    public void testComplexConstructor()
-            throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+    public void testComplexConstructor() throws Exception {
         DataCounts counts = new DataCounts();
 
         counts.setProcessedRecordCount(1);
@@ -93,7 +87,7 @@ public class StatusReporterTest extends ESTestCase {
                 jobDataCountsPersister, mockLogger, 1);
         DataCounts stats = statusReporter.incrementalStats();
         assertNotNull(stats);
-        testAllFieldsEqualZero(stats);
+        assertAllFieldsEqualZero(stats);
 
         assertEquals(1, statusReporter.getProcessedRecordCount());
         assertEquals(2, statusReporter.getBytesRead());
@@ -104,13 +98,11 @@ public class StatusReporterTest extends ESTestCase {
         assertEquals(7, statusReporter.getExcludedRecordCount());
     }
 
-    
-    public void testResetIncrementalCounts()
-            throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-            IntrospectionException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+
+    public void testResetIncrementalCounts() throws Exception {
         DataCounts stats = statusReporter.incrementalStats();
         assertNotNull(stats);
-        testAllFieldsEqualZero(stats);
+        assertAllFieldsEqualZero(stats);
 
         statusReporter.setAnalysedFieldsPerRecord(3);
 
@@ -130,17 +122,17 @@ public class StatusReporterTest extends ESTestCase {
         statusReporter.startNewIncrementalCount();
         stats = statusReporter.incrementalStats();
         assertNotNull(stats);
-        testAllFieldsEqualZero(stats);
+        assertAllFieldsEqualZero(stats);
     }
 
-    
+
     public void testReportLatestTimeIncrementalStats() {
         statusReporter.startNewIncrementalCount();
         statusReporter.reportLatestTimeIncrementalStats(5001L);
         assertEquals(5001L, statusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
     }
 
-    
+
     public void testReportRecordsWritten()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.setAnalysedFieldsPerRecord(3);
@@ -165,7 +157,7 @@ public class StatusReporterTest extends ESTestCase {
         verify(jobDataCountsPersister, never()).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    
+
     public void testReportRecordsWritten_Given100Records()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.setAnalysedFieldsPerRecord(3);
@@ -183,7 +175,7 @@ public class StatusReporterTest extends ESTestCase {
         verify(jobDataCountsPersister, times(1)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    
+
     public void testReportRecordsWritten_Given1000Records()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.setAnalysedFieldsPerRecord(3);
@@ -201,7 +193,7 @@ public class StatusReporterTest extends ESTestCase {
         verify(jobDataCountsPersister, times(10)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    
+
     public void testReportRecordsWritten_Given2000Records()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.setAnalysedFieldsPerRecord(3);
@@ -219,7 +211,7 @@ public class StatusReporterTest extends ESTestCase {
         verify(jobDataCountsPersister, times(11)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    
+
     public void testReportRecordsWritten_Given20000Records()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.setAnalysedFieldsPerRecord(3);
@@ -237,7 +229,7 @@ public class StatusReporterTest extends ESTestCase {
         verify(jobDataCountsPersister, times(29)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    
+
     public void testReportRecordsWritten_Given30000Records()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.setAnalysedFieldsPerRecord(3);
@@ -255,7 +247,7 @@ public class StatusReporterTest extends ESTestCase {
         verify(jobDataCountsPersister, times(30)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    
+
     public void testFinishReporting()
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.setAnalysedFieldsPerRecord(3);
@@ -280,17 +272,18 @@ public class StatusReporterTest extends ESTestCase {
         assertEquals(dc, statusReporter.incrementalStats());
     }
 
-    private void testAllFieldsEqualZero(DataCounts stats)
-            throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        for (PropertyDescriptor propertyDescriptor :
-                Introspector.getBeanInfo(DataCounts.class, Object.class).getPropertyDescriptors()) {
-            if (propertyDescriptor.getReadMethod().getName().equals("getLatestRecordTimeStamp")) {
-                Date val = (Date) propertyDescriptor.getReadMethod().invoke(stats);
-                assertEquals(val, null);
-                continue;
-            }
-
-            assertEquals(new Long(0), propertyDescriptor.getReadMethod().invoke(stats));
-        }
+    private void assertAllFieldsEqualZero(DataCounts stats) throws Exception {
+        assertEquals(0L, stats.getBucketCount());
+        assertEquals(0L, stats.getProcessedRecordCount());
+        assertEquals(0L, stats.getProcessedFieldCount());
+        assertEquals(0L, stats.getInputBytes());
+        assertEquals(0L, stats.getInputFieldCount());
+        assertEquals(0L, stats.getInputRecordCount());
+        assertEquals(0L, stats.getInvalidDateCount());
+        assertEquals(0L, stats.getMissingFieldCount());
+        assertEquals(0L, stats.getOutOfOrderTimeStampCount());
+        assertEquals(0L, stats.getFailedTransformCount());
+        assertEquals(0L, stats.getExcludedRecordCount());
+        assertEquals(null, stats.getLatestRecordTimeStamp());
     }
 }

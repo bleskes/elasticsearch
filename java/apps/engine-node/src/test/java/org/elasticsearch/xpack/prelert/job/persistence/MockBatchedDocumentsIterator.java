@@ -61,8 +61,6 @@ public class MockBatchedDocumentsIterator<T> implements BatchedDocumentsIterator
 
     /**
      * If includeInterim has not been called this is an empty string
-     *
-     * @return
      */
     public String getInterimFieldName() {
         return interimFieldName;

@@ -41,7 +41,8 @@ import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import java.io.IOException;
 import java.util.Objects;
 
-public class StopJobSchedulerAction extends Action<StopJobSchedulerAction.Request, StopJobSchedulerAction.Response, StopJobSchedulerAction.RequestBuilder> {
+public class StopJobSchedulerAction
+        extends Action<StopJobSchedulerAction.Request, StopJobSchedulerAction.Response, StopJobSchedulerAction.RequestBuilder> {
 
     public static final StopJobSchedulerAction INSTANCE = new StopJobSchedulerAction();
     public static final String NAME = "cluster:admin/prelert/job/scheduler/stop";
@@ -123,7 +124,8 @@ public class StopJobSchedulerAction extends Action<StopJobSchedulerAction.Reques
             super(acknowledged);
         }
 
-        private Response() {}
+        private Response() {
+        }
     }
 
     public static class TransportAction extends TransportMasterNodeAction<Request, Response> {
@@ -131,9 +133,8 @@ public class StopJobSchedulerAction extends Action<StopJobSchedulerAction.Reques
         private final JobManager jobManager;
 
         @Inject
-        public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                JobManager jobManager) {
+        public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService, ThreadPool threadPool,
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver, JobManager jobManager) {
             super(settings, StopJobSchedulerAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;

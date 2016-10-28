@@ -50,7 +50,8 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.IOException;
 import java.util.Objects;
 
-public class GetInfluencersAction extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetInfluencersAction.RequestBuilder> {
+public class GetInfluencersAction
+        extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetInfluencersAction.RequestBuilder> {
 
     public static final GetInfluencersAction INSTANCE = new GetInfluencersAction();
     public static final String NAME = "indices:admin/prelert/results/influencers/get";
@@ -236,14 +237,10 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
                 return false;
             }
             Request other = (Request) obj;
-            return Objects.equals(jobId, other.jobId) &&
-                    Objects.equals(start, other.start) &&
-                    Objects.equals(end, other.end) &&
-                    Objects.equals(includeInterim, other.includeInterim) &&
-                    Objects.equals(pageParams, other.pageParams) &&
-                    Objects.equals(anomalyScoreFilter, other.anomalyScoreFilter) &&
-                    Objects.equals(decending, other.decending) &&
-                    Objects.equals(sort, other.sort);
+            return Objects.equals(jobId, other.jobId) && Objects.equals(start, other.start) && Objects.equals(end, other.end)
+                    && Objects.equals(includeInterim, other.includeInterim) && Objects.equals(pageParams, other.pageParams)
+                    && Objects.equals(anomalyScoreFilter, other.anomalyScoreFilter) && Objects.equals(decending, other.decending)
+                    && Objects.equals(sort, other.sort);
         }
     }
 
@@ -323,25 +320,17 @@ public class GetInfluencersAction extends Action<GetInfluencersAction.Request, G
         private final JobProvider jobProvider;
 
         @Inject
-        public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                ElasticsearchJobProvider jobProvider) {
+        public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver, ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            InfluencersQueryBuilder.InfluencersQuery query =
-                    new InfluencersQueryBuilder()
-                    .includeInterim(request.includeInterim)
-                    .epochStart(request.start)
-                    .epochEnd(request.end)
-                    .skip(request.pageParams.getSkip()).take(request.pageParams.getTake())
-                    .anomalyScoreThreshold(request.anomalyScoreFilter)
-                    .sortField(request.sort)
-                    .sortDescending(request.decending)
-                    .build();
+            InfluencersQueryBuilder.InfluencersQuery query = new InfluencersQueryBuilder().includeInterim(request.includeInterim)
+                    .epochStart(request.start).epochEnd(request.end).skip(request.pageParams.getSkip()).take(request.pageParams.getTake())
+                    .anomalyScoreThreshold(request.anomalyScoreFilter).sortField(request.sort).sortDescending(request.decending).build();
 
             QueryPage<Influencer> page = jobProvider.influencers(request.jobId, query);
             listener.onResponse(new Response(page));

@@ -394,13 +394,15 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
 
     /**
-     * Find all the scratch area fields. These are those
-     * that are input to a transform but are not written to the
-     * output or read from input. i.e. for the case where a transforms
-     * output is used exclusively by another transform
+     * Find all the scratch area fields. These are those that are input to a
+     * transform but are not written to the output or read from input. i.e. for
+     * the case where a transforms output is used exclusively by another
+     * transform
      *
-     * @param inputFields   Fields we expect in the header
-     * @param outputFields  Fields that are written to the analytics
+     * @param inputFields
+     *            Fields we expect in the header
+     * @param outputFields
+     *            Fields that are written to the analytics
      * @param dateTimeField date field
      */
     protected final Map<String, Integer> scratchAreaIndexes(Collection<String> inputFields, Collection<String> outputFields,

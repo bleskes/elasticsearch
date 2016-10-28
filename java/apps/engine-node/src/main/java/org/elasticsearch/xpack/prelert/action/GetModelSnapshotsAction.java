@@ -52,7 +52,8 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.IOException;
 import java.util.Objects;
 
-public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response, GetModelSnapshotsAction.RequestBuilder> {
+public class GetModelSnapshotsAction
+        extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response, GetModelSnapshotsAction.RequestBuilder> {
 
     public static final GetModelSnapshotsAction INSTANCE = new GetModelSnapshotsAction();
     public static final String NAME = "cluster:admin/prelert/modelsnapshots/get";
@@ -91,8 +92,7 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
             PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
         }
 
-        public static Request parseRequest(String jobId, XContentParser parser,
-                ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+        public static Request parseRequest(String jobId, XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
             Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
             if (jobId != null) {
                 request.jobId = jobId;
@@ -236,15 +236,11 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
                 return false;
             }
             Request other = (Request) obj;
-            return Objects.equals(jobId, other.jobId) &&
-                    Objects.equals(description, other.description) &&
-                    Objects.equals(start, other.start) &&
-                    Objects.equals(end, other.end) &&
-                    Objects.equals(sort, other.sort) &&
-                    Objects.equals(desc, other.desc);
+            return Objects.equals(jobId, other.jobId) && Objects.equals(description, other.description)
+                    && Objects.equals(start, other.start) && Objects.equals(end, other.end) && Objects.equals(sort, other.sort)
+                    && Objects.equals(desc, other.desc);
         }
     }
-
 
     public static class Response extends ActionResponse implements ToXContent {
 
@@ -324,17 +320,17 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
         private final JobProvider jobProvider;
 
         @Inject
-        public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool,
-                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                ElasticsearchJobProvider jobProvider) {
+        public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,
+                IndexNameExpressionResolver indexNameExpressionResolver, ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            logger.debug(String.format("Get model snapshots for job %s. skip = %d, take = %d"
-                    + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
+            logger.debug(String.format(
+                    "Get model snapshots for job %s. skip = %d, take = %d"
+                            + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
                     request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
                     request.getSort(), request.getDescOrder(), request.getDescriptionString()));
 
@@ -351,10 +347,11 @@ public class GetModelSnapshotsAction extends Action<GetModelSnapshotsAction.Requ
 
         public static QueryPage<ModelSnapshot> doGetPage(JobProvider jobProvider, Request request) throws JobException {
             QueryPage<ModelSnapshot> page = jobProvider.modelSnapshots(request.getJobId(), request.pageParams.getSkip(),
-                    request.pageParams.getTake(), request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(),
-                    null, request.getDescriptionString());
+                    request.pageParams.getTake(), request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(), null,
+                    request.getDescriptionString());
 
-            // The quantiles can be large, and totally dominate the output - it's
+            // The quantiles can be large, and totally dominate the output -
+            // it's
             // clearer to remove them
             if (page.hits() != null) {
                 for (ModelSnapshot modelSnapshot : page.hits()) {

@@ -1,7 +1,6 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
@@ -15,13 +14,21 @@ import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
-import org.elasticsearch.xpack.prelert.job.results.*;
+import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
+import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
+import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
+
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
  * Saves result Buckets and Quantiles to Elasticsearch<br>
@@ -41,7 +48,7 @@ import java.util.function.Supplier;
  * <b>Quantiles</b> may contain model quantiles used in normalisation and are
  * stored in documents of type {@link Quantiles#TYPE} <br>
  * <h2>ModelSizeStats</h2> This is stored in a flat structure <br>
- * 
+ *
  * @see org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchMappings
  */
 public class ElasticsearchPersister implements JobResultsPersister, JobRenormaliser

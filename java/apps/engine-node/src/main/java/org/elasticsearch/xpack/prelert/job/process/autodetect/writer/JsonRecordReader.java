@@ -19,5 +19,5 @@ interface JsonRecordReader {
      * @return The number of fields in the JSON doc or -1 if nothing was read
      * because the end of the stream was reached
      */
-    public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException;
+    long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException;
 }

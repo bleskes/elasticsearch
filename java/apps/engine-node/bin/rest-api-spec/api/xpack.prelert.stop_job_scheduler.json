@@ -1,0 +1,17 @@
+{
+  "xpack.prelert.stop_job_scheduler": {
+    "methods": [ "POST" ],
+    "url": {
+      "path": "/engine/v2/schedulers/{job_id}/stop",
+      "paths": [ "/engine/v2/schedulers/{job_id}/stop" ],
+      "parts": {
+        "job_id": {
+          "type": "string",
+          "required": true,
+          "description": "The ID of the job whose scheduler to stop"
+        }
+      }
+    },
+    "body": null
+  }
+}

@@ -10,7 +10,6 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
  */
 public class NoSuchModelSnapshotException extends JobException
 {
-    private static final long serialVersionUID = -2359537142813149135L;
 
     public NoSuchModelSnapshotException(String jobId)
     {

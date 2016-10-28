@@ -10,7 +10,6 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
  * but is closed
  */
 public class ClosedJobException extends JobException {
-    private static final long serialVersionUID = 5491387807381215423L;
 
     public ClosedJobException(String message) {
         super(message, ErrorCodes.JOB_NOT_RUNNING);

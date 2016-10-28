@@ -28,7 +28,8 @@ public class SchedulerState extends ToXContentToBytes implements Writeable {
             TYPE_FIELD.getPreferredName(), a -> new SchedulerState((JobSchedulerStatus) a[0], (long) a[1], (Long) a[2]));
 
     static {
-        PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> JobSchedulerStatus.fromString(p.text()), STATUS, ValueType.STRING);
+        PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> JobSchedulerStatus.fromString(p.text()), STATUS,
+                ValueType.STRING);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), START_TIME_MILLIS);
         PARSER.declareLong(ConstructingObjectParser.optionalConstructorArg(), END_TIME_MILLIS);
     }
@@ -62,7 +63,9 @@ public class SchedulerState extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * The end time as epoch milliseconds. An {@code null} end time indicates real-time mode.
+     * The end time as epoch milliseconds. An {@code null} end time indicates
+     * real-time mode.
+     *
      * @return The optional end time as epoch milliseconds.
      */
     @Nullable
@@ -71,27 +74,22 @@ public class SchedulerState extends ToXContentToBytes implements Writeable {
     }
 
     @Override
-    public boolean equals(Object other)
-    {
-        if (this == other)
-        {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
-        if (other instanceof SchedulerState == false)
-        {
+        if (other instanceof SchedulerState == false) {
             return false;
         }
 
         SchedulerState that = (SchedulerState) other;
 
-        return Objects.equals(this.status, that.status)
-                && Objects.equals(this.startTimeMillis, that.startTimeMillis)
+        return Objects.equals(this.status, that.status) && Objects.equals(this.startTimeMillis, that.startTimeMillis)
                 && Objects.equals(this.endTimeMillis, that.endTimeMillis);
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return Objects.hash(status, startTimeMillis, endTimeMillis);
     }
 

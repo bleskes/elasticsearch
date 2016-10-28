@@ -49,8 +49,8 @@ import java.util.Objects;
 public class ValidateTransformsAction
 extends Action<ValidateTransformsAction.Request, ValidateTransformsAction.Response, ValidateTransformsAction.RequestBuilder> {
 
-    public final static ValidateTransformsAction INSTANCE = new ValidateTransformsAction();
-    public final static String NAME = "cluster:admin/prelert/validate/transforms";
+    public static final ValidateTransformsAction INSTANCE = new ValidateTransformsAction();
+    public static final String NAME = "cluster:admin/prelert/validate/transforms";
 
     protected ValidateTransformsAction() {
         super(NAME);

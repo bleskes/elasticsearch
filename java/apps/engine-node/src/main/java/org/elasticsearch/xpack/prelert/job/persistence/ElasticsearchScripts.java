@@ -25,9 +25,11 @@ public final class ElasticsearchScripts
     private static final String PAINLESS = "painless";
 
     // Script names
-    private static final String UPDATE_AVERAGE_PROCESSING_TIME = "ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + params.timeMs * 0.1";
+    private static final String UPDATE_AVERAGE_PROCESSING_TIME = "ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs"
+            + " * 0.9 + params.timeMs * 0.1";
     private static final String UPDATE_BUCKET_COUNT = "ctx._source.counts.bucketCount += params.count";
-    private static final String UPDATE_USAGE = "ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount += params.recordCount;";
+    private static final String UPDATE_USAGE = "ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;"
+            + "ctx._source.inputRecordCount += params.recordCount;";
 
     // Script parameters
     private static final String COUNT_PARAM = "count";

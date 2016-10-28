@@ -1,6 +1,9 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
-import static org.junit.Assert.assertEquals;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.prefs.CsvPreference;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,18 +12,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.elasticsearch.test.ESTestCase;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
-
-import org.elasticsearch.xpack.prelert.job.DataDescription;
-
 public class CsvParserTest extends ESTestCase {
 
     /**
      * Test parsing CSV with the NUL character code point (\0 or \u0000)
-     *
-     * @throws IOException
      */
     public void test() throws IOException {
         String data = "1422936876.262044869, 1422936876.262044869, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460, null, null, null, null, null, null, null, null, null, null, null\n"

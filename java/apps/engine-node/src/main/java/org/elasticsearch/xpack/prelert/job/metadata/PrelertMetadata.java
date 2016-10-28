@@ -30,7 +30,13 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class PrelertMetadata implements MetaData.Custom {
 
@@ -40,8 +46,8 @@ public class PrelertMetadata implements MetaData.Custom {
     public static final String TYPE = "prelert";
     public static final PrelertMetadata PROTO = new PrelertMetadata(Collections.emptySortedMap(), Collections.emptySortedMap());
 
-    private static final ObjectParser<Builder, ParseFieldMatcherSupplier> PRELERT_METADATA_PARSER = new ObjectParser<>(
-            "prelert_metadata", Builder::new);
+    private static final ObjectParser<Builder, ParseFieldMatcherSupplier> PRELERT_METADATA_PARSER = new ObjectParser<>("prelert_metadata",
+            Builder::new);
 
     static {
         PRELERT_METADATA_PARSER.declareField((parser, builder, parseFieldMatcherSupplier) -> {
@@ -68,7 +74,8 @@ public class PrelertMetadata implements MetaData.Custom {
     }
 
     public Map<String, Job> getJobs() {
-        // NORELEASE jobs should be immutable or a job can be modified in the cluster state of a single node without a cluster state update
+        // NORELEASE jobs should be immutable or a job can be modified in the
+        // cluster state of a single node without a cluster state update
         return jobs;
     }
 
@@ -176,11 +183,12 @@ public class PrelertMetadata implements MetaData.Custom {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         PrelertMetadata that = (PrelertMetadata) o;
-        return Objects.equals(jobs, that.jobs) &&
-                Objects.equals(allocations, that.allocations);
+        return Objects.equals(jobs, that.jobs) && Objects.equals(allocations, that.allocations);
     }
 
     @Override
