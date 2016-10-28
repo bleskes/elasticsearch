@@ -1,7 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.core.Logger;
-import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.*;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
@@ -12,8 +12,6 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadPar
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,7 +84,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
                         mock(JobResultsPersister.class), mock(StatusReporter.class));
 
         InterimResultsParams params = InterimResultsParams.builder().build();
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> communicator.flushJob(params));
+        ElasticsearchException e = ESTestCase.expectThrows(ElasticsearchException.class, () -> communicator.flushJob(params));
         assertEquals("Flush failed: Unexpected death of the Autodetect process flushing job. Mock process is dead", e.getMessage());
         assertEquals(ErrorCodes.NATIVE_PROCESS_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
@@ -103,7 +101,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
                 new AutodetectCommunicator(createJobDetails(), process, mock(Logger.class), mock(StatusReporter.class), resultsReader);
 
         InterimResultsParams params = InterimResultsParams.builder().build();
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> communicator.flushJob(params, 1, 1));
+        ElasticsearchException e = ESTestCase.expectThrows(ElasticsearchException.class, () -> communicator.flushJob(params, 1, 1));
         assertEquals("Timed out flushing job. Mock process has stalled", e.getMessage());
         assertEquals(ErrorCodes.NATIVE_PROCESS_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
@@ -140,6 +138,7 @@ public class AutodetectCommunicatorTest extends ESTestCase {
         when(io.read(any(byte [].class))).thenReturn(-1);
         AutodetectProcess process = mock(AutodetectProcess.class);
         when(process.out()).thenReturn(io);
+        when(process.isProcessAlive()).thenReturn(true);
         return process;
     }
 

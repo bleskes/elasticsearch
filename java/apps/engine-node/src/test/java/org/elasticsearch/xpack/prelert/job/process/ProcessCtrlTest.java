@@ -25,10 +25,9 @@ public class ProcessCtrlTest extends ESTestCase {
         ProcessBuilder pb = new ProcessBuilder();
         ProcessCtrl.buildEnvironment(pb);
 
-        assertEquals(2, pb.environment().size());
+        assertEquals(1, pb.environment().size());
 
         assertEquals(ProcessCtrl.PRELERT_HOME, pb.environment().get(PrelertSettings.PRELERT_HOME_ENV));
-        assertEquals(ProcessCtrl.LIB_PATH, pb.environment().get(ProcessCtrl.LIB_PATH_ENV));
     }
 
     public void testBuildAutodetectCommand() {
@@ -55,7 +54,7 @@ public class ProcessCtrlTest extends ESTestCase {
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
 
-        assertEquals(16, command.size());
+        assertEquals(17, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
@@ -77,6 +76,8 @@ public class ProcessCtrlTest extends ESTestCase {
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
         int expectedMaxQuantileInterval = 21600 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
+        assertTrue(String.join(", ", command), command.contains(ProcessCtrl.PERSIST_URL_BASE_ARG +
+                "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/prelertresults-unit-test-job"));
         assertTrue(command.contains(ProcessCtrl.IGNORE_DOWNTIME_ARG));
     }
 

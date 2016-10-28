@@ -1,6 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 
 /**
  * Factory interface for creating implementations of {@link AutodetectProcess}

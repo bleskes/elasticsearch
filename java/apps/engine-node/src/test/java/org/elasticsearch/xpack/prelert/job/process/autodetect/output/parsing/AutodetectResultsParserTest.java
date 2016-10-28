@@ -102,7 +102,6 @@ public class AutodetectResultsParserTest extends ESTestCase {
         final List<ModelSizeStats> modelSizeStats = new ArrayList<>();
         final List<ModelDebugOutput> modelDebugOutput = new ArrayList<>();
         final SortedMap<String, ModelSnapshot> modelSnapshots = new TreeMap<>();
-        int bucketCount;
         long processingTimeMs;
 
         @Override
@@ -150,22 +149,12 @@ public class AutodetectResultsParserTest extends ESTestCase {
         }
 
         @Override
-        public void incrementBucketCount(long count) {
-            bucketCount += count;
-        }
-
-        @Override
         public void persistInfluencer(Influencer influencer) {
             influencers.add(influencer);
         }
 
         @Override
         public void deleteInterimResults() {
-        }
-
-        @Override
-        public void updateAverageBucketProcessingTime(long timeMs) {
-            processingTimeMs = timeMs;
         }
     }
 
@@ -212,7 +201,6 @@ public class AutodetectResultsParserTest extends ESTestCase {
         List<Bucket> buckets = persister.getBuckets();
 
         assertEquals(2, buckets.size());
-        assertEquals(buckets.size(), persister.bucketCount);
         assertEquals(new Date(1359450000000L), buckets.get(0).getTimestamp());
         assertEquals(0, buckets.get(0).getRecordCount());
 
@@ -308,7 +296,6 @@ public class AutodetectResultsParserTest extends ESTestCase {
         List<Bucket> buckets = persister.getBuckets();
 
         assertEquals(2, buckets.size());
-        assertEquals(buckets.size(), persister.bucketCount);
         assertEquals(new Date(1379590200000L), buckets.get(0).getTimestamp());
         assertEquals(4, buckets.get(0).getRecordCount());
         assertEquals(buckets.get(0).getEventCount(), 1235);
@@ -523,8 +510,6 @@ public class AutodetectResultsParserTest extends ESTestCase {
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
 
-        assertEquals(1, persister.bucketCount);
-
         assertFalse(alertListener.isFired());
     }
 
@@ -542,8 +527,6 @@ public class AutodetectResultsParserTest extends ESTestCase {
         parser.addObserver(alertListener);
 
         parser.parseResults(inputStream, persister, renormaliser, logger);
-
-        assertEquals(1, persister.bucketCount);
 
         assertTrue(alertListener.isFired());
     }

@@ -58,6 +58,16 @@ task startPrelert(type:JavaExec) {
     ]
 }
 
+task startPrelertWithNativeProcess(type:JavaExec) {
+    main = 'org.elasticsearch.xpack.prelert.ServerBootstrap'
+    classpath = sourceSets.main.runtimeClasspath
+    debug = project.hasProperty('debug-prelert') ? true : false
+    args 'useNativeProcess'
+    systemProperties = [
+            'jetty.home' : "$project.buildDir/prelert-data-dir"
+    ]
+}
+
 task startPrelertInBackground() {
     doFirst {
         def t = Thread.start {

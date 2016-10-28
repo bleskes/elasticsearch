@@ -1,6 +1,6 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
-import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
@@ -57,7 +57,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         InputStream inputStream = createInputStream("");
         doThrow(new IOException("blah")).when(communicator).writeToJob(inputStream);
 
-        ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> manager.processData("foo", inputStream, mock(DataLoadParams.class)));
+        ESTestCase.expectThrows(ElasticsearchException.class, () -> manager.processData("foo", inputStream, mock(DataLoadParams.class)));
     }
 
     public void testCloseJob() {
@@ -75,8 +75,6 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         assertEquals(1, manager.numberOfRunningJobs());
         manager.closeJob("foo");
         assertEquals(0, manager.numberOfRunningJobs());
-
-//        verify(jobManager).setJobFinishedTimeAndStatus(eq("foo"), any(), eq(JobStatus.CLOSED));
     }
 
     public void testBucketResetMessageIsSent() throws IOException, JobException {
@@ -118,7 +116,7 @@ public class AutodetectProcessManagerTest extends ESTestCase {
         InterimResultsParams params = InterimResultsParams.builder().build();
         doThrow(new IOException("blah")).when(communicator).flushJob(params);
 
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> manager.flushJob("foo", params));
+        ElasticsearchException e = ESTestCase.expectThrows(ElasticsearchException.class, () -> manager.flushJob("foo", params));
         assertEquals(ErrorCodes.NATIVE_PROCESS_WRITE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
     }
 

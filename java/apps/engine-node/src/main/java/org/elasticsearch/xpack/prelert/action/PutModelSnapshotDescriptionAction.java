@@ -234,14 +234,7 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
         }
 
         private List<ModelSnapshot> getModelSnapshots(String jobId, String snapshotId, String description) {
-            List<ModelSnapshot> models;
-            try {
-                models = jobProvider.modelSnapshots(jobId, 0, 1, null, null, null,
-                        true, snapshotId, description).hits();
-            } catch (JobException e) {
-                throw ExceptionsHelper.missingException(jobId);
-            }
-            return models;
+            return jobProvider.modelSnapshots(jobId, 0, 1, null, null, null, true, snapshotId, description).hits();
         }
 
     }

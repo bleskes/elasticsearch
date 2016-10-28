@@ -67,7 +67,7 @@ public class AutodetectProcessManager implements DataProcessor {
                         "may be that your connector stalled for too long", e.getCause());
             }
 
-            throw ExceptionsHelper.nativeProcessException(msg, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+            throw ExceptionsHelper.serverError(msg, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
         } catch (OutOfOrderRecordsException e) {
             throw ExceptionsHelper.invalidRequestException(e.getMessage(), e.getErrorCode());
         } catch (HighProportionOfBadTimestampsException e) {
@@ -102,7 +102,7 @@ public class AutodetectProcessManager implements DataProcessor {
         {
             String msg = String.format("Exception flushing process for job %s", jobId);
             LOGGER.warn(msg);
-            throw ExceptionsHelper.nativeProcessException(msg, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+            throw ExceptionsHelper.serverError(msg, ioe, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
         }
     }
 

@@ -319,9 +319,9 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
 
         @Inject
         public TransportAction(Settings settings, ThreadPool threadPool, TransportService transportService,
-                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                JobManager jobManager, ElasticsearchJobProvider jobProvider, ClusterService clusterService,
-                ElasticsearchBulkDeleterFactory bulkDeleterFactory) {
+                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                               JobManager jobManager, ElasticsearchJobProvider jobProvider, ClusterService clusterService,
+                               ElasticsearchBulkDeleterFactory bulkDeleterFactory) {
             super(settings, NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;
@@ -368,13 +368,9 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
                     "' for time '" + request.getTime() + "'");
 
             List<ModelSnapshot> revertCandidates;
-            try {
-                revertCandidates = provider.modelSnapshots(request.getJobId(), 0, 1,
-                        null, request.getTime(), ModelSnapshot.TIMESTAMP.getPreferredName(), true,
-                        request.getSnapshotId(), request.getDescription()).hits();
-            } catch (UnknownJobException e) {
-                throw ExceptionsHelper.missingException(request.getJobId());
-            }
+            revertCandidates = provider.modelSnapshots(request.getJobId(), 0, 1,
+                    null, request.getTime(), ModelSnapshot.TIMESTAMP.getPreferredName(), true,
+                    request.getSnapshotId(), request.getDescription()).hits();
 
             if (revertCandidates == null || revertCandidates.isEmpty()) {
                 throw ExceptionsHelper.invalidRequestException(

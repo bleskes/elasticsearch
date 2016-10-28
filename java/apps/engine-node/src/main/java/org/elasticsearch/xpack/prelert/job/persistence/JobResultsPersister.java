@@ -60,20 +60,6 @@ public interface JobResultsPersister
     void persistInfluencer(Influencer influencer);
 
     /**
-     * Increment the jobs bucket result count by <code>count</code>
-     * @param count
-     * @throws JobException If there was an error updating
-     */
-    void incrementBucketCount(long count) throws JobException;
-
-    /**
-     * Update the last bucket's processing time
-     * @param timeMs
-     * @throws JobException If there was an error updating
-     */
-    void updateAverageBucketProcessingTime(long timeMs) throws JobException;
-
-    /**
      * Delete any existing interim results
      */
     void deleteInterimResults();

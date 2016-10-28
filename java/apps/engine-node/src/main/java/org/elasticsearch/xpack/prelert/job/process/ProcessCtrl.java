@@ -27,9 +27,7 @@ import java.util.Random;
 
 /**
  * Utility class for running a Prelert process<br>
- * The environment variables PRELERT_HOME and LIB_PATH (or platform variants)
- * are set for the environment of the launched process, any inherited values
- * of LIB_PATH or PRELERT_HOME are overwritten.
+ * The process runs in a clean environment with only one env var set - PRELERT_HOME
  * <p>
  * This class first needs to know where PRELERT_HOME is so it checks for
  * the system property <b>prelert.home</b> and failing that looks for the
@@ -72,17 +70,6 @@ public class ProcessCtrl {
      */
     public static final String NORMALIZE_PATH;
     /**
-     * Equivalent to $PRELERT_HOME/lib + $PRELERT_HOME/cots/lib
-     * (or $PRELERT_HOME/cots/bin on Windows)
-     */
-    public static final String LIB_PATH;
-    /**
-     * The name of the platform path environment variable.
-     * See {@linkplain #OSX_LIB_PATH_ENV}, {@linkplain #LINUX_LIB_PATH_ENV}
-     * and {@linkplain #WIN_LIB_PATH_ENV}
-     */
-    public static final String LIB_PATH_ENV;
-    /**
      * Name of the config setting containing the value of Prelert Home
      */
     public static final String PRELERT_HOME_PROPERTY = "prelert.home";
@@ -95,23 +82,31 @@ public class ProcessCtrl {
      */
     public static final String MAX_ANOMALY_RECORDS_PROPERTY = "max.anomaly.records";
     private static final int DEFAULT_MAX_NUM_RECORDS = 500;
-    /**
-     * Mac OS X library path variable
-     */
-    private static final String OSX_LIB_PATH_ENV = "DYLD_LIBRARY_PATH";
-    /**
-     * Linux library path variable
-     */
-    private static final String LINUX_LIB_PATH_ENV = "LD_LIBRARY_PATH";
-    /**
-     * Windows library path variable
-     */
-    private static final String WIN_LIB_PATH_ENV = "Path";
 
     /*
      * General arguments
      */
     public static final String LOG_ID_ARG = "--logid=";
+
+
+    /**
+     * Host for the Elasticsearch we'll pass on to the Autodetect API program
+     */
+    // NORELEASE
+    public static final String ES_HOST = "localhost";
+
+    /**
+     * Default Elasticsearch HTTP port
+     */
+    // NORELEASE
+    public static final int ES_HTTP_PORT = 8080;
+
+    /**
+     * If this is changed, ElasticsearchJobId should also be changed
+     */
+    // NORELEASE
+    private static final String ES_INDEX_PREFIX = "prelertresults-";
+
 
     /*
      * Arguments used by both prelert_autodetect and prelert_normalize
@@ -183,8 +178,7 @@ public class ProcessCtrl {
 
     /**
      * Static initialisation finds Elasticsearch HTTP port, Prelert home and the
-     * path to the binaries.  It also sets the lib path to
-     * PRELERT_HOME/(lib|bin) + PRELERT_HOME/cots/(lib|bin)
+     * path to the executatble.
      */
     static {
         String prelertHome = PrelertSettings.getSettingOrDefault(PRELERT_HOME_PROPERTY, ".");
@@ -213,22 +207,6 @@ public class ProcessCtrl {
 
         File configDir = new File(PRELERT_HOME, "config");
         CONFIG_DIR = configDir.getPath();
-
-        String libSubDirectory = "lib";
-        if (Constants.MAC_OS_X) {
-            LIB_PATH_ENV = OSX_LIB_PATH_ENV;
-        } else if (Constants.WINDOWS) {
-            LIB_PATH_ENV = WIN_LIB_PATH_ENV;
-            libSubDirectory = "bin";
-        } else if (Constants.LINUX) {
-            LIB_PATH_ENV = LINUX_LIB_PATH_ENV;
-        } else {
-            throw new UnsupportedOperationException("Unsupported platform " + Constants.OS_NAME);
-        }
-
-        File libDir = new File(PRELERT_HOME, libSubDirectory);
-        File cotsDir = new File(new File(PRELERT_HOME, "cots"), libSubDirectory);
-        LIB_PATH = libDir.getPath() + File.pathSeparatorChar + cotsDir.getPath();
     }
 
     private ProcessCtrl() {
@@ -236,17 +214,15 @@ public class ProcessCtrl {
     }
 
     /**
-     * Set up an environment containing the PRELERT_HOME and LD_LIBRARY_PATH
-     * (or equivalent) environment variables.
+     * Set up an environment containing the PRELERT_HOME environment variable.
+     * LIB_PATH is not set as the binaries are linked with relative paths
      */
-    static void buildEnvironment(ProcessBuilder pb) {
+    public static void buildEnvironment(ProcessBuilder pb) {
         // Always clear inherited environment variables
         pb.environment().clear();
-
         pb.environment().put(PrelertSettings.PRELERT_HOME_ENV, PRELERT_HOME);
-        pb.environment().put(LIB_PATH_ENV, LIB_PATH);
 
-        LOGGER.debug(String.format("Process Environment = " + pb.environment().toString()));
+        LOGGER.info(String.format("Process Environment = " + pb.environment().toString()));
     }
 
 
@@ -359,8 +335,7 @@ public class ProcessCtrl {
         return rng.nextInt(SECONDS_IN_HOUR);
     }
 
-    static List<String> buildAutodetectCommand(JobDetails job, Logger logger,
-                                               String restoreSnapshotId, boolean ignoreDowntime) {
+    public static List<String> buildAutodetectCommand(JobDetails job, Logger logger, String restoreSnapshotId, boolean ignoreDowntime) {
         List<String> command = new ArrayList<>();
         command.add(AUTODETECT_PATH);
 
@@ -405,18 +380,19 @@ public class ProcessCtrl {
         command.add(timeFieldArg);
 
         int intervalStagger = calculateStaggeringInterval(job.getId());
-        logger.debug("Periodic operations staggered by " + intervalStagger +
-                " seconds for job '" + job.getId() + "'");
+        logger.debug("Periodic operations staggered by " + intervalStagger +" seconds for job '" + job.getId() + "'");
 
         // Supply a URL for persisting/restoring model state unless model
         // persistence has been explicitly disabled.
         if (PrelertSettings.isSet(DONT_PERSIST_MODEL_STATE)) {
-            logger.info("Will not persist model state - " +
-                    DONT_PERSIST_MODEL_STATE + " setting was set");
+            logger.info("Will not persist model state - "  + DONT_PERSIST_MODEL_STATE + " setting was set");
         } else {
             if (Strings.isNullOrEmpty(restoreSnapshotId) == false) {
                 command.add(RESTORE_SNAPSHOT_ID + restoreSnapshotId);
             }
+
+            String persistUrlBase = PERSIST_URL_BASE_ARG + "http://" + ES_HOST + ":" + ES_HTTP_PORT + "/" + ES_INDEX_PREFIX + job.getId();
+            command.add(persistUrlBase);
 
             // Persist model state every few hours even if the job isn't closed
             long persistInterval = (job.getBackgroundPersistInterval() == null) ?
@@ -465,7 +441,7 @@ public class ProcessCtrl {
      *
      * @return
      */
-    static boolean modelConfigFilePresent() {
+    public static boolean modelConfigFilePresent() {
         File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
 
         return f.exists() && !f.isDirectory();
@@ -537,7 +513,7 @@ public class ProcessCtrl {
      * @return The state file path
      * @throws IOException
      */
-    static Path writeNormaliserInitState(String jobId, String state)
+    public static Path writeNormaliserInitState(String jobId, String state)
             throws IOException {
         // createTempFile has a race condition where it may return the same
         // temporary file name to different threads if called simultaneously

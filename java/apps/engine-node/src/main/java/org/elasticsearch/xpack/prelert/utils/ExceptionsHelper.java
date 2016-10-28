@@ -65,14 +65,14 @@ public class ExceptionsHelper {
         return e;
     }
 
-    public static ElasticsearchException serverError(String msg, Throwable cause, ErrorCodes errorCode) {
-        ElasticsearchException e = new ElasticsearchException(msg, cause);
+    public static ElasticsearchException serverError(String msg, ErrorCodes errorCode) {
+        ElasticsearchException e = new ElasticsearchException(msg);
         e.addHeader("errorCode", errorCode.getValueString());
         return e;
     }
 
-    public static ElasticsearchStatusException nativeProcessException(String msg, ErrorCodes errorCode) {
-        ElasticsearchStatusException e =  new ElasticsearchStatusException(msg, RestStatus.INTERNAL_SERVER_ERROR);
+    public static ElasticsearchException serverError(String msg, Throwable cause, ErrorCodes errorCode) {
+        ElasticsearchException e = new ElasticsearchException(msg, cause);
         e.addHeader("errorCode", errorCode.getValueString());
         return e;
     }

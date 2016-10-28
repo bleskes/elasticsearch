@@ -298,43 +298,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         // read again by this process
     }
 
-    @Override
-    public void incrementBucketCount(long count) throws JobException, UnknownJobException {
-        LOGGER.trace("ES API CALL: update ID " + jobId.getId() + " type " + JobDetails.TYPE +
-                " in index " + jobId.getIndex() +
-                " by running Groovy script update-bucket-count with params count=" + count);
-
-        ElasticsearchScripts.updateViaScript(client,
-                jobId.getIndex(),
-                JobDetails.TYPE,  jobId.getId(),
-                ElasticsearchScripts.newUpdateBucketCount(count));
-    }
-
-    @Override
-    public void updateAverageBucketProcessingTime(long timeMs) throws JobException, UnknownJobException
-    {
-        LOGGER.trace("ES API CALL: update ID " + jobId.getId() + " type " + ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE +
-                " in index " + jobId.getIndex() + " update last bucket processing time");
-
-
-        Map<String, Object> upsertMap = new HashMap<>();
-        upsertMap.put(ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS, new Long(timeMs));
-
-        try
-        {
-            ElasticsearchScripts.upsertViaScript(client,
-                    jobId.getIndex(),
-                    ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE, ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS,
-                    ElasticsearchScripts.updateProcessingTime(timeMs),
-                    upsertMap);
-        }
-        catch (VersionConflictEngineException e)
-        {
-            LOGGER.error("Failed to update the bucket processing time document " +
-                    ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS + " in index " + jobId.getIndex(), e);
-        }
-    }
-
     /**
      * Refreshes the Elasticsearch index.
      * Blocks until results are searchable.

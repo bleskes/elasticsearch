@@ -61,6 +61,7 @@ import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JsonViews;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.ModelState;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -79,6 +80,7 @@ import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 import org.elasticsearch.xpack.prelert.job.usage.Usage;
+import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -400,6 +402,7 @@ public class ElasticsearchJobProvider implements JobProvider
             createIndexRequest.mapping(CategoryDefinition.TYPE.getPreferredName(), categoryDefinitionMapping);
             createIndexRequest.mapping(AnomalyRecord.TYPE.getPreferredName(), recordMapping);
             createIndexRequest.mapping(Quantiles.TYPE.getPreferredName(), quantilesMapping);
+            createIndexRequest.mapping(ModelState.TYPE, modelStateMapping);
             createIndexRequest.mapping(ModelSnapshot.TYPE.getPreferredName(), modelSnapshotMapping);
             createIndexRequest.mapping(ModelSizeStats.TYPE.getPreferredName(), modelSizeStatsMapping);
             createIndexRequest.mapping(Influencer.TYPE.getPreferredName(), influencerMapping);
@@ -1006,7 +1009,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public Quantiles getQuantiles(String jobId)
-            throws UnknownJobException
     {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
@@ -1025,13 +1027,12 @@ public class ElasticsearchJobProvider implements JobProvider
         catch (IndexNotFoundException e)
         {
             LOGGER.error("Missing index when getting quantiles", e);
-            throw new UnknownJobException(jobId);
+            throw e;
         }
     }
 
     @Override
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take)
-            throws UnknownJobException
     {
         return modelSnapshots(jobId, skip, take, null, null, null, true, null, null);
     }
@@ -1039,7 +1040,7 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
             String startEpochMs, String endEpochMs, String sortField, boolean sortDescending,
-            String snapshotId, String description) throws UnknownJobException
+            String snapshotId, String description)
     {
         boolean haveId = snapshotId != null && !snapshotId.isEmpty();
         boolean haveDescription = description != null && !description.isEmpty();
@@ -1070,7 +1071,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     private QueryPage<ModelSnapshot> modelSnapshots(ElasticsearchJobId jobId, int skip, int take,
-            String sortField, boolean sortDescending, QueryBuilder fb) throws UnknownJobException
+            String sortField, boolean sortDescending, QueryBuilder fb)
     {
         FieldSortBuilder sb = new FieldSortBuilder(esSortField(sortField))
                 .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
@@ -1094,7 +1095,8 @@ public class ElasticsearchJobProvider implements JobProvider
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(jobId.getId());
+            LOGGER.error("Failed to read modelSnapshots", e);
+            throw e;
         }
 
         List<ModelSnapshot> results = new ArrayList<>();
@@ -1215,6 +1217,17 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.warn("Missing index " + elasticJobId.getIndex(), e);
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<ListDocument> getList(String listId) {
+        GetResponse response = client.prepareGet(PRELERT_INFO_INDEX, ListDocument.TYPE.getPreferredName(), listId).get();
+        if (!response.isExists())
+        {
+            return Optional.empty();
+        }
+        ListDocument listDocument = objectMapper.convertValue(response.getSource(), ListDocument.class);
+        return Optional.of(listDocument);
     }
 
     @Override

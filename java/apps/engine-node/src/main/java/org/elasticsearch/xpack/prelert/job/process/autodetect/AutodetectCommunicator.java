@@ -80,6 +80,8 @@ public class AutodetectCommunicator implements Closeable {
             throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
             OutOfOrderRecordsException, IOException {
 
+        checkProcessIsAlive();
+
         CountingInputStream countingStream = new CountingInputStream(inputStream, statusReporter);
         DataCounts results = autoDetectWriter.write(countingStream);
         autoDetectWriter.flush();
@@ -88,6 +90,7 @@ public class AutodetectCommunicator implements Closeable {
 
     @Override
     public void close() throws IOException {
+        checkProcessIsAlive();
         autodetectProcess.close();
         waitForResultsParser();
     }
@@ -101,10 +104,12 @@ public class AutodetectCommunicator implements Closeable {
     }
 
     public void writeResetBucketsControlMessage(DataLoadParams params) throws IOException {
+        checkProcessIsAlive();
         autodetectProcess.writeResetBucketsControlMessage(params);
     }
 
     public void writeUpdateConfigMessage(String config) throws IOException {
+        checkProcessIsAlive();
         autodetectProcess.writeUpdateConfigMessage(config);
     }
 
@@ -123,7 +128,7 @@ public class AutodetectCommunicator implements Closeable {
 
                 String msg = Messages.getMessage(Messages.AUTODETECT_FLUSH_UNEXPTECTED_DEATH) + " " + autodetectProcess.readError();
                 jobLogger.error(msg);
-                throw ExceptionsHelper.nativeProcessException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
+                throw ExceptionsHelper.serverError(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
             }
             isFlushComplete = resultsReader.waitForFlushAcknowledgement(flushId, intermittentTimeout);
         }
@@ -131,12 +136,23 @@ public class AutodetectCommunicator implements Closeable {
         if (!isFlushComplete) {
             String msg = Messages.getMessage(Messages.AUTODETECT_FLUSH_TIMEOUT) + " " + autodetectProcess.readError();
             jobLogger.error(msg);
-            throw ExceptionsHelper.nativeProcessException(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
+            throw ExceptionsHelper.serverError(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
         }
 
         // We also have to wait for the normaliser to become idle so that we block
         // clients from querying results in the middle of normalisation.
         resultsReader.waitUntilRenormaliserIsIdle();
+    }
+
+    /**
+     * Throws an exception if the process has exited
+     */
+    private void checkProcessIsAlive() {
+        if (!autodetectProcess.isProcessAlive()) {
+            String errorMsg = "Unexpected death of autodetect: " + autodetectProcess.readError();
+            jobLogger.error(errorMsg);
+            throw ExceptionsHelper.serverError(errorMsg, ErrorCodes.NATIVE_PROCESS_ERROR);
+        }
     }
 
     public void addAlertObserver(AlertObserver ao) {

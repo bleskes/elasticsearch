@@ -144,7 +144,7 @@ public class AutodetectResultsParser {
     }
 
     private void parseResultsInternal(InputStream inputStream, JobResultsPersister persister,
-            Renormaliser renormaliser, Logger logger) throws IOException, ElasticsearchParseException {
+            Renormaliser renormaliser, Logger logger) throws IOException {
         logger.debug("Parse Results");
         boolean deleteInterimRequired = true;
         JsonParser parser = new JsonFactory().createParser(inputStream);
@@ -193,7 +193,6 @@ public class AutodetectResultsParser {
                             bucket.calcMaxNormalizedProbabilityPerPartition();
                         }
                         persister.persistBucket(bucket);
-                        tryUpdatingBucket(persister, bucket, logger);
                         notifyObservers(bucket);
 
                         logger.trace("Bucket number " + ++bucketCount + " parsed from output");
@@ -261,7 +260,6 @@ public class AutodetectResultsParser {
                 throw new ElasticsearchParseException(
                         "Invalid JSON  - object should start with a field name, not " + parser.getText());
             }
-
             token = parser.nextToken();
         }
 
@@ -269,15 +267,6 @@ public class AutodetectResultsParser {
 
         // commit data to the datastore
         persister.commitWrites();
-    }
-
-    private void tryUpdatingBucket(JobResultsPersister persister, Bucket bucket, Logger logger) {
-        try {
-            persister.incrementBucketCount(1);
-            persister.updateAverageBucketProcessingTime(bucket.getProcessingTimeMs());
-        } catch (JobException e) {
-            logger.error("Error updating bucket stats", e);
-        }
     }
 
     private final class ObserverTriggerPair {

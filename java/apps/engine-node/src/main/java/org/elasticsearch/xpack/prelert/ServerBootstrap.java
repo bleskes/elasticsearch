@@ -76,7 +76,9 @@ import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterF
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchFactories;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.BlackHoleAutodetectProcess;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.legacy.LegacyAutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.scheduler.http.HttpDataExtractorFactory;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
@@ -116,11 +118,21 @@ public class ServerBootstrap {
     private static final String JETTY_HOME_PROPERTY = "jetty.home";
     private static final String DEFAULT_JETTY_HOME = "cots/jetty";
 
+    // NORELEASE - temporary solution
+    private static final String USE_NATIVE_PROCESS_OPTION = "useNativeProcess";
+    private static boolean useNativeProcess = false;
+
     public static final int JETTY_PORT = 8080;
 
     private static final Logger LOGGER = Loggers.getLogger(ServerBootstrap.class);
 
     public static void main(String[] args) throws Exception {
+
+        if (args.length > 0 && USE_NATIVE_PROCESS_OPTION.toLowerCase().equals(args[0].toLowerCase())) {
+            LOGGER.info("Using the native autodetect process");
+            useNativeProcess = true;
+        }
+
         JarHell.checkJarHell();
         Settings.Builder settings = Settings.builder();
         settings.put("path.home", System.getProperty(JETTY_HOME_PROPERTY, DEFAULT_JETTY_HOME));
@@ -189,7 +201,7 @@ public class ServerBootstrap {
             ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(null, client, 0);
             ElasticsearchFactories elasticsearchFactories = new ElasticsearchFactories(client);
             AutodetectCommunicatorFactory autodetectCommunicatorFactory =
-                                    createAutodetectCommunicatorFactory(elasticsearchFactories);
+                                    createAutodetectCommunicatorFactory(elasticsearchFactories, jobProvider);
 
             JobManager jobManager = new JobManager(jobProvider, clusterService, processActionGuardian);
             DataProcessor dataProcessor = new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager);
@@ -205,9 +217,13 @@ public class ServerBootstrap {
             );
         }
 
-        private AutodetectCommunicatorFactory createAutodetectCommunicatorFactory(ElasticsearchFactories esFactory) {
+        private AutodetectCommunicatorFactory createAutodetectCommunicatorFactory(ElasticsearchFactories esFactory,
+                                                                                  ElasticsearchJobProvider jobProvider) {
+
+            AutodetectProcessFactory processFactory = useNativeProcess ? new LegacyAutodetectProcessFactory(jobProvider)
+                                                                : (JobDetails, ingnoreDowntime) -> new BlackHoleAutodetectProcess();
             return new AutodetectCommunicatorFactory(
-                    (JobDetails, ingnoreDowntime) -> new BlackHoleAutodetectProcess(),
+                    processFactory,
                     esFactory.newJobResultsPersisterFactory(),
                     esFactory.newJobDataCountsPersisterFactory(),
                     esFactory.newUsagePersisterFactory(),
