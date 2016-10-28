@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.prelert.action;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
@@ -30,18 +31,18 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigVerifier;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ValidateTransformAction
 extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response, ValidateTransformAction.RequestBuilder> {
@@ -71,19 +72,24 @@ extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response
 
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest<Request> implements ToXContent {
 
-        private BytesReference transform;
+        private TransformConfig transform;
+
+        public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            TransformConfig transform = TransformConfig.PARSER.apply(parser, parseFieldMatcherSupplier);
+            return new Request(transform);
+        }
 
         Request() {
             this.transform = null;
         }
 
-        public Request(BytesReference transform) {
+        public Request(TransformConfig transform) {
             this.transform = transform;
         }
 
-        public BytesReference getTransform() {
+        public TransformConfig getTransform() {
             return transform;
         }
 
@@ -95,13 +101,36 @@ extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(transform);
+            transform.writeTo(out);
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            transform = in.readBytesReference();
+            transform = new TransformConfig(in);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            transform.toXContent(builder, params);
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(transform);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(transform, other.transform);
         }
 
     }
@@ -128,14 +157,7 @@ extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            TransformConfig transform;
-            try {
-                transform = objectMapper.readValue(request.getTransform().toBytesRef().bytes, TransformConfig.class);
-            } catch (IOException e) {
-                throw new ParsingException(-1, -1, "Failed to parse transform", e);
-            }
-            TransformConfigVerifier.verify(transform);
+            TransformConfigVerifier.verify(request.getTransform());
             listener.onResponse(new Response(true));
         }
 
