@@ -17,15 +17,19 @@
 package org.elasticsearch.xpack.prelert.rest.schedulers;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.DateFieldMapper;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -36,32 +40,37 @@ import java.io.IOException;
 
 public class RestStartJobSchedulerAction extends BaseRestHandler {
 
-    private static final ParseField JOB_ID = new ParseField("jobId");
-    private static final ParseField START = new ParseField("start");
-    private static final ParseField END = new ParseField("end");
-
     private static final String DEFAULT_START = "0";
 
     private final StartJobSchedulerAction.TransportAction transportJobSchedulerAction;
 
     @Inject
     public RestStartJobSchedulerAction(Settings settings, RestController controller,
-                                       StartJobSchedulerAction.TransportAction transportJobSchedulerAction) {
+            StartJobSchedulerAction.TransportAction transportJobSchedulerAction) {
         super(settings);
         this.transportJobSchedulerAction = transportJobSchedulerAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/schedulers/{jobId}/start", this);
+        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/schedulers/{" + JobDetails.ID.getPreferredName() + "}/start", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String jobId = restRequest.param(JOB_ID.getPreferredName());
-        long startTimeMillis = parseDateOrThrow(restRequest.param(START.getPreferredName(), DEFAULT_START), START.getPreferredName());
-        Long endTimeMillis = null;
-        if (restRequest.hasParam(END.getPreferredName())) {
-            endTimeMillis = parseDateOrThrow(restRequest.param(END.getPreferredName()), END.getPreferredName());
+        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        StartJobSchedulerAction.Request jobSchedulerRequest;
+        if (RestActions.hasBodyContent(restRequest)) {
+            BytesReference bodyBytes = RestActions.getRestContent(restRequest);
+            XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
+            jobSchedulerRequest = StartJobSchedulerAction.Request.parseRequest(jobId, parser, () -> parseFieldMatcher);
+        } else {
+            long startTimeMillis = parseDateOrThrow(restRequest.param(SchedulerState.START_TIME_MILLIS.getPreferredName(), DEFAULT_START),
+                    SchedulerState.START_TIME_MILLIS.getPreferredName());
+            Long endTimeMillis = null;
+            if (restRequest.hasParam(SchedulerState.END_TIME_MILLIS.getPreferredName())) {
+                endTimeMillis = parseDateOrThrow(restRequest.param(SchedulerState.END_TIME_MILLIS.getPreferredName()),
+                        SchedulerState.END_TIME_MILLIS.getPreferredName());
+            }
+            SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, startTimeMillis, endTimeMillis);
+            jobSchedulerRequest = new StartJobSchedulerAction.Request(jobId, schedulerState);
         }
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, startTimeMillis, endTimeMillis);
-        StartJobSchedulerAction.Request jobSchedulerRequest = new StartJobSchedulerAction.Request(jobId, schedulerState);
         return channel -> transportJobSchedulerAction.execute(jobSchedulerRequest, new AcknowledgedRestListener<>(channel));
     }
 

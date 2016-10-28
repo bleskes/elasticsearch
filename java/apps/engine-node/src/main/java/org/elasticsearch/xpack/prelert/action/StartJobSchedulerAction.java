@@ -30,18 +30,25 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Request, StartJobSchedulerAction.Response, StartJobSchedulerAction.RequestBuilder> {
 
@@ -62,21 +69,38 @@ public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Requ
         return new Response();
     }
 
-    public static class Request extends AcknowledgedRequest<Request> {
+    public static class Request extends AcknowledgedRequest<Request> implements ToXContent {
+
+        public static ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
+
+        static {
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareObject((request, schedulerState) -> request.schedulerState = schedulerState, SchedulerState.PARSER,
+                    SchedulerState.TYPE_FIELD);
+        }
+
+        public static Request parseRequest(String jobId, XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
+            if (jobId != null) {
+                request.jobId = jobId;
+            }
+            return request;
+        }
 
         private String jobId;
         private SchedulerState schedulerState;
 
         public Request(String jobId, SchedulerState schedulerState) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
-            this.schedulerState = ExceptionsHelper.requireNonNull(schedulerState, "schedulerState");
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.schedulerState = ExceptionsHelper.requireNonNull(schedulerState, SchedulerState.TYPE_FIELD.getPreferredName());
             if (schedulerState.getStatus() != JobSchedulerStatus.STARTED) {
                 throw new IllegalStateException("Start job scheduler action requires the scheduler status to be ["
                         + JobSchedulerStatus.STARTED + "]");
             }
         }
 
-        private Request() {}
+        Request() {
+        }
 
         public String getJobId() {
             return jobId;
@@ -104,6 +128,33 @@ public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Requ
             out.writeString(jobId);
             schedulerState.writeTo(out);
         }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(SchedulerState.TYPE_FIELD.getPreferredName(), schedulerState);
+            builder.endObject();
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId, schedulerState);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId) &&
+                    Objects.equals(schedulerState, other.schedulerState);
+        }
     }
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
@@ -128,8 +179,8 @@ public class StartJobSchedulerAction extends Action<StartJobSchedulerAction.Requ
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                               ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               JobManager jobManager) {
+                ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                JobManager jobManager) {
             super(settings, StartJobSchedulerAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;

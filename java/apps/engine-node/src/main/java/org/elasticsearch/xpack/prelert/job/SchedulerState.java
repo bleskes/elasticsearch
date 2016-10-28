@@ -21,8 +21,8 @@ public class SchedulerState extends ToXContentToBytes implements Writeable {
     // NORELEASE: no camel casing:
     public static final ParseField TYPE_FIELD = new ParseField("schedulerState");
     public static final ParseField STATUS = new ParseField("status");
-    public static final ParseField START_TIME_MILLIS = new ParseField("startTimeMillis");
-    public static final ParseField END_TIME_MILLIS = new ParseField("endTimeMillis");
+    public static final ParseField START_TIME_MILLIS = new ParseField("start");
+    public static final ParseField END_TIME_MILLIS = new ParseField("end");
 
     public static final ConstructingObjectParser<SchedulerState, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
             TYPE_FIELD.getPreferredName(), a -> new SchedulerState((JobSchedulerStatus) a[0], (long) a[1], (Long) a[2]));

@@ -68,7 +68,8 @@ public class StopJobSchedulerAction extends Action<StopJobSchedulerAction.Reques
             this.jobId = Objects.requireNonNull(jobId);
         }
 
-        private Request() {}
+        Request() {
+        }
 
         public String getJobId() {
             return jobId;
@@ -89,6 +90,23 @@ public class StopJobSchedulerAction extends Action<StopJobSchedulerAction.Reques
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId);
         }
     }
 
@@ -114,8 +132,8 @@ public class StopJobSchedulerAction extends Action<StopJobSchedulerAction.Reques
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                               ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               JobManager jobManager) {
+                ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                JobManager jobManager) {
             super(settings, StopJobSchedulerAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;
