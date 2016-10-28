@@ -123,7 +123,7 @@ public class AutodetectProcessManager implements DataProcessor {
         LOGGER.debug("Closing job {}", jobId);
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
         if (communicator == null) {
-            LOGGER.debug("Cannot update config: no active autodetect process for job {}", jobId);
+            LOGGER.debug("Cannot close: no active autodetect process for job {}", jobId);
             return;
         }
 
