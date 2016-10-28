@@ -30,7 +30,6 @@ import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
-import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
@@ -52,7 +51,6 @@ import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
-import org.elasticsearch.xpack.prelert.job.update.JobUpdater;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.util.Collections;
@@ -357,23 +355,6 @@ public class JobManager {
         return newState.build();
     }
 
-    public void updateJob(UpdateJobAction.Request request, ActionListener<UpdateJobAction.Response> actionListener) {
-        clusterService.submitStateUpdateTask("update-job-" + request.getJobId(), new AckedClusterStateUpdateTask<UpdateJobAction.Response>(request, actionListener) {
-
-            @Override
-            protected UpdateJobAction.Response newResponse(boolean acknowledged) {
-                return new UpdateJobAction.Response(acknowledged);
-            }
-
-            @Override
-            public ClusterState execute(ClusterState currentState) throws Exception {
-                JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, request.getJobId());
-                new JobUpdater(jobDetails).update(request.getUpdateJson());
-                return innerPutJob(jobDetails, true, currentState);
-            }
-        });
-    }
-
     public void startJobScheduler(StartJobSchedulerAction.Request request, ActionListener<StartJobSchedulerAction.Response> actionListener) {
         clusterService.submitStateUpdateTask("start-scheduler-job-" + request.getJobId(),
                 new AckedClusterStateUpdateTask<StartJobSchedulerAction.Response>(request, actionListener) {
@@ -491,7 +472,7 @@ public class JobManager {
                 RevertModelSnapshotAction.Response response;
 
                 if (acknowledged) {
-                            response = new RevertModelSnapshotAction.Response(modelSnapshot);
+                    response = new RevertModelSnapshotAction.Response(modelSnapshot);
 
                     // NORELEASE: This is not the place the audit log (indexes a document), because this method is executed on the cluster state update task thread
                     // and any action performed on that thread should be quick. (so no indexing documents)

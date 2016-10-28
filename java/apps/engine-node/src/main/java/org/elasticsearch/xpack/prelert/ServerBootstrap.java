@@ -58,7 +58,6 @@ import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
-import org.elasticsearch.xpack.prelert.action.UpdateJobAction;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
@@ -89,7 +88,6 @@ import org.elasticsearch.xpack.prelert.rest.job.RestDeleteJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
-import org.elasticsearch.xpack.prelert.rest.job.RestUpdateJobAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
@@ -236,7 +234,6 @@ public class ServerBootstrap {
                     RestGetJobAction.class,
                     RestGetJobsAction.class,
                     RestPutJobsAction.class,
-                    RestUpdateJobAction.class,
                     RestDeleteJobAction.class,
                     RestGetListAction.class,
                     RestCreateListAction.class,
@@ -266,7 +263,6 @@ public class ServerBootstrap {
                     new ActionHandler<>(GetJobAction.INSTANCE, GetJobAction.TransportAction.class),
                     new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),
                     new ActionHandler<>(PutJobAction.INSTANCE, PutJobAction.TransportAction.class),
-                    new ActionHandler<>(UpdateJobAction.INSTANCE, UpdateJobAction.TransportAction.class),
                     new ActionHandler<>(DeleteJobAction.INSTANCE, DeleteJobAction.TransportAction.class),
                     new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
                     new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),

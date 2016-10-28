@@ -38,22 +38,6 @@
   - match: { document.jobId: "farequote" }
 
   - do:
-      xpack.prelert.update_job:
-        job_id: "farequote"
-        body: >
-          {
-            "description":"Updated description"
-          }
-  - match: { acknowledged: true }
-
-  - do:
-      xpack.prelert.get_job:
-        job_id: "farequote"
-  - match: { exists: true }
-  - match: { type: "job" }
-  - match: { document.description: "Updated description" }
-
-  - do:
       xpack.prelert.delete_job:
         job_id: "farequote"
   - match: { acknowledged: true }
