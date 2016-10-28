@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.prelert.action;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
@@ -30,18 +31,18 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.config.verification.DetectorVerifier;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ValidateDetectorAction
 extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, ValidateDetectorAction.RequestBuilder> {
@@ -71,19 +72,26 @@ extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, 
 
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest<Request> implements ToXContent {
 
-        private BytesReference detector;
+        private Detector detector;
+
+        // NORELEASE this needs to change so the body is not directly the
+        // detector but and object that contains a field for the detector
+        public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            Detector detector = Detector.PARSER.apply(parser, parseFieldMatcherSupplier);
+            return new Request(detector);
+        }
 
         Request() {
             this.detector = null;
         }
 
-        public Request(BytesReference detector) {
+        public Request(Detector detector) {
             this.detector = detector;
         }
 
-        public BytesReference getDetector() {
+        public Detector getDetector() {
             return detector;
         }
 
@@ -95,13 +103,36 @@ extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeBytesReference(detector);
+            detector.writeTo(out);
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            detector = in.readBytesReference();
+            detector = new Detector(in);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            detector.toXContent(builder, params);
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(detector);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(detector, other.detector);
         }
 
     }
@@ -128,14 +159,7 @@ extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, 
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            Detector detector;
-            try {
-                detector = objectMapper.readValue(request.getDetector().toBytesRef().bytes, Detector.class);
-            } catch (IOException e) {
-                throw new ParsingException(-1, -1, "Failed to parse detector", e);
-            }
-            DetectorVerifier.verify(detector, false);
+            DetectorVerifier.verify(request.getDetector(), false);
             listener.onResponse(new Response(true));
         }
 
