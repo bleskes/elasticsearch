@@ -16,8 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -32,13 +30,18 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.StatusToXContent;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -59,6 +62,7 @@ import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.elasticsearch.action.ValidateActions.addValidationError;
@@ -82,7 +86,30 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
         return new Response();
     }
 
-    public static class Request extends AcknowledgedRequest<Request> {
+    public static class Request extends AcknowledgedRequest<Request> implements ToXContent {
+
+        public static final ParseField TIME = new ParseField("time");
+        public static final ParseField SNAPSHOT_ID = new ParseField("snapshotId");
+        public static final ParseField DESCRIPTION = new ParseField("description");
+        public static final ParseField DELETE_INTERVENING = new ParseField("deleteInterveningResults");
+
+        private static ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
+
+        static {
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString(Request::setTime, TIME);
+            PARSER.declareString(Request::setSnapshotId, SNAPSHOT_ID);
+            PARSER.declareString(Request::setDescription, DESCRIPTION);
+            PARSER.declareBoolean(Request::setDeleteInterveningResults, DELETE_INTERVENING);
+        }
+
+        public static Request parseRequest(String jobId, XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
+            if (jobId != null) {
+                request.jobId = jobId;
+            }
+            return request;
+        }
 
         private String jobId;
         private String time;
@@ -90,11 +117,11 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
         private String description;
         private boolean deleteInterveningResults;
 
-        private Request() {
+        Request() {
         }
 
         public Request(String jobId) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
         }
 
         public String getJobId() {
@@ -162,6 +189,45 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
             out.writeOptionalString(description);
             out.writeBoolean(deleteInterveningResults);
         }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            if (time != null) {
+                builder.field(TIME.getPreferredName(), time);
+            }
+            if (snapshotId != null) {
+                builder.field(SNAPSHOT_ID.getPreferredName(), snapshotId);
+            }
+            if (description != null) {
+                builder.field(DESCRIPTION.getPreferredName(), description);
+            }
+            builder.field(DELETE_INTERVENING.getPreferredName(), deleteInterveningResults);
+            builder.endObject();
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId, time, snapshotId, description, deleteInterveningResults);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId) &&
+                    Objects.equals(time, other.time) &&
+                    Objects.equals(snapshotId, other.snapshotId) &&
+                    Objects.equals(description, other.description) &&
+                    Objects.equals(deleteInterveningResults, other.deleteInterveningResults);
+        }
     }
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
@@ -173,34 +239,32 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
 
     public static class Response extends AcknowledgedResponse implements StatusToXContent {
 
-        private SingleDocument response;
+        private SingleDocument<ModelSnapshot> response;
 
         public Response() {
             super(false);
             response = SingleDocument.empty(ModelSnapshot.TYPE.getPreferredName());
         }
 
-        public Response(ModelSnapshot modelSnapshot, ObjectMapper objectMapper) throws JsonProcessingException {
+        public Response(ModelSnapshot modelSnapshot) {
             super(true);
-            byte[] asBytes = objectMapper.writeValueAsBytes(modelSnapshot);
-            response = new SingleDocument(ModelSnapshot.TYPE.getPreferredName(), new BytesArray(asBytes));
+            response = new SingleDocument<>(ModelSnapshot.TYPE.getPreferredName(), modelSnapshot);
         }
 
-        public SingleDocument getResponse() {
+        public SingleDocument<ModelSnapshot> getResponse() {
             return response;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = new SingleDocument(in.readString(), in.readBytesReference());
+            response = new SingleDocument<>(in, ModelSnapshot::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeString(response.getType());
-            out.writeBytesReference(response.getDocumentBytes());
+            response.writeTo(out);
         }
 
         @Override
@@ -211,6 +275,39 @@ public class RevertModelSnapshotAction extends Action<RevertModelSnapshotAction.
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             return response.toXContent(builder, params);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(response);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Response other = (Response) obj;
+            return Objects.equals(response, other.response);
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
+        public final String toString() {
+            try {
+                XContentBuilder builder = XContentFactory.jsonBuilder();
+                builder.prettyPrint();
+                builder.startObject();
+                toXContent(builder, EMPTY_PARAMS);
+                builder.endObject();
+                return builder.string();
+            } catch (Exception e) {
+                // So we have a stack trace logged somewhere
+                return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
+            }
         }
     }
 
