@@ -137,7 +137,7 @@ public class ElasticsearchServerInfoTest
         StreamInput si = mock(StreamInput.class);
         when(si.readByte()).thenReturn((byte) 0x01);
 
-        when(si.getVersion()).thenReturn(Version.V_5_0_0_beta1);
+        when(si.getVersion()).thenReturn(Version.V_5_0_0);
         OsInfo osInfo = new OsInfo(si);
         when(node.getOs()).thenReturn(osInfo);
         when(node.getJvm()).thenReturn(jvmInfo);
