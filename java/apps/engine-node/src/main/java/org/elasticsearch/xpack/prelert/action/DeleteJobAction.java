@@ -41,6 +41,7 @@ import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAction.Response, DeleteJobAction.RequestBuilder> {
 
@@ -69,7 +70,7 @@ public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAc
             this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
         }
 
-        private Request() {}
+        Request() {}
 
         public String getJobId() {
             return jobId;
@@ -94,6 +95,23 @@ public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAc
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || obj.getClass() != getClass()) {
+                return false;
+            }
+            DeleteJobAction.Request other = (DeleteJobAction.Request) obj;
+            return Objects.equals(jobId, other.jobId);
         }
     }
 

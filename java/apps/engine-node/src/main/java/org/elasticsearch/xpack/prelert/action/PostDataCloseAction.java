@@ -20,6 +20,7 @@ import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class PostDataCloseAction extends Action<PostDataCloseAction.Request, PostDataCloseAction.Response,
         PostDataCloseAction.RequestBuilder> {
@@ -45,8 +46,7 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
 
         private String jobId;
 
-        private Request() {
-        }
+        Request() {}
 
         public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
@@ -71,6 +71,23 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || obj.getClass() != getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId);
         }
     }
 
