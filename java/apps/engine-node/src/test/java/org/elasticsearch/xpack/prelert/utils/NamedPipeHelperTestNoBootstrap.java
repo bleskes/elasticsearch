@@ -14,6 +14,7 @@ package org.elasticsearch.xpack.prelert.utils;
 
 import org.apache.lucene.util.Constants;
 import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.monitor.jvm.JvmInfo;
@@ -34,7 +35,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 
@@ -132,7 +132,7 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     private static String readLineFromPipeUnix(String pipeName) throws IOException {
-        return Files.readAllLines(Paths.get(pipeName), StandardCharsets.UTF_8).get(0);
+        return Files.readAllLines(PathUtils.get(pipeName), StandardCharsets.UTF_8).get(0);
     }
 
     private static String readLineFromPipeWindows(String pipeName, Pointer handle) throws IOException {
@@ -163,7 +163,7 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     private static void writeLineToPipeUnix(String pipeName, String line) throws IOException {
-        Files.write(Paths.get(pipeName), (line + '\n').getBytes(StandardCharsets.UTF_8), StandardOpenOption.WRITE);
+        Files.write(PathUtils.get(pipeName), (line + '\n').getBytes(StandardCharsets.UTF_8), StandardOpenOption.WRITE);
     }
 
     private static void writeLineToPipeWindows(String pipeName, Pointer handle, String line) throws IOException {
@@ -187,7 +187,7 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     private static void deletePipeUnix(String pipeName) throws IOException {
-        Files.delete(Paths.get(pipeName));
+        Files.delete(PathUtils.get(pipeName));
     }
 
     private static void deletePipeWindows(String pipeName, Pointer handle) throws IOException {

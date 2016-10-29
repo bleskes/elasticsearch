@@ -820,7 +820,6 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(2L, page.hitCount());
 
         String queryString = queryBuilder.getValue().toString();
-        System.out.println(queryString);
         assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
 
         List<Influencer> records = page.hits();
@@ -1020,7 +1019,6 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(6, snapshots.get(1).getSnapshotDocCount());
 
         String queryString = queryBuilder.getValue().toString();
-        System.out.println(queryString);
         assertTrue(queryString.matches("(?s).*snapshotId.*value. : .snappyId.*description.*value. : .description1.*"));
     }
 

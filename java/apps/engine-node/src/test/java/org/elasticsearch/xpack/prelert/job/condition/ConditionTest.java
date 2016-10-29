@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.condition;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -65,8 +66,8 @@ public class ConditionTest extends AbstractSerializingTestCase<Condition> {
     }
 
     public void testInvalidTransformName() throws Exception {
-        String json = "{ \"value\":\"someValue\" }";
-        XContentParser parser = XContentFactory.xContent(json.getBytes()).createParser(json.getBytes());
+        BytesArray json = new BytesArray("{ \"value\":\"someValue\" }");
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
         IllegalArgumentException ex = expectThrows(IllegalArgumentException.class,
                 () -> Condition.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
         assertThat(ex.getMessage(), containsString("Required [operator]"));

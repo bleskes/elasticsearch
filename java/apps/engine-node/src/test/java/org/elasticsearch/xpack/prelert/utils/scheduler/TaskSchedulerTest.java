@@ -4,6 +4,7 @@ import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,7 @@ public class TaskSchedulerTest extends ESTestCase {
             latch.countDown();
         };
 
-        TaskScheduler scheduler = new TaskScheduler(task, () -> LocalDateTime.now().plus(50, ChronoUnit.MILLIS));
+        TaskScheduler scheduler = new TaskScheduler(task, () -> LocalDateTime.now(ZoneId.systemDefault()).plus(50, ChronoUnit.MILLIS));
         scheduler.start();
         latch.await();
         scheduler.stop(1, TimeUnit.SECONDS);
@@ -59,7 +60,7 @@ public class TaskSchedulerTest extends ESTestCase {
             end.getAndSet(now);
         };
 
-        TaskScheduler scheduler = new TaskScheduler(task, () -> LocalDateTime.now());
+        TaskScheduler scheduler = new TaskScheduler(task, () -> LocalDateTime.now(ZoneId.systemDefault()));
         scheduler.start();
         firstTaskStartedLatch.await();
 

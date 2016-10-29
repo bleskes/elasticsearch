@@ -4,8 +4,6 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
-import org.junit.Test;
-
 import java.util.Date;
 
 public class ModelDebugOutputTests extends AbstractSerializingTestCase<ModelDebugOutput> {
@@ -56,7 +54,6 @@ public class ModelDebugOutputTests extends AbstractSerializingTestCase<ModelDebu
         return ModelDebugOutput.PARSER.apply(parser, () -> matcher);
     }
 
-    @Test
     public void testEquals_GivenSameObject() {
         ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
 

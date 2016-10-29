@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -547,7 +548,8 @@ public class ElasticsearchDataExtractorTest extends ESTestCase {
         assertEquals(5, requester.deleteRequestParams.size());
         for (int i = 0; i < deletedScrollIds.length; i++) {
             assertEquals("http://localhost:9200/_search/scroll", requester.getDeleteRequestParams(i).url);
-            assertEquals(String.format("{\"scroll_id\":[\"%s\"]}", deletedScrollIds[i]), requester.getDeleteRequestParams(i).requestBody);
+            assertEquals(String.format(Locale.ROOT, "{\"scroll_id\":[\"%s\"]}", deletedScrollIds[i]),
+                    requester.getDeleteRequestParams(i).requestBody);
         }
     }
 

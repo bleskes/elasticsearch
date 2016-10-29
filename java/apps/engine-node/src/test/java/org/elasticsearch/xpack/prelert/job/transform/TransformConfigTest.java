@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.transform;
 
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -177,8 +178,8 @@ public class TransformConfigTest extends AbstractSerializingTestCase<TransformCo
     }
 
     public void testInvalidTransformName() throws Exception {
-        String json = "{ \"transform\":\"\" }";
-        XContentParser parser = XContentFactory.xContent(json.getBytes()).createParser(json.getBytes());
+        BytesArray json = new BytesArray("{ \"transform\":\"\" }");
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
         ParsingException ex = expectThrows(ParsingException.class,
                 () -> TransformConfig.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
         assertThat(ex.getMessage(), containsString("[transform] failed to parse field [transform]"));

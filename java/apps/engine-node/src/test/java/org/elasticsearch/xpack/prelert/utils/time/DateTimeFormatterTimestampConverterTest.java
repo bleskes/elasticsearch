@@ -69,12 +69,12 @@ public class DateTimeFormatterTimestampConverterTest extends ESTestCase {
 
     public void testToEpochSeconds_GivenPatternHasDateWithoutYearAndTimeWithoutTimeZone() throws ParseException {
         // Summertime
-        long expected = ZonedDateTime.of(LocalDate.now().getYear(), 8, 14, 1, 30, 20, 0,
+        long expected = ZonedDateTime.of(LocalDate.now(ZoneId.systemDefault()).getYear(), 8, 14, 1, 30, 20, 0,
                 ZoneOffset.systemDefault()).toEpochSecond();
         assertEquals(expected, toEpochSeconds("08 14 01:30:20", "MM dd HH:mm:ss"));
 
         // Non-summertime
-        expected = ZonedDateTime.of(LocalDate.now().getYear(), 12, 14, 1, 30, 20, 0,
+        expected = ZonedDateTime.of(LocalDate.now(ZoneId.systemDefault()).getYear(), 12, 14, 1, 30, 20, 0,
                 ZoneOffset.systemDefault()).toEpochSecond();
         assertEquals(expected, toEpochSeconds("12 14 01:30:20", "MM dd HH:mm:ss"));
     }

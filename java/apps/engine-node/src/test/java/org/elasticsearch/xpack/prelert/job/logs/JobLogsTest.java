@@ -16,6 +16,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.logs;
 
+import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
@@ -25,13 +26,12 @@ import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 public class JobLogsTest extends ESTestCase {
 
     public void testOperationsNotAllowedWithInvalidPath() throws UnknownJobException, JobException, IOException {
-        Path pathOutsideLogsDir = FileSystems.getDefault().getPath("..", "..", "..", "etc");
+        Path pathOutsideLogsDir = PathUtils.getDefaultFileSystem().getPath("..", "..", "..", "etc");
 
         Environment env = new Environment(Settings.EMPTY);
 
@@ -48,9 +48,9 @@ public class JobLogsTest extends ESTestCase {
     public void testSanitizePath_GivenInvalid() {
 
         Environment env = new Environment(Settings.EMPTY);
-        Path filePath = FileSystems.getDefault().getPath("/opt", "prelert", "../../etc");
+        Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "../../etc");
         try {
-            Path rootDir = FileSystems.getDefault().getPath("/opt", "prelert");
+            Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert");
             new JobLogs(env).sanitizePath(filePath, rootDir);
             fail();
         } catch (JobException e) {
@@ -64,18 +64,18 @@ public class JobLogsTest extends ESTestCase {
     public void testSanitizePath() throws JobException {
 
         Environment env = new Environment(Settings.EMPTY);
-        Path filePath = FileSystems.getDefault().getPath("/opt", "prelert", "logs", "logfile.log");
-        Path rootDir = FileSystems.getDefault().getPath("/opt", "prelert", "logs");
+        Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs", "logfile.log");
+        Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs");
         Path normalized = new JobLogs(env).sanitizePath(filePath, rootDir);
         assertEquals(filePath, normalized);
 
-        Path logDir = FileSystems.getDefault().getPath("./logs");
+        Path logDir = PathUtils.getDefaultFileSystem().getPath("./logs");
         Path filePathStartingDot = logDir.resolve("farequote").resolve("logfile.log");
         normalized = new JobLogs(env).sanitizePath(filePathStartingDot, logDir);
         assertEquals(filePathStartingDot.normalize(), normalized);
 
-        Path filePathWithDotDot = FileSystems.getDefault().getPath("/opt", "prelert", "logs", "../logs/logfile.log");
-        rootDir = FileSystems.getDefault().getPath("/opt", "prelert", "logs");
+        Path filePathWithDotDot = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs", "../logs/logfile.log");
+        rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs");
         normalized = new JobLogs(env).sanitizePath(filePathWithDotDot, rootDir);
 
         assertEquals(filePath, normalized);

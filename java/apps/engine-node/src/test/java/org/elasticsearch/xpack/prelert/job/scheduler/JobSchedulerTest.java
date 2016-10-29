@@ -613,7 +613,7 @@ public class JobSchedulerTest extends ESTestCase {
             }
             streamCount++;
             String stream = "" + searchCount + "-" + streamCount;
-            return Optional.of(new ByteArrayInputStream(stream.getBytes()));
+            return Optional.of(new ByteArrayInputStream(stream.getBytes(StandardCharsets.UTF_8)));
         }
 
         @Override

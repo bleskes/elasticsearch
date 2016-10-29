@@ -9,6 +9,7 @@ import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class AnomalyRecordParserTest extends ESTestCase {
     private static final double EPSILON = 0.000001;
@@ -144,7 +145,7 @@ public class AnomalyRecordParserTest extends ESTestCase {
     }
 
     private static JsonParser createJsonParser(String input) throws IOException {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);
     }
 }

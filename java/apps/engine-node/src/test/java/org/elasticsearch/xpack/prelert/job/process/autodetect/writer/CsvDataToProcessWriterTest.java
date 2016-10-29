@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
@@ -346,7 +347,8 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         SuperCsvException e = ESTestCase.expectThrows(SuperCsvException.class, () -> writer.write(inputStream));
         assertEquals(
-                String.format("max number of lines to read exceeded while reading quoted column beginning on line %d and ending on line %d",
+                String.format(Locale.ROOT,
+                        "max number of lines to read exceeded while reading quoted column beginning on line %d and ending on line %d",
                         2, 10001),
                 e.getMessage());
     }

@@ -1,19 +1,16 @@
 
 package org.elasticsearch.xpack.prelert.transforms;
 
-import static org.elasticsearch.xpack.prelert.transforms.TransformTestUtils.createIndexArray;
-
-import static org.junit.Assert.assertEquals;
-
-import static org.mockito.Mockito.mock;
-
-import java.util.List;
-
 import org.apache.logging.log4j.Logger;
-
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.transforms.Transform.TransformIndex;
 import org.elasticsearch.xpack.prelert.transforms.Transform.TransformResult;
+
+import java.util.List;
+import java.util.Locale;
+
+import static org.elasticsearch.xpack.prelert.transforms.TransformTestUtils.createIndexArray;
+import static org.mockito.Mockito.mock;
 
 public class StringTransformTest extends ESTestCase {
     public void testUpperCaseTransform_GivenZeroInputs() throws TransformException {
@@ -63,7 +60,7 @@ public class StringTransformTest extends ESTestCase {
         String[][] readWriteArea = {input, scratch, output};
 
         assertEquals(TransformResult.OK, upperCase.transform(readWriteArea));
-        assertEquals("aBcD".toUpperCase(), output[0]);
+        assertEquals("aBcD".toUpperCase(Locale.ROOT), output[0]);
     }
 
     public void testLowerCaseTransform_GivenZeroInputs() throws TransformException {
@@ -113,7 +110,7 @@ public class StringTransformTest extends ESTestCase {
         String[][] readWriteArea = {input, scratch, output};
 
         assertEquals(TransformResult.OK, upperCase.transform(readWriteArea));
-        assertEquals("AbCde".toLowerCase(), output[0]);
+        assertEquals("AbCde".toLowerCase(Locale.ROOT), output[0]);
     }
 
     public void testTrimTransform_GivenZeroInputs() throws TransformException {

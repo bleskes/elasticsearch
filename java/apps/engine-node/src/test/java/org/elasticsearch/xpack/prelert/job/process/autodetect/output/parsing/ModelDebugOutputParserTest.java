@@ -9,6 +9,7 @@ import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 public class ModelDebugOutputParserTest extends ESTestCase {
@@ -56,7 +57,7 @@ public class ModelDebugOutputParserTest extends ESTestCase {
     }
 
     private static JsonParser createJsonParser(String input) throws IOException {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);
     }
 }

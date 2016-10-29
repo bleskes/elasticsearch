@@ -25,6 +25,7 @@ import org.junit.After;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -147,7 +148,7 @@ public class ScheduledJobIT extends ESRestTestCase {
     }
 
     private static String responseEntityToString(Response response) throws Exception {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8))) {
             return reader.lines().collect(Collectors.joining("\n"));
         }
     }

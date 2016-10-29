@@ -4,15 +4,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.results.PartitionScore;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class PartitionScoreParserTest extends ESTestCase {
 
-    @Test
     public void testParse() throws IOException {
         String json = "{\"probability\":0.1,\"partitionFieldName\":\"part1\"," +
                 "\"partitionFieldValue\":\"p0\",\"normalizedProbability\":0.2}";

@@ -6,8 +6,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -51,8 +49,7 @@ public class TransformConfigsTests extends AbstractSerializingTestCase<Transform
         return TransformConfigs.PARSER.apply(parser, () -> matcher);
     }
 
-    @Test
-    public void test_Input_Output_FieldNames() {
+    public void testInputOutputFieldNames() {
         List<TransformConfig> transforms = new ArrayList<>();
         transforms.add(createConcatTransform(Arrays.asList("a", "b", "c"), Arrays.asList("c1")));
         transforms.add(createConcatTransform(Arrays.asList("d", "e", "c"), Arrays.asList("c2")));

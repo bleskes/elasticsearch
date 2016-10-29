@@ -9,6 +9,7 @@ import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class CategoryDefinitionParserTest extends ESTestCase {
@@ -43,7 +44,7 @@ public class CategoryDefinitionParserTest extends ESTestCase {
     }
 
     private static JsonParser createJsonParser(String input) throws IOException {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);
     }
 }

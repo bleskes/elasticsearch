@@ -53,7 +53,7 @@ public class NamedPipeHelperTest extends ESTestCase {
 
     public void testOpenForInputGivenPipeIsRegularFile() throws IOException {
         Environment env = new Environment(Settings.EMPTY);
-        Path tempFile = Files.createTempFile("not a named pipe", null);
+        Path tempFile = Files.createTempFile(env.tmpFile(), "not a named pipe", null);
 
         IOException ioe = ESTestCase.expectThrows(IOException.class, () ->
         NamedPipeHelper.openNamedPipeInputStream(tempFile, Duration.ofSeconds(1)));
@@ -65,7 +65,7 @@ public class NamedPipeHelperTest extends ESTestCase {
 
     public void testOpenForOutputGivenPipeIsRegularFile() throws IOException {
         Environment env = new Environment(Settings.EMPTY);
-        Path tempFile = Files.createTempFile("not a named pipe", null);
+        Path tempFile = Files.createTempFile(env.tmpFile(), "not a named pipe", null);
 
         IOException ioe = ESTestCase.expectThrows(IOException.class, () ->
         NamedPipeHelper.openNamedPipeOutputStream(env, tempFile, Duration.ofSeconds(1)));
