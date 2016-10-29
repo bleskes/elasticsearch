@@ -38,7 +38,7 @@ public class ModelSizeStatsParserTest extends ESTestCase {
         assertEquals(MemoryStatus.OK, stats.getMemoryStatus());
     }
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);
     }

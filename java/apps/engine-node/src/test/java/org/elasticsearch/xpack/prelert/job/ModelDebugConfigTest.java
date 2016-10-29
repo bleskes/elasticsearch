@@ -15,35 +15,32 @@ public class ModelDebugConfigTest extends AbstractSerializingTestCase<ModelDebug
         assertFalse(modelDebugConfig.isEnabled());
     }
 
-
     public void testIsEnabled_GivenBoundsPercentile() {
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig(0.95, null);
 
         assertTrue(modelDebugConfig.isEnabled());
     }
 
-
     public void testEquals() {
         assertFalse(new ModelDebugConfig().equals(null));
         assertFalse(new ModelDebugConfig().equals("a string"));
         assertFalse(new ModelDebugConfig(80.0, "").equals(new ModelDebugConfig(81.0, "")));
         assertFalse(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "bar")));
-        assertFalse(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo").equals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")));
+        assertFalse(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo")
+                .equals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")));
 
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
         assertTrue(modelDebugConfig.equals(modelDebugConfig));
         assertTrue(new ModelDebugConfig().equals(new ModelDebugConfig()));
         assertTrue(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "foo")));
         assertTrue(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo").equals(new ModelDebugConfig(80.0, "foo")));
-        assertTrue(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").equals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")));
+        assertTrue(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")
+                .equals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")));
     }
 
-
     public void testHashCode() {
-        assertEquals(new ModelDebugConfig(80.0, "foo").hashCode(),
-                new ModelDebugConfig(80.0, "foo").hashCode());
-        assertEquals(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo").hashCode(),
-                new ModelDebugConfig(80.0, "foo").hashCode());
+        assertEquals(new ModelDebugConfig(80.0, "foo").hashCode(), new ModelDebugConfig(80.0, "foo").hashCode());
+        assertEquals(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo").hashCode(), new ModelDebugConfig(80.0, "foo").hashCode());
         assertEquals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").hashCode(),
                 new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").hashCode());
     }

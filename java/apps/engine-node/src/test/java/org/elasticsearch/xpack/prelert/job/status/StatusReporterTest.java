@@ -54,7 +54,7 @@ public class StatusReporterTest extends ESTestCase {
     @Before
     public void setUpMocks() {
         MockitoAnnotations.initMocks(this);
-        statusReporter = new StatusReporter(JOB_ID, usageReporter, jobDataCountsPersister, mockLogger, 10l);
+        statusReporter = new StatusReporter(JOB_ID, usageReporter, jobDataCountsPersister, mockLogger, 10L);
     }
 
 
@@ -253,11 +253,11 @@ public class StatusReporterTest extends ESTestCase {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         DataCounts dc = new DataCounts();
-        dc.setExcludedRecordCount(1l);
-        dc.setInputFieldCount(12l);
-        dc.setMissingFieldCount(1l);
-        dc.setProcessedFieldCount(5l);
-        dc.setProcessedRecordCount(2l);
+        dc.setExcludedRecordCount(1L);
+        dc.setInputFieldCount(12L);
+        dc.setMissingFieldCount(1L);
+        dc.setProcessedFieldCount(5L);
+        dc.setProcessedRecordCount(2L);
         dc.setLatestRecordTimeStamp(new Date(3000));
 
         statusReporter.reportRecordWritten(5, 2000);

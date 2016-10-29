@@ -11,8 +11,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-
 public class CategoryDefinitionParserTest extends ESTestCase {
     public void testParseJson_GivenCategoryDefinitionWithExamplesThatIsNotAnArrayObject()
             throws IOException {
@@ -44,7 +42,7 @@ public class CategoryDefinitionParserTest extends ESTestCase {
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);
     }

@@ -30,7 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.not;
 
 public class PrelertJobIT extends ESRestTestCase {
 
@@ -44,7 +47,8 @@ public class PrelertJobIT extends ESRestTestCase {
     }
 
     public void testGetJob_GivenNoSuchJob() throws Exception {
-        ResponseException e = expectThrows(ResponseException.class, () -> client().performRequest("get", "engine/v2/jobs/non-existing-job"));
+        ResponseException e = expectThrows(ResponseException.class,
+                () -> client().performRequest("get", "engine/v2/jobs/non-existing-job"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("\"exists\":false"));
@@ -165,19 +169,11 @@ public class PrelertJobIT extends ESRestTestCase {
     }
 
     private Response createFarequoteJob(String jobId) throws Exception {
-        String job = "{\n" +
-                "    \"id\":\"" + jobId + "\",\n" +
-                "    \"description\":\"Analysis of response time by airline\",\n" +
-                "    \"analysisConfig\" : {\n" +
-                "        \"bucketSpan\":3600,\n" +
-                "        \"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n" +
-                "    },\n" +
-                "    \"dataDescription\" : {\n" +
-                "        \"fieldDelimiter\":\",\",\n" +
-                "        \"timeField\":\"time\",\n" +
-                "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"\n" +
-                "    }\n" +
-                "}";
+        String job = "{\n" + "    \"id\":\"" + jobId + "\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
+                + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
+                + "        \"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
+                + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
+                + "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"\n" + "    }\n" + "}";
 
         return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
     }
@@ -187,8 +183,8 @@ public class PrelertJobIT extends ESRestTestCase {
         params.put("start", "2016-06-01T00:00:00Z"); // inclusive
         params.put("end", "2016-06-04T00:00:00Z"); // exclusive
 
-        ResponseException e = expectThrows(ResponseException.class, () ->
-        client().performRequest("get", "/engine/v2/results/1/buckets", params));
+        ResponseException e = expectThrows(ResponseException.class,
+                () -> client().performRequest("get", "/engine/v2/results/1/buckets", params));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '1'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
@@ -207,14 +203,12 @@ public class PrelertJobIT extends ESRestTestCase {
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"hitCount\":1"));
 
-        e = expectThrows(ResponseException.class, () ->
-        client().performRequest("get", "/engine/v2/results/2/bucket/2016-06-01T00:00:00Z"));
+        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/2/bucket/2016-06-01T00:00:00Z"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '2'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
 
-        e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", "/engine/v2/results/1/bucket/2015-06-01T00:00:00Z"));
+        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/1/bucket/2015-06-01T00:00:00Z"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, equalTo("{\"exists\":false,\"type\":\"bucket\"}"));
@@ -228,14 +222,12 @@ public class PrelertJobIT extends ESRestTestCase {
     private Response addBucketResult(String jobId, String timestamp) throws Exception {
         String createIndexBody = "{ \"mappings\": {\"bucket\": { \"properties\": { \"@timestamp\": { \"type\" : \"date\" } } } } }";
         try {
-            client().performRequest("put", "prelertresults-" + jobId, Collections.emptyMap(),
-                    new StringEntity(createIndexBody));
+            client().performRequest("put", "prelertresults-" + jobId, Collections.emptyMap(), new StringEntity(createIndexBody));
         } catch (ResponseException e) {
             // it is ok: the index already exists
             assertThat(e.getMessage(), containsString("index_already_exists_exception"));
             assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         }
-
 
         String bucketResult = "{\"@timestamp\": \"" + timestamp + "\"}";
         return client().performRequest("put", "prelertresults-" + jobId + "/bucket/" + timestamp,

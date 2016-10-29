@@ -102,7 +102,7 @@ public class AnalysisLimitsTest extends AbstractSerializingTestCase<AnalysisLimi
         ElasticsearchStatusException e =
                 expectThrows(ElasticsearchStatusException.class, () -> new AnalysisLimits(1L, -1L));
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
-                AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT, 0, -1l);
+                AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT, 0, -1L);
         assertEquals(errorMessage, e.getMessage());
         assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }

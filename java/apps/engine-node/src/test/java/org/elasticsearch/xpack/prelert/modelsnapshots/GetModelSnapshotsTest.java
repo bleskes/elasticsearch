@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.modelsnapshots;
  * from Elasticsearch Incorporated.
  */
 
-
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
@@ -32,7 +31,6 @@ import java.util.Collections;
 
 import static org.elasticsearch.mock.orig.Mockito.when;
 import static org.mockito.Mockito.mock;
-
 
 public class GetModelSnapshotsTest extends ESTestCase {
 
@@ -87,7 +85,8 @@ public class GetModelSnapshotsTest extends ESTestCase {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
         JobProvider jobProvider = mock(JobProvider.class);
-        when(jobProvider.modelSnapshots("foo", 0, 100, "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", null, true, null, null)).thenReturn(queryResult);
+        when(jobProvider.modelSnapshots("foo", 0, 100, "2015-01-01T12:00:00.042Z", "2015-01-01T13:00:00.142+00:00", null, true, null, null))
+        .thenReturn(queryResult);
 
         GetModelSnapshotsAction.Request request = new GetModelSnapshotsAction.Request("foo");
         request.setPageParams(new PageParams(0, 100));
@@ -104,7 +103,8 @@ public class GetModelSnapshotsTest extends ESTestCase {
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
         JobProvider jobProvider = mock(JobProvider.class);
-        when(jobProvider.modelSnapshots("foo", 0, 100, "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", null, true, null, null)).thenReturn(queryResult);
+        when(jobProvider.modelSnapshots("foo", 0, 100, "2015-01-01T12:00:00Z", "2015-01-01T13:00:00Z", null, true, null, null))
+        .thenReturn(queryResult);
 
         GetModelSnapshotsAction.Request request = new GetModelSnapshotsAction.Request("foo");
         request.setPageParams(new PageParams(0, 100));

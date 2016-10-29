@@ -290,59 +290,69 @@ public class JobManager {
 
         // NORELEASE: Should also delete the running process
 
-        checkJobHasNoRunningScheduler(jobId);
+        try (ActionGuardian<Action>.ActionTicket actionTicket = processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
+            // NORELEASE fix this so we don't have to call a method on
+            // actionTicket, probably by removing ActionGuardian
+            actionTicket.hashCode();
 
-        ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
-            @Override
-            public void onResponse(Boolean aBoolean) {
-                jobProvider.deleteJob(request.getJobId(), new ActionListener<Boolean>() {
-                    @Override
-                    public void onResponse(Boolean aBoolean) {
+            checkJobHasNoRunningScheduler(jobId);
 
-                        try {
-                            new JobLogs().deleteLogs(jobId);
-                            // NORELEASE: This is not the place the audit log
-                            // (indexes a document), because this method is
-                            // executed on
-                            // the cluster state update task thread and any
-                            // action performed on that thread should be quick.
-                            // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+            ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
+                @Override
+                public void onResponse(Boolean aBoolean) {
+                    jobProvider.deleteJob(request.getJobId(), new ActionListener<Boolean>() {
+                        @Override
+                        public void onResponse(Boolean aBoolean) {
 
-                            // Also I wonder if we need to audit log infra
-                            // structure in prelert as when we merge into xpack
-                            // we can use its audit trailing. See:
-                            // https://github.com/elastic/prelert-legacy/issues/48
-                        } catch (JobException e) {
+                            try {
+                                new JobLogs().deleteLogs(jobId);
+                                // NORELEASE: This is not the place the audit
+                                // log
+                                // (indexes a document), because this method is
+                                // executed on
+                                // the cluster state update task thread and any
+                                // action performed on that thread should be
+                                // quick.
+                                // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+
+                                // Also I wonder if we need to audit log infra
+                                // structure in prelert as when we merge into
+                                // xpack
+                                // we can use its audit trailing. See:
+                                // https://github.com/elastic/prelert-legacy/issues/48
+                            } catch (JobException e) {
+                                actionListener.onFailure(e);
+                            }
+                            actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
                             actionListener.onFailure(e);
                         }
-                        actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
-                    }
+                    });
+                }
 
-                    @Override
-                    public void onFailure(Exception e) {
-                        actionListener.onFailure(e);
-                    }
-                });
-            }
+                @Override
+                public void onFailure(Exception e) {
+                    actionListener.onFailure(e);
+                }
+            };
 
-            @Override
-            public void onFailure(Exception e) {
-                actionListener.onFailure(e);
-            }
-        };
+            clusterService.submitStateUpdateTask("delete-job-" + jobId,
+                    new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
 
-        clusterService.submitStateUpdateTask("delete-job-" + jobId, new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
+                @Override
+                protected Boolean newResponse(boolean acknowledged) {
+                    return acknowledged;
+                }
 
-            @Override
-            protected Boolean newResponse(boolean acknowledged) {
-                return acknowledged;
-            }
-
-            @Override
-            public ClusterState execute(ClusterState currentState) throws Exception {
-                return removeJobFromClusterState(jobId, currentState);
-            }
-        });
+                @Override
+                public ClusterState execute(ClusterState currentState) throws Exception {
+                    return removeJobFromClusterState(jobId, currentState);
+                }
+            });
+        }
     }
 
     private void checkJobHasNoRunningScheduler(String jobId) {

@@ -18,8 +18,10 @@ public class CsvParserTest extends ESTestCase {
      * Test parsing CSV with the NUL character code point (\0 or \u0000)
      */
     public void test() throws IOException {
-        String data = "1422936876.262044869, 1422936876.262044869, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460, null, null, null, null, null, null, null, null, null, null, null\n"
-                + "1422943772.875342698, 1422943772.875342698, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460,,,,,\0,\u0000,,,,,\u0000\n"
+        String data = "1422936876.262044869, 1422936876.262044869, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460, null, null, "
+                + "null, null, null, null, null, null, null, null, null\n"
+                + "1422943772.875342698, 1422943772.875342698, 90, 2, 10.132.0.1, 0, 224.0.0.5, 0, 1, 1, 268435460,,,,,\0,\u0000,,,,,"
+                + "\u0000\n"
                 + "\0";
         InputStream inputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
 

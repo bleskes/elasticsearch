@@ -10,7 +10,11 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfiguration> {
@@ -82,8 +86,8 @@ public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfigu
     }
 
     /**
-     * Test the {@link AnalysisConfig#analysisFields()} method which produces
-     * a list of analysis fields from the detectors
+     * Test the {@link AnalysisConfig#analysisFields()} method which produces a
+     * list of analysis fields from the detectors
      */
     public void testAnalysisConfigRequiredFields() {
         Detector d1 = new Detector("max", "field");
@@ -187,7 +191,8 @@ public class JobConfigurationTest extends AbstractSerializingTestCase<JobConfigu
         jobConfiguration.setAnalysisLimits(new AnalysisLimits(42L, null));
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
                 () -> jobConfiguration.setAnalysisLimits(new AnalysisLimits(41L, null)));
-        assertEquals("Invalid update value for analysisLimits: modelMemoryLimit cannot be decreased; existing is 42, update had 41", e.getMessage());
+        assertEquals("Invalid update value for analysisLimits: modelMemoryLimit cannot be decreased; existing is 42, update had 41",
+                e.getMessage());
         assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 }

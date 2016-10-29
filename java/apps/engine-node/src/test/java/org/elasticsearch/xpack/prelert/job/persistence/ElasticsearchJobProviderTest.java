@@ -68,8 +68,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testShutdown() throws InterruptedException, ExecutionException, IOException {
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
@@ -78,11 +77,9 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         verify(node).close();
     }
 
-    public void testGetQuantiles_GivenNoIndexForJob() throws InterruptedException,
-    ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenNoIndexForJob() throws InterruptedException, ExecutionException, UnknownJobException {
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .throwMissingIndexOnPrepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID);
 
@@ -91,12 +88,10 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         IndexNotFoundException e = ESTestCase.expectThrows(IndexNotFoundException.class, () -> provider.getQuantiles(JOB_ID));
     }
 
-    public void testGetQuantiles_GivenNoQuantilesForJob() throws InterruptedException,
-    ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenNoQuantilesForJob() throws InterruptedException, ExecutionException, UnknownJobException {
         GetResponse getResponse = createGetResponse(false, null);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
 
@@ -107,14 +102,12 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals("", quantiles.getQuantileState());
     }
 
-    public void testGetQuantiles_GivenQuantilesHaveNonEmptyState()
-            throws InterruptedException, ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws InterruptedException, ExecutionException, UnknownJobException {
         Map<String, Object> source = new HashMap<>();
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "state");
         GetResponse getResponse = createGetResponse(true, source);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
 
@@ -125,13 +118,11 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals("state", quantiles.getQuantileState());
     }
 
-    public void testGetQuantiles_GivenQuantilesHaveEmptyState()
-            throws InterruptedException, ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws InterruptedException, ExecutionException, UnknownJobException {
         Map<String, Object> source = new HashMap<>();
         GetResponse getResponse = createGetResponse(true, source);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
 
@@ -143,8 +134,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testIsConnected() throws InterruptedException, ExecutionException {
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .addClusterStatusYellowResponse("prelertresults-id", TimeValue.timeValueSeconds(2L));
 
@@ -154,8 +144,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testIsConnected_TimedOutException() throws InterruptedException, ExecutionException {
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .addClusterStatusYellowResponse("prelertresults-id", TimeValue.timeValueSeconds(2L), new NoNodeAvailableException("blah"));
         Client client = clientBuilder.build();
@@ -164,19 +153,16 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     }
 
     public void testCreateUsageMetering() throws InterruptedException, ExecutionException {
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, false)
                 .prepareCreate(ElasticsearchJobProvider.PRELERT_USAGE_INDEX)
                 .addClusterStatusYellowResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX);
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         provider.initialize();
-        try
-        {
+        try {
             clientBuilder.verifyIndexCreated(ElasticsearchJobProvider.PRELERT_USAGE_INDEX);
-        }
-        finally {
+        } finally {
             provider.shutdown();
         }
     }
@@ -185,10 +171,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         String index = "prelert-int";
         String info = "info";
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareCreate(index)
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true).prepareCreate(index)
                 .addClusterStatusYellowResponse(index);
 
         Client client = clientBuilder.build();
@@ -208,8 +192,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         GetResponse getResponse = createGetResponse(true, null);
         String jobId = "jobThing";
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, getResponse);
 
@@ -226,8 +209,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         GetResponse getResponse = createGetResponse(false, null);
         String jobId = "jobThing";
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, getResponse);
 
@@ -242,8 +224,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
     public void testCheckJobExists_GivenInvalidIndex() throws InterruptedException, ExecutionException {
         String jobId = "jobThing";
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, new IndexNotFoundException("blah"));
         Client client = clientBuilder.build();
@@ -258,8 +239,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     public void testJobIdIsUnique_GivenSingleJob() throws InterruptedException, ExecutionException {
         String jobId = "jobThing";
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
 
         Client client = clientBuilder.build();
@@ -273,8 +253,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
     public void testJobIdIsUnique_GivenJobExists() throws InterruptedException, ExecutionException {
         String jobId = "jobThing";
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
 
         Client client = clientBuilder.build();
@@ -293,8 +272,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         AnalysisLimits limits = new AnalysisLimits(9878695309134L, null);
         job.setAnalysisLimits(limits);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .createIndexRequest("prelertresults-" + job.getJobId());
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).createIndexRequest("prelertresults-" + job.getJobId());
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -318,14 +296,13 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         @SuppressWarnings("unchecked")
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
-        clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-        .addIndicesDeleteResponse("prelertresults-" + jobId, true, false, actionListener);
+        clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true).addIndicesDeleteResponse("prelertresults-" + jobId, true,
+                false, actionListener);
         clientBuilder.build();
 
         provider.deleteJob(jobId, actionListener);
@@ -337,16 +314,14 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         @SuppressWarnings("unchecked")
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
-        clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true)
-        .addIndicesDeleteResponse("prelertresults-" + jobId, true, true, actionListener);
+        clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true).addIndicesDeleteResponse("prelertresults-" + jobId, true,
+                true, actionListener);
         clientBuilder.build();
-
 
         provider.deleteJob(jobId, actionListener);
 
@@ -355,7 +330,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertThat(exceptionCaptor.getValue(), instanceOf(InterruptedException.class));
     }
 
-    public void testBuckets_OneBucketNoInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testBuckets_OneBucketNoInterim()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -368,28 +344,26 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         SearchResponse response = createSearchResponse(true, source);
         int skip = 0;
         int take = 10;
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        BucketsQueryBuilder bq = new BucketsQueryBuilder()
-                .skip(skip)
-                .take(take)
-                .anomalyScoreThreshold(0.0)
+        BucketsQueryBuilder bq = new BucketsQueryBuilder().skip(skip).take(take).anomalyScoreThreshold(0.0)
                 .normalizedProbabilityThreshold(1.0);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
-        assertEquals(1l, buckets.hitCount());
+        assertEquals(1L, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
-        assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
+        assertTrue(
+                queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
     }
 
-    public void testBuckets_OneBucketInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testBuckets_OneBucketInterim()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -402,24 +376,18 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         SearchResponse response = createSearchResponse(true, source);
         int skip = 99;
         int take = 17;
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        BucketsQueryBuilder bq = new BucketsQueryBuilder()
-                .skip(skip)
-                .take(take)
-                .anomalyScoreThreshold(5.1)
-                .normalizedProbabilityThreshold(10.9)
-                .includeInterim(true);
-
+        BucketsQueryBuilder bq = new BucketsQueryBuilder().skip(skip).take(take).anomalyScoreThreshold(5.1)
+                .normalizedProbabilityThreshold(10.9).includeInterim(true);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
-        assertEquals(1l, buckets.hitCount());
+        assertEquals(1L, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
         assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
@@ -427,7 +395,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertFalse(queryString.matches("(?s).*isInterim.*"));
     }
 
-    public void testBuckets_UsingBuilder() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testBuckets_UsingBuilder()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -440,8 +409,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         SearchResponse response = createSearchResponse(true, source);
         int skip = 99;
         int take = 17;
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
@@ -456,7 +424,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         bq.includeInterim(true);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
-        assertEquals(1l, buckets.hitCount());
+        assertEquals(1L, buckets.hitCount());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
         assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
@@ -464,7 +432,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertFalse(queryString.matches("(?s).*isInterim.*"));
     }
 
-    public void testBucket_NoBucketNoExpandNoInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testBucket_NoBucketNoExpandNoInterim()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Long timestamp = 98765432123456789L;
         Date now = new Date();
@@ -472,12 +441,11 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
         Map<String, Object> map = new HashMap<>();
         map.put("timestamp", now.getTime());
-        //source.add(map);
+        // source.add(map);
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(false, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
 
@@ -490,7 +458,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertFalse(bucket.isPresent());
     }
 
-    public void testBucket_OneBucketNoExpandNoInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testBucket_OneBucketNoExpandNoInterim()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -501,14 +470,12 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
-
 
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
 
@@ -518,7 +485,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(now, b.getTimestamp());
     }
 
-    public void testBucket_OneBucketNoExpandInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testBucket_OneBucketNoExpandInterim()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -530,8 +498,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
 
@@ -571,21 +538,15 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         String sortfield = "minefield";
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        RecordsQueryBuilder rqb = new RecordsQueryBuilder()
-                .skip(skip)
-                .take(take)
-                .epochStart(String.valueOf(now.getTime())).epochEnd(String.valueOf(now.getTime()))
-                .includeInterim(true)
-                .sortField(sortfield)
-                .anomalyScoreThreshold(11.1)
+        RecordsQueryBuilder rqb = new RecordsQueryBuilder().skip(skip).take(take).epochStart(String.valueOf(now.getTime()))
+                .epochEnd(String.valueOf(now.getTime())).includeInterim(true).sortField(sortfield).anomalyScoreThreshold(11.1)
                 .normalizedProbability(2.2);
 
         QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
@@ -599,7 +560,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
-    public void testRecords_UsingBuilder() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testRecords_UsingBuilder()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -626,8 +588,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         String sortfield = "minefield";
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
@@ -654,7 +615,6 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(933.3, records.get(1).getActual().get(0), 0.000001);
         assertEquals("irrascible", records.get(1).getFunction());
     }
-
 
     public void testBucketRecords() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
@@ -685,8 +645,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         String sortfield = "minefield";
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
@@ -725,8 +684,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearchAnySize("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), response, queryBuilder);
 
@@ -737,7 +695,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(400L, records);
     }
 
-    public void testexpandBucket_WithManyRecords() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testexpandBucket_WithManyRecords()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         Bucket bucket = new Bucket();
@@ -757,8 +716,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearchAnySize("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), response, queryBuilder);
 
@@ -766,12 +724,14 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
 
         int records = provider.expandBucket(jobId, false, bucket);
-        // This is not realistic, but is an artifact of the fact that the mock query
+        // This is not realistic, but is an artifact of the fact that the mock
+        // query
         // returns all the records, not a subset
         assertEquals(1200L, records);
     }
 
-    public void testCategoryDefinitions() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testCategoryDefinitions()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         String terms = "the terms and conditions are not valid here";
         List<Map<String, Object>> source = new ArrayList<>();
@@ -786,19 +746,19 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         SearchResponse response = createSearchResponse(true, source);
         int skip = 0;
         int take = 10;
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         QueryPage<CategoryDefinition> categoryDefinitions = provider.categoryDefinitions(jobId, skip, take);
-        assertEquals(1l, categoryDefinitions.hitCount());
+        assertEquals(1L, categoryDefinitions.hitCount());
         assertEquals(terms, categoryDefinitions.hits().get(0).getTerms());
     }
 
-    public void testCategoryDefinition() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testCategoryDefinition()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         String terms = "the terms and conditions are not valid here";
 
@@ -809,8 +769,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
 
         GetResponse getResponse = createGetResponse(true, source);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), categoryId, getResponse);
 
@@ -822,7 +781,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(terms, category.getTerms());
     }
 
-    public void testInfluencers_NoInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testInfluencers_NoInterim()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -848,8 +808,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         int take = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Influencer.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
@@ -880,8 +839,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(5.0, records.get(1).getInitialAnomalyScore(), 0.00001);
     }
 
-
-    public void testInfluencers_WithInterim() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testInfluencers_WithInterim()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -907,8 +866,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         int take = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, Influencer.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
@@ -943,8 +901,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         String jobId = "TestJobIdentificationForInfluencers";
         String influencerId = "ThisIsAnInfluencerId";
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
 
         Client client = clientBuilder.build();
@@ -983,8 +940,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         int take = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
@@ -1010,8 +966,8 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(6, snapshots.get(1).getSnapshotDocCount());
     }
 
-
-    public void testModelSnapshots_WithDescription() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testModelSnapshots_WithDescription()
+            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -1037,16 +993,15 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         int take = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addClusterStatusYellowResponse()
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), skip, take, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take, null, null,
-                "sortfield", true, "snappyId", "description1");
+        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take, null, null, "sortfield", true, "snappyId",
+                "description1");
         assertEquals(2L, page.hitCount());
         List<ModelSnapshot> snapshots = page.hits();
 
@@ -1069,11 +1024,9 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertTrue(queryString.matches("(?s).*snapshotId.*value. : .snappyId.*description.*value. : .description1.*"));
     }
 
-    public void testMergePartitionScoresIntoBucket()
-            throws InterruptedException, ExecutionException {
+    public void testMergePartitionScoresIntoBucket() throws InterruptedException, ExecutionException {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .addClusterStatusYellowResponse();
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true).addClusterStatusYellowResponse();
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
@@ -1099,11 +1052,9 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         assertEquals(0.0, buckets.get(5).getMaxNormalizedProbability(), 0.001);
     }
 
-    public void testMergePartitionScoresIntoBucket_WithEmptyScoresList()
-            throws InterruptedException, ExecutionException {
+    public void testMergePartitionScoresIntoBucket_WithEmptyScoresList() throws InterruptedException, ExecutionException {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .addClusterStatusYellowResponse();
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true).addClusterStatusYellowResponse();
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
@@ -1149,8 +1100,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
             SearchHit hit = mock(SearchHit.class);
             when(hit.getSource()).thenReturn(map);
             when(hit.getId()).thenReturn(String.valueOf(map.hashCode()));
-            doAnswer(invocation ->
-            {
+            doAnswer(invocation -> {
                 String field = (String) invocation.getArguments()[0];
                 SearchHitField shf = mock(SearchHitField.class);
                 when(shf.getValue()).thenReturn(map.get(field));
@@ -1162,8 +1112,7 @@ public class ElasticsearchJobProviderTest extends ESTestCase {
         when(hits.getHits()).thenReturn(list.toArray(new SearchHit[0]));
         when(hits.getTotalHits()).thenReturn((long) source.size());
 
-        doAnswer(invocation ->
-        {
+        doAnswer(invocation -> {
             Integer idx = (Integer) invocation.getArguments()[0];
             return list.get(idx);
         }).when(hits).getAt(any(Integer.class));

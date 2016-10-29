@@ -8,7 +8,12 @@ import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 
 public class AnalysisConfigTest extends AbstractSerializingTestCase<AnalysisConfig> {
@@ -369,8 +374,8 @@ public class AnalysisConfigTest extends AbstractSerializingTestCase<AnalysisConf
     public void testBucketSpanOrDefault() {
         AnalysisConfig config1 = new AnalysisConfig();
         assertEquals(AnalysisConfig.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
-        config1.setBucketSpan(100l);
-        assertEquals(100l, config1.getBucketSpanOrDefault());
+        config1.setBucketSpan(100L);
+        assertEquals(100L, config1.getBucketSpanOrDefault());
     }
 
 

@@ -3,9 +3,6 @@ package org.elasticsearch.xpack.prelert.job.manager.actions;
 
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class ActionTest extends ESTestCase {
 

@@ -45,7 +45,8 @@ import org.elasticsearch.xpack.prelert.transforms.Transform.TransformIndex;
 import org.mockito.MockitoAnnotations;
 
 /**
- * Testing methods of AbstractDataToProcessWriter but uses the concrete instances.
+ * Testing methods of AbstractDataToProcessWriter but uses the concrete
+ * instances.
  * <p>
  * Asserts that the transforms have the right input and outputs.
  */
@@ -79,9 +80,8 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
-
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
-                , dd, ac, transforms, statusReporter, jobLogger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
+                jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
         assertEquals(4, inputFields.size());
@@ -90,8 +90,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         assertTrue(inputFields.contains("host"));
         assertTrue(inputFields.contains("metric"));
 
-
-        String[] header = {"timeField", "metric", "host", "value"};
+        String[] header = { "timeField", "metric", "host", "value" };
         writer.buildTransformsAndWriteHeader(header);
         List<Transform> trs = writer.postDateTransforms;
         assertEquals(1, trs.size());
@@ -103,7 +102,6 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         List<TransformIndex> writeIndexes = tr.getWriteIndexes();
         assertEquals(writeIndexes.get(0), new TransformIndex(2, 1));
-
 
         Map<String, Integer> inputIndexes = writer.getInputFieldIndexes();
         assertEquals(4, inputIndexes.size());
@@ -119,13 +117,11 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         Assert.assertEquals(new Integer(2), outputIndexes.get("value"));
         Assert.assertEquals(new Integer(3), outputIndexes.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
 
-
         List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
         assertEquals(1, inOutMaps.size());
         assertEquals(inOutMaps.get(0).inputIndex, 3);
         assertEquals(inOutMaps.get(0).outputIndex, 2);
     }
-
 
     public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException, IOException {
 
@@ -143,9 +139,8 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
-
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
-                , dd, ac, transforms, statusReporter, jobLogger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
+                jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -154,7 +149,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         assertTrue(inputFields.contains("value"));
         assertTrue(inputFields.contains("domain"));
 
-        String[] header = {"timeField", "domain", "value"};
+        String[] header = { "timeField", "domain", "value" };
         writer.buildTransformsAndWriteHeader(header);
         List<Transform> trs = writer.postDateTransforms;
         assertEquals(1, trs.size());
@@ -169,7 +164,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         List<String> allOutputs = new ArrayList<>(TransformType.DOMAIN_SPLIT.defaultOutputNames());
         allOutputs.add("value");
-        Collections.sort(allOutputs);  // outputs are in alphabetical order
+        Collections.sort(allOutputs); // outputs are in alphabetical order
 
         assertEquals(5, outputIndexes.size()); // time + control field + outputs
         Assert.assertEquals(new Integer(0), outputIndexes.get("timeField"));
@@ -178,9 +173,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         for (String f : allOutputs) {
             Assert.assertEquals(new Integer(count++), outputIndexes.get(f));
         }
-        Assert.assertEquals(new Integer(allOutputs.size() + 1),
-                outputIndexes.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
-
+        Assert.assertEquals(new Integer(allOutputs.size() + 1), outputIndexes.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
 
         List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
         assertEquals(1, inOutMaps.size());
@@ -193,19 +186,16 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         List<TransformIndex> writeIndexes = new ArrayList<>();
         int[] outIndexes = new int[TransformType.DOMAIN_SPLIT.defaultOutputNames().size()];
         for (int i = 0; i < outIndexes.length; i++) {
-            writeIndexes.add(new TransformIndex(2,
-                    allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(i)) + 1));
+            writeIndexes.add(new TransformIndex(2, allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(i)) + 1));
         }
         assertEquals(writeIndexes, tr.getWriteIndexes());
     }
-
 
     /**
      * Only one output of the transform is used
      */
 
-    public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed()
-            throws MissingFieldException, IOException {
+    public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed() throws MissingFieldException, IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");
@@ -220,7 +210,8 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter, jobLogger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
+                jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -229,7 +220,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         assertTrue(inputFields.contains("value"));
         assertTrue(inputFields.contains("domain"));
 
-        String[] header = {"timeField", "domain", "value"};
+        String[] header = { "timeField", "domain", "value" };
         writer.buildTransformsAndWriteHeader(header);
         List<Transform> trs = writer.postDateTransforms;
         assertEquals(1, trs.size());
@@ -245,7 +236,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         List<String> allOutputs = new ArrayList<>();
         allOutputs.add(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
         allOutputs.add("value");
-        Collections.sort(allOutputs);  // outputs are in alphabetical order
+        Collections.sort(allOutputs); // outputs are in alphabetical order
 
         assertEquals(4, outputIndexes.size()); // time + control field + outputs
         Assert.assertEquals(new Integer(0), outputIndexes.get("timeField"));
@@ -254,9 +245,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         for (String f : allOutputs) {
             Assert.assertEquals(new Integer(count++), outputIndexes.get(f));
         }
-        Assert.assertEquals(new Integer(allOutputs.size() + 1),
-                outputIndexes.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
-
+        Assert.assertEquals(new Integer(allOutputs.size() + 1), outputIndexes.get(LengthEncodedWriter.CONTROL_FIELD_NAME));
 
         List<InputOutputMap> inOutMaps = writer.getInputOutputMap();
         assertEquals(1, inOutMaps.size());
@@ -266,18 +255,15 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         Transform tr = trs.get(0);
         assertEquals(tr.getReadIndexes().get(0), new TransformIndex(0, 1));
 
-        TransformIndex ti = new TransformIndex(2,
-                allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0)) + 1);
+        TransformIndex ti = new TransformIndex(2, allOutputs.indexOf(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0)) + 1);
         assertEquals(tr.getWriteIndexes().get(0), ti);
     }
-
 
     /**
      * Only one output of the transform is used
      */
 
-    public void testBuildTransforms_ChainedTransforms()
-            throws MissingFieldException, IOException {
+    public void testBuildTransforms_ChainedTransforms() throws MissingFieldException, IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("datetime");
@@ -296,9 +282,8 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(concatTc, hrdTc));
 
-
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
-                , dd, ac, transforms, statusReporter, jobLogger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
+                jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -308,7 +293,7 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         assertTrue(inputFields.contains("value"));
         assertTrue(inputFields.contains("domain"));
 
-        String[] header = {"date", "time", "domain", "value"};
+        String[] header = { "date", "time", "domain", "value" };
 
         writer.buildTransformsAndWriteHeader(header);
         List<Transform> trs = writer.dateInputTransforms;
@@ -327,10 +312,9 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         Assert.assertEquals(new Integer(3), inputIndexes.get("value"));
     }
 
-
     /**
-     * The exclude transform returns fail fatal meaning the record
-     * shouldn't be processed.
+     * The exclude transform returns fail fatal meaning the record shouldn't be
+     * processed.
      */
 
     public void testApplyTransforms_transformReturnsExclude()
@@ -349,17 +333,16 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(excludeConfig));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess
-                , dd, ac, transforms, statusReporter, jobLogger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
+                jobLogger);
 
-        String[] header = {"datetime", "metric", "value"};
+        String[] header = { "datetime", "metric", "value" };
 
         writer.buildTransformsAndWriteHeader(header);
 
         // metricA is excluded
-        String[] input = {"1", "metricA", "0"};
+        String[] input = { "1", "metricA", "0" };
         String[] output = new String[3];
-
 
         assertFalse(writer.applyTransformsAndWrite(input, output, 3));
 
@@ -371,17 +354,14 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         Mockito.reset(statusReporter);
 
         // this is ok
-        input = new String[]{"2", "metricB", "0"};
-        String[] expectedOutput = {"2", null, null};
+        input = new String[] { "2", "metricB", "0" };
+        String[] expectedOutput = { "2", null, null };
         assertTrue(writer.applyTransformsAndWrite(input, output, 3));
-
 
         verify(autodetectProcess, times(1)).writeRecord(expectedOutput);
         verify(statusReporter, times(1)).reportRecordWritten(3, 2000);
         verify(statusReporter, never()).reportExcludedRecord(anyLong());
     }
-
-
 
     public void testBuildTransforms_DateTransformsAreSorted() throws MissingFieldException, IOException {
 
@@ -406,14 +386,12 @@ public class AbstractDataToProcessWriterTest extends ESTestCase {
         splitTc.setOutputs(Arrays.asList("date"));
         splitTc.setArguments(Arrays.asList("-"));
 
-
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(upperTc, concatTc, splitTc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess,
-                dd, ac, transforms, statusReporter, jobLogger);
+        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
+                jobLogger);
 
-
-        String[] header = {"date-somethingelse", "time", "type", "value"};
+        String[] header = { "date-somethingelse", "time", "type", "value" };
 
         writer.buildTransformsAndWriteHeader(header);
 

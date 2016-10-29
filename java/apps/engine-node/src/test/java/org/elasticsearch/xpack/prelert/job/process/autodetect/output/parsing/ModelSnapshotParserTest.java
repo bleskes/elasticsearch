@@ -13,9 +13,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Date;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 public class ModelSnapshotParserTest extends ESTestCase {
     public void testParseJson_GivenInvalidJson() throws IOException {
         String input = "\"snapshotId\": \"123\" }";
@@ -57,8 +54,8 @@ public class ModelSnapshotParserTest extends ESTestCase {
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-    private static final JsonParser createJsonParser(String input) throws JsonParseException,
-            IOException {
+    private static JsonParser createJsonParser(String input) throws JsonParseException,
+    IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);
     }

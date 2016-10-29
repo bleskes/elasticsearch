@@ -22,30 +22,19 @@ import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonExcep
 
 public class AggregatedJsonRecordReaderTest extends ESTestCase {
     public void testRead_WithNoTermField() throws IOException, MalformedJsonException {
-        String data =
-                "{" +
-                        "\"took\" : 88," +
-                        "\"timed_out\" : false," +
-                        "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 }," +
-                        "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," +
-                        "\"aggregations\" : {" +
-                        "\"time_level\" : {" +
-                        "\"buckets\" : [ {" +
-                        "\"key_as_string\" : \"2015-12-07T00:00:00.000Z\", \"key\" : 1449446400000, \"doc_count\" : 649," +
-                        "\"metric_level\" : { \"value\" : 106.72129514140468 }" +
-                        "}," +
-                        "{" +
-                        "\"key_as_string\" : \"2015-12-07T01:00:00.000Z\", \"key\" : 1449450000000, \"doc_count\" : 627," +
-                        "\"metric_level\" : { \"value\" : 103.64676252462097 }" +
-                        "} ]" +
-                        "}" +
-                        "}" +
-                        "}";
+        String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
+                + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
+                + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {"
+                + "\"buckets\" : [ {" + "\"key_as_string\" : \"2015-12-07T00:00:00.000Z\", \"key\" : 1449446400000, \"doc_count\" : 649,"
+                + "\"metric_level\" : { \"value\" : 106.72129514140468 }" + "}," + "{"
+                + "\"key_as_string\" : \"2015-12-07T01:00:00.000Z\", \"key\" : 1449450000000, \"doc_count\" : 627,"
+                + "\"metric_level\" : { \"value\" : 103.64676252462097 }" + "} ]" + "}" + "}" + "}";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMapWithNoTermField();
         List<String> nestingOrder = createNestingOrderWithNoTermField();
 
-        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
+        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class),
+                nestingOrder);
 
         String[] record = new String[4];
         boolean[] gotFields = new boolean[4];
@@ -64,38 +53,24 @@ public class AggregatedJsonRecordReaderTest extends ESTestCase {
     }
 
     public void testRead_WithOneTermField() throws JsonParseException, IOException, MalformedJsonException {
-        String data =
-                "{" +
-                        "\"took\" : 88," +
-                        "\"timed_out\" : false," +
-                        "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 }," +
-                        "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," +
-                        "\"aggregations\" : {" +
-                        "\"time_level\" : {" +
-                        "\"buckets\" : [ {" +
-                        "\"key_as_string\" : \"2015-12-07T00:00:00.000Z\", \"key\" : 1449446400000, \"doc_count\" : 649," +
-                        "\"airline_level\" : {" +
-                        "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," +
-                        "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 62, \"metric_level\" : { \"value\" : 106.72129514140468 } }," +
-                        "{ \"key\" : \"awe\", \"doc_count\" : 61, \"metric_level\" : { \"value\" : 20.20497368984535 } } ]" +
-                        "}" +
-                        "}," +
-                        "{" +
-                        "\"key_as_string\" : \"2015-12-07T01:00:00.000Z\", \"key\" : 1449450000000, \"doc_count\" : 627," +
-                        "\"airline_level\" : {" +
-                        "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," +
-                        "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 59, \"metric_level\" : { \"value\" : 103.64676252462097 } }," +
-                        "{ \"key\" : \"awe\", \"doc_count\" : 56, \"metric_level\" : { \"value\" : 20.047162464686803 } } ]" +
-                        "}" +
-                        "} ]" +
-                        "}" +
-                        "}" +
-                        "}";
+        String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
+                + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
+                + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {"
+                + "\"buckets\" : [ {" + "\"key_as_string\" : \"2015-12-07T00:00:00.000Z\", \"key\" : 1449446400000, \"doc_count\" : 649,"
+                + "\"airline_level\" : {" + "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0,"
+                + "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 62, \"metric_level\" : { \"value\" : 106.72129514140468 } },"
+                + "{ \"key\" : \"awe\", \"doc_count\" : 61, \"metric_level\" : { \"value\" : 20.20497368984535 } } ]" + "}" + "}," + "{"
+                + "\"key_as_string\" : \"2015-12-07T01:00:00.000Z\", \"key\" : 1449450000000, \"doc_count\" : 627,"
+                + "\"airline_level\" : {" + "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0,"
+                + "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 59, \"metric_level\" : { \"value\" : 103.64676252462097 } },"
+                + "{ \"key\" : \"awe\", \"doc_count\" : 56, \"metric_level\" : { \"value\" : 20.047162464686803 } } ]" + "}" + "} ]" + "}"
+                + "}" + "}";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMapWithOneTermField();
         List<String> nestingOrder = createNestingOrderWithOneTermField();
 
-        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
+        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class),
+                nestingOrder);
 
         String[] record = new String[4];
         boolean[] gotFields = new boolean[4];
@@ -128,50 +103,28 @@ public class AggregatedJsonRecordReaderTest extends ESTestCase {
     }
 
     public void testRead_WithTwoTermFields() throws JsonParseException, IOException, MalformedJsonException {
-        String data =
-                "{" +
-                        "\"took\" : 88," +
-                        "\"timed_out\" : false," +
-                        "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 }," +
-                        "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," +
-                        "\"aggregations\" : {" +
-                        "\"time_level\" : {" +
-                        "\"buckets\" : [ {" +
-                        "\"key_as_string\" : \"2015-12-07T00:00:00.000Z\", \"key\" : 1449446400000, \"doc_count\" : 649," +
-                        "\"sourcetype_level\" : {" +
-                        "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," +
-                        "\"buckets\" : [ {" +
-                        "\"key\" : \"farequote\", \"doc_count\" : 649," +
-                        "\"airline_level\" : {" +
-                        "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," +
-                        "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 62, \"metric_level\" : { \"value\" : 106.72129514140468 } }," +
-                        "{ \"key\" : \"awe\", \"doc_count\" : 61, \"metric_level\" : { \"value\" : 20.20497368984535 } } ]" +
-                        "}" +
-                        "} ]" +
-                        "}" +
-                        "}," +
-                        "{" +
-                        "\"key_as_string\" : \"2015-12-07T01:00:00.000Z\", \"key\" : 1449450000000, \"doc_count\" : 627," +
-                        "\"sourcetype_level\" : {" +
-                        "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," +
-                        "\"buckets\" : [ {" +
-                        "\"key\" : \"farequote\", \"doc_count\" : 627," +
-                        "\"airline_level\" : {" +
-                        "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," +
-                        "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 59, \"metric_level\" : { \"value\" : 103.64676252462097 } }," +
-                        "{ \"key\" : \"awe\", \"doc_count\" : 56, \"metric_level\" : { \"value\" : 20.047162464686803 } } ]" +
-                        "}" +
-                        "} ]" +
-                        "}" +
-                        "} ]" +
-                        "}" +
-                        "}" +
-                        "}";
+        String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
+                + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
+                + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {"
+                + "\"buckets\" : [ {" + "\"key_as_string\" : \"2015-12-07T00:00:00.000Z\", \"key\" : 1449446400000, \"doc_count\" : 649,"
+                + "\"sourcetype_level\" : {" + "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," + "\"buckets\" : [ {"
+                + "\"key\" : \"farequote\", \"doc_count\" : 649," + "\"airline_level\" : {"
+                + "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0,"
+                + "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 62, \"metric_level\" : { \"value\" : 106.72129514140468 } },"
+                + "{ \"key\" : \"awe\", \"doc_count\" : 61, \"metric_level\" : { \"value\" : 20.20497368984535 } } ]" + "}" + "} ]" + "}"
+                + "}," + "{" + "\"key_as_string\" : \"2015-12-07T01:00:00.000Z\", \"key\" : 1449450000000, \"doc_count\" : 627,"
+                + "\"sourcetype_level\" : {" + "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0," + "\"buckets\" : [ {"
+                + "\"key\" : \"farequote\", \"doc_count\" : 627," + "\"airline_level\" : {"
+                + "\"doc_count_error_upper_bound\" : 0, \"sum_other_doc_count\" : 0,"
+                + "\"buckets\" : [ { \"key\" : \"aal\", \"doc_count\" : 59, \"metric_level\" : { \"value\" : 103.64676252462097 } },"
+                + "{ \"key\" : \"awe\", \"doc_count\" : 56, \"metric_level\" : { \"value\" : 20.047162464686803 } } ]" + "}" + "} ]" + "}"
+                + "} ]" + "}" + "}" + "}";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMapWithTwoTermFields();
         List<String> nestingOrder = createNestingOrderWithTwoTermFields();
 
-        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
+        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class),
+                nestingOrder);
 
         String[] record = new String[5];
         boolean[] gotFields = new boolean[5];
@@ -217,19 +170,15 @@ public class AggregatedJsonRecordReaderTest extends ESTestCase {
     }
 
     public void testRead_GivenInvalidJson() throws JsonParseException, IOException, MalformedJsonException {
-        String data =
-                "{" +
-                        "\"took\" : 88," +
-                        "\"timed_out\" : false," +
-                        "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 }," +
-                        "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," +
-                        "\"aggregations\" : {" +
-                        "\"time_level\" : {";
+        String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
+                + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
+                + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMapWithNoTermField();
         List<String> nestingOrder = createNestingOrderWithNoTermField();
 
-        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder);
+        AggregatedJsonRecordReader reader = new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class),
+                nestingOrder);
 
         String[] record = new String[4];
         boolean[] gotFields = new boolean[4];

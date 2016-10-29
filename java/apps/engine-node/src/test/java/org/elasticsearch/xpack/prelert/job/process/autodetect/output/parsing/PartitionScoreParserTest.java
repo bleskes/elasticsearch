@@ -10,8 +10,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertEquals;
-
 public class PartitionScoreParserTest extends ESTestCase {
 
     @Test
@@ -29,7 +27,7 @@ public class PartitionScoreParserTest extends ESTestCase {
         assertEquals(0.1, score.getProbability(), 0.0001);
     }
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);
     }

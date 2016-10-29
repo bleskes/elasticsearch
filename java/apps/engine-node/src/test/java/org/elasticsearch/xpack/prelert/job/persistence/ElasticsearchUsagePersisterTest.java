@@ -1,9 +1,6 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -41,7 +38,7 @@ public class ElasticsearchUsagePersisterTest extends ESTestCase {
 
         ElasticsearchUsagePersister persister = new ElasticsearchUsagePersister(client, logger);
 
-        persister.persistUsage("job1", 10l, 30l, 1l);
+        persister.persistUsage("job1", 10L, 30L, 1L);
 
         ArgumentCaptor<String> indexCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
@@ -66,7 +63,8 @@ public class ElasticsearchUsagePersisterTest extends ESTestCase {
         assertEquals("prelertresults-job1", indexCaptor.getAllValues().get(1));
 
         Script script = updateScriptCaptor.getValue();
-        assertEquals("ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount += params.recordCount;", script.getScript());
+        assertEquals("ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount"
+                + " += params.recordCount;", script.getScript());
         assertEquals(ScriptService.ScriptType.INLINE, script.getType());
         assertEquals("painless", script.getLang());
         Map<String, Object> scriptParams = script.getParams();

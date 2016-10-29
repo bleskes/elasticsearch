@@ -9,8 +9,6 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknow
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-
 public class FlushAcknowledgementParserTest extends ESTestCase {
 
     public void testParseJson() throws IOException {
@@ -26,7 +24,7 @@ public class FlushAcknowledgementParserTest extends ESTestCase {
     }
 
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);
     }

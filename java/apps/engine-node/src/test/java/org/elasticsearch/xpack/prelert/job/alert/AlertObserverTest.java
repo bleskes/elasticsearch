@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
-
 public class AlertObserverTest extends ESTestCase {
     private class ConcreteObserver extends AlertObserver {
         public ConcreteObserver(AlertTrigger[] triggers) {
@@ -25,68 +23,61 @@ public class AlertObserverTest extends ESTestCase {
 
     public void testEvaluate_GivenScoreIsEqualToThreshold() {
         AlertTrigger at = new AlertTrigger(80.0, 39.0, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(80.0, 40.0)));
     }
 
-
     public void testEvaluate_GivenScoreIsGreaterThanThreshold() {
         AlertTrigger at = new AlertTrigger(80.0, 50.0, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(80.1, 40.0)));
 
         at = new AlertTrigger(80.0, null, AlertType.BUCKET);
-        ao = new ConcreteObserver(new AlertTrigger[]{at});
+        ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(80.1, 40.0)));
     }
 
-
     public void testEvaluate_GivenProbabilityIsEqualToThreshold() {
         AlertTrigger at = new AlertTrigger(40.0, 60.0, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(3.0, 60.0)));
 
         at = new AlertTrigger(null, 60.0, AlertType.BUCKET);
-        ao = new ConcreteObserver(new AlertTrigger[]{at});
+        ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(3.0, 60.0)));
     }
-
 
     public void testEvaluate_GivenProbabilityIsGreaterThanThreshold() {
         AlertTrigger at = new AlertTrigger(40.0, 60.0, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(30.0, 60.1)));
 
         at = new AlertTrigger(null, 60.0, AlertType.BUCKET);
-        ao = new ConcreteObserver(new AlertTrigger[]{at});
+        ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(30.0, 60.1)));
     }
 
-
     public void testEvaluate_GivenScoreAndProbabilityGreaterThanThresholds() {
         AlertTrigger at = new AlertTrigger(40.0, 60.0, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertTrue(ao.evaluate(makeBucket(90.0, 90.0)));
     }
 
-
     public void testEvaluate_GivenScoreAndProbabilityBelowThresholds() {
         AlertTrigger at = new AlertTrigger(40.0, 60.0, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertFalse(ao.evaluate(makeBucket(30.0, 50.0)));
     }
-
 
     public void testEvaluate_GivenScoreAndProbabilityAreNotSet() {
         AlertTrigger at = new AlertTrigger(null, null, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
         assertFalse(ao.evaluate(makeBucket(30.0, 50.0)));
     }
 
-
     public void testTriggeredAlerts_bucketAlert() {
         AlertTrigger at = new AlertTrigger(90.0, 95.0, AlertType.BUCKET);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
 
         List<AlertTrigger> triggered = null;
         triggered = ao.triggeredAlerts(makeBucket(91.0, 96.0));
@@ -108,10 +99,9 @@ public class AlertObserverTest extends ESTestCase {
         assertSame(at, triggered.get(0));
     }
 
-
     public void testTriggeredAlerts_InfluencerAlert() {
         AlertTrigger at = new AlertTrigger(null, 90.0, AlertType.INFLUENCER);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
 
         List<AlertTrigger> triggered = null;
         triggered = ao.triggeredAlerts(makeInfluencerBucket(91.0));
@@ -128,10 +118,9 @@ public class AlertObserverTest extends ESTestCase {
         assertSame(at, triggered.get(0));
     }
 
-
     public void testTriggeredAlerts_BucketInfluencerAlert() {
         AlertTrigger at = new AlertTrigger(null, 90.0, AlertType.BUCKETINFLUENCER);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at });
 
         List<AlertTrigger> triggered = null;
         triggered = ao.triggeredAlerts(makeBucketInfluencerBucket(91.0));
@@ -148,12 +137,11 @@ public class AlertObserverTest extends ESTestCase {
         assertSame(at, triggered.get(0));
     }
 
-
     public void testTriggeredAlerts_OnlyInterimTriggersGivenInterimBucket() {
         AlertTrigger at = new AlertTrigger(null, 90.0, AlertType.BUCKETINFLUENCER);
         AlertTrigger atInterim = new AlertTrigger(null, 90.0, AlertType.BUCKETINFLUENCER, true);
         AlertTrigger at2 = new AlertTrigger(null, 90.0, AlertType.INFLUENCER);
-        AlertObserver ao = new ConcreteObserver(new AlertTrigger[]{at, atInterim, at2});
+        AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at, atInterim, at2 });
 
         Bucket bucket = makeInterimBucket(91.0, 91.0);
         BucketInfluencer bf = new BucketInfluencer();

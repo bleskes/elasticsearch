@@ -3,7 +3,11 @@ package org.elasticsearch.xpack.prelert.job.process;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.*;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
+import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 import org.junit.Before;
 import org.mockito.Mock;

@@ -2,9 +2,6 @@
 package org.elasticsearch.xpack.prelert.job.usage;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
@@ -34,7 +31,7 @@ public class UsageReporterTest extends ESTestCase {
         }
 
         usage.addBytesRead(50);
-        Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 60l, 5l, 1l);
+        Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 60L, 5L, 1L);
 
         assertEquals(0, usage.getBytesReadSinceLastReport());
         assertEquals(0, usage.getFieldsReadSinceLastReport());
@@ -57,7 +54,7 @@ public class UsageReporterTest extends ESTestCase {
         }
 
         usage.addBytesRead(10);
-        Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 30l, 10l, 1l);
+        Mockito.verify(persister, Mockito.times(1)).persistUsage("job1", 30L, 10L, 1L);
 
         assertEquals(0, usage.getBytesReadSinceLastReport());
         assertEquals(0, usage.getFieldsReadSinceLastReport());

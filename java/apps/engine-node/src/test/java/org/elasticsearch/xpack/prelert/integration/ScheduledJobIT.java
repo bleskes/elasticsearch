@@ -79,7 +79,8 @@ public class ScheduledJobIT extends ESRestTestCase {
         createAirlineDataIndex();
         createScheduledJob();
 
-        Response response = client().performRequest("post", "engine/v2/schedulers/scheduled/start?start=2016-06-01T00:00:00Z&end=2016-06-02T00:00:00Z");
+        Response response = client().performRequest("post",
+                "engine/v2/schedulers/scheduled/start?start=2016-06-01T00:00:00Z&end=2016-06-02T00:00:00Z");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
 
@@ -109,66 +110,38 @@ public class ScheduledJobIT extends ESRestTestCase {
     }
 
     private void createAirlineDataIndex() throws Exception {
-        String airlineDataMappings = "{"
-                + "  \"mappings\": {"
-                + "    \"response\": {"
-                + "      \"properties\": {"
-                + "        \"time\": { \"type\":\"date\"},"
-                + "        \"airline\": { \"type\":\"keyword\"},"
-                + "        \"responsetime\": { \"type\":\"float\"}"
-                + "      }"
-                + "    }"
-                + "  }"
-                + "}";
+        String airlineDataMappings = "{" + "  \"mappings\": {" + "    \"response\": {" + "      \"properties\": {"
+                + "        \"time\": { \"type\":\"date\"}," + "        \"airline\": { \"type\":\"keyword\"},"
+                + "        \"responsetime\": { \"type\":\"float\"}" + "      }" + "    }" + "  }" + "}";
         client().performRequest("put", "airline-data", Collections.emptyMap(), new StringEntity(airlineDataMappings));
 
-        client().performRequest("put", "airline-data/response/1", Collections.emptyMap(), new StringEntity(
-                "{\"time\":\"2016-10-01T00:00:00Z\",\"airline\":\"AAA\",\"responsetime\":135.22}"));
-        client().performRequest("put", "airline-data/response/2", Collections.emptyMap(), new StringEntity(
-                "{\"time\":\"2016-10-01T01:59:00Z\",\"airline\":\"AAA\",\"responsetime\":541.76}"));
+        client().performRequest("put", "airline-data/response/1", Collections.emptyMap(),
+                new StringEntity("{\"time\":\"2016-10-01T00:00:00Z\",\"airline\":\"AAA\",\"responsetime\":135.22}"));
+        client().performRequest("put", "airline-data/response/2", Collections.emptyMap(),
+                new StringEntity("{\"time\":\"2016-10-01T01:59:00Z\",\"airline\":\"AAA\",\"responsetime\":541.76}"));
 
         client().performRequest("post", "airline-data/_refresh");
     }
 
     private Response createNonScheduledJob() throws Exception {
-        String job = "{\n" +
-                "    \"id\":\"non-scheduled\",\n" +
-                "    \"description\":\"Analysis of response time by airline\",\n" +
-                "    \"analysisConfig\" : {\n" +
-                "        \"bucketSpan\":3600,\n" +
-                "        \"detectors\" :[{\"function\":\"mean\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n" +
-                "    },\n" +
-                "    \"dataDescription\" : {\n" +
-                "        \"fieldDelimiter\":\",\",\n" +
-                "        \"timeField\":\"time\",\n" +
-                "        \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" +
-                "    }\n" +
-                "}";
+        String job = "{\n" + "    \"id\":\"non-scheduled\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
+                + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
+                + "        \"detectors\" :[{\"function\":\"mean\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
+                + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
+                + "        \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" + "    }\n" + "}";
 
         return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
     }
 
     private Response createScheduledJob() throws Exception {
-        String job = "{\n" +
-                "    \"id\":\"scheduled\",\n" +
-                "    \"description\":\"Analysis of response time by airline\",\n" +
-                "    \"analysisConfig\" : {\n" +
-                "        \"bucketSpan\":3600,\n" +
-                "        \"detectors\" :[{\"function\":\"mean\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n" +
-                "    },\n" +
-                "    \"dataDescription\" : {\n" +
-                "        \"format\":\"ELASTICSEARCH\",\n" +
-                "        \"timeField\":\"time\",\n" +
-                "        \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" +
-                "    },\n" +
-                "    \"schedulerConfig\" : {\n" +
-                "        \"dataSource\":\"ELASTICSEARCH\",\n" +
-                "        \"baseUrl\":\"http://localhost:8080\",\n" +
-                "        \"indexes\":[\"airline-data\"],\n" +
-                "        \"types\":[\"response\"],\n" +
-                "        \"retrieveWholeSource\":true\n" +
-                "    }\n" +
-                "}";
+        String job = "{\n" + "    \"id\":\"scheduled\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
+                + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
+                + "        \"detectors\" :[{\"function\":\"mean\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
+                + "    },\n" + "    \"dataDescription\" : {\n" + "        \"format\":\"ELASTICSEARCH\",\n"
+                + "        \"timeField\":\"time\",\n" + "        \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" + "    },\n"
+                + "    \"schedulerConfig\" : {\n" + "        \"dataSource\":\"ELASTICSEARCH\",\n"
+                + "        \"baseUrl\":\"http://localhost:8080\",\n" + "        \"indexes\":[\"airline-data\"],\n"
+                + "        \"types\":[\"response\"],\n" + "        \"retrieveWholeSource\":true\n" + "    }\n" + "}";
 
         return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
     }

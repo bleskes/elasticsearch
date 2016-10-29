@@ -149,7 +149,7 @@ public class DataCountsTest extends AbstractSerializingTestCase<DataCounts> {
         counts1.setOutOfOrderTimeStampCount(40);
         counts1.setProcessedFieldCount(5000);
         counts1.setProcessedRecordCount(10);
-        counts1.setLatestRecordTimeStamp(new Date(1435000000l));
+        counts1.setLatestRecordTimeStamp(new Date(1435000000L));
 
         DataCounts counts2 = new DataCounts(counts1);
 

@@ -10,8 +10,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Date;
 
-import static org.junit.Assert.assertEquals;
-
 public class QuantilesParserTest extends ESTestCase {
     public void testParseJson() throws IOException {
         String input = "{\"timestamp\": 1,"
@@ -23,12 +21,12 @@ public class QuantilesParserTest extends ESTestCase {
         Quantiles quantile = new QuantilesParser(parser).parseJson();
         assertEquals("quantile-state", quantile.getQuantileState());
 
-        assertEquals(new Date(1000l), quantile.getTimestamp());
+        assertEquals(new Date(1000L), quantile.getTimestamp());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);
     }

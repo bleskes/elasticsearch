@@ -1,10 +1,6 @@
 
 package org.elasticsearch.xpack.prelert.job;
 
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
@@ -17,8 +13,17 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerConfig> {
 
@@ -27,42 +32,42 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         DataSource dataSource = randomFrom(DataSource.values());
         SchedulerConfig.Builder builder = new SchedulerConfig.Builder(dataSource);
         switch (dataSource) {
-            case FILE:
-                builder.setFilePath(randomAsciiOfLength(10));
-                builder.setTailFile(randomBoolean());
-                break;
-            case ELASTICSEARCH:
-                builder.setBaseUrl("http://localhost/" + randomAsciiOfLength(10));
+        case FILE:
+            builder.setFilePath(randomAsciiOfLength(10));
+            builder.setTailFile(randomBoolean());
+            break;
+        case ELASTICSEARCH:
+            builder.setBaseUrl("http://localhost/" + randomAsciiOfLength(10));
+            if (randomBoolean()) {
+                builder.setQuery(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+            }
+            boolean retrieveWholeSource = randomBoolean();
+            if (retrieveWholeSource) {
+                builder.setRetrieveWholeSource(randomBoolean());
+            } else if (randomBoolean()) {
+                builder.setScriptFields(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+            }
+            if (randomBoolean()) {
+                builder.setScrollSize(randomIntBetween(0, Integer.MAX_VALUE));
+            }
+            if (randomBoolean()) {
+                builder.setUsername(randomAsciiOfLength(10));
                 if (randomBoolean()) {
-                    builder.setQuery(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+                    builder.setEncryptedPassword(randomAsciiOfLength(10));
+                } else {
+                    builder.setPassword(randomAsciiOfLength(10));
                 }
-                boolean retrieveWholeSource = randomBoolean();
-                if (retrieveWholeSource) {
-                    builder.setRetrieveWholeSource(randomBoolean());
-                } else if (randomBoolean()) {
-                    builder.setScriptFields(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
-                }
-                if (randomBoolean()) {
-                    builder.setScrollSize(randomIntBetween(0, Integer.MAX_VALUE));
-                }
-                if (randomBoolean()) {
-                    builder.setUsername(randomAsciiOfLength(10));
-                    if (randomBoolean()) {
-                        builder.setEncryptedPassword(randomAsciiOfLength(10));
-                    } else {
-                        builder.setPassword(randomAsciiOfLength(10));
-                    }
-                }
-                builder.setIndexes(randomStringList(1, 10));
-                builder.setTypes(randomStringList(1, 10));
-                if (randomBoolean()) {
-                    builder.setAggregations(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
-                } else if (randomBoolean()) {
-                    builder.setAggs(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
-                }
-                break;
-            default:
-                throw new UnsupportedOperationException();
+            }
+            builder.setIndexes(randomStringList(1, 10));
+            builder.setTypes(randomStringList(1, 10));
+            if (randomBoolean()) {
+                builder.setAggregations(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+            } else if (randomBoolean()) {
+                builder.setAggs(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+            }
+            break;
+        default:
+            throw new UnsupportedOperationException();
         }
         if (randomBoolean()) {
             builder.setFrequency(randomPositiveLong());
@@ -95,31 +100,15 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
     /**
      * Test parsing of the opaque {@link SchedulerConfig#getQuery()} object
      */
-    public void testAnalysisConfigRequiredFields()
-            throws IOException {
+    public void testAnalysisConfigRequiredFields() throws IOException {
         Logger logger = Loggers.getLogger(SchedulerConfigTest.class);
 
-        String jobConfigStr =
-                "{" +
-                        "\"id\":\"farequote\"," +
-                        "\"schedulerConfig\" : {" +
-                        "\"dataSource\":\"ELASTICSEARCH\"," +
-                        "\"baseUrl\":\"http://localhost:9200/\"," +
-                        "\"indexes\":[\"farequote\"]," +
-                        "\"types\":[\"farequote\"]," +
-                        "\"query\":{\"match_all\":{} }" +
-                        "}," +
-                        "\"analysisConfig\" : {" +
-                        "\"bucketSpan\":3600," +
-                        "\"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]," +
-                        "\"influencers\" :[\"airline\"]" +
-                        "}," +
-                        "\"dataDescription\" : {" +
-                        "\"format\":\"ELASTICSEARCH\"," +
-                        "\"timeField\":\"@timestamp\"," +
-                        "\"timeFormat\":\"epoch_ms\"" +
-                        "}" +
-                        "}";
+        String jobConfigStr = "{" + "\"id\":\"farequote\"," + "\"schedulerConfig\" : {" + "\"dataSource\":\"ELASTICSEARCH\","
+                + "\"baseUrl\":\"http://localhost:9200/\"," + "\"indexes\":[\"farequote\"]," + "\"types\":[\"farequote\"],"
+                + "\"query\":{\"match_all\":{} }" + "}," + "\"analysisConfig\" : {" + "\"bucketSpan\":3600,"
+                + "\"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}],"
+                + "\"influencers\" :[\"airline\"]" + "}," + "\"dataDescription\" : {" + "\"format\":\"ELASTICSEARCH\","
+                + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
         ObjectReader objectReader = new ObjectMapper().readerFor(JobConfiguration.class);
         JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
@@ -148,54 +137,19 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
      * Test parsing of the opaque {@link SchedulerConfig#getAggs()} object
      */
 
-    public void testAggsParse()
-            throws IOException {
+    public void testAggsParse() throws IOException {
         Logger logger = Loggers.getLogger(SchedulerConfigTest.class);
 
-        String jobConfigStr =
-                "{" +
-                        "\"id\":\"farequote\"," +
-                        "\"schedulerConfig\" : {" +
-                        "\"dataSource\":\"ELASTICSEARCH\"," +
-                        "\"baseUrl\":\"http://localhost:9200/\"," +
-                        "\"indexes\":[\"farequote\"]," +
-                        "\"types\":[\"farequote\"]," +
-                        "\"query\":{\"match_all\":{} }," +
-                        "\"aggs\" : {" +
-                        "\"top_level_must_be_time\" : {" +
-                        "\"histogram\" : {" +
-                        "\"field\" : \"@timestamp\"," +
-                        "\"interval\" : 3600000" +
-                        "}," +
-                        "\"aggs\" : {" +
-                        "\"by_field_in_the_middle\" : { " +
-                        "\"terms\" : {" +
-                        "\"field\" : \"airline\"," +
-                        "\"size\" : 0" +
-                        "}," +
-                        "\"aggs\" : {" +
-                        "\"stats_last\" : {" +
-                        "\"avg\" : {" +
-                        "\"field\" : \"responsetime\"" +
-                        "}" +
-                        "}" +
-                        "} " +
-                        "}" +
-                        "}" +
-                        "}" +
-                        "}" +
-                        "}," +
-                        "\"analysisConfig\" : {" +
-                        "\"bucketSpan\":3600," +
-                        "\"detectors\" :[{\"function\":\"avg\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]," +
-                        "\"influencers\" :[\"airline\"]" +
-                        "}," +
-                        "\"dataDescription\" : {" +
-                        "\"format\":\"ELASTICSEARCH\"," +
-                        "\"timeField\":\"@timestamp\"," +
-                        "\"timeFormat\":\"epoch_ms\"" +
-                        "}" +
-                        "}";
+        String jobConfigStr = "{" + "\"id\":\"farequote\"," + "\"schedulerConfig\" : {" + "\"dataSource\":\"ELASTICSEARCH\","
+                + "\"baseUrl\":\"http://localhost:9200/\"," + "\"indexes\":[\"farequote\"]," + "\"types\":[\"farequote\"],"
+                + "\"query\":{\"match_all\":{} }," + "\"aggs\" : {" + "\"top_level_must_be_time\" : {" + "\"histogram\" : {"
+                + "\"field\" : \"@timestamp\"," + "\"interval\" : 3600000" + "}," + "\"aggs\" : {" + "\"by_field_in_the_middle\" : { "
+                + "\"terms\" : {" + "\"field\" : \"airline\"," + "\"size\" : 0" + "}," + "\"aggs\" : {" + "\"stats_last\" : {"
+                + "\"avg\" : {" + "\"field\" : \"responsetime\"" + "}" + "}" + "} " + "}" + "}" + "}" + "}" + "},"
+                + "\"analysisConfig\" : {" + "\"bucketSpan\":3600,"
+                + "\"detectors\" :[{\"function\":\"avg\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}],"
+                + "\"influencers\" :[\"airline\"]" + "}," + "\"dataDescription\" : {" + "\"format\":\"ELASTICSEARCH\","
+                + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
         ObjectReader objectReader = new ObjectMapper().readerFor(JobConfiguration.class);
         JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
@@ -218,7 +172,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertEquals("responsetime", aggregatedFieldList.get(2));
     }
 
-
     public void testFillDefaults_GivenDataSourceIsFile() {
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(DataSource.FILE);
         schedulerConfig.setFilePath("/some/path");
@@ -227,7 +180,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         expectedSchedulerConfig.setTailFile(false);
         assertEquals(expectedSchedulerConfig.build(), schedulerConfig.build());
     }
-
 
     public void testFillDefaults_GivenDataSourceIsElasticsearchAndNothingToFill() {
         SchedulerConfig.Builder originalSchedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
@@ -251,7 +203,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertEquals(originalSchedulerConfig.build(), defaultedSchedulerConfig.build());
     }
 
-
     public void testFillDefaults_GivenDataSourceIsElasticsearchAndDefaultsAreApplied() {
         SchedulerConfig.Builder expectedSchedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         expectedSchedulerConfig.setIndexes(Arrays.asList("index"));
@@ -270,13 +221,11 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertEquals(expectedSchedulerConfig.build(), defaultedSchedulerConfig.build());
     }
 
-
     public void testEquals_GivenDifferentClass() {
         SchedulerConfig.Builder builder = new SchedulerConfig.Builder(DataSource.FILE);
         builder.setFilePath("path");
         assertFalse(builder.build().equals("a string"));
     }
-
 
     public void testEquals_GivenSameRef() {
         SchedulerConfig.Builder builder = new SchedulerConfig.Builder(DataSource.FILE);
@@ -284,7 +233,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         SchedulerConfig schedulerConfig = builder.build();
         assertTrue(schedulerConfig.equals(schedulerConfig));
     }
-
 
     public void testEquals_GivenEqual() {
         SchedulerConfig.Builder b1 = createFullyPopulated();
@@ -297,7 +245,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertEquals(sc1.hashCode(), sc2.hashCode());
     }
 
-
     public void testEquals_GivenDifferentBaseUrl() {
         SchedulerConfig.Builder b1 = createFullyPopulated();
         SchedulerConfig.Builder b2 = createFullyPopulated();
@@ -308,7 +255,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
-
 
     public void testEquals_GivenDifferentQueryDelay() {
         SchedulerConfig.Builder b1 = createFullyPopulated();
@@ -321,7 +267,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertFalse(sc2.equals(sc1));
     }
 
-
     public void testEquals_GivenDifferentScrollSize() {
         SchedulerConfig.Builder b1 = createFullyPopulated();
         SchedulerConfig.Builder b2 = createFullyPopulated();
@@ -332,7 +277,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
-
 
     public void testEquals_GivenDifferentFrequency() {
         SchedulerConfig.Builder b1 = createFullyPopulated();
@@ -345,7 +289,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertFalse(sc2.equals(sc1));
     }
 
-
     public void testEquals_GivenDifferentIndexes() {
         SchedulerConfig.Builder sc1 = createFullyPopulated();
         SchedulerConfig.Builder sc2 = createFullyPopulated();
@@ -355,7 +298,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertFalse(sc2.build().equals(sc1.build()));
     }
 
-
     public void testEquals_GivenDifferentTypes() {
         SchedulerConfig.Builder sc1 = createFullyPopulated();
         SchedulerConfig.Builder sc2 = createFullyPopulated();
@@ -364,7 +306,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertFalse(sc1.build().equals(sc2.build()));
         assertFalse(sc2.build().equals(sc1.build()));
     }
-
 
     public void testEquals_GivenDifferentQuery() {
         SchedulerConfig.Builder b1 = createFullyPopulated();
@@ -377,7 +318,6 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         assertFalse(sc1.equals(sc2));
         assertFalse(sc2.equals(sc1));
     }
-
 
     public void testEquals_GivenDifferentAggregations() {
         SchedulerConfig.Builder sc1 = createFullyPopulated();
@@ -433,8 +373,7 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         conf.setBaseUrl("http://localhost:9200/");
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
         assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));
-        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "baseUrl", DataSource.FILE),
-                e.getMessage());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "baseUrl", DataSource.FILE), e.getMessage());
     }
 
     public void testCheckValidElasticsearch_AllOk() throws IOException {
@@ -525,7 +464,8 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         conf.setTailFile(true);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
         assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));
-        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "tailFile", DataSource.ELASTICSEARCH), e.getMessage());
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "tailFile", DataSource.ELASTICSEARCH),
+                e.getMessage());
     }
 
     public void testCheckValidElasticsearch_GivenScriptFieldsNotWholeSource() throws IOException {
@@ -534,9 +474,9 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
         ObjectMapper mapper = new ObjectMapper();
-        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", " +
-                "\"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>() {
-        }));
+        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", "
+                + "\"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>() {
+                }));
         conf.setRetrieveWholeSource(false);
         assertEquals(1, conf.build().getScriptFields().size());
     }
@@ -547,9 +487,9 @@ public class SchedulerConfigTest extends AbstractSerializingTestCase<SchedulerCo
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
         ObjectMapper mapper = new ObjectMapper();
-        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", " +
-                "\"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>() {
-        }));
+        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", "
+                + "\"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>() {
+                }));
         conf.setRetrieveWholeSource(true);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
         assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));

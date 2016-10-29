@@ -20,20 +20,21 @@ public class RuleConditionTest extends AbstractSerializingTestCase<RuleCondition
         String fieldValue = null;
         RuleConditionType r = randomFrom(RuleConditionType.values());
         switch (r) {
-            case CATEGORICAL:
-                valueList = randomAsciiOfLengthBetween(1, 20);
-                if (randomBoolean()) {
-                    fieldName = randomAsciiOfLengthBetween(1, 20);
-                }
-                break;
-            default:
-                // no need to randomize, it is properly randomily tested in ConditionTest
-                condition = new Condition(Operator.LT, Double.toString(randomDouble()));
-                if (randomBoolean()) {
-                    fieldName = randomAsciiOfLengthBetween(1, 20);
-                    fieldValue = randomAsciiOfLengthBetween(1, 20);
-                }
-                break;
+        case CATEGORICAL:
+            valueList = randomAsciiOfLengthBetween(1, 20);
+            if (randomBoolean()) {
+                fieldName = randomAsciiOfLengthBetween(1, 20);
+            }
+            break;
+        default:
+            // no need to randomize, it is properly randomily tested in
+            // ConditionTest
+            condition = new Condition(Operator.LT, Double.toString(randomDouble()));
+            if (randomBoolean()) {
+                fieldName = randomAsciiOfLengthBetween(1, 20);
+                fieldValue = randomAsciiOfLengthBetween(1, 20);
+            }
+            break;
         }
         return new RuleCondition(r, fieldName, fieldValue, condition, valueList);
     }
@@ -67,40 +68,38 @@ public class RuleConditionTest extends AbstractSerializingTestCase<RuleCondition
 
     public void testEqualsGivenDifferentType() {
         RuleCondition condition1 = createFullyPopulated();
-        RuleCondition condition2 =
-                new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, "valueList");
+        RuleCondition condition2 = new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, "valueList");
         assertFalse(condition1.equals(condition2));
         assertFalse(condition2.equals(condition1));
     }
 
     public void testEqualsGivenDifferentFieldName() {
         RuleCondition condition1 = createFullyPopulated();
-        RuleCondition condition2 =
-                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricNameaaa", "cpu", new Condition(Operator.LT, "5"), null);
+        RuleCondition condition2 = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricNameaaa", "cpu",
+                new Condition(Operator.LT, "5"), null);
         assertFalse(condition1.equals(condition2));
         assertFalse(condition2.equals(condition1));
     }
 
     public void testEqualsGivenDifferentFieldValue() {
         RuleCondition condition1 = createFullyPopulated();
-        RuleCondition condition2 =
-                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "cpuaaa", new Condition(Operator.LT, "5"), null);
+        RuleCondition condition2 = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "cpuaaa",
+                new Condition(Operator.LT, "5"), null);
         assertFalse(condition1.equals(condition2));
         assertFalse(condition2.equals(condition1));
     }
 
     public void testEqualsGivenDifferentCondition() {
         RuleCondition condition1 = createFullyPopulated();
-        RuleCondition condition2 =
-                new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "cpu", new Condition(Operator.GT, "5"), null);
+        RuleCondition condition2 = new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "cpu",
+                new Condition(Operator.GT, "5"), null);
         assertFalse(condition1.equals(condition2));
         assertFalse(condition2.equals(condition1));
     }
 
     public void testEqualsGivenDifferentValueList() {
         RuleCondition condition1 = new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, "myList");
-        RuleCondition condition2 =
-                new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, "myListaaa");
+        RuleCondition condition2 = new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, "myListaaa");
         assertFalse(condition1.equals(condition2));
         assertFalse(condition2.equals(condition1));
     }
@@ -206,7 +205,8 @@ public class RuleConditionTest extends AbstractSerializingTestCase<RuleCondition
 
     public void testVerify_GivenDetectionRuleWithInvalidCondition() {
         ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
-                () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "CPU", new Condition(Operator.LT, "invalid"), null));
+                () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "CPU", new Condition(Operator.LT, "invalid"),
+                        null));
         assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, "invalid"), e.getMessage());
     }

@@ -9,8 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertEquals;
-
 public class InfluencerParserTest extends ESTestCase {
     public void testParse() throws IOException {
         String json = "{"
@@ -32,7 +30,8 @@ public class InfluencerParserTest extends ESTestCase {
     }
 
     public void testParseJson() throws IOException {
-        String json = "{\"probability\":0.9,\"initialAnomalyScore\":97.1948,\"influencerFieldName\":\"src_ip\",\"influencerFieldValue\":\"23.28.243.150\"},";
+        String json = "{\"probability\":0.9,\"initialAnomalyScore\":97.1948,\"influencerFieldName\":\"src_ip\","
+                + "\"influencerFieldValue\":\"23.28.243.150\"},";
 
         JsonParser parser = createJsonParser(json);
         parser.nextToken();
@@ -45,7 +44,8 @@ public class InfluencerParserTest extends ESTestCase {
         assertEquals("23.28.243.150", inf.getInfluencerFieldValue());
 
 
-        json = "{\"probability\":0.4,\"initialAnomalyScore\":12.1948,\"influencerFieldName\":\"dst_ip\",\"influencerFieldValue\":\"23.28.243.1\"}";
+        json = "{\"probability\":0.4,\"initialAnomalyScore\":12.1948,\"influencerFieldName\":\"dst_ip\","
+                + "\"influencerFieldValue\":\"23.28.243.1\"}";
 
         parser = createJsonParser(json);
         parser.nextToken();
@@ -57,7 +57,7 @@ public class InfluencerParserTest extends ESTestCase {
         assertEquals("23.28.243.1", inf.getInfluencerFieldValue());
     }
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);
     }

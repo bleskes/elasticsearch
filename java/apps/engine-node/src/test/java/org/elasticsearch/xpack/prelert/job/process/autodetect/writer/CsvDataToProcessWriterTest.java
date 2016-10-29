@@ -81,8 +81,8 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         analysisConfig.setDetectors(Arrays.asList(detector));
     }
 
-    public void testWrite_GivenTimeFormatIsEpochAndDataIsValid() throws MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenTimeFormatIsEpochAndDataIsValid()
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
         input.append("1,foo,1.0\n");
@@ -95,16 +95,16 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"time", "value", "."});
-        expectedRecords.add(new String[]{"1", "1.0", ""});
-        expectedRecords.add(new String[]{"2", "2.0", ""});
+        expectedRecords.add(new String[] { "time", "value", "." });
+        expectedRecords.add(new String[] { "1", "1.0", "" });
+        expectedRecords.add(new String[] { "2", "2.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter).finishReporting();
     }
 
-    public void testWrite_GivenTransformAndEmptyField() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenTransformAndEmptyField()
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig transform = new TransformConfig("uppercase");
         transform.setInputs(Arrays.asList("value"));
         transform.setOutputs(Arrays.asList("transformed"));
@@ -133,17 +133,16 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"time", "transformed", "."});
-        expectedRecords.add(new String[]{"1", "FOO", ""});
-        expectedRecords.add(new String[]{"2", "", ""});
+        expectedRecords.add(new String[] { "time", "transformed", "." });
+        expectedRecords.add(new String[] { "1", "FOO", "" });
+        expectedRecords.add(new String[] { "2", "", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter).finishReporting();
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndTimestampsAreOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException {
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
         input.append("3,foo,3.0\n");
@@ -157,8 +156,8 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"time", "value", "."});
-        expectedRecords.add(new String[]{"3", "3.0", ""});
+        expectedRecords.add(new String[] { "time", "value", "." });
+        expectedRecords.add(new String[] { "3", "3.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter, times(2)).reportOutOfOrderRecord(2);
@@ -167,8 +166,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndAllRecordsAreOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException {
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
         input.append("1,foo,1.0\n");
@@ -183,7 +181,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"time", "value", "."});
+        expectedRecords.add(new String[] { "time", "value", "." });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter, times(2)).reportOutOfOrderRecord(2);
@@ -193,8 +191,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException {
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         analysisConfig.setLatency(2L);
 
         StringBuilder input = new StringBuilder();
@@ -213,11 +210,11 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"time", "value", "."});
-        expectedRecords.add(new String[]{"4", "4.0", ""});
-        expectedRecords.add(new String[]{"5", "5.0", ""});
-        expectedRecords.add(new String[]{"3", "3.0", ""});
-        expectedRecords.add(new String[]{"4", "4.0", ""});
+        expectedRecords.add(new String[] { "time", "value", "." });
+        expectedRecords.add(new String[] { "4", "4.0", "" });
+        expectedRecords.add(new String[] { "5", "5.0", "" });
+        expectedRecords.add(new String[] { "3", "3.0", "" });
+        expectedRecords.add(new String[] { "4", "4.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter, times(1)).reportOutOfOrderRecord(2);
@@ -226,14 +223,13 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     public void testWrite_NullByte()
-            throws MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException {
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         analysisConfig.setLatency(0L);
 
         StringBuilder input = new StringBuilder();
         input.append("metric,value,time\n");
         input.append("foo,4.0,1\n");
-        input.append("\0");   // the csv reader skips over this line
+        input.append("\0"); // the csv reader skips over this line
         input.append("foo,5.0,2\n");
         input.append("foo,3.0,3\n");
         input.append("bar,4.0,4\n");
@@ -246,11 +242,11 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"time", "value", "."});
-        expectedRecords.add(new String[]{"1", "4.0", ""});
-        expectedRecords.add(new String[]{"2", "5.0", ""});
-        expectedRecords.add(new String[]{"3", "3.0", ""});
-        expectedRecords.add(new String[]{"4", "4.0", ""});
+        expectedRecords.add(new String[] { "time", "value", "." });
+        expectedRecords.add(new String[] { "1", "4.0", "" });
+        expectedRecords.add(new String[] { "2", "5.0", "" });
+        expectedRecords.add(new String[] { "3", "3.0", "" });
+        expectedRecords.add(new String[] { "4", "4.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter, times(1)).reportMissingField();
@@ -262,8 +258,8 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
         verify(statusReporter).finishReporting();
     }
 
-    public void testWrite_GivenDateTimeFieldIsOutputOfTransform() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenDateTimeFieldIsOutputOfTransform()
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig transform = new TransformConfig("concat");
         transform.setInputs(Arrays.asList("date", "time-of-day"));
         transform.setOutputs(Arrays.asList("datetime"));
@@ -289,16 +285,16 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"datetime", "value", "."});
-        expectedRecords.add(new String[]{"1", "5.0", ""});
-        expectedRecords.add(new String[]{"2", "6.0", ""});
+        expectedRecords.add(new String[] { "datetime", "value", "." });
+        expectedRecords.add(new String[] { "1", "5.0", "" });
+        expectedRecords.add(new String[] { "2", "6.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter).finishReporting();
     }
 
-    public void testWrite_GivenChainedTransforms_SortsByDependencies() throws MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenChainedTransforms_SortsByDependencies()
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
         TransformConfig tc1 = new TransformConfig(TransformType.Names.UPPERCASE_NAME);
         tc1.setInputs(Arrays.asList("dns"));
         tc1.setOutputs(Arrays.asList("dns_upper"));
@@ -327,16 +323,16 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
-        expectedRecords.add(new String[]{"time", "dns_upper", "value", "."});
-        expectedRecords.add(new String[]{"1", "WWW.FOO.COM", "1.0", ""});
-        expectedRecords.add(new String[]{"2", "WWW.BAR.COM", "2.0", ""});
+        expectedRecords.add(new String[] { "time", "dns_upper", "value", "." });
+        expectedRecords.add(new String[] { "1", "WWW.FOO.COM", "1.0", "" });
+        expectedRecords.add(new String[] { "2", "WWW.BAR.COM", "2.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(statusReporter).finishReporting();
     }
 
-    public void testWrite_GivenMisplacedQuoteMakesRecordExtendOverTooManyLines() throws MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenMisplacedQuoteMakesRecordExtendOverTooManyLines()
+            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
 
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
@@ -350,7 +346,8 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
 
         SuperCsvException e = ESTestCase.expectThrows(SuperCsvException.class, () -> writer.write(inputStream));
         assertEquals(
-                String.format("max number of lines to read exceeded while reading quoted column beginning on line %d and ending on line %d", 2, 10001),
+                String.format("max number of lines to read exceeded while reading quoted column beginning on line %d and ending on line %d",
+                        2, 10001),
                 e.getMessage());
     }
 
@@ -359,8 +356,7 @@ public class CsvDataToProcessWriterTest extends ESTestCase {
     }
 
     private CsvDataToProcessWriter createWriter() {
-        return new CsvDataToProcessWriter(true, autodetectProcess, dataDescription,
-                analysisConfig, new TransformConfigs(transforms),
+        return new CsvDataToProcessWriter(true, autodetectProcess, dataDescription, analysisConfig, new TransformConfigs(transforms),
                 statusReporter, jobLogger);
     }
 

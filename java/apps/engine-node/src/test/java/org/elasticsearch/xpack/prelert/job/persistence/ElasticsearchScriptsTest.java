@@ -1,10 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -19,7 +16,6 @@ import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
-
 
 public class ElasticsearchScriptsTest extends ESTestCase {
     @Captor
@@ -39,7 +35,10 @@ public class ElasticsearchScriptsTest extends ESTestCase {
 
     public void testNewUpdateUsage() {
         Script script = ElasticsearchScripts.newUpdateUsage(1L, 2L, 3L);
-        assertEquals("ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount += params.recordCount;", script.getScript());
+        assertEquals(
+                "ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount"
+                        + " += params.recordCount;",
+                        script.getScript());
         assertEquals(3, script.getParams().size());
         assertEquals(1L, script.getParams().get("bytes"));
         assertEquals(2L, script.getParams().get("fieldCount"));
@@ -49,11 +48,11 @@ public class ElasticsearchScriptsTest extends ESTestCase {
     public void testUpdateProcessingTime() {
         Long time = 135790L;
         Script script = ElasticsearchScripts.updateProcessingTime(time);
-        assertEquals("ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + params.timeMs * 0.1", script.getScript());
+        assertEquals("ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + params.timeMs * 0.1",
+                script.getScript());
         assertEquals(time, script.getParams().get("timeMs"));
     }
 
-    
     public void testUpdateUpsertViaScript() throws JobException {
         String index = "idx";
         String docId = "docId";
@@ -64,8 +63,7 @@ public class ElasticsearchScriptsTest extends ESTestCase {
         Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
         ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
-                .prepareUpdateScript(index, type, docId, captor, mapCaptor);
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster").prepareUpdateScript(index, type, docId, captor, mapCaptor);
         Client client = clientBuilder.build();
 
         assertTrue(ElasticsearchScripts.updateViaScript(client, index, type, docId, script));
@@ -83,7 +81,6 @@ public class ElasticsearchScriptsTest extends ESTestCase {
         assertEquals(map, updatedParams);
     }
 
-    
     public void testUpdateUpsertViaScript_InvalidIndex() throws JobException {
         String index = "idx";
         String docId = "docId";
@@ -94,8 +91,7 @@ public class ElasticsearchScriptsTest extends ESTestCase {
         Script script = new Script("foo");
         ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
-                .prepareUpdateScript(index, type, docId, captor, mapCaptor, e);
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster").prepareUpdateScript(index, type, docId, captor, mapCaptor, e);
         Client client = clientBuilder.build();
 
         try {
@@ -106,7 +102,6 @@ public class ElasticsearchScriptsTest extends ESTestCase {
         }
     }
 
-    
     public void testUpdateUpsertViaScript_IllegalArgument() throws JobException {
         String index = "idx";
         String docId = "docId";
@@ -119,8 +114,7 @@ public class ElasticsearchScriptsTest extends ESTestCase {
         Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
         ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder("cluster")
-                .prepareUpdateScript(index, type, docId, captor, mapCaptor, ex);
+        MockClientBuilder clientBuilder = new MockClientBuilder("cluster").prepareUpdateScript(index, type, docId, captor, mapCaptor, ex);
         Client client = clientBuilder.build();
 
         try {

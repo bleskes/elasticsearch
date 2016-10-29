@@ -26,7 +26,8 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         String jobId = randomAsciiOfLength(10);
         String description = randomBoolean() ? randomAsciiOfLength(10) : null;
         JobStatus jobStatus = randomFrom(JobStatus.values());
-        SchedulerState jobSchedulerState = new SchedulerState(randomFrom(JobSchedulerStatus.values()), randomPositiveLong(), randomPositiveLong());
+        SchedulerState jobSchedulerState = new SchedulerState(randomFrom(JobSchedulerStatus.values()), randomPositiveLong(),
+                randomPositiveLong());
         Date createTime = new Date(randomPositiveLong());
         Date finishedTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
         Date lastDataTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
@@ -49,15 +50,13 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         Long backgroundPersistInterval = randomBoolean() ? randomLong() : null;
         Long modelSnapshotRetentionDays = randomBoolean() ? randomLong() : null;
         Long resultsRetentionDays = randomBoolean() ? randomLong() : null;
-        Map<String, Object> customConfig =
-                randomBoolean() ? Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)) : null;
+        Map<String, Object> customConfig = randomBoolean() ? Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10))
+                : null;
         Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
-        return new JobDetails(
-                jobId, description, jobStatus, jobSchedulerState, createTime, finishedTime, lastDataTime, timeout,
+        return new JobDetails(jobId, description, jobStatus, jobSchedulerState, createTime, finishedTime, lastDataTime, timeout,
                 analysisConfig, analysisLimits, schedulerConfig.build(), dataDescription, modelSizeStats, transformConfigList,
-                modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
-                modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs
-        );
+                modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
+                resultsRetentionDays, customConfig, averageBucketProcessingTimeMs);
     }
 
     @Override
@@ -98,7 +97,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertTrue(jobDetails.allFields().isEmpty());
     }
 
-
     public void testConstructor_GivenJobConfigurationWithIgnoreDowntime() {
         JobConfiguration jobConfiguration = new JobConfiguration("foo");
         jobConfiguration.setIgnoreDowntime(IgnoreDowntime.ONCE);
@@ -108,24 +106,20 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertEquals(IgnoreDowntime.ONCE, jobDetails.getIgnoreDowntime());
     }
 
-
     public void testConstructor_GivenJobConfigurationWithElasticsearchScheduler_ShouldFillDefaults() {
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
         expectThrows(NullPointerException.class, () -> schedulerConfig.setQuery(null));
     }
-
 
     public void testEquals_GivenSameReference() {
         JobDetails jobDetails = new JobConfiguration().build();
         assertTrue(jobDetails.equals(jobDetails));
     }
 
-
     public void testEquals_GivenDifferentClass() {
         JobDetails jobDetails = new JobConfiguration().build();
         assertFalse(jobDetails.equals("a string"));
     }
-
 
     public void testEquals_GivenEqualJobDetails() throws URISyntaxException {
         ModelSizeStats modelSizeStats = new ModelSizeStats();
@@ -158,7 +152,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         jobDetails1.setTimeout(3600L);
         jobDetails1.setTransforms(Collections.emptyList());
 
-
         JobDetails jobDetails2 = new JobConfiguration().build();
         jobDetails2.setId("foo");
         jobDetails2.setAnalysisConfig(new AnalysisConfig());
@@ -187,7 +180,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertTrue(jobDetails2.equals(jobDetails1));
         assertEquals(jobDetails1.hashCode(), jobDetails2.hashCode());
     }
-
 
     public void testEquals_GivenDifferentIds() {
         JobConfiguration jobConfiguration = new JobConfiguration("foo");
@@ -221,7 +213,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-
     public void testEquals_GivenDifferentBackgroundPersistInterval() {
         JobConfiguration jobDetails1 = new JobConfiguration();
         jobDetails1.setBackgroundPersistInterval(10000L);
@@ -230,7 +221,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }
-
 
     public void testEquals_GivenDifferentModelSnapshotRetentionDays() {
         JobConfiguration jobDetails1 = new JobConfiguration();
@@ -241,7 +231,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         assertFalse(jobDetails1.equals(jobDetails2));
     }
 
-
     public void testEquals_GivenDifferentResultsRetentionDays() {
         JobConfiguration jobDetails1 = new JobConfiguration();
         jobDetails1.setResultsRetentionDays(30L);
@@ -250,7 +239,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }
-
 
     public void testEquals_GivenDifferentCustomSettings() {
         JobConfiguration jobDetails1 = new JobConfiguration();
@@ -264,7 +252,6 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
 
         assertFalse(jobDetails1.equals(jobDetails2));
     }
-
 
     public void testEquals_GivenDifferentIgnoreDowntime() {
         JobDetails job1 = new JobConfiguration().build();
@@ -281,7 +268,8 @@ public class JobDetailsTest extends AbstractSerializingTestCase<JobDetails> {
         jobDetails.setAnalysisLimits(new AnalysisLimits(42L, null));
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
                 () -> jobDetails.setAnalysisLimits(new AnalysisLimits(41L, null)));
-        assertEquals("Invalid update value for analysisLimits: modelMemoryLimit cannot be decreased; existing is 42, update had 41", e.getMessage());
+        assertEquals("Invalid update value for analysisLimits: modelMemoryLimit cannot be decreased; existing is 42, update had 41",
+                e.getMessage());
         assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 }

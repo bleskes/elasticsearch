@@ -15,59 +15,27 @@ public class ElasticsearchQueryBuilderTest extends ESTestCase {
 
         String searchBody = queryBuilder.createSearchBody(1451606400000L, 1451610000000L);
 
-        String expected = "{"
-                + "  \"sort\": ["
-                + "    {\"time\": {\"order\": \"asc\"}}"
-                + "  ],"
-                + "  \"query\": {"
-                + "    \"bool\": {"
-                + "      \"filter\": ["
-                + "        {\"match_all\":{}},"
-                + "        {"
-                + "          \"range\": {"
-                + "            \"time\": {"
-                + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
-                + "              \"format\": \"date_time\""
-                + "            }"
-                + "          }"
-                + "        }"
-                + "      ]"
-                + "    }"
-                + "  }"
+        String expected = "{" + "  \"sort\": [" + "    {\"time\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {" + "    \"bool\": {"
+                + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {" + "            \"time\": {"
+                + "              \"gte\": \"2016-01-01T00:00:00.000Z\"," + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
+                + "              \"format\": \"date_time\"" + "            }" + "          }" + "        }" + "      ]" + "    }" + "  }"
                 + "}";
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 
     public void testCreateSearchBody_GivenQueryAndFields() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, "[\"foo\",\"bar\"]", "@timestamp");
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, "[\"foo\",\"bar\"]",
+                "@timestamp");
 
         assertFalse(queryBuilder.isAggregated());
 
         String searchBody = queryBuilder.createSearchBody(1451606400000L, 1451610000000L);
 
-        String expected = "{"
-                + "  \"sort\": ["
-                + "    {\"@timestamp\": {\"order\": \"asc\"}}"
-                + "  ],"
-                + "  \"query\": {"
-                + "    \"bool\": {"
-                + "      \"filter\": ["
-                + "        {\"match_all\":{}},"
-                + "        {"
-                + "          \"range\": {"
-                + "            \"@timestamp\": {"
-                + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
-                + "              \"format\": \"date_time\""
-                + "            }"
-                + "          }"
-                + "        }"
-                + "      ]"
-                + "    }"
-                + "  },"
-                + "  \"fields\": [\"foo\",\"bar\"]"
-                + "}";
+        String expected = "{" + "  \"sort\": [" + "    {\"@timestamp\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {"
+                + "    \"bool\": {" + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
+                + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
+                + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"fields\": [\"foo\",\"bar\"]" + "}";
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 
@@ -79,29 +47,12 @@ public class ElasticsearchQueryBuilderTest extends ESTestCase {
 
         String searchBody = queryBuilder.createSearchBody(1451606400000L, 1451610000000L);
 
-        String expected = "{"
-                + "  \"sort\": ["
-                + "    {\"@timestamp\": {\"order\": \"asc\"}}"
-                + "  ],"
-                + "  \"query\": {"
-                + "    \"bool\": {"
-                + "      \"filter\": ["
-                + "        {\"match_all\":{}},"
-                + "        {"
-                + "          \"range\": {"
-                + "            \"@timestamp\": {"
-                + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
-                + "              \"format\": \"date_time\""
-                + "            }"
-                + "          }"
-                + "        }"
-                + "      ]"
-                + "    }"
-                + "  },"
-                + "  \"script_fields\": {\"test1\":{\"script\":\"...\"}},"
-                + "  \"fields\": [\"foo\",\"bar\"]"
-                + "}";
+        String expected = "{" + "  \"sort\": [" + "    {\"@timestamp\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {"
+                + "    \"bool\": {" + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
+                + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
+                + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"script_fields\": {\"test1\":{\"script\":\"...\"}},"
+                + "  \"fields\": [\"foo\",\"bar\"]" + "}";
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 
@@ -112,28 +63,11 @@ public class ElasticsearchQueryBuilderTest extends ESTestCase {
 
         String searchBody = queryBuilder.createSearchBody(1451606400000L, 1451610000000L);
 
-        String expected = "{"
-                + "  \"sort\": ["
-                + "    {\"time\": {\"order\": \"asc\"}}"
-                + "  ],"
-                + "  \"query\": {"
-                + "    \"bool\": {"
-                + "      \"filter\": ["
-                + "        {\"match_all\":{}},"
-                + "        {"
-                + "          \"range\": {"
-                + "            \"time\": {"
-                + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
-                + "              \"format\": \"date_time\""
-                + "            }"
-                + "          }"
-                + "        }"
-                + "      ]"
-                + "    }"
-                + "  },"
-                + "  \"aggs\":{\"my_aggs\":{}}"
-                + "}";
+        String expected = "{" + "  \"sort\": [" + "    {\"time\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {" + "    \"bool\": {"
+                + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {" + "            \"time\": {"
+                + "              \"gte\": \"2016-01-01T00:00:00.000Z\"," + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
+                + "              \"format\": \"date_time\"" + "            }" + "          }" + "        }" + "      ]" + "    }" + "  },"
+                + "  \"aggs\":{\"my_aggs\":{}}" + "}";
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 
@@ -144,35 +78,13 @@ public class ElasticsearchQueryBuilderTest extends ESTestCase {
 
         String dataSummaryQuery = queryBuilder.createDataSummaryQuery(1451606400000L, 1451610000000L);
 
-        String expected = "{"
-                + "  \"sort\": ["
-                + "    {\"_doc\": {\"order\": \"asc\"}}"
-                + "  ],"
-                + "  \"query\": {"
-                + "    \"bool\": {"
-                + "      \"filter\": ["
-                + "        {\"match_all\":{}},"
-                + "        {"
-                + "          \"range\": {"
-                + "            \"@timestamp\": {"
-                + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
-                + "              \"format\": \"date_time\""
-                + "            }"
-                + "          }"
-                + "        }"
-                + "      ]"
-                + "    }"
-                + "  },"
-                + "  \"aggs\":{"
-                + "    \"earliestTime\":{"
-                + "      \"min\":{\"field\":\"@timestamp\"}"
-                + "    },"
-                + "    \"latestTime\":{"
-                + "      \"max\":{\"field\":\"@timestamp\"}"
-                + "    }"
-                + "  }"
-                + "}";
+        String expected = "{" + "  \"sort\": [" + "    {\"_doc\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {" + "    \"bool\": {"
+                + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
+                + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
+                + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"aggs\":{" + "    \"earliestTime\":{"
+                + "      \"min\":{\"field\":\"@timestamp\"}" + "    }," + "    \"latestTime\":{"
+                + "      \"max\":{\"field\":\"@timestamp\"}" + "    }" + "  }" + "}";
         assertEquals(expected.replaceAll(" ", ""), dataSummaryQuery.replaceAll(" ", ""));
     }
 
@@ -184,35 +96,13 @@ public class ElasticsearchQueryBuilderTest extends ESTestCase {
 
         String dataSummaryQuery = queryBuilder.createDataSummaryQuery(1451606400000L, 1451610000000L);
 
-        String expected = "{"
-                + "  \"sort\": ["
-                + "    {\"_doc\": {\"order\": \"asc\"}}"
-                + "  ],"
-                + "  \"query\": {"
-                + "    \"bool\": {"
-                + "      \"filter\": ["
-                + "        {\"match_all\":{}},"
-                + "        {"
-                + "          \"range\": {"
-                + "            \"@timestamp\": {"
-                + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
-                + "              \"format\": \"date_time\""
-                + "            }"
-                + "          }"
-                + "        }"
-                + "      ]"
-                + "    }"
-                + "  },"
-                + "  \"aggs\":{"
-                + "    \"earliestTime\":{"
-                + "      \"min\":{\"field\":\"@timestamp\"}"
-                + "    },"
-                + "    \"latestTime\":{"
-                + "      \"max\":{\"field\":\"@timestamp\"}"
-                + "    }"
-                + "  }"
-                + "}";
+        String expected = "{" + "  \"sort\": [" + "    {\"_doc\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {" + "    \"bool\": {"
+                + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
+                + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
+                + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"aggs\":{" + "    \"earliestTime\":{"
+                + "      \"min\":{\"field\":\"@timestamp\"}" + "    }," + "    \"latestTime\":{"
+                + "      \"max\":{\"field\":\"@timestamp\"}" + "    }" + "  }" + "}";
         assertEquals(expected.replaceAll(" ", ""), dataSummaryQuery.replaceAll(" ", ""));
     }
 
@@ -224,35 +114,13 @@ public class ElasticsearchQueryBuilderTest extends ESTestCase {
 
         String dataSummaryQuery = queryBuilder.createDataSummaryQuery(1451606400000L, 1451610000000L);
 
-        String expected = "{"
-                + "  \"sort\": ["
-                + "    {\"_doc\": {\"order\": \"asc\"}}"
-                + "  ],"
-                + "  \"query\": {"
-                + "    \"bool\": {"
-                + "      \"filter\": ["
-                + "        {\"match_all\":{}},"
-                + "        {"
-                + "          \"range\": {"
-                + "            \"@timestamp\": {"
-                + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\","
-                + "              \"format\": \"date_time\""
-                + "            }"
-                + "          }"
-                + "        }"
-                + "      ]"
-                + "    }"
-                + "  },"
-                + "  \"aggs\":{"
-                + "    \"earliestTime\":{"
-                + "      \"min\":{\"field\":\"@timestamp\"}"
-                + "    },"
-                + "    \"latestTime\":{"
-                + "      \"max\":{\"field\":\"@timestamp\"}"
-                + "    }"
-                + "  }"
-                + "}";
+        String expected = "{" + "  \"sort\": [" + "    {\"_doc\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {" + "    \"bool\": {"
+                + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
+                + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
+                + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"aggs\":{" + "    \"earliestTime\":{"
+                + "      \"min\":{\"field\":\"@timestamp\"}" + "    }," + "    \"latestTime\":{"
+                + "      \"max\":{\"field\":\"@timestamp\"}" + "    }" + "  }" + "}";
         assertEquals(expected.replaceAll(" ", ""), dataSummaryQuery.replaceAll(" ", ""));
     }
 

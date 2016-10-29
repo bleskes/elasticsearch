@@ -13,8 +13,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-
 public class InfluenceParserTest extends ESTestCase {
     private class InfluenceFieldComparator implements Comparator<Influence> {
         @Override
@@ -96,7 +94,7 @@ public class InfluenceParserTest extends ESTestCase {
     }
 
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         return new JsonFactory().createParser(inputStream);
     }

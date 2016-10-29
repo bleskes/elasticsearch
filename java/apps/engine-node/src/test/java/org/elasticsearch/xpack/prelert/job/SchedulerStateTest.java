@@ -10,7 +10,8 @@ public class SchedulerStateTest extends AbstractSerializingTestCase<SchedulerSta
 
     @Override
     protected SchedulerState createTestInstance() {
-        return new SchedulerState(randomFrom(JobSchedulerStatus.values()), randomPositiveLong(), randomBoolean() ? null : randomPositiveLong());
+        return new SchedulerState(randomFrom(JobSchedulerStatus.values()), randomPositiveLong(),
+                randomBoolean() ? null : randomPositiveLong());
     }
 
     @Override
@@ -35,8 +36,8 @@ public class SchedulerStateTest extends AbstractSerializingTestCase<SchedulerSta
 
     public void testEquals_GivenEqualObjects() {
         SchedulerState schedulerState1 = new SchedulerState(JobSchedulerStatus.STARTED, 18L, 42L);
-        SchedulerState schedulerState2 = new SchedulerState(
-                schedulerState1.getStatus(), schedulerState1.getStartTimeMillis(), schedulerState1.getEndTimeMillis());
+        SchedulerState schedulerState2 = new SchedulerState(schedulerState1.getStatus(), schedulerState1.getStartTimeMillis(),
+                schedulerState1.getEndTimeMillis());
 
         assertTrue(schedulerState1.equals(schedulerState2));
         assertTrue(schedulerState2.equals(schedulerState1));
@@ -45,9 +46,8 @@ public class SchedulerStateTest extends AbstractSerializingTestCase<SchedulerSta
 
     public void testEquals_GivenDifferentStatus() {
         SchedulerState schedulerState1 = new SchedulerState(JobSchedulerStatus.STARTED, 18L, 42L);
-        SchedulerState schedulerState2 = new SchedulerState(
-                JobSchedulerStatus.STOPPED, schedulerState1.getStartTimeMillis(), schedulerState1.getEndTimeMillis());
-
+        SchedulerState schedulerState2 = new SchedulerState(JobSchedulerStatus.STOPPED, schedulerState1.getStartTimeMillis(),
+                schedulerState1.getEndTimeMillis());
 
         assertFalse(schedulerState1.equals(schedulerState2));
         assertFalse(schedulerState2.equals(schedulerState1));

@@ -143,7 +143,7 @@ public class AnomalyRecordParserTest extends ESTestCase {
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());
     }
 
-    private static final JsonParser createJsonParser(String input) throws IOException {
+    private static JsonParser createJsonParser(String input) throws IOException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(input.getBytes());
         return new JsonFactory().createParser(inputStream);
     }
