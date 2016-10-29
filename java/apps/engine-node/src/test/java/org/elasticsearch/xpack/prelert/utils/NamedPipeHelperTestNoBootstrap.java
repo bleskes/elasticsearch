@@ -12,14 +12,17 @@
 
 package org.elasticsearch.xpack.prelert.utils;
 
+import org.apache.lucene.util.Constants;
+import org.apache.lucene.util.LuceneTestCase;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.monitor.jvm.JvmInfo;
+
 import com.sun.jna.IntegerType;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
-import org.apache.lucene.util.Constants;
-import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.monitor.jvm.JvmInfo;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,6 +33,7 @@ import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
@@ -79,7 +83,7 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365150(v=vs.85).aspx
     private static native Pointer CreateNamedPipeW(WString name, DWord openMode, DWord pipeMode, DWord maxInstances, DWord outBufferSize,
-                                                   DWord inBufferSize, DWord defaultTimeOut, Pointer securityAttributes);
+            DWord inBufferSize, DWord defaultTimeOut, Pointer securityAttributes);
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365146(v=vs.85).aspx
     private static native boolean ConnectNamedPipe(Pointer handle, Pointer overlapped);
@@ -89,11 +93,11 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365467(v=vs.85).aspx
     private static native boolean ReadFile(Pointer handle, Pointer buffer, DWord numberOfBytesToRead, IntByReference numberOfBytesRead,
-                                           Pointer overlapped);
+            Pointer overlapped);
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365747(v=vs.85).aspx
     private static native boolean WriteFile(Pointer handle, Pointer buffer, DWord numberOfBytesToWrite, IntByReference numberOfBytesWritten,
-                                            Pointer overlapped);
+            Pointer overlapped);
 
     private static Pointer createPipe(String pipeName, boolean forWrite) throws IOException, InterruptedException {
         if (Constants.WINDOWS) {
@@ -198,10 +202,11 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
         private String line;
         private Exception exception;
 
-        public PipeReaderServer(String pipeName) {
-            this.pipeName = pipeName;
+        public PipeReaderServer(Path pipeName) {
+            this.pipeName = pipeName.toString();
         }
 
+        @Override
         public void run() {
             Pointer handle = INVALID_HANDLE_VALUE;
             try {
@@ -236,11 +241,12 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
         private String line;
         private Exception exception;
 
-        public PipeWriterServer(String pipeName, String line) {
-            this.pipeName = pipeName;
+        public PipeWriterServer(Path pipeName, String line) {
+            this.pipeName = pipeName.toString();
             this.line = line;
         }
 
+        @Override
         public void run() {
             Pointer handle = INVALID_HANDLE_VALUE;
             try {
@@ -265,12 +271,13 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     public void testOpenForInput() throws IOException, InterruptedException {
-        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "inputPipe" + JvmInfo.jvmInfo().pid();
+        Environment env = new Environment(Settings.EMPTY);
+        Path pipeName = env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "inputPipe" + JvmInfo.jvmInfo().pid());
 
         PipeWriterServer server = new PipeWriterServer(pipeName, HELLO_WORLD);
         server.start();
         try {
-            InputStream is = NamedPipeHelper.openNamedPipeInputStream(pipeName, Duration.ofSeconds(1));
+            InputStream is = NamedPipeHelper.openNamedPipeInputStream(env, pipeName, Duration.ofSeconds(1));
             assertNotNull(is);
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -285,12 +292,13 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     public void testOpenForOutput() throws IOException, InterruptedException {
-        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "outputPipe" + JvmInfo.jvmInfo().pid();
+        Environment env = new Environment(Settings.EMPTY);
+        Path pipeName = env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "outputPipe" + JvmInfo.jvmInfo().pid());
 
         PipeReaderServer server = new PipeReaderServer(pipeName);
         server.start();
         try {
-            OutputStream os = NamedPipeHelper.openNamedPipeOutputStream(pipeName, Duration.ofSeconds(1));
+            OutputStream os = NamedPipeHelper.openNamedPipeOutputStream(env, pipeName, Duration.ofSeconds(1));
             assertNotNull(os);
 
             try (OutputStreamWriter writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {

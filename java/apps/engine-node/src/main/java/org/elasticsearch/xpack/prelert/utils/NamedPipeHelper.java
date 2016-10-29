@@ -13,14 +13,15 @@
 package org.elasticsearch.xpack.prelert.utils;
 
 import org.apache.lucene.util.Constants;
+import org.elasticsearch.common.io.PathUtils;
+import org.elasticsearch.env.Environment;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 
 
@@ -78,21 +79,25 @@ public class NamedPipeHelper {
         // are made here then CNamedPipeFactory::defaultPath() in the C++ code will probably
         // also need to be changed.
         String tmpDir = System.getProperty("java.io.tmpdir");
-        if (tmpDir.endsWith(File.separator)) {
+        if (tmpDir.endsWith(PathUtils.getDefaultFileSystem().getSeparator())) {
             return tmpDir;
         }
-        return tmpDir + File.separator;
+        return tmpDir + PathUtils.getDefaultFileSystem().getSeparator();
     }
 
     /**
      * Open a named pipe created elsewhere for input.
-     * @param name Name of named pipe to open.
-     * @param timeout How long to wait for the named pipe to exist.
+     * 
+     * @param path
+     *            Path of named pipe to open.
+     * @param timeout
+     *            How long to wait for the named pipe to exist.
      * @return A stream opened to read from the named pipe.
-     * @throws IOException if the named pipe cannot be opened.
+     * @throws IOException
+     *             if the named pipe cannot be opened.
      */
-    public static InputStream openNamedPipeInputStream(String name, Duration timeout) throws IOException {
-        return openNamedPipeInputStream(new File(name), timeout);
+    public static InputStream openNamedPipeInputStream(Environment env, Path path, Duration timeout) throws IOException {
+        return openNamedPipeInputStream(path, timeout);
     }
 
     /**
@@ -102,11 +107,11 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    public static InputStream openNamedPipeInputStream(File file, Duration timeout) throws IOException {
+    public static InputStream openNamedPipeInputStream(Path file, Duration timeout) throws IOException {
         long timeoutMillisRemaining = timeout.toMillis();
 
         // Can't use File.isFile() on Windows, but luckily there's an even simpler check (that's not possible on *nix)
-        if (Constants.WINDOWS && !file.getPath().startsWith(WIN_PIPE_PREFIX)) {
+        if (Constants.WINDOWS && !file.toString().startsWith(WIN_PIPE_PREFIX)) {
             throw new IOException(file + " is not a named pipe");
         }
 
@@ -114,11 +119,11 @@ public class NamedPipeHelper {
         // it's still not available throw the exception from FileInputStream
         while (true) {
             // On Windows File.isFile() will render a genuine named pipe unusable
-            if (!Constants.WINDOWS && file.isFile()) {
+            if (!Constants.WINDOWS && Files.isRegularFile(file)) {
                 throw new IOException(file + " is not a named pipe");
             }
             try {
-                return new FileInputStream(file);
+                return Files.newInputStream(file);
             } catch (IOException ioe) {
                 if (timeoutMillisRemaining <= 0) {
                     throw ioe;
@@ -137,13 +142,17 @@ public class NamedPipeHelper {
 
     /**
      * Open a named pipe created elsewhere for output.
-     * @param name Name of named pipe to open.
-     * @param timeout How long to wait for the named pipe to exist.
+     *
+     * @param path
+     *            Path of named pipe to open.
+     * @param timeout
+     *            How long to wait for the named pipe to exist.
      * @return A stream opened to read from the named pipe.
-     * @throws IOException if the named pipe cannot be opened.
+     * @throws IOException
+     *             if the named pipe cannot be opened.
      */
-    public static OutputStream openNamedPipeOutputStream(String name, Duration timeout) throws IOException {
-        return openNamedPipeOutputStream(new File(name), timeout);
+    public static OutputStream openNamedPipeOutputStream(Environment env, Path path, Duration timeout) throws IOException {
+        return openNamedPipeOutputStream(path, timeout);
     }
 
     /**
@@ -153,7 +162,7 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    public static OutputStream openNamedPipeOutputStream(File file, Duration timeout) throws IOException {
+    public static OutputStream openNamedPipeOutputStream(Path file, Duration timeout) throws IOException {
         if (Constants.WINDOWS) {
             return openNamedPipeOutputStreamWindows(file, timeout);
         }
@@ -168,11 +177,11 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    private static OutputStream openNamedPipeOutputStreamWindows(File file, Duration timeout) throws IOException {
+    private static OutputStream openNamedPipeOutputStreamWindows(Path file, Duration timeout) throws IOException {
         long timeoutMillisRemaining = timeout.toMillis();
 
         // Can't use File.isFile() on Windows, but luckily there's an even simpler check (that's not possible on *nix)
-        if (!file.getPath().startsWith(WIN_PIPE_PREFIX)) {
+        if (!file.toString().startsWith(WIN_PIPE_PREFIX)) {
             throw new IOException(file + " is not a named pipe");
         }
 
@@ -180,7 +189,7 @@ public class NamedPipeHelper {
         // it's still not available throw the exception from FileOutputStream
         while (true) {
             try {
-                return new FileOutputStream(file);
+                return Files.newOutputStream(file);
             } catch (IOException ioe) {
                 if (timeoutMillisRemaining <= 0) {
                     throw ioe;
@@ -205,12 +214,12 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    private static OutputStream openNamedPipeOutputStreamUnix(File file, Duration timeout) throws IOException {
+    private static OutputStream openNamedPipeOutputStreamUnix(Path file, Duration timeout) throws IOException {
         long timeoutMillisRemaining = timeout.toMillis();
 
         // Periodically check whether the file exists until the timeout expires, then, if
         // it's still not available throw a FileNotFoundException
-        while (timeoutMillisRemaining > 0 && !file.exists()) {
+        while (timeoutMillisRemaining > 0 && !Files.exists(file)) {
             long thisSleep = Math.min(timeoutMillisRemaining, PAUSE_TIME_MS);
             timeoutMillisRemaining -= thisSleep;
             try {
@@ -221,11 +230,11 @@ public class NamedPipeHelper {
             }
         }
 
-        if (file.isFile()) {
+        if (Files.isRegularFile(file)) {
             throw new IOException(file + " is not a named pipe");
         }
 
-        if (!file.exists()) {
+        if (!Files.exists(file)) {
             throw new FileNotFoundException("Cannot open " + file + " (No such file or directory)");
         }
 
@@ -233,6 +242,6 @@ public class NamedPipeHelper {
         // causing the line below to create a regular file.  Not sure what can be done about this
         // without using low level OS calls...
 
-        return new FileOutputStream(file);
+        return Files.newOutputStream(file);
     }
 }
