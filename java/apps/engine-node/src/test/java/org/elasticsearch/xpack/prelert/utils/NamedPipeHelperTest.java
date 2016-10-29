@@ -19,6 +19,7 @@ import org.elasticsearch.test.ESTestCase;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -30,18 +31,22 @@ import java.time.Duration;
 public class NamedPipeHelperTest extends ESTestCase {
 
     public void testOpenForInputGivenPipeDoesNotExist() {
-        Environment env = new Environment(Settings.EMPTY);
-        IOException ioe = ESTestCase.expectThrows(FileNotFoundException.class, () ->
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
+        IOException ioe = ESTestCase.expectThrows(NoSuchFileException.class,
+                () ->
         NamedPipeHelper.openNamedPipeInputStream(env,
                 env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "this pipe does not exist"),
                 Duration.ofSeconds(1)));
 
-        assertTrue(ioe.getMessage(), ioe.getMessage().contains("No such file or directory") ||
+        assertTrue(ioe.getMessage(),
+                ioe.getMessage().contains("pipe does not exist") ||
                 ioe.getMessage().contains("The system cannot find the file specified"));
     }
 
     public void testOpenForOutputGivenPipeDoesNotExist() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         IOException ioe = ESTestCase.expectThrows(FileNotFoundException.class, () ->
         NamedPipeHelper.openNamedPipeOutputStream(env,
                 env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "this pipe does not exist"),
@@ -52,7 +57,8 @@ public class NamedPipeHelperTest extends ESTestCase {
     }
 
     public void testOpenForInputGivenPipeIsRegularFile() throws IOException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         Path tempFile = Files.createTempFile(env.tmpFile(), "not a named pipe", null);
 
         IOException ioe = ESTestCase.expectThrows(IOException.class, () ->
@@ -64,7 +70,8 @@ public class NamedPipeHelperTest extends ESTestCase {
     }
 
     public void testOpenForOutputGivenPipeIsRegularFile() throws IOException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         Path tempFile = Files.createTempFile(env.tmpFile(), "not a named pipe", null);
 
         IOException ioe = ESTestCase.expectThrows(IOException.class, () ->

@@ -33,7 +33,8 @@ public class JobLogsTest extends ESTestCase {
     public void testOperationsNotAllowedWithInvalidPath() throws UnknownJobException, JobException, IOException {
         Path pathOutsideLogsDir = PathUtils.getDefaultFileSystem().getPath("..", "..", "..", "etc");
 
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
 
         // delete
         try {
@@ -47,7 +48,8 @@ public class JobLogsTest extends ESTestCase {
 
     public void testSanitizePath_GivenInvalid() {
 
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "../../etc");
         try {
             Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert");
@@ -63,7 +65,8 @@ public class JobLogsTest extends ESTestCase {
 
     public void testSanitizePath() throws JobException {
 
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs", "logfile.log");
         Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs");
         Path normalized = new JobLogs(env).sanitizePath(filePath, rootDir);

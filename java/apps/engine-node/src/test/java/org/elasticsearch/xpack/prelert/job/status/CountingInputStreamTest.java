@@ -21,7 +21,8 @@ import static org.elasticsearch.mock.orig.Mockito.mock;
 public class CountingInputStreamTest extends ESTestCase {
 
     public void testRead_OneByteAtATime() throws IOException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         UsageReporter usageReporter = new UsageReporter(env, "foo", mock(UsagePersister.class), mock(Logger.class));
         DummyStatusReporter statusReporter = new DummyStatusReporter(env, usageReporter);
 
@@ -43,7 +44,8 @@ public class CountingInputStreamTest extends ESTestCase {
     }
 
     public void testRead_WithBuffer() throws IOException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         final String TEXT = "To the man who only has a hammer,"
                 + " everything he encounters begins to look like a nail.";
 
@@ -68,7 +70,8 @@ public class CountingInputStreamTest extends ESTestCase {
     }
 
     public void testRead_WithTinyBuffer() throws IOException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         final String TEXT = "To the man who only has a hammer,"
                 + " everything he encounters begins to look like a nail.";
 

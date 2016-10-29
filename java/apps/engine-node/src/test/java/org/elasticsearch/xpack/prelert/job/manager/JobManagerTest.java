@@ -274,7 +274,8 @@ public class JobManagerTest extends ESTestCase {
     }
 
     private JobManager createJobManager() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         return new JobManager(env, jobProvider, clusterService, new LocalActionGuardian<>(Action.CLOSED));
     }
 

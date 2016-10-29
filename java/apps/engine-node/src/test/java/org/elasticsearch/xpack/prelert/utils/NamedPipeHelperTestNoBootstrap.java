@@ -271,7 +271,8 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     public void testOpenForInput() throws IOException, InterruptedException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         Path pipeName = env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "inputPipe" + JvmInfo.jvmInfo().pid());
 
         PipeWriterServer server = new PipeWriterServer(pipeName, HELLO_WORLD);
@@ -292,7 +293,8 @@ public class NamedPipeHelperTestNoBootstrap extends LuceneTestCase {
     }
 
     public void testOpenForOutput() throws IOException, InterruptedException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         Path pipeName = env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "outputPipe" + JvmInfo.jvmInfo().pid());
 
         PipeReaderServer server = new PipeReaderServer(pipeName);

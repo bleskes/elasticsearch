@@ -55,7 +55,8 @@ public class StatusReporterTest extends ESTestCase {
 
     @Before
     public void setUpMocks() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         MockitoAnnotations.initMocks(this);
         statusReporter = new StatusReporter(env, JOB_ID, usageReporter, jobDataCountsPersister, mockLogger, 10L);
     }
@@ -76,7 +77,8 @@ public class StatusReporterTest extends ESTestCase {
 
 
     public void testComplexConstructor() throws Exception {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         DataCounts counts = new DataCounts();
 
         counts.setProcessedRecordCount(1);

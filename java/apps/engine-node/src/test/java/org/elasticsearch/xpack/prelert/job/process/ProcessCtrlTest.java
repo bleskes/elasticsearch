@@ -27,7 +27,8 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildEnvironment() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         ProcessBuilder pb = new ProcessBuilder();
         ProcessCtrl.buildEnvironment(env, pb);
 
@@ -38,7 +39,8 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
@@ -61,9 +63,8 @@ public class ProcessCtrlTest extends ESTestCase {
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
-
         assertEquals(17, command.size());
-        assertTrue(command.contains(ProcessCtrl.getAutodetectPath(env)));
+        assertTrue(command.contains(ProcessCtrl.getAutodetectPath(env).toString()));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
         assertTrue(command.contains(ProcessCtrl.LATENCY_ARG + "360"));
@@ -90,7 +91,8 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand_defaultTimeField() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
@@ -99,32 +101,28 @@ public class ProcessCtrlTest extends ESTestCase {
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "time"));
     }
 
-    // NORELEASE work out if we can remove this
-    // public void testBuildAutodetectCommand_givenPersistModelState() {
-    // Environment env = new Environment(Settings.EMPTY);
-    // JobDetails job = new JobConfiguration().build();
-    // job.setId("unit-test-job");
-    //
-    // System.setProperty(ProcessCtrl.DONT_PERSIST_MODEL_STATE, "true");
-    //
-    // int expectedPersistInterval = 10800 +
-    // ProcessCtrl.calculateStaggeringInterval(job.getId());
-    //
-    // List<String> command = ProcessCtrl.buildAutodetectCommand(env, job,
-    // logger, null, false);
-    // assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG +
-    // expectedPersistInterval));
-    //
-    // System.getProperties().remove(ProcessCtrl.DONT_PERSIST_MODEL_STATE);
-    //
-    // command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null,
-    // false);
-    // assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG +
-    // expectedPersistInterval));
-    // }
+    public void testBuildAutodetectCommand_givenPersistModelState() {
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
+        JobDetails job = new JobConfiguration().build();
+        job.setId("unit-test-job");
+
+        System.setProperty(ProcessCtrl.DONT_PERSIST_MODEL_STATE, "true");
+
+        int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
+
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
+        assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
+
+        System.getProperties().remove(ProcessCtrl.DONT_PERSIST_MODEL_STATE);
+
+        command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
+        assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
+    }
 
     public void testBuildAutodetectCommand_GivenNoIgnoreDowntime() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         JobDetails job = new JobConfiguration().build();
         job.setId("foo");
 
@@ -134,7 +132,8 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand_GivenIgnoreDowntimeParam() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         JobDetails job = new JobConfiguration().build();
         job.setId("foo");
 
@@ -144,13 +143,13 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildNormaliserCommand() throws IOException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         String jobId = "unit-test-job";
 
         List<String> command = ProcessCtrl.buildNormaliserCommand(env, jobId, 300, true);
-
         assertEquals(5, command.size());
-        assertTrue(command.contains(ProcessCtrl.getNormalizePath(env)));
+        assertTrue(command.contains(ProcessCtrl.getNormalizePath(env).toString()));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "300"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + jobId));
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));

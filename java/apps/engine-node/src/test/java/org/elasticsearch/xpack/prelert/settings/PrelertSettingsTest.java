@@ -96,7 +96,7 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testLoadFileSettings_GivenNoSuchFile() throws Exception {
-        Path configFile = PathUtils.get(getClass().getResource("/settings/valid_engine_api.yml").toURI());
+        Path configFile = PathUtils.get("missing_engine_api.yml");
 
         Map<Object, Object> settings = PrelertSettings.loadSettingsFile(configFile);
 
@@ -105,7 +105,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchString() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.setProperty("testproperty", "testvalue");
 
         assertTrue(PrelertSettings.isSet(env, "testproperty"));
@@ -113,7 +114,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchInteger() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.setProperty("testproperty", "42");
 
         assertTrue(PrelertSettings.isSet(env, "testproperty"));
@@ -121,7 +123,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchLong() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.setProperty("testproperty", "42");
 
         assertTrue(PrelertSettings.isSet(env, "testproperty"));
@@ -129,7 +132,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchFloat() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.setProperty("testproperty", "42.2");
 
         assertTrue(PrelertSettings.isSet(env, "testproperty"));
@@ -137,7 +141,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSettingOrDefault_GivenSystemPropertyShouldMatchDouble() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.setProperty("testproperty", "42.2");
 
         assertTrue(PrelertSettings.isSet(env, "testproperty"));
@@ -145,7 +150,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSettingOrDefault_GivenSystemPropertyDoesNotMatchType() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.setProperty("testproperty", "a string");
 
         assertTrue(PrelertSettings.isSet(env, "testproperty"));
@@ -153,7 +159,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSetting_GivenNoSystemProperty() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.clearProperty("testproperty");
 
         assertFalse(PrelertSettings.isSet(env, "testproperty"));
@@ -161,7 +168,8 @@ public class PrelertSettingsTest extends ESTestCase {
     }
 
     public void testGetSetting_GivenEnvironmentSetting() {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         System.clearProperty("prelert.home");
 
         // Don't mess with the $PRELERT_HOME environment variable as this could

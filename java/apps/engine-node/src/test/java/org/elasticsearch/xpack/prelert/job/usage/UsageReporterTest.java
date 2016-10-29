@@ -13,7 +13,8 @@ import org.mockito.Mockito;
 
 public class UsageReporterTest extends ESTestCase {
     public void testUpdatePeriod() throws JobException {
-        Environment env = new Environment(Settings.EMPTY);
+        Environment env = new Environment(
+                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         // set the update interval to 1 secs
         System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");
 
