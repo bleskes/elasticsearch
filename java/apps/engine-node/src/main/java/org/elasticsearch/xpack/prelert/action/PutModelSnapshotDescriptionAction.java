@@ -16,7 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
@@ -28,19 +27,23 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.StatusToXContent;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
@@ -49,6 +52,7 @@ import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDescriptionAction.Request, PutModelSnapshotDescriptionAction.Response, PutModelSnapshotDescriptionAction.RequestBuilder> {
 
@@ -69,19 +73,39 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest<Request> implements ToXContent {
+
+        private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
+
+        static {
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, snapshotId) -> request.snapshotId = snapshotId, ModelSnapshot.SNAPSHOT_ID);
+            PARSER.declareString((request, description) -> request.description = description, ModelSnapshot.DESCRIPTION);
+        }
+
+        public static Request parseRequest(String jobId, String snapshotId, XContentParser parser,
+                ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
+            if (jobId != null) {
+                request.jobId = jobId;
+            }
+            if (snapshotId != null) {
+                request.snapshotId = snapshotId;
+            }
+            return request;
+        }
 
         private String jobId;
         private String snapshotId;
         private String description;
 
-        private Request() {
+        Request() {
         }
 
         public Request(String jobId, String snapshotId, String description) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
-            this.snapshotId = ExceptionsHelper.requireNonNull(snapshotId, "snapshotId");
-            this.description = ExceptionsHelper.requireNonNull(description, "description");
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.snapshotId = ExceptionsHelper.requireNonNull(snapshotId, ModelSnapshot.SNAPSHOT_ID.getPreferredName());
+            this.description = ExceptionsHelper.requireNonNull(description, ModelSnapshot.DESCRIPTION.getPreferredName());
         }
 
         public String getJobId() {
@@ -116,37 +140,64 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
             out.writeString(snapshotId);
             out.writeString(description);
         }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
+            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(ModelSnapshot.SNAPSHOT_ID.getPreferredName(), snapshotId);
+            builder.field(ModelSnapshot.DESCRIPTION.getPreferredName(), description);
+            builder.endObject();
+            return builder;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jobId, snapshotId, description);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId) &&
+                    Objects.equals(snapshotId, other.snapshotId) &&
+                    Objects.equals(description, other.description);
+        }
     }
 
 
     public static class Response extends ActionResponse implements StatusToXContent {
 
-        private SingleDocument response;
+        private SingleDocument<ModelSnapshot> response;
 
         public Response() {
             response = SingleDocument.empty(ModelSnapshot.TYPE.getPreferredName());
         }
 
-        public Response(ModelSnapshot modelSnapshot, ObjectMapper objectMapper) throws JsonProcessingException {
-            byte[] asBytes = objectMapper.writeValueAsBytes(modelSnapshot);
-            response = new SingleDocument(ModelSnapshot.TYPE.getPreferredName(), new BytesArray(asBytes));
+        public Response(ModelSnapshot modelSnapshot) {
+            response = new SingleDocument<>(ModelSnapshot.TYPE.getPreferredName(), modelSnapshot);
         }
 
-        public SingleDocument getResponse() {
+        public SingleDocument<ModelSnapshot> getResponse() {
             return response;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            response = new SingleDocument(in.readString(), in.readBytesReference());
+            response = new SingleDocument<>(in, ModelSnapshot::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeString(response.getType());
-            out.writeBytesReference(response.getDocumentBytes());
+            response.writeTo(out);
         }
 
         @Override
@@ -157,6 +208,39 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             return response.toXContent(builder, params);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(response);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Response other = (Response) obj;
+            return Objects.equals(response, other.response);
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
+        public final String toString() {
+            try {
+                XContentBuilder builder = XContentFactory.jsonBuilder();
+                builder.prettyPrint();
+                builder.startObject();
+                toXContent(builder, EMPTY_PARAMS);
+                builder.endObject();
+                return builder.string();
+            } catch (Exception e) {
+                // So we have a stack trace logged somewhere
+                return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
+            }
         }
     }
 
@@ -174,8 +258,8 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               ElasticsearchJobProvider jobProvider) {
+                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                ElasticsearchJobProvider jobProvider) {
             super(settings, NAME, threadPool, transportService, actionFilters, indexNameExpressionResolver, Request::new);
             this.jobProvider = jobProvider;
         }
@@ -192,7 +276,7 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
 
             if (changeCandidates.size() > 1) {
                 logger.warn("More than one model found for [jobId: " + request.getJobId()
-                        + ", snapshotId: " + request.getSnapshotId() + "] tuple.");
+                + ", snapshotId: " + request.getSnapshotId() + "] tuple.");
             }
             ModelSnapshot modelSnapshot = changeCandidates.get(0);
             modelSnapshot.setDescription(request.getDescriptionString());
@@ -208,11 +292,7 @@ public class PutModelSnapshotDescriptionAction extends Action<PutModelSnapshotDe
             // clearer to remove them
             modelSnapshot.setQuantiles(null);
 
-            try {
-                listener.onResponse(new Response(modelSnapshot, objectMapper));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            listener.onResponse(new Response(modelSnapshot));
 
         }
 

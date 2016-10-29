@@ -22,8 +22,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
@@ -31,11 +34,7 @@ import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-
 import java.io.IOException;
 
 public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
@@ -47,7 +46,7 @@ public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
 
     @Inject
     public RestPutModelSnapshotDescriptionAction(Settings settings, RestController controller,
-                                                 PutModelSnapshotDescriptionAction.TransportAction transportAction) {
+            PutModelSnapshotDescriptionAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
 
@@ -57,18 +56,13 @@ public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String description;
-        try {
-            description = parseDescriptionFromJson(RestActions.getRestContent(restRequest).utf8ToString());
-        } catch (MalformedJsonException e) {
-            throw ExceptionsHelper.parseException(Messages.getMessage(Messages.REST_INVALID_DESCRIPTION_PARAMS),
-                    ErrorCodes.INVALID_DESCRIPTION_PARAMS);
-        }
-        PutModelSnapshotDescriptionAction.Request getModelSnapshots = new PutModelSnapshotDescriptionAction.Request(
+        BytesReference bodyBytes = RestActions.getRestContent(restRequest);
+        XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
+        PutModelSnapshotDescriptionAction.Request getModelSnapshots = PutModelSnapshotDescriptionAction.Request.parseRequest(
                 restRequest.param(JOB_ID.getPreferredName()),
                 restRequest.param(SNAPSHOT_ID.getPreferredName()),
-                description
-        );
+                parser, () -> parseFieldMatcher
+                );
 
         return channel -> transportAction.execute(getModelSnapshots, new RestStatusToXContentListener<>(channel));
     }
