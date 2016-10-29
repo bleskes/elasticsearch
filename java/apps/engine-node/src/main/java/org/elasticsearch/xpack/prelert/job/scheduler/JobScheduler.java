@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.scheduler;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.index.mapper.DateFieldMapper;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
@@ -90,8 +91,8 @@ public class JobScheduler {
      *            the factory to create a job logger
      */
     public JobScheduler(String jobId, Duration bucketSpan, Duration frequency, Duration queryDelay, DataExtractor dataExtractor,
-                        DataProcessor dataProcessor, JobProvider jobProvider, JobLoggerFactory jobLoggerFactory,
-                        Supplier<JobSchedulerStatus> statusSupplier, Listener listener) {
+            DataProcessor dataProcessor, JobProvider jobProvider, JobLoggerFactory jobLoggerFactory,
+            Supplier<JobSchedulerStatus> statusSupplier, Listener listener) {
         this.jobId = jobId;
         bucketSpanMs = bucketSpan.toMillis();
         frequencyMs = frequency.toMillis();
@@ -212,7 +213,7 @@ public class JobScheduler {
 
         logger = jobLoggerFactory.newLogger(jobId);
         logger.info("Scheduler started");
-        lookbackExecutor = Executors.newSingleThreadExecutor();
+        lookbackExecutor = Executors.newSingleThreadExecutor(EsExecutors.daemonThreadFactory("job_scheduler"));
         initLastEndTime(job);
         long startMs = job.getSchedulerState().getStartTimeMillis();
         OptionalLong endMs = job.getSchedulerState().getEndTimeMillis() == null ? OptionalLong.empty()

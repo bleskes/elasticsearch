@@ -31,14 +31,14 @@ public class AnalysisLimitsWriter {
         StringBuilder contents = new StringBuilder(MEMORY_STANZA_STR).append(NEW_LINE);
         if (limits.getModelMemoryLimit() != 0) {
             contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + EQUALS)
-                    .append(limits.getModelMemoryLimit()).append(NEW_LINE);
+            .append(limits.getModelMemoryLimit()).append(NEW_LINE);
         }
 
         contents.append(RESULTS_STANZA_STR).append(NEW_LINE);
         if (limits.getCategorizationExamplesLimit() != null) {
             contents.append(MAX_EXAMPLES_LIMIT_CONFIG_STR + EQUALS)
-                    .append(limits.getCategorizationExamplesLimit())
-                    .append(NEW_LINE);
+            .append(limits.getCategorizationExamplesLimit())
+            .append(NEW_LINE);
         }
 
         writer.write(contents.toString());

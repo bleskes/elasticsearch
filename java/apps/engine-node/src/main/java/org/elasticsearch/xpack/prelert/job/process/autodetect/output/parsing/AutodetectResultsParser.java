@@ -80,7 +80,8 @@ public class AutodetectResultsParser {
         synchronized (acknowledgedFlushes) {
             parsingStarted = true;
             parsingInProgress = true;
-            acknowledgedFlushes.notifyAll();
+            // NORELEASE fix this so its not needed
+            // acknowledgedFlushes.notifyAll();
         }
 
         try {
@@ -94,7 +95,8 @@ public class AutodetectResultsParser {
                 // case where the entire parse happens without the interested
                 // thread getting scheduled
                 parsingInProgress = false;
-                acknowledgedFlushes.notifyAll();
+                // NORELEASE fix this so its not needed
+                // acknowledgedFlushes.notifyAll();
             }
         }
     }
@@ -111,11 +113,12 @@ public class AutodetectResultsParser {
      */
     public boolean waitForFlushAcknowledgement(String flushId, Duration timeout) {
         synchronized (acknowledgedFlushes) {
-            try {
-                acknowledgedFlushes.wait(timeout.toMillis());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            // NORELEASE fix this so its not needed
+            // try {
+            // acknowledgedFlushes.wait(timeout.toMillis());
+            // } catch (InterruptedException e) {
+            // Thread.currentThread().interrupt();
+            // }
             boolean isFlushAcknowledged = acknowledgedFlushes.remove(flushId);
             return isFlushAcknowledged || !parsingInProgress;
         }
@@ -128,11 +131,12 @@ public class AutodetectResultsParser {
     void waitForParseStart() {
         synchronized (acknowledgedFlushes) {
             while (!parsingStarted) {
-                try {
-                    acknowledgedFlushes.wait();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                // NORELEASE fix this so its not needed
+                // try {
+                // acknowledgedFlushes.wait();
+                // } catch (InterruptedException e) {
+                // Thread.currentThread().interrupt();
+                // }
             }
         }
     }
@@ -233,7 +237,8 @@ public class AutodetectResultsParser {
                         persister.commitWrites();
                         synchronized (acknowledgedFlushes) {
                             acknowledgedFlushes.add(ack.getId());
-                            acknowledgedFlushes.notifyAll();
+                            // NORELEASE fix this so its not needed
+                            // acknowledgedFlushes.notifyAll();
                         }
                         // Interim results may have been produced by the flush, which need to be
                         // deleted when the next finalized results come through

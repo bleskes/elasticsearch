@@ -11,11 +11,12 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.LengthEncod
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -32,9 +33,9 @@ public class LegacyAutodetectProcess implements AutodetectProcess {
     private final int numberOfAnalysisFields;
     private final Process nativeProcess;
     private final BufferedReader errorReader;
-    private final List<File> filesToDelete;
+    private final List<Path> filesToDelete;
 
-    public LegacyAutodetectProcess(Process nativeProcess, int numberOfAnalysisFields, List<File> filesToDelete) {
+    public LegacyAutodetectProcess(Process nativeProcess, int numberOfAnalysisFields, List<Path> filesToDelete) {
         this.recordWriter = new LengthEncodedWriter(nativeProcess.getOutputStream());
         startTime = ZonedDateTime.now();
         this.numberOfAnalysisFields = numberOfAnalysisFields;
@@ -122,13 +123,13 @@ public class LegacyAutodetectProcess implements AutodetectProcess {
         return sb;
     }
 
-    public void deleteAssociatedFiles() {
+    public void deleteAssociatedFiles() throws IOException {
         if (filesToDelete == null) {
             return;
         }
 
-        for (File fileToDelete : filesToDelete) {
-            if (fileToDelete.delete() == true) {
+        for (Path fileToDelete : filesToDelete) {
+            if (Files.deleteIfExists(fileToDelete) == true) {
                 LOGGER.debug("Deleted file {}", fileToDelete::toString);
             } else {
                 LOGGER.warn("Failed to delete file {}", fileToDelete::toString);

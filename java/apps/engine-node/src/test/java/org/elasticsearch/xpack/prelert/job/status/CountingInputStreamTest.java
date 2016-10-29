@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
 import org.junit.Assert;
@@ -19,8 +21,9 @@ import static org.elasticsearch.mock.orig.Mockito.mock;
 public class CountingInputStreamTest extends ESTestCase {
 
     public void testRead_OneByteAtATime() throws IOException {
-        UsageReporter usageReporter = new UsageReporter("foo", mock(UsagePersister.class), mock(Logger.class));
-        DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+        Environment env = new Environment(Settings.EMPTY);
+        UsageReporter usageReporter = new UsageReporter(env, "foo", mock(UsagePersister.class), mock(Logger.class));
+        DummyStatusReporter statusReporter = new DummyStatusReporter(env, usageReporter);
 
         final String TEXT = "123";
         InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
@@ -40,11 +43,12 @@ public class CountingInputStreamTest extends ESTestCase {
     }
 
     public void testRead_WithBuffer() throws IOException {
+        Environment env = new Environment(Settings.EMPTY);
         final String TEXT = "To the man who only has a hammer,"
                 + " everything he encounters begins to look like a nail.";
 
-        UsageReporter usageReporter = new UsageReporter("foo", mock(UsagePersister.class), mock(Logger.class));
-        DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+        UsageReporter usageReporter = new UsageReporter(env, "foo", mock(UsagePersister.class), mock(Logger.class));
+        DummyStatusReporter statusReporter = new DummyStatusReporter(env, usageReporter);
 
         InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
 
@@ -64,11 +68,12 @@ public class CountingInputStreamTest extends ESTestCase {
     }
 
     public void testRead_WithTinyBuffer() throws IOException {
+        Environment env = new Environment(Settings.EMPTY);
         final String TEXT = "To the man who only has a hammer,"
                 + " everything he encounters begins to look like a nail.";
 
-        UsageReporter usageReporter = new UsageReporter("foo", mock(UsagePersister.class), mock(Logger.class));
-        DummyStatusReporter statusReporter = new DummyStatusReporter(usageReporter);
+        UsageReporter usageReporter = new UsageReporter(env, "foo", mock(UsagePersister.class), mock(Logger.class));
+        DummyStatusReporter statusReporter = new DummyStatusReporter(env, usageReporter);
 
         InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
 

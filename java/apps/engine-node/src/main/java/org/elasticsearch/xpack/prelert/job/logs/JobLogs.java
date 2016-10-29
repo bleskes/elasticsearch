@@ -18,15 +18,15 @@ package org.elasticsearch.xpack.prelert.job.logs;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
 import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -48,9 +48,9 @@ public class JobLogs {
      * If -D{@value #DONT_DELETE_LOGS_PROP} is set to anything
      * (not null) the log files aren't deleted
      */
-    public JobLogs()
+    public JobLogs(Environment env)
     {
-        m_DontDelete = PrelertSettings.isSet(DONT_DELETE_LOGS_PROP);
+        m_DontDelete = PrelertSettings.isSet(env, DONT_DELETE_LOGS_PROP);
     }
 
     /**
@@ -62,8 +62,8 @@ public class JobLogs {
      * @throws JobException
      *             If the file path is invalid i.e. jobId = ../../etc
      */
-    public boolean deleteLogs(String jobId) throws JobException {
-        return deleteLogs(ProcessCtrl.LOG_DIR, jobId);
+    public boolean deleteLogs(Environment env, String jobId) throws JobException {
+        return deleteLogs(env.logsFile().resolve(PrelertPlugin.NAME), jobId);
     }
 
     /**
@@ -82,12 +82,12 @@ public class JobLogs {
      * @throws JobException
      *             If the file path is invalid i.e. jobId = ../../etc
      */
-    public boolean deleteLogs(String logDir, String jobId) throws JobException {
+    public boolean deleteLogs(Path logDir, String jobId) throws JobException {
         if (m_DontDelete) {
             return true;
         }
 
-        Path logPath = sanitizePath(FileSystems.getDefault().getPath(logDir, jobId), logDir);
+        Path logPath = sanitizePath(logDir.resolve(jobId), logDir);
 
         LOGGER.info(String.format(Locale.ROOT, "Deleting log files %s/%s", logDir, jobId));
 
@@ -121,17 +121,16 @@ public class JobLogs {
     }
 
     /**
-     * Normalize a file path resolving .. and . directories
-     * and check the resulting path is below the {@linkplain ProcessCtrl#LOG_DIR}
-     * directory.
+     * Normalize a file path resolving .. and . directories and check the
+     * resulting path is below the rootDir directory.
      *
-     * Throws an exception if the path is outside the logs directory
-     * e.g. logs/../lic/license resolves to lic/license and would throw
+     * Throws an exception if the path is outside the logs directory e.g.
+     * logs/../lic/license resolves to lic/license and would throw
      */
-    public Path sanitizePath(Path filePath, String rootDir) throws JobException
+    public Path sanitizePath(Path filePath, Path rootDir) throws JobException
     {
         Path normalizedPath = filePath.normalize();
-        Path rootPath = FileSystems.getDefault().getPath(rootDir).normalize();
+        Path rootPath = rootDir.normalize();
         if (normalizedPath.startsWith(rootPath) == false)
         {
             String msg = Messages.getMessage(Messages.LOGFILE_INVALID_PATH, filePath);

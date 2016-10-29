@@ -25,6 +25,7 @@ import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
@@ -94,11 +95,14 @@ public class JobManager {
     private final ActionGuardian<Action> processActionGuardian;
     private final JobProvider jobProvider;
     private final ClusterService clusterService;
+    private final Environment env;
 
     /**
      * Create a JobManager
      */
-    public JobManager(JobProvider jobProvider, ClusterService clusterService, ActionGuardian<Action> processActionGuardian) {
+    public JobManager(Environment env, JobProvider jobProvider, ClusterService clusterService,
+            ActionGuardian<Action> processActionGuardian) {
+        this.env = env;
         this.jobProvider = Objects.requireNonNull(jobProvider);
         this.clusterService = clusterService;
         this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
@@ -305,7 +309,7 @@ public class JobManager {
                         public void onResponse(Boolean aBoolean) {
 
                             try {
-                                new JobLogs().deleteLogs(jobId);
+                                new JobLogs(env).deleteLogs(env, jobId);
                                 // NORELEASE: This is not the place the audit
                                 // log
                                 // (indexes a document), because this method is

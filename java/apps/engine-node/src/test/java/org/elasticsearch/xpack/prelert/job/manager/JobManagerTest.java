@@ -24,6 +24,8 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
@@ -272,7 +274,8 @@ public class JobManagerTest extends ESTestCase {
     }
 
     private JobManager createJobManager() {
-        return new JobManager(jobProvider, clusterService, new LocalActionGuardian<>(Action.CLOSED));
+        Environment env = new Environment(Settings.EMPTY);
+        return new JobManager(env, jobProvider, clusterService, new LocalActionGuardian<>(Action.CLOSED));
     }
 
     private static Stubber doAnswerSleep(long millis)

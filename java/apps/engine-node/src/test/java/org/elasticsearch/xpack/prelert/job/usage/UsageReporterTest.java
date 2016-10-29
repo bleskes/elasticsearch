@@ -3,6 +3,8 @@ package org.elasticsearch.xpack.prelert.job.usage;
 
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
@@ -11,11 +13,12 @@ import org.mockito.Mockito;
 
 public class UsageReporterTest extends ESTestCase {
     public void testUpdatePeriod() throws JobException {
+        Environment env = new Environment(Settings.EMPTY);
         // set the update interval to 1 secs
         System.setProperty(UsageReporter.UPDATE_INTERVAL_PROP, "1");
 
         UsagePersister persister = Mockito.mock(UsagePersister.class);
-        UsageReporter usage = new UsageReporter("job1", persister, Mockito.mock(Logger.class));
+        UsageReporter usage = new UsageReporter(env, "job1", persister, Mockito.mock(Logger.class));
 
         usage.addBytesRead(10);
         usage.addFieldsRecordsRead(5);

@@ -2,6 +2,7 @@ package org.elasticsearch.xpack.prelert.utils.scheduler;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public class TaskScheduler {
 
     // NORELEASE Task scheduler should be using a thread pool
     public TaskScheduler(Runnable task, Supplier<LocalDateTime> nextTimeSupplier) {
-        executor = Executors.newScheduledThreadPool(1);
+        executor = Executors.newScheduledThreadPool(1, EsExecutors.daemonThreadFactory("task_scheduler"));
         this.task = Objects.requireNonNull(task);
         this.nextTimeSupplier = Objects.requireNonNull(nextTimeSupplier);
     }

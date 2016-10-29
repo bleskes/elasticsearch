@@ -3,9 +3,14 @@ package org.elasticsearch.xpack.prelert.settings;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Wrapper for Prelert settings.
@@ -110,8 +115,8 @@ public final class PrelertSettings {
      * @param settingName Name of the setting to check if it is set
      * @return {@code true} if a setting with the given {@code settingName} is set
      */
-    public static boolean isSet(String settingName) {
-        return getSetting(settingName, s -> s) != null;
+    public static boolean isSet(Environment env, String settingName) {
+        return getSetting(env, settingName, s -> s) != null;
     }
 
     /**
@@ -124,13 +129,13 @@ public final class PrelertSettings {
      * @return The setting value, or the supplied default value if no setting is
      * present or its type does not match that of the default value
      */
-    public static <T> T getSettingOrDefault(String settingName, T defaultValue) {
+    public static <T> T getSettingOrDefault(Environment env, String settingName, T defaultValue) {
         java.util.Objects.requireNonNull(defaultValue);
 
         @SuppressWarnings("unchecked")
         Class<T> resultType = (Class<T>) defaultValue.getClass();
 
-        Object setting = getSetting(settingName, MAPPERS.getOrDefault(resultType, s -> s));
+        Object setting = getSetting(env, settingName, MAPPERS.getOrDefault(resultType, s -> s));
         if (setting != null && resultType.isInstance(setting)) {
             return resultType.cast(setting);
         } else if (setting != null) {
@@ -156,7 +161,7 @@ public final class PrelertSettings {
      * @param mapper      A mapper that is used to convert a system property String value
      * @return The retrieved setting
      */
-    private static Object getSetting(String settingName, java.util.function.Function<String, Object> mapper) {
+    private static Object getSetting(Environment env, String settingName, java.util.function.Function<String, Object> mapper) {
         // System properties always take precedence
         String prop = System.getProperty(settingName);
         if (prop != null) {
@@ -175,13 +180,13 @@ public final class PrelertSettings {
         }
 
         // This is a setting where we'll accept config file values
-        return getFileSettings().get(settingName);
+        return getFileSettings(env).get(settingName);
     }
 
     /**
      * Get file settings.  These are lazy loaded, once per run.
      */
-    private static java.util.Map<Object, Object> getFileSettings() {
+    private static java.util.Map<Object, Object> getFileSettings(Environment env) {
         if (ms_LoadedFile) {
             return ms_FileSettings;
         }
@@ -190,10 +195,7 @@ public final class PrelertSettings {
             // Double check in case multiple threads waited to enter the
             // synchronized block
             if (!ms_LoadedFile) {
-                java.io.File configFile = new java.io.File(
-                        new java.io.File(getSettingOrDefault(PRELERT_HOME_PROPERTY, DEFAULT_PRELERT_HOME),
-                                ENGINE_CONFIG_DIRECTORY),
-                        ENGINE_CONFIG_FILE);
+                Path configFile = PrelertPlugin.resolveConfigFile(env, ENGINE_CONFIG_FILE);
                 ms_FileSettings = loadSettingsFile(configFile);
                 ms_LoadedFile = true;
             }
@@ -211,8 +213,8 @@ public final class PrelertSettings {
      * @param configFile The config file to attempt to load.
      * @return Map of settings file content; empty on error.
      */
-    static java.util.Map<Object, Object> loadSettingsFile(java.io.File configFile) {
-        try (java.io.InputStream input = new java.io.FileInputStream(configFile)) {
+    static java.util.Map<Object, Object> loadSettingsFile(Path configFile) {
+        try (java.io.InputStream input = Files.newInputStream(configFile)) {
             java.util.Map<Object, Object> fileSettings = parseSettings(input);
             if (fileSettings != null) {
                 return fileSettings;

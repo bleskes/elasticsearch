@@ -1,6 +1,7 @@
 
 package org.elasticsearch.xpack.prelert.job.process;
 
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
@@ -9,12 +10,12 @@ import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 import org.elasticsearch.xpack.prelert.utils.Strings;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.env.Environment;
+
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,31 +44,6 @@ public class ProcessCtrl {
      * The normalisation native program name
      */
     public static final String NORMALIZE = "prelert_normalize";
-    /**
-     * The location of Prelert Home. Equivalent to $PRELERT_HOME
-     */
-    public static final String PRELERT_HOME;
-    /**
-     * The base log file directory. Defaults to $PRELERT_HOME/logs
-     * but may be overridden with the PRELERT_LOGS_PROPERTY property
-     */
-    public static final String LOG_DIR;
-    /**
-     * The config directory. Equivalent to $PRELERT_HOME/config
-     */
-    public static final String CONFIG_DIR;
-    /**
-     * The bin directory. Equivalent to $PRELERT_HOME/bin
-     */
-    public static final String BIN_DIR;
-    /**
-     * The full path to the autodetect program
-     */
-    public static final String AUTODETECT_PATH;
-    /**
-     * The full path to the normalisation program
-     */
-    public static final String NORMALIZE_PATH;
     /**
      * Name of the config setting containing the value of Prelert Home
      */
@@ -130,7 +106,6 @@ public class ProcessCtrl {
     public static final String LATENCY_ARG = "--latency=";
     public static final String RESULT_FINALIZATION_WINDOW_ARG = "--resultFinalizationWindow=";
     public static final String MULTIVARIATE_BY_FIELDS_ARG = "--multivariateByFields";
-    public static final String MAX_ANOMALY_RECORDS_ARG;
     public static final String PERIOD_ARG = "--period=";
     public static final String PERSIST_INTERVAL_ARG = "--persistInterval=";
     public static final String MAX_QUANTILE_INTERVAL_ARG = "--maxQuantileInterval=";
@@ -177,38 +152,9 @@ public class ProcessCtrl {
      */
     public static final String DONT_PERSIST_MODEL_STATE = "no.model.state.persist";
 
-
-    /**
-     * Static initialisation finds Elasticsearch HTTP port, Prelert home and the
-     * path to the executatble.
-     */
-    static {
-        String prelertHome = PrelertSettings.getSettingOrDefault(PRELERT_HOME_PROPERTY, ".");
-
-        String logPath = PrelertSettings.getSettingOrDefault(PRELERT_LOGS_PROPERTY,
-                prelertHome + "/logs");
-
-        int maxNumRecords = PrelertSettings.getSettingOrDefault(MAX_ANOMALY_RECORDS_PROPERTY,
+    public static String maxAnomalyRecordsArg(Environment env) {
+        return "--maxAnomalyRecords=" + PrelertSettings.getSettingOrDefault(env, MAX_ANOMALY_RECORDS_PROPERTY,
                 DEFAULT_MAX_NUM_RECORDS);
-        MAX_ANOMALY_RECORDS_ARG = "--maxAnomalyRecords=" + maxNumRecords;
-
-        PRELERT_HOME = prelertHome;
-        BIN_DIR = new File(PRELERT_HOME, "bin").getPath();
-        File executable = new File(BIN_DIR, AUTODETECT);
-        AUTODETECT_PATH = executable.getPath();
-
-        executable = new File(BIN_DIR, NORMALIZE);
-        NORMALIZE_PATH = executable.getPath();
-
-        if (logPath != null) {
-            LOG_DIR = logPath;
-        } else {
-            File logDir = new File(PRELERT_HOME, "logs");
-            LOG_DIR = logDir.getPath();
-        }
-
-        File configDir = new File(PRELERT_HOME, "config");
-        CONFIG_DIR = configDir.getPath();
     }
 
     private ProcessCtrl() {
@@ -219,36 +165,42 @@ public class ProcessCtrl {
      * Set up an environment containing the PRELERT_HOME environment variable.
      * LIB_PATH is not set as the binaries are linked with relative paths
      */
-    public static void buildEnvironment(ProcessBuilder pb) {
+    public static void buildEnvironment(Environment env, ProcessBuilder pb) {
         // Always clear inherited environment variables
         pb.environment().clear();
-        pb.environment().put(PrelertSettings.PRELERT_HOME_ENV, PRELERT_HOME);
+        pb.environment().put(PrelertSettings.PRELERT_HOME_ENV, env.binFile().resolve(PrelertPlugin.NAME).toString());
 
         LOGGER.info(String.format(Locale.ROOT, "Process Environment = " + pb.environment().toString()));
     }
 
+    public static Path getAutodetectPath(Environment env) {
+        return PrelertPlugin.resolveBinFile(env, AUTODETECT);
+    }
 
-    public static String getAnalyticsVersion() {
-        return AnalyticsVersionHolder.s_AnalyticsVersion;
+    public static Path getNormalizePath(Environment env) {
+        return PrelertPlugin.resolveBinFile(env, NORMALIZE);
+    }
+
+    public static String getAnalyticsVersion(Environment env) {
+        return AnalyticsVersionHolder.detectAnalyticsVersion(env);
     }
 
     // Static field lazy initialization idiom
     private static class AnalyticsVersionHolder {
-        static final String s_AnalyticsVersion = detectAnalyticsVersion();
 
         private AnalyticsVersionHolder() {
         }
 
-        private static String detectAnalyticsVersion() {
+        private static String detectAnalyticsVersion(Environment env) {
             List<String> command = new ArrayList<>();
-            command.add(AUTODETECT_PATH);
+            command.add(getAutodetectPath(env).toString());
             command.add(VERSION_ARG);
 
             LOGGER.info("Getting version number from " + command);
 
             // Build the process
             ProcessBuilder pb = new ProcessBuilder(command);
-            buildEnvironment(pb);
+            buildEnvironment(env, pb);
 
             try {
                 Process proc = pb.start();
@@ -287,16 +239,16 @@ public class ProcessCtrl {
      * Get the C++ process to print a JSON document containing some of the usage
      * and license info
      */
-    public static synchronized String getInfo() {
+    public static synchronized String getInfo(Environment env) {
         List<String> command = new ArrayList<>();
-        command.add(AUTODETECT_PATH);
+        command.add(getAutodetectPath(env).toString());
         command.add(INFO_ARG);
 
         LOGGER.info("Getting info from " + command);
 
         // Build the process
         ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(pb);
+        buildEnvironment(env, pb);
 
         try {
             Process proc = pb.start();
@@ -337,9 +289,10 @@ public class ProcessCtrl {
         return rng.nextInt(SECONDS_IN_HOUR);
     }
 
-    public static List<String> buildAutodetectCommand(JobDetails job, Logger logger, String restoreSnapshotId, boolean ignoreDowntime) {
+    public static List<String> buildAutodetectCommand(Environment env, JobDetails job, Logger logger, String restoreSnapshotId,
+            boolean ignoreDowntime) {
         List<String> command = new ArrayList<>();
-        command.add(AUTODETECT_PATH);
+        command.add(getAutodetectPath(env).toString());
 
         // the logging id is the job id
         String logId = LOG_ID_ARG + job.getId();
@@ -375,7 +328,7 @@ public class ProcessCtrl {
         command.add(LENGTH_ENCODED_INPUT_ARG);
 
         // Limit the number of output records
-        command.add(MAX_ANOMALY_RECORDS_ARG);
+        command.add(maxAnomalyRecordsArg(env));
 
         // always set the time field
         String timeFieldArg = TIME_FIELD_ARG + getTimeFieldOrDefault(job);
@@ -386,7 +339,7 @@ public class ProcessCtrl {
 
         // Supply a URL for persisting/restoring model state unless model
         // persistence has been explicitly disabled.
-        if (PrelertSettings.isSet(DONT_PERSIST_MODEL_STATE)) {
+        if (PrelertSettings.isSet(env, DONT_PERSIST_MODEL_STATE)) {
             logger.info("Will not persist model state - "  + DONT_PERSIST_MODEL_STATE + " setting was set");
         } else {
             if (Strings.isNullOrEmpty(restoreSnapshotId) == false) {
@@ -441,10 +394,10 @@ public class ProcessCtrl {
     /**
      * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
      */
-    public static boolean modelConfigFilePresent() {
-        File f = new File(CONFIG_DIR, PRELERT_MODEL_CONF);
+    public static boolean modelConfigFilePresent(Environment env) {
+        Path modelConfPath = PrelertPlugin.resolveConfigFile(env, PRELERT_MODEL_CONF);
 
-        return f.exists() && !f.isDirectory();
+        return Files.exists(modelConfPath) && (Files.isDirectory(modelConfPath) == false);
     }
 
     /**
@@ -452,41 +405,40 @@ public class ProcessCtrl {
      * unusualBehaviourState if either is <code>null</code> then is
      * is not used.
      */
-    public static Process buildNormaliser(String jobId, String quantilesState,
-            Integer bucketSpan, boolean perPartitionNormalization, Logger logger)
+    public static Process buildNormaliser(Environment env, String jobId, String quantilesState, Integer bucketSpan,
+            boolean perPartitionNormalization, Logger logger)
                     throws IOException {
-        logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 
-        List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, bucketSpan,
+        List<String> command = ProcessCtrl.buildNormaliserCommand(env, jobId, bucketSpan,
                 perPartitionNormalization);
 
         if (quantilesState != null) {
-            Path quantilesStateFilePath = writeNormaliserInitState(jobId, quantilesState);
+            Path quantilesStateFilePath = writeNormaliserInitState(jobId, quantilesState, env);
 
             String stateFileArg = QUANTILES_STATE_PATH_ARG + quantilesStateFilePath;
             command.add(stateFileArg);
             command.add(DELETE_STATE_FILES_ARG);
         }
 
-        if (modelConfigFilePresent()) {
-            String modelConfigFile = new File(CONFIG_DIR, PRELERT_MODEL_CONF).getPath();
-            command.add(MODEL_CONFIG_ARG + modelConfigFile);
+        if (modelConfigFilePresent(env)) {
+            Path modelConfPath = PrelertPlugin.resolveConfigFile(env, PRELERT_MODEL_CONF);
+            command.add(MODEL_CONFIG_ARG + modelConfPath.toAbsolutePath().getFileName());
         }
 
         // Build the process
         logger.info("Starting normaliser process with command: " + command);
         ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(pb);
+        buildEnvironment(env, pb);
 
         return pb.start();
 
     }
 
-    static List<String> buildNormaliserCommand(String jobId, Integer bucketSpan,
+    static List<String> buildNormaliserCommand(Environment env, String jobId, Integer bucketSpan,
             boolean perPartitionNormalization)
                     throws IOException {
         List<String> command = new ArrayList<>();
-        command.add(NORMALIZE_PATH);
+        command.add(getNormalizePath(env).toString());
         addIfNotNull(bucketSpan, BUCKET_SPAN_ARG, command);
         command.add(LOG_ID_ARG + jobId);
         command.add(LENGTH_ENCODED_INPUT_ARG);
@@ -500,17 +452,15 @@ public class ProcessCtrl {
     /**
      * Write the normaliser init state to file.
      */
-    public static Path writeNormaliserInitState(String jobId, String state)
+    public static Path writeNormaliserInitState(String jobId, String state, Environment env)
             throws IOException {
         // createTempFile has a race condition where it may return the same
         // temporary file name to different threads if called simultaneously
         // from multiple threads, hence add the thread ID to avoid this
-        Path stateFile = Files.createTempFile(jobId + "_quantiles_" + Thread.currentThread().getId(),
+        Path stateFile = Files.createTempFile(env.tmpFile(), jobId + "_quantiles_" + Thread.currentThread().getId(),
                 QUANTILES_FILE_EXTENSION);
 
-        try (OutputStreamWriter osw = new OutputStreamWriter(
-                new FileOutputStream(stateFile.toFile().getPath()),
-                StandardCharsets.UTF_8)) {
+        try (BufferedWriter osw = Files.newBufferedWriter(stateFile, StandardCharsets.UTF_8);) {
             osw.write(state);
         }
 

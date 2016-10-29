@@ -9,6 +9,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
@@ -83,6 +84,7 @@ import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -90,10 +92,13 @@ import java.util.List;
 
 public class PrelertPlugin extends Plugin implements ActionPlugin {
 
+    public static final String NAME = "prelert";
+
     // NORELEASE - temporary solution
     static final String USE_NATIVE_PROCESS_OPTION = "useNativeProcess";
 
     private final Settings settings;
+    private final Environment env;
 
     static {
         MetaData.registerPrototype(PrelertMetadata.TYPE, PrelertMetadata.PROTO);
@@ -101,6 +106,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
 
     public PrelertPlugin(Settings settings) {
         this.settings = settings;
+        this.env = new Environment(settings);
     }
 
     @Override
@@ -126,7 +132,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         AutodetectCommunicatorFactory autodetectCommunicatorFactory =
                 createAutodetectCommunicatorFactory(elasticsearchFactories, jobProvider);
 
-        JobManager jobManager = new JobManager(jobProvider, clusterService, processActionGuardian);
+        JobManager jobManager = new JobManager(env, jobProvider, clusterService, processActionGuardian);
         DataProcessor dataProcessor = new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager);
         JobScheduledService jobScheduledService = new JobScheduledService(
                 jobProvider, jobManager, dataProcessor, new HttpDataExtractorFactory(), jobId -> Loggers.getLogger(jobId));
@@ -144,9 +150,9 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
             ElasticsearchJobProvider jobProvider) {
 
         AutodetectProcessFactory processFactory = this.settings.getAsBoolean(USE_NATIVE_PROCESS_OPTION, false)
-                ? new LegacyAutodetectProcessFactory(jobProvider)
+                ? new LegacyAutodetectProcessFactory(jobProvider, env)
                         : (JobDetails, ingnoreDowntime) -> new BlackHoleAutodetectProcess();
-                        return new AutodetectCommunicatorFactory(
+        return new AutodetectCommunicatorFactory(env, 
                                 processFactory,
                                 esFactory.newJobResultsPersisterFactory(),
                                 esFactory.newJobDataCountsPersisterFactory(),
@@ -210,5 +216,17 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(PutModelSnapshotDescriptionAction.INSTANCE, PutModelSnapshotDescriptionAction.TransportAction.class),
                 new ActionHandler<>(StartJobSchedulerAction.INSTANCE, StartJobSchedulerAction.TransportAction.class),
                 new ActionHandler<>(StopJobSchedulerAction.INSTANCE, StopJobSchedulerAction.TransportAction.class));
+    }
+
+    public static Path resolveConfigFile(Environment env, String name) {
+        return env.configFile().resolve(NAME).resolve(name);
+    }
+
+    public static Path resolveLogFile(Environment env, String name) {
+        return env.logsFile().resolve(NAME).resolve(name);
+    }
+
+    public static Path resolveBinFile(Environment env, String name) {
+        return env.binFile().resolve(NAME).resolve(name);
     }
 }

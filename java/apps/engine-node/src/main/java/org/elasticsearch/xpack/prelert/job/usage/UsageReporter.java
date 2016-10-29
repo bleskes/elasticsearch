@@ -2,7 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.usage;
 
 import org.apache.logging.log4j.Logger;
-
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
 import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
@@ -31,7 +31,7 @@ public class UsageReporter {
 
     private final UsagePersister persister;
 
-    public UsageReporter(String jobId, UsagePersister persister, Logger logger) {
+    public UsageReporter(Environment env, String jobId, UsagePersister persister, Logger logger) {
         bytesReadSinceLastReport = 0;
         fieldsReadSinceLastReport = 0;
         recordsReadSinceLastReport = 0;
@@ -42,7 +42,7 @@ public class UsageReporter {
 
         lastUpdateTimeMs = System.currentTimeMillis();
 
-        long interval = PrelertSettings.getSettingOrDefault(UPDATE_INTERVAL_PROP, UPDATE_AFTER_COUNT_SECS);
+        long interval = PrelertSettings.getSettingOrDefault(env, UPDATE_INTERVAL_PROP, UPDATE_AFTER_COUNT_SECS);
         updateIntervalMs = interval * 1000;
         this.logger.info("Setting usage update interval to " + interval + " seconds");
     }

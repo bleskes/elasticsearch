@@ -6,7 +6,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Logger;
-
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
@@ -59,17 +59,17 @@ public class StatusReporter {
 
     private final AtomicLong lastRecordTimeEpochMs;
 
-    public StatusReporter(String jobId, UsageReporter usageReporter,
+    public StatusReporter(Environment env, String jobId, UsageReporter usageReporter,
             JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
-        this(jobId, usageReporter, dataCountsPersister, logger, new DataCounts(), bucketSpan);
+        this(env, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(), bucketSpan);
     }
 
-    public StatusReporter(String jobId, DataCounts counts, UsageReporter usageReporter,
+    public StatusReporter(Environment env, String jobId, DataCounts counts, UsageReporter usageReporter,
             JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
-        this(jobId, usageReporter, dataCountsPersister, logger, new DataCounts(counts), bucketSpan);
+        this(env, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(counts), bucketSpan);
     }
 
-    private StatusReporter(String jobId, UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister,
+    private StatusReporter(Environment env, String jobId, UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister,
             Logger logger, DataCounts totalCounts, long bucketSpan) {
         this.jobId = jobId;
         this.usageReporter = usageReporter;
@@ -81,10 +81,10 @@ public class StatusReporter {
 
         lastRecordTimeEpochMs = new AtomicLong();
 
-        acceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(
+        acceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(env,
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
                 ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS);
-        acceptablePercentOutOfOrderErrors = PrelertSettings.getSettingOrDefault(
+        acceptablePercentOutOfOrderErrors = PrelertSettings.getSettingOrDefault(env,
                 ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
                 ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS);
     }
@@ -308,9 +308,9 @@ public class StatusReporter {
 
         String status = String.format(Locale.ROOT,
                 "%d records written to autodetect; missingFieldCount=%d, "
-                + "invalidDateCount=%d, outOfOrderCount=%d, failedTransformCount=%d",
-                getProcessedRecordCount(), getMissingFieldErrorCount(), getDateParseErrorsCount(),
-                getOutOfOrderRecordCount(), getFailedTransformCount());
+                        + "invalidDateCount=%d, outOfOrderCount=%d, failedTransformCount=%d",
+                        getProcessedRecordCount(), getMissingFieldErrorCount(), getDateParseErrorsCount(),
+                        getOutOfOrderRecordCount(), getFailedTransformCount());
 
         logger.info(status);
 

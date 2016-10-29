@@ -2,13 +2,14 @@
 package org.elasticsearch.xpack.prelert.job.process;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -26,15 +27,18 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildEnvironment() {
+        Environment env = new Environment(Settings.EMPTY);
         ProcessBuilder pb = new ProcessBuilder();
-        ProcessCtrl.buildEnvironment(pb);
+        ProcessCtrl.buildEnvironment(env, pb);
 
         assertEquals(1, pb.environment().size());
 
-        assertEquals(ProcessCtrl.PRELERT_HOME, pb.environment().get(PrelertSettings.PRELERT_HOME_ENV));
+        // NORELEASE assertEquals(ProcessCtrl.PRELERT_HOME,
+        // pb.environment().get(PrelertSettings.PRELERT_HOME_ENV));
     }
 
     public void testBuildAutodetectCommand() {
+        Environment env = new Environment(Settings.EMPTY);
         JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
@@ -56,10 +60,10 @@ public class ProcessCtrlTest extends ESTestCase {
 
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
 
         assertEquals(17, command.size());
-        assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
+        assertTrue(command.contains(ProcessCtrl.getAutodetectPath(env)));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
         assertTrue(command.contains(ProcessCtrl.LATENCY_ARG + "360"));
@@ -69,7 +73,7 @@ public class ProcessCtrlTest extends ESTestCase {
         assertTrue(command.contains(ProcessCtrl.MULTIVARIATE_BY_FIELDS_ARG));
 
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));
-        assertTrue(command.contains(ProcessCtrl.MAX_ANOMALY_RECORDS_ARG));
+        assertTrue(command.contains(ProcessCtrl.maxAnomalyRecordsArg(env)));
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "tf"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + "unit-test-job"));
@@ -86,15 +90,17 @@ public class ProcessCtrlTest extends ESTestCase {
     }
 
     public void testBuildAutodetectCommand_defaultTimeField() {
+        Environment env = new Environment(Settings.EMPTY);
         JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "time"));
     }
 
     public void testBuildAutodetectCommand_givenPersistModelState() {
+        Environment env = new Environment(Settings.EMPTY);
         JobDetails job = new JobConfiguration().build();
         job.setId("unit-test-job");
 
@@ -102,40 +108,43 @@ public class ProcessCtrlTest extends ESTestCase {
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
         assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
 
         System.getProperties().remove(ProcessCtrl.DONT_PERSIST_MODEL_STATE);
 
-        command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
+        command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
     }
 
     public void testBuildAutodetectCommand_GivenNoIgnoreDowntime() {
+        Environment env = new Environment(Settings.EMPTY);
         JobDetails job = new JobConfiguration().build();
         job.setId("foo");
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, false);
 
         assertFalse(command.contains("--ignoreDowntime"));
     }
 
     public void testBuildAutodetectCommand_GivenIgnoreDowntimeParam() {
+        Environment env = new Environment(Settings.EMPTY);
         JobDetails job = new JobConfiguration().build();
         job.setId("foo");
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(job, logger, null, true);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, job, logger, null, true);
 
         assertTrue(command.contains("--ignoreDowntime"));
     }
 
     public void testBuildNormaliserCommand() throws IOException {
+        Environment env = new Environment(Settings.EMPTY);
         String jobId = "unit-test-job";
 
-        List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, 300, true);
+        List<String> command = ProcessCtrl.buildNormaliserCommand(env, jobId, 300, true);
 
         assertEquals(5, command.size());
-        assertTrue(command.contains(ProcessCtrl.NORMALIZE_PATH));
+        assertTrue(command.contains(ProcessCtrl.getNormalizePath(env)));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "300"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + jobId));
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));

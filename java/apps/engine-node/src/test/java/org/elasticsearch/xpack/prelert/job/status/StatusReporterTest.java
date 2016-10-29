@@ -11,6 +11,8 @@ import static org.mockito.Mockito.verify;
 import java.util.Date;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -53,8 +55,9 @@ public class StatusReporterTest extends ESTestCase {
 
     @Before
     public void setUpMocks() {
+        Environment env = new Environment(Settings.EMPTY);
         MockitoAnnotations.initMocks(this);
-        statusReporter = new StatusReporter(JOB_ID, usageReporter, jobDataCountsPersister, mockLogger, 10L);
+        statusReporter = new StatusReporter(env, JOB_ID, usageReporter, jobDataCountsPersister, mockLogger, 10L);
     }
 
 
@@ -73,6 +76,7 @@ public class StatusReporterTest extends ESTestCase {
 
 
     public void testComplexConstructor() throws Exception {
+        Environment env = new Environment(Settings.EMPTY);
         DataCounts counts = new DataCounts();
 
         counts.setProcessedRecordCount(1);
@@ -83,7 +87,7 @@ public class StatusReporterTest extends ESTestCase {
         counts.setFailedTransformCount(6);
         counts.setExcludedRecordCount(7);
 
-        statusReporter = new StatusReporter(JOB_ID, counts, usageReporter,
+        statusReporter = new StatusReporter(env, JOB_ID, counts, usageReporter,
                 jobDataCountsPersister, mockLogger, 1);
         DataCounts stats = statusReporter.incrementalStats();
         assertNotNull(stats);

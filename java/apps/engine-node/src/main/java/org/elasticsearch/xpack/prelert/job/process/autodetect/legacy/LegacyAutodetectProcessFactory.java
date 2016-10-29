@@ -2,6 +2,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.legacy;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -14,6 +15,7 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,21 +27,23 @@ public class LegacyAutodetectProcessFactory implements AutodetectProcessFactory 
 
     private static final Logger LOGGER = Loggers.getLogger(LegacyAutodetectProcessFactory.class);
     private final JobProvider jobProvider;
+    private Environment env;
 
-    public LegacyAutodetectProcessFactory(JobProvider jobProvider) {
+    public LegacyAutodetectProcessFactory(JobProvider jobProvider, Environment env) {
+        this.env = env;
         this.jobProvider = Objects.requireNonNull(jobProvider);
     }
 
     @Override
     public AutodetectProcess createAutodetectProcess(JobDetails jobDetails, boolean ignoreDowntime) {
-        List<File> filesToDelete = new ArrayList<>();
+        List<Path> filesToDelete = new ArrayList<>();
         Process nativeProcess = createNativeProcess(jobDetails, ignoreDowntime, filesToDelete);
 
         int numberOfAnalysisFields = jobDetails.getAnalysisConfig().analysisFields().size();
         return new LegacyAutodetectProcess(nativeProcess, numberOfAnalysisFields, filesToDelete);
     }
 
-    private Process createNativeProcess(JobDetails job, boolean ignoreDowntime, List<File> filesToDelete) {
+    private Process createNativeProcess(JobDetails job, boolean ignoreDowntime, List<Path> filesToDelete) {
 
         String jobId = job.getId();
         Quantiles quantiles = jobProvider.getQuantiles(jobId);
@@ -48,7 +52,7 @@ public class LegacyAutodetectProcessFactory implements AutodetectProcessFactory 
         Process nativeProcess = null;
 
         try {
-            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER)
+            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER, env)
                     .ignoreDowntime(ignoreDowntime)
                     .referencedLists(resolveLists(job.getAnalysisConfig().extractReferencedLists()));
 
