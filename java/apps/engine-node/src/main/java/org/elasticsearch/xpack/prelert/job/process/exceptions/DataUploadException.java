@@ -4,6 +4,8 @@ package org.elasticsearch.xpack.prelert.job.process.exceptions;
 
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 
+import java.util.Locale;
+
 /**
  * This exception is meant to be a wrapper around RuntimeExceptions
  * that may be thrown during data upload. The exception message
@@ -17,7 +19,7 @@ public class DataUploadException extends RuntimeException {
             + "(invalidDateCount = %d, missingFieldCount = %d, outOfOrderTimeStampCount = %d)";
 
     public DataUploadException(DataCounts dataCounts, Throwable cause) {
-        super(String.format(MSG_FORMAT,
+        super(String.format(Locale.ROOT, MSG_FORMAT,
                 dataCounts.getInputRecordCount(),
                 dataCounts.getInvalidDateCount(),
                 dataCounts.getMissingFieldCount(),

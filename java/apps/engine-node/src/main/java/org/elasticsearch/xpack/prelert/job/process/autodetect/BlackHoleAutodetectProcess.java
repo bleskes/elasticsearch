@@ -13,6 +13,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 
 /**
  * A placeholder class simulating the actions of the native Autodetect process.
@@ -66,7 +67,7 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
      */
     @Override
     public String flushJob(InterimResultsParams params) throws IOException {
-        pipedOutputStream.write(String.format(FLUSH_ACK_TEMPLATE, FLUSH_ID).getBytes(StandardCharsets.UTF_8));
+        pipedOutputStream.write(String.format(Locale.ROOT, FLUSH_ACK_TEMPLATE, FLUSH_ID).getBytes(StandardCharsets.UTF_8));
         pipedOutputStream.flush();
         return FLUSH_ID;
     }

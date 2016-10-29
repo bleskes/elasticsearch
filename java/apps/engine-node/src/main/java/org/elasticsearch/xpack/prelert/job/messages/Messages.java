@@ -275,7 +275,7 @@ public final class Messages
 
     public static ResourceBundle load()
     {
-        return ResourceBundle.getBundle(Messages.BUNDLE_NAME);
+        return ResourceBundle.getBundle(Messages.BUNDLE_NAME, Locale.getDefault());
     }
 
     /**

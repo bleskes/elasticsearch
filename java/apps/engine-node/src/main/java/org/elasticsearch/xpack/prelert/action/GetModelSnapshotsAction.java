@@ -50,10 +50,11 @@ import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Objects;
 
 public class GetModelSnapshotsAction
-        extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response, GetModelSnapshotsAction.RequestBuilder> {
+extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response, GetModelSnapshotsAction.RequestBuilder> {
 
     public static final GetModelSnapshotsAction INSTANCE = new GetModelSnapshotsAction();
     public static final String NAME = "cluster:admin/prelert/modelsnapshots/get";
@@ -328,7 +329,7 @@ public class GetModelSnapshotsAction
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            logger.debug(String.format(
+            logger.debug(String.format(Locale.ROOT,
                     "Get model snapshots for job %s. skip = %d, take = %d"
                             + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
                     request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
@@ -341,7 +342,7 @@ public class GetModelSnapshotsAction
                 throw ExceptionsHelper.missingException(request.getJobId());
             }
 
-            logger.debug(String.format("Return %d model snapshots for job %s", page.hitCount(), request.getJobId()));
+            logger.debug(String.format(Locale.ROOT, "Return %d model snapshots for job %s", page.hitCount(), request.getJobId()));
             listener.onResponse(new Response(page));
         }
 

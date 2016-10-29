@@ -47,6 +47,7 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -230,7 +231,7 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
                 logger.debug("Returning job '" + optionalJob.get().getJobId() + "'");
             }
             else {
-                logger.debug(String.format("Cannot find job '%s'", request.getJobId()));
+                logger.debug(String.format(Locale.ROOT, "Cannot find job '%s'", request.getJobId()));
             }
             listener.onResponse(new Response(jobDocument));
         }

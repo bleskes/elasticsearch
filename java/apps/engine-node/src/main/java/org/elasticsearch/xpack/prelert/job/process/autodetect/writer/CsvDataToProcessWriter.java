@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
@@ -49,8 +50,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
     private static final int MAX_LINES_PER_RECORD = 10000;
 
     public CsvDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
-                                  DataDescription dataDescription, AnalysisConfig analysisConfig,
-                                  TransformConfigs transforms, StatusReporter statusReporter, Logger logger) {
+            DataDescription dataDescription, AnalysisConfig analysisConfig,
+            TransformConfigs transforms, StatusReporter statusReporter, Logger logger) {
         super(includeControlField, autodetectProcess, dataDescription, analysisConfig, transforms,
                 statusReporter, logger);
     }
@@ -68,7 +69,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
      */
     @Override
     public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         CsvPreference csvPref = new CsvPreference.Builder(
                 dataDescription.getQuoteCharacter(),
                 dataDescription.getFieldDelimiter(),
@@ -152,8 +153,8 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
             }
             Integer index = inputFieldIndexes.get(field);
             if (index == null) {
-                String msg = String.format("Field configured for analysis "
-                                + "'%s' is not in the CSV header '%s'",
+                String msg = String.format(Locale.ROOT, "Field configured for analysis "
+                        + "'%s' is not in the CSV header '%s'",
                         field, Arrays.toString(header));
 
                 logger.error(msg);

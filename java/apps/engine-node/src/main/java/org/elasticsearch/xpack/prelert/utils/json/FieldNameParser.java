@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Base class that allows parsing of simple JSON objects given a JsonParser
@@ -75,7 +76,7 @@ public abstract class FieldNameParser<T> {
     private void parse(T data) throws IOException {
         JsonToken token = parser.getCurrentToken();
         if (JsonToken.START_OBJECT != token) {
-            String msg = String.format(
+            String msg = String.format(Locale.ROOT,
                     "Cannot parse %s. First token '%s', is not the start object token",
                     objectName, parser.getText());
             logger.error(msg);
@@ -90,17 +91,17 @@ public abstract class FieldNameParser<T> {
         while (token != JsonToken.END_OBJECT) {
             switch (token) {
             case START_OBJECT:
-                logger.error(String.format("Start object parsed in %s", objectName));
+                logger.error(String.format(Locale.ROOT, "Start object parsed in %s", objectName));
                 break;
             case END_OBJECT:
-                logger.error(String.format("End object parsed in %s", objectName));
+                logger.error(String.format(Locale.ROOT, "End object parsed in %s", objectName));
                 break;
             case FIELD_NAME:
                 String fieldName = parser.getCurrentName();
                 handleFieldName(fieldName, data);
                 break;
             default:
-                logger.warn(String.format(
+                logger.warn(String.format(Locale.ROOT, 
                         "Parsing error: Only simple fields expected in %s not %s",
                         objectName, token));
                 break;

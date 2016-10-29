@@ -29,6 +29,7 @@ import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
 public class ServerBootstrap {
@@ -44,7 +45,7 @@ public class ServerBootstrap {
     public static void main(String[] args) throws Exception {
 
         boolean useNativeProcess = false;
-        if (args.length > 0 && PrelertPlugin.USE_NATIVE_PROCESS_OPTION.toLowerCase().equals(args[0].toLowerCase())) {
+        if (args.length > 0 && PrelertPlugin.USE_NATIVE_PROCESS_OPTION.toLowerCase(Locale.ROOT).equals(args[0].toLowerCase(Locale.ROOT))) {
             LOGGER.info("Using the native autodetect process");
             useNativeProcess = true;
         }

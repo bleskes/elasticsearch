@@ -4,6 +4,7 @@ package org.elasticsearch.xpack.prelert.transforms.date;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
 
@@ -21,7 +22,7 @@ public class DateFormatTransform extends DateTransform {
     private final TimestampConverter dateToEpochConverter;
 
     public DateFormatTransform(String timeFormat, ZoneId defaultTimezone,
-                               List<TransformIndex> readIndexes, List<TransformIndex> writeIndexes, Logger logger) {
+            List<TransformIndex> readIndexes, List<TransformIndex> writeIndexes, Logger logger) {
         super(readIndexes, writeIndexes, logger);
 
         this.timeFormat = timeFormat;
@@ -33,7 +34,7 @@ public class DateFormatTransform extends DateTransform {
         try {
             return dateToEpochConverter.toEpochMillis(field);
         } catch (DateTimeParseException pe) {
-            String message = String.format("Cannot parse date '%s' with format string '%s'",
+            String message = String.format(Locale.ROOT, "Cannot parse date '%s' with format string '%s'",
                     field, timeFormat);
 
             throw new ParseTimestampException(message);

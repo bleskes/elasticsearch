@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -475,7 +476,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
      * @return The new unique job Id
      */
     static String generateJobId(String hostName) {
-        String dateStr = ID_DATEFORMAT.format(LocalDateTime.now());
+        String dateStr = ID_DATEFORMAT.format(LocalDateTime.now(ZoneId.systemDefault()));
         long sequence = ID_SEQUENCE.incrementAndGet();
         if (hostName == null) {
             return String.format(Locale.ROOT, "%s-%05d", dateStr, sequence);

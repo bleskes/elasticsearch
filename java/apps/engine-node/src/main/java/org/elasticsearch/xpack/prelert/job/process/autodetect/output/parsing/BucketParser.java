@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 final class BucketParser extends FieldNameParser<Bucket> {
     private static final Logger LOGGER = Loggers.getLogger(BucketParser.class);
@@ -33,47 +34,47 @@ final class BucketParser extends FieldNameParser<Bucket> {
     protected void handleFieldName(String fieldName, Bucket bucket) throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case "timestamp":
-                parseTimestamp(bucket, token);
-                break;
-            case "anomalyScore":
-                bucket.setAnomalyScore(parseAsDoubleOrZero(fieldName));
-                bucket.setInitialAnomalyScore(bucket.getAnomalyScore());
-                break;
-            case "maxNormalizedProbability":
-                bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(fieldName));
-                break;
-            case "recordCount":
-                bucket.setRecordCount(parseAsIntOrZero(fieldName));
-                break;
-            case "eventCount":
-                bucket.setEventCount(parseAsLongOrZero(fieldName));
-                break;
-            case "isInterim":
-                bucket.setInterim(parseAsBooleanOrNull(fieldName));
-                break;
-            case "records":
-                bucket.setRecords(parseRecords(fieldName));
-                break;
-            case "bucketInfluencers":
-                bucket.setBucketInfluencers(parseBucketInfluencers(fieldName));
-                break;
-            case "influencers":
-                bucket.setInfluencers(parseInfluencers(fieldName));
-                break;
-            case "bucketSpan":
-                bucket.setBucketSpan(parseAsLongOrZero(fieldName));
-                break;
-            case "processingTimeMs":
-                bucket.setProcessingTimeMs(parseAsLongOrZero(fieldName));
-                break;
-            case "partitionScores":
-                bucket.setPartitionScores(parsePartitionScores(fieldName));
-                break;
-            default:
-                LOGGER.warn(String.format("Parse error: unknown field in Bucket %s:%s",
-                        fieldName, token.asString()));
-                break;
+        case "timestamp":
+            parseTimestamp(bucket, token);
+            break;
+        case "anomalyScore":
+            bucket.setAnomalyScore(parseAsDoubleOrZero(fieldName));
+            bucket.setInitialAnomalyScore(bucket.getAnomalyScore());
+            break;
+        case "maxNormalizedProbability":
+            bucket.setMaxNormalizedProbability(parseAsDoubleOrZero(fieldName));
+            break;
+        case "recordCount":
+            bucket.setRecordCount(parseAsIntOrZero(fieldName));
+            break;
+        case "eventCount":
+            bucket.setEventCount(parseAsLongOrZero(fieldName));
+            break;
+        case "isInterim":
+            bucket.setInterim(parseAsBooleanOrNull(fieldName));
+            break;
+        case "records":
+            bucket.setRecords(parseRecords(fieldName));
+            break;
+        case "bucketInfluencers":
+            bucket.setBucketInfluencers(parseBucketInfluencers(fieldName));
+            break;
+        case "influencers":
+            bucket.setInfluencers(parseInfluencers(fieldName));
+            break;
+        case "bucketSpan":
+            bucket.setBucketSpan(parseAsLongOrZero(fieldName));
+            break;
+        case "processingTimeMs":
+            bucket.setProcessingTimeMs(parseAsLongOrZero(fieldName));
+            break;
+        case "partitionScores":
+            bucket.setPartitionScores(parsePartitionScores(fieldName));
+            break;
+        default:
+            LOGGER.warn(String.format(Locale.ROOT, "Parse error: unknown field in Bucket %s:%s",
+                    fieldName, token.asString()));
+            break;
         }
     }
 
@@ -84,7 +85,7 @@ final class BucketParser extends FieldNameParser<Bucket> {
             bucket.setTimestamp(new Date(val));
         } else {
             LOGGER.warn("Cannot parse " + Bucket.TIMESTAMP + " : " + parser.getText()
-                    + " as a long");
+            + " as a long");
         }
     }
 

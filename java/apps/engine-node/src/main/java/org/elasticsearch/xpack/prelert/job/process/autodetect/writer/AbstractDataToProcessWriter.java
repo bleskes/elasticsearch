@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -68,8 +69,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
 
 
     protected AbstractDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
-                                          DataDescription dataDescription, AnalysisConfig analysisConfig,
-                                          TransformConfigs transformConfigs, StatusReporter statusReporter, Logger logger) {
+            DataDescription dataDescription, AnalysisConfig analysisConfig,
+            TransformConfigs transformConfigs, StatusReporter statusReporter, Logger logger) {
         this.includeControlField = includeControlField;
         this.autodetectProcess = Objects.requireNonNull(autodetectProcess);
         this.dataDescription = Objects.requireNonNull(dataDescription);
@@ -170,7 +171,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
                 readIndexes.add(new TransformIndex(TransformFactory.SCRATCH_ARRAY_INDEX, index));
             } else {
                 throw new IllegalStateException(
-                        String.format("Transform input date field '%s' not found",
+                        String.format(Locale.ROOT, "Transform input date field '%s' not found",
                                 dataDescription.getTimeField()));
             }
         }
@@ -406,7 +407,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * @param dateTimeField date field
      */
     protected final Map<String, Integer> scratchAreaIndexes(Collection<String> inputFields, Collection<String> outputFields,
-                                                            String dateTimeField) {
+            String dateTimeField) {
         Set<String> requiredFields = new HashSet<>(transformConfigs.outputFieldNames());
         boolean dateTimeFieldIsTransformOutput = requiredFields.contains(dateTimeField);
 
@@ -467,8 +468,8 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * otherwise the field cannnot be found.
      */
     protected abstract boolean checkForMissingFields(Collection<String> inputFields, Map<String, Integer> inputFieldIndexes,
-                                                     String[] header)
-            throws MissingFieldException;
+            String[] header)
+                    throws MissingFieldException;
 
 
     /**

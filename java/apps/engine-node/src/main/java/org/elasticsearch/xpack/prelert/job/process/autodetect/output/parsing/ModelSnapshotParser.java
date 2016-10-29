@@ -10,6 +10,7 @@ import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 
 final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot> {
     private static final Logger LOGGER = Loggers.getLogger(ModelSnapshotParser.class);
@@ -55,7 +56,7 @@ final class ModelSnapshotParser extends FieldNameParser<ModelSnapshot> {
             modelSnapshot.setLatestResultTimeStamp(new Date(parseAsLongOrZero(fieldName)));
             break;
         default:
-            LOGGER.warn(String.format("Parse error unknown field in ModelSnapshot %s:%s",
+            LOGGER.warn(String.format(Locale.ROOT, "Parse error unknown field in ModelSnapshot %s:%s",
                     fieldName, token.asString()));
             break;
         }

@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 
@@ -223,7 +224,7 @@ public class ProcessCtrl {
         pb.environment().clear();
         pb.environment().put(PrelertSettings.PRELERT_HOME_ENV, PRELERT_HOME);
 
-        LOGGER.info(String.format("Process Environment = " + pb.environment().toString()));
+        LOGGER.info(String.format(Locale.ROOT, "Process Environment = " + pb.environment().toString()));
     }
 
 
@@ -265,7 +266,7 @@ public class ProcessCtrl {
                     LOGGER.debug("autodetect version output = " + output);
 
                     if (exitValue < 0) {
-                        return String.format("Error autodetect returned %d. \nError Output = '%s'.\n%s",
+                        return String.format(Locale.ROOT, "Error autodetect returned %d. \nError Output = '%s'.\n%s",
                                 exitValue, output, UNKNOWN_VERSION);
                     }
                     return output.isEmpty() ? UNKNOWN_VERSION : output;
@@ -398,8 +399,8 @@ public class ProcessCtrl {
             // Persist model state every few hours even if the job isn't closed
             long persistInterval = (job.getBackgroundPersistInterval() == null) ?
                     (DEFAULT_BASE_PERSIST_INTERVAL + intervalStagger) :
-                    job.getBackgroundPersistInterval();
-            command.add(PERSIST_INTERVAL_ARG + persistInterval);
+                        job.getBackgroundPersistInterval();
+                    command.add(PERSIST_INTERVAL_ARG + persistInterval);
         }
 
         int maxQuantileInterval = BASE_MAX_QUANTILE_INTERVAL + intervalStagger;
@@ -452,8 +453,8 @@ public class ProcessCtrl {
      * is not used.
      */
     public static Process buildNormaliser(String jobId, String quantilesState,
-                                          Integer bucketSpan, boolean perPartitionNormalization, Logger logger)
-            throws IOException {
+            Integer bucketSpan, boolean perPartitionNormalization, Logger logger)
+                    throws IOException {
         logger.info("PRELERT_HOME is set to " + PRELERT_HOME);
 
         List<String> command = ProcessCtrl.buildNormaliserCommand(jobId, bucketSpan,
@@ -482,8 +483,8 @@ public class ProcessCtrl {
     }
 
     static List<String> buildNormaliserCommand(String jobId, Integer bucketSpan,
-                                               boolean perPartitionNormalization)
-            throws IOException {
+            boolean perPartitionNormalization)
+                    throws IOException {
         List<String> command = new ArrayList<>();
         command.add(NORMALIZE_PATH);
         addIfNotNull(bucketSpan, BUCKET_SPAN_ARG, command);

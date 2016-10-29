@@ -29,6 +29,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 /**
  * Manage job logs
@@ -67,11 +68,11 @@ public class JobLogs {
 
     /**
      * Delete all the files in the directory
-     * 
+     *
      * <pre>
      * logDir / jobId
      * </pre>
-     * 
+     *
      * .
      *
      * @param logDir
@@ -88,7 +89,7 @@ public class JobLogs {
 
         Path logPath = sanitizePath(FileSystems.getDefault().getPath(logDir, jobId), logDir);
 
-        LOGGER.info(String.format("Deleting log files %s/%s", logDir, jobId));
+        LOGGER.info(String.format(Locale.ROOT, "Deleting log files %s/%s", logDir, jobId));
 
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(logPath)) {
             for (Path logFile : directoryStream) {

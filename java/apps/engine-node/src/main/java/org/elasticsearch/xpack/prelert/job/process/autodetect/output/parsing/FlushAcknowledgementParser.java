@@ -9,6 +9,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
 
 import java.io.IOException;
+import java.util.Locale;
 
 public final class FlushAcknowledgementParser extends FieldNameParser<FlushAcknowledgement> {
     private static final Logger LOGGER = Loggers.getLogger(FlushAcknowledgementParser.class);
@@ -28,7 +29,7 @@ public final class FlushAcknowledgementParser extends FieldNameParser<FlushAckno
         if (FlushAcknowledgement.FLUSH.equals(fieldName)) {
             ack.setId(parseAsStringOrNull(fieldName));
         } else {
-            LOGGER.warn(String.format("Parse error unknown field in FlushAcknowledgement %s:%s",
+            LOGGER.warn(String.format(Locale.ROOT, "Parse error unknown field in FlushAcknowledgement %s:%s",
                     fieldName, token.asString()));
         }
     }

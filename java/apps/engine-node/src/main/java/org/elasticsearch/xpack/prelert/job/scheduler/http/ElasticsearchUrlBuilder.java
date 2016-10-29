@@ -1,6 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.scheduler.http;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -33,7 +34,7 @@ public class ElasticsearchUrlBuilder {
     }
 
     public String buildIndexSettingsUrl(String index) {
-        return newUrlBuilder().append(String.format(INDEX_SETTINGS_END_POINT, index)).toString();
+        return newUrlBuilder().append(String.format(Locale.ROOT, INDEX_SETTINGS_END_POINT, index)).toString();
     }
 
     public String buildSearchSizeOneUrl() {
@@ -42,7 +43,7 @@ public class ElasticsearchUrlBuilder {
 
     public String buildInitScrollUrl(int scrollSize) {
         return buildUrlWithIndicesAndTypes()
-                .append(String.format(SEARCH_SCROLL_END_POINT, scrollSize))
+                .append(String.format(Locale.ROOT, SEARCH_SCROLL_END_POINT, scrollSize))
                 .toString();
     }
 

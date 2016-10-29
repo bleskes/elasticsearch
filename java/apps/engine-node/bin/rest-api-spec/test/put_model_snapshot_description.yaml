@@ -67,7 +67,6 @@ setup:
         snapshotId: "foo"
         body: >
           {
-            "some_field": "foo",
             "description": "new_description"
           }
 
@@ -102,6 +101,5 @@ setup:
         snapshotId: "foo"
         body: >
           {
-            "some_field": "foo",
             "description": "bar"
           }

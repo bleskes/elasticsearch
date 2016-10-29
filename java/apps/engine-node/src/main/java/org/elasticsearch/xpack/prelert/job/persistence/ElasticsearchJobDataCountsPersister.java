@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import java.io.IOException;
+import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
@@ -39,13 +40,13 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
             XContentBuilder content = serialiseCounts(counts);
 
             client.prepareIndex(elasticJobId.getIndex(), DataCounts.TYPE.getPreferredName(), elasticJobId.getId() + "-data-counts")
-                    .setSource(content).execute().actionGet();
+            .setSource(content).execute().actionGet();
         }
         catch (IOException ioe) {
             logger.warn("Error serialising DataCounts stats", ioe);
         }
         catch (IndexNotFoundException e) {
-            String msg = String.format("Error writing the job '%s' status stats.", elasticJobId.getId());
+            String msg = String.format(Locale.ROOT, "Error writing the job '%s' status stats.", elasticJobId.getId());
             logger.warn(msg, e);
         }
     }

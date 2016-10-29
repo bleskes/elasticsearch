@@ -10,6 +10,7 @@ import org.elasticsearch.common.logging.Loggers;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 
 final class ModelDebugOutputParser extends FieldNameParser<ModelDebugOutput> {
     private static final Logger LOGGER = Loggers.getLogger(ModelDebugOutputParser.class);
@@ -65,7 +66,7 @@ final class ModelDebugOutputParser extends FieldNameParser<ModelDebugOutput> {
             modelDebugOutput.setActual(parseAsDoubleOrZero(fieldName));
             break;
         default:
-            LOGGER.warn(String.format("Parse error unknown field in ModelDebugOutput %s:%s",
+            LOGGER.warn(String.format(Locale.ROOT, "Parse error unknown field in ModelDebugOutput %s:%s",
                     fieldName, token.asString()));
             break;
         }

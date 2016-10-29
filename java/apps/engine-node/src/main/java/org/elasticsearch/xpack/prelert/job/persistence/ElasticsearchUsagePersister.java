@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,7 @@ public class ElasticsearchUsagePersister implements UsagePersister {
     public ElasticsearchUsagePersister(Client client, Logger logger) {
         this.client = client;
         this.logger = logger;
-        dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX");
+        dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXX", Locale.ROOT);
         upsertMap = new HashMap<>();
 
         upsertMap.put(ElasticsearchMappings.ES_TIMESTAMP, "");

@@ -63,7 +63,7 @@ public class DateTimeFormatterTimestampConverter implements TimestampConverter
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .parseLenient()
                 .appendPattern(pattern)
-                .parseDefaulting(ChronoField.YEAR_OF_ERA, LocalDate.now().getYear())
+                .parseDefaulting(ChronoField.YEAR_OF_ERA, LocalDate.now(defaultTimezone).getYear())
                 .toFormatter();
 
         String now = formatter.format(ZonedDateTime.ofInstant(Instant.ofEpochSecond(0), ZoneOffset.UTC));

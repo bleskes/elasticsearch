@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.transforms.date;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
 
@@ -18,7 +19,7 @@ public class DoubleDateTransform extends DateTransform {
     private final boolean isMillisecond;
 
     public DoubleDateTransform(boolean isMillisecond, List<TransformIndex> readIndexes,
-                               List<TransformIndex> writeIndexes, Logger logger) {
+            List<TransformIndex> writeIndexes, Logger logger) {
         super(readIndexes, writeIndexes, logger);
         this.isMillisecond = isMillisecond;
     }
@@ -29,7 +30,7 @@ public class DoubleDateTransform extends DateTransform {
             long longValue = Double.valueOf(field).longValue();
             return isMillisecond ? longValue : longValue * SECONDS_TO_MS;
         } catch (NumberFormatException e) {
-            String message = String.format("Cannot parse timestamp '%s' as epoch value", field);
+            String message = String.format(Locale.ROOT, "Cannot parse timestamp '%s' as epoch value", field);
             throw new ParseTimestampException(message);
         }
     }

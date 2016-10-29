@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Autodetect process based on the old Java API process code.
@@ -79,7 +80,7 @@ public class LegacyAutodetectProcess implements AutodetectProcess {
 
             // wait for the process to exit
             int exitValue = nativeProcess.waitFor();
-            String msg = String.format("Process returned with value %d.", exitValue);
+            String msg = String.format(Locale.ROOT, "Process returned with value %d.", exitValue);
             if (exitValue != 0) {
                 // Read any error output from the process
                 StringBuilder sb = new StringBuilder(msg).append("\n");
@@ -157,7 +158,7 @@ public class LegacyAutodetectProcess implements AutodetectProcess {
             int exitValue = nativeProcess.exitValue();
 
             // If we get here the process has exited.
-            String msg = String.format("Process exited with code %d.", exitValue);
+            String msg = String.format(Locale.ROOT, "Process exited with code %d.", exitValue);
             LOGGER.info(msg);
             return false;
         } catch (IllegalThreadStateException e) {

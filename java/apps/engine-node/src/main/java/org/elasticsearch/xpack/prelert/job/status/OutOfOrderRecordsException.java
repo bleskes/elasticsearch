@@ -4,6 +4,8 @@ package org.elasticsearch.xpack.prelert.job.status;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 
+import java.util.Locale;
+
 /**
  * Records sent to autodetect should be in ascending chronological
  * order else they are ignored and a error logged. This exception
@@ -16,7 +18,8 @@ public class OutOfOrderRecordsException extends JobException {
     private final long totalNumber;
 
     public OutOfOrderRecordsException(long numberBadRecords, long totalNumberRecords) {
-        super(String.format("A high proportion of records are not in ascending chronological order (%d of %d) and/or not within latency.",
+        super(String.format(Locale.ROOT,
+                "A high proportion of records are not in ascending chronological order (%d of %d) and/or not within latency.",
                 numberBadRecords, totalNumberRecords), ErrorCodes.TOO_MANY_OUT_OF_ORDER_RECORDS);
 
         numberBad = numberBadRecords;

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
@@ -59,7 +60,7 @@ public class AutodetectProcessManager implements DataProcessor {
             // TODO check for errors from autodetect
         }
         catch (IOException e) {
-            String msg = String.format("Exception writing to process for job %s", jobId);
+            String msg = String.format(Locale.ROOT, "Exception writing to process for job %s", jobId);
 
             if (e.getCause() instanceof TimeoutException)
             {
@@ -100,7 +101,7 @@ public class AutodetectProcessManager implements DataProcessor {
         }
         catch (IOException ioe)
         {
-            String msg = String.format("Exception flushing process for job %s", jobId);
+            String msg = String.format(Locale.ROOT, "Exception flushing process for job %s", jobId);
             LOGGER.warn(msg);
             throw ExceptionsHelper.serverError(msg, ioe, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
         }
@@ -176,7 +177,7 @@ public class AutodetectProcessManager implements DataProcessor {
         }
         else
         {
-            String message = String.format("Cannot alert on job '%s' because the job is not running", jobId);
+            String message = String.format(Locale.ROOT, "Cannot alert on job '%s' because the job is not running", jobId);
             LOGGER.info(message);
             throw new ClosedJobException(message);
         }

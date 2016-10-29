@@ -10,6 +10,7 @@ import org.elasticsearch.xpack.prelert.job.results.PartitionScore;
 import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
 
 import java.io.IOException;
+import java.util.Locale;
 
 public class PartitionScoreParser extends FieldNameParser<PartitionScore>
 {
@@ -45,7 +46,7 @@ public class PartitionScoreParser extends FieldNameParser<PartitionScore>
             score.setPartitionFieldValue(parseAsStringOrNull(fieldName));
             break;
         default:
-            LOGGER.warn(String.format("Parse error unknown field in PartitionScore %s:%s",
+            LOGGER.warn(String.format(Locale.ROOT, "Parse error unknown field in PartitionScore %s:%s",
                     fieldName, token.asString()));
             break;
         }

@@ -10,6 +10,7 @@ import org.elasticsearch.xpack.prelert.utils.json.FieldNameParser;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 
 // NORELEASE remove this class in favour of ModelSizeStats.PARSER when we remove Jackson
 final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats> {
@@ -29,32 +30,32 @@ final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats> {
             throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {
-            case "modelBytes":
-                modelSizeStats.setModelBytes(parseAsLongOrZero(fieldName));
-                break;
-            case "totalByFieldCount":
-                modelSizeStats.setTotalByFieldCount(parseAsLongOrZero(fieldName));
-                break;
-            case "totalOverFieldCount":
-                modelSizeStats.setTotalOverFieldCount(parseAsLongOrZero(fieldName));
-                break;
-            case "totalPartitionFieldCount":
-                modelSizeStats.setTotalPartitionFieldCount(parseAsLongOrZero(fieldName));
-                break;
-            case "bucketAllocationFailuresCount":
-                modelSizeStats.setBucketAllocationFailuresCount(parseAsLongOrZero(fieldName));
-                break;
-            case "memoryStatus":
-                int status = parseAsIntOrZero(fieldName);
-                modelSizeStats.setMemoryStatus(ModelSizeStats.MemoryStatus.values()[status]);
-                break;
-            case "bucketTime":
-                modelSizeStats.setTimestamp(parseTimestamp(token));
-                break;
-            default:
-                LOGGER.warn(String.format("Parse error unknown field in ModelSizeStats %s:%s",
-                        fieldName, token.asString()));
-                break;
+        case "modelBytes":
+            modelSizeStats.setModelBytes(parseAsLongOrZero(fieldName));
+            break;
+        case "totalByFieldCount":
+            modelSizeStats.setTotalByFieldCount(parseAsLongOrZero(fieldName));
+            break;
+        case "totalOverFieldCount":
+            modelSizeStats.setTotalOverFieldCount(parseAsLongOrZero(fieldName));
+            break;
+        case "totalPartitionFieldCount":
+            modelSizeStats.setTotalPartitionFieldCount(parseAsLongOrZero(fieldName));
+            break;
+        case "bucketAllocationFailuresCount":
+            modelSizeStats.setBucketAllocationFailuresCount(parseAsLongOrZero(fieldName));
+            break;
+        case "memoryStatus":
+            int status = parseAsIntOrZero(fieldName);
+            modelSizeStats.setMemoryStatus(ModelSizeStats.MemoryStatus.values()[status]);
+            break;
+        case "bucketTime":
+            modelSizeStats.setTimestamp(parseTimestamp(token));
+            break;
+        default:
+            LOGGER.warn(String.format(Locale.ROOT, "Parse error unknown field in ModelSizeStats %s:%s",
+                    fieldName, token.asString()));
+            break;
         }
     }
 

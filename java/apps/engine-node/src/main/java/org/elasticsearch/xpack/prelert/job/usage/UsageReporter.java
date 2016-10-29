@@ -7,6 +7,8 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
 import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 
+import java.util.Locale;
+
 /**
  * Reports the number of bytes, fields and records read.
  * Persistence is done via {@linkplain UsagePersister}
@@ -99,7 +101,7 @@ public class UsageReporter {
      * @param epochMs The time now - saved as the last update time
      */
     private void reportUsage(long epochMs) {
-        logger.info(String.format("An additional %dKiB, %d fields and %d records read by job %s",
+        logger.info(String.format(Locale.ROOT, "An additional %dKiB, %d fields and %d records read by job %s",
                 bytesReadSinceLastReport >> 10, fieldsReadSinceLastReport, recordsReadSinceLastReport, jobId));
 
         try {

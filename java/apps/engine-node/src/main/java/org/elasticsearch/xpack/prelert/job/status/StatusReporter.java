@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.status;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Logger;
@@ -305,7 +306,8 @@ public class StatusReporter {
             return;
         }
 
-        String status = String.format("%d records written to autodetect; missingFieldCount=%d, "
+        String status = String.format(Locale.ROOT,
+                "%d records written to autodetect; missingFieldCount=%d, "
                 + "invalidDateCount=%d, outOfOrderCount=%d, failedTransformCount=%d",
                 getProcessedRecordCount(), getMissingFieldErrorCount(), getDateParseErrorsCount(),
                 getOutOfOrderRecordCount(), getFailedTransformCount());

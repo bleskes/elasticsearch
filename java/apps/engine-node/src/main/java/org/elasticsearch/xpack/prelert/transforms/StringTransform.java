@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.transforms;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.Logger;
@@ -10,7 +11,7 @@ public class StringTransform extends Transform {
     private final Function<String, String> convertFunction;
 
     private StringTransform(Function<String, String> convertFunction,
-                            List<TransformIndex> readIndexes, List<TransformIndex> writeIndexes, Logger logger) {
+            List<TransformIndex> readIndexes, List<TransformIndex> writeIndexes, Logger logger) {
         super(readIndexes, writeIndexes, logger);
         this.convertFunction = convertFunction;
         if (readIndexes.size() != 1 || writeIndexes.size() != 1) {
@@ -28,17 +29,17 @@ public class StringTransform extends Transform {
     }
 
     public static StringTransform createLowerCase(List<TransformIndex> readIndexes,
-                                                  List<TransformIndex> writeIndexes, Logger logger) {
-        return new StringTransform(s -> s.toLowerCase(), readIndexes, writeIndexes, logger);
+            List<TransformIndex> writeIndexes, Logger logger) {
+        return new StringTransform(s -> s.toLowerCase(Locale.ROOT), readIndexes, writeIndexes, logger);
     }
 
     public static StringTransform createUpperCase(List<TransformIndex> readIndexes,
-                                                  List<TransformIndex> writeIndexes, Logger logger) {
-        return new StringTransform(s -> s.toUpperCase(), readIndexes, writeIndexes, logger);
+            List<TransformIndex> writeIndexes, Logger logger) {
+        return new StringTransform(s -> s.toUpperCase(Locale.ROOT), readIndexes, writeIndexes, logger);
     }
 
     public static StringTransform createTrim(List<TransformIndex> readIndexes,
-                                             List<TransformIndex> writeIndexes, Logger logger) {
+            List<TransformIndex> writeIndexes, Logger logger) {
         return new StringTransform(s -> s.trim(), readIndexes, writeIndexes, logger);
     }
 }

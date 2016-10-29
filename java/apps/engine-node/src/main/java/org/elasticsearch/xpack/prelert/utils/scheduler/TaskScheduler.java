@@ -5,6 +5,7 @@ import org.elasticsearch.common.logging.Loggers;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.concurrent.Executors;
@@ -70,7 +71,7 @@ public class TaskScheduler {
     }
 
     private long computeNextDelay() {
-        return LocalDateTime.now().until(nextTimeSupplier.get(), ChronoUnit.MILLIS);
+        return LocalDateTime.now(ZoneId.systemDefault()).until(nextTimeSupplier.get(), ChronoUnit.MILLIS);
     }
 
     /**
@@ -81,6 +82,6 @@ public class TaskScheduler {
      * @return the scheduler
      */
     public static TaskScheduler newMidnightTaskScheduler(Runnable task, long offsetMinutes) {
-        return new TaskScheduler(task, () -> LocalDate.now().plusDays(1).atStartOfDay().plusMinutes(offsetMinutes));
+        return new TaskScheduler(task, () -> LocalDate.now(ZoneId.systemDefault()).plusDays(1).atStartOfDay().plusMinutes(offsetMinutes));
     }
 }

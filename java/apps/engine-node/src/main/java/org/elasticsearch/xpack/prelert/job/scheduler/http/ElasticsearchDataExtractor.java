@@ -5,6 +5,7 @@ import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -133,6 +134,7 @@ public class ElasticsearchDataExtractor implements DataExtractor {
         return matchLong(response, NUMBER_OF_SHARDS_PATTERN);
     }
 
+    @Override
     public void clear() {
         scrollState.reset();
     }
@@ -180,7 +182,7 @@ public class ElasticsearchDataExtractor implements DataExtractor {
 
         String url = urlBuilder.buildClearScrollUrl();
         try {
-            HttpResponse response = httpRequester.delete(url, String.format(CLEAR_SCROLL_TEMPLATE, scrollState.getScrollId()));
+            HttpResponse response = httpRequester.delete(url, String.format(Locale.ROOT, CLEAR_SCROLL_TEMPLATE, scrollState.getScrollId()));
 
             // This is necessary to ensure the response stream has been consumed entirely.
             // Failing to do this can cause a lot of issues with Elasticsearch when

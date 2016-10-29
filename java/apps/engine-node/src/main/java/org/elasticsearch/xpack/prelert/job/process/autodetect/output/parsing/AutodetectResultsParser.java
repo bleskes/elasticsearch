@@ -1,9 +1,6 @@
 
 package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
@@ -18,6 +15,10 @@ import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -207,7 +209,7 @@ public class AutodetectResultsParser {
                         break;
                     case "modelBytes":
                         ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject();
-                        logger.trace(String.format("Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
+                        logger.trace(String.format(Locale.ROOT, "Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
                                 modelSizeStats.getModelBytes(),
                                 modelSizeStats.getTotalByFieldCount(),
                                 modelSizeStats.getTotalOverFieldCount(),

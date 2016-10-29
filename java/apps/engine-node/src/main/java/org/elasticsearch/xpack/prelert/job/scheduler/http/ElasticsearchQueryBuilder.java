@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Objects;
 
 public class ElasticsearchQueryBuilder {
@@ -53,14 +54,14 @@ public class ElasticsearchQueryBuilder {
      * The single placeholder expects the time field.
      */
     private static final String DATA_SUMMARY_AGGS_TEMPLATE = ""
-    + "{"
-    +   "\"earliestTime\":{"
-    +     "\"min\":{\"field\":\"%1$s\"}"
-    +   "},"
-    +   "\"latestTime\":{"
-    +     "\"max\":{\"field\":\"%1$s\"}"
-    +   "}"
-    + "}";
+            + "{"
+            +   "\"earliestTime\":{"
+            +     "\"min\":{\"field\":\"%1$s\"}"
+            +   "},"
+            +   "\"latestTime\":{"
+            +     "\"max\":{\"field\":\"%1$s\"}"
+            +   "}"
+            + "}";
 
     private static final String AGGREGATION_TEMPLATE = ", \"aggs\": %s";
     private static final String SCRIPT_FIELDS_TEMPLATE = ", \"script_fields\": %s";
@@ -85,14 +86,14 @@ public class ElasticsearchQueryBuilder {
     }
 
     private String createSearchBody(long start, long end, String sortField, String aggs) {
-        return String.format(SEARCH_BODY_TEMPLATE_2_X, sortField, search, timeField, formatAsDateTime(start),
+        return String.format(Locale.ROOT, SEARCH_BODY_TEMPLATE_2_X, sortField, search, timeField, formatAsDateTime(start),
                 formatAsDateTime(end), createResultsFormatSpec(aggs));
     }
 
     private static String formatAsDateTime(long epochMs) {
         Instant instant = Instant.ofEpochMilli(epochMs);
         ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.ROOT));
     }
 
     private String createResultsFormatSpec(String aggs) {
@@ -100,19 +101,19 @@ public class ElasticsearchQueryBuilder {
     }
 
     private String createAggregations(String aggs) {
-        return String.format(AGGREGATION_TEMPLATE, aggs);
+        return String.format(Locale.ROOT, AGGREGATION_TEMPLATE, aggs);
     }
 
     private String createFieldDataFields() {
-        return String.format(FIELDS_TEMPLATE, createScriptFields(), fields);
+        return String.format(Locale.ROOT, FIELDS_TEMPLATE, createScriptFields(), fields);
     }
 
     private String createScriptFields() {
-        return (scriptFields != null) ? String.format(SCRIPT_FIELDS_TEMPLATE, scriptFields) : "";
+        return (scriptFields != null) ? String.format(Locale.ROOT, SCRIPT_FIELDS_TEMPLATE, scriptFields) : "";
     }
 
     public String createDataSummaryQuery(long start, long end) {
-        String aggs = String.format(DATA_SUMMARY_AGGS_TEMPLATE, timeField);
+        String aggs = String.format(Locale.ROOT, DATA_SUMMARY_AGGS_TEMPLATE, timeField);
         return createSearchBody(start, end, DATA_SUMMARY_SORT_FIELD, aggs);
     }
 
