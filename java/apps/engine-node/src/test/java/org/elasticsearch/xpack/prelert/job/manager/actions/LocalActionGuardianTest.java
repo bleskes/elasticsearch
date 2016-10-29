@@ -13,6 +13,7 @@ public class LocalActionGuardianTest extends ESTestCase {
         try (ActionGuardian<Action>.ActionTicket actionTicket = actionGuardian.tryAcquiringAction("foo", Action.WRITING)) {
             assertEquals(Action.WRITING, actionGuardian.currentAction("foo"));
             assertEquals(Action.CLOSED, actionGuardian.currentAction("unknown"));
+            actionTicket.hashCode();
         }
         assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
     }
@@ -23,11 +24,14 @@ public class LocalActionGuardianTest extends ESTestCase {
         try (ActionGuardian<Action>.ActionTicket deleting = actionGuardian.tryAcquiringAction("foo", Action.DELETING)) {
             try (ActionGuardian<Action>.ActionTicket writing = actionGuardian.tryAcquiringAction("foo", Action.WRITING)) {
                 fail();
+                writing.hashCode();
             } catch (ElasticsearchStatusException e) {
                 assertEquals("Cannot write to job foo while another connection is deleting the job", e.getMessage());
                 assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
             }
             assertEquals(Action.DELETING, actionGuardian.currentAction("foo"));
+            deleting.hashCode();
+
         }
         assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
     }
@@ -59,12 +63,14 @@ public class LocalActionGuardianTest extends ESTestCase {
         LocalActionGuardian<Action> actionGuardian = new LocalActionGuardian<>(Action.CLOSED);
 
         try (ActionGuardian<Action>.ActionTicket ticket =
-                     actionGuardian.tryAcquiringAction("foo", Action.CLOSING)) {
+                actionGuardian.tryAcquiringAction("foo", Action.CLOSING)) {
+            ticket.hashCode();
         }
         assertEquals(Action.CLOSED, actionGuardian.currentAction("foo"));
 
         try (ActionGuardian<Action>.ActionTicket ticket =
-                     actionGuardian.tryAcquiringAction("foo", Action.WRITING)) {
+                actionGuardian.tryAcquiringAction("foo", Action.WRITING)) {
+            ticket.hashCode();
         }
         assertEquals(Action.SLEEPING, actionGuardian.currentAction("foo"));
     }
