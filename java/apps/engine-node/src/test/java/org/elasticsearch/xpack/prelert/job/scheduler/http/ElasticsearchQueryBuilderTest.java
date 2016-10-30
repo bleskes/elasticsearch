@@ -143,12 +143,12 @@ public class ElasticsearchQueryBuilderTest extends ESTestCase {
     }
 
     public void testLogQueryInfo_GivenAggs() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", "{\"my_aggs\":{}}", null, null,
-                "@timestamp");
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", "{\"my_aggs\":{ \"foo\": \"bar\" }}",
+                null, null, "@timestamp");
 
         Logger logger = mock(Logger.class);
         queryBuilder.logQueryInfo(logger);
 
-        verify(logger).debug("Will use the following Elasticsearch aggregations: {\"my_aggs\":{}}");
+        verify(logger).debug("Will use the following Elasticsearch aggregations: {\"my_aggs\":{ \"foo\": \"bar\" }}");
     }
 }
