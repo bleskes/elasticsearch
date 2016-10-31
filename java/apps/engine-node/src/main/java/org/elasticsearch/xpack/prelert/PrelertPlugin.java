@@ -42,6 +42,7 @@ import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformsAction;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
+import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
@@ -54,11 +55,14 @@ import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchFactories;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
+import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.BlackHoleAutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.legacy.LegacyAutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.scheduler.http.HttpDataExtractorFactory;
+import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
+import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
 import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
@@ -95,7 +99,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
     public static final String NAME = "prelert";
 
     // NORELEASE - temporary solution
-    static final String USE_NATIVE_PROCESS_OPTION = "useNativeProcess";
+    static final Setting<Boolean> USE_NATIVE_PROCESS_OPTION = Setting.boolSetting("useNativeProcess", false, Property.NodeScope,
+            Property.Deprecated);
 
     private final Settings settings;
     private final Environment env;
@@ -111,7 +116,14 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
 
     @Override
     public List<Setting<?>> getSettings() {
-        return Collections.singletonList(Setting.boolSetting(USE_NATIVE_PROCESS_OPTION, false, Property.NodeScope, Property.Deprecated));
+        return Collections.unmodifiableList(
+                Arrays.asList(USE_NATIVE_PROCESS_OPTION,
+                        JobLogs.DONT_DELETE_LOGS_SETTING,
+                        ProcessCtrl.DONT_PERSIST_MODEL_STATE_SETTING,
+                        ProcessCtrl.MAX_ANOMALY_RECORDS_SETTING,
+                        StatusReporter.ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_SETTING,
+                        StatusReporter.ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_SETTING,
+                        UsageReporter.UPDATE_INTERVAL_SETTING));
     }
 
     @Override
@@ -132,7 +144,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         AutodetectCommunicatorFactory autodetectCommunicatorFactory =
                 createAutodetectCommunicatorFactory(elasticsearchFactories, jobProvider);
 
-        JobManager jobManager = new JobManager(env, jobProvider, clusterService, processActionGuardian);
+        JobManager jobManager = new JobManager(env, settings, jobProvider, clusterService, processActionGuardian);
         DataProcessor dataProcessor = new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager);
         JobScheduledService jobScheduledService = new JobScheduledService(
                 jobProvider, jobManager, dataProcessor, new HttpDataExtractorFactory(), jobId -> Loggers.getLogger(jobId));
@@ -149,10 +161,10 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
     private AutodetectCommunicatorFactory createAutodetectCommunicatorFactory(ElasticsearchFactories esFactory,
             ElasticsearchJobProvider jobProvider) {
 
-        AutodetectProcessFactory processFactory = this.settings.getAsBoolean(USE_NATIVE_PROCESS_OPTION, false)
-                ? new LegacyAutodetectProcessFactory(jobProvider, env)
+        AutodetectProcessFactory processFactory = USE_NATIVE_PROCESS_OPTION.get(settings)
+                ? new LegacyAutodetectProcessFactory(jobProvider, env, settings)
                         : (JobDetails, ingnoreDowntime) -> new BlackHoleAutodetectProcess();
-        return new AutodetectCommunicatorFactory(env, 
+                        return new AutodetectCommunicatorFactory(env, settings,
                                 processFactory,
                                 esFactory.newJobResultsPersisterFactory(),
                                 esFactory.newJobDataCountsPersisterFactory(),

@@ -19,9 +19,10 @@ import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
 public class CountingInputStreamTests extends ESTestCase {
 
     public void testRead_OneByteAtATime() throws IOException {
+        Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
-                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        UsageReporter usageReporter = new UsageReporter(env, "foo", Mockito.mock(UsagePersister.class), Mockito.mock(Logger.class));
+                settings);
+        UsageReporter usageReporter = new UsageReporter(settings, "foo", Mockito.mock(UsagePersister.class), Mockito.mock(Logger.class));
         DummyStatusReporter statusReporter = new DummyStatusReporter(env, usageReporter);
 
         final String TEXT = "123";
@@ -42,12 +43,13 @@ public class CountingInputStreamTests extends ESTestCase {
     }
 
     public void testRead_WithBuffer() throws IOException {
+        Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
-                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
+                settings);
         final String TEXT = "To the man who only has a hammer,"
                 + " everything he encounters begins to look like a nail.";
 
-        UsageReporter usageReporter = new UsageReporter(env, "foo", Mockito.mock(UsagePersister.class), Mockito.mock(Logger.class));
+        UsageReporter usageReporter = new UsageReporter(settings, "foo", Mockito.mock(UsagePersister.class), Mockito.mock(Logger.class));
         DummyStatusReporter statusReporter = new DummyStatusReporter(env, usageReporter);
 
         InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));
@@ -68,12 +70,13 @@ public class CountingInputStreamTests extends ESTestCase {
     }
 
     public void testRead_WithTinyBuffer() throws IOException {
+        Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
-                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
+                settings);
         final String TEXT = "To the man who only has a hammer,"
                 + " everything he encounters begins to look like a nail.";
 
-        UsageReporter usageReporter = new UsageReporter(env, "foo", Mockito.mock(UsagePersister.class), Mockito.mock(Logger.class));
+        UsageReporter usageReporter = new UsageReporter(settings, "foo", Mockito.mock(UsagePersister.class), Mockito.mock(Logger.class));
         DummyStatusReporter statusReporter = new DummyStatusReporter(env, usageReporter);
 
         InputStream source = new ByteArrayInputStream(TEXT.getBytes(StandardCharsets.UTF_8));

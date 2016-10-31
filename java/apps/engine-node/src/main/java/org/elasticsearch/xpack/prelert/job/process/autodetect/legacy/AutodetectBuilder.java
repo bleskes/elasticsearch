@@ -2,6 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect.legacy;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
@@ -44,6 +45,7 @@ public class AutodetectBuilder {
     private Optional<Quantiles> quantiles;
     private Optional<ModelSnapshot> modelSnapshot;
     private Environment env;
+    private Settings settings;
 
     /**
      * Constructs an autodetect process builder
@@ -53,8 +55,9 @@ public class AutodetectBuilder {
      *                      deleted when the process completes
      * @param logger        The job's logger
      */
-    public AutodetectBuilder(JobDetails job, List<Path> filesToDelete, Logger logger, Environment env) {
+    public AutodetectBuilder(JobDetails job, List<Path> filesToDelete, Logger logger, Environment env, Settings settings) {
         this.env = env;
+        this.settings = settings;
         jobDetails = Objects.requireNonNull(job);
         this.filesToDelete = Objects.requireNonNull(filesToDelete);
         this.logger = Objects.requireNonNull(logger);
@@ -112,7 +115,7 @@ public class AutodetectBuilder {
     public Process build() throws IOException {
 
         String restoreSnapshotId = modelSnapshot.isPresent() ? modelSnapshot.get().getSnapshotId() : null;
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, jobDetails, logger, restoreSnapshotId, ignoreDowntime);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, jobDetails, logger, restoreSnapshotId, ignoreDowntime);
 
         buildLimits(command);
         buildModelDebugConfig(command);

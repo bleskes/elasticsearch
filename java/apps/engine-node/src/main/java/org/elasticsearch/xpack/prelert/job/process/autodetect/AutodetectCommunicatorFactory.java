@@ -1,7 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
@@ -15,19 +15,19 @@ import java.util.Objects;
 
 public class AutodetectCommunicatorFactory {
 
-    private static final Logger LOGGER = Loggers.getLogger(AutodetectCommunicatorFactory.class);
-
     private final AutodetectProcessFactory autodetectProcessFactory;
     private final JobResultsPeristerFactory persisterFactory;
     private final JobDataCountsPersisterFactory dataCountsPersisterFactory;
     private final UsagePersisterFactory usagePersisterFactory;
     private final JobLoggerFactory jobLoggerFactory;
     private final Environment env;
+    private final Settings settings;
 
-    public AutodetectCommunicatorFactory(Environment env, AutodetectProcessFactory autodetectProcessFactory,
+    public AutodetectCommunicatorFactory(Environment env, Settings settings, AutodetectProcessFactory autodetectProcessFactory,
             JobResultsPeristerFactory persisterFactory, JobDataCountsPersisterFactory dataCountsPersisterFactory,
             UsagePersisterFactory usagePersisterFactory, JobLoggerFactory loggerFactory) {
         this.env = env;
+        this.settings = settings;
         this.autodetectProcessFactory = Objects.requireNonNull(autodetectProcessFactory);
         this.persisterFactory = Objects.requireNonNull(persisterFactory);
         this.dataCountsPersisterFactory = Objects.requireNonNull(dataCountsPersisterFactory);
@@ -38,9 +38,9 @@ public class AutodetectCommunicatorFactory {
     public AutodetectCommunicator create(JobDetails job, boolean ignoreDowntime) {
 
         Logger jobLogger = jobLoggerFactory.newLogger(job.getJobId());
-        UsageReporter usageReporter = new UsageReporter(env, job.getJobId(), usagePersisterFactory.getInstance(jobLogger), jobLogger);
+        UsageReporter usageReporter = new UsageReporter(settings, job.getJobId(), usagePersisterFactory.getInstance(jobLogger), jobLogger);
 
-        StatusReporter statusReporter = new StatusReporter(env, job.getJobId(), job.getCounts(), usageReporter,
+        StatusReporter statusReporter = new StatusReporter(env, settings, job.getJobId(), job.getCounts(), usageReporter,
                 dataCountsPersisterFactory.getInstance(jobLogger),
                 jobLogger, job.getAnalysisConfig().getBucketSpanOrDefault());
 

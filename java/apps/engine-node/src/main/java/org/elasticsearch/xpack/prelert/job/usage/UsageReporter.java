@@ -2,11 +2,11 @@
 package org.elasticsearch.xpack.prelert.job.usage;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.env.Environment;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Setting.Property;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
-import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
-
 import java.util.Locale;
 
 /**
@@ -16,8 +16,7 @@ import java.util.Locale;
  * is that this writes hourly reports i.e. how much data was read in an hour
  */
 public class UsageReporter {
-    public static final String UPDATE_INTERVAL_PROP = "usage.update.interval";
-    private static final long UPDATE_AFTER_COUNT_SECS = 300;
+    public static final Setting<Long> UPDATE_INTERVAL_SETTING = Setting.longSetting("usage.update.interval", 300, 0, Property.NodeScope);
 
     private final String jobId;
     private final Logger logger;
@@ -27,11 +26,11 @@ public class UsageReporter {
     private long recordsReadSinceLastReport;
 
     private long lastUpdateTimeMs;
-    private long updateIntervalMs = UPDATE_AFTER_COUNT_SECS * 1000;
+    private long updateIntervalMs;
 
     private final UsagePersister persister;
 
-    public UsageReporter(Environment env, String jobId, UsagePersister persister, Logger logger) {
+    public UsageReporter(Settings settings, String jobId, UsagePersister persister, Logger logger) {
         bytesReadSinceLastReport = 0;
         fieldsReadSinceLastReport = 0;
         recordsReadSinceLastReport = 0;
@@ -42,7 +41,7 @@ public class UsageReporter {
 
         lastUpdateTimeMs = System.currentTimeMillis();
 
-        long interval = PrelertSettings.getSettingOrDefault(env, UPDATE_INTERVAL_PROP, UPDATE_AFTER_COUNT_SECS);
+        long interval = UPDATE_INTERVAL_SETTING.get(settings);
         updateIntervalMs = interval * 1000;
         this.logger.info("Setting usage update interval to " + interval + " seconds");
     }

@@ -3,6 +3,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.legacy;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
@@ -14,7 +15,6 @@ import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.AccessController;
@@ -31,9 +31,11 @@ public class LegacyAutodetectProcessFactory implements AutodetectProcessFactory 
     private static final Logger LOGGER = Loggers.getLogger(LegacyAutodetectProcessFactory.class);
     private final JobProvider jobProvider;
     private Environment env;
+    private Settings settings;
 
-    public LegacyAutodetectProcessFactory(JobProvider jobProvider, Environment env) {
+    public LegacyAutodetectProcessFactory(JobProvider jobProvider, Environment env, Settings settings) {
         this.env = env;
+        this.settings = settings;
         this.jobProvider = Objects.requireNonNull(jobProvider);
     }
 
@@ -60,7 +62,7 @@ public class LegacyAutodetectProcessFactory implements AutodetectProcessFactory 
         Process nativeProcess = null;
 
         try {
-            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER, env)
+            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER, env, settings)
                     .ignoreDowntime(ignoreDowntime)
                     .referencedLists(resolveLists(job.getAnalysisConfig().extractReferencedLists()));
 

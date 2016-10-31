@@ -33,12 +33,13 @@ public class JobLogsTests extends ESTestCase {
     public void testOperationsNotAllowedWithInvalidPath() throws UnknownJobException, JobException, IOException {
         Path pathOutsideLogsDir = PathUtils.getDefaultFileSystem().getPath("..", "..", "..", "etc");
 
+        Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
-                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
+                settings);
 
         // delete
         try {
-            JobLogs jobLogs = new JobLogs(env);
+            JobLogs jobLogs = new JobLogs(settings);
             jobLogs.deleteLogs(env, pathOutsideLogsDir.toString());
             fail();
         } catch (JobException e) {
@@ -48,12 +49,13 @@ public class JobLogsTests extends ESTestCase {
 
     public void testSanitizePath_GivenInvalid() {
 
+        Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
-                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
+                settings);
         Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "../../etc");
         try {
             Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert");
-            new JobLogs(env).sanitizePath(filePath, rootDir);
+            new JobLogs(settings).sanitizePath(filePath, rootDir);
             fail();
         } catch (JobException e) {
             assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
@@ -65,21 +67,22 @@ public class JobLogsTests extends ESTestCase {
 
     public void testSanitizePath() throws JobException {
 
+        Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
-                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
+                settings);
         Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs", "logfile.log");
         Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs");
-        Path normalized = new JobLogs(env).sanitizePath(filePath, rootDir);
+        Path normalized = new JobLogs(settings).sanitizePath(filePath, rootDir);
         assertEquals(filePath, normalized);
 
         Path logDir = PathUtils.getDefaultFileSystem().getPath("./logs");
         Path filePathStartingDot = logDir.resolve("farequote").resolve("logfile.log");
-        normalized = new JobLogs(env).sanitizePath(filePathStartingDot, logDir);
+        normalized = new JobLogs(settings).sanitizePath(filePathStartingDot, logDir);
         assertEquals(filePathStartingDot.normalize(), normalized);
 
         Path filePathWithDotDot = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs", "../logs/logfile.log");
         rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs");
-        normalized = new JobLogs(env).sanitizePath(filePathWithDotDot, rootDir);
+        normalized = new JobLogs(settings).sanitizePath(filePathWithDotDot, rootDir);
 
         assertEquals(filePath, normalized);
     }

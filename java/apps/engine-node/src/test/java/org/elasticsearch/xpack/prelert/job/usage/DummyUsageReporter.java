@@ -2,7 +2,7 @@
 package org.elasticsearch.xpack.prelert.job.usage;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.env.Environment;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
 
@@ -11,8 +11,8 @@ public class DummyUsageReporter extends UsageReporter {
     long totalFieldCount;
     long totalRecordCount;
 
-    public DummyUsageReporter(Environment env, String jobId, Logger logger) {
-        super(env, jobId, new UsagePersister() {
+    public DummyUsageReporter(Settings settings, String jobId, Logger logger) {
+        super(settings, jobId, new UsagePersister() {
             @Override
             public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead) throws JobException {
 
@@ -24,8 +24,8 @@ public class DummyUsageReporter extends UsageReporter {
         totalRecordCount = 0;
     }
 
-    public DummyUsageReporter(Environment env, String jobId, UsagePersister persister, Logger logger) {
-        super(env, jobId, persister, logger);
+    public DummyUsageReporter(Settings settings, String jobId, UsagePersister persister, Logger logger) {
+        super(settings, jobId, persister, logger);
 
         totalByteCount = 0;
         totalFieldCount = 0;

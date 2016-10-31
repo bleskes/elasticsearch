@@ -6,11 +6,13 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Setting.Property;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
-import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 
 
 /**
@@ -27,17 +29,15 @@ public class StatusReporter {
      * The max percentage of date parse errors allowed before
      * an exception is thrown.
      */
-    public static final int ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS = 25;
-    public static final String ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP =
-            "max.percent.date.errors";
+    public static final Setting<Integer> ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_SETTING = Setting.intSetting("max.percent.date.errors", 25,
+            Property.NodeScope);
 
     /**
      * The max percentage of out of order records allowed before
      * an exception is thrown.
      */
-    public static final int ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS = 25;
-    public static final String ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP =
-            "max.percent.outoforder.errors";
+    public static final Setting<Integer> ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_SETTING = Setting
+            .intSetting("max.percent.outoforder.errors", 25, Property.NodeScope);
 
     private final String jobId;
     private final UsageReporter usageReporter;
@@ -59,18 +59,18 @@ public class StatusReporter {
 
     private final AtomicLong lastRecordTimeEpochMs;
 
-    public StatusReporter(Environment env, String jobId, UsageReporter usageReporter,
+    public StatusReporter(Environment env, Settings settings, String jobId, UsageReporter usageReporter,
             JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
-        this(env, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(), bucketSpan);
+        this(env, settings, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(), bucketSpan);
     }
 
-    public StatusReporter(Environment env, String jobId, DataCounts counts, UsageReporter usageReporter,
+    public StatusReporter(Environment env, Settings settings, String jobId, DataCounts counts, UsageReporter usageReporter,
             JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
-        this(env, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(counts), bucketSpan);
+        this(env, settings, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(counts), bucketSpan);
     }
 
-    private StatusReporter(Environment env, String jobId, UsageReporter usageReporter, JobDataCountsPersister dataCountsPersister,
-            Logger logger, DataCounts totalCounts, long bucketSpan) {
+    private StatusReporter(Environment env, Settings settings, String jobId, UsageReporter usageReporter,
+            JobDataCountsPersister dataCountsPersister, Logger logger, DataCounts totalCounts, long bucketSpan) {
         this.jobId = jobId;
         this.usageReporter = usageReporter;
         this.dataCountsPersister = dataCountsPersister;
@@ -81,12 +81,8 @@ public class StatusReporter {
 
         lastRecordTimeEpochMs = new AtomicLong();
 
-        acceptablePercentDateParseErrors = PrelertSettings.getSettingOrDefault(env,
-                ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_PROP,
-                ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS);
-        acceptablePercentOutOfOrderErrors = PrelertSettings.getSettingOrDefault(env,
-                ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_PROP,
-                ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS);
+        acceptablePercentDateParseErrors = ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_SETTING.get(settings);
+        acceptablePercentOutOfOrderErrors = ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_SETTING.get(settings);
     }
 
     /**
@@ -361,10 +357,10 @@ public class StatusReporter {
     }
 
     /**
-     * Throws an exception if too high a proportion of the records
-     * contains errors (bad dates, out of order). See
-     * {@linkplain #ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS} and
-     * {@linkplain #ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS}
+     * Throws an exception if too high a proportion of the records contains
+     * errors (bad dates, out of order). See
+     * {@linkplain #ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_SETTING} and
+     * {@linkplain #ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_SETTING}
      */
     protected void checkStatus(long totalRecords)
             throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {

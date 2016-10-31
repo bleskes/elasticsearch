@@ -13,7 +13,7 @@ public class DummyStatusReporter extends StatusReporter {
     boolean statusReported = false;
 
     public DummyStatusReporter(Environment env, UsageReporter usageReporter) {
-        super(env, "DummyJobId", usageReporter, new JobDataCountsPersister() {
+        super(env, env.settings(), "DummyJobId", usageReporter, new JobDataCountsPersister() {
             @Override
             public void persistDataCounts(String jobId, DataCounts counts) {
 
@@ -23,7 +23,7 @@ public class DummyStatusReporter extends StatusReporter {
 
     public DummyStatusReporter(Environment env, DataCounts counts,
             UsageReporter usageReporter) {
-        super(env, "DummyJobId", counts, usageReporter, new JobDataCountsPersister() {
+        super(env, env.settings(), "DummyJobId", counts, usageReporter, new JobDataCountsPersister() {
             @Override
             public void persistDataCounts(String jobId, DataCounts counts) {
 

@@ -18,13 +18,14 @@ package org.elasticsearch.xpack.prelert.job.logs;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
-
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -36,21 +37,17 @@ import java.util.Locale;
  */
 public class JobLogs {
     private static final Logger LOGGER = Loggers.getLogger(JobLogs.class);
-
     /**
-     * If this system property is set the log files aren't deleted when
-     * the job is.
+     * If this system property is set the log files aren't deleted when the job
+     * is.
      */
-    public static final String DONT_DELETE_LOGS_PROP = "preserve.logs";
+    public static final Setting<Boolean> DONT_DELETE_LOGS_SETTING = Setting.boolSetting("preserve.logs", false, Property.NodeScope);
+
     private boolean m_DontDelete;
 
-    /**
-     * If -D{@value #DONT_DELETE_LOGS_PROP} is set to anything
-     * (not null) the log files aren't deleted
-     */
-    public JobLogs(Environment env)
+    public JobLogs(Settings settings)
     {
-        m_DontDelete = PrelertSettings.isSet(env, DONT_DELETE_LOGS_PROP);
+        m_DontDelete = DONT_DELETE_LOGS_SETTING.get(settings);
     }
 
     /**

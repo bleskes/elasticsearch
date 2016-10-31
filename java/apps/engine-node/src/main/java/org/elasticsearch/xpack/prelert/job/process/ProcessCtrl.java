@@ -1,16 +1,18 @@
 
 package org.elasticsearch.xpack.prelert.job.process;
 
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Setting.Property;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.settings.PrelertSettings;
 import org.elasticsearch.xpack.prelert.utils.Strings;
-import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.env.Environment;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -52,11 +54,12 @@ public class ProcessCtrl {
      * Name of the config setting containing the path to the logs directory
      */
     public static final String PRELERT_LOGS_PROPERTY = "prelert.logs";
+    private static final int DEFAULT_MAX_NUM_RECORDS = 500;
     /**
      * The maximum number of anomaly records that will be written each bucket
      */
-    public static final String MAX_ANOMALY_RECORDS_PROPERTY = "max.anomaly.records";
-    private static final int DEFAULT_MAX_NUM_RECORDS = 500;
+    public static final Setting<Integer> MAX_ANOMALY_RECORDS_SETTING = Setting.intSetting("max.anomaly.records", DEFAULT_MAX_NUM_RECORDS,
+            Property.NodeScope);
 
     /*
      * General arguments
@@ -147,14 +150,16 @@ public class ProcessCtrl {
      */
     private static final String QUANTILES_FILE_EXTENSION = ".json";
 
+    public static final String PRELERT_HOME_ENV = "PRELERT_HOME";
+
     /**
      * Config setting storing the flag that disables model persistence
      */
-    public static final String DONT_PERSIST_MODEL_STATE = "no.model.state.persist";
+    public static final Setting<Boolean> DONT_PERSIST_MODEL_STATE_SETTING = Setting.boolSetting("no.model.state.persist", false,
+            Property.NodeScope);
 
-    public static String maxAnomalyRecordsArg(Environment env) {
-        return "--maxAnomalyRecords=" + PrelertSettings.getSettingOrDefault(env, MAX_ANOMALY_RECORDS_PROPERTY,
-                DEFAULT_MAX_NUM_RECORDS);
+    public static String maxAnomalyRecordsArg(Settings settings) {
+        return "--maxAnomalyRecords=" + MAX_ANOMALY_RECORDS_SETTING.get(settings);
     }
 
     private ProcessCtrl() {
@@ -168,7 +173,7 @@ public class ProcessCtrl {
     public static void buildEnvironment(Environment env, ProcessBuilder pb) {
         // Always clear inherited environment variables
         pb.environment().clear();
-        pb.environment().put(PrelertSettings.PRELERT_HOME_ENV, env.binFile().resolve(PrelertPlugin.NAME).toString());
+        pb.environment().put(PRELERT_HOME_ENV, env.binFile().resolve(PrelertPlugin.NAME).toString());
 
         LOGGER.info(String.format(Locale.ROOT, "Process Environment = " + pb.environment().toString()));
     }
@@ -289,8 +294,8 @@ public class ProcessCtrl {
         return rng.nextInt(SECONDS_IN_HOUR);
     }
 
-    public static List<String> buildAutodetectCommand(Environment env, JobDetails job, Logger logger, String restoreSnapshotId,
-            boolean ignoreDowntime) {
+    public static List<String> buildAutodetectCommand(Environment env, Settings settings, JobDetails job, Logger logger,
+            String restoreSnapshotId, boolean ignoreDowntime) {
         List<String> command = new ArrayList<>();
         command.add(getAutodetectPath(env).toString());
 
@@ -328,7 +333,7 @@ public class ProcessCtrl {
         command.add(LENGTH_ENCODED_INPUT_ARG);
 
         // Limit the number of output records
-        command.add(maxAnomalyRecordsArg(env));
+        command.add(maxAnomalyRecordsArg(settings));
 
         // always set the time field
         String timeFieldArg = TIME_FIELD_ARG + getTimeFieldOrDefault(job);
@@ -339,8 +344,8 @@ public class ProcessCtrl {
 
         // Supply a URL for persisting/restoring model state unless model
         // persistence has been explicitly disabled.
-        if (PrelertSettings.isSet(env, DONT_PERSIST_MODEL_STATE)) {
-            logger.info("Will not persist model state - "  + DONT_PERSIST_MODEL_STATE + " setting was set");
+        if (DONT_PERSIST_MODEL_STATE_SETTING.get(settings)) {
+            logger.info("Will not persist model state - "  + DONT_PERSIST_MODEL_STATE_SETTING + " setting was set");
         } else {
             if (Strings.isNullOrEmpty(restoreSnapshotId) == false) {
                 command.add(RESTORE_SNAPSHOT_ID + restoreSnapshotId);
