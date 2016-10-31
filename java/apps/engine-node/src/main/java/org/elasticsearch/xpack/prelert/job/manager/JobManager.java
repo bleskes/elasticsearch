@@ -16,7 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
@@ -86,13 +85,6 @@ public class JobManager {
     public static final String APP_VER_FIELDNAME = "appVer";
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY.getPreferredName();
-
-    private static final int LAST_DATA_TIME_MIN_UPDATE_INTERVAL_MS = 1000;
-
-    private static final String SCHEDULER_AUTORESTART_SETTING = "scheduler.autorestart";
-    private static final boolean DEFAULT_SCHEDULER_AUTORESTART = true;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final ActionGuardian<Action> processActionGuardian;
     private final JobProvider jobProvider;
     private final ClusterService clusterService;

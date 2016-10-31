@@ -2,7 +2,6 @@
 package org.elasticsearch.xpack.prelert.transforms;
 
 import static org.elasticsearch.xpack.prelert.transforms.TransformTestUtils.createIndexArray;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.util.List;

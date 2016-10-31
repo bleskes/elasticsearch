@@ -382,13 +382,6 @@ public class ProcessCtrl {
         return useDefault ? DataDescription.DEFAULT_TIME_FIELD : dataDescription.getTimeField();
     }
 
-    private static void addIfNotNull(List<String> list, String argKey, List<String> command) {
-        if (list != null) {
-            String param = argKey + String.join(",", list);
-            command.add(param);
-        }
-    }
-
     private static <T> void addIfNotNull(T object, String argKey, List<String> command) {
         if (object != null) {
             String param = argKey + object;

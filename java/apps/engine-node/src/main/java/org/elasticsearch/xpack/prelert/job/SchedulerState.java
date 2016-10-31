@@ -39,9 +39,6 @@ public class SchedulerState extends ToXContentToBytes implements Writeable {
     @Nullable
     private Long endTimeMillis;
 
-    private SchedulerState() {
-    }
-
     public SchedulerState(JobSchedulerStatus status, long startTimeMillis, Long endTimeMillis) {
         this.status = status;
         this.startTimeMillis = startTimeMillis;

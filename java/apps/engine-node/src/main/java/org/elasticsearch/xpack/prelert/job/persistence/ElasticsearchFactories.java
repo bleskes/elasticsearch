@@ -3,7 +3,6 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 
 import java.util.Objects;
 

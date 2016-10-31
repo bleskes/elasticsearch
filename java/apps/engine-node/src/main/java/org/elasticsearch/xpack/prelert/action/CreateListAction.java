@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
@@ -156,7 +155,6 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
 
         // TODO these need to be moved to a settings object later. See #20
         private static final String PRELERT_INFO_INDEX = "prelert-int";
-        private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,

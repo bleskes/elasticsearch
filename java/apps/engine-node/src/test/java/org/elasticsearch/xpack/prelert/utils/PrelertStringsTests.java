@@ -4,8 +4,6 @@ package org.elasticsearch.xpack.prelert.utils;
 
 import org.elasticsearch.test.ESTestCase;
 
-import static org.junit.Assert.assertEquals;
-
 public class PrelertStringsTests extends ESTestCase {
     public void testDoubleQuoteIfNotAlphaNumeric() {
         assertEquals("foo2", PrelertStrings.doubleQuoteIfNotAlphaNumeric("foo2"));

@@ -1,6 +1,5 @@
 package org.elasticsearch.xpack.prelert.job.data;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;

@@ -1,8 +1,6 @@
 
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import static org.junit.Assert.assertEquals;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.test.ESTestCase;

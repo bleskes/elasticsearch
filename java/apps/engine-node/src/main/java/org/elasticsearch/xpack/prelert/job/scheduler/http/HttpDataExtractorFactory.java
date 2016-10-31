@@ -2,8 +2,6 @@ package org.elasticsearch.xpack.prelert.job.scheduler.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
@@ -12,10 +10,6 @@ import org.elasticsearch.xpack.prelert.job.extraction.DataExtractorFactory;
 import java.util.Map;
 
 public class HttpDataExtractorFactory implements DataExtractorFactory {
-
-    private static final Logger LOGGER = Loggers.getLogger(HttpDataExtractorFactory.class);
-
-    private static final String ELASTICSEARCH_CONTENT_TYPE = "application/json";
 
     public HttpDataExtractorFactory() {}
 

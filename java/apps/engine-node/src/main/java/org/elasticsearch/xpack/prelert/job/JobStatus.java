@@ -7,9 +7,7 @@ import org.elasticsearch.common.io.stream.Writeable;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * Jobs whether running or complete are in one of these states.

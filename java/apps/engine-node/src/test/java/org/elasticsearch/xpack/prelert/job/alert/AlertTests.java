@@ -12,9 +12,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-
-
 public class AlertTests extends ESTestCase {
 
     public void testGettersAndSetters() throws URISyntaxException {

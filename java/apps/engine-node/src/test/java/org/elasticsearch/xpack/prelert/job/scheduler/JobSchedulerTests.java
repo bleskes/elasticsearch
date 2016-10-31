@@ -581,12 +581,6 @@ public class JobSchedulerTests extends ESTestCase {
         return counts;
     }
 
-    private long calcAlignedBucketEnd(long timeMs) {
-        long bucketSpanMillis = BUCKET_SPAN.toMillis();
-        long result = (timeMs / bucketSpanMillis) * bucketSpanMillis;
-        return result == timeMs ? result : result + bucketSpanMillis;
-    }
-
     private static class MockDataExtractor implements DataExtractor {
         private final List<Integer> batchesPerSearch;
         private final List<Long> starts = new ArrayList<>();

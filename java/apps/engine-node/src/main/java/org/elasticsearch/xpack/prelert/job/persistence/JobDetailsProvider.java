@@ -5,7 +5,6 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 
 /**
  * General interface for classes that persist Jobs and job data

@@ -1,6 +1,5 @@
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -218,7 +217,6 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
         private final AutodetectProcessManager processManager;
-        private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,

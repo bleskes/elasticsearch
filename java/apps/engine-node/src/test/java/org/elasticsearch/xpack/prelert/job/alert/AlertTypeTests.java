@@ -3,8 +3,6 @@ package org.elasticsearch.xpack.prelert.job.alert;
 
 import org.elasticsearch.test.ESTestCase;
 
-import static org.junit.Assert.assertEquals;
-
 public class AlertTypeTests extends ESTestCase {
 
     public void testAlertTypes() {

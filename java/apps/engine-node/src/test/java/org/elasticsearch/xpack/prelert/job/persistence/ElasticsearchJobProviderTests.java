@@ -82,7 +82,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        IndexNotFoundException e = ESTestCase.expectThrows(IndexNotFoundException.class, () -> provider.getQuantiles(JOB_ID));
+        ESTestCase.expectThrows(IndexNotFoundException.class, () -> provider.getQuantiles(JOB_ID));
     }
 
     public void testGetQuantiles_GivenNoQuantilesForJob() throws InterruptedException, ExecutionException, UnknownJobException {

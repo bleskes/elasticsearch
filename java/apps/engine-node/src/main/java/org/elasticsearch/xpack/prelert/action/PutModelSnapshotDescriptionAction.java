@@ -16,7 +16,6 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -254,7 +253,6 @@ public class PutModelSnapshotDescriptionAction extends
     public static class TransportAction extends HandledTransportAction<Request, Response> {
 
         private final ElasticsearchJobProvider jobProvider;
-        private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,

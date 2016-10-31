@@ -2,10 +2,6 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import org.elasticsearch.test.ESTestCase;
-import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class JobStatusTests extends ESTestCase {
 

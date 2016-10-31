@@ -10,13 +10,14 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResu
 public class BlackHoleAutodetectProcessTests extends ESTestCase {
 
     public void testFlushJob_writesAck() throws Exception {
-        BlackHoleAutodetectProcess process = new BlackHoleAutodetectProcess();
+        try (BlackHoleAutodetectProcess process = new BlackHoleAutodetectProcess()) {
 
-        String flushId = process.flushJob(InterimResultsParams.builder().build());
+            String flushId = process.flushJob(InterimResultsParams.builder().build());
 
-        JsonParser jsonParser = new JsonFactory().createParser(process.out());
-        jsonParser.nextToken(); // FlushAcknowledgementParser expects this to be called first
-        FlushAcknowledgement ack = new FlushAcknowledgementParser(jsonParser).parseJson();
-        assertEquals(flushId, ack.getId());
+            JsonParser jsonParser = new JsonFactory().createParser(process.out());
+            jsonParser.nextToken(); // FlushAcknowledgementParser expects this to be called first
+            FlushAcknowledgement ack = new FlushAcknowledgementParser(jsonParser).parseJson();
+            assertEquals(flushId, ack.getId());
+        }
     }
 }

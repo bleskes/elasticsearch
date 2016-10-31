@@ -13,7 +13,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
-import org.elasticsearch.xpack.prelert.job.detectionrules.RuleConditionType;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 public class DetectorTests extends AbstractSerializingTestCase<Detector> {

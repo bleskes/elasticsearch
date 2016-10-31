@@ -50,8 +50,6 @@ public class JobLogsTests extends ESTestCase {
     public void testSanitizePath_GivenInvalid() {
 
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
-        Environment env = new Environment(
-                settings);
         Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "../../etc");
         try {
             Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert");
@@ -68,8 +66,6 @@ public class JobLogsTests extends ESTestCase {
     public void testSanitizePath() throws JobException {
 
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
-        Environment env = new Environment(
-                settings);
         Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs", "logfile.log");
         Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs");
         Path normalized = new JobLogs(settings).sanitizePath(filePath, rootDir);
