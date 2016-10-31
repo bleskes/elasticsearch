@@ -10,6 +10,9 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 
 import java.io.IOException;
@@ -39,7 +42,8 @@ public class SchedulerState extends ToXContentToBytes implements Writeable {
     @Nullable
     private Long endTimeMillis;
 
-    public SchedulerState(JobSchedulerStatus status, long startTimeMillis, Long endTimeMillis) {
+    public SchedulerState(@JsonProperty("status") JobSchedulerStatus status, @JsonProperty("startTimeMillis") long startTimeMillis,
+            @JsonProperty("endTimeMillis") Long endTimeMillis) {
         this.status = status;
         this.startTimeMillis = startTimeMillis;
         this.endTimeMillis = endTimeMillis;
