@@ -140,7 +140,7 @@ setup:
                   "request" : {
                     "indices" : "idx",
                     "template" : {
-                      "id": "search-template",
+                      "stored": "search-template",
                       "params": {
                         "num": 2
                       }
