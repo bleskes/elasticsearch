@@ -83,7 +83,7 @@ public final class ElasticsearchScripts
      *            the document id
      * @param script
      *            the script the performs the update
-     * @return {@code} true if successful, {@false} otherwise
+     * @return {@code} true if successful, {@code} false otherwise
      * @throws UnknownJobException
      *             if no job does not exist
      * @throws JobException
@@ -124,7 +124,7 @@ public final class ElasticsearchScripts
      * @param upsertMap
      *            the doc source of the update request to be used when the
      *            document does not exists
-     * @return {@code} true if successful, {@false} otherwise
+     * @return {@code} true if successful, {@code} false otherwise
      * @throws UnknownJobException
      *             if no job does not exist
      * @throws JobException
