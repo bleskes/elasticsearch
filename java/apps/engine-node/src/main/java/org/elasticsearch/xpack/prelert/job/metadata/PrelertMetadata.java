@@ -50,18 +50,7 @@ public class PrelertMetadata implements MetaData.Custom {
             Builder::new);
 
     static {
-        PRELERT_METADATA_PARSER.declareField((parser, builder, parseFieldMatcherSupplier) -> {
-            try {
-                for (XContentParser.Token token = parser.nextToken(); token != XContentParser.Token.END_ARRAY; token = parser.nextToken()) {
-                    if (token == XContentParser.Token.START_OBJECT) {
-                        Job job = new Job(parser);
-                        builder.putJob(job, true);
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }, JOBS_FIELD, ObjectParser.ValueType.OBJECT_ARRAY);
+        PRELERT_METADATA_PARSER.declareObjectArray(Builder::putJobs, Job.PARSER, JOBS_FIELD);
         PRELERT_METADATA_PARSER.declareObjectArray(Builder::putAllocations, Allocation.PARSER, ALLOCATIONS_FIELD);
     }
 
@@ -113,7 +102,7 @@ public class PrelertMetadata implements MetaData.Custom {
         int size = in.readVInt();
         TreeMap<String, Job> jobs = new TreeMap<>();
         for (int i = 0; i < size; i++) {
-            jobs.put(in.readString(), new Job(in.readString()));
+            jobs.put(in.readString(), Job.PROTO.readFrom(in));
         }
         size = in.readVInt();
         TreeMap<String, Allocation> allocations = new TreeMap<>();
@@ -238,6 +227,13 @@ public class PrelertMetadata implements MetaData.Custom {
             for (Allocation.Builder allocationBuilder : allocations) {
                 Allocation allocation = allocationBuilder.build();
                 this.allocations.put(allocation.getJobId(), allocation);
+            }
+            return this;
+        }
+
+        private Builder putJobs(Collection<Job> jobs) {
+            for (Job job : jobs) {
+                putJob(job, true);
             }
             return this;
         }

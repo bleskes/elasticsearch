@@ -16,6 +16,8 @@ import java.util.Deque;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import static org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider.doPrivilegedCall;
+
 abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T> {
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchBatchedDocumentsIterator.class);
 
@@ -86,7 +88,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
 
         SearchHit[] hits = searchResponse.getHits().getHits();
         for (SearchHit hit : hits) {
-            T mapped = map(objectMapper, hit);
+            T mapped = doPrivilegedCall(() -> map(objectMapper, hit));
             if (mapped != null) {
                 results.add(mapped);
             }

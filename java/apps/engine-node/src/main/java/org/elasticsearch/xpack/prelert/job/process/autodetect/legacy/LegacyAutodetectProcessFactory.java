@@ -1,6 +1,7 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect.legacy;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
@@ -16,6 +17,8 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -37,8 +40,13 @@ public class LegacyAutodetectProcessFactory implements AutodetectProcessFactory 
     @Override
     public AutodetectProcess createAutodetectProcess(JobDetails jobDetails, boolean ignoreDowntime) {
         List<Path> filesToDelete = new ArrayList<>();
-        Process nativeProcess = createNativeProcess(jobDetails, ignoreDowntime, filesToDelete);
-
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new SpecialPermission());
+        }
+        Process nativeProcess = AccessController.doPrivileged((PrivilegedAction<Process>) () -> {
+            return createNativeProcess(jobDetails, ignoreDowntime, filesToDelete);
+        });
         int numberOfAnalysisFields = jobDetails.getAnalysisConfig().analysisFields().size();
         return new LegacyAutodetectProcess(nativeProcess, numberOfAnalysisFields, filesToDelete);
     }

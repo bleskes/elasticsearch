@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -83,6 +84,8 @@ import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,6 +96,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ElasticsearchJobProvider implements JobProvider
@@ -361,8 +366,7 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator()
     {
-        return new ElasticsearchBatchedJobsIterator(client, ElasticsearchJobId.INDEX_PREFIX + "*",
-                objectMapper);
+        return new ElasticsearchBatchedJobsIterator(client, ElasticsearchJobId.INDEX_PREFIX + "*",objectMapper);
     }
 
     /**
@@ -557,7 +561,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
             hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), timestamp);
 
-            Bucket bucket = objectMapper.convertValue(hit.getSource(), Bucket.class);
+            Bucket bucket = doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), Bucket.class));
             bucket.setId(hit.getId());
 
             if (includeInterim || bucket.isInterim() == false)
@@ -598,7 +602,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Object ts = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
             hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), ts);
 
-            Bucket bucket = objectMapper.convertValue(hit.getSource(), Bucket.class);
+            Bucket bucket = doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), Bucket.class));
             bucket.setId(hit.getId());
 
             // don't return interim buckets if not requested
@@ -684,7 +688,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 if (partitionFieldValue.equals(prob.get(AnomalyRecord.PARTITION_FIELD_VALUE)))
                 {
-                    Date ts = objectMapper.convertValue(m.get(ElasticsearchMappings.ES_TIMESTAMP), Date.class);
+                    Date ts = doPrivilegedCall(() -> objectMapper.convertValue(m.get(ElasticsearchMappings.ES_TIMESTAMP), Date.class));
                     results.add(new ScoreTimestamp(ts,
                             (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY)));
                 }
@@ -793,7 +797,7 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         List<CategoryDefinition> results = Arrays.stream(searchResponse.getHits().getHits())
-                .map(hit -> objectMapper.convertValue(hit.getSource(), CategoryDefinition.class))
+                .map(hit -> doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), CategoryDefinition.class)))
                 .collect(Collectors.toList());
 
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
@@ -813,8 +817,13 @@ public class ElasticsearchJobProvider implements JobProvider
             throw ExceptionsHelper.missingException(jobId);
         }
 
-        return response.isExists() ? Optional.of(objectMapper.convertValue(response.getSource(),
-                CategoryDefinition.class)) : Optional.<CategoryDefinition> empty();
+        if (response.isExists()) {
+            CategoryDefinition definition =
+                    doPrivilegedCall(() -> objectMapper.convertValue(response.getSource(), CategoryDefinition.class));
+            return Optional.of(definition);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -885,8 +894,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // replace logstash timestamp name with timestamp
             m.put(AnomalyRecord.TIMESTAMP.getPreferredName(), m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 
-            AnomalyRecord record = objectMapper.convertValue(
-                    m, AnomalyRecord.class);
+            AnomalyRecord record = doPrivilegedCall(() -> objectMapper.convertValue(m, AnomalyRecord.class));
 
             // set the ID and parent ID
             record.setId(hit.getId());
@@ -946,7 +954,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // replace logstash timestamp name with timestamp
             m.put(Influencer.TIMESTAMP.getPreferredName(), m.remove(ElasticsearchMappings.ES_TIMESTAMP));
 
-            Influencer influencer = objectMapper.convertValue(m, Influencer.class);
+            Influencer influencer = doPrivilegedCall(() -> objectMapper.convertValue(m, Influencer.class));
             influencer.setId(hit.getId());
 
             influencers.add(influencer);
@@ -1113,11 +1121,26 @@ public class ElasticsearchJobProvider implements JobProvider
                 map.put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), ts);
             }
 
-            ModelSnapshot modelSnapshot = objectMapper.convertValue(hit.getSource(), ModelSnapshot.class);
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(new SpecialPermission());
+            }
+            ModelSnapshot modelSnapshot =
+                    doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), ModelSnapshot.class));
             results.add(modelSnapshot);
         }
 
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
+    }
+
+    public static <T> T doPrivilegedCall(Supplier<T> function) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new SpecialPermission());
+        }
+        return AccessController.doPrivileged((PrivilegedAction<T>) () -> {
+            return function.get();
+        });
     }
 
     @Override
@@ -1166,9 +1189,8 @@ public class ElasticsearchJobProvider implements JobProvider
         return modelSnapshot;
     }
 
-    private Quantiles createQuantiles(String jobId, GetResponse response)
-    {
-        Quantiles quantiles = objectMapper.convertValue(response.getSource(), Quantiles.class);
+    private Quantiles createQuantiles(String jobId, GetResponse response) {
+        Quantiles quantiles = doPrivilegedCall(() -> objectMapper.convertValue(response.getSource(), Quantiles.class));
         if (quantiles.getQuantileState() == null)
         {
             LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE
@@ -1203,8 +1225,8 @@ public class ElasticsearchJobProvider implements JobProvider
                 Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
                 modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), timestamp);
 
-                ModelSizeStats modelSizeStats = objectMapper.convertValue(
-                        modelSizeStatsResponse.getSource(), ModelSizeStats.class);
+                ModelSizeStats modelSizeStats =
+                        doPrivilegedCall(() -> objectMapper.convertValue(modelSizeStatsResponse.getSource(), ModelSizeStats.class));
                 return Optional.of(modelSizeStats);
             }
         }
@@ -1222,7 +1244,7 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             return Optional.empty();
         }
-        ListDocument listDocument = objectMapper.convertValue(response.getSource(), ListDocument.class);
+        ListDocument listDocument = doPrivilegedCall(() -> objectMapper.convertValue(response.getSource(), ListDocument.class));
         return Optional.of(listDocument);
     }
 

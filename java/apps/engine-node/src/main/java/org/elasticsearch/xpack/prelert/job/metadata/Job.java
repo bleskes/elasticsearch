@@ -16,14 +16,14 @@
  */
 package org.elasticsearch.xpack.prelert.job.metadata;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.cluster.AbstractDiffable;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 
 import java.io.IOException;
@@ -31,39 +31,22 @@ import java.util.Objects;
 
 public class Job extends AbstractDiffable<Job> implements ToXContent {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     static final Job PROTO = new Job((JobDetails) null);
+
+    public static final ConstructingObjectParser<Job, ParseFieldMatcherSupplier> PARSER =
+            new ConstructingObjectParser<>("job", objects -> new Job((JobDetails) objects[0]));
+
+    static {
+        PARSER.declareObject(ConstructingObjectParser.constructorArg(), JobDetails.PARSER, new ParseField("job"));
+    }
 
     // NORELEASE: A few fields of job details change frequently and this needs to be stored elsewhere
     // performance issue will occur if we don't change that
     // also it needs ot be converted from jackson databind to ES' xcontent
     private final JobDetails jobDetails;
 
-    public Job(XContentParser parser) throws IOException {
-        String data = null;
-        String currentField = null;
-        for (XContentParser.Token token = parser.nextToken(); token != XContentParser.Token.END_OBJECT; token = parser.nextToken()) {
-            if (token == XContentParser.Token.FIELD_NAME) {
-                currentField = parser.currentName();
-            } else if (token == XContentParser.Token.VALUE_STRING) {
-                if ("raw_data".equals(currentField)) {
-                    data = parser.text();
-                } else {
-                    throw new ElasticsearchParseException("Illegal field [" + currentField + "]");
-                }
-            } else {
-                throw new ElasticsearchParseException("Illegal token [" + token + "]");
-            }
-        }
-        jobDetails = objectMapper.readValue(data, JobDetails.class);
-    }
-
     public Job(JobDetails jobDetails) {
         this.jobDetails = jobDetails;
-    }
-
-    public Job(String data) throws IOException {
-        jobDetails = objectMapper.readValue(data, JobDetails.class);
     }
 
     public JobDetails getJobDetails() {
@@ -72,21 +55,18 @@ public class Job extends AbstractDiffable<Job> implements ToXContent {
 
     @Override
     public Job readFrom(StreamInput in) throws IOException {
-        JobDetails jobDetails = objectMapper.readValue(in.readString(), JobDetails.class);
-        return new Job(jobDetails);
+        return new Job(new JobDetails(in));
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        String data = objectMapper.writeValueAsString(jobDetails);
-        out.writeString(data);
+        jobDetails.writeTo(out);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        String data = objectMapper.writeValueAsString(jobDetails);
         builder.startObject();
-        builder.field("raw_data", data);
+        builder.field("job", jobDetails);
         builder.endObject();
         return builder;
     }

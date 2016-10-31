@@ -1,8 +1,35 @@
+import org.elasticsearch.gradle.precommit.PrecommitTasks
+
 description = 'Prelert Engine-Elastic integration'
 
-apply plugin: 'maven'
-apply plugin: 'java'
+buildscript {
+    repositories {
+        if (System.getProperty("repos.mavenlocal") != null) {
+            // with -Drepos.mavenlocal=true we can force checking the local .m2 repo which is useful for building against
+            // elasticsearch snapshots
+            mavenLocal()
+        }
+        mavenCentral()
+        maven {
+            name 'sonatype-snapshots'
+            url "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+        jcenter()
+    }
+    dependencies {
+        // Version of elasticsearch
+        classpath "org.elasticsearch.gradle:build-tools:5.0.0"
+    }
+}
+
 apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'elasticsearch.esplugin'
+
+esplugin {
+    description 'Prelert Plugin'
+    classname 'org.elasticsearch.xpack.prelert.PrelertPlugin'
+}
 
 group = 'org.elasticsearch.prelert'
 version = '0.1'
@@ -11,6 +38,14 @@ targetCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
+// We need to enable this at some point
+licenseHeaders.enabled = false
+thirdPartyAudit.enabled = false
+
+forbiddenApisMain {
+  signaturesURLs = [PrecommitTasks.getResource('/forbidden/jdk-signatures.txt'),
+                    PrecommitTasks.getResource('/forbidden/es-all-signatures.txt')]
+}
 
 dependencies {
     compile (group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:'2.8.1') {
@@ -19,8 +54,6 @@ dependencies {
     compile (group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.8.1') {
         transitive = false
     }
-    compile group: 'org.elasticsearch', name: 'elasticsearch', version: '5.0.0'
-    compile group: 'org.elasticsearch.plugin', name: 'transport-netty4-client', version: '5.0.0'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.6.2'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.6.2'
     compile group: 'net.sf.supercsv', name: 'super-csv', version:'2.4.0'
@@ -28,80 +61,24 @@ dependencies {
     testCompile group: 'org.elasticsearch', name: 'rest-api-spec', version: '5.0.0'
 }
 
-
 test {
-    include '**/*Test.class', '**/*Tests.class'
-    systemProperty 'tests.security.manager', 'false'
+    exclude '**/*NoBootstrapTests.class'
 }
 
 task noBootstrapTest(type: Test,
         dependsOn: test.dependsOn) {
     classpath = project.test.classpath
     testClassesDir = project.test.testClassesDir
-    include '**/*TestNoBootstrap.class'
+    include '**/*NoBootstrapTests.class'
 }
 check.dependsOn noBootstrapTest
 noBootstrapTest.mustRunAfter test
 
-task copyRestSpec(type: Copy) {
-    from { zipTree(configurations.testCompile.files.find { it.name.contains('rest-api-spec')}) }
-    include 'rest-api-spec/api/**'
-    into project.sourceSets.test.output.resourcesDir
-}
-
-task startPrelert(type:JavaExec) {
-    main = 'org.elasticsearch.xpack.prelert.ServerBootstrap'
-    classpath = sourceSets.main.runtimeClasspath
-    debug = project.hasProperty('debug-prelert') ? true : false
-    systemProperties = [
-            'jetty.home' : "$project.buildDir/prelert-data-dir"
-    ]
-}
-
-task startPrelertWithNativeProcess(type:JavaExec) {
-    main = 'org.elasticsearch.xpack.prelert.ServerBootstrap'
-    classpath = sourceSets.main.runtimeClasspath
-    debug = project.hasProperty('debug-prelert') ? true : false
-    args 'useNativeProcess'
-    systemProperties = [
-            'jetty.home' : "$project.buildDir/prelert-data-dir"
-    ]
-}
-
-task startPrelertInBackground() {
-    doFirst {
-        def t = Thread.start {
-            startPrelert.execute()
-        }
-        while (true) {
-            sleep 500
-            if (prelertStarted()) {
-                break;
-            }
-        }
+integTest {
+    cluster {
+        //setting 'useNativeProcess', 'true'
+        setting 'bootstrap.seccomp', 'false'
     }
 }
 
-static boolean prelertStarted() {
-    try {
-        return new URL("http://localhost:8080/_cat/health").text.contains("green");
-    } catch (Exception e) {
-        return false;
-    }
-}
-
-task integTest(type: Test,
-        dependsOn: test.dependsOn) {
-    classpath = project.test.classpath
-    testClassesDir = project.test.testClassesDir
-    include '**/*IT.class'
-    systemProperties = [
-            'tests.rest.cluster': 'localhost:8080',
-            'tests.rest.load_packaged' : 'false',
-            'tests.security.manager' : 'false'
-    ]
-}
-integTest.dependsOn startPrelertInBackground
-startPrelertInBackground.dependsOn copyRestSpec
-check.dependsOn integTest
 integTest.mustRunAfter noBootstrapTest
