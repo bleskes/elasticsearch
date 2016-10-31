@@ -21,6 +21,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
@@ -229,16 +230,18 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         @Override
         protected final void doExecute(Request request, ActionListener<Response> listener) {
 
-            // NORELEASE - execute in another thread using ES's thread pool. See https://github.com/elastic/prelert-legacy/issues/167
             TimeRange timeRange = TimeRange.builder().startTime(request.getResetStart()).endTime(request.getResetEnd()).build();
             DataLoadParams params = new DataLoadParams(timeRange, request.isIgnoreDowntime());
 
-            try {
-                DataCounts dataCounts = processManager.processData(request.getJobId(), request.content.streamInput(), params);
-                listener.onResponse(new Response(dataCounts));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            // NORELEASE Make this all async so we don't need to pass off to another thread pool and block
+            threadPool.executor(PrelertPlugin.THREAD_POOL_NAME).execute(() -> {
+                try {
+                    DataCounts dataCounts = processManager.processData(request.getJobId(), request.content.streamInput(), params);
+                    listener.onResponse(new Response(dataCounts));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
     }
 }

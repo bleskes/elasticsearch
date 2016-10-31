@@ -8,6 +8,7 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
+import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.plugins.ActionPlugin;
@@ -15,6 +16,8 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchRequestParsers;
+import org.elasticsearch.threadpool.ExecutorBuilder;
+import org.elasticsearch.threadpool.FixedExecutorBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
@@ -87,7 +90,6 @@ import org.elasticsearch.xpack.prelert.rest.schedulers.RestStopJobSchedulerActio
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
-
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -97,6 +99,7 @@ import java.util.List;
 public class PrelertPlugin extends Plugin implements ActionPlugin {
 
     public static final String NAME = "prelert";
+    public static final String THREAD_POOL_NAME = NAME;
 
     // NORELEASE - temporary solution
     static final Setting<Boolean> USE_NATIVE_PROCESS_OPTION = Setting.boolSetting("useNativeProcess", false, Property.NodeScope,
@@ -240,5 +243,12 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
 
     public static Path resolveBinFile(Environment env, String name) {
         return env.binFile().resolve(NAME).resolve(name);
+    }
+
+    @Override
+    public List<ExecutorBuilder<?>> getExecutorBuilders(Settings settings) {
+        final FixedExecutorBuilder builder = new FixedExecutorBuilder(settings, THREAD_POOL_NAME,
+                5 * EsExecutors.boundedNumberOfProcessors(settings), 1000, "xpack.prelert.thread_pool");
+        return Collections.singletonList(builder);
     }
 }

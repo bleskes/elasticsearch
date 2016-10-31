@@ -10,8 +10,6 @@ import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
 import org.mockito.Mockito;
 
-
-//NOCOMMIT fix this test to not use system properties
 public class UsageReporterTests extends ESTestCase {
     public void testUpdatePeriod() throws JobException {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
