@@ -39,8 +39,6 @@ public class ProcessCtrlTests extends ESTestCase {
     }
 
     public void testBuildEnvironment() {
-        Environment env = new Environment(
-                Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         ProcessBuilder pb = new ProcessBuilder();
         ProcessCtrl.buildEnvironment(pb);
 

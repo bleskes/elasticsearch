@@ -128,9 +128,6 @@ public class ElasticsearchMappingsTests extends ESTestCase {
 
         Set<String> expected = new HashSet<>();
 
-        Class<?> c = Class.forName("org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchMappings");
-        Class<?> contentBuilder = Class.forName("org.elasticsearch.common.xcontent.XContentBuilder");
-
         XContentBuilder builder = ElasticsearchMappings.auditActivityMapping();
         BufferedInputStream inputStream = new BufferedInputStream(
                 new ByteArrayInputStream(builder.string().getBytes(StandardCharsets.UTF_8)));
