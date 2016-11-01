@@ -1,3 +1,17 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.config;
 
 import org.elasticsearch.xpack.prelert.job.Detector;
@@ -41,7 +55,7 @@ public final class DefaultDetectorDescription {
             sb.append(detector.getFunction());
             if (isNotNullOrEmpty(detector.getFieldName())) {
                 sb.append('(').append(quoteField(detector.getFieldName()))
-                        .append(')');
+                .append(')');
             }
         } else if (isNotNullOrEmpty(detector.getFieldName())) {
             sb.append(quoteField(detector.getFieldName()));
@@ -61,12 +75,12 @@ public final class DefaultDetectorDescription {
 
         if (isNotNullOrEmpty(detector.getPartitionFieldName())) {
             sb.append(PARTITION_FIELD_OPTION)
-                    .append(quoteField(detector.getPartitionFieldName()));
+            .append(quoteField(detector.getPartitionFieldName()));
         }
 
         if (isNotNullOrEmpty(detector.getExcludeFrequent())) {
             sb.append(EXCLUDE_FREQUENT_OPTION)
-                    .append(detector.getExcludeFrequent());
+            .append(detector.getExcludeFrequent());
         }
     }
 

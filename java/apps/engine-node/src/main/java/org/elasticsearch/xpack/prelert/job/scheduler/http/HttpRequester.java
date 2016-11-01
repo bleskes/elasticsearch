@@ -1,3 +1,17 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.scheduler.http;
 
 import org.apache.logging.log4j.Logger;
@@ -125,6 +139,7 @@ public class HttpRequester {
      * Hostname verifier that ignores hostname discrepancies.
      */
     private static final class NoOpHostnameVerifier implements HostnameVerifier {
+        @Override
         public boolean verify(String hostname, SSLSession session) {
             return true;
         }
@@ -136,14 +151,17 @@ public class HttpRequester {
     private static final class NoOpTrustManager implements X509TrustManager {
         private static final X509Certificate[] EMPTY_CERTIFICATE_ARRAY = new X509Certificate[0];
 
+        @Override
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             // Ignore certificate problems
         }
 
+        @Override
         public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             // Ignore certificate problems
         }
 
+        @Override
         public X509Certificate[] getAcceptedIssuers() {
             return EMPTY_CERTIFICATE_ARRAY;
         }

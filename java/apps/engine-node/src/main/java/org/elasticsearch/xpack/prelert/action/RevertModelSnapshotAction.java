@@ -1,18 +1,16 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
- * __________________
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ * Copyright (c) 2016
  *
- * NOTICE:  All information contained herein is, and remains
- * the property of Elasticsearch Incorporated and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to Elasticsearch Incorporated
- * and its suppliers and may be covered by U.S. and Foreign Patents,
- * patents in process, and are protected by trade secret or copyright law.
- * Dissemination of this information or reproduction of this material
- * is strictly forbidden unless prior written permission is obtained
- * from Elasticsearch Incorporated.
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
  */
 package org.elasticsearch.xpack.prelert.action;
 
@@ -67,7 +65,7 @@ import java.util.Optional;
 import static org.elasticsearch.action.ValidateActions.addValidationError;
 
 public class RevertModelSnapshotAction
-        extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Response, RevertModelSnapshotAction.RequestBuilder> {
+extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Response, RevertModelSnapshotAction.RequestBuilder> {
 
     public static final RevertModelSnapshotAction INSTANCE = new RevertModelSnapshotAction();
     public static final String NAME = "indices:admin/prelert/modelsnapshots/revert";
@@ -338,8 +336,8 @@ public class RevertModelSnapshotAction
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
             logger.debug("Received request to revert to time '" + request.getTime() + "' description '" + request.getDescription()
-                    + "' snapshot id '" + request.getSnapshotId() + "' for job '" + request.getJobId() + "', deleting intervening "
-                    + " results: " + request.getDeleteInterveningResults());
+            + "' snapshot id '" + request.getSnapshotId() + "' for job '" + request.getJobId() + "', deleting intervening "
+            + " results: " + request.getDeleteInterveningResults());
 
             if (request.getTime() == null && request.getSnapshotId() == null && request.getDescription() == null) {
                 throw new IllegalStateException(Messages.getMessage(Messages.REST_INVALID_REVERT_PARAMS));

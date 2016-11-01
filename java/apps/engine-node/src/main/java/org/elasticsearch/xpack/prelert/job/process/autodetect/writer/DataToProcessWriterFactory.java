@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
 import org.apache.logging.log4j.Logger;
@@ -29,22 +42,22 @@ public final class DataToProcessWriterFactory {
      * format is JSON or otherwise a {@link CsvDataToProcessWriter}
      */
     public static DataToProcessWriter create(boolean includeControlField, AutodetectProcess autodetectProcess,
-                                      DataDescription dataDescription, AnalysisConfig analysisConfig,
-                                      SchedulerConfig schedulerConfig, TransformConfigs transforms,
-                                      StatusReporter statusReporter, Logger logger) {
+            DataDescription dataDescription, AnalysisConfig analysisConfig,
+            SchedulerConfig schedulerConfig, TransformConfigs transforms,
+            StatusReporter statusReporter, Logger logger) {
         switch (dataDescription.getFormat()) {
-            case JSON:
-            case ELASTICSEARCH:
-                return new JsonDataToProcessWriter(includeControlField, autodetectProcess, dataDescription, analysisConfig,
-                        schedulerConfig, transforms, statusReporter, logger);
-            case DELIMITED:
-                return new CsvDataToProcessWriter(includeControlField, autodetectProcess, dataDescription, analysisConfig,
-                        transforms, statusReporter, logger);
-            case SINGLE_LINE:
-                return new SingleLineDataToProcessWriter(includeControlField, autodetectProcess, dataDescription, analysisConfig,
-                        transforms, statusReporter, logger);
-            default:
-                throw new IllegalArgumentException();
+        case JSON:
+        case ELASTICSEARCH:
+            return new JsonDataToProcessWriter(includeControlField, autodetectProcess, dataDescription, analysisConfig,
+                    schedulerConfig, transforms, statusReporter, logger);
+        case DELIMITED:
+            return new CsvDataToProcessWriter(includeControlField, autodetectProcess, dataDescription, analysisConfig,
+                    transforms, statusReporter, logger);
+        case SINGLE_LINE:
+            return new SingleLineDataToProcessWriter(includeControlField, autodetectProcess, dataDescription, analysisConfig,
+                    transforms, statusReporter, logger);
+        default:
+            throw new IllegalArgumentException();
         }
     }
 }

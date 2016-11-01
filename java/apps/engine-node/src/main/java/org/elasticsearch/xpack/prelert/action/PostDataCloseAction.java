@@ -1,3 +1,17 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.action.Action;
@@ -23,7 +37,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class PostDataCloseAction extends Action<PostDataCloseAction.Request, PostDataCloseAction.Response,
-        PostDataCloseAction.RequestBuilder> {
+PostDataCloseAction.RequestBuilder> {
 
     public static final PostDataCloseAction INSTANCE = new PostDataCloseAction();
     public static final String NAME = "cluster:admin/prelert/data/post/close";
@@ -115,7 +129,7 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,
-                               IndexNameExpressionResolver indexNameExpressionResolver, AutodetectProcessManager processManager) {
+                IndexNameExpressionResolver indexNameExpressionResolver, AutodetectProcessManager processManager) {
             super(settings, PostDataCloseAction.NAME, false, threadPool, transportService, actionFilters,
                     indexNameExpressionResolver, Request::new);
 

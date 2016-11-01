@@ -1,3 +1,17 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.action.Action;
@@ -32,7 +46,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class PostDataFlushAction extends Action<PostDataFlushAction.Request, PostDataFlushAction.Response,
-        PostDataFlushAction.RequestBuilder> {
+PostDataFlushAction.RequestBuilder> {
 
     public static final PostDataFlushAction INSTANCE = new PostDataFlushAction();
     public static final String NAME = "cluster:admin/prelert/data/post/flush";
@@ -167,7 +181,7 @@ public class PostDataFlushAction extends Action<PostDataFlushAction.Request, Pos
                     Objects.equals(start, other.start) &&
                     Objects.equals(end, other.end) &&
                     Objects.equals(advanceTime, other.advanceTime);
-         }
+        }
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
@@ -212,7 +226,7 @@ public class PostDataFlushAction extends Action<PostDataFlushAction.Request, Pos
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,
-                               IndexNameExpressionResolver indexNameExpressionResolver, AutodetectProcessManager processManager) {
+                IndexNameExpressionResolver indexNameExpressionResolver, AutodetectProcessManager processManager) {
             super(settings, PostDataFlushAction.NAME, false, threadPool, transportService, actionFilters,
                     indexNameExpressionResolver, PostDataFlushAction.Request::new);
 
@@ -224,15 +238,15 @@ public class PostDataFlushAction extends Action<PostDataFlushAction.Request, Pos
 
             TimeRange timeRange = TimeRange.builder().startTime(request.getStart()).endTime(request.getEnd()).build();
             InterimResultsParams params = InterimResultsParams.builder()
-                                            .calcInterim(request.getCalcInterim())
-                                            .forTimeRange(timeRange)
-                                            .advanceTime(request.getAdvanceTime())
-                                            .build();
+                    .calcInterim(request.getCalcInterim())
+                    .forTimeRange(timeRange)
+                    .advanceTime(request.getAdvanceTime())
+                    .build();
 
             processManager.flushJob(request.getJobId(), params);
             listener.onResponse(new Response(true));
         }
     }
 }
- 
+
 

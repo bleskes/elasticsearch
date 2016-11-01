@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
 import java.io.BufferedReader;
@@ -36,14 +49,14 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter {
     private static final String RAW = "raw";
 
     protected SingleLineDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
-                                            DataDescription dataDescription, AnalysisConfig analysisConfig,
-                                            TransformConfigs transformConfigs, StatusReporter statusReporter, Logger logger) {
+            DataDescription dataDescription, AnalysisConfig analysisConfig,
+            TransformConfigs transformConfigs, StatusReporter statusReporter, Logger logger) {
         super(includeControlField, autodetectProcess, dataDescription, analysisConfig, transformConfigs, statusReporter, logger);
     }
 
     @Override
     public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
-            HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
         statusReporter.startNewIncrementalCount();
 
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
@@ -54,7 +67,7 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter {
             String[] record = new String[numFields];
 
             for (String line = bufferedReader.readLine(); line != null;
-                 line = bufferedReader.readLine()) {
+                    line = bufferedReader.readLine()) {
                 Arrays.fill(record, "");
                 applyTransformsAndWrite(new String[]{line}, record, 1);
             }
@@ -66,7 +79,7 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter {
 
     @Override
     protected boolean checkForMissingFields(Collection<String> inputFields,
-                                            Map<String, Integer> inputFieldIndexes, String[] header) throws MissingFieldException {
+            Map<String, Integer> inputFieldIndexes, String[] header) throws MissingFieldException {
         return true;
     }
 }

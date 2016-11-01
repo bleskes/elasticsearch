@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.utils.json;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -101,7 +114,7 @@ public abstract class FieldNameParser<T> {
                 handleFieldName(fieldName, data);
                 break;
             default:
-                logger.warn(String.format(Locale.ROOT, 
+                logger.warn(String.format(Locale.ROOT,
                         "Parsing error: Only simple fields expected in %s not %s",
                         objectName, token));
                 break;

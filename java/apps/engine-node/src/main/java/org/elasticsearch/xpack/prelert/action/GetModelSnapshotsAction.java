@@ -1,18 +1,16 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
- * __________________
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ * Copyright (c) 2016
  *
- * NOTICE:  All information contained herein is, and remains
- * the property of Elasticsearch Incorporated and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to Elasticsearch Incorporated
- * and its suppliers and may be covered by U.S. and Foreign Patents,
- * patents in process, and are protected by trade secret or copyright law.
- * Dissemination of this information or reproduction of this material
- * is strictly forbidden unless prior written permission is obtained
- * from Elasticsearch Incorporated.
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
  */
 package org.elasticsearch.xpack.prelert.action;
 
@@ -332,8 +330,8 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
             logger.debug(String.format(Locale.ROOT,
                     "Get model snapshots for job %s. skip = %d, take = %d"
                             + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
-                    request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
-                    request.getSort(), request.getDescOrder(), request.getDescriptionString()));
+                            request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
+                            request.getSort(), request.getDescOrder(), request.getDescriptionString()));
 
             QueryPage<ModelSnapshot> page;
             try {

@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
 import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.EQUALS;
@@ -43,7 +56,7 @@ public class FieldConfigWriter {
     private final ObjectMapper objectMapper;
 
     public FieldConfigWriter(AnalysisConfig config, Set<ListDocument> lists,
-                             OutputStreamWriter writer, Logger logger) {
+            OutputStreamWriter writer, Logger logger) {
         this.config = Objects.requireNonNull(config);
         this.lists = Objects.requireNonNull(lists);
         this.writer = Objects.requireNonNull(writer);
@@ -82,13 +95,13 @@ public class FieldConfigWriter {
 
     private void writeDetectorClause(int detectorId, Detector detector, StringBuilder contents) {
         contents.append(DETECTOR_PREFIX).append(detectorId)
-                .append(DETECTOR_CLAUSE_SUFFIX).append(EQUALS);
+        .append(DETECTOR_CLAUSE_SUFFIX).append(EQUALS);
 
         DefaultDetectorDescription.appendOn(detector, contents);
 
         if (Strings.isNullOrEmpty(config.getCategorizationFieldName()) == false) {
             contents.append(CATEGORIZATION_FIELD_OPTION)
-                    .append(quoteField(config.getCategorizationFieldName()));
+            .append(quoteField(config.getCategorizationFieldName()));
         }
 
         contents.append(NEW_LINE);
@@ -101,7 +114,7 @@ public class FieldConfigWriter {
         }
 
         contents.append(DETECTOR_PREFIX).append(detectorId)
-                .append(DETECTOR_RULES_SUFFIX).append(EQUALS);
+        .append(DETECTOR_RULES_SUFFIX).append(EQUALS);
 
         String rulesAsJson = objectMapper.writeValueAsString(detector.getDetectorRules());
         contents.append(rulesAsJson);
@@ -113,7 +126,7 @@ public class FieldConfigWriter {
         for (ListDocument list : lists) {
             String listAsJson = objectMapper.writeValueAsString(list.getItems());
             buffer.append(LIST_PREFIX).append(list.getId()).append(EQUALS).append(listAsJson)
-                    .append(NEW_LINE);
+            .append(NEW_LINE);
         }
     }
 
@@ -125,7 +138,7 @@ public class FieldConfigWriter {
         int counter = 0;
         for (String value : values) {
             buffer.append(settingName).append(counter++).append(EQUALS)
-                    .append(quote ? quoteField(value) : value).append(NEW_LINE);
+            .append(quote ? quoteField(value) : value).append(NEW_LINE);
         }
     }
 

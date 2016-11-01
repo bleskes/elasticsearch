@@ -1,3 +1,17 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.scheduler.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,7 +44,7 @@ public class HttpDataExtractorFactory implements DataExtractorFactory {
                 stringifyElasticsearchAggregations(schedulerConfig.getAggregations(), schedulerConfig.getAggs()),
                 stringifyElasticsearchScriptFields(schedulerConfig.getScriptFields()),
                 Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource()) ? null : writeObjectAsJson(job.allFields()),
-                timeField);
+                        timeField);
         HttpRequester httpRequester = new HttpRequester();
         ElasticsearchUrlBuilder urlBuilder = ElasticsearchUrlBuilder
                 .create(schedulerConfig.getBaseUrl(), schedulerConfig.getIndexes(), schedulerConfig.getTypes());

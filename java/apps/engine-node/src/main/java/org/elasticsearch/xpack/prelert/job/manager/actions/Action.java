@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -84,7 +97,7 @@ public enum Action implements ActionState<Action>
     public String getBusyActionError(String jobId, ActionState<Action> actionInUse)
     {
         return Messages.getMessage(getMessageKey(), jobId,
-                            Messages.getMessage(actionInUse.getActionVerb()), "");
+                Messages.getMessage(actionInUse.getActionVerb()), "");
     }
 
     @Override
@@ -93,9 +106,9 @@ public enum Action implements ActionState<Action>
         // host needs a single white space appended to be formatted properly.
         // Review if the message string changes
         return Messages.getMessage(getMessageKey(),
-                                jobId,
-                                Messages.getMessage(actionInUse.getActionVerb()),
-                                Messages.getMessage(Messages.ON_HOST, host + " "));
+                jobId,
+                Messages.getMessage(actionInUse.getActionVerb()),
+                Messages.getMessage(Messages.ON_HOST, host + " "));
     }
 
     @Override

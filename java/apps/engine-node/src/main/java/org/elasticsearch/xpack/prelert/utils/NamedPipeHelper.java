@@ -1,15 +1,17 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (C) 2016 Elasticsearch BV. All Rights Reserved.
+ * Copyright (c) 2016
  *
- * Notice: this software, and all information contained therein, is the
- * exclusive property of Elasticsearch BV and its licensors, if any, and is
- * protected under applicable domestic and foreign law, and international
- * treaties. Reproduction, republication or distribution without the express
- * written consent of Elasticsearch BV is strictly prohibited.
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
  */
-
 package org.elasticsearch.xpack.prelert.utils;
 
 import org.apache.lucene.util.Constants;
@@ -87,7 +89,7 @@ public class NamedPipeHelper {
 
     /**
      * Open a named pipe created elsewhere for input.
-     * 
+     *
      * @param path
      *            Path of named pipe to open.
      * @param timeout

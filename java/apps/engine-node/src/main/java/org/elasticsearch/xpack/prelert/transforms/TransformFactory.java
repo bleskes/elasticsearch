@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.transforms;
 
 import java.util.ArrayList;
@@ -23,10 +36,10 @@ public class TransformFactory {
     public static final int OUTPUT_ARRAY_INDEX = 2;
 
     public Transform create(TransformConfig transformConfig,
-                            Map<String, Integer> inputIndexesMap,
-                            Map<String, Integer> scratchAreaIndexesMap,
-                            Map<String, Integer> outputIndexesMap,
-                            Logger logger) {
+            Map<String, Integer> inputIndexesMap,
+            Map<String, Integer> scratchAreaIndexesMap,
+            Map<String, Integer> outputIndexesMap,
+            Logger logger) {
         int[] input = new int[transformConfig.getInputs().size()];
         fillIndexArray(transformConfig.getInputs(), inputIndexesMap, input);
 
@@ -66,39 +79,39 @@ public class TransformFactory {
         TransformType type = transformConfig.type();
 
         switch (type) {
-            case DOMAIN_SPLIT:
-                return new HighestRegisteredDomain(readIndexes, writeIndexes, logger);
-            case CONCAT:
-                if (transformConfig.getArguments().isEmpty()) {
-                    return new Concat(readIndexes, writeIndexes, logger);
-                } else {
-                    return new Concat(transformConfig.getArguments().get(0),
-                            readIndexes, writeIndexes, logger);
-                }
-            case REGEX_EXTRACT:
-                return new RegexExtract(transformConfig.getArguments().get(0), readIndexes,
+        case DOMAIN_SPLIT:
+            return new HighestRegisteredDomain(readIndexes, writeIndexes, logger);
+        case CONCAT:
+            if (transformConfig.getArguments().isEmpty()) {
+                return new Concat(readIndexes, writeIndexes, logger);
+            } else {
+                return new Concat(transformConfig.getArguments().get(0),
+                        readIndexes, writeIndexes, logger);
+            }
+        case REGEX_EXTRACT:
+            return new RegexExtract(transformConfig.getArguments().get(0), readIndexes,
+                    writeIndexes, logger);
+        case REGEX_SPLIT:
+            return new RegexSplit(transformConfig.getArguments().get(0), readIndexes,
+                    writeIndexes, logger);
+        case EXCLUDE:
+            if (transformConfig.getCondition().getOperator().expectsANumericArgument()) {
+                return new ExcludeFilterNumeric(transformConfig.getCondition(),
+                        readIndexes, writeIndexes, logger);
+            } else {
+                return new ExcludeFilterRegex(transformConfig.getCondition(), readIndexes,
                         writeIndexes, logger);
-            case REGEX_SPLIT:
-                return new RegexSplit(transformConfig.getArguments().get(0), readIndexes,
-                        writeIndexes, logger);
-            case EXCLUDE:
-                if (transformConfig.getCondition().getOperator().expectsANumericArgument()) {
-                    return new ExcludeFilterNumeric(transformConfig.getCondition(),
-                            readIndexes, writeIndexes, logger);
-                } else {
-                    return new ExcludeFilterRegex(transformConfig.getCondition(), readIndexes,
-                            writeIndexes, logger);
-                }
-            case LOWERCASE:
-                return StringTransform.createLowerCase(readIndexes, writeIndexes, logger);
-            case UPPERCASE:
-                return StringTransform.createUpperCase(readIndexes, writeIndexes, logger);
-            case TRIM:
-                return StringTransform.createTrim(readIndexes, writeIndexes, logger);
-            default:
-                // This code will never be hit - it's to
-                // keep the compiler happy.
-                throw new IllegalArgumentException("Unknown transform type " + type);
+            }
+        case LOWERCASE:
+            return StringTransform.createLowerCase(readIndexes, writeIndexes, logger);
+        case UPPERCASE:
+            return StringTransform.createUpperCase(readIndexes, writeIndexes, logger);
+        case TRIM:
+            return StringTransform.createTrim(readIndexes, writeIndexes, logger);
+        default:
+            // This code will never be hit - it's to
+            // keep the compiler happy.
+            throw new IllegalArgumentException("Unknown transform type " + type);
         }
     }
 
@@ -107,7 +120,7 @@ public class TransformFactory {
      * with the index from the <code>indexes</code> map.
      */
     private static void fillIndexArray(List<String> fields, Map<String, Integer> indexes,
-                                       int[] indexArray) {
+            int[] indexArray) {
         int i = 0;
         for (String field : fields) {
             Integer index = indexes.get(field);

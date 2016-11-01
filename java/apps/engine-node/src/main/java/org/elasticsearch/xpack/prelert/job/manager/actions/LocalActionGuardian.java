@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
 import org.apache.logging.log4j.Logger;
@@ -14,7 +27,7 @@ import java.util.Map;
  * will throw otherwise an ActionTicket is returned
  */
 public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
-                            extends ActionGuardian<T>
+extends ActionGuardian<T>
 {
     private static final Logger LOGGER = Loggers.getLogger(LocalActionGuardian.class);
 

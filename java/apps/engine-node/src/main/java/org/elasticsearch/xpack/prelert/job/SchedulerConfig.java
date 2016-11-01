@@ -1,18 +1,16 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
- * __________________
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ * Copyright (c) 2016
  *
- * NOTICE:  All information contained herein is, and remains
- * the property of Elasticsearch Incorporated and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to Elasticsearch Incorporated
- * and its suppliers and may be covered by U.S. and Foreign Patents,
- * patents in process, and are protected by trade secret or copyright law.
- * Dissemination of this information or reproduction of this material
- * is strictly forbidden unless prior written permission is obtained
- * from Elasticsearch Incorporated.
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
  */
 package org.elasticsearch.xpack.prelert.job;
 
@@ -95,7 +93,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
      */
     public static final ParseField SCRIPT_FIELDS = new ParseField("script_fields");
 
-    public static final ConstructingObjectParser<SchedulerConfig.Builder, ParseFieldMatcherSupplier> PARSER = 
+    public static final ConstructingObjectParser<SchedulerConfig.Builder, ParseFieldMatcherSupplier> PARSER =
             new ConstructingObjectParser<>("schedule_config", a -> new SchedulerConfig.Builder((DataSource) a[0]));
 
     static {
