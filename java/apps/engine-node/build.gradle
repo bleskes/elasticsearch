@@ -39,12 +39,16 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 // We need to enable this at some point
-licenseHeaders.enabled = false
 thirdPartyAudit.enabled = false
 
 forbiddenApisMain {
   signaturesURLs = [PrecommitTasks.getResource('/forbidden/jdk-signatures.txt'),
                     PrecommitTasks.getResource('/forbidden/es-all-signatures.txt')]
+}
+
+licenseHeaders {
+    approvedLicenses = ['Elasticsearch Confidential']
+    additionalLicense 'ESCON', 'Elasticsearch Confidential', 'ELASTICSEARCH CONFIDENTIAL'
 }
 
 dependencies {
