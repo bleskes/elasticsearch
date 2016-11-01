@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
@@ -48,6 +49,8 @@ import java.util.Set;
  * Expects an array of buckets so the first element will always be the
  * start array symbol and the data must be terminated with the end array symbol.
  */
+// NORELEASE remove this class when Jackson is gone
+@SuppressForbidden(reason = "This class uses notify and wait but will be removed when jackson is gone")
 public class AutodetectResultsParser {
     private final List<AlertObserver> observers = new ArrayList<>();
     private final Set<String> acknowledgedFlushes = new HashSet<>();
