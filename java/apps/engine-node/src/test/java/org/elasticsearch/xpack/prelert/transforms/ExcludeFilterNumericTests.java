@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.transforms;
 
 import static org.elasticsearch.xpack.prelert.transforms.TransformTestUtils.createIndexArray;
@@ -15,7 +28,7 @@ import org.elasticsearch.xpack.prelert.transforms.Transform.TransformIndex;
 import org.elasticsearch.xpack.prelert.transforms.Transform.TransformResult;
 
 public class ExcludeFilterNumericTests extends ESTestCase {
-    
+
     public void testEq()
             throws TransformException {
         ExcludeFilterNumeric transform = createTransform(Operator.EQ, "5.0");
@@ -31,7 +44,7 @@ public class ExcludeFilterNumericTests extends ESTestCase {
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
     }
 
-    
+
     public void testGT()
             throws TransformException {
         ExcludeFilterNumeric transform = createTransform(Operator.GT, "10.000");
@@ -47,7 +60,7 @@ public class ExcludeFilterNumericTests extends ESTestCase {
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
     }
 
-    
+
     public void testGTE()
             throws TransformException {
         ExcludeFilterNumeric transform = createTransform(Operator.GTE, "10.000");
@@ -66,7 +79,7 @@ public class ExcludeFilterNumericTests extends ESTestCase {
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
     }
 
-    
+
     public void testLT()
             throws TransformException {
         ExcludeFilterNumeric transform = createTransform(Operator.LT, "2000");
@@ -82,7 +95,7 @@ public class ExcludeFilterNumericTests extends ESTestCase {
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
     }
 
-    
+
     public void testLTE()
             throws TransformException {
         ExcludeFilterNumeric transform = createTransform(Operator.LTE, "2000");

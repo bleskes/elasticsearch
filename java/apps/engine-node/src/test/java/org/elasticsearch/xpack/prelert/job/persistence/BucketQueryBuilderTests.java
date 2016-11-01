@@ -1,18 +1,16 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
- * __________________
  *
- *  [2014] Elasticsearch Incorporated. All Rights Reserved.
+ * Copyright (c) 2016
  *
- * NOTICE:  All information contained herein is, and remains
- * the property of Elasticsearch Incorporated and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to Elasticsearch Incorporated
- * and its suppliers and may be covered by U.S. and Foreign Patents,
- * patents in process, and are protected by trade secret or copyright law.
- * Dissemination of this information or reproduction of this material
- * is strictly forbidden unless prior written permission is obtained
- * from Elasticsearch Incorporated.
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
@@ -33,10 +31,10 @@ public class BucketQueryBuilderTests extends ESTestCase {
     public void testDefaultAll() throws Exception {
         BucketQueryBuilder.BucketQuery query =
                 new BucketQueryBuilder("1000")
-                        .expand(true)
-                        .includeInterim(true)
-                        .partitionValue("p")
-                        .build();
+                .expand(true)
+                .includeInterim(true)
+                .partitionValue("p")
+                .build();
 
         Assert.assertEquals("1000", query.getTimestamp());
         assertEquals(true, query.isIncludeInterim());
@@ -47,27 +45,27 @@ public class BucketQueryBuilderTests extends ESTestCase {
     public void testEqualsHash() throws Exception {
         BucketQueryBuilder.BucketQuery query =
                 new BucketQueryBuilder("1000")
-                        .expand(true)
-                        .includeInterim(true)
-                        .partitionValue("p")
-                        .build();
+                .expand(true)
+                .includeInterim(true)
+                .partitionValue("p")
+                .build();
 
         BucketQueryBuilder.BucketQuery query2 =
                 new BucketQueryBuilder("1000")
-                        .expand(true)
-                        .includeInterim(true)
-                        .partitionValue("p")
-                        .build();
+                .expand(true)
+                .includeInterim(true)
+                .partitionValue("p")
+                .build();
 
         assertEquals(query2, query);
         assertEquals(query2.hashCode(), query.hashCode());
 
         query2 =
                 new BucketQueryBuilder("1000")
-                        .expand(true)
-                        .includeInterim(true)
-                        .partitionValue("q")
-                        .build();
+                .expand(true)
+                .includeInterim(true)
+                .partitionValue("q")
+                .build();
 
         assertFalse(query2.equals(query));
         assertFalse(query2.hashCode() == query.hashCode());

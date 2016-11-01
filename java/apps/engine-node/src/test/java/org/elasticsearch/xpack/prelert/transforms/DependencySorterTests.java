@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.transforms;
 
 import java.util.ArrayList;
@@ -12,14 +25,14 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 
 public class DependencySorterTests extends ESTestCase {
 
-    
+
     public void testFindDependencies_GivenNoDependencies() {
         List<TransformConfig> transforms = new ArrayList<>();
         List<TransformConfig> deps = DependencySorter.findDependencies("metricField", transforms);
         assertEquals(0, deps.size());
     }
 
-    
+
     public void testFindDependencies_Given1Dependency() {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -39,7 +52,7 @@ public class DependencySorterTests extends ESTestCase {
         assertEquals(deps.get(0), concat2);
     }
 
-    
+
     public void testFindDependencies_Given2Dependencies() {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -61,7 +74,7 @@ public class DependencySorterTests extends ESTestCase {
         assertTrue(deps.contains(concat2));
     }
 
-    
+
     public void testFindDependencies_GivenChainOfDependencies() {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -85,7 +98,7 @@ public class DependencySorterTests extends ESTestCase {
     /**
      * 2 separate inputs with chain of dependencies one of which is shared
      */
-    
+
     public void testFindDependencies_Given2ChainsAndSharedDependencys() {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -112,7 +125,7 @@ public class DependencySorterTests extends ESTestCase {
         assertEquals(dependentConcat2, deps.get(2));
     }
 
-    
+
     public void testSortByDependency_NoDependencies() {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -134,7 +147,7 @@ public class DependencySorterTests extends ESTestCase {
         assertEquals(transforms.size(), orderedDeps.size());
     }
 
-    
+
     public void testSortByDependency_SingleChain() {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -166,7 +179,7 @@ public class DependencySorterTests extends ESTestCase {
         assertTrue(chain1HrdIndex < chain1Concat2Index);
     }
 
-    
+
     public void testSortByDependency_3ChainsInOrder() {
         List<TransformConfig> transforms = new ArrayList<>();
 
@@ -211,7 +224,7 @@ public class DependencySorterTests extends ESTestCase {
         assertTrue(chain2ConcatIndex < chain2Concat2Index);
     }
 
-    
+
     public void testSortByDependency_3ChainsOutOfOrder() {
         List<TransformConfig> transforms = new ArrayList<>();
 

@@ -1,4 +1,17 @@
-
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.transforms;
 
 import java.util.ArrayList;
@@ -47,7 +60,7 @@ public final class TransformTestUtils {
     }
 
     private static List<String> createValidArgs(IntRange range, TransformType type,
-                                                BiFunction<Integer, TransformType, String> argumentCreator) {
+            BiFunction<Integer, TransformType, String> argumentCreator) {
         List<String> args = new ArrayList<>();
         int validCount = getValidCount(range);
         for (int arg = 0; arg < validCount; ++arg) {
@@ -58,18 +71,18 @@ public final class TransformTestUtils {
 
     private static String createValidArgument(int argNumber, TransformType type) {
         switch (type) {
-            case REGEX_EXTRACT:
-                return Integer.toString(argNumber) + ".Foo ([0-9]+)";
-            case CONCAT:
-            case DOMAIN_SPLIT:
-            case EXCLUDE:
-            case LOWERCASE:
-            case REGEX_SPLIT:
-            case TRIM:
-            case UPPERCASE:
-                return Integer.toString(argNumber);
-            default:
-                throw new IllegalArgumentException();
+        case REGEX_EXTRACT:
+            return Integer.toString(argNumber) + ".Foo ([0-9]+)";
+        case CONCAT:
+        case DOMAIN_SPLIT:
+        case EXCLUDE:
+        case LOWERCASE:
+        case REGEX_SPLIT:
+        case TRIM:
+        case UPPERCASE:
+            return Integer.toString(argNumber);
+        default:
+            throw new IllegalArgumentException();
         }
     }
 

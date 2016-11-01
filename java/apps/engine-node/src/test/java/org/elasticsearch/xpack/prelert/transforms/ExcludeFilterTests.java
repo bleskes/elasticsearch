@@ -1,3 +1,17 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
 package org.elasticsearch.xpack.prelert.transforms;
 
 import static org.elasticsearch.xpack.prelert.transforms.TransformTestUtils.createIndexArray;
@@ -14,7 +28,7 @@ import org.elasticsearch.xpack.prelert.transforms.Transform.TransformIndex;
 import org.elasticsearch.xpack.prelert.transforms.Transform.TransformResult;
 
 public class ExcludeFilterTests extends ESTestCase {
-    
+
     public void testTransform_matches() throws TransformException {
         List<TransformIndex> readIndexes = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndexes = createIndexArray();
@@ -31,7 +45,7 @@ public class ExcludeFilterTests extends ESTestCase {
         assertEquals(TransformResult.EXCLUDE, transform.transform(readWriteArea));
     }
 
-    
+
     public void testTransform_noMatches() throws TransformException {
         List<TransformIndex> readIndexes = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndexes = createIndexArray();
@@ -48,7 +62,7 @@ public class ExcludeFilterTests extends ESTestCase {
         assertEquals(TransformResult.OK, transform.transform(readWriteArea));
     }
 
-    
+
     public void testTransform_matchesRegex() throws TransformException {
         List<TransformIndex> readIndexes = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndexes = createIndexArray();
@@ -68,7 +82,7 @@ public class ExcludeFilterTests extends ESTestCase {
     }
 
 
-    
+
     public void testTransform_matchesMultipleInputs() throws TransformException {
         List<TransformIndex> readIndexes = createIndexArray(new TransformIndex(0, 0),
                 new TransformIndex(0, 1),
@@ -88,7 +102,7 @@ public class ExcludeFilterTests extends ESTestCase {
     }
 
 
-    
+
     public void testTransform() throws TransformException {
         List<TransformIndex> readIndexes = createIndexArray(new TransformIndex(0, 0));
         List<TransformIndex> writeIndexes = createIndexArray();
