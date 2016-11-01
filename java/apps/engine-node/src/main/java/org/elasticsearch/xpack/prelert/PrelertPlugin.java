@@ -77,7 +77,7 @@ import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.BlackHoleAutodetectProcess;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.legacy.LegacyAutodetectProcessFactory;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.NativeAutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.scheduler.http.HttpDataExtractorFactory;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
@@ -184,7 +184,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
             ElasticsearchJobProvider jobProvider) {
 
         AutodetectProcessFactory processFactory = USE_NATIVE_PROCESS_OPTION.get(settings)
-                ? new LegacyAutodetectProcessFactory(jobProvider, env, settings)
+                ? new NativeAutodetectProcessFactory(jobProvider, env, settings)
                         : (JobDetails, ingnoreDowntime) -> new BlackHoleAutodetectProcess();
                         return new AutodetectCommunicatorFactory(env, settings,
                                 processFactory,

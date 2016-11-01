@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.process.autodetect.legacy;
+package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
@@ -39,8 +39,8 @@ import java.util.Locale;
  * Autodetect process based on the old Java API process code.
  */
 // NORELEASE This is a temporary solution so the integration tests can be added.
-public class LegacyAutodetectProcess implements AutodetectProcess {
-    private static final Logger LOGGER = Loggers.getLogger(LegacyAutodetectProcess.class);
+public class NativeAutodetectProcess implements AutodetectProcess {
+    private static final Logger LOGGER = Loggers.getLogger(NativeAutodetectProcess.class);
 
     private final LengthEncodedWriter recordWriter;
     private final ZonedDateTime startTime;
@@ -49,7 +49,7 @@ public class LegacyAutodetectProcess implements AutodetectProcess {
     private final BufferedReader errorReader;
     private final List<Path> filesToDelete;
 
-    public LegacyAutodetectProcess(Process nativeProcess, int numberOfAnalysisFields, List<Path> filesToDelete) {
+    public NativeAutodetectProcess(Process nativeProcess, int numberOfAnalysisFields, List<Path> filesToDelete) {
         this.recordWriter = new LengthEncodedWriter(nativeProcess.getOutputStream());
         startTime = ZonedDateTime.now();
         this.numberOfAnalysisFields = numberOfAnalysisFields;

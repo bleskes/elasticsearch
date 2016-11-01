@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.process.autodetect.legacy;
+package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.SpecialPermission;
@@ -40,14 +40,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-public class LegacyAutodetectProcessFactory implements AutodetectProcessFactory {
+public class NativeAutodetectProcessFactory implements AutodetectProcessFactory {
 
-    private static final Logger LOGGER = Loggers.getLogger(LegacyAutodetectProcessFactory.class);
+    private static final Logger LOGGER = Loggers.getLogger(NativeAutodetectProcessFactory.class);
     private final JobProvider jobProvider;
     private Environment env;
     private Settings settings;
 
-    public LegacyAutodetectProcessFactory(JobProvider jobProvider, Environment env, Settings settings) {
+    public NativeAutodetectProcessFactory(JobProvider jobProvider, Environment env, Settings settings) {
         this.env = env;
         this.settings = settings;
         this.jobProvider = Objects.requireNonNull(jobProvider);
@@ -64,7 +64,7 @@ public class LegacyAutodetectProcessFactory implements AutodetectProcessFactory 
             return createNativeProcess(jobDetails, ignoreDowntime, filesToDelete);
         });
         int numberOfAnalysisFields = jobDetails.getAnalysisConfig().analysisFields().size();
-        return new LegacyAutodetectProcess(nativeProcess, numberOfAnalysisFields, filesToDelete);
+        return new NativeAutodetectProcess(nativeProcess, numberOfAnalysisFields, filesToDelete);
     }
 
     private Process createNativeProcess(JobDetails job, boolean ignoreDowntime, List<Path> filesToDelete) {
