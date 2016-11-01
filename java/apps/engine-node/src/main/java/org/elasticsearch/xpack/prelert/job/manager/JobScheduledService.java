@@ -98,6 +98,9 @@ public class JobScheduledService {
                     LOGGER.error(Messages.getMessage(Messages.JOB_SCHEDULER_FAILED_TO_STOP), e);
                 }
             }
+            // NORELEASE: these operations need to happen via an master node operation,
+            // this service can run on any node. In a non single node setup this would
+            // have failed.
             jobManager.updateSchedulerStatus(jobId, newStatus);
         }
     }
