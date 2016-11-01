@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert;
 
+import org.apache.lucene.util.Constants;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.Client;
@@ -109,11 +110,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class PrelertPlugin extends Plugin implements ActionPlugin {
 
     public static final String NAME = "prelert";
     public static final String THREAD_POOL_NAME = NAME;
+
+    // NORELEASE: eventually we won't run programs directly so won't need to know this in this class
+    private static final String PLATFORM_NAME = makePlatformName();
 
     // NORELEASE - temporary solution
     static final Setting<Boolean> USE_NATIVE_PROCESS_OPTION = Setting.boolSetting("useNativeProcess", false, Property.NodeScope,
@@ -255,8 +260,9 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         return env.logsFile().resolve(NAME).resolve(name);
     }
 
+    // NORELEASE: eventually we won't run programs directly
     public static Path resolveBinFile(Environment env, String name) {
-        return env.binFile().resolve(NAME).resolve(name);
+        return env.pluginsFile().resolve(NAME).resolve("platform").resolve(PLATFORM_NAME).resolve("bin").resolve(name);
     }
 
     @Override
@@ -264,5 +270,31 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         final FixedExecutorBuilder builder = new FixedExecutorBuilder(settings, THREAD_POOL_NAME,
                 5 * EsExecutors.boundedNumberOfProcessors(settings), 1000, "xpack.prelert.thread_pool");
         return Collections.singletonList(builder);
+    }
+
+    /**
+     * Make the platform name in the format used in Kibana downloads, for example:
+     * - darwin-x86_64
+     * - linux-x86-64
+     * - windows-x86_64
+     * For *nix platforms this is more-or-less `uname -s`-`uname -m` converted to lower case.
+     * However, for consistency between different operating systems on the same architecture
+     * "amd64" is replaced with "x86_64" and "i386" with "x86".
+     * For Windows it's "windows-" followed by either "x86" or "x86_64".
+     */
+    static String makePlatformName() {
+        String os = Constants.OS_NAME.toLowerCase(Locale.ROOT);
+        if (os.startsWith("windows")) {
+            os = "windows";
+        } else if (os.equals("mac os x")) {
+            os = "darwin";
+        }
+        String cpu = Constants.OS_ARCH.toLowerCase(Locale.ROOT);
+        if (cpu.equals("amd64")) {
+            cpu = "x86_64";
+        } else if (cpu.equals("i386")) {
+            cpu = "x86";
+        }
+        return os + "-" + cpu;
     }
 }

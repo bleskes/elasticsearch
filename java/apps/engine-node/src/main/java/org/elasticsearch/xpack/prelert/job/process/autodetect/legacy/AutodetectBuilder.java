@@ -117,11 +117,9 @@ public class AutodetectBuilder {
     }
 
     /**
-     * Sets the environment variables PRELERT_HOME and LIB_PATH (or platform
-     * variants) and starts the process in that environment. Any inherited value
-     * of LIB_PATH or PRELERT_HOME is overwritten.
+     * Clears the environment and starts the process in that environment.
      * <code>processName</code> is not the full path it is the relative path of the
-     * program from the PRELERT_HOME/bin directory.
+     * program from the Elasticsearch plugins directory.
      *
      * @return A Java Process object
      */
@@ -215,7 +213,7 @@ public class AutodetectBuilder {
     private Process buildProcess(List<String> command) throws IOException {
         logger.info("Starting autodetect process with command: " + command);
         ProcessBuilder pb = new ProcessBuilder(command);
-        ProcessCtrl.buildEnvironment(env, pb);
+        ProcessCtrl.buildEnvironment(pb);
         return pb.start();
     }
 }

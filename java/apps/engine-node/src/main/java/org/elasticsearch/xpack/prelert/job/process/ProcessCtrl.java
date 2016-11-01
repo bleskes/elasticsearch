@@ -42,11 +42,7 @@ import java.util.Random;
 
 /**
  * Utility class for running a Prelert process<br>
- * The process runs in a clean environment with only one env var set - PRELERT_HOME
- * <p>
- * This class first needs to know where PRELERT_HOME is so it checks for
- * the system property <b>prelert.home</b> and failing that looks for the
- * PRELERT_HOME env var. If neither exist prelert home is set to an empty string.
+ * The process runs in a clean environment.
  */
 public class ProcessCtrl {
     private static final Logger LOGGER = Loggers.getLogger(ProcessCtrl.class);
@@ -59,10 +55,6 @@ public class ProcessCtrl {
      * The normalisation native program name
      */
     public static final String NORMALIZE = "prelert_normalize";
-    /**
-     * Name of the config setting containing the value of Prelert Home
-     */
-    public static final String PRELERT_HOME_PROPERTY = "prelert.home";
     /**
      * Name of the config setting containing the path to the logs directory
      */
@@ -180,15 +172,12 @@ public class ProcessCtrl {
     }
 
     /**
-     * Set up an environment containing the PRELERT_HOME environment variable.
-     * LIB_PATH is not set as the binaries are linked with relative paths
+     * Set up a completely empty environment. LD_LIBRARY_PATH (or equivalent)
+     * is not needed as the binaries are linked with relative paths.
      */
-    public static void buildEnvironment(Environment env, ProcessBuilder pb) {
+    public static void buildEnvironment(ProcessBuilder pb) {
         // Always clear inherited environment variables
         pb.environment().clear();
-        pb.environment().put(PRELERT_HOME_ENV, env.binFile().resolve(PrelertPlugin.NAME).toString());
-
-        LOGGER.info(String.format(Locale.ROOT, "Process Environment = " + pb.environment().toString()));
     }
 
     public static Path getAutodetectPath(Environment env) {
@@ -218,7 +207,7 @@ public class ProcessCtrl {
 
             // Build the process
             ProcessBuilder pb = new ProcessBuilder(command);
-            buildEnvironment(env, pb);
+            buildEnvironment(pb);
 
             try {
                 Process proc = pb.start();
@@ -266,7 +255,7 @@ public class ProcessCtrl {
 
         // Build the process
         ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(env, pb);
+        buildEnvironment(pb);
 
         try {
             Process proc = pb.start();
@@ -439,7 +428,7 @@ public class ProcessCtrl {
         // Build the process
         logger.info("Starting normaliser process with command: " + command);
         ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(env, pb);
+        buildEnvironment(pb);
 
         return pb.start();
 

@@ -42,12 +42,9 @@ public class ProcessCtrlTests extends ESTestCase {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         ProcessBuilder pb = new ProcessBuilder();
-        ProcessCtrl.buildEnvironment(env, pb);
+        ProcessCtrl.buildEnvironment(pb);
 
-        assertEquals(1, pb.environment().size());
-
-        // NORELEASE assertEquals(ProcessCtrl.PRELERT_HOME,
-        // pb.environment().get(PrelertSettings.PRELERT_HOME_ENV));
+        assertEquals(0, pb.environment().size());
     }
 
     public void testBuildAutodetectCommand() {
