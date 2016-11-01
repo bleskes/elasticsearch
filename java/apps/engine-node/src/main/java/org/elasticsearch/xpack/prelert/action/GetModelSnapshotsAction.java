@@ -330,8 +330,8 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
             logger.debug(String.format(Locale.ROOT,
                     "Get model snapshots for job %s. skip = %d, take = %d"
                             + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
-                            request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
-                            request.getSort(), request.getDescOrder(), request.getDescriptionString()));
+                    request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
+                    request.getSort(), request.getDescOrder(), request.getDescriptionString()));
 
             QueryPage<ModelSnapshot> page;
             try {
