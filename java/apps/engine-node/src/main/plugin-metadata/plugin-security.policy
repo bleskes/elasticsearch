@@ -23,5 +23,7 @@ grant {
   permission java.lang.RuntimePermission "accessDeclaredMembers";
   
   // needed for process to be spawned (should be removed later)
-  permission java.io.FilePermission "${es.path.home}/bin/prelert/prelert_autodetect", "execute";
+  permission java.io.FilePermission "${es.path.home}/plugins/prelert/platform/darwin-x86_64/bin/prelert_autodetect", "execute";
+  permission java.io.FilePermission "${es.path.home}/plugins/prelert/platform/linux-x86_64/bin/prelert_autodetect", "execute";
+  permission java.io.FilePermission "${es.path.home}/plugins/prelert/platform/windows-x86_64/bin/prelert_autodetect.exe", "execute";
 };

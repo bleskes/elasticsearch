@@ -27,6 +27,7 @@ apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
 
 esplugin {
+    name 'prelert'
     description 'Prelert Plugin'
     classname 'org.elasticsearch.xpack.prelert.PrelertPlugin'
 }
@@ -86,3 +87,16 @@ integTest {
 }
 
 integTest.mustRunAfter noBootstrapTest
+
+task copyCppDist(type: Copy) {
+  from "$rootDir/cppdistribution"
+  into "${project.buildDir}/engine-node"
+}
+
+project.bundlePlugin.dependsOn(copyCppDist)
+
+bundlePlugin {
+  from("${project.buildDir}/engine-node/plugins/prelert") {
+    into '.'
+  }
+}
