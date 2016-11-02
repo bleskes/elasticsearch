@@ -21,6 +21,7 @@ package org.elasticsearch.xpack.prelert.job;
  * serialised/deserialised when a particular "view" of the object is
  * desired.
  */
+// NORELEASE remove this when Jackson is gone
 public class JsonViews
 {
     /**
