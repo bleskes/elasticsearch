@@ -18,7 +18,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.cluster.AbstractDiffable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -760,6 +759,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     }
 
     // Class alreadt extends from AbstractDiffable, so copied from ToXContentToBytes#toString()
+    @SuppressWarnings("deprecation")
     @Override
     public final String toString() {
         try {
