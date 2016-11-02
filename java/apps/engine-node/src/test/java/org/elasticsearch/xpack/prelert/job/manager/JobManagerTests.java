@@ -32,7 +32,6 @@ import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
-import org.elasticsearch.xpack.prelert.job.metadata.Job;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -84,7 +83,7 @@ public class JobManagerTests extends ESTestCase {
     public void testGetJob() throws UnknownJobException {
         JobManager jobManager = createJobManager();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
-        builder.putJob(new Job(new JobConfiguration("foo").build()), false);
+        builder.putJob(new JobConfiguration("foo").build(), false);
         ClusterState clusterState = ClusterState.builder(new ClusterName("name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, builder.build())).build();
         Optional<JobDetails> doc = jobManager.getJob("foo", clusterState);
@@ -163,7 +162,7 @@ public class JobManagerTests extends ESTestCase {
         JobManager jobManager = createJobManager();
         JobDetails job = new JobConfiguration().build();
         job.setId("foo");
-        PrelertMetadata prelertMetadata = new PrelertMetadata.Builder().putJob(new Job(job), false).build();
+        PrelertMetadata prelertMetadata = new PrelertMetadata.Builder().putJob(job, false).build();
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata)).build();
 
@@ -173,7 +172,7 @@ public class JobManagerTests extends ESTestCase {
     public void testGetJobs() {
         PrelertMetadata.Builder prelertMetadata = new PrelertMetadata.Builder();
         for (int i = 0; i < 10; i++) {
-            prelertMetadata.putJob(new Job(new JobConfiguration(Integer.toString(i)).build()), false);
+            prelertMetadata.putJob(new JobConfiguration(Integer.toString(i)).build(), false);
         }
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata.build())).build();
@@ -224,14 +223,14 @@ public class JobManagerTests extends ESTestCase {
         JobDetails jobDetails1 = new JobConfiguration("_id").build();
         ClusterState result1 = jobManager.innerPutJob(jobDetails1, false, cs);
         PrelertMetadata pm = result1.getMetaData().custom(PrelertMetadata.TYPE);
-        assertThat(pm.getJobs().get("_id").getJobDetails(), sameInstance(jobDetails1));
+        assertThat(pm.getJobs().get("_id"), sameInstance(jobDetails1));
 
         JobDetails jobDetails2 = new JobConfiguration("_id").build();
         expectThrows(ElasticsearchStatusException.class, () -> jobManager.innerPutJob(jobDetails2, false, result1));
 
         ClusterState result2 = jobManager.innerPutJob(jobDetails2, true, result1);
         pm = result2.getMetaData().custom(PrelertMetadata.TYPE);
-        assertThat(pm.getJobs().get("_id").getJobDetails(), sameInstance(jobDetails2));
+        assertThat(pm.getJobs().get("_id"), sameInstance(jobDetails2));
     }
 
     private JobManager createJobManager() {

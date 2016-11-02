@@ -78,20 +78,19 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
     }
 
     private void handleLocallyAllocatedJob(PrelertMetadata prelertMetadata, Allocation allocation, ClusterChangedEvent event) {
-        Job job = prelertMetadata.getJobs().get(allocation.getJobId());
+        JobDetails job = prelertMetadata.getJobs().get(allocation.getJobId());
         if (localAllocatedJobs.contains(allocation.getJobId()) == false) {
             startJob(job);
         }
 
-        JobDetails jobDetails = job.getJobDetails();
-        SchedulerState schedulerState = jobDetails.getSchedulerState();
+        SchedulerState schedulerState = job.getSchedulerState();
         if (schedulerState != null) {
             switch (schedulerState.getStatus()) {
             case STARTED:
-                jobScheduledService.start(jobDetails);
+                jobScheduledService.start(job);
                 break;
             case STOPPING:
-                executor.execute(() -> jobScheduledService.stop(jobDetails.getId()));
+                executor.execute(() -> jobScheduledService.stop(job.getId()));
                 break;
             case STOPPED:
                 break;
@@ -101,13 +100,13 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         }
     }
 
-    void startJob(Job job) {
-        logger.info("Starting job [" + job.getJobDetails().getId() + "]");
+    void startJob(JobDetails job) {
+        logger.info("Starting job [" + job.getId() + "]");
         // noop now, but should delegate to a task / ProcessManager that actually starts the job
 
         // update which jobs are now allocated locally
         Set<String> newSet = new HashSet<>(localAllocatedJobs);
-        newSet.add(job.getJobDetails().getId());
+        newSet.add(job.getId());
         localAllocatedJobs = newSet;
     }
 

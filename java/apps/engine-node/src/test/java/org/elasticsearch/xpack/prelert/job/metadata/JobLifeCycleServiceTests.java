@@ -46,7 +46,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
     }
 
     public void testStartStop() {
-        jobLifeCycleService.startJob(new Job(new JobConfiguration("_job_id").build()));
+        jobLifeCycleService.startJob(new JobConfiguration("_job_id").build());
         assertTrue(jobLifeCycleService.localAllocatedJobs.contains("_job_id"));
         jobLifeCycleService.stopJob("_job_id");
         assertTrue(jobLifeCycleService.localAllocatedJobs.isEmpty());
@@ -54,7 +54,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
 
     public void testClusterChanged() {
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
-        pmBuilder.putJob(new Job(new JobConfiguration("_job_id").build()), false);
+        pmBuilder.putJob(new JobConfiguration("_job_id").build(), false);
         pmBuilder.putAllocation("_node_id", "_job_id");
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))

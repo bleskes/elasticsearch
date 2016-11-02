@@ -59,7 +59,7 @@ public class JobAllocatorTests extends ESTestCase {
         assertFalse("No jobs, so nothing to allocate", jobAllocator.shouldAllocate(cs));
 
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder(cs.metaData().custom(PrelertMetadata.TYPE));
-        pmBuilder.putJob(new Job(new JobConfiguration("_job_id").build()), false);
+        pmBuilder.putJob((new JobConfiguration("_job_id").build()), false);
         cs = ClusterState.builder(cs).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .build();
@@ -75,7 +75,7 @@ public class JobAllocatorTests extends ESTestCase {
 
     public void testAllocateJobs() {
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
-        pmBuilder.putJob(new Job(new JobConfiguration("_job_id").build()), false);
+        pmBuilder.putJob(new JobConfiguration("_job_id").build(), false);
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()
@@ -147,7 +147,7 @@ public class JobAllocatorTests extends ESTestCase {
 
         // add an allocated job
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
-        pmBuilder.putJob(new Job(new JobConfiguration("_id").build()), false);
+        pmBuilder.putJob(new JobConfiguration("_id").build(), false);
         pmBuilder.putAllocation("_id", "_id");
         cs = ClusterState.builder(new ClusterName("_name"))
                 .nodes(DiscoveryNodes.builder()
@@ -163,7 +163,7 @@ public class JobAllocatorTests extends ESTestCase {
 
         // make job not allocated
         pmBuilder = new PrelertMetadata.Builder();
-        pmBuilder.putJob(new Job(new JobConfiguration("_job_id").build()), false);
+        pmBuilder.putJob(new JobConfiguration("_job_id").build(), false);
         cs = ClusterState.builder(new ClusterName("_name"))
                 .nodes(DiscoveryNodes.builder()
                         .add(new DiscoveryNode("_id", new LocalTransportAddress("_id"), Version.CURRENT))

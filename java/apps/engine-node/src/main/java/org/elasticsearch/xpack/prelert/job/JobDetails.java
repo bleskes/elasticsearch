@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.cluster.AbstractDiffable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -26,7 +27,9 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
@@ -50,7 +53,9 @@ import java.util.TreeSet;
  * non-empty list else the expects data to be streamed to it.
  */
 @JsonInclude(Include.NON_NULL)
-public class JobDetails extends ToXContentToBytes implements Writeable {
+public class JobDetails extends AbstractDiffable<JobDetails> implements Writeable, ToXContent {
+
+    public static final JobDetails PROTO = new JobDetails();
 
     public static final long DEFAULT_BUCKETSPAN = 300;
 
@@ -216,6 +221,11 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
         resultsRetentionDays = in.readOptionalLong();
         customSettings = in.readMap();
         averageBucketProcessingTimeMs = in.readOptionalDouble();
+    }
+
+    @Override
+    public JobDetails readFrom(StreamInput in) throws IOException {
+        return new JobDetails(in);
     }
 
     /**
@@ -748,4 +758,19 @@ public class JobDetails extends ToXContentToBytes implements Writeable {
                 backgroundPersistInterval, modelSnapshotRetentionDays, resultsRetentionDays, ignoreDowntime, customSettings,
                 modelSnapshotId);
     }
+
+    // Class alreadt extends from AbstractDiffable, so copied from ToXContentToBytes#toString()
+    @Override
+    public final String toString() {
+        try {
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            builder.prettyPrint();
+            toXContent(builder, EMPTY_PARAMS);
+            return builder.string();
+        } catch (Exception e) {
+            // So we have a stack trace logged somewhere
+            return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
+        }
+    }
+
 }

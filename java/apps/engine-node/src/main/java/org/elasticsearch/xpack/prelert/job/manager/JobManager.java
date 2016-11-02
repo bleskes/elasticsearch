@@ -45,7 +45,6 @@ import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.job.metadata.Job;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -116,12 +115,12 @@ public class JobManager {
             return Optional.empty();
         }
 
-        Job job = prelertMetadata.getJobs().get(jobId);
+        JobDetails job = prelertMetadata.getJobs().get(jobId);
         if (job == null) {
             return Optional.empty();
         }
 
-        return Optional.of(job.getJobDetails());
+        return Optional.of(job);
     }
 
     /**
@@ -142,8 +141,11 @@ public class JobManager {
             return new QueryPage<>(Collections.emptyList(), 0);
         }
 
-        List<JobDetails> jobs = prelertMetadata.getJobs().entrySet().stream().skip(skip).limit(take).map(Map.Entry::getValue)
-                .map(Job::getJobDetails).collect(Collectors.toList());
+        List<JobDetails> jobs = prelertMetadata.getJobs().entrySet().stream()
+                .skip(skip)
+                .limit(take)
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
         return new QueryPage<>(jobs, prelertMetadata.getJobs().size());
     }
 
@@ -180,11 +182,11 @@ public class JobManager {
         if (prelertMetadata == null) {
             throw ExceptionsHelper.missingException(jobId);
         }
-        Job job = prelertMetadata.getJobs().get(jobId);
+        JobDetails job = prelertMetadata.getJobs().get(jobId);
         if (job == null) {
             throw ExceptionsHelper.missingException(jobId);
         }
-        return job.getJobDetails();
+        return job;
     }
 
     /**
@@ -256,7 +258,7 @@ public class JobManager {
             builder = new PrelertMetadata.Builder();
         }
 
-        builder.putJob(new Job(jobDetails), overwrite);
+        builder.putJob(jobDetails, overwrite);
 
         ClusterState.Builder newState = ClusterState.builder(currentState);
         newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
