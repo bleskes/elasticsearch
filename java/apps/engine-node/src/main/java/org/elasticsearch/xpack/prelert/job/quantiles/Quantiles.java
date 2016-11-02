@@ -20,13 +20,11 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
 import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-import org.elasticsearch.xpack.prelert.utils.Strings;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -53,18 +51,34 @@ public class Quantiles extends ToXContentToBytes implements Writeable, StorageSe
      */
     public static final ParseField TYPE = new ParseField("quantiles");
 
-    public static final ObjectParser<Quantiles, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
-            Quantiles::new);
+    public static final ConstructingObjectParser<Quantiles, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            TYPE.getPreferredName(), a -> new Quantiles((Date) a[0], (String) a[1]));
 
     static {
-        PARSER.declareField(Quantiles::setTimestamp, p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
-        PARSER.declareString(Quantiles::setQuantileState, QUANTILE_STATE);
+        PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), QUANTILE_STATE);
     }
 
     private Date timestamp;
     private String quantileState;
 
+    // NORELEASE remove this constructor when jackson is gone
     public Quantiles() {
+    }
+
+    // NORELEASE remove this constructor when jackson is gone
+    public void setQuantileState(String quantileState) {
+        this.quantileState = quantileState;
+    }
+
+    // NORELEASE remove this constructor when jackson is gone
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Quantiles(Date timestamp, String quantilesState) {
+        this.timestamp = timestamp;
+        quantileState = quantilesState == null ? "" : quantilesState;
     }
 
     public Quantiles(StreamInput in) throws IOException {
@@ -102,19 +116,9 @@ public class Quantiles extends ToXContentToBytes implements Writeable, StorageSe
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp)
-    {
-        this.timestamp = timestamp;
-    }
-
     public String getQuantileState()
     {
-        return Strings.nullToEmpty(quantileState);
-    }
-
-    public void setQuantileState(String quantileState)
-    {
-        this.quantileState = quantileState;
+        return quantileState;
     }
 
     @Override

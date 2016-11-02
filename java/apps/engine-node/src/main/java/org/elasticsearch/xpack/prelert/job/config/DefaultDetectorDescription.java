@@ -14,9 +14,9 @@
  */
 package org.elasticsearch.xpack.prelert.job.config;
 
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.utils.PrelertStrings;
-import org.elasticsearch.xpack.prelert.utils.Strings;
 
 
 public final class DefaultDetectorDescription {

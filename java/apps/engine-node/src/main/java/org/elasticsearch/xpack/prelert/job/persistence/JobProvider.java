@@ -34,7 +34,7 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
     /**
      * Get the persisted quantiles state for the job
      */
-    Quantiles getQuantiles(String jobId);
+    Optional<Quantiles> getQuantiles(String jobId);
 
     /**
      * Get model snapshots for the job ordered by descending restore priority.

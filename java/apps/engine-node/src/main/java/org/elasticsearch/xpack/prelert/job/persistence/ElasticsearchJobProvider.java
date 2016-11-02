@@ -1009,7 +1009,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Quantiles getQuantiles(String jobId)
+    public Optional<Quantiles> getQuantiles(String jobId)
     {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         try
@@ -1021,9 +1021,9 @@ public class ElasticsearchJobProvider implements JobProvider
             if (!response.isExists())
             {
                 LOGGER.info("There are currently no quantiles for job " + jobId);
-                return new Quantiles();
+                return Optional.empty();
             }
-            return createQuantiles(jobId, response);
+            return Optional.of(createQuantiles(jobId, response));
         }
         catch (IndexNotFoundException e)
         {

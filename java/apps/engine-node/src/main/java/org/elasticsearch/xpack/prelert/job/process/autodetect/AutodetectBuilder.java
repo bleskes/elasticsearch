@@ -101,8 +101,8 @@ public class AutodetectBuilder {
      *
      * @param quantiles the non-null quantiles
      */
-    public AutodetectBuilder quantiles(Quantiles quantiles) {
-        this.quantiles = Optional.of(Objects.requireNonNull(quantiles));
+    public AutodetectBuilder quantiles(Optional<Quantiles> quantiles) {
+        this.quantiles = quantiles;
         return this;
     }
 

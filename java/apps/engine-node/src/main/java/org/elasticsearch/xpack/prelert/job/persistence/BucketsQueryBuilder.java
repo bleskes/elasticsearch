@@ -15,7 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.utils.Strings;
+import org.elasticsearch.common.Strings;
 
 import java.util.Objects;
 

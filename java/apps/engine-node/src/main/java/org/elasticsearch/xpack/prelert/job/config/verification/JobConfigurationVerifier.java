@@ -26,7 +26,7 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 import org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigsVerifier;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.prelert.utils.Strings;
+import org.elasticsearch.common.Strings;
 
 import java.util.Set;
 import java.util.regex.Pattern;

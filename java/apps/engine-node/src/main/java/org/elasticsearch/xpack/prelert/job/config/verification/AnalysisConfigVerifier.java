@@ -20,7 +20,7 @@ import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.prelert.utils.Strings;
+import org.elasticsearch.common.Strings;
 
 import java.util.ArrayList;
 import java.util.List;

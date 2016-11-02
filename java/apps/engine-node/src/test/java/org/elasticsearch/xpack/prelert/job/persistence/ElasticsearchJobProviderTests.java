@@ -107,9 +107,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        Quantiles quantiles = provider.getQuantiles(JOB_ID);
+        Optional<Quantiles> quantiles = provider.getQuantiles(JOB_ID);
 
-        assertEquals("", quantiles.getQuantileState());
+        assertFalse(quantiles.isPresent());
     }
 
     public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws InterruptedException, ExecutionException, UnknownJobException {
@@ -123,9 +123,10 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        Quantiles quantiles = provider.getQuantiles(JOB_ID);
+        Optional<Quantiles> quantiles = provider.getQuantiles(JOB_ID);
 
-        assertEquals("state", quantiles.getQuantileState());
+        assertTrue(quantiles.isPresent());
+        assertEquals("state", quantiles.get().getQuantileState());
     }
 
     public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws InterruptedException, ExecutionException, UnknownJobException {
@@ -138,9 +139,10 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        Quantiles quantiles = provider.getQuantiles(JOB_ID);
+        Optional<Quantiles> quantiles = provider.getQuantiles(JOB_ID);
 
-        assertEquals("", quantiles.getQuantileState());
+        assertTrue(quantiles.isPresent());
+        assertEquals("", quantiles.get().getQuantileState());
     }
 
     public void testIsConnected() throws InterruptedException, ExecutionException {

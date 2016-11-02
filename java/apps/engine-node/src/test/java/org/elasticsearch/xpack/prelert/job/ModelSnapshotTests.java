@@ -123,7 +123,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
     public void testEquals_GivenDifferentQuantiles() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
-        modelSnapshot2.getQuantiles().setQuantileState("different state");
+        modelSnapshot2.setQuantiles(new Quantiles(modelSnapshot2.getQuantiles().getTimestamp(), "different state"));
 
         assertFalse(modelSnapshot1.equals(modelSnapshot2));
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
@@ -163,9 +163,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         modelSizeStats.setTotalPartitionFieldCount(5L);
         modelSizeStats.setLogTime(new Date(42L));
 
-        Quantiles quantiles = new Quantiles();
-        quantiles.setQuantileState("my_q_state");
-        quantiles.setTimestamp(new Date(43L));
+        Quantiles quantiles = new Quantiles(new Date(43L), "my_q_state");
 
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         modelSnapshot.setTimestamp(new Date(12345L));
@@ -240,7 +238,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         modelSnapshot.setModelSizeStats(new ModelSizeStats());
         modelSnapshot.setLatestResultTimeStamp(DEFAULT_LATEST_RESULT_TIMESTAMP);
         modelSnapshot.setLatestRecordTimeStamp(DEFAULT_LATEST_RECORD_TIMESTAMP);
-        modelSnapshot.setQuantiles(new Quantiles());
+        modelSnapshot.setQuantiles(new Quantiles(DEFAULT_TIMESTAMP, "state"));
         return modelSnapshot;
     }
 
@@ -283,13 +281,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         modelSnapshot.setModelSizeStats(stats);
         modelSnapshot.setLatestResultTimeStamp(new Date(randomLong()));
         modelSnapshot.setLatestRecordTimeStamp(new Date(randomLong()));
-        Quantiles quantiles = new Quantiles();
-        if (randomBoolean()) {
-            quantiles.setTimestamp(new Date(randomLong()));
-        }
-        if (randomBoolean()) {
-            quantiles.setQuantileState(randomAsciiOfLengthBetween(0, 1000));
-        }
+        Quantiles quantiles = new Quantiles(new Date(randomLong()), randomAsciiOfLengthBetween(0, 1000));
         modelSnapshot.setQuantiles(quantiles);
         return modelSnapshot;
     }

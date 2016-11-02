@@ -62,8 +62,7 @@ public class ModelSnapshotParserTests extends ESTestCase {
         assertEquals(54321L, modelSnapshot.getModelSizeStats().getModelBytes());
         assertEquals(new Date(1111111111111L), modelSnapshot.getLatestRecordTimeStamp());
         assertEquals(new Date(1010101010101L), modelSnapshot.getLatestResultTimeStamp());
-        Quantiles q = new Quantiles();
-        q.setQuantileState("yabadabadoo");
+        Quantiles q = new Quantiles(new Date(0101010101010L), "yabadabadoo");
         assertEquals(q, modelSnapshot.getQuantiles());
 
         assertEquals(JsonToken.END_OBJECT, parser.getCurrentToken());

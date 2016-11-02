@@ -26,13 +26,13 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.PrelertStrings;
-import org.elasticsearch.xpack.prelert.utils.Strings;
 
 public class FieldConfigWriter {
     private static final String DETECTOR_PREFIX = "detector.";

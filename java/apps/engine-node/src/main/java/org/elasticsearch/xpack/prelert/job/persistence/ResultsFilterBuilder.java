@@ -17,13 +17,12 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
-
-import org.elasticsearch.xpack.prelert.utils.Strings;
 
 /**
  * This builder facilitates the creation of a {@link QueryBuilder} with common

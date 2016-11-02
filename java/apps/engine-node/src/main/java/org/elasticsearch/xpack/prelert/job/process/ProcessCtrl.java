@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.process;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
@@ -25,7 +26,6 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.utils.Strings;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

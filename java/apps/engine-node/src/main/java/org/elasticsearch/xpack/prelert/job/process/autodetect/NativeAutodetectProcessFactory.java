@@ -70,7 +70,7 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
     private Process createNativeProcess(JobDetails job, boolean ignoreDowntime, List<Path> filesToDelete) {
 
         String jobId = job.getId();
-        Quantiles quantiles = jobProvider.getQuantiles(jobId);
+        Optional<Quantiles> quantiles = jobProvider.getQuantiles(jobId);
         List<ModelSnapshot> modelSnapshots = jobProvider.modelSnapshots(jobId, 0, 1).hits();
 
         Process nativeProcess = null;

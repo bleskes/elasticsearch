@@ -14,15 +14,14 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
-import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.EQUALS;
-import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.NEW_LINE;
+import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
 
-import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
-import org.elasticsearch.xpack.prelert.utils.Strings;
+import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.EQUALS;
+import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.NEW_LINE;
 
 public class ModelDebugConfigWriter {
     private static final String WRITE_TO_STR = "writeto";
@@ -51,9 +50,10 @@ public class ModelDebugConfigWriter {
         .append(modelDebugConfig.getBoundsPercentile())
         .append(NEW_LINE);
 
+        String terms = modelDebugConfig.getTerms();
         contents.append(TERMS_STR)
         .append(EQUALS)
-        .append(Strings.nullToEmpty(modelDebugConfig.getTerms()))
+        .append(terms == null ? "" : terms)
         .append(NEW_LINE);
 
         writer.write(contents.toString());
