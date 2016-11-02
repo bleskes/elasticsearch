@@ -131,6 +131,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
     public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws InterruptedException, ExecutionException, UnknownJobException {
         Map<String, Object> source = new HashMap<>();
+        source.put(Quantiles.TIMESTAMP.getPreferredName(), new Date(0L));
+        source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "");
         GetResponse getResponse = createGetResponse(true, source);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
