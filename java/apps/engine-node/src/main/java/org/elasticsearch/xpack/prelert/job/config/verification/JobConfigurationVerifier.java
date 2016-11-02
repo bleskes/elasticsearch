@@ -55,7 +55,6 @@ public final class JobConfigurationVerifier {
      * <li>Verify {@link AnalysisConfigVerifier#verify(AnalysisConfig) AnalysisConfig}</li>
      * <li>Verify {@link DataDescriptionVerifier#verify(DataDescription) DataDescription}</li>
      * <li>Verify {@link TransformConfigsVerifier#verify(List) Transforms}</li>
-     * <li>Verify {@link ModelDebugConfigVerifier#verify(ModelDebugConfig) ModelDebugConfig}</li>
      * <li>Verify all the transform outputs are used</li>
      * <li>Check timeout is a +ve number</li>
      * <li>The job ID cannot contain any upper case characters, control
@@ -89,10 +88,6 @@ public final class JobConfigurationVerifier {
         checkValueNotLessThan(MIN_BACKGROUND_PERSIST_INTERVAL, "backgroundPersistInterval", config.getBackgroundPersistInterval());
         checkValueNotLessThan(0, "modelSnapshotRetentionDays", config.getModelSnapshotRetentionDays());
         checkValueNotLessThan(0, "resultsRetentionDays", config.getResultsRetentionDays());
-
-        if (config.getModelDebugConfig() != null) {
-            ModelDebugConfigVerifier.verify(config.getModelDebugConfig());
-        }
 
         return true;
     }

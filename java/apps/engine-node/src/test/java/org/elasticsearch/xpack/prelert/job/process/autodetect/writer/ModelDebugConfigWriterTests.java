@@ -40,15 +40,6 @@ public class ModelDebugConfigWriterTests extends ESTestCase {
         verifyNoMoreInteractions(writer);
     }
 
-    public void testWrite_GivenEmptyConfig() throws IOException {
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
-        ModelDebugConfigWriter writer = new ModelDebugConfigWriter(modelDebugConfig, this.writer);
-
-        writer.write();
-
-        verify(this.writer).write("boundspercentile = null\nterms = \n");
-    }
-
     public void testWrite_GivenFileConfig() throws IOException {
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig(65.0, "foo,bar");
         ModelDebugConfigWriter writer = new ModelDebugConfigWriter(modelDebugConfig, this.writer);

@@ -14,37 +14,29 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig.DebugDestination;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 public class ModelDebugConfigTests extends AbstractSerializingTestCase<ModelDebugConfig> {
 
-    public void testIsEnabled_GivenNullBoundsPercentile() {
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
-
-        assertFalse(modelDebugConfig.isEnabled());
-    }
-
-    public void testIsEnabled_GivenBoundsPercentile() {
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(0.95, null);
-
-        assertTrue(modelDebugConfig.isEnabled());
-    }
-
     public void testEquals() {
-        assertFalse(new ModelDebugConfig().equals(null));
-        assertFalse(new ModelDebugConfig().equals("a string"));
+        assertFalse(new ModelDebugConfig(0d, null).equals(null));
+        assertFalse(new ModelDebugConfig(0d, null).equals("a string"));
         assertFalse(new ModelDebugConfig(80.0, "").equals(new ModelDebugConfig(81.0, "")));
         assertFalse(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "bar")));
         assertFalse(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo")
                 .equals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")));
 
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig();
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(0d, null);
         assertTrue(modelDebugConfig.equals(modelDebugConfig));
-        assertTrue(new ModelDebugConfig().equals(new ModelDebugConfig()));
+        assertTrue(new ModelDebugConfig(0d, null).equals(new ModelDebugConfig(0d, null)));
         assertTrue(new ModelDebugConfig(80.0, "foo").equals(new ModelDebugConfig(80.0, "foo")));
         assertTrue(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo").equals(new ModelDebugConfig(80.0, "foo")));
         assertTrue(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo")
@@ -56,6 +48,29 @@ public class ModelDebugConfigTests extends AbstractSerializingTestCase<ModelDebu
         assertEquals(new ModelDebugConfig(DebugDestination.FILE, 80.0, "foo").hashCode(), new ModelDebugConfig(80.0, "foo").hashCode());
         assertEquals(new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").hashCode(),
                 new ModelDebugConfig(DebugDestination.DATA_STORE, 80.0, "foo").hashCode());
+    }
+
+    public void testVerify_GivenBoundPercentileLessThanZero() {
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class,
+                        () -> new ModelDebugConfig(-1.0, ""));
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE, ""), e.getMessage());
+    }
+
+    public void testVerify_GivenBoundPercentileGreaterThan100() {
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class,
+                        () -> new ModelDebugConfig(100.1, ""));
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE, ""), e.getMessage());
+    }
+
+    public void testVerify_GivenValid() {
+        new ModelDebugConfig(93.0, "");
+        new ModelDebugConfig(93.0, "foo,bar");
     }
 
     @Override

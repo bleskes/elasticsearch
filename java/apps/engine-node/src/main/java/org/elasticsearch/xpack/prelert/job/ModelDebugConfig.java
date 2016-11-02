@@ -15,9 +15,9 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -27,12 +27,14 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
 
-@JsonIgnoreProperties({ "enabled" })
 @JsonInclude(Include.NON_NULL)
 public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
     /**
@@ -44,7 +46,7 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
 
         private String name;
 
-        private DebugDestination(String name) {
+        DebugDestination(String name) {
             this.name = name;
         }
 
@@ -80,10 +82,12 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
         }
     }
 
-    public static final ParseField TYPE_FIELD = new ParseField("modelDebugConfig");
-    public static final ParseField WRITE_TO_FIELD = new ParseField("writeTo");
-    public static final ParseField BOUNDS_PERCENTILE_FIELD = new ParseField("boundsPercentile");
-    public static final ParseField TERMS_FIELD = new ParseField("terms");
+    private static final double MAX_PERCENTILE = 100.0;
+
+    private static final ParseField TYPE_FIELD = new ParseField("modelDebugConfig");
+    private static final ParseField WRITE_TO_FIELD = new ParseField("writeTo");
+    private static final ParseField BOUNDS_PERCENTILE_FIELD = new ParseField("boundsPercentile");
+    private static final ParseField TERMS_FIELD = new ParseField("terms");
 
     public static final ConstructingObjectParser<ModelDebugConfig, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
             TYPE_FIELD.getPreferredName(), a -> {
@@ -101,56 +105,37 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
     }
 
     private DebugDestination writeTo;
-    private Double boundsPercentile;
+    private double boundsPercentile;
     private String terms;
 
-    public ModelDebugConfig() {
-        // NB: this.writeTo defaults to null in this case, otherwise an update
-        // to
-        // the bounds percentile could switch where the debug is written to
-    }
-
     public ModelDebugConfig(double boundsPercentile, String terms) {
-        this.writeTo = DebugDestination.FILE;
-        this.boundsPercentile = boundsPercentile;
-        this.terms = terms;
+        this(DebugDestination.FILE, boundsPercentile, terms);
     }
 
-    public ModelDebugConfig(DebugDestination writeTo, double boundsPercentile, String terms) {
+    @JsonCreator
+    public ModelDebugConfig(@JsonProperty("writeTo") DebugDestination writeTo, @JsonProperty("boundsPercentile") double boundsPercentile,
+                            @JsonProperty("terms") String terms) {
+        if (boundsPercentile < 0.0 || boundsPercentile > MAX_PERCENTILE) {
+            String msg = Messages.getMessage(
+                    Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE);
+            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.INVALID_VALUE);
+        }
         this.writeTo = writeTo;
         this.boundsPercentile = boundsPercentile;
         this.terms = terms;
     }
 
     public ModelDebugConfig(StreamInput in) throws IOException {
-        if (in.readBoolean()) {
-            writeTo = DebugDestination.readFromStream(in);
-        }
-        if (in.readBoolean()) {
-            boundsPercentile = in.readDouble();
-        }
-        if (in.readBoolean()) {
-            terms = in.readString();
-        }
+        writeTo = in.readOptionalWriteable(DebugDestination::readFromStream);
+        boundsPercentile = in.readDouble();
+        terms = in.readOptionalString();
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        boolean hasWriteTo = writeTo != null;
-        out.writeBoolean(hasWriteTo);
-        if (hasWriteTo) {
-            writeTo.writeTo(out);
-        }
-        boolean hasBounds = boundsPercentile != null;
-        out.writeBoolean(hasBounds);
-        if (hasBounds) {
-            out.writeDouble(boundsPercentile);
-        }
-        boolean hasTerms = terms != null;
-        out.writeBoolean(hasTerms);
-        if (hasTerms) {
-            out.writeString(terms);
-        }
+        out.writeOptionalWriteable(writeTo);
+        out.writeDouble(boundsPercentile);
+        out.writeOptionalString(terms);
     }
 
     @Override
@@ -159,9 +144,7 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
         if (writeTo != null) {
             builder.field(WRITE_TO_FIELD.getPreferredName(), writeTo.getName());
         }
-        if (boundsPercentile != null) {
-            builder.field(BOUNDS_PERCENTILE_FIELD.getPreferredName(), boundsPercentile);
-        }
+        builder.field(BOUNDS_PERCENTILE_FIELD.getPreferredName(), boundsPercentile);
         if (terms != null) {
             builder.field(TERMS_FIELD.getPreferredName(), terms);
         }
@@ -173,11 +156,7 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
         return this.writeTo;
     }
 
-    public boolean isEnabled() {
-        return this.boundsPercentile != null;
-    }
-
-    public Double getBoundsPercentile() {
+    public double getBoundsPercentile() {
         return this.boundsPercentile;
     }
 

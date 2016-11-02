@@ -162,7 +162,7 @@ public class AutodetectBuilder {
     }
 
     private void buildModelDebugConfig(List<String> command) throws IOException {
-        if (jobDetails.getModelDebugConfig() != null && jobDetails.getModelDebugConfig().isEnabled()) {
+        if (jobDetails.getModelDebugConfig() != null) {
             Path modelDebugConfigFile = Files.createTempFile(env.tmpFile(), "modeldebugconfig", CONF_EXTENSION);
             filesToDelete.add(modelDebugConfigFile);
             writeModelDebugConfig(jobDetails.getModelDebugConfig(), modelDebugConfigFile);
