@@ -142,7 +142,7 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            result = new SingleDocument<JobDetails>(in, JobDetails::new);
+            result = new SingleDocument<>(in, JobDetails::new);
         }
 
         @Override

@@ -49,6 +49,7 @@ import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
@@ -344,7 +345,8 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
             }
 
             Optional<JobDetails> job = jobManager.getJob(request.getJobId(), clusterService.state());
-            if (job.isPresent() && job.get().getStatus().equals(JobStatus.RUNNING)) {
+            Allocation allocation = jobManager.getJobAllocation(request.getJobId());
+            if (job.isPresent() && allocation.getStatus().equals(JobStatus.RUNNING)) {
                 throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT),
                         ErrorCodes.JOB_NOT_CLOSED);
             }

@@ -52,6 +52,10 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
 
     // NORELEASE remove this test method when Jackson is gone
     public void testJacksonSerialisation() throws Exception {
+        if (skipJacksonTest()) {
+            return;
+        }
+
         T testInstance = createTestInstance();
         ObjectMapper objectMapper = new ObjectMapper();
         String instanceStr = objectMapper.writeValueAsString(testInstance);
@@ -106,4 +110,9 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
     protected Map<String, T> getAlternateVersions() {
         return Collections.emptyMap();
     }
+
+    protected boolean skipJacksonTest() {
+        return false;
+    }
+
 }

@@ -226,6 +226,14 @@ public class PrelertMetadata implements MetaData.Custom {
             return this;
         }
 
+        public Builder updateAllocation(String jobId, Allocation updated) {
+            Allocation previous = this.allocations.put(jobId, updated);
+            if (previous == null) {
+                throw new IllegalStateException("Expected that job [" + jobId + "] was already allocated");
+            }
+            return this;
+        }
+
         // only for parsing
         private Builder putAllocations(Collection<Allocation.Builder> allocations) {
             for (Allocation.Builder allocationBuilder : allocations) {

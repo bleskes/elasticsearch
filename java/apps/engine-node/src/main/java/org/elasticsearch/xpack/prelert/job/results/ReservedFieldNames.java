@@ -24,8 +24,10 @@ import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.job.alert.Alert;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 
@@ -200,7 +202,7 @@ public final class ReservedFieldNames
             // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
             // JobDetails.STATUS is not reserved because it is an analyzed string
             JobDetails.DATA_DESCRIPTION.getPreferredName(),
-            JobDetails.SCHEDULER_STATE.getPreferredName(),
+            Allocation.SCHEDULER_STATE.getPreferredName(),
             JobDetails.SCHEDULER_CONFIG.getPreferredName(),
             JobDetails.FINISHED_TIME.getPreferredName(),
             JobDetails.LAST_DATA_TIME.getPreferredName(),

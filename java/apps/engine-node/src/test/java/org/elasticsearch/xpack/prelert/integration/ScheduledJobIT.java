@@ -83,8 +83,15 @@ public class ScheduledJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
 
-        response = client().performRequest("get", "engine/v2/jobs/scheduled");
-        assertThat(responseEntityToString(response), containsString("\"status\":\"STARTED\""));
+        assertBusy(() -> {
+            try {
+                Response response2 = client().performRequest("get", "/_cluster/state",
+                        Collections.singletonMap("filter_path", "metadata.prelert.allocations.scheduler_state"));
+                assertThat(responseEntityToString(response2), containsString("\"status\":\"STARTED\""));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         waitForSchedulerToBeStopped();
     }
@@ -97,8 +104,15 @@ public class ScheduledJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
 
-        response = client().performRequest("get", "engine/v2/jobs/scheduled");
-        assertThat(responseEntityToString(response), containsString("\"status\":\"STARTED\""));
+        assertBusy(() -> {
+            try {
+                Response response2 = client().performRequest("get", "/_cluster/state",
+                        Collections.singletonMap("filter_path", "metadata.prelert.allocations.scheduler_state"));
+                assertThat(responseEntityToString(response2), containsString("\"status\":\"STARTED\""));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         response = client().performRequest("post", "engine/v2/schedulers/scheduled/stop");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
@@ -154,7 +168,8 @@ public class ScheduledJobIT extends ESRestTestCase {
     private void waitForSchedulerToBeStopped() throws Exception {
         assertBusy(() -> {
             try {
-                Response response = client().performRequest("get", "engine/v2/jobs/scheduled");
+                Response response = client().performRequest("get", "/_cluster/state",
+                        Collections.singletonMap("filter_path", "metadata.prelert.allocations.scheduler_state"));
                 assertThat(responseEntityToString(response), containsString("\"status\":\"STOPPED\""));
             } catch (Exception e) {
                 fail();

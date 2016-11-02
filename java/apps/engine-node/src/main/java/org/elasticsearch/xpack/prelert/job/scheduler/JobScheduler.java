@@ -27,6 +27,7 @@ import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -220,7 +221,7 @@ public class JobScheduler {
         };
     }
 
-    public void start(JobDetails job) {
+    public void start(JobDetails job, Allocation allocation) {
         if (logger != null) {
             throw new IllegalStateException("Cannot start while scheduler is already started");
         }
@@ -229,9 +230,9 @@ public class JobScheduler {
         logger.info("Scheduler started");
         lookbackExecutor = Executors.newSingleThreadExecutor(EsExecutors.daemonThreadFactory("job_scheduler"));
         initLastEndTime(job);
-        long startMs = job.getSchedulerState().getStartTimeMillis();
-        OptionalLong endMs = job.getSchedulerState().getEndTimeMillis() == null ? OptionalLong.empty()
-                : OptionalLong.of(job.getSchedulerState().getEndTimeMillis());
+        long startMs = allocation.getSchedulerState().getStartTimeMillis();
+        OptionalLong endMs = allocation.getSchedulerState().getEndTimeMillis() == null ? OptionalLong.empty()
+                : OptionalLong.of(allocation.getSchedulerState().getEndTimeMillis());
         lookbackStartTimeMs = (lastEndTimeMs != null && lastEndTimeMs + 1 > startMs) ? lastEndTimeMs + 1 : startMs;
         long lookbackEnd = endMs.orElse(System.currentTimeMillis() - queryDelayMs);
         isLookbackOnly = endMs.isPresent();

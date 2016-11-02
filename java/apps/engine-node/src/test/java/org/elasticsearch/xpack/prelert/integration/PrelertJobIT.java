@@ -42,7 +42,6 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
-        assertThat(responseAsString, containsString("\"status\":\"CLOSED\""));
     }
 
     public void testGetJob_GivenNoSuchJob() throws Exception {
@@ -64,7 +63,6 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"exists\":true"));
         assertThat(responseAsString, containsString("\"type\":\"job\""));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
-        assertThat(responseAsString, containsString("\"status\":\"CLOSED\""));
     }
 
     public void testGetJobs_GivenNegativeSkip() throws Exception {

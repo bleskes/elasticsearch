@@ -83,14 +83,14 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
             startJob(job);
         }
 
-        SchedulerState schedulerState = job.getSchedulerState();
+        SchedulerState schedulerState = allocation.getSchedulerState();
         if (schedulerState != null) {
             switch (schedulerState.getStatus()) {
             case STARTED:
-                jobScheduledService.start(job);
+                jobScheduledService.start(job, allocation);
                 break;
             case STOPPING:
-                executor.execute(() -> jobScheduledService.stop(job.getId()));
+                executor.execute(() -> jobScheduledService.stop(allocation));
                 break;
             case STOPPED:
                 break;

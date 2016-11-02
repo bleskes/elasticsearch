@@ -25,6 +25,7 @@ import org.elasticsearch.xpack.prelert.job.ModelState;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -122,7 +123,7 @@ public class ElasticsearchMappingsTests extends ESTestCase {
         // These are not reserved because they're analyzed strings, i.e. the
         // same type as user-specified fields
         overridden.add(JobDetails.DESCRIPTION.getPreferredName());
-        overridden.add(JobDetails.STATUS.getPreferredName());
+        overridden.add(Allocation.STATUS.getPreferredName());
         overridden.add(ModelSnapshot.DESCRIPTION.getPreferredName());
         overridden.add(SchedulerConfig.USERNAME.getPreferredName());
 

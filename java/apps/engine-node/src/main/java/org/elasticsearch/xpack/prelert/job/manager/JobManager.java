@@ -43,6 +43,7 @@ import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -161,6 +162,10 @@ public class JobManager {
      */
     public JobDetails getJobOrThrowIfUnknown(String jobId) {
         return getJobOrThrowIfUnknown(clusterService.state(), jobId);
+    }
+
+    public Allocation getJobAllocation(String jobId) {
+        return getAllocation(clusterService.state(), jobId);
     }
 
     /**
@@ -342,8 +347,8 @@ public class JobManager {
     }
 
     private void checkJobHasNoRunningScheduler(String jobId) {
-        JobDetails job = getJobOrThrowIfUnknown(jobId);
-        SchedulerState schedulerState = job.getSchedulerState();
+        Allocation allocation = getAllocation(clusterService.state(), jobId);
+        SchedulerState schedulerState = allocation.getSchedulerState();
         if (schedulerState != null && schedulerState.getStatus() != JobSchedulerStatus.STOPPED) {
             throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS, jobId),
                     ErrorCodes.CANNOT_DELETE_JOB_SCHEDULER);
@@ -406,35 +411,6 @@ public class JobManager {
         }
     }
 
-    private void validateSchedulerStateTransition(JobDetails jobDetails, SchedulerState newState) {
-        SchedulerState currentSchedulerState = jobDetails.getSchedulerState();
-        JobSchedulerStatus currentSchedulerStatus = currentSchedulerState == null ? JobSchedulerStatus.STOPPED
-                : currentSchedulerState.getStatus();
-        JobSchedulerStatus newSchedulerStatus = newState.getStatus();
-        switch (newSchedulerStatus) {
-        case STARTED:
-            if (currentSchedulerStatus != JobSchedulerStatus.STOPPED) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobDetails.getId(),
-                        jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_START_JOB_SCHEDULER);
-            }
-            break;
-        case STOPPING:
-            if (currentSchedulerStatus != JobSchedulerStatus.STARTED) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
-                        jobDetails.getId(), jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
-            }
-            break;
-        case STOPPED:
-            if (currentSchedulerStatus != JobSchedulerStatus.STOPPING) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE,
-                        jobDetails.getId(), jobDetails.getSchedulerState().getStatus()), ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
-            }
-            break;
-        default:
-            throw new IllegalArgumentException("Invalid requested job scheduler status: " + newSchedulerStatus);
-        }
-    }
-
     public void updateSchedulerStatus(String jobId, JobSchedulerStatus newSchedulerStatus) {
         clusterService.submitStateUpdateTask("udpate-scheduler-status-job-" + jobId, new ClusterStateUpdateTask() {
 
@@ -455,11 +431,38 @@ public class JobManager {
             Function<SchedulerState, SchedulerState> stateUpdater) {
         JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, jobId);
         checkJobIsScheduled(jobDetails);
-        SchedulerState oldState = jobDetails.getSchedulerState();
+
+        Allocation allocation = getAllocation(currentState, jobId);
+        SchedulerState oldState = allocation.getSchedulerState();
         SchedulerState newState = stateUpdater.apply(oldState);
-        validateSchedulerStateTransition(jobDetails, newState);
-        jobDetails.setSchedulerState(newState);
-        return innerPutJob(jobDetails, true, currentState);
+        Allocation.Builder builder = new Allocation.Builder(allocation);
+        builder.setSchedulerState(newState);
+        return innerUpdateAllocation(builder.build(), currentState);
+    }
+
+    private Allocation getAllocation(ClusterState state, String jobId) {
+        PrelertMetadata prelertMetadata = state.metaData().custom(PrelertMetadata.TYPE);
+        if (prelertMetadata == null) {
+            throw new IllegalStateException("Expected PrelertMetadata");
+        }
+        Allocation allocation = prelertMetadata.getAllocations().get(jobId);
+        if (allocation == null) {
+            throw new IllegalStateException("Excepted allocation for job with id [" + jobId + "]");
+        }
+        return allocation;
+    }
+
+    private ClusterState innerUpdateAllocation(Allocation newAllocation, ClusterState currentState) {
+        PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
+        if (currentPrelertMetadata == null) {
+            throw new IllegalStateException("PrelertMetaData should already have been created");
+        }
+
+        PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
+        builder.updateAllocation(newAllocation.getJobId(), newAllocation);
+        ClusterState.Builder newState = ClusterState.builder(currentState);
+        newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
+        return newState.build();
     }
 
     public Auditor audit(String jobId) {

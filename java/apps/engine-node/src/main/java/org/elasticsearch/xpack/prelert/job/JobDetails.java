@@ -80,8 +80,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     public static final ParseField BACKGROUND_PERSIST_INTERVAL = new ParseField("backgroundPersistInterval");
     public static final ParseField MODEL_SNAPSHOT_RETENTION_DAYS = new ParseField("modelSnapshotRetentionDays");
     public static final ParseField RESULTS_RETENTION_DAYS = new ParseField("resultsRetentionDays");
-    public static final ParseField STATUS = new ParseField("status");
-    public static final ParseField SCHEDULER_STATE = new ParseField("schedulerState");
     public static final ParseField TIMEOUT = new ParseField("timeout");
     public static final ParseField TRANSFORMS = new ParseField("transforms");
     public static final ParseField MODEL_SIZE_STATS = new ParseField("modelSizeStats");
@@ -103,8 +101,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     static {
         PARSER.declareString(JobDetails::setId, ID);
         PARSER.declareStringOrNull(JobDetails::setDescription, DESCRIPTION);
-        PARSER.declareField(JobDetails::setStatus, (p, c) -> JobStatus.fromString(p.text()), STATUS, ValueType.STRING);
-        PARSER.declareObject(JobDetails::setSchedulerState, SchedulerState.PARSER, SCHEDULER_STATE);
         PARSER.declareField(JobDetails::setCreateTime, (p, c) -> new Date(p.longValue()), CREATE_TIME, ValueType.LONG);
         PARSER.declareField(JobDetails::setFinishedTime, (p, c) -> new Date(p.longValue()), FINISHED_TIME, ValueType.LONG);
         PARSER.declareField(JobDetails::setLastDataTime, (p, c) -> new Date(p.longValue()), LAST_DATA_TIME, ValueType.LONG);
@@ -129,8 +125,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
 
     private String jobId;
     private String description;
-    private JobStatus status;
-    private SchedulerState schedulerState;
 
     // NORELEASE: Use Jodatime instead
     private Date createTime;
@@ -159,7 +153,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     private JobDetails() {
     }
 
-    public JobDetails(String jobId, String description, JobStatus status, SchedulerState schedulerState, Date createTime, Date finishedTime,
+    public JobDetails(String jobId, String description, Date createTime, Date finishedTime,
             Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits, SchedulerConfig schedulerConfig,
             DataDescription dataDescription, ModelSizeStats modelSizeStats, List<TransformConfig> transforms,
             ModelDebugConfig modelDebugConfig, DataCounts counts, IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays,
@@ -167,8 +161,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             Double averageBucketProcessingTimeMs) {
         this.jobId = jobId;
         this.description = description;
-        this.status = status;
-        this.schedulerState = schedulerState;
         this.createTime = createTime;
         this.finishedTime = finishedTime;
         this.lastDataTime = lastDataTime;
@@ -193,8 +185,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     public JobDetails(StreamInput in) throws IOException {
         jobId = in.readString();
         description = in.readOptionalString();
-        status = JobStatus.fromStream(in);
-        schedulerState = in.readOptionalWriteable(SchedulerState::new);
         createTime = new Date(in.readVLong());
         if (in.readBoolean()) {
             finishedTime = new Date(in.readVLong());
@@ -294,21 +284,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      *
      * @return The job's status
      */
-    public JobStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(JobStatus status) {
-        this.status = status;
-    }
-
-    public SchedulerState getSchedulerState() {
-        return schedulerState;
-    }
-
-    public void setSchedulerState(SchedulerState schedulerState) {
-        this.schedulerState = schedulerState;
-    }
 
     /**
      * The Job creation time. This name is preferred when serialising to the
@@ -620,8 +595,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(jobId);
         out.writeOptionalString(description);
-        status.writeTo(out);
-        out.writeOptionalWriteable(schedulerState);
         out.writeVLong(createTime.getTime());
         if (finishedTime != null) {
             out.writeBoolean(true);
@@ -668,10 +641,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         builder.field(ID.getPreferredName(), jobId);
         builder.field(DESCRIPTION.getPreferredName(), description);
-        builder.field(STATUS.getPreferredName(), status);
-        if (schedulerState != null) {
-            builder.field(SCHEDULER_STATE.getPreferredName(), schedulerState);
-        }
         builder.field(CREATE_TIME.getPreferredName(), createTime.getTime());
         if (finishedTime != null) {
             builder.field(FINISHED_TIME.getPreferredName(), finishedTime.getTime());
@@ -735,8 +704,8 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         }
 
         JobDetails that = (JobDetails) other;
-        return Objects.equals(this.jobId, that.jobId) && Objects.equals(this.description, that.description) && (this.status == that.status)
-                && Objects.equals(this.schedulerState, that.schedulerState) && Objects.equals(this.createTime, that.createTime)
+        return Objects.equals(this.jobId, that.jobId) && Objects.equals(this.description, that.description)
+                 && Objects.equals(this.createTime, that.createTime)
                 && Objects.equals(this.finishedTime, that.finishedTime) && Objects.equals(this.lastDataTime, that.lastDataTime)
                 && (this.timeout == that.timeout) && Objects.equals(this.analysisConfig, that.analysisConfig)
                 && Objects.equals(this.analysisLimits, that.analysisLimits) && Objects.equals(this.dataDescription, that.dataDescription)
@@ -752,7 +721,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
 
     @Override
     public int hashCode() {
-        return Objects.hash(jobId, description, status, schedulerState, createTime, finishedTime, lastDataTime, timeout, analysisConfig,
+        return Objects.hash(jobId, description, createTime, finishedTime, lastDataTime, timeout, analysisConfig,
                 analysisLimits, dataDescription, modelDebugConfig, modelSizeStats, transforms, counts, renormalizationWindowDays,
                 backgroundPersistInterval, modelSnapshotRetentionDays, resultsRetentionDays, ignoreDowntime, customSettings,
                 modelSnapshotId);

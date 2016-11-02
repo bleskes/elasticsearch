@@ -25,6 +25,7 @@ import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractorFactory;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.scheduler.JobScheduler;
 
@@ -54,13 +55,13 @@ public class JobScheduledService {
         this.jobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
     }
 
-    public void start(JobDetails job) {
-        if (!jobToScheduler.containsKey(job.getId())) {
-            SchedulerState schedulerState = job.getSchedulerState();
+    public void start(JobDetails job, Allocation allocation) {
+        if (!jobToScheduler.containsKey(allocation.getJobId())) {
+            SchedulerState schedulerState = allocation.getSchedulerState();
             if (schedulerState != null && schedulerState.getStatus() == JobSchedulerStatus.STARTED) {
-                LOGGER.info("Starting scheduler for job: " + job.getId());
+                LOGGER.info("Starting scheduler for job: " + allocation.getJobId());
                 createJobScheduler(job);
-                jobToScheduler.get(job.getId()).start(job);
+                jobToScheduler.get(job.getId()).start(job, allocation);
             }
         }
     }
@@ -71,7 +72,7 @@ public class JobScheduledService {
         Duration queryDelay = Duration.ofSeconds(job.getSchedulerConfig().getQueryDelay());
         JobScheduler jobScheduler = new JobScheduler(job.getId(), bucketSpan, frequency, queryDelay,
                 dataExtractorFactory.newExtractor(job), dataProcessor, jobProvider, jobLoggerFactory,
-                () -> jobManager.getJobOrThrowIfUnknown(job.getId()).getSchedulerState().getStatus(),
+                () -> jobManager.getJobAllocation(job.getJobId()).getSchedulerState().getStatus(),
                 new SchedulerStatusListener(job.getId()));
         jobToScheduler.put(job.getId(), jobScheduler);
         return jobScheduler;
@@ -83,13 +84,12 @@ public class JobScheduledService {
         return frequency == null ? DefaultFrequency.ofBucketSpan(bucketSpan) : Duration.ofSeconds(frequency);
     }
 
-    public void stop(String jobId) {
-        if (jobToScheduler.containsKey(jobId)) {
-            JobDetails job = jobManager.getJobOrThrowIfUnknown(jobId);
-            SchedulerState schedulerState = job.getSchedulerState();
+    public void stop(Allocation allocation) {
+        if (jobToScheduler.containsKey(allocation.getJobId())) {
+            SchedulerState schedulerState = allocation.getSchedulerState();
             if (schedulerState != null && schedulerState.getStatus() == JobSchedulerStatus.STOPPING) {
-                LOGGER.info("Stopping scheduler for job: " + jobId);
-                jobToScheduler.get(jobId).stopManual();
+                LOGGER.info("Stopping scheduler for job: " + allocation.getJobId());
+                jobToScheduler.get(allocation.getJobId()).stopManual();
             }
         }
     }

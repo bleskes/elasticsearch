@@ -16,7 +16,7 @@
                 "timeFormat":"yyyy-MM-dd HH:mm:ssX"
             }
           }
-  - match: { status: "CLOSED" }
+  - match: { jobId: "farequote" }
 
   - do:
       indices.get:

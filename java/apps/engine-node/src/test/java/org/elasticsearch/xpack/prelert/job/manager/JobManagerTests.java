@@ -28,9 +28,11 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -106,6 +108,11 @@ public class JobManagerTests extends ESTestCase {
         JobDetails jobDetails = new JobConfiguration().build();
         jobDetails.setJobId("foo");
         clusterState = jobManager.innerPutJob(jobDetails, false, clusterState);
+        PrelertMetadata currentPrelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
+        PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
+        builder.putAllocation("nodeId", "foo");
+        clusterState = ClusterState.builder(clusterState).metaData(MetaData.builder(clusterState.getMetaData())
+                .putCustom(PrelertMetadata.TYPE, builder.build()).build()).build();
         when(clusterService.state()).thenReturn(clusterState);
 
         doAnswerSleep(200).when(clusterService).submitStateUpdateTask(eq("delete-job-foo"), any(AckedClusterStateUpdateTask.class));

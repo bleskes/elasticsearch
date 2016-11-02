@@ -364,7 +364,7 @@ public class JobConfiguration extends ToXContentToBytes implements Writeable {
     public JobDetails build() {
         String id = iD == null ? generateJobId(HOSTNAME) : iD;
         return new JobDetails(
-                id, description, JobStatus.CLOSED, null, new Date(), null, null, DEFAULT_TIMEOUT, analysisConfig,
+                id, description, new Date(), null, null, DEFAULT_TIMEOUT, analysisConfig,
                 analysisLimits, schedulerConfig, dataDescription, null, transforms, modelDebugConfig, new DataCounts(),
                 ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
                 resultsRetentionDays, customSettings, null

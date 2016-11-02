@@ -22,6 +22,7 @@ import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -29,6 +30,7 @@ import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractorFactory;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -77,50 +79,54 @@ public class JobScheduledServiceTests extends ESTestCase {
 
     public void testStart_GivenNewlyCreatedJob() throws IOException {
         JobDetails job = createScheduledJob();
-        job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
+        Allocation allocation =
+                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(0));
         job.setCounts(dataCounts);
-        when(jobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
+        when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
         Logger jobLogger = mock(Logger.class);
         when(jobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(dataExtractorFactory.newExtractor(job)).thenReturn(dataExtractor);
 
-        jobScheduledService.start(job);
+        jobScheduledService.start(job, allocation);
 
-        job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
-        jobScheduledService.stop("foo");
+        allocation =
+                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
+        jobScheduledService.stop(allocation);
 
         verify(dataExtractor).newSearch(anyLong(), anyLong(), eq(jobLogger));
         verify(dataProcessor).closeJob("foo");
     }
 
     public void testStop_GivenNonScheduledJob() {
-        jobScheduledService.stop("foo");
+        jobScheduledService.stop(new Allocation(null, "foo", null, null));
     }
 
     public void testStop_GivenStartedScheduledJob() throws IOException {
         JobDetails job = createScheduledJob();
-        job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
+        Allocation allocation =
+                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(0));
         job.setCounts(dataCounts);
-        when(jobManager.getJobOrThrowIfUnknown("foo")).thenReturn(job);
+        when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
         Logger jobLogger = mock(Logger.class);
         when(jobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(dataExtractorFactory.newExtractor(job)).thenReturn(dataExtractor);
 
-        jobScheduledService.start(job);
+        jobScheduledService.start(job, allocation);
 
-        jobScheduledService.stop("foo");
+        jobScheduledService.stop(allocation);
 
         // Properly stop it to avoid leaking threads in the test
-        job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
-        jobScheduledService.stop("foo");
+        allocation =
+                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
+        jobScheduledService.stop(allocation);
 
         verify(dataExtractor).newSearch(anyLong(), anyLong(), eq(jobLogger));
 

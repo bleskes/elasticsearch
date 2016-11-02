@@ -281,7 +281,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         JobDetails job = new JobConfiguration().build();
         job.setJobId("marscapone");
         job.setDescription("This is a very cheesy job");
-        job.setStatus(JobStatus.FAILED);
         AnalysisLimits limits = new AnalysisLimits(9878695309134L, null);
         job.setAnalysisLimits(limits);
 
