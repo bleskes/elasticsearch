@@ -17,7 +17,9 @@
 
 package org.elasticsearch.xpack.security.transport;
 
+import org.elasticsearch.action.support.DestructiveOperations;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
@@ -42,6 +44,7 @@ import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
 import org.elasticsearch.xpack.ssl.SSLService;
 
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -80,7 +83,8 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
     public void testSendAsyncUnlicensed() {
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
                 mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
-                securityContext);
+                securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
+                Collections.singleton(DestructiveOperations.REQUIRES_NAME_SETTING))));
         when(xPackLicenseState.isAuthAllowed()).thenReturn(false);
         AtomicBoolean calledWrappedSender = new AtomicBoolean(false);
         AsyncSender sender = interceptor.interceptSender(new AsyncSender() {
@@ -105,7 +109,8 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         authentication.writeToContext(threadContext, cryptoService, AuthenticationService.SIGN_USER_HEADER.get(settings));
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
                 mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
-                securityContext);
+                securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
+                Collections.singleton(DestructiveOperations.REQUIRES_NAME_SETTING))));
 
         AtomicBoolean calledWrappedSender = new AtomicBoolean(false);
         AtomicReference<User> sendingUser = new AtomicReference<>();
@@ -136,7 +141,8 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
 
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
                 mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
-                securityContext);
+                securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
+                Collections.singleton(DestructiveOperations.REQUIRES_NAME_SETTING))));
 
         AtomicBoolean calledWrappedSender = new AtomicBoolean(false);
         AtomicReference<User> sendingUser = new AtomicReference<>();
@@ -163,7 +169,8 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
     public void testSendWithoutUser() throws Exception {
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
                 mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
-                securityContext);
+                securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
+                Collections.singleton(DestructiveOperations.REQUIRES_NAME_SETTING))));
 
         assertNull(securityContext.getUser());
         AsyncSender sender = interceptor.interceptSender(new AsyncSender() {
