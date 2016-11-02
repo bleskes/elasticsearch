@@ -21,7 +21,6 @@ import org.elasticsearch.test.ESTestCase;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -35,10 +34,10 @@ public class NamedPipeHelperTests extends ESTestCase {
     public void testOpenForInputGivenPipeDoesNotExist() {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        IOException ioe = ESTestCase.expectThrows(NoSuchFileException.class,
+        IOException ioe = ESTestCase.expectThrows(FileNotFoundException.class,
                 () ->
-        NamedPipeHelper.openNamedPipeInputStream(env,
-                env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "this pipe does not exist"),
+        NamedPipeHelper.openNamedPipeInputStream(
+                NamedPipeHelper.getDefaultPipeDirectoryPrefix(env) + "this pipe does not exist",
                 Duration.ofSeconds(1)));
 
         assertTrue(ioe.getMessage(),
@@ -50,8 +49,8 @@ public class NamedPipeHelperTests extends ESTestCase {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         IOException ioe = ESTestCase.expectThrows(FileNotFoundException.class, () ->
-        NamedPipeHelper.openNamedPipeOutputStream(env,
-                env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "this pipe does not exist"),
+        NamedPipeHelper.openNamedPipeOutputStream(
+                NamedPipeHelper.getDefaultPipeDirectoryPrefix(env) + "this pipe does not exist",
                 Duration.ofSeconds(1)));
 
         assertTrue(ioe.getMessage(), ioe.getMessage().contains("No such file or directory") ||
@@ -77,7 +76,7 @@ public class NamedPipeHelperTests extends ESTestCase {
         Path tempFile = Files.createTempFile(env.tmpFile(), "not a named pipe", null);
 
         IOException ioe = ESTestCase.expectThrows(IOException.class, () ->
-        NamedPipeHelper.openNamedPipeOutputStream(env, tempFile, Duration.ofSeconds(1)));
+        NamedPipeHelper.openNamedPipeOutputStream(tempFile, Duration.ofSeconds(1)));
 
         assertTrue(ioe.getMessage(), ioe.getMessage().contains("is not a named pipe") ||
                 ioe.getMessage().contains("The system cannot find the file specified"));

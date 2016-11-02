@@ -36,7 +36,6 @@ import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 
@@ -204,8 +203,8 @@ public class NamedPipeHelperNoBootstrapTests extends LuceneTestCase {
         private String line;
         private Exception exception;
 
-        public PipeReaderServer(Path pipeName) {
-            this.pipeName = pipeName.toString();
+        public PipeReaderServer(String pipeName) {
+            this.pipeName = pipeName;
         }
 
         @Override
@@ -243,8 +242,8 @@ public class NamedPipeHelperNoBootstrapTests extends LuceneTestCase {
         private String line;
         private Exception exception;
 
-        public PipeWriterServer(Path pipeName, String line) {
-            this.pipeName = pipeName.toString();
+        public PipeWriterServer(String pipeName, String line) {
+            this.pipeName = pipeName;
             this.line = line;
         }
 
@@ -275,12 +274,12 @@ public class NamedPipeHelperNoBootstrapTests extends LuceneTestCase {
     public void testOpenForInput() throws IOException, InterruptedException {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        Path pipeName = env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "inputPipe" + JvmInfo.jvmInfo().pid());
+        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix(env) + "inputPipe" + JvmInfo.jvmInfo().pid();
 
         PipeWriterServer server = new PipeWriterServer(pipeName, HELLO_WORLD);
         server.start();
         try {
-            InputStream is = NamedPipeHelper.openNamedPipeInputStream(env, pipeName, Duration.ofSeconds(1));
+            InputStream is = NamedPipeHelper.openNamedPipeInputStream(pipeName, Duration.ofSeconds(1));
             assertNotNull(is);
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -297,12 +296,12 @@ public class NamedPipeHelperNoBootstrapTests extends LuceneTestCase {
     public void testOpenForOutput() throws IOException, InterruptedException {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        Path pipeName = env.tmpFile().resolve(NamedPipeHelper.getDefaultPipeDirectoryPrefix() + "outputPipe" + JvmInfo.jvmInfo().pid());
+        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix(env) + "outputPipe" + JvmInfo.jvmInfo().pid();
 
         PipeReaderServer server = new PipeReaderServer(pipeName);
         server.start();
         try {
-            OutputStream os = NamedPipeHelper.openNamedPipeOutputStream(env, pipeName, Duration.ofSeconds(1));
+            OutputStream os = NamedPipeHelper.openNamedPipeOutputStream(pipeName, Duration.ofSeconds(1));
             assertNotNull(os);
 
             try (OutputStreamWriter writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {

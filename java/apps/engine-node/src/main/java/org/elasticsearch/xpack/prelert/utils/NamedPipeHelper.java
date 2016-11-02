@@ -15,15 +15,22 @@
 package org.elasticsearch.xpack.prelert.utils;
 
 import org.apache.lucene.util.Constants;
+import org.elasticsearch.ExceptionsHelper;
+import org.elasticsearch.SpecialPermission;
+import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.env.Environment;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.time.Duration;
 
 
@@ -68,7 +75,7 @@ public class NamedPipeHelper {
      * be created.
      * @return The directory prefix as a string.
      */
-    public static String getDefaultPipeDirectoryPrefix() {
+    public static String getDefaultPipeDirectoryPrefix(Environment env) {
         // The return type is String because we don't want any (too) clever path processing removing
         // the seemingly pointless . in the path used on Windows.
         if (Constants.WINDOWS) {
@@ -80,11 +87,7 @@ public class NamedPipeHelper {
         // All these factors need to align for everything to work in production.  If any changes
         // are made here then CNamedPipeFactory::defaultPath() in the C++ code will probably
         // also need to be changed.
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        if (tmpDir.endsWith(PathUtils.getDefaultFileSystem().getSeparator())) {
-            return tmpDir;
-        }
-        return tmpDir + PathUtils.getDefaultFileSystem().getSeparator();
+        return env.tmpFile().toString() + PathUtils.getDefaultFileSystem().getSeparator();
     }
 
     /**
@@ -98,8 +101,9 @@ public class NamedPipeHelper {
      * @throws IOException
      *             if the named pipe cannot be opened.
      */
-    public static InputStream openNamedPipeInputStream(Environment env, Path path, Duration timeout) throws IOException {
-        return openNamedPipeInputStream(path, timeout);
+    @SuppressForbidden(reason = "Environment doesn't have path for Windows named pipes")
+    public static InputStream openNamedPipeInputStream(String path, Duration timeout) throws IOException {
+        return openNamedPipeInputStream(PathUtils.get(path), timeout);
     }
 
     /**
@@ -112,23 +116,30 @@ public class NamedPipeHelper {
     public static InputStream openNamedPipeInputStream(Path file, Duration timeout) throws IOException {
         long timeoutMillisRemaining = timeout.toMillis();
 
-        // Can't use File.isFile() on Windows, but luckily there's an even simpler check (that's not possible on *nix)
+        // Can't use Files.isRegularFile() on on named pipes on Windows, as it renders them unusable,
+        // but luckily there's an even simpler check (that's not possible on *nix)
         if (Constants.WINDOWS && !file.toString().startsWith(WIN_PIPE_PREFIX)) {
             throw new IOException(file + " is not a named pipe");
+        }
+
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new SpecialPermission());
         }
 
         // Try to open the file periodically until the timeout expires, then, if
         // it's still not available throw the exception from FileInputStream
         while (true) {
-            // On Windows File.isFile() will render a genuine named pipe unusable
+            // On Windows Files.isRegularFile() will render a genuine named pipe unusable
             if (!Constants.WINDOWS && Files.isRegularFile(file)) {
                 throw new IOException(file + " is not a named pipe");
             }
             try {
-                return Files.newInputStream(file);
-            } catch (IOException ioe) {
+                PrivilegedInputPipeOpener privilegedInputPipeOpener = new PrivilegedInputPipeOpener(file);
+                return AccessController.doPrivileged(privilegedInputPipeOpener);
+            } catch (RuntimeException e) {
                 if (timeoutMillisRemaining <= 0) {
-                    throw ioe;
+                    propagatePrivilegedException(e);
                 }
                 long thisSleep = Math.min(timeoutMillisRemaining, PAUSE_TIME_MS);
                 timeoutMillisRemaining -= thisSleep;
@@ -136,7 +147,7 @@ public class NamedPipeHelper {
                     Thread.sleep(thisSleep);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
-                    throw ioe;
+                    propagatePrivilegedException(e);
                 }
             }
         }
@@ -153,8 +164,9 @@ public class NamedPipeHelper {
      * @throws IOException
      *             if the named pipe cannot be opened.
      */
-    public static OutputStream openNamedPipeOutputStream(Environment env, Path path, Duration timeout) throws IOException {
-        return openNamedPipeOutputStream(path, timeout);
+    @SuppressForbidden(reason = "Environment doesn't have path for Windows named pipes")
+    public static OutputStream openNamedPipeOutputStream(String path, Duration timeout) throws IOException {
+        return openNamedPipeOutputStream(PathUtils.get(path), timeout);
     }
 
     /**
@@ -187,14 +199,20 @@ public class NamedPipeHelper {
             throw new IOException(file + " is not a named pipe");
         }
 
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new SpecialPermission());
+        }
+
         // Try to open the file periodically until the timeout expires, then, if
         // it's still not available throw the exception from FileOutputStream
         while (true) {
             try {
-                return Files.newOutputStream(file);
-            } catch (IOException ioe) {
+                PrivilegedOutputPipeOpener privilegedOutputPipeOpener = new PrivilegedOutputPipeOpener(file);
+                return AccessController.doPrivileged(privilegedOutputPipeOpener);
+            } catch (RuntimeException e) {
                 if (timeoutMillisRemaining <= 0) {
-                    throw ioe;
+                    propagatePrivilegedException(e);
                 }
                 long thisSleep = Math.min(timeoutMillisRemaining, PAUSE_TIME_MS);
                 timeoutMillisRemaining -= thisSleep;
@@ -202,7 +220,7 @@ public class NamedPipeHelper {
                     Thread.sleep(thisSleep);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
-                    throw ioe;
+                    propagatePrivilegedException(e);
                 }
             }
         }
@@ -245,5 +263,64 @@ public class NamedPipeHelper {
         // without using low level OS calls...
 
         return Files.newOutputStream(file);
+    }
+
+    /**
+     * To work around the limitation that privileged actions cannot throw checked exceptions the classes
+     * below wrap IOExceptions in RuntimeExceptions.  If such an exception needs to be propagated back
+     * to a user of this class then it's nice if they get the original IOException rather than having
+     * it wrapped in a RuntimeException.  However, the privileged calls could also possibly throw other
+     * RuntimeExceptions, so this method accounts for this case too.
+     */
+    private static void propagatePrivilegedException(RuntimeException e) throws IOException {
+        Throwable ioe = ExceptionsHelper.unwrap(e, IOException.class);
+        if (ioe != null) {
+            throw (IOException)ioe;
+        }
+        throw e;
+    }
+
+    /**
+     * Used to work around the limitation that privileged actions cannot throw checked exceptions.
+     */
+    private static class PrivilegedInputPipeOpener implements PrivilegedAction<InputStream> {
+
+        private final Path file;
+
+        public PrivilegedInputPipeOpener(Path file) {
+            this.file = file;
+        }
+
+        @SuppressForbidden(reason = "Files.newInputStream doesn't work with Windows named pipes")
+        public InputStream run() {
+            try {
+                return new FileInputStream(file.toString());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    /**
+     * Used to work around the limitation that privileged actions cannot throw checked exceptions.
+     */
+    private static class PrivilegedOutputPipeOpener implements PrivilegedAction<OutputStream> {
+
+        private final Path file;
+
+        public PrivilegedOutputPipeOpener(Path file) {
+            this.file = file;
+        }
+
+        @SuppressForbidden(reason = "Files.newOutputStream doesn't work with Windows named pipes")
+        public OutputStream run() {
+            try {
+                return new FileOutputStream(file.toString());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 }
