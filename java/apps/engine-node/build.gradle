@@ -33,7 +33,7 @@ esplugin {
 }
 
 group = 'org.elasticsearch.prelert'
-version = '0.1'
+version = '2.3.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
@@ -83,15 +83,13 @@ integTest {
 
 integTest.mustRunAfter noBootstrapTest
 
-task copyCppDist(type: Copy) {
-  from "$rootDir/cppdistribution"
-  into "${project.buildDir}/engine-node"
-}
-
-project.bundlePlugin.dependsOn(copyCppDist)
-
 bundlePlugin {
-  from("${project.buildDir}/engine-node/plugins/prelert") {
+  from("${rootDir}/cppdistribution") {
     into '.'
+    // Don't copy Windows import libraries
+    exclude "**/*.lib"
+    // Don't copy the test support library
+    exclude "**/libPreTest.*"
+    includeEmptyDirs = false
   }
 }
