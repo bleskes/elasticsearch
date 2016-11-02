@@ -31,8 +31,7 @@ import java.util.Set;
  * added to them, as it could create confusion if in some results a given field
  * contains raw data and in others it contains some aspect of our output.
  */
-public final class ReservedFieldNames
-{
+public final class ReservedFieldNames {
     /**
      * jobId isn't in this package, so redefine.
      */
@@ -179,7 +178,6 @@ public final class ReservedFieldNames
      */
     public static final Set<String> RESERVED_FIELD_NAMES = new HashSet<>(Arrays.asList(RESERVED_FIELD_NAME_ARRAY));
 
-    private ReservedFieldNames()
-    {
+    private ReservedFieldNames() {
     }
 }
