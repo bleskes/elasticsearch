@@ -14,6 +14,8 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -64,12 +66,7 @@ public interface JobDataDeleter {
     void deleteModelSizeStats(ModelSizeStats modelSizeStats);
 
     /**
-     * Commit the deletions and remove data from disk if possible
-     */
-    void commitAndFreeDiskSpace();
-
-    /**
      * Commit the deletions without enforcing the removal of data from disk
      */
-    void commit();
+    void commit(ActionListener<BulkResponse> listener);
 }

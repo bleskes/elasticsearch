@@ -14,6 +14,10 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.bulk.BulkResponse;
+
 import java.util.Date;
 import java.util.Deque;
 import java.util.Objects;
@@ -37,11 +41,11 @@ public class OldDataRemover {
     /**
      * Removes results between the time given and the current time
      */
-    public void deleteResultsAfter(String jobId, long cutoffEpochMs) {
+    public void deleteResultsAfter(ActionListener<BulkResponse> listener, String jobId, long cutoffEpochMs) {
         Date now = new Date();
         JobDataDeleter deleter = dataDeleterFactory.apply(jobId);
         deleteResultsWithinRange(jobId, deleter, cutoffEpochMs, now.getTime());
-        deleter.commitAndFreeDiskSpace();
+        deleter.commit(listener);
     }
 
     private void deleteResultsWithinRange(String jobId, JobDataDeleter deleter, long start, long end) {

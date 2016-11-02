@@ -1,5 +1,6 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
+ * __________________
  *
  * Copyright (c) 2016
  *
@@ -1164,24 +1165,6 @@ public class ElasticsearchJobProvider implements JobProvider
         persister.commitWrites();
     }
 
-    @Override
-    public ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
-    {
-        List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
-                null, null, null, true, snapshotId, null).hits();
-        if (deleteCandidates == null || deleteCandidates.isEmpty())
-        {
-            throw ExceptionsHelper.missingModelSnapshotException(jobId);
-        }
-
-        ModelSnapshot modelSnapshot = deleteCandidates.get(0);
-
-        ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(client, jobId);
-        deleter.deleteModelSnapshot(modelSnapshot);
-        deleter.commit();
-
-        return modelSnapshot;
-    }
 
     private Quantiles createQuantiles(String jobId, GetResponse response) {
         Quantiles quantiles = doPrivilegedCall(() -> objectMapper.convertValue(response.getSource(), Quantiles.class));

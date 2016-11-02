@@ -15,9 +15,8 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeAction;
-import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeResponse;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteAction;
@@ -235,22 +234,13 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
         }
     }
 
-    @Override
-    public void commitAndFreeDiskSpace() {
-        commit(true);
-    }
-
-    @Override
-    public void commit() {
-        commit(false);
-    }
-
     /**
      * Commits the deletions and if {@code forceMerge} is {@code true}, it
      * forces a merge which removes the data from disk.
      */
-    private void commit(boolean forceMerge) {
+    public void commit(ActionListener<BulkResponse> listener) {
         if (bulkRequestBuilder.numberOfActions() == 0) {
+            listener.onResponse(new BulkResponse(new BulkItemResponse[0], 0L));
             return;
         }
 
@@ -266,30 +256,9 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
         }
 
         try {
-            executeBulkRequest();
-            if (forceMerge) {
-                forceMerge();
-            }
-        } catch (RuntimeException e) {
-            LOGGER.error("Failed to perform bulk delete", e);
-        }
-    }
-
-    private void executeBulkRequest() {
-        BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet();
-        if (bulkResponse.hasFailures()) {
-            LOGGER.error(bulkResponse.buildFailureMessage());
-        }
-    }
-
-    private void forceMerge() {
-        // We need to do a force-merge request to ACTUALLY delete the results from disk
-        ForceMergeResponse forceMergeResponse = ForceMergeAction.INSTANCE.newRequestBuilder(client)
-                .setIndices(jobId.getIndex())
-                .setOnlyExpungeDeletes(true)
-                .get();
-        for (ShardOperationFailedException shardFailure : forceMergeResponse.getShardFailures()) {
-            LOGGER.error("Shard failed during force-merge: " + shardFailure.reason());
+            bulkRequestBuilder.execute(listener);
+        } catch (Exception e) {
+            listener.onFailure(e);
         }
     }
 }

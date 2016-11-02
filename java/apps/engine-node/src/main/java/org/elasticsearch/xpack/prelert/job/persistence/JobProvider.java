@@ -75,15 +75,6 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
             boolean restoreModelSizeStats);
 
     /**
-     * Delete a persisted model snapshot.
-     *
-     * @param jobId      the job ID
-     * @param snapshotId the ID of the snapshot to be deleted
-     */
-    ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId);
-
-
-    /**
      * Get the job's model size stats.
      */
     Optional<ModelSizeStats> modelSizeStats(String jobId);

@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.action;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -397,9 +398,18 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
                     // We should replace this
                     // whole abstraction with DBQ eventually
                     OldDataRemover remover = new OldDataRemover(jobProvider, bulkDeleterFactory);
-                    remover.deleteResultsAfter(jobId, deleteAfter.getTime() + 1);
+                    remover.deleteResultsAfter(new ActionListener<BulkResponse>() {
+                        @Override
+                        public void onResponse(BulkResponse bulkItemResponses) {
+                            listener.onResponse(response);
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            listener.onFailure(e);
+                        }
+                    }, jobId, deleteAfter.getTime() + 1);
                 }
-                listener.onResponse(response);
             }, listener::onFailure);
         }
 

@@ -196,6 +196,10 @@ setup:
         deleteInterveningResults: true
 
   - do:
+      indices.refresh:
+        index: prelertresults-foo
+
+  - do:
       xpack.prelert.get_buckets:
         jobId: "foo"
         start: "2016-01-01T00:00:00Z"

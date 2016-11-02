@@ -38,6 +38,7 @@ import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
 import org.elasticsearch.xpack.prelert.action.CreateListAction;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
+import org.elasticsearch.xpack.prelert.action.DeleteModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
 import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
@@ -92,6 +93,7 @@ import org.elasticsearch.xpack.prelert.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.prelert.rest.job.RestPutJobsAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestCreateListAction;
 import org.elasticsearch.xpack.prelert.rest.list.RestGetListAction;
+import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestDeleteModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestGetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestPutModelSnapshotDescriptionAction;
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestRevertModelSnapshotAction;
@@ -220,7 +222,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 RestRevertModelSnapshotAction.class,
                 RestPutModelSnapshotDescriptionAction.class,
                 RestStartJobSchedulerAction.class,
-                RestStopJobSchedulerAction.class);
+                RestStopJobSchedulerAction.class,
+                RestDeleteModelSnapshotAction.class);
     }
 
     @Override
@@ -249,7 +252,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(RevertModelSnapshotAction.INSTANCE, RevertModelSnapshotAction.TransportAction.class),
                 new ActionHandler<>(PutModelSnapshotDescriptionAction.INSTANCE, PutModelSnapshotDescriptionAction.TransportAction.class),
                 new ActionHandler<>(StartJobSchedulerAction.INSTANCE, StartJobSchedulerAction.TransportAction.class),
-                new ActionHandler<>(StopJobSchedulerAction.INSTANCE, StopJobSchedulerAction.TransportAction.class));
+                new ActionHandler<>(StopJobSchedulerAction.INSTANCE, StopJobSchedulerAction.TransportAction.class),
+                new ActionHandler<>(DeleteModelSnapshotAction.INSTANCE, DeleteModelSnapshotAction.TransportAction.class));
     }
 
     public static Path resolveConfigFile(Environment env, String name) {

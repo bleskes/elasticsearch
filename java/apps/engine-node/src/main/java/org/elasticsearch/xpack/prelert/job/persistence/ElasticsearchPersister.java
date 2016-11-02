@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -435,7 +436,19 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         ElasticsearchBulkDeleter deleter = new ElasticsearchBulkDeleter(client, jobId, true);
         deleter.deleteInterimResults();
-        deleter.commit();
+
+        // NOCOMMIT This is called from AutodetectResultsParser, feels wrong...
+        deleter.commit(new ActionListener<BulkResponse>() {
+            @Override
+            public void onResponse(BulkResponse bulkResponse) {
+                // don't care?
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                // don't care?
+            }
+        });
     }
 
     private interface Serialiser
