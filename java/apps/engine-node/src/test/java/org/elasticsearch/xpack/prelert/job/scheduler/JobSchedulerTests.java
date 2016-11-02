@@ -23,8 +23,6 @@ import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder;
@@ -84,7 +82,7 @@ public class JobSchedulerTests extends ESTestCase {
     private volatile CountDownLatch schedulerStoppedAuditedLatch;
 
     @Before
-    public void setUpTests() throws UnknownJobException
+    public void setUpTests()
     {
         jobProvider = mock(JobProvider.class);
         jobLoggerFactory = mock(JobLoggerFactory.class);
@@ -102,7 +100,7 @@ public class JobSchedulerTests extends ESTestCase {
         givenNoExistingBuckets();
     }
 
-    public void testStart_GivenEndIsEarlierThanStart() throws JobException {
+    public void testStart_GivenEndIsEarlierThanStart() {
         JobDetails job = createScheduledJob(JobSchedulerStatus.STARTED, 1000L, 500L);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         DataProcessor dataProcessor = mock(DataProcessor.class);
@@ -118,7 +116,7 @@ public class JobSchedulerTests extends ESTestCase {
         Mockito.verifyNoMoreInteractions(dataExtractor, dataProcessor, auditor);
     }
 
-    public void testStart_GivenSameStartAndEnd() throws JobException {
+    public void testStart_GivenSameStartAndEnd() {
         JobDetails job = createScheduledJob(JobSchedulerStatus.STARTED, 1000L, 1000L);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         DataProcessor dataProcessor = mock(DataProcessor.class);
@@ -508,7 +506,7 @@ public class JobSchedulerTests extends ESTestCase {
         assertEquals(JobSchedulerStatus.STARTED, currentStatus);
     }
 
-    public void testStopAuto_GivenRealTimeJob() throws JobException {
+    public void testStopAuto_GivenRealTimeJob() {
         JobDetails job = createScheduledJob(JobSchedulerStatus.STARTED, 1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
@@ -536,7 +534,7 @@ public class JobSchedulerTests extends ESTestCase {
         return job;
     }
 
-    private void recordSchedulerStatus() throws UnknownJobException {
+    private void recordSchedulerStatus() {
         statusListener = new JobScheduler.Listener() {
             @Override
             public void statusChanged(JobSchedulerStatus newStatus) {
@@ -716,7 +714,7 @@ public class JobSchedulerTests extends ESTestCase {
             assertFalse(params.isResettingBuckets());
             countDownLatch.countDown();
             if (shouldThrow) {
-                throw ExceptionsHelper.missingException(jobId);
+                throw ExceptionsHelper.missingJobException(jobId);
             }
             try {
                 streams.add(streamToString(input));

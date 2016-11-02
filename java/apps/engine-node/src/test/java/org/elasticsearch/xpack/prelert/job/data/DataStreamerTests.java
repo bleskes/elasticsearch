@@ -18,7 +18,6 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -42,7 +41,7 @@ public class DataStreamerTests extends ESTestCase {
         ESTestCase.expectThrows(NullPointerException.class, () -> new DataStreamer(null));
     }
 
-    public void testStreamData_GivenNoContentEncodingAndNoPersistBaseDir() throws JobException, IOException {
+    public void testStreamData_GivenNoContentEncodingAndNoPersistBaseDir() throws IOException {
 
         DataProcessor dataProcessor = mock(DataProcessor.class);
         DataStreamer dataStreamer = new DataStreamer(dataProcessor);
@@ -57,7 +56,7 @@ public class DataStreamerTests extends ESTestCase {
         Mockito.verifyNoMoreInteractions(dataProcessor);
     }
 
-    public void testStreamData_ExpectsGzipButNotCompressed() throws JobException, IOException {
+    public void testStreamData_ExpectsGzipButNotCompressed() throws IOException {
         DataProcessor dataProcessor = mock(DataProcessor.class);
         DataStreamer dataStreamer = new DataStreamer(dataProcessor);
         InputStream inputStream = mock(InputStream.class);
@@ -71,7 +70,7 @@ public class DataStreamerTests extends ESTestCase {
         }
     }
 
-    public void testStreamData_ExpectsGzipUsesGZipStream() throws JobException, IOException {
+    public void testStreamData_ExpectsGzipUsesGZipStream() throws IOException {
         PipedInputStream pipedIn = new PipedInputStream();
         PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
         try (GZIPOutputStream gzip = new GZIPOutputStream(pipedOut)) {

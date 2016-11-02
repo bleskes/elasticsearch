@@ -20,11 +20,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
 
 abstract class AbstractJsonRecordReader implements JsonRecordReader {
     static final int PARSE_ERRORS_LIMIT = 100;
@@ -57,7 +58,7 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
         this.logger = Objects.requireNonNull(logger);
     }
 
-    protected void consumeToField(String field) throws MalformedJsonException, IOException {
+    protected void consumeToField(String field) throws IOException {
         if (field == null || field.isEmpty()) {
             return;
         }
@@ -71,7 +72,7 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
         }
     }
 
-    protected void consumeToRecordHoldingField() throws MalformedJsonException, IOException {
+    protected void consumeToRecordHoldingField() throws IOException {
         consumeToField(recordHoldingField);
     }
 
@@ -83,7 +84,7 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
     /**
      * Returns null at the EOF or the next token
      */
-    protected JsonToken tryNextTokenOrReadToEndOnError() throws IOException, MalformedJsonException {
+    protected JsonToken tryNextTokenOrReadToEndOnError() throws IOException {
         try {
             return parser.nextToken();
         } catch (JsonParseException e) {
@@ -104,7 +105,7 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
      * JSON document and so may skip to the end of the second document. In this
      * case we lose an extra record.
      */
-    protected void readToEndOfObject() throws IOException, MalformedJsonException {
+    protected void readToEndOfObject() throws IOException {
         JsonToken token = null;
         do {
             try {
@@ -113,7 +114,7 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
                 ++errorCounter;
                 if (errorCounter >= PARSE_ERRORS_LIMIT) {
                     logger.error("Failed to recover from malformed JSON data.", e);
-                    throw new MalformedJsonException(e);
+                    throw ExceptionsHelper.parseException("The input JSON data is malformed.", ErrorCodes.MALFORMED_JSON);
                 }
             }
         }

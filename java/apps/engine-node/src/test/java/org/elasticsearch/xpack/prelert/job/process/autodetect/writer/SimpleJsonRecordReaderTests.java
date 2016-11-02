@@ -15,8 +15,8 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
 import org.elasticsearch.xpack.prelert.job.status.CountingInputStream;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 
@@ -35,7 +35,7 @@ import java.util.Map;
 import static org.mockito.Mockito.mock;
 
 public class SimpleJsonRecordReaderTests extends ESTestCase {
-    public void testRead() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead() throws JsonParseException, IOException {
         String data = "{\"a\":10, \"b\":20, \"c\":30}\n{\"b\":21, \"a\":11, \"c\":31}\n";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
@@ -59,7 +59,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
     }
 
 
-    public void testRead_GivenNestedField() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_GivenNestedField() throws JsonParseException, IOException {
         String data = "{\"a\":10, \"b\":20, \"c\":{\"d\":30, \"e\":40}}";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = new HashMap<>();
@@ -81,7 +81,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
     }
 
 
-    public void testRead_GivenSingleValueArrays() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_GivenSingleValueArrays() throws JsonParseException, IOException {
         String data = "{\"a\":[10], \"b\":20, \"c\":{\"d\":30, \"e\":[40]}}";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = new HashMap<>();
@@ -103,7 +103,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
     }
 
 
-    public void testRead_GivenMultiValueArrays() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_GivenMultiValueArrays() throws JsonParseException, IOException {
         String data = "{\"a\":[10, 11], \"b\":20, \"c\":{\"d\":30, \"e\":[40, 50]}, \"f\":[\"a\", \"a\", \"a\", \"a\"], \"g\":20}";
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = new HashMap<>();
@@ -130,7 +130,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
      * This means we miss the next record after a bad one.
      */
 
-    public void testRead_RecoverFromBadJson() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_RecoverFromBadJson() throws JsonParseException, IOException {
         // no opening '{'
         String data = "\"a\":10, \"b\":20, \"c\":30}\n{\"b\":21, \"a\":11, \"c\":31}\n{\"c\":32, \"b\":22, \"a\":12}";
         JsonParser parser = createParser(data);
@@ -151,7 +151,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
     }
 
 
-    public void testRead_RecoverFromBadNestedJson() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_RecoverFromBadNestedJson() throws JsonParseException, IOException {
         // nested object 'd' is missing a ','
         String data = "{\"a\":10, \"b\":20, \"c\":30}\n" +
                 "{\"b\":21, \"d\" : {\"ee\": 1 \"ff\":0}, \"a\":11, \"c\":31}";
@@ -175,7 +175,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
     }
 
 
-    public void testRead_HitParseErrorsLimit() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_HitParseErrorsLimit() throws JsonParseException, IOException {
         // missing a ':'
         String format = "{\"a\":1%1$d, \"b\"2%1$d, \"c\":3%1$d}\n";
         StringBuilder builder = new StringBuilder();
@@ -187,10 +187,10 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         Map<String, Integer> fieldMap = createFieldMap();
 
         SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
-        ESTestCase.expectThrows(MalformedJsonException.class, () -> readUntilError(reader));
+        ESTestCase.expectThrows(ElasticsearchParseException.class, () -> readUntilError(reader));
     }
 
-    private void readUntilError(SimpleJsonRecordReader reader) throws IOException, MalformedJsonException {
+    private void readUntilError(SimpleJsonRecordReader reader) throws IOException {
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];
 
@@ -201,8 +201,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
     }
 
 
-    public void testRead_GivenDataEmbeddedInSource() throws JsonParseException, IOException,
-    MalformedJsonException {
+    public void testRead_GivenDataEmbeddedInSource() throws Exception {
         String data = "{\"took\": 1,\"hits\":{\"total\":1,\"hits\":["
                 + "{\"_index\":\"foo\",\"_source\":{\"a\":1,\"b\":2,\"c\":3}},"
                 + "{\"_index\":\"foo\",\"_source\":{\"a\":4,\"b\":5,\"c\":6}}"
@@ -229,8 +228,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
     }
 
 
-    public void testRead_givenControlCharacterInData() throws JsonParseException, IOException,
-    MalformedJsonException {
+    public void testRead_givenControlCharacterInData() throws Exception {
         char controlChar = '\u0002';
 
         String data = "{\"a\":10, \"" + controlChar + "\" : 5, \"b\":20, \"c\":30}"

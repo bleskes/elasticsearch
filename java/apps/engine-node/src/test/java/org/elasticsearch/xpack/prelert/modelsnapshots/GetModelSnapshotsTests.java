@@ -19,7 +19,6 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
@@ -45,7 +44,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
         assertEquals(ErrorCodes.INVALID_TAKE_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
-    public void testModelSnapshots_GivenNoStartOrEndParams() throws JobException {
+    public void testModelSnapshots_GivenNoStartOrEndParams() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
@@ -60,7 +59,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
         assertEquals(300, page.hitCount());
     }
 
-    public void testModelSnapshots_GivenEpochStartAndEpochEndParams() throws JobException {
+    public void testModelSnapshots_GivenEpochStartAndEpochEndParams() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
@@ -77,7 +76,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
         assertEquals(300, page.hitCount());
     }
 
-    public void testModelSnapshots_GivenIsoWithMillisStartAndEpochEndParams() throws JobException {
+    public void testModelSnapshots_GivenIsoWithMillisStartAndEpochEndParams() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
@@ -95,7 +94,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
         assertEquals(300, page.hitCount());
     }
 
-    public void testModelSnapshots_GivenIsoWithoutMillisStartAndEpochEndParams() throws JobException {
+    public void testModelSnapshots_GivenIsoWithoutMillisStartAndEpochEndParams() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 

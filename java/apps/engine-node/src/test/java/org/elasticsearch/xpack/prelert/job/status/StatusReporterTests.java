@@ -127,7 +127,7 @@ public class StatusReporterTests extends ESTestCase {
         assertEquals(5001L, statusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
     }
 
-    public void testReportRecordsWritten() throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void testReportRecordsWritten() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         statusReporter.reportRecordWritten(5, 2000);
@@ -150,7 +150,7 @@ public class StatusReporterTests extends ESTestCase {
         verify(jobDataCountsPersister, never()).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    public void testReportRecordsWritten_Given100Records() throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void testReportRecordsWritten_Given100Records() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         for (int i = 1; i <= 100; i++) {
@@ -166,7 +166,7 @@ public class StatusReporterTests extends ESTestCase {
         verify(jobDataCountsPersister, times(1)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    public void testReportRecordsWritten_Given1000Records() throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void testReportRecordsWritten_Given1000Records() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         for (int i = 1; i <= 1000; i++) {
@@ -182,7 +182,7 @@ public class StatusReporterTests extends ESTestCase {
         verify(jobDataCountsPersister, times(10)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    public void testReportRecordsWritten_Given2000Records() throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void testReportRecordsWritten_Given2000Records() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         for (int i = 1; i <= 2000; i++) {
@@ -198,7 +198,7 @@ public class StatusReporterTests extends ESTestCase {
         verify(jobDataCountsPersister, times(11)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    public void testReportRecordsWritten_Given20000Records() throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void testReportRecordsWritten_Given20000Records() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         for (int i = 1; i <= 20000; i++) {
@@ -214,7 +214,7 @@ public class StatusReporterTests extends ESTestCase {
         verify(jobDataCountsPersister, times(29)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    public void testReportRecordsWritten_Given30000Records() throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void testReportRecordsWritten_Given30000Records() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         for (int i = 1; i <= 30000; i++) {
@@ -230,7 +230,7 @@ public class StatusReporterTests extends ESTestCase {
         verify(jobDataCountsPersister, times(30)).persistDataCounts(anyString(), any(DataCounts.class));
     }
 
-    public void testFinishReporting() throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void testFinishReporting() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         DataCounts dc = new DataCounts();

@@ -32,7 +32,9 @@ import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
 import java.io.IOException;
 
 public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
@@ -71,7 +73,7 @@ public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
      * out of it.  Irrelevant junk in the JSON document is tolerated.
      */
     @Nullable
-    private String parseDescriptionFromJson(@Nullable String updateJson) throws MalformedJsonException {
+    private String parseDescriptionFromJson(@Nullable String updateJson) {
         if (updateJson != null && !updateJson.isEmpty()) {
             try {
                 ObjectNode objNode = new ObjectMapper().readValue(updateJson, ObjectNode.class);
@@ -80,7 +82,7 @@ public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
                     return descNode.asText();
                 }
             } catch (IOException e) {
-                throw new MalformedJsonException(e);
+                throw ExceptionsHelper.parseException("The input JSON data is malformed.", ErrorCodes.MALFORMED_JSON, e);
             }
         }
         return null;    // this null ok, will catch in Request ctor

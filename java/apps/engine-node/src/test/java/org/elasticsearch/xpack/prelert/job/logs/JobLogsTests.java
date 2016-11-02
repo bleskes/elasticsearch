@@ -14,13 +14,12 @@
  */
 package org.elasticsearch.xpack.prelert.job.logs;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.io.IOException;
@@ -28,7 +27,7 @@ import java.nio.file.Path;
 
 public class JobLogsTests extends ESTestCase {
 
-    public void testOperationsNotAllowedWithInvalidPath() throws UnknownJobException, JobException, IOException {
+    public void testOperationsNotAllowedWithInvalidPath() throws IOException {
         Path pathOutsideLogsDir = PathUtils.getDefaultFileSystem().getPath("..", "..", "..", "etc");
 
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
@@ -40,8 +39,8 @@ public class JobLogsTests extends ESTestCase {
             JobLogs jobLogs = new JobLogs(settings);
             jobLogs.deleteLogs(env, pathOutsideLogsDir.toString());
             fail();
-        } catch (JobException e) {
-            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
+        } catch (ElasticsearchException e) {
+            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH.getValueString(), e.getHeader("errorCode").get(0));
         }
     }
 
@@ -53,15 +52,15 @@ public class JobLogsTests extends ESTestCase {
             Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert");
             new JobLogs(settings).sanitizePath(filePath, rootDir);
             fail();
-        } catch (JobException e) {
-            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH, e.getErrorCode());
+        } catch (ElasticsearchException e) {
+            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH.getValueString(), e.getHeader("errorCode").get(0));
             assertEquals(
                     Messages.getMessage(Messages.LOGFILE_INVALID_PATH, filePath),
                     e.getMessage());
         }
     }
 
-    public void testSanitizePath() throws JobException {
+    public void testSanitizePath() {
 
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Path filePath = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert", "logs", "logfile.log");

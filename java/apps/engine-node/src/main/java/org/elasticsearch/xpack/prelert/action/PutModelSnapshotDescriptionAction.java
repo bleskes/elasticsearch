@@ -41,7 +41,6 @@ import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -274,11 +273,7 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
             }
             ModelSnapshot modelSnapshot = changeCandidates.get(0);
             modelSnapshot.setDescription(request.getDescriptionString());
-            try {
-                jobProvider.updateModelSnapshot(request.getJobId(), modelSnapshot, false);
-            } catch (UnknownJobException e) {
-                throw ExceptionsHelper.missingException(request.getJobId());
-            }
+            jobProvider.updateModelSnapshot(request.getJobId(), modelSnapshot, false);
 
             modelSnapshot.setDescription(request.getDescriptionString());
 

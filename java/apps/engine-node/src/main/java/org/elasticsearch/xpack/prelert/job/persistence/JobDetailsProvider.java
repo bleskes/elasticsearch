@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 
 /**
  * General interface for classes that persist Jobs and job data
@@ -55,7 +54,7 @@ public interface JobDetailsProvider
      * same Id already exists.
      */
     // TODO: rename and move?
-    void createJob(JobDetails job, ActionListener<Boolean> listener) throws JobIdAlreadyExistsException;
+    void createJob(JobDetails job, ActionListener<Boolean> listener);
 
     /**
      * Delete all the job related documents from the database.

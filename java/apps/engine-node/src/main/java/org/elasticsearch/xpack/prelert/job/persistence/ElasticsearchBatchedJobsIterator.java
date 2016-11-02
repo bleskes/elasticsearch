@@ -19,7 +19,6 @@ import org.elasticsearch.search.SearchHit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
 
 class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIterator<JobDetails>
 {
@@ -41,13 +40,6 @@ class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIter
     @Override
     protected JobDetails map(ObjectMapper objectMapper, SearchHit hit)
     {
-        try
-        {
-            return jobMapper.map(hit.getSource());
-        }
-        catch (CannotMapJobFromJson e)
-        {
-            return null;
-        }
+        return jobMapper.map(hit.getSource());
     }
 }

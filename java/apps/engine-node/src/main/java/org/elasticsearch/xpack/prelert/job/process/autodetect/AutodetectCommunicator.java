@@ -26,12 +26,8 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadPar
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.DataToProcessWriter;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.DataToProcessWriterFactory;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.noop.NoOpRenormaliser;
 import org.elasticsearch.xpack.prelert.job.status.CountingInputStream;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -91,8 +87,7 @@ public class AutodetectCommunicator implements Closeable {
     }
 
     public DataCounts writeToJob(InputStream inputStream)
-            throws MalformedJsonException, MissingFieldException, HighProportionOfBadTimestampsException,
-            OutOfOrderRecordsException, IOException {
+            throws IOException {
 
         checkProcessIsAlive();
 

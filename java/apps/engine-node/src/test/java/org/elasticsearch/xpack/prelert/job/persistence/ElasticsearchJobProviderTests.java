@@ -34,7 +34,6 @@ import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
@@ -87,7 +86,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         verify(node).close();
     }
 
-    public void testGetQuantiles_GivenNoIndexForJob() throws InterruptedException, ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenNoIndexForJob() throws InterruptedException, ExecutionException {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
@@ -98,7 +97,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         ESTestCase.expectThrows(IndexNotFoundException.class, () -> provider.getQuantiles(JOB_ID));
     }
 
-    public void testGetQuantiles_GivenNoQuantilesForJob() throws InterruptedException, ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenNoQuantilesForJob() throws InterruptedException, ExecutionException {
         GetResponse getResponse = createGetResponse(false, null);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
@@ -112,7 +111,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertFalse(quantiles.isPresent());
     }
 
-    public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws InterruptedException, ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws InterruptedException, ExecutionException {
         Map<String, Object> source = new HashMap<>();
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "state");
         GetResponse getResponse = createGetResponse(true, source);
@@ -129,7 +128,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals("state", quantiles.get().getQuantileState());
     }
 
-    public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws InterruptedException, ExecutionException, UnknownJobException {
+    public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws InterruptedException, ExecutionException {
         Map<String, Object> source = new HashMap<>();
         source.put(Quantiles.TIMESTAMP.getPreferredName(), new Date(0L));
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "");
@@ -306,7 +305,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertTrue(resultHolder.get());
     }
 
-    public void testDeleteJob() throws InterruptedException, ExecutionException, UnknownJobException, IOException {
+    public void testDeleteJob() throws InterruptedException, ExecutionException, IOException {
         @SuppressWarnings("unchecked")
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
@@ -324,7 +323,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         verify(actionListener).onResponse(true);
     }
 
-    public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, UnknownJobException, IOException {
+    public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, IOException {
         @SuppressWarnings("unchecked")
         ActionListener<Boolean> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
@@ -345,7 +344,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBuckets_OneBucketNoInterim()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -377,7 +376,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBuckets_OneBucketInterim()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -410,7 +409,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBuckets_UsingBuilder()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -447,7 +446,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBucket_NoBucketNoExpandNoInterim()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Long timestamp = 98765432123456789L;
         Date now = new Date();
@@ -473,7 +472,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBucket_OneBucketNoExpandNoInterim()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -500,7 +499,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBucket_OneBucketNoExpandInterim()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -525,7 +524,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertFalse(bucketHolder.isPresent());
     }
 
-    public void testRecords() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testRecords() throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -575,7 +574,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testRecords_UsingBuilder()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -630,7 +629,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
-    public void testBucketRecords() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testBucketRecords() throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         Bucket bucket = mock(Bucket.class);
@@ -678,7 +677,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
-    public void testexpandBucket() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testexpandBucket() throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         Bucket bucket = new Bucket();
@@ -710,7 +709,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testexpandBucket_WithManyRecords()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         Bucket bucket = new Bucket();
@@ -745,7 +744,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testCategoryDefinitions()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         String terms = "the terms and conditions are not valid here";
         List<Map<String, Object>> source = new ArrayList<>();
@@ -772,7 +771,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testCategoryDefinition()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentification";
         String terms = "the terms and conditions are not valid here";
 
@@ -796,7 +795,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testInfluencers_NoInterim()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -853,7 +852,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testInfluencers_WithInterim()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -910,7 +909,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(5.0, records.get(1).getInitialAnomalyScore(), 0.00001);
     }
 
-    public void testInfluencer() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testInfluencer() throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         String influencerId = "ThisIsAnInfluencerId";
 
@@ -927,7 +926,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         }
     }
 
-    public void testModelSnapshots() throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+    public void testModelSnapshots() throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -980,7 +979,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testModelSnapshots_WithDescription()
-            throws InterruptedException, ExecutionException, UnknownJobException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, JsonParseException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();

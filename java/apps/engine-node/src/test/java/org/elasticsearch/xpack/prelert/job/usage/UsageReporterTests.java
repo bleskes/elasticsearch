@@ -19,12 +19,11 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
 import org.mockito.Mockito;
 
 public class UsageReporterTests extends ESTestCase {
-    public void testUpdatePeriod() throws JobException {
+    public void testUpdatePeriod() {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
                 .put(UsageReporter.UPDATE_INTERVAL_SETTING.getKey(), 1).build();
 

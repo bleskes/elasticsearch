@@ -30,11 +30,12 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
+
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
 
 public class AggregatedJsonRecordReaderTests extends ESTestCase {
-    public void testRead_WithNoTermField() throws IOException, MalformedJsonException {
+    public void testRead_WithNoTermField() throws IOException {
         String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
                 + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
                 + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {"
@@ -65,7 +66,7 @@ public class AggregatedJsonRecordReaderTests extends ESTestCase {
         assertEquals(-1, reader.read(record, gotFields));
     }
 
-    public void testRead_WithOneTermField() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_WithOneTermField() throws JsonParseException, IOException {
         String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
                 + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
                 + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {"
@@ -115,7 +116,7 @@ public class AggregatedJsonRecordReaderTests extends ESTestCase {
         assertEquals(-1, reader.read(record, gotFields));
     }
 
-    public void testRead_WithTwoTermFields() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_WithTwoTermFields() throws JsonParseException, IOException {
         String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
                 + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
                 + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {"
@@ -173,7 +174,7 @@ public class AggregatedJsonRecordReaderTests extends ESTestCase {
         assertEquals(-1, reader.read(record, gotFields));
     }
 
-    public void testConstructor_GivenNoNestingOrder() throws JsonParseException, IOException, MalformedJsonException {
+    public void testConstructor_GivenNoNestingOrder() throws JsonParseException, IOException {
         JsonParser parser = createParser("");
         Map<String, Integer> fieldMap = createFieldMapWithNoTermField();
         List<String> nestingOrder = Collections.emptyList();
@@ -182,7 +183,7 @@ public class AggregatedJsonRecordReaderTests extends ESTestCase {
                 () -> new AggregatedJsonRecordReader(parser, fieldMap, "aggregations", mock(Logger.class), nestingOrder));
     }
 
-    public void testRead_GivenInvalidJson() throws JsonParseException, IOException, MalformedJsonException {
+    public void testRead_GivenInvalidJson() throws JsonParseException, IOException {
         String data = "{" + "\"took\" : 88," + "\"timed_out\" : false,"
                 + "\"_shards\" : { \"total\" : 5, \"successful\" : 5, \"failed\" : 0 },"
                 + "\"hits\" : { \"total\" : 86275, \"max_score\" : 0.0, \"hits\" : [ ] }," + "\"aggregations\" : {" + "\"time_level\" : {";
@@ -196,7 +197,7 @@ public class AggregatedJsonRecordReaderTests extends ESTestCase {
         String[] record = new String[4];
         boolean[] gotFields = new boolean[4];
 
-        ESTestCase.expectThrows(MalformedJsonException.class, () -> reader.read(record, gotFields));
+        ESTestCase.expectThrows(ElasticsearchParseException.class, () -> reader.read(record, gotFields));
     }
 
     private JsonParser createParser(String input) throws JsonParseException, IOException {

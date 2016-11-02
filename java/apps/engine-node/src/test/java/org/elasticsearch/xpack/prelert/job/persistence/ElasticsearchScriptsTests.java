@@ -18,17 +18,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
+
+import static org.hamcrest.Matchers.containsString;
 
 public class ElasticsearchScriptsTests extends ESTestCase {
     @Captor
@@ -66,7 +68,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         assertEquals(time, script.getParams().get("timeMs"));
     }
 
-    public void testUpdateUpsertViaScript() throws JobException {
+    public void testUpdateUpsertViaScript() {
         String index = "idx";
         String docId = "docId";
         String type = "type";
@@ -94,7 +96,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         assertEquals(map, updatedParams);
     }
 
-    public void testUpdateUpsertViaScript_InvalidIndex() throws JobException {
+    public void testUpdateUpsertViaScript_InvalidIndex() {
         String index = "idx";
         String docId = "docId";
         String type = "type";
@@ -110,12 +112,12 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         try {
             ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
             assertFalse(true);
-        } catch (UnknownJobException ex) {
-            assertEquals(index, ex.getJobId());
+        } catch (ResourceNotFoundException ex) {
+            assertThat(ex.getMessage(), containsString(index));
         }
     }
 
-    public void testUpdateUpsertViaScript_IllegalArgument() throws JobException {
+    public void testUpdateUpsertViaScript_IllegalArgument() {
         String index = "idx";
         String docId = "docId";
         String type = "type";
@@ -132,7 +134,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
 
         try {
             ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
-        } catch (JobException e) {
+        } catch (ElasticsearchException e) {
             String msg = e.toString();
             assertTrue(msg.matches(".*test-script-here.*inline.*params.*testKey.*testValue.*"));
         }

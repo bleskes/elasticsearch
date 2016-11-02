@@ -37,9 +37,6 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
@@ -119,7 +116,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * <p>
      * Writes the header.
      */
-    public void buildTransformsAndWriteHeader(String[] header) throws MissingFieldException, IOException {
+    public void buildTransformsAndWriteHeader(String[] header) throws IOException {
         Collection<String> inputFields = inputFields();
         inFieldIndexes = inputFieldIndexes(header, inputFields);
         checkForMissingFields(inputFields, inFieldIndexes, header);
@@ -224,7 +221,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * @param numberOfFieldsRead The total number read not just those included in the analysis
      */
     protected boolean applyTransformsAndWrite(String[] input, String[] output, long numberOfFieldsRead)
-            throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         readWriteArea[TransformFactory.INPUT_ARRAY_INDEX] = input;
         readWriteArea[TransformFactory.OUTPUT_ARRAY_INDEX] = output;
         Arrays.fill(readWriteArea[TransformFactory.SCRATCH_ARRAY_INDEX], "");
@@ -481,8 +478,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
      * otherwise the field cannnot be found.
      */
     protected abstract boolean checkForMissingFields(Collection<String> inputFields, Map<String, Integer> inputFieldIndexes,
-            String[] header)
-                    throws MissingFieldException;
+            String[] header);
 
 
     /**

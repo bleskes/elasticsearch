@@ -25,7 +25,6 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
 
 /**
  * Reads highly hierarchical JSON structures.  Currently very much geared to the
@@ -70,7 +69,7 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader {
      * because the end of the stream was reached
      */
     @Override
-    public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException {
+    public long read(String[] record, boolean[] gotFields) throws IOException {
         initArrays(record, gotFields);
         latestDocCount = null;
         fieldCount = 0;
@@ -140,7 +139,7 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader {
         nestedLevel = 0;
     }
 
-    private boolean parseFieldValuePair(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException {
+    private boolean parseFieldValuePair(String[] record, boolean[] gotFields) throws IOException {
         String fieldName = parser.getCurrentName();
         JsonToken token = tryNextTokenOrReadToEndOnError();
 
@@ -181,7 +180,7 @@ class AggregatedJsonRecordReader extends AbstractJsonRecordReader {
         return true;
     }
 
-    private void completeRecord(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException {
+    private void completeRecord(String[] record, boolean[] gotFields) throws IOException {
         // This loop should do time plus the by/over/partition/influencer fields
         int numberOfFields = Math.min(nestingOrder.size() - 1, nestedValues.size());
         if (nestingOrder.size() - 1 != nestedValues.size()) {

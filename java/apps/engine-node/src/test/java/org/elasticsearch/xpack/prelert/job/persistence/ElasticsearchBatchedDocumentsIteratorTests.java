@@ -34,7 +34,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -59,7 +58,7 @@ public class ElasticsearchBatchedDocumentsIteratorTests extends ESTestCase {
         givenClearScrollRequest();
     }
 
-    public void testQueryReturnsNoResults() throws UnknownJobException {
+    public void testQueryReturnsNoResults() {
         new ScrollResponsesMocker().finishMock();
 
         assertTrue(testIterator.hasNext());
@@ -68,7 +67,7 @@ public class ElasticsearchBatchedDocumentsIteratorTests extends ESTestCase {
         assertTrue(wasScrollCleared);
     }
 
-    public void testCallingNextWhenHasNextIsFalseThrows() throws UnknownJobException {
+    public void testCallingNextWhenHasNextIsFalseThrows() {
         new ScrollResponsesMocker().addBatch("a", "b", "c").finishMock();
         testIterator.next();
         assertFalse(testIterator.hasNext());
@@ -76,7 +75,7 @@ public class ElasticsearchBatchedDocumentsIteratorTests extends ESTestCase {
         ESTestCase.expectThrows(NoSuchElementException.class, () -> testIterator.next());
     }
 
-    public void testQueryReturnsSingleBatch() throws UnknownJobException {
+    public void testQueryReturnsSingleBatch() {
         new ScrollResponsesMocker().addBatch("a", "b", "c").finishMock();
 
         assertTrue(testIterator.hasNext());
@@ -87,7 +86,7 @@ public class ElasticsearchBatchedDocumentsIteratorTests extends ESTestCase {
         assertTrue(wasScrollCleared);
     }
 
-    public void testQueryReturnsThreeBatches() throws UnknownJobException {
+    public void testQueryReturnsThreeBatches() {
         new ScrollResponsesMocker()
         .addBatch("a", "b", "c")
         .addBatch("d", "e")

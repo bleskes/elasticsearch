@@ -38,10 +38,6 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
@@ -72,9 +68,7 @@ public class DataWithTransformsToProcessWriterTests extends ESTestCase {
         }).when(autodetectProcess).writeRecord(any(String[].class));
     }
 
-    public void testCsvWriteWithConcat() throws MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
-    MalformedJsonException {
+    public void testCsvWriteWithConcat() throws IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,host,metric,value\n");
         input.append("1,hostA,foo,3.0\n");
@@ -98,9 +92,7 @@ public class DataWithTransformsToProcessWriterTests extends ESTestCase {
         verify(statusReporter).finishReporting();
     }
 
-    public void testJsonWriteWithConcat() throws MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException,
-    MalformedJsonException {
+    public void testJsonWriteWithConcat() throws IOException {
         StringBuilder input = new StringBuilder();
         input.append("{\"time\" : 1, \"host\" : \"hostA\", \"metric\" : \"foo\", \"value\" : 3.0}\n");
         input.append("{\"time\" : 2, \"host\" : \"hostB\", \"metric\" : \"bar\", \"value\" : 2.0}\n");

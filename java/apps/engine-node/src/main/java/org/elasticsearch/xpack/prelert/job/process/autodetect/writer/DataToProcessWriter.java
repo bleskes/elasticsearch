@@ -18,10 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 
 /**
  * A writer for transforming and piping data from an
@@ -36,14 +32,8 @@ public interface DataToProcessWriter {
      * a <code>MissingFieldException</code> is thrown
      *
      * @return Counts of the records processed, bytes read etc
-     * @throws MissingFieldException                  If any fields are missing from the inputIndex
-     * @throws HighProportionOfBadTimestampsException If a large proportion
-     *                                                of the records read have missing fields
-     * @throws MalformedJsonException                 If JSON data is malformed and we cannot recover.
      */
-    DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    MalformedJsonException;
+    DataCounts write(InputStream inputStream) throws IOException;
 
     /**
      * Flush the outputstream

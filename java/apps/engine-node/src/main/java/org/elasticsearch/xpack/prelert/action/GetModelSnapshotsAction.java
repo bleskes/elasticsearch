@@ -40,7 +40,6 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -333,18 +332,13 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
                     request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
                     request.getSort(), request.getDescOrder(), request.getDescriptionString()));
 
-            QueryPage<ModelSnapshot> page;
-            try {
-                page = doGetPage(jobProvider, request);
-            } catch (JobException e) {
-                throw ExceptionsHelper.missingException(request.getJobId());
-            }
+            QueryPage<ModelSnapshot> page = doGetPage(jobProvider, request);
 
             logger.debug(String.format(Locale.ROOT, "Return %d model snapshots for job %s", page.hitCount(), request.getJobId()));
             listener.onResponse(new Response(page));
         }
 
-        public static QueryPage<ModelSnapshot> doGetPage(JobProvider jobProvider, Request request) throws JobException {
+        public static QueryPage<ModelSnapshot> doGetPage(JobProvider jobProvider, Request request) {
             QueryPage<ModelSnapshot> page = jobProvider.modelSnapshots(request.getJobId(), request.pageParams.getSkip(),
                     request.pageParams.getTake(), request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(), null,
                     request.getDescriptionString());

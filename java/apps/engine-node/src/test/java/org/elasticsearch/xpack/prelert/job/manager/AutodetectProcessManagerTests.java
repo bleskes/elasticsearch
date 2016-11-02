@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
@@ -24,13 +25,11 @@ import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicator;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.ClosedJobException;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.mockito.Mockito;
 
@@ -64,7 +63,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         assertEquals(1, manager.numberOfRunningJobs());
     }
 
-    public void testProcessDataThrowsElasticsearchStatusException_onIoException() throws JobException, IOException {
+    public void testProcessDataThrowsElasticsearchStatusException_onIoException() throws Exception {
         AutodetectCommunicator communicator = Mockito.mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
 
@@ -92,7 +91,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         assertEquals(0, manager.numberOfRunningJobs());
     }
 
-    public void testBucketResetMessageIsSent() throws IOException, JobException {
+    public void testBucketResetMessageIsSent() throws IOException {
 
         AutodetectCommunicator communicator = Mockito.mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
@@ -123,7 +122,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         verify(communicator).flushJob(params);
     }
 
-    public void testFlushThrows() throws JobException, IOException {
+    public void testFlushThrows() throws IOException {
 
         AutodetectCommunicator communicator = Mockito.mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
@@ -143,7 +142,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         verify(communicator).writeUpdateConfigMessage("go faster");
     }
 
-    public void testJobHasActiveAutodetectProcess()throws JobException, IOException {
+    public void testJobHasActiveAutodetectProcess() throws IOException {
 
         AutodetectCommunicator communicator = Mockito.mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
@@ -160,10 +159,11 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AutodetectCommunicator communicator = Mockito.mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
 
-        ESTestCase.expectThrows(ClosedJobException.class, () -> manager.addAlertObserver("foo", Mockito.mock(AlertObserver.class)));
+        ESTestCase.expectThrows(ElasticsearchStatusException.class,
+                () -> manager.addAlertObserver("foo", Mockito.mock(AlertObserver.class)));
     }
 
-    public void testAddRemoveAlertObserver() throws JobException {
+    public void testAddRemoveAlertObserver() {
 
         AutodetectCommunicator communicator = Mockito.mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");

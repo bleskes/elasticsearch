@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
 
 class SimpleJsonRecordReader extends AbstractJsonRecordReader {
     private Deque<String> nestedFields;
@@ -63,7 +62,7 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
      * because the end of the stream was reached
      */
     @Override
-    public long read(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException {
+    public long read(String[] record, boolean[] gotFields) throws IOException {
         initArrays(record, gotFields);
         fieldCount = 0;
         clearNestedLevel();
@@ -102,7 +101,7 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
         nestedPrefix = "";
     }
 
-    private void parseFieldValuePair(String[] record, boolean[] gotFields) throws IOException, MalformedJsonException {
+    private void parseFieldValuePair(String[] record, boolean[] gotFields) throws IOException {
         String fieldName = parser.getCurrentName();
         JsonToken token = tryNextTokenOrReadToEndOnError();
 
@@ -131,7 +130,7 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
         }
     }
 
-    private String parseSingleFieldValue(JsonToken token) throws IOException, MalformedJsonException {
+    private String parseSingleFieldValue(JsonToken token) throws IOException {
         if (token == JsonToken.START_ARRAY) {
             // Convert any scalar values in the array to a comma delimited
             // string.  (Arrays of more complex objects are ignored.)
@@ -155,7 +154,7 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
         return tokenToString(token);
     }
 
-    private void skipSingleFieldValue(JsonToken token) throws IOException, MalformedJsonException {
+    private void skipSingleFieldValue(JsonToken token) throws IOException {
         // Scalar values don't need any extra skip code
         if (token == JsonToken.START_ARRAY) {
             // Consume the whole array but do nothing with it

@@ -29,9 +29,6 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 
@@ -55,8 +52,7 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter {
     }
 
     @Override
-    public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public DataCounts write(InputStream inputStream) throws IOException {
         statusReporter.startNewIncrementalCount();
 
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
@@ -79,7 +75,7 @@ public class SingleLineDataToProcessWriter extends AbstractDataToProcessWriter {
 
     @Override
     protected boolean checkForMissingFields(Collection<String> inputFields,
-            Map<String, Integer> inputFieldIndexes, String[] header) throws MissingFieldException {
+            Map<String, Integer> inputFieldIndexes, String[] header) {
         return true;
     }
 }

@@ -27,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersister implements UsagePersister {
@@ -50,7 +49,7 @@ public class ElasticsearchUsagePersister implements UsagePersister {
     }
 
     @Override
-    public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead) throws JobException {
+    public void persistUsage(String jobId, long bytesRead, long fieldsRead, long recordsRead) {
         ZonedDateTime nowTruncatedToHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
         String formattedNowTruncatedToHour = nowTruncatedToHour.format(dateTimeFormatter);
         docId = USAGE_DOC_ID_PREFIX + formattedNowTruncatedToHour;
@@ -74,8 +73,7 @@ public class ElasticsearchUsagePersister implements UsagePersister {
      * @param additionalFields  Add this value to the running total
      * @param additionalRecords Add this value to the running total
      */
-    private void updateDocument(String index, String id, long additionalBytes, long additionalFields, long additionalRecords)
-            throws JobException {
+    private void updateDocument(String index, String id, long additionalBytes, long additionalFields, long additionalRecords) {
         upsertMap.put(Usage.INPUT_BYTES, new Long(additionalBytes));
         upsertMap.put(Usage.INPUT_FIELD_COUNT, new Long(additionalFields));
         upsertMap.put(Usage.INPUT_RECORD_COUNT, new Long(additionalRecords));
@@ -93,10 +91,6 @@ public class ElasticsearchUsagePersister implements UsagePersister {
         } catch (VersionConflictEngineException e) {
             logger.error("Failed to update the Usage document " + id +
                     " in index " + index, e);
-        } catch (JobException e) {
-            // log and rethrow
-            logger.error(e);
-            throw e;
         }
     }
 }

@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
@@ -26,6 +27,7 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 
 /**
@@ -108,8 +110,7 @@ public class StatusReporter {
      * @param latestRecordTimeMs The time of the latest record written
      *                           in milliseconds from the epoch.
      */
-    public void reportRecordWritten(long inputFieldCount, long latestRecordTimeMs)
-            throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void reportRecordWritten(long inputFieldCount, long latestRecordTimeMs) {
         usageReporter.addFieldsRecordsRead(inputFieldCount);
 
         // Only a single thread updates this value so there isn't a
@@ -134,7 +135,7 @@ public class StatusReporter {
             dataCountsPersister.persistDataCounts(jobId, runningTotalStats());
             try {
                 checkStatus(totalRecords);
-            } catch (HighProportionOfBadTimestampsException | OutOfOrderRecordsException e) {
+            } catch (ElasticsearchException e) {
                 // report usage and re-throw
                 usageReporter.reportUsage();
                 throw e;
@@ -292,8 +293,7 @@ public class StatusReporter {
      * Report the the status now regardless of whether or
      * not we are at a reporting boundary.
      */
-    public void finishReporting()
-            throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public void finishReporting() {
         usageReporter.reportUsage();
 
         long totalRecords = getInputRecordCount();
@@ -375,18 +375,15 @@ public class StatusReporter {
      * {@linkplain #ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_SETTING} and
      * {@linkplain #ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_SETTING}
      */
-    protected void checkStatus(long totalRecords)
-            throws HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    protected void checkStatus(long totalRecords) {
         long percentBadDate = (getDateParseErrorsCount() * 100) / totalRecords;
         if (percentBadDate > getAcceptablePercentDateParseErrors()) {
-            throw new HighProportionOfBadTimestampsException(
-                    getDateParseErrorsCount(), totalRecords);
+            throw ExceptionsHelper.highProportionOfBadTimestamps(getDateParseErrorsCount(), totalRecords);
         }
 
         long percentOutOfOrder = (getOutOfOrderRecordCount() * 100) / totalRecords;
         if (percentOutOfOrder > getAcceptablePercentOutOfOrderErrors()) {
-            throw new OutOfOrderRecordsException(
-                    getOutOfOrderRecordCount(), totalRecords);
+            throw ExceptionsHelper.outOfOrderRecords(getOutOfOrderRecordCount(), totalRecords);
         }
     }
 

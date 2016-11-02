@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -64,9 +63,8 @@ public interface JobResultsProvider
      * @param includeInterim Include interim results
      * @param bucket The bucket to be expanded
      * @return The number of records added to the bucket
-     * @throws UnknownJobException If the job id is no recognised
      */
-    int expandBucket(String jobId, boolean includeInterim, Bucket bucket) throws UnknownJobException;
+    int expandBucket(String jobId, boolean includeInterim, Bucket bucket);
 
     /**
      * Get a page of {@linkplain CategoryDefinition}s for the given <code>jobId</code>.

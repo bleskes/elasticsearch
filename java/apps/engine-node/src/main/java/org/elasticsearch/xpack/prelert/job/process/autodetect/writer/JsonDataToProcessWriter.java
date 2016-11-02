@@ -32,10 +32,6 @@ import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 
@@ -66,20 +62,14 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
     }
 
     /**
-     * Read the JSON inputIndex, transform to length encoded values and pipe
-     * to the OutputStream.
-     * No transformation is applied to the data the timestamp is expected
-     * in seconds from the epoch.
-     * If any of the fields in <code>analysisFields</code> or the
-     * <code>DataDescription</code>s timeField is missing from the JOSN inputIndex
-     * a <code>MissingFieldException</code> is thrown
-     * @throws MissingFieldException                  If any fields are missing from the JSON records
-     * @throws HighProportionOfBadTimestampsException If a large proportion
-     *                                                of the records read have missing fields
+     * Read the JSON inputIndex, transform to length encoded values and pipe to
+     * the OutputStream. No transformation is applied to the data the timestamp
+     * is expected in seconds from the epoch. If any of the fields in
+     * <code>analysisFields</code> or the <code>DataDescription</code>s
+     * timeField is missing from the JOSN inputIndex an exception is thrown
      */
     @Override
-    public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, MalformedJsonException {
+    public DataCounts write(InputStream inputStream) throws IOException {
         statusReporter.startNewIncrementalCount();
 
         try (JsonParser parser = new JsonFactory().createParser(inputStream)) {
@@ -92,9 +82,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
         return statusReporter.incrementalStats();
     }
 
-    private void writeJson(JsonParser parser) throws IOException, MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException,
-    MalformedJsonException {
+    private void writeJson(JsonParser parser) throws IOException {
         Collection<String> analysisFields = inputFields();
 
         buildTransformsAndWriteHeader(analysisFields.toArray(new String[0]));
@@ -158,8 +146,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
     @Override
     protected boolean checkForMissingFields(Collection<String> inputFields,
             Map<String, Integer> inputFieldIndexes,
-            String[] header)
-                    throws MissingFieldException {
+            String[] header) {
         return true;
     }
 

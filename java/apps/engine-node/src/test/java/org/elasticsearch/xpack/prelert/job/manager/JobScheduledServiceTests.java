@@ -26,7 +26,6 @@ import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractorFactory;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
@@ -76,7 +75,7 @@ public class JobScheduledServiceTests extends ESTestCase {
                 new QueryPage<>(Collections.emptyList(), 0));
     }
 
-    public void testStart_GivenNewlyCreatedJob() throws JobException, IOException {
+    public void testStart_GivenNewlyCreatedJob() throws IOException {
         JobDetails job = createScheduledJob();
         job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();
@@ -102,7 +101,7 @@ public class JobScheduledServiceTests extends ESTestCase {
         jobScheduledService.stop("foo");
     }
 
-    public void testStop_GivenStartedScheduledJob() throws JobException, IOException {
+    public void testStop_GivenStartedScheduledJob() throws IOException {
         JobDetails job = createScheduledJob();
         job.setSchedulerState(new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();

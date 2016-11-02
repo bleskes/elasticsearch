@@ -45,9 +45,6 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
@@ -94,7 +91,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndDataIsValid()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
         input.append("1,foo,1.0\n");
@@ -116,7 +113,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenTransformAndEmptyField()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         TransformConfig transform = new TransformConfig("uppercase");
         transform.setInputs(Arrays.asList("value"));
         transform.setOutputs(Arrays.asList("transformed"));
@@ -148,7 +145,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndTimestampsAreOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
         input.append("3,foo,3.0\n");
@@ -172,7 +169,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndAllRecordsAreOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");
         input.append("1,foo,1.0\n");
@@ -197,7 +194,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         analysisConfig.setLatency(2L);
 
         StringBuilder input = new StringBuilder();
@@ -229,7 +226,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_NullByte()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         analysisConfig.setLatency(0L);
 
         StringBuilder input = new StringBuilder();
@@ -265,7 +262,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenDateTimeFieldIsOutputOfTransform()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         TransformConfig transform = new TransformConfig("concat");
         transform.setInputs(Arrays.asList("date", "time-of-day"));
         transform.setOutputs(Arrays.asList("datetime"));
@@ -300,7 +297,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenChainedTransforms_SortsByDependencies()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
         TransformConfig tc1 = new TransformConfig(TransformType.Names.UPPERCASE_NAME);
         tc1.setInputs(Arrays.asList("dns"));
         tc1.setOutputs(Arrays.asList("dns_upper"));
@@ -338,7 +335,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenMisplacedQuoteMakesRecordExtendOverTooManyLines()
-            throws MissingFieldException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+            throws IOException {
 
         StringBuilder input = new StringBuilder();
         input.append("time,metric,value\n");

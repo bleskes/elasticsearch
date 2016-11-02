@@ -64,8 +64,6 @@ import org.elasticsearch.xpack.prelert.job.ModelState;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
@@ -305,7 +303,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 LOGGER.info("No job document with id {}", elasticJobId.getId());
                 String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-                throw ExceptionsHelper.missingException(message);
+                throw ExceptionsHelper.missingJobException(message);
             }
         }
         catch (IndexNotFoundException e)
@@ -313,7 +311,7 @@ public class ElasticsearchJobProvider implements JobProvider
             // the job does not exist
             LOGGER.info("Missing Index: no job with id {}", elasticJobId.getId());
             String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-            throw ExceptionsHelper.missingException(message);
+            throw ExceptionsHelper.missingJobException(message);
         }
     }
 
@@ -428,7 +426,7 @@ public class ElasticsearchJobProvider implements JobProvider
     public void deleteJob(String jobId, ActionListener<Boolean> listener) {
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
         if (indexExists(elasticJobId) == false) {
-            listener.onFailure(ExceptionsHelper.missingException(jobId));
+            listener.onFailure(ExceptionsHelper.missingJobException(jobId));
             return;
         }
         LOGGER.trace("ES API CALL: delete index " + elasticJobId.getIndex());
@@ -545,7 +543,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .setFrom(skip).setSize(take)
                     .get();
         } catch (IndexNotFoundException e) {
-            throw ExceptionsHelper.missingException(jobId.getId());
+            throw ExceptionsHelper.missingJobException(jobId.getId());
         }
 
         List<Bucket> results = new ArrayList<>();
@@ -588,7 +586,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     .get();
             hits = searchResponse.getHits();
         } catch (IndexNotFoundException e) {
-            throw ExceptionsHelper.missingException(jobId);
+            throw ExceptionsHelper.missingJobException(jobId);
         }
 
         Optional<Bucket> doc = Optional.<Bucket>empty();
@@ -668,7 +666,7 @@ public class ElasticsearchJobProvider implements JobProvider
         try {
             searchResponse = searchBuilder.get();
         } catch (IndexNotFoundException e) {
-            throw ExceptionsHelper.missingException(jobId.getId());
+            throw ExceptionsHelper.missingJobException(jobId.getId());
         }
 
         List<ScoreTimestamp> results = new ArrayList<>();
@@ -790,7 +788,7 @@ public class ElasticsearchJobProvider implements JobProvider
         try {
             searchResponse = searchBuilder.get();
         } catch (IndexNotFoundException e) {
-            throw ExceptionsHelper.missingException(jobId);
+            throw ExceptionsHelper.missingJobException(jobId);
         }
 
         List<CategoryDefinition> results = Arrays.stream(searchResponse.getHits().getHits())
@@ -811,7 +809,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " from index " + elasticJobId.getIndex());
             response = client.prepareGet(elasticJobId.getIndex(), CategoryDefinition.TYPE.getPreferredName(), categoryId).get();
         } catch (IndexNotFoundException e) {
-            throw ExceptionsHelper.missingException(jobId);
+            throw ExceptionsHelper.missingJobException(jobId);
         }
 
         if (response.isExists()) {
@@ -880,7 +878,7 @@ public class ElasticsearchJobProvider implements JobProvider
                     " with filter after sort skip " + skip + " take " + take);
             searchResponse = searchBuilder.get();
         } catch (IndexNotFoundException e) {
-            throw ExceptionsHelper.missingException(jobId.getId());
+            throw ExceptionsHelper.missingJobException(jobId.getId());
         }
 
         List<AnomalyRecord> results = new ArrayList<>();
@@ -1142,7 +1140,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public void updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
-            boolean restoreModelSizeStats) throws UnknownJobException
+            boolean restoreModelSizeStats)
     {
         // For Elasticsearch the update can be done in exactly the same way as
         // the original persist
@@ -1168,13 +1166,12 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
-            throws UnknownJobException, NoSuchModelSnapshotException
     {
         List<ModelSnapshot> deleteCandidates = modelSnapshots(jobId, 0, 1,
                 null, null, null, true, snapshotId, null).hits();
         if (deleteCandidates == null || deleteCandidates.isEmpty())
         {
-            throw new NoSuchModelSnapshotException(jobId);
+            throw ExceptionsHelper.missingModelSnapshotException(jobId);
         }
 
         ModelSnapshot modelSnapshot = deleteCandidates.get(0);

@@ -18,8 +18,6 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.NoSuchModelSnapshotException;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 
@@ -72,21 +70,17 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
      * @param modelSnapshot         the updated model snapshot object to be stored
      * @param restoreModelSizeStats should the model size stats in this
      *                              snapshot be made the current ones for this job?
-     * @throws UnknownJobException If there is no job with id <code>jobId</code>
      */
     void updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
-            boolean restoreModelSizeStats) throws UnknownJobException;
+            boolean restoreModelSizeStats);
 
     /**
      * Delete a persisted model snapshot.
      *
      * @param jobId      the job ID
      * @param snapshotId the ID of the snapshot to be deleted
-     * @throws UnknownJobException          If there is no job with ID <code>jobId</code>
-     * @throws NoSuchModelSnapshotException If there is no snapshot with ID <code>snapshotId</code> for the job
      */
-    ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId)
-            throws UnknownJobException, NoSuchModelSnapshotException;
+    ModelSnapshot deleteModelSnapshot(String jobId, String snapshotId);
 
 
     /**

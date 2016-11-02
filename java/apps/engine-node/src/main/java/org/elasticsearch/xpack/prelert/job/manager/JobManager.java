@@ -39,8 +39,6 @@ import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobIdAlreadyExistsException;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
@@ -180,11 +178,11 @@ public class JobManager {
     public JobDetails getJobOrThrowIfUnknown(ClusterState clusterState, String jobId) {
         PrelertMetadata prelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
         if (prelertMetadata == null) {
-            throw ExceptionsHelper.missingException(jobId);
+            throw ExceptionsHelper.missingJobException(jobId);
         }
         JobDetails job = prelertMetadata.getJobs().get(jobId);
         if (job == null) {
-            throw ExceptionsHelper.missingException(jobId);
+            throw ExceptionsHelper.missingJobException(jobId);
         }
         return job;
     }
@@ -192,8 +190,7 @@ public class JobManager {
     /**
      * Stores a job in the cluster state
      */
-    public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener)
-            throws JobIdAlreadyExistsException {
+    public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) {
         JobConfiguration jobConfiguration = request.getJobConfiguration();
         JobConfigurationVerifier.verify(jobConfiguration);
         // TODO: Remove once all validation happens in JobConfiguration#build()
@@ -202,30 +199,26 @@ public class JobManager {
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean acked) {
-                try {
-                    jobProvider.createJob(jobDetails, new ActionListener<Boolean>() {
-                        @Override
-                        public void onResponse(Boolean aBoolean) {
-                            // NORELEASE: make auditing async too (we can't do
-                            // blocking stuff here):
-                            // audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
+                jobProvider.createJob(jobDetails, new ActionListener<Boolean>() {
+                    @Override
+                    public void onResponse(Boolean aBoolean) {
+                        // NORELEASE: make auditing async too (we can't do
+                        // blocking stuff here):
+                        // audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
 
-                            // Also I wonder if we need to audit log infra
-                            // structure in prelert as when we merge into xpack
-                            // we can use its audit trailing. See:
-                            // https://github.com/elastic/prelert-legacy/issues/48
-                            actionListener.onResponse(new PutJobAction.Response(jobDetails));
-                        }
+                        // Also I wonder if we need to audit log infra
+                        // structure in prelert as when we merge into xpack
+                        // we can use its audit trailing. See:
+                        // https://github.com/elastic/prelert-legacy/issues/48
+                        actionListener.onResponse(new PutJobAction.Response(jobDetails));
+                    }
 
-                        @Override
-                        public void onFailure(Exception e) {
-                            actionListener.onFailure(e);
+                    @Override
+                    public void onFailure(Exception e) {
+                        actionListener.onFailure(e);
 
-                        }
-                    });
-                } catch (JobIdAlreadyExistsException e) {
-                    actionListener.onFailure(e);
-                }
+                    }
+                });
             }
 
             @Override
@@ -279,10 +272,8 @@ public class JobManager {
      *            the delete job request
      * @param actionListener
      *            the action listener
-     * @throws JobException
-     *             If the job could not be deleted
      */
-    public void deleteJob(DeleteJobAction.Request request, ActionListener<DeleteJobAction.Response> actionListener) throws JobException {
+    public void deleteJob(DeleteJobAction.Request request, ActionListener<DeleteJobAction.Response> actionListener) {
         String jobId = request.getJobId();
 
         LOGGER.debug("Deleting job '" + jobId + "'");
@@ -303,25 +294,21 @@ public class JobManager {
                         @Override
                         public void onResponse(Boolean aBoolean) {
 
-                            try {
-                                new JobLogs(settings).deleteLogs(env, jobId);
-                                // NORELEASE: This is not the place the audit
-                                // log
-                                // (indexes a document), because this method is
-                                // executed on
-                                // the cluster state update task thread and any
-                                // action performed on that thread should be
-                                // quick.
-                                // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+                            new JobLogs(settings).deleteLogs(env, jobId);
+                            // NORELEASE: This is not the place the audit
+                            // log
+                            // (indexes a document), because this method is
+                            // executed on
+                            // the cluster state update task thread and any
+                            // action performed on that thread should be
+                            // quick.
+                            // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
 
-                                // Also I wonder if we need to audit log infra
-                                // structure in prelert as when we merge into
-                                // xpack
-                                // we can use its audit trailing. See:
-                                // https://github.com/elastic/prelert-legacy/issues/48
-                            } catch (JobException e) {
-                                actionListener.onFailure(e);
-                            }
+                            // Also I wonder if we need to audit log infra
+                            // structure in prelert as when we merge into
+                            // xpack
+                            // we can use its audit trailing. See:
+                            // https://github.com/elastic/prelert-legacy/issues/48
                             actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
                         }
 

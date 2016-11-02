@@ -26,7 +26,6 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
-import org.elasticsearch.xpack.prelert.job.exceptions.CannotMapJobFromJson;
 import org.junit.Before;
 import org.mockito.Mockito;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -61,7 +60,7 @@ public class ElasticsearchJobDetailsMapperTests extends ESTestCase {
 
         ElasticsearchJobDetailsMapper mapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
 
-        ESTestCase.expectThrows(CannotMapJobFromJson.class, () -> mapper.map(source));
+        ESTestCase.expectThrows(IllegalArgumentException.class, () -> mapper.map(source));
     }
 
     public void testMap_GivenModelSizeStatsExists() {

@@ -40,10 +40,7 @@ import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.AbstractDataToProcessWriter.InputOutputMap;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
@@ -73,7 +70,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         jobLogger = Mockito.mock(Logger.class);
     }
 
-    public void testInputFields_MulitpleInputsSingleOutput() throws MissingFieldException, IOException {
+    public void testInputFields_MulitpleInputsSingleOutput() throws IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");
@@ -133,7 +130,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         assertEquals(inOutMaps.get(0).outputIndex, 2);
     }
 
-    public void testInputFields_SingleInputMulitpleOutputs() throws MissingFieldException, IOException {
+    public void testInputFields_SingleInputMulitpleOutputs() throws IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");
@@ -205,7 +202,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
      * Only one output of the transform is used
      */
 
-    public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed() throws MissingFieldException, IOException {
+    public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed() throws IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");
@@ -273,7 +270,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
      * Only one output of the transform is used
      */
 
-    public void testBuildTransforms_ChainedTransforms() throws MissingFieldException, IOException {
+    public void testBuildTransforms_ChainedTransforms() throws IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("datetime");
@@ -328,7 +325,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
      */
 
     public void testApplyTransforms_transformReturnsExclude()
-            throws MissingFieldException, IOException, HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+            throws IOException {
         DataDescription dd = new DataDescription();
         dd.setTimeField("datetime");
 
@@ -373,7 +370,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
         verify(statusReporter, never()).reportExcludedRecord(anyLong());
     }
 
-    public void testBuildTransforms_DateTransformsAreSorted() throws MissingFieldException, IOException {
+    public void testBuildTransforms_DateTransformsAreSorted() throws IOException {
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("datetime");

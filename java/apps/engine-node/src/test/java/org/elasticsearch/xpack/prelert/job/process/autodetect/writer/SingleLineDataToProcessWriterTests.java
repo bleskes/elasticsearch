@@ -40,9 +40,6 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
@@ -85,8 +82,7 @@ public class SingleLineDataToProcessWriterTests extends ESTestCase {
         transformConfigs = new ArrayList<>();
     }
 
-    public void testWrite_GivenDataIsValid() throws MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenDataIsValid() throws Exception {
         TransformConfig transformConfig = new TransformConfig("extract");
         transformConfig.setInputs(Arrays.asList("raw"));
         transformConfig.setOutputs(Arrays.asList("time", "message"));
@@ -121,8 +117,7 @@ public class SingleLineDataToProcessWriterTests extends ESTestCase {
         verifyNoMoreInteractions(statusReporter);
     }
 
-    public void testWrite_GivenDataContainsInvalidRecords() throws MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenDataContainsInvalidRecords() throws Exception {
         TransformConfig transformConfig = new TransformConfig("extract");
         transformConfig.setInputs(Arrays.asList("raw"));
         transformConfig.setOutputs(Arrays.asList("time", "message"));
@@ -159,8 +154,7 @@ public class SingleLineDataToProcessWriterTests extends ESTestCase {
         verifyNoMoreInteractions(statusReporter);
     }
 
-    public void testWrite_GivenNoTransforms() throws MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException, IOException {
+    public void testWrite_GivenNoTransforms() throws Exception {
         StringBuilder input = new StringBuilder();
         input.append("2015-04-29 10:00:00Z This is message 1\n");
         InputStream inputStream = createInputStream(input.toString());

@@ -23,7 +23,6 @@ import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
 import org.elasticsearch.xpack.prelert.job.alert.AlertType;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -445,7 +444,7 @@ public class AutodetectResultsParserTests extends ESTestCase {
         assertNotNull(quantiles.get("hierarchical"));
     }
 
-    public void testPopulationParser() throws IOException, UnknownJobException {
+    public void testPopulationParser() throws IOException {
         Logger logger = Loggers.getLogger(AutodetectResultsParserTests.class);
 
         InputStream inputStream = new ByteArrayInputStream(POPULATION_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));

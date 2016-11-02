@@ -26,11 +26,6 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunic
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.ClosedJobException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MalformedJsonException;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -83,14 +78,6 @@ public class AutodetectProcessManager implements DataProcessor {
             }
 
             throw ExceptionsHelper.serverError(msg, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
-        } catch (OutOfOrderRecordsException e) {
-            throw ExceptionsHelper.invalidRequestException(e.getMessage(), e.getErrorCode());
-        } catch (HighProportionOfBadTimestampsException e) {
-            throw ExceptionsHelper.invalidRequestException(e.getMessage(), e.getErrorCode());
-        } catch (MissingFieldException e) {
-            throw ExceptionsHelper.invalidRequestException(e.getMessage(), e.getErrorCode());
-        } catch (MalformedJsonException e) {
-            throw ExceptionsHelper.invalidRequestException(e.getMessage(), e.getErrorCode());
         }
     }
 
@@ -182,7 +169,7 @@ public class AutodetectProcessManager implements DataProcessor {
         LOGGER.error("Cannot set finished job status and time- Not Implemented");
     }
 
-    public void addAlertObserver(String jobId, AlertObserver alertObserver) throws ClosedJobException
+    public void addAlertObserver(String jobId, AlertObserver alertObserver)
     {
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
         if (communicator != null)
@@ -191,9 +178,7 @@ public class AutodetectProcessManager implements DataProcessor {
         }
         else
         {
-            String message = String.format(Locale.ROOT, "Cannot alert on job '%s' because the job is not running", jobId);
-            LOGGER.info(message);
-            throw new ClosedJobException(message);
+            throw ExceptionsHelper.jobClosed(jobId);
         }
     }
 

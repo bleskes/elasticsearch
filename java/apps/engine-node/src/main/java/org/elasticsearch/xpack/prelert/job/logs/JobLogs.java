@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.logs;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
@@ -22,7 +23,6 @@ import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -54,10 +54,8 @@ public class JobLogs {
      * @param jobId
      *            the jobId
      * @return true if success.
-     * @throws JobException
-     *             If the file path is invalid i.e. jobId = ../../etc
      */
-    public boolean deleteLogs(Environment env, String jobId) throws JobException {
+    public boolean deleteLogs(Environment env, String jobId) {
         return deleteLogs(env.logsFile().resolve(PrelertPlugin.NAME), jobId);
     }
 
@@ -74,10 +72,8 @@ public class JobLogs {
      *            The base directory of the log files
      * @param jobId
      *            the jobId
-     * @throws JobException
-     *             If the file path is invalid i.e. jobId = ../../etc
      */
-    public boolean deleteLogs(Path logDir, String jobId) throws JobException {
+    public boolean deleteLogs(Path logDir, String jobId) {
         if (m_DontDelete) {
             return true;
         }
@@ -122,7 +118,7 @@ public class JobLogs {
      * Throws an exception if the path is outside the logs directory e.g.
      * logs/../lic/license resolves to lic/license and would throw
      */
-    public Path sanitizePath(Path filePath, Path rootDir) throws JobException
+    public Path sanitizePath(Path filePath, Path rootDir)
     {
         Path normalizedPath = filePath.normalize();
         Path rootPath = rootDir.normalize();
@@ -130,7 +126,9 @@ public class JobLogs {
         {
             String msg = Messages.getMessage(Messages.LOGFILE_INVALID_PATH, filePath);
             LOGGER.warn(msg);
-            throw new JobException(msg, ErrorCodes.INVALID_LOG_FILE_PATH);
+            ElasticsearchException exception = new ElasticsearchException(msg);
+            exception.addHeader("errorCode", ErrorCodes.INVALID_LOG_FILE_PATH.getValueString());
+            throw exception;
         }
 
         return normalizedPath;

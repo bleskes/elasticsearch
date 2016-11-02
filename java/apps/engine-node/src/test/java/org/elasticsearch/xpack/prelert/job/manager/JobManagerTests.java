@@ -29,7 +29,6 @@ import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
@@ -80,7 +79,7 @@ public class JobManagerTests extends ESTestCase {
         when(jobProvider.audit(anyString())).thenReturn(auditor);
     }
 
-    public void testGetJob() throws UnknownJobException {
+    public void testGetJob() {
         JobManager jobManager = createJobManager();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(new JobConfiguration("foo").build(), false);
@@ -101,7 +100,7 @@ public class JobManagerTests extends ESTestCase {
         assertTrue(diff.contains("tom"));
     }
 
-    public void testDeleteJob_GivenJobActionIsNotAvailable() throws UnknownJobException, InterruptedException, ExecutionException {
+    public void testDeleteJob_GivenJobActionIsNotAvailable() throws InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
         JobDetails jobDetails = new JobConfiguration().build();
@@ -158,7 +157,7 @@ public class JobManagerTests extends ESTestCase {
         ESTestCase.expectThrows(ResourceNotFoundException.class, () -> jobManager.getJobOrThrowIfUnknown(cs, "foo"));
     }
 
-    public void testGetJobOrThrowIfUnknown_GivenKnownJob() throws UnknownJobException {
+    public void testGetJobOrThrowIfUnknown_GivenKnownJob() {
         JobManager jobManager = createJobManager();
         JobDetails job = new JobConfiguration().build();
         job.setId("foo");

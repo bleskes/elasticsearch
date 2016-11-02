@@ -15,10 +15,10 @@
 package org.elasticsearch.xpack.prelert.job.usage;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
 import java.util.Locale;
 
@@ -118,7 +118,7 @@ public class UsageReporter {
 
         try {
             persister.persistUsage(jobId, bytesReadSinceLastReport, fieldsReadSinceLastReport, recordsReadSinceLastReport);
-        } catch (JobException e) {
+        } catch (ElasticsearchException e) {
             logger.error("Error persisting usage for job " + jobId, e);
         }
 

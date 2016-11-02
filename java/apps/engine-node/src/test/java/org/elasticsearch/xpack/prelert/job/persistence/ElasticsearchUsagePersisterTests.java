@@ -32,7 +32,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -41,7 +40,7 @@ import org.elasticsearch.xpack.prelert.job.usage.Usage;
 
 public class ElasticsearchUsagePersisterTests extends ESTestCase {
     @SuppressWarnings("rawtypes")
-    public void testPersistUsageCounts() throws ParseException, JobException {
+    public void testPersistUsageCounts() throws ParseException {
         Client client = mock(Client.class);
         Logger logger = mock(Logger.class);
         final UpdateRequestBuilder updateRequestBuilder = createSelfReturningUpdateRequester();

@@ -15,15 +15,15 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.exceptions.JobException;
-import org.elasticsearch.xpack.prelert.job.exceptions.UnknownJobException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -97,13 +97,9 @@ public final class ElasticsearchScripts
      * @param script
      *            the script the performs the update
      * @return {@code} true if successful, {@code} false otherwise
-     * @throws UnknownJobException
-     *             if no job does not exist
-     * @throws JobException
-     *             if the update fails (e.g. the script does not exist)
      */
     public static boolean updateViaScript(Client client, String index, String type, String docId,
-            Script script) throws JobException, UnknownJobException {
+            Script script) {
         try
         {
             client.prepareUpdate(index, type, docId)
@@ -112,7 +108,7 @@ public final class ElasticsearchScripts
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(index);
+            throw ExceptionsHelper.missingJobException(index);
         }
         catch (IllegalArgumentException e)
         {
@@ -138,13 +134,9 @@ public final class ElasticsearchScripts
      *            the doc source of the update request to be used when the
      *            document does not exists
      * @return {@code} true if successful, {@code} false otherwise
-     * @throws UnknownJobException
-     *             if no job does not exist
-     * @throws JobException
-     *             if the update fails (e.g. the script does not exist)
      */
     public static boolean upsertViaScript(Client client, String index, String type, String docId,
-            Script script, Map<String, Object> upsertMap) throws JobException, UnknownJobException {
+            Script script, Map<String, Object> upsertMap) {
         try
         {
             client.prepareUpdate(index, type, docId)
@@ -154,7 +146,7 @@ public final class ElasticsearchScripts
         }
         catch (IndexNotFoundException e)
         {
-            throw new UnknownJobException(index);
+            throw ExceptionsHelper.missingJobException(index);
         }
         catch (IllegalArgumentException e)
         {
@@ -164,12 +156,13 @@ public final class ElasticsearchScripts
     }
 
     private static void handleIllegalArgumentException(IllegalArgumentException e, Script script)
-            throws JobException
     {
         String msg = Messages.getMessage(Messages.DATASTORE_ERROR_EXECUTING_SCRIPT, script);
         LOGGER.warn(msg);
         Throwable th = (e.getCause() == null) ? e : e.getCause();
-        throw new JobException(msg, ErrorCodes.DATA_STORE_ERROR, th);
+        ElasticsearchException exception = new ElasticsearchException(msg, th);
+        exception.addHeader("errorCode", ErrorCodes.DATA_STORE_ERROR.getValueString());
+        throw exception;
     }
 
 }

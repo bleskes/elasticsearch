@@ -33,10 +33,9 @@ import org.supercsv.prefs.CsvPreference;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
-import org.elasticsearch.xpack.prelert.job.process.exceptions.MissingFieldException;
-import org.elasticsearch.xpack.prelert.job.status.HighProportionOfBadTimestampsException;
-import org.elasticsearch.xpack.prelert.job.status.OutOfOrderRecordsException;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 /**
  * A writer for transforming and piping CSV data from an
@@ -70,19 +69,13 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
     }
 
     /**
-     * Read the csv inputIndex, transform to length encoded values and pipe
-     * to the OutputStream.
-     * If any of the expected fields in the transform inputs, analysis inputIndex or
-     * if the expected time field is missing from the CSV header
-     * a <code>MissingFieldException</code> is thrown
-     *
-     * @throws MissingFieldException                  If any fields are missing from the CSV header
-     * @throws HighProportionOfBadTimestampsException If a large proportion
-     *                                                of the records read have missing fields
+     * Read the csv inputIndex, transform to length encoded values and pipe to
+     * the OutputStream. If any of the expected fields in the transform inputs,
+     * analysis inputIndex or if the expected time field is missing from the CSV
+     * header a exception is thrown
      */
     @Override
-    public DataCounts write(InputStream inputStream) throws IOException, MissingFieldException,
-    HighProportionOfBadTimestampsException, OutOfOrderRecordsException {
+    public DataCounts write(InputStream inputStream) throws IOException {
         CsvPreference csvPref = new CsvPreference.Builder(
                 dataDescription.getQuoteCharacter(),
                 dataDescription.getFieldDelimiter(),
@@ -158,8 +151,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
     }
 
     @Override
-    protected boolean checkForMissingFields(Collection<String> inputFields, Map<String, Integer> inputFieldIndexes, String[] header)
-            throws MissingFieldException {
+    protected boolean checkForMissingFields(Collection<String> inputFields, Map<String, Integer> inputFieldIndexes, String[] header) {
         for (String field : inputFields) {
             if (AnalysisConfig.AUTO_CREATED_FIELDS.contains(field)) {
                 continue;
@@ -171,7 +163,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
                         field, Arrays.toString(header));
 
                 logger.error(msg);
-                throw new MissingFieldException(field, msg);
+                throw ExceptionsHelper.parseException(msg, ErrorCodes.MISSING_FIELD);
             }
         }
 
