@@ -129,6 +129,7 @@ public class Allocation extends AbstractDiffable<Allocation> implements ToXConte
     }
 
     // Class alreadt extends from AbstractDiffable, so copied from ToXContentToBytes#toString()
+    @SuppressWarnings("deprecation")
     @Override
     public final String toString() {
         try {
@@ -176,26 +177,26 @@ public class Allocation extends AbstractDiffable<Allocation> implements ToXConte
                     JobSchedulerStatus.STOPPED : this.schedulerState.getStatus();
             JobSchedulerStatus newSchedulerStatus = schedulerState.getStatus();
             switch (newSchedulerStatus) {
-                case STARTED:
-                    if (currentSchedulerStatus != JobSchedulerStatus.STOPPED) {
-                        String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobId, newSchedulerStatus);
-                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_START_JOB_SCHEDULER);
-                    }
-                    break;
-                case STOPPING:
-                    if (currentSchedulerStatus != JobSchedulerStatus.STARTED) {
-                        String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, jobId, newSchedulerStatus);
-                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
-                    }
-                    break;
-                case STOPPED:
-                    if (currentSchedulerStatus != JobSchedulerStatus.STOPPING) {
-                        String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, jobId, newSchedulerStatus);
-                        throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException("Invalid requested job scheduler status: " + newSchedulerStatus);
+            case STARTED:
+                if (currentSchedulerStatus != JobSchedulerStatus.STOPPED) {
+                    String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobId, newSchedulerStatus);
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                }
+                break;
+            case STOPPING:
+                if (currentSchedulerStatus != JobSchedulerStatus.STARTED) {
+                    String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, jobId, newSchedulerStatus);
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                }
+                break;
+            case STOPPED:
+                if (currentSchedulerStatus != JobSchedulerStatus.STOPPING) {
+                    String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, jobId, newSchedulerStatus);
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid requested job scheduler status: " + newSchedulerStatus);
             }
 
             this.schedulerState = schedulerState;

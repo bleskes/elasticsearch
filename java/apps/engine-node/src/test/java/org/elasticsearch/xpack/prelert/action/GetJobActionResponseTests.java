@@ -21,12 +21,9 @@ import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
-import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
-import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
@@ -48,9 +45,6 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
         } else {
             String jobId = randomAsciiOfLength(10);
             String description = randomBoolean() ? randomAsciiOfLength(10) : null;
-            JobStatus jobStatus = randomFrom(JobStatus.values());
-            SchedulerState jobSchedulerState = new SchedulerState(randomFrom(JobSchedulerStatus.values()), randomPositiveLong(),
-                    randomPositiveLong());
             Date createTime = new Date(randomPositiveLong());
             Date finishedTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
             Date lastDataTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
