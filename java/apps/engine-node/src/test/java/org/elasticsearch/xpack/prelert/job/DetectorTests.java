@@ -306,8 +306,6 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         return d;
     }
 
-    private static final String SUFFIX = "suffix";
-
     private static Collection<Object[]> getCharactersAndValidity() {
         return Arrays.asList(new Object[][]{
                 // char, isValid?
