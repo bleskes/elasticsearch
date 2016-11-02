@@ -23,8 +23,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -36,7 +34,7 @@ import java.util.Objects;
  * Quantiles Result POJO
  */
 @JsonInclude(Include.NON_NULL)
-public class Quantiles extends ToXContentToBytes implements Writeable, StorageSerialisable
+public class Quantiles extends ToXContentToBytes implements Writeable
 {
     public static final String QUANTILES_ID = "hierarchical";
 
@@ -146,12 +144,6 @@ public class Quantiles extends ToXContentToBytes implements Writeable, StorageSe
         Quantiles that = (Quantiles) other;
 
         return Objects.equals(this.getQuantileState(), that.getQuantileState());
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException
-    {
-        serialiser.addTimestamp(timestamp).add(QUANTILE_STATE.getPreferredName(), quantileState);
     }
 }
 

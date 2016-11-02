@@ -23,9 +23,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -48,7 +45,7 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties({ "epoch", "normalisable", "id", "perPartitionMaxProbability"
 /* , "partitionScores" */ })
 @JsonInclude(Include.NON_NULL)
-public class Bucket extends ToXContentToBytes implements Writeable, StorageSerialisable {
+public class Bucket extends ToXContentToBytes implements Writeable {
     /*
      * Field Names
      */
@@ -434,26 +431,5 @@ public class Bucket extends ToXContentToBytes implements Writeable, StorageSeria
             return false;
         }
         return anomalyScore > 0.0 || recordCount > 0;
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException {
-        serialiser.addTimestamp(timestamp).add(ANOMALY_SCORE.getPreferredName(), anomalyScore)
-        .add(INITIAL_ANOMALY_SCORE.getPreferredName(), initialAnomalyScore)
-        .add(MAX_NORMALIZED_PROBABILITY.getPreferredName(), maxNormalizedProbability)
-        .add(RECORD_COUNT.getPreferredName(), recordCount).add(EVENT_COUNT.getPreferredName(), eventCount)
-        .add(BUCKET_SPAN.getPreferredName(), bucketSpan).add(PROCESSING_TIME_MS.getPreferredName(), processingTimeMs);
-
-        if (isInterim) {
-            serialiser.add(IS_INTERIM.getPreferredName(), isInterim);
-        }
-
-        if (bucketInfluencers != null) {
-            serialiser.add(BUCKET_INFLUENCERS.getPreferredName(), bucketInfluencers);
-        }
-
-        if (partitionScores != null && partitionScores.isEmpty() == false) {
-            serialiser.add(PARTITION_SCORES.getPreferredName(), partitionScores);
-        }
     }
 }

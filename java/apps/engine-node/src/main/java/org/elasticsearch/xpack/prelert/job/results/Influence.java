@@ -24,9 +24,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +32,7 @@ import java.util.Objects;
 /**
  * Influence field name and list of influence field values/score pairs
  */
-public class Influence extends ToXContentToBytes implements Writeable, StorageSerialisable
+public class Influence extends ToXContentToBytes implements Writeable
 {
     /**
      * Note all publicly exposed field names are "influencer" not "influence"
@@ -122,11 +119,5 @@ public class Influence extends ToXContentToBytes implements Writeable, StorageSe
 
         return Objects.equals(field, other.field) &&
                 Objects.equals(fieldValues, other.fieldValues);
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException
-    {
-        serialiser.add(INFLUENCER_FIELD_NAME.getPreferredName(), field).add(INFLUENCER_FIELD_VALUES.getPreferredName(), fieldValues);
     }
 }

@@ -217,7 +217,7 @@ public class PrelertJobIT extends ESRestTestCase {
     }
 
     private Response addBucketResult(String jobId, String timestamp) throws Exception {
-        String createIndexBody = "{ \"mappings\": {\"bucket\": { \"properties\": { \"@timestamp\": { \"type\" : \"date\" } } } } }";
+        String createIndexBody = "{ \"mappings\": {\"bucket\": { \"properties\": { \"timestamp\": { \"type\" : \"date\" } } } } }";
         try {
             client().performRequest("put", "prelertresults-" + jobId, Collections.emptyMap(), new StringEntity(createIndexBody));
         } catch (ResponseException e) {
@@ -226,7 +226,7 @@ public class PrelertJobIT extends ESRestTestCase {
             assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         }
 
-        String bucketResult = "{\"@timestamp\": \"" + timestamp + "\"}";
+        String bucketResult = "{\"timestamp\": \"" + timestamp + "\"}";
         return client().performRequest("put", "prelertresults-" + jobId + "/bucket/" + timestamp,
                 Collections.singletonMap("refresh", "true"), new StringEntity(bucketResult));
     }

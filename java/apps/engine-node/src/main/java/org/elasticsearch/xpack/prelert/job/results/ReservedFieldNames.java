@@ -40,7 +40,7 @@ public final class ReservedFieldNames {
     /**
      * @timestamp isn't in this package, so redefine.
      */
-    private static final String ES_TIMESTAMP = "@timestamp";
+    private static final String ES_TIMESTAMP = "timestamp";
 
     public static final String BUCKET_PROCESSING_TIME_TYPE = "bucketProcessingTime";
     public static final String AVERAGE_PROCESSING_TIME_MS = "averageProcessingTimeMs";

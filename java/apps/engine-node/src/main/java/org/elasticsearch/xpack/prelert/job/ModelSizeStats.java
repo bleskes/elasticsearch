@@ -25,9 +25,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
@@ -36,7 +33,7 @@ import java.util.Objects;
  * Provide access to the C++ model memory usage numbers for the Java process.
  */
 @JsonIgnoreProperties({ "modelSizeStatsId" })
-public class ModelSizeStats extends ToXContentToBytes implements StorageSerialisable, Writeable {
+public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     /**
      * Field Names
      */
@@ -243,19 +240,6 @@ public class ModelSizeStats extends ToXContentToBytes implements StorageSerialis
 
     public void setLogTime(Date d) {
         this.logTime = d;
-    }
-
-    // NORELEASE remove this method when we remove Jackson
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException {
-        serialiser.addTimestamp(timestamp)
-        .add("modelBytes", modelBytes)
-        .add("totalByFieldCount", totalByFieldCount)
-        .add("totalOverFieldCount", totalOverFieldCount)
-        .add("totalPartitionFieldCount", totalPartitionFieldCount)
-        .add("bucketAllocationFailuresCount", bucketAllocationFailuresCount)
-        .add("memoryStatus", memoryStatus)
-        .add("logTime", logTime);
     }
 
     @Override

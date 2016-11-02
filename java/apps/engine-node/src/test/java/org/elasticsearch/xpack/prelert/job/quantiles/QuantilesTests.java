@@ -17,10 +17,8 @@ package org.elasticsearch.xpack.prelert.job.quantiles;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialisers;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.io.IOException;
 import java.util.Date;
 
 public class QuantilesTests extends AbstractSerializingTestCase<Quantiles> {
@@ -65,21 +63,6 @@ public class QuantilesTests extends AbstractSerializingTestCase<Quantiles> {
         assertEquals(quantiles1.hashCode(), quantiles2.hashCode());
     }
 
-
-    public void testSerialise() throws IOException {
-        Quantiles quantiles = new Quantiles(new Date(1234L), "foo");
-
-        TestJsonStorageSerialisers serialiser = new TestJsonStorageSerialisers();
-        serialiser.startObject();
-        quantiles.serialise(serialiser);
-        serialiser.endObject();
-
-        String expected = "{"
-                + "\"@timestamp\":1234,"
-                + "\"quantileState\":\"foo\""
-                + "}";
-        assertEquals(expected, serialiser.toJson());
-    }
 
     @Override
     protected Quantiles createTestInstance() {

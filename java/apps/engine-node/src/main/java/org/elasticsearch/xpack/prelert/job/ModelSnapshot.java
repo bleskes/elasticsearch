@@ -26,8 +26,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 
 import java.io.IOException;
@@ -39,7 +37,7 @@ import java.util.Objects;
  * ModelSnapshot Result POJO
  */
 @JsonInclude(Include.NON_NULL)
-public class ModelSnapshot extends ToXContentToBytes implements Writeable, StorageSerialisable {
+public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     /**
      * Field Names
      */
@@ -270,29 +268,5 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable, Stora
                 && Objects.equals(this.quantiles, that.quantiles)
                 && Objects.equals(this.latestRecordTimeStamp, that.latestRecordTimeStamp)
                 && Objects.equals(this.latestResultTimeStamp, that.latestResultTimeStamp);
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException {
-        serialiser.addTimestamp(timestamp)
-        .add(DESCRIPTION.getPreferredName(), description).add(RESTORE_PRIORITY.getPreferredName(), restorePriority)
-        .add(SNAPSHOT_ID.getPreferredName(), snapshotId).add(SNAPSHOT_DOC_COUNT.getPreferredName(), snapshotDocCount);
-
-        if (modelSizeStats != null) {
-            serialiser.startObject(ModelSizeStats.TYPE.getPreferredName());
-            modelSizeStats.serialise(serialiser);
-            serialiser.endObject();
-        }
-        if (quantiles != null) {
-            serialiser.startObject(Quantiles.TYPE.getPreferredName());
-            quantiles.serialise(serialiser);
-            serialiser.endObject();
-        }
-        if (latestRecordTimeStamp != null) {
-            serialiser.add(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp);
-        }
-        if (latestResultTimeStamp != null) {
-            serialiser.add(LATEST_RESULT_TIME.getPreferredName(), latestResultTimeStamp);
-        }
     }
 }

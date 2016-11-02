@@ -6,7 +6,7 @@ setup:
           mappings:
             modelSnapshot:
               properties:
-                "@timestamp":
+                "timestamp":
                   type: date
                 "restorePriority":
                   type: integer
@@ -17,7 +17,7 @@ setup:
         id:     "1"
         body: >
           {
-            "@timestamp": "2016-06-02T00:00:00Z",
+            "timestamp": "2016-06-02T00:00:00Z",
             "restorePriority": "1",
             "snapshotId": "foo"
           }
@@ -29,7 +29,7 @@ setup:
         id:     "2"
         body: >
           {
-            "@timestamp": "2016-06-01T00:00:00Z",
+            "timestamp": "2016-06-01T00:00:00Z",
             "restorePriority": "2",
             "snapshotId": "bar",
             "description": "bar"

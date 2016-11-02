@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
@@ -80,7 +81,7 @@ public class ElasticsearchMappings {
      * API Bucket Resource, and is chosen for consistency with the default field name used by
      * Logstash and Kibana.
      */
-    static final String ES_TIMESTAMP = "@timestamp";
+    static final String ES_TIMESTAMP = "timestamp";
 
     /**
      * Name of the Elasticsearch field by which documents are sorted by default
@@ -172,7 +173,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -259,7 +260,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -307,7 +308,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -360,7 +361,7 @@ public class ElasticsearchMappings {
                 .startObject(CategoryDefinition.CATEGORY_ID.getPreferredName())
                 .field(TYPE, LONG)
                 .endObject()
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(CategoryDefinition.TERMS.getPreferredName())
@@ -397,7 +398,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD).field(INCLUDE_IN_ALL, false)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -599,7 +600,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -622,7 +623,7 @@ public class ElasticsearchMappings {
                 .endObject()
                 .startObject(ModelSizeStats.TYPE.getPreferredName())
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ModelSizeStats.MODEL_BYTES_FIELD.getPreferredName())
@@ -730,7 +731,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD).field(INCLUDE_IN_ALL, false)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -791,7 +792,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ElasticsearchPersister.JOB_ID_NAME)
+                .startObject(JobDetails.ID.getPreferredName())
                 .field(TYPE, KEYWORD).field(INCLUDE_IN_ALL, false)
                 .endObject()
                 .startObject(ES_TIMESTAMP)

@@ -22,10 +22,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.DotNotationReverser;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -46,7 +42,7 @@ import java.util.Objects;
  */
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties({"id", "parent"})
-public class AnomalyRecord extends ToXContentToBytes implements Writeable, StorageSerialisable
+public class AnomalyRecord extends ToXContentToBytes implements Writeable
 {
     /**
      * Serialisation fields
@@ -255,7 +251,9 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable, Stora
         builder.field(BUCKET_SPAN.getPreferredName(), bucketSpan);
         builder.field(DETECTOR_INDEX.getPreferredName(), detectorIndex);
         builder.field(IS_INTERIM.getPreferredName(), isInterim);
-        builder.field(TIMESTAMP.getPreferredName(), timestamp.getTime());
+        if (timestamp != null) {
+            builder.field(TIMESTAMP.getPreferredName(), timestamp.getTime());
+        }
         if (byFieldName != null) {
             builder.field(BY_FIELD_NAME.getPreferredName(), byFieldName);
         }
@@ -643,123 +641,5 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable, Stora
     public void raiseBigNormalisedUpdateFlag()
     {
         hadBigNormalisedUpdate = true;
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException
-    {
-        serialiser.addTimestamp(timestamp)
-        .add(DETECTOR_INDEX.getPreferredName(), detectorIndex).add(PROBABILITY.getPreferredName(), probability)
-        .add(ANOMALY_SCORE.getPreferredName(), anomalyScore).add(NORMALIZED_PROBABILITY.getPreferredName(), normalizedProbability)
-        .add(INITIAL_NORMALIZED_PROBABILITY.getPreferredName(), initialNormalizedProbability)
-        .add(BUCKET_SPAN.getPreferredName(), bucketSpan);
-
-        DotNotationReverser reverser = serialiser.newDotNotationReverser();
-        List<String> topLevelExcludes = new ArrayList<>();
-
-        if (byFieldName != null)
-        {
-            serialiser.add(BY_FIELD_NAME.getPreferredName(), byFieldName);
-            if (byFieldValue != null)
-            {
-                reverser.add(byFieldName, byFieldValue);
-                topLevelExcludes.add(byFieldName);
-            }
-        }
-        if (byFieldValue != null)
-        {
-            serialiser.add(BY_FIELD_VALUE.getPreferredName(), byFieldValue);
-        }
-        if (correlatedByFieldValue != null)
-        {
-            serialiser.add(CORRELATED_BY_FIELD_VALUE.getPreferredName(), correlatedByFieldValue);
-        }
-        if (typical != null)
-        {
-            if (typical.size() == 1)
-            {
-                serialiser.add(TYPICAL.getPreferredName(), typical.get(0));
-            }
-            else
-            {
-                serialiser.add(TYPICAL.getPreferredName(), typical);
-            }
-        }
-        if (actual != null)
-        {
-            if (actual.size() == 1)
-            {
-                serialiser.add(ACTUAL.getPreferredName(), actual.get(0));
-            }
-            else
-            {
-                serialiser.add(ACTUAL.getPreferredName(), actual);
-            }
-        }
-        if (isInterim)
-        {
-            serialiser.add(IS_INTERIM.getPreferredName(), isInterim);
-        }
-        if (fieldName != null)
-        {
-            serialiser.add(FIELD_NAME.getPreferredName(), fieldName);
-        }
-        if (function != null)
-        {
-            serialiser.add(FUNCTION.getPreferredName(), function);
-        }
-        if (functionDescription != null)
-        {
-            serialiser.add(FUNCTION_DESCRIPTION.getPreferredName(), functionDescription);
-        }
-        if (partitionFieldName != null)
-        {
-            serialiser.add(PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
-            if (partitionFieldValue != null)
-            {
-                reverser.add(partitionFieldName, partitionFieldValue);
-                topLevelExcludes.add(partitionFieldName);
-            }
-        }
-        if (partitionFieldValue != null)
-        {
-            serialiser.add(PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
-        }
-        if (overFieldName != null)
-        {
-            serialiser.add(AnomalyRecord.OVER_FIELD_NAME.getPreferredName(), overFieldName);
-            if (overFieldValue != null)
-            {
-                reverser.add(overFieldName, overFieldValue);
-                topLevelExcludes.add(overFieldName);
-            }
-        }
-        if (overFieldValue != null)
-        {
-            serialiser.add(OVER_FIELD_VALUE.getPreferredName(), overFieldValue);
-        }
-        if (causes != null)
-        {
-            serialiser.add(CAUSES.getPreferredName(), causes);
-        }
-        if (influencers != null && influencers.isEmpty() == false)
-        {
-            // First add the influencers array
-            serialiser.add(INFLUENCERS.getPreferredName(), influencers);
-
-            // Then, where possible without creating duplicates, add top level
-            // raw data fields
-            for (Influence influence: influencers)
-            {
-                if (influence.getInfluencerFieldName() != null &&
-                        !influence.getInfluencerFieldValues().isEmpty() &&
-                        !topLevelExcludes.contains(influence.getInfluencerFieldName()))
-                {
-                    reverser.add(influence.getInfluencerFieldName(), influence.getInfluencerFieldValues().get(0));
-                }
-            }
-        }
-
-        serialiser.addReverserResults(reverser);
     }
 }

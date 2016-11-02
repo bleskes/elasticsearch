@@ -19,6 +19,8 @@ import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
+import java.util.Date;
+
 public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInfluencer> {
 
     @Override
@@ -38,6 +40,15 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
         }
         if (randomBoolean()) {
             bucketInfluencer.setRawAnomalyScore(randomDouble());
+        }
+        if (randomBoolean()) {
+            bucketInfluencer.setIsInterim(randomBoolean());
+        }
+        if (randomBoolean()) {
+            bucketInfluencer.setJobId(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            bucketInfluencer.setTimestamp(new Date(randomLong()));
         }
         return bucketInfluencer;
     }

@@ -23,10 +23,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.DotNotationReverser;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -35,7 +31,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
-public class Influencer extends ToXContentToBytes implements Writeable, StorageSerialisable {
+public class Influencer extends ToXContentToBytes implements Writeable {
     /**
      * Elasticsearch type
      */
@@ -255,21 +251,5 @@ public class Influencer extends ToXContentToBytes implements Writeable, StorageS
                 && Double.compare(initialAnomalyScore, other.initialAnomalyScore) == 0
                 && Double.compare(anomalyScore, other.anomalyScore) == 0 && Double.compare(probability, other.probability) == 0
                 && (isInterim == other.isInterim);
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException {
-        serialiser.addTimestamp(timestamp).add(PROBABILITY.getPreferredName(), probability)
-        .add(INFLUENCER_FIELD_NAME.getPreferredName(), influenceField)
-        .add(INFLUENCER_FIELD_VALUE.getPreferredName(), influenceValue)
-        .add(INITIAL_ANOMALY_SCORE.getPreferredName(), initialAnomalyScore).add(ANOMALY_SCORE.getPreferredName(), anomalyScore);
-
-        if (isInterim) {
-            serialiser.add(Bucket.IS_INTERIM.getPreferredName(), true);
-        }
-
-        DotNotationReverser reverser = serialiser.newDotNotationReverser();
-        reverser.add(influenceField, influenceValue);
-        serialiser.addReverserResults(reverser);
     }
 }

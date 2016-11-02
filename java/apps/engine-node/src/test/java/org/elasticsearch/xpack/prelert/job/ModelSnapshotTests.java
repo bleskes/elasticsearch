@@ -18,11 +18,9 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialisers;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.io.IOException;
 import java.util.Date;
 
 public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapshot> {
@@ -151,82 +149,6 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
     }
 
-
-    public void testSerialise_GivenFullyPopulated() throws IOException {
-        ModelSizeStats modelSizeStats = new ModelSizeStats();
-        modelSizeStats.setTimestamp(new Date(9123L));
-        modelSizeStats.setModelBytes(1000L);
-        modelSizeStats.setBucketAllocationFailuresCount(1L);
-        modelSizeStats.setMemoryStatus(MemoryStatus.SOFT_LIMIT);
-        modelSizeStats.setTotalByFieldCount(3L);
-        modelSizeStats.setTotalOverFieldCount(4L);
-        modelSizeStats.setTotalPartitionFieldCount(5L);
-        modelSizeStats.setLogTime(new Date(42L));
-
-        Quantiles quantiles = new Quantiles(new Date(43L), "my_q_state");
-
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
-        modelSnapshot.setTimestamp(new Date(12345L));
-        modelSnapshot.setDescription("a snapshot");
-        modelSnapshot.setRestorePriority(1234L);
-        modelSnapshot.setSnapshotId("my_id");
-        modelSnapshot.setSnapshotDocCount(7);
-        modelSnapshot.setModelSizeStats(modelSizeStats);
-        modelSnapshot.setQuantiles(quantiles);
-        modelSnapshot.setLatestRecordTimeStamp(new Date(12345678901234L));
-        modelSnapshot.setLatestResultTimeStamp(new Date(14345678901234L));
-
-        TestJsonStorageSerialisers serialiser = new TestJsonStorageSerialisers();
-        serialiser.startObject();
-        modelSnapshot.serialise(serialiser);
-        serialiser.endObject();
-
-        String expected = "{"
-                + "\"quantiles\":{\"@timestamp\":43,\"quantileState\":\"my_q_state\"},"
-                + "\"latestRecordTimeStamp\":12345678901234,"
-                + "\"latestResultTimeStamp\":14345678901234,"
-                + "\"@timestamp\":12345,"
-                + "\"restorePriority\":1234,"
-                + "\"snapshotId\":\"my_id\","
-                + "\"description\":\"a snapshot\","
-                + "\"snapshotDocCount\":7,"
-                + "\"modelSizeStats\":{"
-                + "\"modelBytes\":1000,"
-                + "\"totalByFieldCount\":3,"
-                + "\"totalPartitionFieldCount\":5,"
-                + "\"bucketAllocationFailuresCount\":1,"
-                + "\"totalOverFieldCount\":4,"
-                + "\"@timestamp\":9123,"
-                + "\"memoryStatus\":\"SOFT_LIMIT\","
-                + "\"logTime\":42"
-                + "}"
-                + "}";
-        assertEquals(expected, serialiser.toJson());
-    }
-
-
-    public void testSerialise_GivenMissingOptionals() throws IOException {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
-        modelSnapshot.setTimestamp(new Date(54321L));
-        modelSnapshot.setDescription("another snapshot");
-        modelSnapshot.setRestorePriority(4321L);
-        modelSnapshot.setSnapshotId("another_id");
-        modelSnapshot.setSnapshotDocCount(3);
-
-        TestJsonStorageSerialisers serialiser = new TestJsonStorageSerialisers();
-        serialiser.startObject();
-        modelSnapshot.serialise(serialiser);
-        serialiser.endObject();
-
-        String expected = "{"
-                + "\"@timestamp\":54321,"
-                + "\"restorePriority\":4321,"
-                + "\"snapshotId\":\"another_id\","
-                + "\"description\":\"another snapshot\","
-                + "\"snapshotDocCount\":3"
-                + "}";
-        assertEquals(expected, serialiser.toJson());
-    }
 
     private static ModelSnapshot createFullyPopulated() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();

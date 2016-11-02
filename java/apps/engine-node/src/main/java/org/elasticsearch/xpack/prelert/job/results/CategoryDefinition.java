@@ -22,9 +22,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -37,7 +34,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 @JsonInclude(Include.NON_NULL)
-public class CategoryDefinition extends ToXContentToBytes implements Writeable, StorageSerialisable {
+public class CategoryDefinition extends ToXContentToBytes implements Writeable {
 
     public static final ParseField TYPE = new ParseField("categoryDefinition");
     public static final ParseField CATEGORY_ID = new ParseField("categoryId");
@@ -160,14 +157,5 @@ public class CategoryDefinition extends ToXContentToBytes implements Writeable, 
     @Override
     public int hashCode() {
         return Objects.hash(id, terms, regex, maxMatchingLength, examples);
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException {
-        serialiser.add(CATEGORY_ID.getPreferredName(), id)
-        .add(TERMS.getPreferredName(), terms)
-        .add(REGEX.getPreferredName(), regex)
-        .add(MAX_MATCHING_LENGTH.getPreferredName(), maxMatchingLength)
-        .add(EXAMPLES.getPreferredName(), examples.toArray(new String[examples.size()]));
     }
 }

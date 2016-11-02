@@ -17,10 +17,8 @@ package org.elasticsearch.xpack.prelert.job.results;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.TestJsonStorageSerialisers;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 public class CategoryDefinitionTests extends AbstractSerializingTestCase<CategoryDefinition> {
@@ -110,24 +108,6 @@ public class CategoryDefinitionTests extends AbstractSerializingTestCase<Categor
 
         assertFalse(category1.equals(category2));
         assertFalse(category2.equals(category1));
-    }
-
-    public void testSerialise() throws IOException {
-        CategoryDefinition category = createFullyPopulatedCategoryDefinition();
-
-        TestJsonStorageSerialisers serialiser = new TestJsonStorageSerialisers();
-        serialiser.startObject();
-        category.serialise(serialiser);
-        serialiser.endObject();
-
-        String expected = "{"
-                + "\"regex\":\".*?foo.*?bar.*\","
-                + "\"examples\":[\"bar\",\"foo\"],"
-                + "\"terms\":\"foo bar\","
-                + "\"maxMatchingLength\":120,"
-                + "\"categoryId\":42"
-                + "}";
-        assertEquals(expected, serialiser.toJson());
     }
 
     private static CategoryDefinition createFullyPopulatedCategoryDefinition() {

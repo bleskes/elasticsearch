@@ -6,14 +6,14 @@ setup:
           mappings:
             bucket:
               properties:
-                "@timestamp":
+                "timestamp":
                   type: date
   - do:
       index:
         index:  prelertresults-farequote
         type:   bucket
         id:     1
-        body:   { "@timestamp": "2016-06-01T00:00:00Z" }
+        body:   { "timestamp": "2016-06-01T00:00:00Z" }
 
   - do:
       indices.refresh:

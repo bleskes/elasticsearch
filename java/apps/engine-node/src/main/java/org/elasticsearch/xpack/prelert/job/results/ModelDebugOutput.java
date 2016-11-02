@@ -27,10 +27,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.DotNotationReverser;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
@@ -43,7 +39,7 @@ import java.util.Objects;
  */
 @JsonIgnoreProperties({"id"})
 @JsonInclude(Include.NON_NULL)
-public class ModelDebugOutput extends ToXContentToBytes implements Writeable, StorageSerialisable
+public class ModelDebugOutput extends ToXContentToBytes implements Writeable
 {
     public static final ParseField TYPE = new ParseField("modelDebugOutput");
     public static final ParseField TIMESTAMP = new ParseField("timestamp");
@@ -332,57 +328,5 @@ public class ModelDebugOutput extends ToXContentToBytes implements Writeable, St
         return Objects.hash(timestamp, partitionFieldName, partitionFieldValue,
                 overFieldName, overFieldValue, byFieldName, byFieldValue,
                 debugFeature, debugLower, debugUpper, debugMedian, actual);
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException
-    {
-        serialiser.addTimestamp(timestamp)
-        .add(DEBUG_FEATURE.getPreferredName(), debugFeature)
-        .add(DEBUG_LOWER.getPreferredName(), debugLower)
-        .add(DEBUG_UPPER.getPreferredName(), debugUpper)
-        .add(DEBUG_MEDIAN.getPreferredName(), debugMedian)
-        .add(ACTUAL.getPreferredName(), actual);
-
-        DotNotationReverser reverser = serialiser.newDotNotationReverser();
-
-        if (byFieldName != null)
-        {
-            serialiser.add(BY_FIELD_NAME.getPreferredName(), byFieldName);
-            if (byFieldValue != null)
-            {
-                reverser.add(byFieldName, byFieldValue);
-            }
-        }
-        if (byFieldValue != null)
-        {
-            serialiser.add(BY_FIELD_VALUE.getPreferredName(), byFieldValue);
-        }
-        if (overFieldName != null)
-        {
-            serialiser.add(OVER_FIELD_NAME.getPreferredName(), overFieldName);
-            if (overFieldValue != null)
-            {
-                reverser.add(overFieldName, overFieldValue);
-            }
-        }
-        if (overFieldValue != null)
-        {
-            serialiser.add(OVER_FIELD_VALUE.getPreferredName(), overFieldValue);
-        }
-        if (partitionFieldName != null)
-        {
-            serialiser.add(PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
-            if (partitionFieldValue != null)
-            {
-                reverser.add(partitionFieldName, partitionFieldValue);
-            }
-        }
-        if (partitionFieldValue != null)
-        {
-            serialiser.add(PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
-        }
-
-        serialiser.addReverserResults(reverser);
     }
 }

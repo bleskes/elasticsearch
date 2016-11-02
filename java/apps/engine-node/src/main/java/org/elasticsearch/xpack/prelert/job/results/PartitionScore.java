@@ -22,13 +22,10 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import java.io.IOException;
 import java.util.Objects;
 
-public class PartitionScore extends ToXContentToBytes implements Writeable, StorageSerialisable {
+public class PartitionScore extends ToXContentToBytes implements Writeable {
     public static final ParseField PARTITION_SCORE = new ParseField("partitionScore");
 
     private String partitionFieldValue;
@@ -142,14 +139,6 @@ public class PartitionScore extends ToXContentToBytes implements Writeable, Stor
         return Objects.equals(this.partitionFieldValue, that.partitionFieldValue)
                 && Objects.equals(this.partitionFieldName, that.partitionFieldName) && (this.probability == that.probability)
                 && (this.anomalyScore == that.anomalyScore);
-    }
-
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException {
-        serialiser.add(AnomalyRecord.PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
-        serialiser.add(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
-        serialiser.add(AnomalyRecord.PROBABILITY.getPreferredName(), probability);
-        serialiser.add(AnomalyRecord.ANOMALY_SCORE.getPreferredName(), anomalyScore);
     }
 
     public boolean hadBigNormalisedUpdate() {

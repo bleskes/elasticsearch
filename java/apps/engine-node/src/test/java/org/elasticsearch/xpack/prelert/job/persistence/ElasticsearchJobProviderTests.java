@@ -476,7 +476,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("@timestamp", now.getTime());
+        map.put("timestamp", now.getTime());
         source.add(map);
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
@@ -503,7 +503,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("@timestamp", now.getTime());
+        map.put("timestamp", now.getTime());
         map.put("isInterim", true);
         source.add(map);
 
@@ -801,14 +801,14 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         Map<String, Object> recordMap1 = new HashMap<>();
         recordMap1.put("probability", 0.555);
         recordMap1.put("influencerFieldName", "Builder");
-        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("timestamp", now.getTime());
         recordMap1.put("influencerFieldValue", "Bob");
         recordMap1.put("initialAnomalyScore", 22.2);
         recordMap1.put("anomalyScore", 22.6);
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("probability", 0.99);
         recordMap2.put("influencerFieldName", "Builder");
-        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("timestamp", now.getTime());
         recordMap2.put("influencerFieldValue", "James");
         recordMap2.put("initialAnomalyScore", 5.0);
         recordMap2.put("anomalyScore", 5.0);
@@ -858,14 +858,14 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         Map<String, Object> recordMap1 = new HashMap<>();
         recordMap1.put("probability", 0.555);
         recordMap1.put("influencerFieldName", "Builder");
-        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("timestamp", now.getTime());
         recordMap1.put("influencerFieldValue", "Bob");
         recordMap1.put("initialAnomalyScore", 22.2);
         recordMap1.put("anomalyScore", 22.6);
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("probability", 0.99);
         recordMap2.put("influencerFieldName", "Builder");
-        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("timestamp", now.getTime());
         recordMap2.put("influencerFieldValue", "James");
         recordMap2.put("initialAnomalyScore", 5.0);
         recordMap2.put("anomalyScore", 5.0);
@@ -932,14 +932,14 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         Map<String, Object> recordMap1 = new HashMap<>();
         recordMap1.put("description", "snapshot1");
         recordMap1.put("restorePriority", 1);
-        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("timestamp", now.getTime());
         recordMap1.put("snapshotDocCount", 5);
         recordMap1.put("latestRecordTimeStamp", now.getTime());
         recordMap1.put("latestResultTimeStamp", now.getTime());
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("description", "snapshot2");
         recordMap2.put("restorePriority", 999);
-        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("timestamp", now.getTime());
         recordMap2.put("snapshotDocCount", 6);
         recordMap2.put("latestRecordTimeStamp", now.getTime());
         recordMap2.put("latestResultTimeStamp", now.getTime());
@@ -985,14 +985,14 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         Map<String, Object> recordMap1 = new HashMap<>();
         recordMap1.put("description", "snapshot1");
         recordMap1.put("restorePriority", 1);
-        recordMap1.put("@timestamp", now.getTime());
+        recordMap1.put("timestamp", now.getTime());
         recordMap1.put("snapshotDocCount", 5);
         recordMap1.put("latestRecordTimeStamp", now.getTime());
         recordMap1.put("latestResultTimeStamp", now.getTime());
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("description", "snapshot2");
         recordMap2.put("restorePriority", 999);
-        recordMap2.put("@timestamp", now.getTime());
+        recordMap2.put("timestamp", now.getTime());
         recordMap2.put("snapshotDocCount", 6);
         recordMap2.put("latestRecordTimeStamp", now.getTime());
         recordMap2.put("latestResultTimeStamp", now.getTime());

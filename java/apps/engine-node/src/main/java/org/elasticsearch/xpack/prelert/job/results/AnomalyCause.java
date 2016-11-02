@@ -27,10 +27,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.DotNotationReverser;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialisable;
-import org.elasticsearch.xpack.prelert.job.persistence.serialisation.StorageSerialiser;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -40,7 +36,7 @@ import java.util.Objects;
  * Used as a nested level inside population anomaly records.
  */
 @JsonInclude(Include.NON_NULL)
-public class AnomalyCause extends ToXContentToBytes implements Writeable, StorageSerialisable
+public class AnomalyCause extends ToXContentToBytes implements Writeable
 {
     public static final ParseField ANOMALY_CAUSE = new ParseField("anomalyCause");
     /**
@@ -402,89 +398,5 @@ public class AnomalyCause extends ToXContentToBytes implements Writeable, Storag
                 Objects.equals(this.influencers, that.influencers);
     }
 
-    @Override
-    public void serialise(StorageSerialiser serialiser) throws IOException
-    {
-        serialiser.add(PROBABILITY.getPreferredName(), probability);
 
-        if (typical != null)
-        {
-            if (typical.size() == 1)
-            {
-                serialiser.add(AnomalyCause.TYPICAL.getPreferredName(), typical.get(0));
-            }
-            else
-            {
-                serialiser.add(AnomalyCause.TYPICAL.getPreferredName(), typical);
-            }
-        }
-        if (actual != null)
-        {
-            if (actual.size() == 1)
-            {
-                serialiser.add(ACTUAL.getPreferredName(), actual.get(0));
-            }
-            else
-            {
-                serialiser.add(ACTUAL.getPreferredName(), actual);
-            }
-        }
-
-        DotNotationReverser reverser = serialiser.newDotNotationReverser();
-
-        if (byFieldName != null)
-        {
-            serialiser.add(AnomalyCause.BY_FIELD_NAME.getPreferredName(), byFieldName);
-            if (byFieldValue != null)
-            {
-                reverser.add(byFieldName, byFieldValue);
-            }
-        }
-        if (byFieldValue != null)
-        {
-            serialiser.add(AnomalyCause.BY_FIELD_VALUE.getPreferredName(), byFieldValue);
-        }
-        if (correlatedByFieldValue != null)
-        {
-            serialiser.add(AnomalyCause.CORRELATED_BY_FIELD_VALUE.getPreferredName(), correlatedByFieldValue);
-        }
-        if (fieldName != null)
-        {
-            serialiser.add(AnomalyCause.FIELD_NAME.getPreferredName(), fieldName);
-        }
-        if (function != null)
-        {
-            serialiser.add(AnomalyCause.FUNCTION.getPreferredName(), function);
-        }
-        if (functionDescription != null)
-        {
-            serialiser.add(AnomalyCause.FUNCTION_DESCRIPTION.getPreferredName(), functionDescription);
-        }
-        if (partitionFieldName != null)
-        {
-            serialiser.add(AnomalyCause.PARTITION_FIELD_NAME.getPreferredName(), partitionFieldName);
-            if (partitionFieldValue != null)
-            {
-                reverser.add(partitionFieldName, partitionFieldValue);
-            }
-        }
-        if (partitionFieldValue != null)
-        {
-            serialiser.add(AnomalyCause.PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue);
-        }
-        if (overFieldName != null)
-        {
-            serialiser.add(AnomalyCause.OVER_FIELD_NAME.getPreferredName(), overFieldName);
-            if (overFieldValue != null)
-            {
-                reverser.add(overFieldName, overFieldValue);
-            }
-        }
-        if (overFieldValue != null)
-        {
-            serialiser.add(AnomalyCause.OVER_FIELD_VALUE.getPreferredName(), overFieldValue);
-        }
-
-        serialiser.addReverserResults(reverser);
-    }
 }

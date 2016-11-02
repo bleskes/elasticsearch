@@ -22,7 +22,7 @@ setup:
         id:     "1"
         body: >
           {
-            "@timestamp": "2016-06-02T00:00:00Z",
+            "timestamp": "2016-06-02T00:00:00Z",
             "restorePriority": "1",
             "snapshotId": "foo1",
             "description": "first",
@@ -37,7 +37,7 @@ setup:
         id:     "2"
         body: >
           {
-            "@timestamp": "2016-06-01T00:00:00Z",
+            "timestamp": "2016-06-01T00:00:00Z",
             "restorePriority": "2",
             "snapshotId": "foo2",
             "description": "second",
@@ -50,21 +50,21 @@ setup:
         index:  prelertresults-foo
         type:   bucket
         id:     1
-        body:   { "@timestamp": "2016-06-02T00:00:00Z" }
+        body:   { "timestamp": "2016-06-02T00:00:00Z" }
 
   - do:
       index:
         index:  prelertresults-foo
         type:   bucket
         id:     2
-        body:   { "@timestamp": "2016-06-01T12:00:00Z" }
+        body:   { "timestamp": "2016-06-01T12:00:00Z" }
 
   - do:
       index:
         index:  prelertresults-foo
         type:   bucket
         id:     3
-        body:   { "@timestamp": "2016-05-01T00:00:00Z" }
+        body:   { "timestamp": "2016-05-01T00:00:00Z" }
 
   - do:
       indices.refresh:
