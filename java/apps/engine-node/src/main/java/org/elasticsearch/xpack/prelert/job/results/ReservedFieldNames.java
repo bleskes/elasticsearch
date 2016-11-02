@@ -69,23 +69,6 @@ public final class ReservedFieldNames
      * in a given index.)
      */
     private static final String[] RESERVED_FIELD_NAME_ARRAY = {
-
-            AnalysisConfig.BUCKET_SPAN.getPreferredName(),
-            AnalysisConfig.BATCH_SPAN.getPreferredName(),
-            AnalysisConfig.LATENCY.getPreferredName(),
-            AnalysisConfig.PERIOD.getPreferredName(),
-            AnalysisConfig.SUMMARY_COUNT_FIELD_NAME.getPreferredName(),
-            AnalysisConfig.CATEGORIZATION_FIELD_NAME.getPreferredName(),
-            AnalysisConfig.CATEGORIZATION_FILTERS.getPreferredName(),
-            AnalysisConfig.DETECTORS.getPreferredName(),
-            AnalysisConfig.INFLUENCERS.getPreferredName(),
-            AnalysisConfig.OVERLAPPING_BUCKETS.getPreferredName(),
-            AnalysisConfig.RESULT_FINALIZATION_WINDOW.getPreferredName(),
-            AnalysisConfig.MULTIVARIATE_BY_FIELDS.getPreferredName(),
-
-            AnalysisLimits.MODEL_MEMORY_LIMIT.getPreferredName(),
-            AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT.getPreferredName(),
-
             AnomalyCause.PROBABILITY.getPreferredName(),
             AnomalyCause.OVER_FIELD_NAME.getPreferredName(),
             AnomalyCause.OVER_FIELD_VALUE.getPreferredName(),
@@ -164,32 +147,6 @@ public final class ReservedFieldNames
             DataCounts.EXCLUDED_RECORD_COUNT.getPreferredName(),
             DataCounts.LATEST_RECORD_TIME.getPreferredName(),
 
-            DataDescription.FORMAT_FIELD.getPreferredName(),
-            DataDescription.TIME_FIELD_NAME_FIELD.getPreferredName(),
-            DataDescription.TIME_FORMAT_FIELD.getPreferredName(),
-            DataDescription.FIELD_DELIMITER_FIELD.getPreferredName(),
-            DataDescription.QUOTE_CHARACTER_FIELD.getPreferredName(),
-
-            DetectionRule.RULE_ACTION_FIELD.getPreferredName(),
-            DetectionRule.TARGET_FIELD_NAME_FIELD.getPreferredName(),
-            DetectionRule.TARGET_FIELD_VALUE_FIELD.getPreferredName(),
-            DetectionRule.CONDITIONS_CONNECTIVE_FIELD.getPreferredName(),
-            DetectionRule.RULE_CONDITIONS_FIELD.getPreferredName(),
-
-            Detector.DETECTOR_DESCRIPTION_FIELD.getPreferredName(),
-            Detector.FUNCTION_FIELD.getPreferredName(),
-            Detector.FIELD_NAME_FIELD.getPreferredName(),
-            Detector.BY_FIELD_NAME_FIELD.getPreferredName(),
-            Detector.OVER_FIELD_NAME_FIELD.getPreferredName(),
-            Detector.PARTITION_FIELD_NAME_FIELD.getPreferredName(),
-            Detector.USE_NULL_FIELD.getPreferredName(),
-            Detector.DETECTOR_RULES_FIELD.getPreferredName(),
-
-            RuleCondition.CONDITION_TYPE_FIELD.getPreferredName(),
-            RuleCondition.FIELD_NAME_FIELD.getPreferredName(),
-            RuleCondition.FIELD_VALUE_FIELD.getPreferredName(),
-            RuleCondition.VALUE_LIST_FIELD.getPreferredName(),
-
             Influence.INFLUENCER_FIELD_NAME.getPreferredName(),
             Influence.INFLUENCER_FIELD_VALUES.getPreferredName(),
 
@@ -198,30 +155,6 @@ public final class ReservedFieldNames
             Influencer.INFLUENCER_FIELD_VALUE.getPreferredName(),
             Influencer.INITIAL_ANOMALY_SCORE.getPreferredName(),
             Influencer.ANOMALY_SCORE.getPreferredName(),
-
-            // JobDetails.DESCRIPTION is not reserved because it is an analyzed string
-            // JobDetails.STATUS is not reserved because it is an analyzed string
-            JobDetails.DATA_DESCRIPTION.getPreferredName(),
-            Allocation.SCHEDULER_STATE.getPreferredName(),
-            JobDetails.SCHEDULER_CONFIG.getPreferredName(),
-            JobDetails.FINISHED_TIME.getPreferredName(),
-            JobDetails.LAST_DATA_TIME.getPreferredName(),
-            JobDetails.COUNTS.getPreferredName(),
-            JobDetails.TIMEOUT.getPreferredName(),
-            JobDetails.RENORMALIZATION_WINDOW_DAYS.getPreferredName(),
-            JobDetails.BACKGROUND_PERSIST_INTERVAL.getPreferredName(),
-            JobDetails.MODEL_SNAPSHOT_RETENTION_DAYS.getPreferredName(),
-            JobDetails.RESULTS_RETENTION_DAYS.getPreferredName(),
-            JobDetails.ANALYSIS_CONFIG.getPreferredName(),
-            JobDetails.ANALYSIS_LIMITS.getPreferredName(),
-            JobDetails.TRANSFORMS.getPreferredName(),
-            JobDetails.MODEL_DEBUG_CONFIG.getPreferredName(),
-            JobDetails.IGNORE_DOWNTIME.getPreferredName(),
-            JobDetails.CUSTOM_SETTINGS.getPreferredName(),
-
-            ModelDebugConfig.WRITE_TO_FIELD.getPreferredName(),
-            ModelDebugConfig.BOUNDS_PERCENTILE_FIELD.getPreferredName(),
-            ModelDebugConfig.TERMS_FIELD.getPreferredName(),
 
             ModelDebugOutput.PARTITION_FIELD_NAME.getPreferredName(), ModelDebugOutput.PARTITION_FIELD_VALUE.getPreferredName(),
             ModelDebugOutput.OVER_FIELD_NAME.getPreferredName(), ModelDebugOutput.OVER_FIELD_VALUE.getPreferredName(),
@@ -247,28 +180,6 @@ public final class ReservedFieldNames
             ModelSnapshot.LATEST_RESULT_TIME.getPreferredName(),
 
             Quantiles.QUANTILE_STATE.getPreferredName(),
-
-            SchedulerConfig.DATA_SOURCE.getPreferredName(),
-            SchedulerConfig.QUERY_DELAY.getPreferredName(),
-            SchedulerConfig.FREQUENCY.getPreferredName(),
-            SchedulerConfig.FILE_PATH.getPreferredName(),
-            SchedulerConfig.TAIL_FILE.getPreferredName(),
-            SchedulerConfig.BASE_URL.getPreferredName(),
-            // SchedulerConfig.USERNAME, is not reserved because it is an analyzed string
-            SchedulerConfig.ENCRYPTED_PASSWORD.getPreferredName(),
-            SchedulerConfig.INDEXES.getPreferredName(),
-            SchedulerConfig.TYPES.getPreferredName(),
-            SchedulerConfig.QUERY.getPreferredName(),
-            SchedulerConfig.RETRIEVE_WHOLE_SOURCE.getPreferredName(),
-            SchedulerConfig.AGGREGATIONS.getPreferredName(),
-            SchedulerConfig.AGGS.getPreferredName(),
-            SchedulerConfig.SCRIPT_FIELDS.getPreferredName(),
-            SchedulerConfig.SCROLL_SIZE.getPreferredName(),
-
-            TransformConfig.TRANSFORM.getPreferredName(),
-            TransformConfig.ARGUMENTS.getPreferredName(),
-            TransformConfig.INPUTS.getPreferredName(),
-            TransformConfig.OUTPUTS.getPreferredName(),
 
             JOB_ID_NAME,
             ES_TIMESTAMP
