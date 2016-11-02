@@ -104,9 +104,9 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), TERMS_FIELD);
     }
 
-    private DebugDestination writeTo;
-    private double boundsPercentile;
-    private String terms;
+    private final DebugDestination writeTo;
+    private final double boundsPercentile;
+    private final String terms;
 
     public ModelDebugConfig(double boundsPercentile, String terms) {
         this(DebugDestination.FILE, boundsPercentile, terms);
