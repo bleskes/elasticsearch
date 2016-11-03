@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.utils;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -29,7 +28,6 @@ import org.elasticsearch.rest.RestStatus;
 import java.io.IOException;
 import java.util.Objects;
 
-//NORELEASE Remove documentBytes form this class when jackson is gone
 /**
  * Generic wrapper class for returning a single document requested through
  * the REST API. If the requested document does not exist {@link #isExists()}
@@ -45,23 +43,7 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
     private final String type;
 
     @Nullable
-    private final BytesReference documentBytes;
-
-    @Nullable
     private final T document;
-
-    /**
-     * Constructor for a SingleDocument with an existing doc
-     *
-     * @param type the document type
-     * @param document the document (non-null)
-     */
-    public SingleDocument(String type, BytesReference document) {
-        this.exists = document != null;
-        this.type = type;
-        this.documentBytes = document;
-        this.document = null;
-    }
 
     /**
      * Constructor for a SingleDocument with an existing doc
@@ -74,18 +56,12 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
     public SingleDocument(String type, T document) {
         this.exists = document != null;
         this.type = type;
-        this.documentBytes = null;
         this.document = document;
     }
 
     public SingleDocument(StreamInput in, Reader<T> documentReader) throws IOException {
         this.exists = in.readBoolean();
         this.type = in.readString();
-        if (in.readBoolean()) {
-            documentBytes = in.readBytesReference();
-        } else {
-            documentBytes = null;
-        }
         if (in.readBoolean()) {
             document = documentReader.read(in);
         } else {
@@ -97,11 +73,6 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
     public void writeTo(StreamOutput out) throws IOException {
         out.writeBoolean(exists);
         out.writeString(type);
-        boolean hasDocumentBytes = documentBytes != null;
-        out.writeBoolean(hasDocumentBytes);
-        if (hasDocumentBytes) {
-            out.writeBytesReference(documentBytes);
-        }
         boolean hasDocument = document != null;
         out.writeBoolean(hasDocument);
         if (hasDocument) {
@@ -129,16 +100,6 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
     /**
      * Get the requested document or null
      *
-     * @return The document bytes or <code>null</code>
-     */
-    @Nullable
-    public BytesReference getDocumentBytes() {
-        return documentBytes;
-    }
-
-    /**
-     * Get the requested document or null
-     *
      * @return The document or <code>null</code>
      */
     @Nullable
@@ -155,9 +116,6 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.field(EXISTS.getPreferredName(), exists);
         builder.field(TYPE.getPreferredName(), type);
-        if (documentBytes != null) {
-            builder.rawField(DOCUMENT.getPreferredName(), documentBytes);
-        }
         if (document != null) {
             builder.field(DOCUMENT.getPreferredName(), document);
         }
@@ -175,7 +133,7 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
 
     @Override
     public int hashCode() {
-        return Objects.hash(document, documentBytes, type, exists);
+        return Objects.hash(document, type, exists);
     }
 
     @Override
@@ -190,7 +148,6 @@ public class SingleDocument<T extends ToXContent & Writeable> extends ToXContent
         SingleDocument<T> other = (SingleDocument<T>) obj;
         return Objects.equals(exists, other.exists) &&
                 Objects.equals(type, other.type) &&
-                Objects.equals(documentBytes, other.documentBytes) &&
                 Objects.equals(document, other.document);
     }
 }

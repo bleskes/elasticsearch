@@ -173,8 +173,8 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     private final String baseUrl;
     private final List<String> indexes;
     private final List<String> types;
-    // NORELEASE: I think these 4 fields can be reduced to a single
-    // BytesReference field holding the entire source:
+    // NORELEASE: These 4 fields can be reduced to a single
+    // SearchSourceBuilder field holding the entire source:
     private final Map<String, Object> query;
     private final Map<String, Object> aggregations;
     private final Map<String, Object> aggs;

@@ -57,16 +57,16 @@ public class Quantiles extends ToXContentToBytes implements Writeable
     private Date timestamp;
     private String quantileState;
 
-    // NORELEASE remove this constructor when jackson is gone
+    // NORELEASE remove this constructor when QuantilesParser is gone
     public Quantiles() {
     }
 
-    // NORELEASE remove this constructor when jackson is gone
+    // NORELEASE remove this method when QuantilesParser is gone
     public void setQuantileState(String quantileState) {
         this.quantileState = quantileState;
     }
 
-    // NORELEASE remove this constructor when jackson is gone
+    // NORELEASE remove this method when QuantilesParser is gone
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
