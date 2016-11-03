@@ -618,7 +618,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         if (bwcIndexesExist) {
             int timestampIndexes = between(1, 100);
             for (int i = 0; i < timestampIndexes; i++) {
-                writeIndex(response, ".marvel-es-1-" + i, bwcAliasesExist ? ".monitoring-es-2-" + i : "ignored");
+                writeIndex(response, ".marvel-es-1-" + i, bwcAliasesExist ? ".monitoring-es-2-" + i + "-alias" : "ignored");
             }
         }
         response.endObject();
