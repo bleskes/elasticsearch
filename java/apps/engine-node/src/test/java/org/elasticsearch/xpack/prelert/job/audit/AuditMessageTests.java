@@ -14,12 +14,16 @@
  */
 package org.elasticsearch.xpack.prelert.job.audit;
 
-import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 import org.junit.Before;
 
 import java.util.Date;
 
-public class AuditMessageTests extends ESTestCase {
+public class AuditMessageTests extends AbstractSerializingTestCase<AuditMessage> {
     private long startMillis;
 
     @Before
@@ -71,5 +75,33 @@ public class AuditMessageTests extends ESTestCase {
         long timestampMillis = timestamp.getTime();
         assertTrue(timestampMillis >= startMillis);
         assertTrue(timestampMillis <= System.currentTimeMillis());
+    }
+
+    @Override
+    protected AuditMessage parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return AuditMessage.PARSER.apply(parser, () -> matcher);
+    }
+
+    @Override
+    protected AuditMessage createTestInstance() {
+        AuditMessage message = new AuditMessage();
+        if (randomBoolean()) {
+            message.setJobId(randomAsciiOfLengthBetween(1, 20));
+        }
+        if (randomBoolean()) {
+            message.setMessage(randomAsciiOfLengthBetween(1, 200));
+        }
+        if (randomBoolean()) {
+            message.setLevel(randomFrom(Level.values()));
+        }
+        if (randomBoolean()) {
+            message.setTimestamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
+        }
+        return message;
+    }
+
+    @Override
+    protected Reader<AuditMessage> instanceReader() {
+        return AuditMessage::new;
     }
 }

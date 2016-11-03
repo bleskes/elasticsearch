@@ -24,9 +24,9 @@ import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
@@ -53,7 +53,6 @@ public class FieldConfigWriter {
     private final Set<ListDocument> lists;
     private final OutputStreamWriter writer;
     private final Logger logger;
-    private final ObjectMapper objectMapper;
 
     public FieldConfigWriter(AnalysisConfig config, Set<ListDocument> lists,
             OutputStreamWriter writer, Logger logger) {
@@ -61,7 +60,6 @@ public class FieldConfigWriter {
         this.lists = Objects.requireNonNull(lists);
         this.writer = Objects.requireNonNull(writer);
         this.logger = Objects.requireNonNull(logger);
-        objectMapper = new ObjectMapper();
     }
 
     /**
@@ -116,15 +114,38 @@ public class FieldConfigWriter {
         contents.append(DETECTOR_PREFIX).append(detectorId)
         .append(DETECTOR_RULES_SUFFIX).append(EQUALS);
 
-        String rulesAsJson = objectMapper.writeValueAsString(detector.getDetectorRules());
-        contents.append(rulesAsJson);
+        contents.append('[');
+        boolean first = true;
+        for (DetectionRule rule : detector.getDetectorRules()) {
+            if (first) {
+                first = false;
+            } else {
+                contents.append(',');
+            }
+            contents.append(rule.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).string());
+        }
+        contents.append(']');
 
         contents.append(NEW_LINE);
     }
 
-    private void writeLists(StringBuilder buffer) throws JsonProcessingException {
+    private void writeLists(StringBuilder buffer) throws IOException {
         for (ListDocument list : lists) {
-            String listAsJson = objectMapper.writeValueAsString(list.getItems());
+
+            StringBuilder listAsJson = new StringBuilder();
+            listAsJson.append('[');
+            boolean first = true;
+            for (String item : list.getItems()) {
+                if (first) {
+                    first = false;
+                } else {
+                    listAsJson.append(',');
+                }
+                listAsJson.append('"');
+                listAsJson.append(item);
+                listAsJson.append('"');
+            }
+            listAsJson.append(']');
             buffer.append(LIST_PREFIX).append(list.getId()).append(EQUALS).append(listAsJson)
             .append(NEW_LINE);
         }

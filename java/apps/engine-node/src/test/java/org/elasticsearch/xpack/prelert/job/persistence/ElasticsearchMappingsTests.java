@@ -97,8 +97,8 @@ public class ElasticsearchMappingsTests extends ESTestCase {
 
         // These are not reserved because they're data types, not field names
         overridden.add(AnomalyRecord.TYPE.getPreferredName());
-        overridden.add(AuditActivity.TYPE);
-        overridden.add(AuditMessage.TYPE);
+        overridden.add(AuditActivity.TYPE.getPreferredName());
+        overridden.add(AuditMessage.TYPE.getPreferredName());
         overridden.add(Bucket.TYPE.getPreferredName());
         overridden.add(DataCounts.TYPE.getPreferredName());
         overridden.add(ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE);

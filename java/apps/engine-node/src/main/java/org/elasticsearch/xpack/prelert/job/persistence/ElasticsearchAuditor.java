@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
@@ -77,7 +78,7 @@ public class ElasticsearchAuditor implements Auditor
     {
         try
         {
-            client.prepareIndex(index, AuditMessage.TYPE)
+            client.prepareIndex(index, AuditMessage.TYPE.getPreferredName())
             .setSource(serialiseMessage(message))
             .execute().actionGet();
         }
@@ -91,7 +92,7 @@ public class ElasticsearchAuditor implements Auditor
     {
         try
         {
-            client.prepareIndex(index, AuditActivity.TYPE)
+            client.prepareIndex(index, AuditActivity.TYPE.getPreferredName())
             .setSource(serialiseActivity(activity))
             .execute().actionGet();
         }
@@ -103,22 +104,11 @@ public class ElasticsearchAuditor implements Auditor
 
     private XContentBuilder serialiseMessage(AuditMessage message) throws IOException
     {
-        return jsonBuilder().startObject()
-                .field(ElasticsearchMappings.ES_TIMESTAMP, message.getTimestamp())
-                .field(AuditMessage.JOB_ID, message.getJobId())
-                .field(AuditMessage.LEVEL, message.getLevel())
-                .field(AuditMessage.MESSAGE, message.getMessage())
-                .endObject();
+        return message.toXContent(jsonBuilder(), ToXContent.EMPTY_PARAMS);
     }
 
     private XContentBuilder serialiseActivity(AuditActivity activity) throws IOException
     {
-        return jsonBuilder().startObject()
-                .field(ElasticsearchMappings.ES_TIMESTAMP, activity.getTimestamp())
-                .field(AuditActivity.TOTAL_JOBS, activity.getTotalJobs())
-                .field(AuditActivity.TOTAL_DETECTORS, activity.getTotalDetectors())
-                .field(AuditActivity.RUNNING_JOBS, activity.getRunningJobs())
-                .field(AuditActivity.RUNNING_DETECTORS, activity.getRunningDetectors())
-                .endObject();
+        return activity.toXContent(jsonBuilder(), ToXContent.EMPTY_PARAMS);
     }
 }

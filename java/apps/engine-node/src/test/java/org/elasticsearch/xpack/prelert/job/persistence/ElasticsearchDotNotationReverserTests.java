@@ -14,24 +14,23 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.test.ESTestCase;
 
 
 public class ElasticsearchDotNotationReverserTests extends ESTestCase {
-    public void testResultsMap() throws JsonProcessingException {
+    public void testResultsMap() throws Exception {
         ElasticsearchDotNotationReverser reverser = createReverser();
 
         String expected = "{\"complex\":{\"nested\":{\"structure\":{\"first\":\"x\"," +
                 "\"second\":\"y\"},\"value\":\"z\"}},\"cpu\":{\"system\":\"5\"," +
                 "\"user\":\"10\",\"wait\":\"1\"},\"simple\":\"simon\"}";
 
-        String actual = new ObjectMapper().writeValueAsString(reverser.getResultsMap());
+        String actual = XContentFactory.jsonBuilder().map(reverser.getResultsMap()).string();
         assertEquals(expected, actual);
     }
 
-    public void testMappingsMap() throws JsonProcessingException {
+    public void testMappingsMap() throws Exception {
         ElasticsearchDotNotationReverser reverser = createReverser();
 
         String expected = "{\"complex\":{\"properties\":{\"nested\":{\"properties\":" +
@@ -43,7 +42,7 @@ public class ElasticsearchDotNotationReverserTests extends ESTestCase {
                 "\"wait\":{\"type\":\"keyword\"}},\"type\":\"object\"}," +
                 "\"simple\":{\"type\":\"keyword\"}}";
 
-        String actual = new ObjectMapper().writeValueAsString(reverser.getMappingsMap());
+        String actual = XContentFactory.jsonBuilder().map(reverser.getMappingsMap()).string();
         assertEquals(expected, actual);
     }
 

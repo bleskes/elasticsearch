@@ -868,7 +868,7 @@ public class ElasticsearchMappings {
     public static XContentBuilder auditMessageMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
-                .startObject(AuditMessage.TYPE)
+                .startObject(AuditMessage.TYPE.getPreferredName())
                 .startObject(PROPERTIES)
                 .startObject(ES_TIMESTAMP)
                 .field(TYPE, DATE)
@@ -881,7 +881,7 @@ public class ElasticsearchMappings {
     public static XContentBuilder auditActivityMapping() throws IOException {
         return jsonBuilder()
                 .startObject()
-                .startObject(AuditActivity.TYPE)
+                .startObject(AuditActivity.TYPE.getPreferredName())
                 .startObject(PROPERTIES)
                 .startObject(ES_TIMESTAMP)
                 .field(TYPE, DATE)

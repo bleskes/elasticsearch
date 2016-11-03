@@ -269,8 +269,8 @@ public class ElasticsearchJobProvider implements JobProvider
                 LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
                 client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
                 .setSettings(prelertIndexSettings())
-                .addMapping(AuditActivity.TYPE, ElasticsearchMappings.auditActivityMapping())
-                .addMapping(AuditMessage.TYPE, ElasticsearchMappings.auditMessageMapping())
+                        .addMapping(AuditActivity.TYPE.getPreferredName(), ElasticsearchMappings.auditActivityMapping())
+                        .addMapping(AuditMessage.TYPE.getPreferredName(), ElasticsearchMappings.auditMessageMapping())
                 .get();
                 LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
                 client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();

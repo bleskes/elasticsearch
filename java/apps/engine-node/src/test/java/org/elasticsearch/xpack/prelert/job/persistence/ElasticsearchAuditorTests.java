@@ -23,13 +23,15 @@ import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
 import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Level;
@@ -143,8 +145,8 @@ public class ElasticsearchAuditorTests extends ESTestCase {
     private AuditMessage parseAuditMessage() {
         try {
             String json = jsonCaptor.getValue().string();
-            json = json.replace("@timestamp", "timestamp");
-            return new ObjectMapper().readValue(json, AuditMessage.class);
+            XContentParser parser = XContentFactory.xContent(json).createParser(json);
+            return AuditMessage.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
         } catch (IOException e) {
             return new AuditMessage();
         }
@@ -153,8 +155,8 @@ public class ElasticsearchAuditorTests extends ESTestCase {
     private AuditActivity parseAuditActivity() {
         try {
             String json = jsonCaptor.getValue().string();
-            json = json.replace("@timestamp", "timestamp");
-            return new ObjectMapper().readValue(json, AuditActivity.class);
+            XContentParser parser = XContentFactory.xContent(json).createParser(json);
+            return AuditActivity.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
         } catch (IOException e) {
             return new AuditActivity();
         }

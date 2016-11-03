@@ -41,12 +41,6 @@ public class PageParamsTests extends AbstractSerializingTestCase<PageParams> {
         return PageParams::new;
     }
 
-    @Override
-    public void testJacksonSerialisation() throws Exception {
-        // Skip Jackson serialisation tests for this class since its a new class
-        // and doesn't get jackson serialised
-    }
-
     public void testValidate_GivenSkipIsMinusOne() {
         ElasticsearchException e = expectThrows(ElasticsearchException.class, () -> new PageParams(-1, 100));
         assertEquals("Parameter [skip] cannot be < 0", e.getMessage());

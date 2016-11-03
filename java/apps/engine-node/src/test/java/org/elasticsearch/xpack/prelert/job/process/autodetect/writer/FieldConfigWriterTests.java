@@ -30,7 +30,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
-
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.ini4j.Config;
@@ -39,8 +40,6 @@ import org.ini4j.Profile.Section;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
@@ -204,11 +203,7 @@ public class FieldConfigWriterTests extends ESTestCase {
         String expectedSecondLineStart = "detector.0.rules = ";
         assertTrue(secondLine.startsWith(expectedSecondLineStart));
         String rulesJson = secondLine.substring(expectedSecondLineStart.length());
-        List<DetectionRule> writtenRules = new ObjectMapper().readValue(rulesJson,
-                new TypeReference<List<DetectionRule>>() {
-        });
-        assertEquals(1, writtenRules.size());
-        assertEquals(rule, writtenRules.get(0));
+        assertEquals("[" + rule.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).string() + "]\n", rulesJson);
     }
 
     public void testWrite_GivenLists() throws IOException {

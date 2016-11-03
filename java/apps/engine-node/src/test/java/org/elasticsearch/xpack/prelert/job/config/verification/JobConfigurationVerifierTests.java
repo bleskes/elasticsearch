@@ -14,9 +14,9 @@
  */
 package org.elasticsearch.xpack.prelert.job.config.verification;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
@@ -36,7 +36,6 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 
 public class JobConfigurationVerifierTests extends ESTestCase {
 
@@ -525,9 +524,8 @@ public class JobConfigurationVerifierTests extends ESTestCase {
                         "}" +
                         "}   " +
                         "}";
-        ObjectMapper mapper = new ObjectMapper();
-        schedulerConfig.setAggs(mapper.readValue(aggStr, new TypeReference<Map<String, Object>>() {
-        }));
+        XContentParser parser = XContentFactory.xContent(aggStr).createParser(aggStr);
+        schedulerConfig.setAggs(parser.map());
         return schedulerConfig;
     }
 }

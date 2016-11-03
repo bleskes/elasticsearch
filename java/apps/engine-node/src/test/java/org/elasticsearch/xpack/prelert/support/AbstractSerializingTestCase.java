@@ -28,8 +28,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 
 public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeable> extends AbstractWireSerializingTestCase<T> {
 
@@ -48,22 +46,6 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
                 assertParsedInstance(new BytesArray(instanceAsString), alternateVersion.getValue());
             }
         }
-    }
-
-    // NORELEASE remove this test method when Jackson is gone
-    public void testJacksonSerialisation() throws Exception {
-        if (skipJacksonTest()) {
-            return;
-        }
-
-        T testInstance = createTestInstance();
-        ObjectMapper objectMapper = new ObjectMapper();
-        String instanceStr = objectMapper.writeValueAsString(testInstance);
-        ObjectReader objectReader = objectMapper.readerFor(testInstance.getClass());
-        T deserializedInstance = objectReader.readValue(instanceStr);
-        assertEquals(testInstance, deserializedInstance);
-        assertEquals(testInstance.hashCode(), deserializedInstance.hashCode());
-        assertNotSame(testInstance, deserializedInstance);
     }
 
     private void assertParsedInstance(BytesReference queryAsBytes, T expectedInstance)

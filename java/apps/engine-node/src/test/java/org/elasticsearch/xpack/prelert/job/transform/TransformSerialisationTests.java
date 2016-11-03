@@ -15,9 +15,9 @@
 package org.elasticsearch.xpack.prelert.job.transform;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 
 import java.io.IOException;
@@ -25,12 +25,10 @@ import java.io.IOException;
 public class TransformSerialisationTests extends ESTestCase {
 
     public void testDeserialise_singleFieldAsArray() throws JsonProcessingException, IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectReader reader = mapper.readerFor(TransformConfig.class)
-                .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
         String json = "{\"inputs\":\"dns\", \"transform\":\"domain_split\"}";
-        TransformConfig tr = reader.readValue(json);
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        TransformConfig tr = TransformConfig.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
 
         assertEquals(1, tr.getInputs().size());
         assertEquals("dns", tr.getInputs().get(0));
@@ -41,7 +39,8 @@ public class TransformSerialisationTests extends ESTestCase {
 
 
         json = "{\"inputs\":\"dns\", \"transform\":\"domain_split\", \"outputs\":\"catted\"}";
-        tr = reader.readValue(json);
+        parser = XContentFactory.xContent(json).createParser(json);
+        tr = TransformConfig.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
 
         assertEquals(1, tr.getInputs().size());
         assertEquals("dns", tr.getInputs().get(0));
@@ -52,19 +51,18 @@ public class TransformSerialisationTests extends ESTestCase {
 
 
     public void testDeserialise_fieldsArray() throws JsonProcessingException, IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectReader reader = mapper.readerFor(TransformConfig.class)
-                .with(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
         String json = "{\"inputs\":[\"dns\"], \"transform\":\"domain_split\"}";
-        TransformConfig tr = reader.readValue(json);
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        TransformConfig tr = TransformConfig.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
 
         assertEquals(1, tr.getInputs().size());
         assertEquals("dns", tr.getInputs().get(0));
         assertEquals("domain_split", tr.getTransform());
 
         json = "{\"inputs\":[\"a\", \"b\", \"c\"], \"transform\":\"concat\", \"outputs\":[\"catted\"]}";
-        tr = reader.readValue(json);
+        parser = XContentFactory.xContent(json).createParser(json);
+        tr = TransformConfig.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
 
         assertEquals(3, tr.getInputs().size());
         assertEquals("a", tr.getInputs().get(0));

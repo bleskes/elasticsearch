@@ -19,16 +19,13 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -123,8 +120,8 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
                 + "\"influencers\" :[\"airline\"]" + "}," + "\"dataDescription\" : {" + "\"format\":\"ELASTICSEARCH\","
                 + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
-        ObjectReader objectReader = new ObjectMapper().readerFor(JobConfiguration.class);
-        JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
+        XContentParser parser = XContentFactory.xContent(jobConfigStr).createParser(jobConfigStr);
+        JobConfiguration jobConfig = JobConfiguration.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
         assertNotNull(jobConfig);
 
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(jobConfig.getSchedulerConfig());
@@ -133,7 +130,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         Map<String, Object> query = schedulerConfig.getQuery();
         assertNotNull(query);
 
-        String queryAsJson = new ObjectMapper().writeValueAsString(query);
+        String queryAsJson = XContentFactory.jsonBuilder().map(query).string();
         logger.info("Round trip of query is: " + queryAsJson);
         assertTrue(query.containsKey("match_all"));
     }
@@ -164,8 +161,8 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
                 + "\"influencers\" :[\"airline\"]" + "}," + "\"dataDescription\" : {" + "\"format\":\"ELASTICSEARCH\","
                 + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
-        ObjectReader objectReader = new ObjectMapper().readerFor(JobConfiguration.class);
-        JobConfiguration jobConfig = objectReader.readValue(jobConfigStr);
+        XContentParser parser = XContentFactory.xContent(jobConfigStr).createParser(jobConfigStr);
+        JobConfiguration jobConfig = JobConfiguration.PARSER.parse(parser, () -> ParseFieldMatcher.STRICT);
         assertNotNull(jobConfig);
 
         SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();
@@ -174,7 +171,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         Map<String, Object> aggs = schedulerConfig.getAggregationsOrAggs();
         assertNotNull(aggs);
 
-        String aggsAsJson = new ObjectMapper().writeValueAsString(aggs);
+        String aggsAsJson = XContentFactory.jsonBuilder().map(aggs).string();
         logger.info("Round trip of aggs is: " + aggsAsJson);
         assertTrue(aggs.containsKey("top_level_must_be_time"));
 
@@ -395,9 +392,9 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
-        ObjectMapper mapper = new ObjectMapper();
-        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>() {
-        }));
+        String json = "{ \"match_all\" : {} }";
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        conf.setQuery(parser.map());
         conf.setScrollSize(2000);
         conf.build();
     }
@@ -410,9 +407,9 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setTypes(Arrays.asList("mytype"));
         conf.setUsername("dave");
         conf.setPassword("secret");
-        ObjectMapper mapper = new ObjectMapper();
-        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>() {
-        }));
+        String json = "{ \"match_all\" : {} }";
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        conf.setQuery(parser.map());
         SchedulerConfig schedulerConfig = conf.build();
         assertEquals("dave", schedulerConfig.getUsername());
         assertEquals("secret", schedulerConfig.getPassword());
@@ -426,9 +423,9 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setTypes(Arrays.asList("mytype"));
         conf.setUsername("dave");
         conf.setEncryptedPassword("already_encrypted");
-        ObjectMapper mapper = new ObjectMapper();
-        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>() {
-        }));
+        String json = "{ \"match_all\" : {} }";
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        conf.setQuery(parser.map());
         SchedulerConfig schedulerConfig = conf.build();
         assertEquals("dave", schedulerConfig.getUsername());
         assertEquals("already_encrypted", schedulerConfig.getEncryptedPassword());
@@ -471,9 +468,9 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
-        ObjectMapper mapper = new ObjectMapper();
-        conf.setQuery(mapper.readValue("{ \"match_all\" : {} }", new TypeReference<Map<String, Object>>() {
-        }));
+        String json = "{ \"match_all\" : {} }";
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        conf.setQuery(parser.map());
         conf.setTailFile(true);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
         assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));
@@ -486,10 +483,10 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
-        ObjectMapper mapper = new ObjectMapper();
-        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", "
-                + "\"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>() {
-                }));
+        String json = "{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", "
+                + "\"inline\" : \"doc['responsetime'].value * 2\" } } }";
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        conf.setScriptFields(parser.map());
         conf.setRetrieveWholeSource(false);
         assertEquals(1, conf.build().getScriptFields().size());
     }
@@ -499,10 +496,10 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
-        ObjectMapper mapper = new ObjectMapper();
-        conf.setScriptFields(mapper.readValue("{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", "
-                + "\"inline\" : \"doc['responsetime'].value * 2\" } } }", new TypeReference<Map<String, Object>>() {
-                }));
+        String json = "{ \"twiceresponsetime\" : { \"script\" : { \"lang\" : \"expression\", "
+                + "\"inline\" : \"doc['responsetime'].value * 2\" } } }";
+        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        conf.setScriptFields(parser.map());
         conf.setRetrieveWholeSource(true);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
         assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));

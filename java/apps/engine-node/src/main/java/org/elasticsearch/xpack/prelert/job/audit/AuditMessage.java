@@ -14,15 +14,53 @@
  */
 package org.elasticsearch.xpack.prelert.job.audit;
 
+import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
+
+import java.io.IOException;
 import java.util.Date;
+import java.util.Objects;
 
-public class AuditMessage
+public class AuditMessage extends ToXContentToBytes implements Writeable
 {
-    public static final String TYPE = "auditMessage";
+    public static final ParseField TYPE = new ParseField("auditMessage");
 
-    public static final String JOB_ID = "jobId";
-    public static final String MESSAGE = "message";
-    public static final String LEVEL = "level";
+    public static final ParseField MESSAGE = new ParseField("message");
+    public static final ParseField LEVEL = new ParseField("level");
+    public static final ParseField TIMESTAMP = new ParseField("timestamp");
+
+    public static final ObjectParser<AuditMessage, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
+            AuditMessage::new);
+
+    static {
+        PARSER.declareString(AuditMessage::setJobId, JobDetails.ID);
+        PARSER.declareString(AuditMessage::setMessage, MESSAGE);
+        PARSER.declareField(AuditMessage::setLevel, p -> {
+            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
+                return Level.forString(p.text());
+            }
+            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
+        }, LEVEL, ValueType.STRING);
+        PARSER.declareField(AuditMessage::setTimestamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP.getPreferredName() + "]");
+        }, TIMESTAMP, ValueType.VALUE);
+    }
 
     private String jobId;
     private String message;
@@ -40,6 +78,33 @@ public class AuditMessage
         this.message = message;
         level = severity;
         timestamp = new Date();
+    }
+
+    public AuditMessage(StreamInput in) throws IOException {
+        jobId = in.readOptionalString();
+        message = in.readOptionalString();
+        if (in.readBoolean()) {
+            level = Level.readFromStream(in);
+        }
+        if (in.readBoolean()) {
+            timestamp = new Date(in.readLong());
+        }
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeOptionalString(jobId);
+        out.writeOptionalString(message);
+        boolean hasLevel = level != null;
+        out.writeBoolean(hasLevel);
+        if (hasLevel) {
+            level.writeTo(out);
+        }
+        boolean hasTimestamp = timestamp != null;
+        out.writeBoolean(hasTimestamp);
+        if (hasTimestamp) {
+            out.writeLong(timestamp.getTime());
+        }
     }
 
     public String getJobId()
@@ -100,5 +165,44 @@ public class AuditMessage
     public static AuditMessage newError(String jobId, String message)
     {
         return new AuditMessage(jobId, message, Level.ERROR);
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        if (jobId != null) {
+            builder.field(JobDetails.ID.getPreferredName(), jobId);
+        }
+        if (message != null) {
+            builder.field(MESSAGE.getPreferredName(), message);
+        }
+        if (level != null) {
+            builder.field(LEVEL.getPreferredName(), level);
+        }
+        if (timestamp != null) {
+            builder.field(TIMESTAMP.getPreferredName(), timestamp.getTime());
+        }
+        builder.endObject();
+        return builder;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(jobId, message, level, timestamp);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        AuditMessage other = (AuditMessage) obj;
+        return Objects.equals(jobId, other.jobId) &&
+                Objects.equals(message, other.message) &&
+                Objects.equals(level, other.level) &&
+                Objects.equals(timestamp, other.timestamp);
     }
 }
