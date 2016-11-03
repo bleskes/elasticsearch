@@ -20,7 +20,6 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
@@ -220,11 +219,11 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AnalysisConfig ac = new AnalysisConfig();
         ac.setDetectors(Collections.singletonList(d));
 
-        JobDetails jobDetails = new JobConfiguration(jobId).build();
-        jobDetails.setDataDescription(dd);
-        jobDetails.setAnalysisConfig(ac);
+        JobDetails.Builder builder = new JobDetails.Builder(jobId);
+        builder.setDataDescription(dd);
+        builder.setAnalysisConfig(ac);
 
-        return jobDetails;
+        return builder.build();
     }
 
     private static InputStream createInputStream(String input)

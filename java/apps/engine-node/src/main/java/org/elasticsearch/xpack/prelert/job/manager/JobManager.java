@@ -31,13 +31,11 @@ import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.config.verification.JobConfigurationVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
@@ -196,15 +194,11 @@ public class JobManager {
      * Stores a job in the cluster state
      */
     public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) {
-        JobConfiguration jobConfiguration = request.getJobConfiguration();
-        JobConfigurationVerifier.verify(jobConfiguration);
-        // TODO: Remove once all validation happens in JobConfiguration#build()
-        // method:
-        JobDetails jobDetails = jobConfiguration.build();
+        JobDetails job = request.getJob();
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean acked) {
-                jobProvider.createJob(jobDetails, new ActionListener<Boolean>() {
+                jobProvider.createJob(job, new ActionListener<Boolean>() {
                     @Override
                     public void onResponse(Boolean aBoolean) {
                         // NORELEASE: make auditing async too (we can't do
@@ -215,7 +209,7 @@ public class JobManager {
                         // structure in prelert as when we merge into xpack
                         // we can use its audit trailing. See:
                         // https://github.com/elastic/prelert-legacy/issues/48
-                        actionListener.onResponse(new PutJobAction.Response(jobDetails));
+                        actionListener.onResponse(new PutJobAction.Response(job));
                     }
 
                     @Override
@@ -231,7 +225,7 @@ public class JobManager {
                 actionListener.onFailure(e);
             }
         };
-        clusterService.submitStateUpdateTask("put-job-" + jobDetails.getId(),
+        clusterService.submitStateUpdateTask("put-job-" + job.getId(),
                 new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
 
             @Override
@@ -241,7 +235,7 @@ public class JobManager {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                return innerPutJob(jobDetails, request.isOverwrite(), currentState);
+                return innerPutJob(job, request.isOverwrite(), currentState);
             }
 
         });
@@ -503,21 +497,21 @@ public class JobManager {
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
                 JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, request.getJobId());
-                jobDetails.setModelSnapshotId(modelSnapshot.getSnapshotId());
+                JobDetails.Builder builder = new JobDetails.Builder(jobDetails);
+                builder.setModelSnapshotId(modelSnapshot.getSnapshotId());
                 if (request.getDeleteInterveningResults()) {
-                    jobDetails.setIgnoreDowntime(IgnoreDowntime.NEVER);
-
+                    builder.setIgnoreDowntime(IgnoreDowntime.NEVER);
                     Date latestRecordTime = modelSnapshot.getLatestResultTimeStamp();
                     LOGGER.info("Resetting latest record time to '" + latestRecordTime + "'");
-                    jobDetails.setLastDataTime(latestRecordTime);
+                    builder.setLastDataTime(latestRecordTime);
                     DataCounts counts = jobDetails.getCounts();
                     counts.setLatestRecordTimeStamp(latestRecordTime);
-                    jobDetails.setCounts(counts);
+                    builder.setCounts(counts);
                 } else {
-                    jobDetails.setIgnoreDowntime(IgnoreDowntime.ONCE);
+                    builder.setIgnoreDowntime(IgnoreDowntime.ONCE);
                 }
 
-                return innerPutJob(jobDetails, true, currentState);
+                return innerPutJob(builder.build(), true, currentState);
             }
         });
     }

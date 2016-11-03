@@ -113,7 +113,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
     public void testAnalysisConfigRequiredFields() throws IOException {
         Logger logger = Loggers.getLogger(SchedulerConfigTests.class);
 
-        String jobConfigStr = "{" + "\"id\":\"farequote\"," + "\"schedulerConfig\" : {" + "\"dataSource\":\"ELASTICSEARCH\","
+        String jobConfigStr = "{" + "\"jobId\":\"farequote\"," + "\"schedulerConfig\" : {" + "\"dataSource\":\"ELASTICSEARCH\","
                 + "\"baseUrl\":\"http://localhost:9200/\"," + "\"indexes\":[\"farequote\"]," + "\"types\":[\"farequote\"],"
                 + "\"query\":{\"match_all\":{} }" + "}," + "\"analysisConfig\" : {" + "\"bucketSpan\":3600,"
                 + "\"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}],"
@@ -121,7 +121,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
                 + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
         XContentParser parser = XContentFactory.xContent(jobConfigStr).createParser(jobConfigStr);
-        JobConfiguration jobConfig = JobConfiguration.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
+        JobDetails jobConfig = JobDetails.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT).build();
         assertNotNull(jobConfig);
 
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(jobConfig.getSchedulerConfig());
@@ -150,19 +150,19 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
     public void testAggsParse() throws IOException {
         Logger logger = Loggers.getLogger(SchedulerConfigTests.class);
 
-        String jobConfigStr = "{" + "\"id\":\"farequote\"," + "\"schedulerConfig\" : {" + "\"dataSource\":\"ELASTICSEARCH\","
+        String jobConfigStr = "{" + "\"jobId\":\"farequote\"," + "\"schedulerConfig\" : {" + "\"dataSource\":\"ELASTICSEARCH\","
                 + "\"baseUrl\":\"http://localhost:9200/\"," + "\"indexes\":[\"farequote\"]," + "\"types\":[\"farequote\"],"
                 + "\"query\":{\"match_all\":{} }," + "\"aggs\" : {" + "\"top_level_must_be_time\" : {" + "\"histogram\" : {"
                 + "\"field\" : \"@timestamp\"," + "\"interval\" : 3600000" + "}," + "\"aggs\" : {" + "\"by_field_in_the_middle\" : { "
                 + "\"terms\" : {" + "\"field\" : \"airline\"," + "\"size\" : 0" + "}," + "\"aggs\" : {" + "\"stats_last\" : {"
                 + "\"avg\" : {" + "\"field\" : \"responsetime\"" + "}" + "}" + "} " + "}" + "}" + "}" + "}" + "},"
-                + "\"analysisConfig\" : {" + "\"bucketSpan\":3600,"
+                + "\"analysisConfig\" : {" + "\"summaryCountFieldName\":\"doc_count\"," + "\"bucketSpan\":3600,"
                 + "\"detectors\" :[{\"function\":\"avg\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}],"
                 + "\"influencers\" :[\"airline\"]" + "}," + "\"dataDescription\" : {" + "\"format\":\"ELASTICSEARCH\","
                 + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
         XContentParser parser = XContentFactory.xContent(jobConfigStr).createParser(jobConfigStr);
-        JobConfiguration jobConfig = JobConfiguration.PARSER.parse(parser, () -> ParseFieldMatcher.STRICT);
+        JobDetails jobConfig = JobDetails.PARSER.parse(parser, () -> ParseFieldMatcher.STRICT).build();
         assertNotNull(jobConfig);
 
         SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();

@@ -18,8 +18,8 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
@@ -78,20 +78,20 @@ public class JobScheduledServiceTests extends ESTestCase {
     }
 
     public void testStart_GivenNewlyCreatedJob() throws IOException {
-        JobDetails job = createScheduledJob();
+        JobDetails.Builder builder = createScheduledJob();
         Allocation allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(0));
-        job.setCounts(dataCounts);
+        builder.setCounts(dataCounts);
         when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
         Logger jobLogger = mock(Logger.class);
         when(jobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(dataExtractorFactory.newExtractor(job)).thenReturn(dataExtractor);
+        when(dataExtractorFactory.newExtractor(builder.build())).thenReturn(dataExtractor);
 
-        jobScheduledService.start(job, allocation);
+        jobScheduledService.start(builder.build(), allocation);
 
         allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
@@ -106,20 +106,20 @@ public class JobScheduledServiceTests extends ESTestCase {
     }
 
     public void testStop_GivenStartedScheduledJob() throws IOException {
-        JobDetails job = createScheduledJob();
+        JobDetails.Builder builder = createScheduledJob();
         Allocation allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(0));
-        job.setCounts(dataCounts);
+        builder.setCounts(dataCounts);
         when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
         Logger jobLogger = mock(Logger.class);
         when(jobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
-        when(dataExtractorFactory.newExtractor(job)).thenReturn(dataExtractor);
+        when(dataExtractorFactory.newExtractor(builder.build())).thenReturn(dataExtractor);
 
-        jobScheduledService.start(job, allocation);
+        jobScheduledService.start(builder.build(), allocation);
 
         jobScheduledService.stop(allocation);
 
@@ -135,7 +135,7 @@ public class JobScheduledServiceTests extends ESTestCase {
         verify(dataProcessor, times(1)).closeJob("foo");
     }
 
-    private static JobDetails createScheduledJob() {
+    private static JobDetails.Builder createScheduledJob() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(3600L);
         analysisConfig.setDetectors(Arrays.asList(new Detector.Builder("metric", "field").build()));
@@ -145,9 +145,12 @@ public class JobScheduledServiceTests extends ESTestCase {
         schedulerConfig.setIndexes(Arrays.asList("myIndex"));
         schedulerConfig.setTypes(Arrays.asList("myType"));
 
-        JobConfiguration jobConfig = new JobConfiguration("foo");
+        JobDetails.Builder jobConfig = new JobDetails.Builder("foo");
         jobConfig.setAnalysisConfig(analysisConfig);
         jobConfig.setSchedulerConfig(schedulerConfig);
-        return jobConfig.build();
+        DataDescription dataDescription = new DataDescription();
+        dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
+        jobConfig.setDataDescription(dataDescription);
+        return jobConfig;
     }
 }

@@ -20,7 +20,6 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -139,7 +138,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
     }
 
     private JobDetails createJobDetails() {
-        JobDetails jobDetails = new JobConfiguration().build();
+        JobDetails.Builder builder = new JobDetails.Builder("foo");
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");
@@ -149,9 +148,9 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         detector.setByFieldName("host-metric");
         ac.setDetectors(Collections.singletonList(detector.build()));
 
-        jobDetails.setDataDescription(dd);
-        jobDetails.setAnalysisConfig(ac);
-        return jobDetails;
+        builder.setDataDescription(dd);
+        builder.setAnalysisConfig(ac);
+        return builder.build();
     }
 
     private AutodetectProcess mockAutodetectProcessWithOutputStream() throws IOException {

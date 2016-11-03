@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.job;
 import org.elasticsearch.cluster.AbstractDiffable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -26,20 +27,30 @@ import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.xpack.prelert.job.config.verification.AnalysisConfigVerifier;
+import org.elasticsearch.xpack.prelert.job.config.verification.DataDescriptionVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
+import org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigsVerifier;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 
 /**
  * This class represents a configured and created Job. The creation time is set
@@ -51,7 +62,8 @@ import java.util.TreeSet;
  */
 public class JobDetails extends AbstractDiffable<JobDetails> implements Writeable, ToXContent {
 
-    public static final JobDetails PROTO = new JobDetails();
+    public static final JobDetails PROTO = new JobDetails(null, null, null, null, null, 0L, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null, null);
 
     public static final long DEFAULT_BUCKETSPAN = 300;
 
@@ -81,6 +93,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     public static final ParseField TRANSFORMS = new ParseField("transforms");
     public static final ParseField MODEL_SIZE_STATS = new ParseField("modelSizeStats");
     public static final ParseField AVERAGE_BUCKET_PROCESSING_TIME = new ParseField("averageBucketProcessingTimeMs");
+    public static final ParseField MODEL_SNAPSHOT_ID = new ParseField("modelSnapshotId");
 
     /**
      * Endpoints key names
@@ -93,12 +106,12 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     public static final String RECORDS_ENDPOINT_KEY = "records";
     public static final String MODEL_SNAPSHOTS_ENDPOINT_KEY = "modelSnapshots";
 
-    public static final ObjectParser<JobDetails, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>("job_details", JobDetails::new);
+    public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>("job_details", Builder::new);
 
     static {
-        PARSER.declareString(JobDetails::setId, ID);
-        PARSER.declareStringOrNull(JobDetails::setDescription, DESCRIPTION);
-        PARSER.declareField(JobDetails::setCreateTime, p -> {
+        PARSER.declareString(Builder::setId, ID);
+        PARSER.declareStringOrNull(Builder::setDescription, DESCRIPTION);
+        PARSER.declareField(Builder::setCreateTime, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
             } else if (p.currentToken() == Token.VALUE_STRING) {
@@ -106,7 +119,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             }
             throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + CREATE_TIME.getPreferredName() + "]");
         }, CREATE_TIME, ValueType.VALUE);
-        PARSER.declareField(JobDetails::setFinishedTime, p -> {
+        PARSER.declareField(Builder::setFinishedTime, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
             } else if (p.currentToken() == Token.VALUE_STRING) {
@@ -115,7 +128,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             throw new IllegalArgumentException(
                     "unexpected token [" + p.currentToken() + "] for [" + FINISHED_TIME.getPreferredName() + "]");
         }, FINISHED_TIME, ValueType.VALUE);
-        PARSER.declareField(JobDetails::setLastDataTime, p -> {
+        PARSER.declareField(Builder::setLastDataTime, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
             } else if (p.currentToken() == Token.VALUE_STRING) {
@@ -124,61 +137,55 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             throw new IllegalArgumentException(
                     "unexpected token [" + p.currentToken() + "] for [" + LAST_DATA_TIME.getPreferredName() + "]");
         }, LAST_DATA_TIME, ValueType.VALUE);
-        PARSER.declareLong(JobDetails::setTimeout, TIMEOUT);
-        PARSER.declareObject(JobDetails::setAnalysisConfig, AnalysisConfig.PARSER, ANALYSIS_CONFIG);
-        PARSER.declareObject(JobDetails::setAnalysisLimits, AnalysisLimits.PARSER, ANALYSIS_LIMITS);
-        PARSER.declareObject(JobDetails::setSchedulerConfig, (p, c) -> SchedulerConfig.PARSER.apply(p, c).build(), SCHEDULER_CONFIG);
-        PARSER.declareObject(JobDetails::setDataDescription, DataDescription.PARSER, DATA_DESCRIPTION);
-        PARSER.declareObject(JobDetails::setModelSizeStats, ModelSizeStats.PARSER, MODEL_SIZE_STATS);
-        PARSER.declareObjectArray(JobDetails::setTransforms, TransformConfig.PARSER, TRANSFORMS);
-        PARSER.declareObject(JobDetails::setModelDebugConfig, ModelDebugConfig.PARSER, MODEL_DEBUG_CONFIG);
-        PARSER.declareObject(JobDetails::setCounts, DataCounts.PARSER, COUNTS);
-        PARSER.declareField(JobDetails::setIgnoreDowntime, (p, c) -> IgnoreDowntime.fromString(p.text()), IGNORE_DOWNTIME,
-                ValueType.STRING);
-        PARSER.declareLong(JobDetails::setRenormalizationWindowDays, RENORMALIZATION_WINDOW_DAYS);
-        PARSER.declareLong(JobDetails::setBackgroundPersistInterval, BACKGROUND_PERSIST_INTERVAL);
-        PARSER.declareLong(JobDetails::setResultsRetentionDays, RESULTS_RETENTION_DAYS);
-        PARSER.declareLong(JobDetails::setModelSnapshotRetentionDays, MODEL_SNAPSHOT_RETENTION_DAYS);
-        PARSER.declareField(JobDetails::setCustomSettings, (p, c) -> p.map(), CUSTOM_SETTINGS, ValueType.OBJECT);
-        PARSER.declareDouble(JobDetails::setAverageBucketProcessingTimeMs, AVERAGE_BUCKET_PROCESSING_TIME);
+        PARSER.declareObject(Builder::setAnalysisConfig, AnalysisConfig.PARSER, ANALYSIS_CONFIG);
+        PARSER.declareObject(Builder::setAnalysisLimits, AnalysisLimits.PARSER, ANALYSIS_LIMITS);
+        PARSER.declareObject(Builder::setSchedulerConfig, SchedulerConfig.PARSER, SCHEDULER_CONFIG);
+        PARSER.declareObject(Builder::setDataDescription, DataDescription.PARSER, DATA_DESCRIPTION);
+        PARSER.declareObject(Builder::setModelSizeStats, ModelSizeStats.PARSER, MODEL_SIZE_STATS);
+        PARSER.declareObjectArray(Builder::setTransforms, TransformConfig.PARSER, TRANSFORMS);
+        PARSER.declareObject(Builder::setModelDebugConfig, ModelDebugConfig.PARSER, MODEL_DEBUG_CONFIG);
+        PARSER.declareObject(Builder::setCounts, DataCounts.PARSER, COUNTS);
+        PARSER.declareField(Builder::setIgnoreDowntime, (p, c) -> IgnoreDowntime.fromString(p.text()), IGNORE_DOWNTIME, ValueType.STRING);
+        PARSER.declareLong(Builder::setTimeout, TIMEOUT);
+        PARSER.declareLong(Builder::setRenormalizationWindowDays, RENORMALIZATION_WINDOW_DAYS);
+        PARSER.declareLong(Builder::setBackgroundPersistInterval, BACKGROUND_PERSIST_INTERVAL);
+        PARSER.declareLong(Builder::setResultsRetentionDays, RESULTS_RETENTION_DAYS);
+        PARSER.declareLong(Builder::setModelSnapshotRetentionDays, MODEL_SNAPSHOT_RETENTION_DAYS);
+        PARSER.declareField(Builder::setCustomSettings, (p, c) -> p.map(), CUSTOM_SETTINGS, ValueType.OBJECT);
+        PARSER.declareDouble(Builder::setAverageBucketProcessingTimeMs, AVERAGE_BUCKET_PROCESSING_TIME);
+        PARSER.declareStringOrNull(Builder::setModelSnapshotId, MODEL_SNAPSHOT_ID);
     }
 
-    private String jobId;
-    private String description;
-
+    private final String jobId;
+    private final String description;
     // NORELEASE: Use Jodatime instead
-    private Date createTime;
-    private Date finishedTime;
-    private Date lastDataTime;
-
-    private long timeout;
-
-    private AnalysisConfig analysisConfig;
-    private AnalysisLimits analysisLimits;
-    private SchedulerConfig schedulerConfig;
-    private DataDescription dataDescription;
-    private ModelSizeStats modelSizeStats;
-    private List<TransformConfig> transforms;
-    private ModelDebugConfig modelDebugConfig;
-    private DataCounts counts;
-    private IgnoreDowntime ignoreDowntime;
-    private Long renormalizationWindowDays;
-    private Long backgroundPersistInterval;
-    private Long modelSnapshotRetentionDays;
-    private Long resultsRetentionDays;
-    private Map<String, Object> customSettings;
-    private Double averageBucketProcessingTimeMs;
-    private String modelSnapshotId;
-
-    private JobDetails() {
-    }
+    private final Date createTime;
+    private final Date finishedTime;
+    private final Date lastDataTime;
+    private final long timeout;
+    private final AnalysisConfig analysisConfig;
+    private final AnalysisLimits analysisLimits;
+    private final SchedulerConfig schedulerConfig;
+    private final DataDescription dataDescription;
+    private final ModelSizeStats modelSizeStats;
+    private final List<TransformConfig> transforms;
+    private final ModelDebugConfig modelDebugConfig;
+    private final DataCounts counts;
+    private final IgnoreDowntime ignoreDowntime;
+    private final Long renormalizationWindowDays;
+    private final Long backgroundPersistInterval;
+    private final Long modelSnapshotRetentionDays;
+    private final Long resultsRetentionDays;
+    private final Map<String, Object> customSettings;
+    private final Double averageBucketProcessingTimeMs;
+    private final String modelSnapshotId;
 
     public JobDetails(String jobId, String description, Date createTime, Date finishedTime,
             Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits, SchedulerConfig schedulerConfig,
             DataDescription dataDescription, ModelSizeStats modelSizeStats, List<TransformConfig> transforms,
             ModelDebugConfig modelDebugConfig, DataCounts counts, IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays,
             Long backgroundPersistInterval, Long modelSnapshotRetentionDays, Long resultsRetentionDays, Map<String, Object> customSettings,
-            Double averageBucketProcessingTimeMs) {
+            Double averageBucketProcessingTimeMs, String modelSnapshotId) {
         this.jobId = jobId;
         this.description = description;
         this.createTime = createTime;
@@ -200,18 +207,15 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         this.resultsRetentionDays = resultsRetentionDays;
         this.customSettings = customSettings;
         this.averageBucketProcessingTimeMs = averageBucketProcessingTimeMs;
+        this.modelSnapshotId = modelSnapshotId;
     }
 
     public JobDetails(StreamInput in) throws IOException {
         jobId = in.readString();
         description = in.readOptionalString();
         createTime = new Date(in.readVLong());
-        if (in.readBoolean()) {
-            finishedTime = new Date(in.readVLong());
-        }
-        if (in.readBoolean()) {
-            lastDataTime = new Date(in.readVLong());
-        }
+        finishedTime = in.readBoolean() ? new Date(in.readVLong()) : null;
+        lastDataTime = in.readBoolean() ? new Date(in.readVLong()) : null;
         timeout = in.readVLong();
         analysisConfig = new AnalysisConfig(in);
         analysisLimits = in.readOptionalWriteable(AnalysisLimits::new);
@@ -221,15 +225,14 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         transforms = in.readList(TransformConfig::new);
         modelDebugConfig = in.readOptionalWriteable(ModelDebugConfig::new);
         counts = in.readOptionalWriteable(DataCounts::new);
-        if (in.readBoolean()) {
-            ignoreDowntime = IgnoreDowntime.fromStream(in);
-        }
+        ignoreDowntime = in.readOptionalWriteable(IgnoreDowntime::fromStream);
         renormalizationWindowDays = in.readOptionalLong();
         backgroundPersistInterval = in.readOptionalLong();
         modelSnapshotRetentionDays = in.readOptionalLong();
         resultsRetentionDays = in.readOptionalLong();
         customSettings = in.readMap();
         averageBucketProcessingTimeMs = in.readOptionalDouble();
+        modelSnapshotId = in.readOptionalString();
     }
 
     @Override
@@ -248,18 +251,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     }
 
     /**
-     * Set the job's Id. In general this method should not be used as the Id
-     * does not change once set. This method is provided for the Jackson object
-     * mapper to de-serialise this class from Json.
-     *
-     * @param id
-     *            the job id
-     */
-    public void setId(String id) {
-        jobId = id;
-    }
-
-    /**
      * Return the Job Id. This name is preferred when serialising to the data
      * store.
      *
@@ -267,18 +258,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      */
     public String getJobId() {
         return jobId;
-    }
-
-    /**
-     * Set the job's Id. In general this method should not be used as the Id
-     * does not change once set. This method is provided for the Jackson object
-     * mapper to de-serialise this class from Json.
-     *
-     * @param jobId
-     *            the job id
-     */
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
     }
 
     /**
@@ -290,19 +269,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * Return the Job Status. Jobs are initialised to {@link JobStatus#CLOSED}
-     * when created and move into the @link JobStatus#RUNNING} state when
-     * processing data. Once data has been processed the status will be either
-     * {@link JobStatus#CLOSED} or {@link JobStatus#FAILED}
-     *
-     * @return The job's status
-     */
-
     /**
      * The Job creation time. This name is preferred when serialising to the
      * REST API.
@@ -311,10 +277,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      */
     public Date getCreateTime() {
         return createTime;
-    }
-
-    public void setCreateTime(Date time) {
-        createTime = time;
     }
 
     /**
@@ -327,10 +289,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         return createTime;
     }
 
-    public void setAtTimestamp(Date time) {
-        createTime = time;
-    }
-
     /**
      * The time the job was finished or <code>null</code> if not finished.
      *
@@ -338,10 +296,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      */
     public Date getFinishedTime() {
         return finishedTime;
-    }
-
-    public void setFinishedTime(Date finishedTime) {
-        this.finishedTime = finishedTime;
     }
 
     /**
@@ -354,10 +308,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         return lastDataTime;
     }
 
-    public void setLastDataTime(Date lastTime) {
-        lastDataTime = lastTime;
-    }
-
     /**
      * The job timeout setting in seconds. Jobs are retired if they do not
      * receive data for this period of time. The default is 600 seconds
@@ -366,10 +316,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      */
     public long getTimeout() {
         return timeout;
-    }
-
-    public void setTimeout(long timeout) {
-        this.timeout = timeout;
     }
 
     /**
@@ -381,10 +327,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         return analysisConfig;
     }
 
-    public void setAnalysisConfig(AnalysisConfig config) {
-        analysisConfig = config;
-    }
-
     /**
      * The analysis options object
      *
@@ -394,44 +336,16 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         return analysisLimits;
     }
 
-    public void setAnalysisLimits(AnalysisLimits analysisLimits) {
-        // TODO: remove once JobDetail is immutable
-        if (this.analysisLimits != null) {
-            long oldMemoryLimit = this.analysisLimits.getModelMemoryLimit();
-            long newMemoryLimit = analysisLimits.getModelMemoryLimit();
-            if (newMemoryLimit < oldMemoryLimit) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED,
-                                oldMemoryLimit, newMemoryLimit),
-                        ErrorCodes.INVALID_VALUE);
-            }
-        }
-
-        this.analysisLimits = analysisLimits;
-    }
-
     public IgnoreDowntime getIgnoreDowntime() {
         return ignoreDowntime;
-    }
-
-    public void setIgnoreDowntime(IgnoreDowntime ignoreDowntime) {
-        this.ignoreDowntime = ignoreDowntime;
     }
 
     public SchedulerConfig getSchedulerConfig() {
         return schedulerConfig;
     }
 
-    public void setSchedulerConfig(SchedulerConfig schedulerConfig) {
-        this.schedulerConfig = schedulerConfig;
-    }
-
     public ModelDebugConfig getModelDebugConfig() {
         return modelDebugConfig;
-    }
-
-    public void setModelDebugConfig(ModelDebugConfig modelDebugConfig) {
-        this.modelDebugConfig = modelDebugConfig;
     }
 
     /**
@@ -441,10 +355,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      */
     public ModelSizeStats getModelSizeStats() {
         return modelSizeStats;
-    }
-
-    public void setModelSizeStats(ModelSizeStats modelSizeStats) {
-        this.modelSizeStats = modelSizeStats;
     }
 
     /**
@@ -458,16 +368,8 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         return dataDescription;
     }
 
-    public void setDataDescription(DataDescription dd) {
-        dataDescription = dd;
-    }
-
     public List<TransformConfig> getTransforms() {
         return transforms;
-    }
-
-    public void setTransforms(List<TransformConfig> transforms) {
-        this.transforms = transforms;
     }
 
     /**
@@ -480,32 +382,12 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     }
 
     /**
-     * Processed records count
-     *
-     * @param counts
-     *            the counts {@code DataCounts}
-     */
-    public void setCounts(DataCounts counts) {
-        this.counts = counts;
-    }
-
-    /**
      * The duration of the renormalization window in days
      *
      * @return renormalization window in days
      */
     public Long getRenormalizationWindowDays() {
         return renormalizationWindowDays;
-    }
-
-    /**
-     * Set the renormalization window duration
-     *
-     * @param renormalizationWindowDays
-     *            the renormalization window in days
-     */
-    public void setRenormalizationWindowDays(Long renormalizationWindowDays) {
-        this.renormalizationWindowDays = renormalizationWindowDays;
     }
 
     /**
@@ -517,54 +399,24 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         return backgroundPersistInterval;
     }
 
-    /**
-     * Set the background persistence interval
-     *
-     * @param backgroundPersistInterval
-     *            the persistence interval in seconds
-     */
-    public void setBackgroundPersistInterval(Long backgroundPersistInterval) {
-        this.backgroundPersistInterval = backgroundPersistInterval;
-    }
-
     public Long getModelSnapshotRetentionDays() {
         return modelSnapshotRetentionDays;
-    }
-
-    public void setModelSnapshotRetentionDays(Long modelSnapshotRetentionDays) {
-        this.modelSnapshotRetentionDays = modelSnapshotRetentionDays;
     }
 
     public Long getResultsRetentionDays() {
         return resultsRetentionDays;
     }
 
-    public void setResultsRetentionDays(Long resultsRetentionDays) {
-        this.resultsRetentionDays = resultsRetentionDays;
-    }
-
     public Map<String, Object> getCustomSettings() {
         return customSettings;
-    }
-
-    public void setCustomSettings(Map<String, Object> customSettings) {
-        this.customSettings = customSettings;
     }
 
     public Double getAverageBucketProcessingTimeMs() {
         return averageBucketProcessingTimeMs;
     }
 
-    public void setAverageBucketProcessingTimeMs(Double value) {
-        averageBucketProcessingTimeMs = value;
-    }
-
     public String getModelSnapshotId() {
         return modelSnapshotId;
-    }
-
-    public void setModelSnapshotId(String modelSnapshotId) {
-        this.modelSnapshotId = modelSnapshotId;
     }
 
     /**
@@ -631,17 +483,14 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         out.writeList(transforms);
         out.writeOptionalWriteable(modelDebugConfig);
         out.writeOptionalWriteable(counts);
-        boolean hasIgnoreDowntime = ignoreDowntime != null;
-        out.writeBoolean(hasIgnoreDowntime);
-        if (hasIgnoreDowntime) {
-            ignoreDowntime.writeTo(out);
-        }
+        out.writeOptionalWriteable(ignoreDowntime);
         out.writeOptionalLong(renormalizationWindowDays);
         out.writeOptionalLong(backgroundPersistInterval);
         out.writeOptionalLong(modelSnapshotRetentionDays);
         out.writeOptionalLong(resultsRetentionDays);
         out.writeMap(customSettings);
         out.writeOptionalDouble(averageBucketProcessingTimeMs);
+        out.writeOptionalString(modelSnapshotId);
     }
 
     @Override
@@ -663,25 +512,27 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             builder.field(LAST_DATA_TIME.getPreferredName(), lastDataTime.getTime());
         }
         builder.field(TIMEOUT.getPreferredName(), timeout);
-        builder.field(ANALYSIS_CONFIG.getPreferredName(), analysisConfig);
+        builder.field(ANALYSIS_CONFIG.getPreferredName(), analysisConfig, params);
         if (analysisLimits != null) {
-            builder.field(ANALYSIS_LIMITS.getPreferredName(), analysisLimits);
+            builder.field(ANALYSIS_LIMITS.getPreferredName(), analysisLimits, params);
         }
         if (schedulerConfig != null) {
-            builder.field(SCHEDULER_CONFIG.getPreferredName(), schedulerConfig);
+            builder.field(SCHEDULER_CONFIG.getPreferredName(), schedulerConfig, params);
         }
         if (dataDescription != null) {
-            builder.field(DATA_DESCRIPTION.getPreferredName(), dataDescription);
+            builder.field(DATA_DESCRIPTION.getPreferredName(), dataDescription, params);
         }
         if (modelSizeStats != null) {
-            builder.field(MODEL_SIZE_STATS.getPreferredName(), modelSizeStats);
+            builder.field(MODEL_SIZE_STATS.getPreferredName(), modelSizeStats, params);
         }
-        builder.field(TRANSFORMS.getPreferredName(), transforms);
+        if (transforms != null) {
+            builder.field(TRANSFORMS.getPreferredName(), transforms);
+        }
         if (modelDebugConfig != null) {
-            builder.field(MODEL_DEBUG_CONFIG.getPreferredName(), modelDebugConfig);
+            builder.field(MODEL_DEBUG_CONFIG.getPreferredName(), modelDebugConfig, params);
         }
         if (counts != null) {
-            builder.field(COUNTS.getPreferredName(), counts);
+            builder.field(COUNTS.getPreferredName(), counts, params);
         }
         if (ignoreDowntime != null) {
             builder.field(IGNORE_DOWNTIME.getPreferredName(), ignoreDowntime);
@@ -703,6 +554,9 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         }
         if (averageBucketProcessingTimeMs != null) {
             builder.field(AVERAGE_BUCKET_PROCESSING_TIME.getPreferredName(), averageBucketProcessingTimeMs);
+        }
+        if (modelSnapshotId != null){
+            builder.field(MODEL_SNAPSHOT_ID.getPreferredName(), modelSnapshotId);
         }
         return builder;
     }
@@ -730,7 +584,8 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
                 && Objects.equals(this.backgroundPersistInterval, that.backgroundPersistInterval)
                 && Objects.equals(this.modelSnapshotRetentionDays, that.modelSnapshotRetentionDays)
                 && Objects.equals(this.resultsRetentionDays, that.resultsRetentionDays)
-                && Objects.equals(this.customSettings, that.customSettings) && Objects.equals(this.modelSnapshotId, that.modelSnapshotId);
+                && Objects.equals(this.customSettings, that.customSettings)
+                && Objects.equals(this.modelSnapshotId, that.modelSnapshotId);
     }
 
     @Override
@@ -754,6 +609,361 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             // So we have a stack trace logged somewhere
             return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
         }
+    }
+
+    public static class Builder {
+
+        /**
+         * Valid jobId characters. Note that '.' is allowed but not documented.
+         */
+        private static final Pattern VALID_JOB_ID_CHAR_PATTERN = Pattern.compile("[a-z0-9_\\-\\.]+");
+        public static final int MAX_JOB_ID_LENGTH = 64;
+        public static final long MIN_BACKGROUND_PERSIST_INTERVAL = 3600;
+        public static final long DEFAULT_TIMEOUT = 600;
+        private static final int MIN_SEQUENCE_LENGTH = 5;
+        private static final int HOSTNAME_ID_SEPARATORS_LENGTH = 2;
+        static final AtomicLong ID_SEQUENCE = new AtomicLong(); // package protected for testing
+        private static final DateTimeFormatter ID_DATEFORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss", Locale.ROOT);
+        private static final String HOSTNAME;
+
+        static {
+            String hostname = System.getenv("HOSTNAME");
+            if (hostname == null) {
+                hostname = System.getenv("COMPUTERNAME");
+            }
+            HOSTNAME = hostname != null ? hostname.toLowerCase(Locale.ROOT) : null;
+        }
+
+        private String id;
+        private String description;
+
+        private AnalysisConfig analysisConfig = new AnalysisConfig();
+        private AnalysisLimits analysisLimits;
+        private SchedulerConfig schedulerConfig;
+        private List<TransformConfig> transforms = new ArrayList<>();
+        private ModelSizeStats modelSizeStats;
+        private DataDescription dataDescription;
+        private Date createTime;
+        private Date finishedTime;
+        private Date lastDataTime;
+        private Long timeout = DEFAULT_TIMEOUT;
+        private ModelDebugConfig modelDebugConfig;
+        private Long renormalizationWindowDays;
+        private Long backgroundPersistInterval;
+        private Long modelSnapshotRetentionDays;
+        private Long resultsRetentionDays;
+        private DataCounts counts;
+        private IgnoreDowntime ignoreDowntime;
+        private Map<String, Object> customSettings;
+        private Double averageBucketProcessingTimeMs;
+        private String modelSnapshotId;
+
+        public Builder() {
+        }
+
+        public Builder(String id) {
+            this.id = id;
+        }
+
+        public Builder(JobDetails job) {
+            this.id = job.getId();
+            this.description = job.getDescription();
+            this.analysisConfig = job.getAnalysisConfig();
+            this.schedulerConfig = job.getSchedulerConfig();
+            this.transforms = job.getTransforms();
+            this.modelSizeStats = job.getModelSizeStats();
+            this.dataDescription = job.getDataDescription();
+            this.createTime = job.getCreateTime();
+            this.finishedTime = job.getFinishedTime();
+            this.lastDataTime = job.getLastDataTime();
+            this.timeout = job.getTimeout();
+            this.modelDebugConfig = job.getModelDebugConfig();
+            this.renormalizationWindowDays = job.getRenormalizationWindowDays();
+            this.backgroundPersistInterval = job.getBackgroundPersistInterval();
+            this.resultsRetentionDays = job.getResultsRetentionDays();
+            this.counts = job.getCounts();
+            this.ignoreDowntime = job.getIgnoreDowntime();
+            this.customSettings = job.getCustomSettings();
+            this.averageBucketProcessingTimeMs = job.getAverageBucketProcessingTimeMs();
+            this.modelSnapshotId = job.getModelSnapshotId();
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setCustomSettings(Map<String, Object> customSettings) {
+            this.customSettings = customSettings;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public void setAnalysisConfig(AnalysisConfig config) {
+            analysisConfig = config;
+        }
+
+        public void setAnalysisLimits(AnalysisLimits analysisLimits) {
+            if (this.analysisLimits != null) {
+                long oldMemoryLimit = this.analysisLimits.getModelMemoryLimit();
+                long newMemoryLimit = analysisLimits.getModelMemoryLimit();
+                if (newMemoryLimit < oldMemoryLimit) {
+                    throw ExceptionsHelper.invalidRequestException(
+                            Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED,
+                                    oldMemoryLimit, newMemoryLimit), ErrorCodes.INVALID_VALUE);
+                }
+            }
+            this.analysisLimits = analysisLimits;
+        }
+
+        public void setSchedulerConfig(SchedulerConfig.Builder config) {
+            schedulerConfig = config.build();
+        }
+
+        public void setTimeout(Long timeout) {
+            this.timeout = timeout;
+        }
+
+        public void setCreateTime(Date createTime) {
+            this.createTime = createTime;
+        }
+
+        public void setFinishedTime(Date finishedTime) {
+            this.finishedTime = finishedTime;
+        }
+
+        public void setLastDataTime(Date lastDataTime) {
+            this.lastDataTime = lastDataTime;
+        }
+
+        public void setTransforms(List<TransformConfig> transforms) {
+            this.transforms = transforms;
+        }
+
+        public void setModelSizeStats(ModelSizeStats modelSizeStats) {
+            this.modelSizeStats = modelSizeStats;
+        }
+
+        public void setDataDescription(DataDescription description) {
+            dataDescription = description;
+        }
+
+        public void setModelDebugConfig(ModelDebugConfig modelDebugConfig) {
+            this.modelDebugConfig = modelDebugConfig;
+        }
+
+        public void setBackgroundPersistInterval(Long backgroundPersistInterval) {
+            this.backgroundPersistInterval = backgroundPersistInterval;
+        }
+
+        public void setRenormalizationWindowDays(Long renormalizationWindowDays) {
+            this.renormalizationWindowDays = renormalizationWindowDays;
+        }
+
+        public void setModelSnapshotRetentionDays(Long modelSnapshotRetentionDays) {
+            this.modelSnapshotRetentionDays = modelSnapshotRetentionDays;
+        }
+
+        public void setResultsRetentionDays(Long resultsRetentionDays) {
+            this.resultsRetentionDays = resultsRetentionDays;
+        }
+
+        public void setIgnoreDowntime(IgnoreDowntime ignoreDowntime) {
+            this.ignoreDowntime = ignoreDowntime;
+        }
+
+        public void setCounts(DataCounts counts) {
+            this.counts = counts;
+        }
+
+        public void setAverageBucketProcessingTimeMs(Double averageBucketProcessingTimeMs) {
+            this.averageBucketProcessingTimeMs = averageBucketProcessingTimeMs;
+        }
+
+        public void setModelSnapshotId(String modelSnapshotId) {
+            this.modelSnapshotId = modelSnapshotId;
+        }
+
+        public JobDetails build() {
+            return build(false);
+        }
+
+        public JobDetails build(boolean fromApi) {
+            if (id.length() > MAX_JOB_ID_LENGTH) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
+                        ErrorCodes.JOB_ID_TOO_LONG);
+            }
+            if (!VALID_JOB_ID_CHAR_PATTERN.matcher(id).matches()) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS),
+                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
+            }
+            if (analysisConfig == null) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
+                        ErrorCodes.INCOMPLETE_CONFIGURATION);
+            }
+            // Move to AnalysisConfig.Builder once created:
+            AnalysisConfigVerifier.verify(analysisConfig);
+
+            if (schedulerConfig != null) {
+                if (analysisConfig.getBucketSpan() == null) {
+                    throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN),
+                            ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN);
+                }
+                if (schedulerConfig.getDataSource() == SchedulerConfig.DataSource.ELASTICSEARCH) {
+                    if (analysisConfig.getLatency() != null && analysisConfig.getLatency() > 0) {
+                        throw ExceptionsHelper.invalidRequestException(
+                                Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY),
+                                ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
+                    }
+                    if (schedulerConfig.getAggregationsOrAggs() != null
+                            && !SchedulerConfig.DOC_COUNT.equals(analysisConfig.getSummaryCountFieldName())) {
+                        throw ExceptionsHelper.invalidRequestException(
+                                Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
+                                        SchedulerConfig.DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT),
+                                ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD);
+                    }
+                    if (dataDescription == null || dataDescription.getFormat() != DataDescription.DataFormat.ELASTICSEARCH) {
+                        throw ExceptionsHelper.invalidRequestException(
+                                Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH),
+                                ErrorCodes.SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH);
+                    }
+                }
+            }
+
+            if (dataDescription != null) {
+                // Move to DataDescription.Builder once created:
+                DataDescriptionVerifier.verify(dataDescription);
+            }
+            if (transforms != null && transforms.isEmpty() == false) {
+                TransformConfigsVerifier.verify(transforms);
+                checkTransformOutputIsUsed();
+            } else {
+                if (dataDescription != null && dataDescription.getFormat() == DataDescription.DataFormat.SINGLE_LINE) {
+                    String msg = Messages.getMessage(
+                            Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
+                            DataDescription.DataFormat.SINGLE_LINE);
+
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
+                }
+            }
+
+
+            checkValueNotLessThan(0, "timeout", timeout);
+            checkValueNotLessThan(0, "renormalizationWindowDays", renormalizationWindowDays);
+            checkValueNotLessThan(MIN_BACKGROUND_PERSIST_INTERVAL, "backgroundPersistInterval", backgroundPersistInterval);
+            checkValueNotLessThan(0, "modelSnapshotRetentionDays", modelSnapshotRetentionDays);
+            checkValueNotLessThan(0, "resultsRetentionDays", resultsRetentionDays);
+
+            String id;
+            Date createTime;
+            Date finishedTime;
+            Date lastDataTime;
+            DataCounts counts;
+            ModelSizeStats modelSizeStats;
+            Double averageBucketProcessingTimeMs;
+            String modelSnapshotId;
+            if (fromApi) {
+                id = this.id == null ? generateJobId(HOSTNAME): this.id;
+                createTime = this.createTime == null ? new Date() : this.createTime;
+                finishedTime = null;
+                lastDataTime = null;
+                counts = new DataCounts();
+                modelSizeStats = null;
+                averageBucketProcessingTimeMs = null;
+                modelSnapshotId = null;
+            } else {
+                id = this.id;
+                createTime = this.createTime;
+                finishedTime = this.finishedTime;
+                lastDataTime = this.lastDataTime;
+                counts = this.counts;
+                modelSizeStats = this.modelSizeStats;
+                averageBucketProcessingTimeMs = this.averageBucketProcessingTimeMs;
+                modelSnapshotId = this.modelSnapshotId;
+            }
+            return new JobDetails(
+                    id, description, createTime, finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
+                    schedulerConfig, dataDescription, modelSizeStats, transforms, modelDebugConfig, counts,
+                    ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
+                    resultsRetentionDays, customSettings, averageBucketProcessingTimeMs, modelSnapshotId
+            );
+        }
+
+        /**
+         * If hostname is null the job Id is a concatenation of the date in
+         * 'yyyyMMddHHmmss' format and a sequence number that is a minimum of
+         * 5 digits wide left padded with zeros<br>
+         * If hostname is not null the Id is the concatenation of the date in
+         * 'yyyyMMddHHmmss' format the hostname and a sequence number that is a
+         * minimum of 5 digits wide left padded with zeros. If hostname is long
+         * and it is truncated so the job Id does not exceed the maximum length<br>
+         * <p>
+         * e.g. the first Id created 23rd November 2013 at 11am
+         * '20131125110000-serverA-00001'
+         *
+         * @return The new unique job Id
+         */
+        static String generateJobId(String hostName) {
+            String dateStr = ID_DATEFORMAT.format(LocalDateTime.now(ZoneId.systemDefault()));
+            long sequence = ID_SEQUENCE.incrementAndGet();
+            if (hostName == null) {
+                return String.format(Locale.ROOT, "%s-%05d", dateStr, sequence);
+            } else {
+                int formattedSequenceLen = Math.max(String.valueOf(sequence).length(), MIN_SEQUENCE_LENGTH);
+                int hostnameMaxLen = MAX_JOB_ID_LENGTH - dateStr.length() - formattedSequenceLen - HOSTNAME_ID_SEPARATORS_LENGTH;
+                String trimmedHostName = hostName.substring(0, Math.min(hostName.length(), hostnameMaxLen));
+                return String.format(Locale.ROOT, "%s-%s-%05d", dateStr, trimmedHostName, sequence);
+            }
+        }
+
+        private static void checkValueNotLessThan(long minVal, String name, Long value) {
+            if (value != null && value < minVal) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, name, minVal, value), ErrorCodes.INVALID_VALUE);
+            }
+        }
+
+        /**
+         * Transform outputs should be used in either the date field,
+         * as an analysis field or input to another transform
+         */
+        private boolean checkTransformOutputIsUsed() {
+            Set<String> usedFields = new TransformConfigs(transforms).inputFieldNames();
+            usedFields.addAll(analysisConfig.analysisFields());
+            String summaryCountFieldName = analysisConfig.getSummaryCountFieldName();
+            boolean isSummarised = !Strings.isNullOrEmpty(summaryCountFieldName);
+            if (isSummarised) {
+                usedFields.remove(summaryCountFieldName);
+            }
+
+            String timeField = dataDescription == null ? DataDescription.DEFAULT_TIME_FIELD : dataDescription.getTimeField();
+            usedFields.add(timeField);
+
+            for (TransformConfig tc : transforms) {
+                // if the type has no default outputs it doesn't need an output
+                boolean usesAnOutput = tc.type().defaultOutputNames().isEmpty()
+                        || tc.getOutputs().stream().anyMatch(outputName -> usedFields.contains(outputName));
+
+                if (isSummarised && tc.getOutputs().contains(summaryCountFieldName)) {
+                    String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME, tc.type().prettyName());
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+                }
+
+                if (!usesAnOutput) {
+                    String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED,
+                            tc.type().prettyName());
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
+                }
+            }
+
+            return false;
+        }
+
     }
 
 }

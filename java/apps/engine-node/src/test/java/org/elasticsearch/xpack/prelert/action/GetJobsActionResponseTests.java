@@ -15,13 +15,16 @@
 package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.xpack.prelert.action.GetJobsAction.Response;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.randomValidJobId;
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.createAnalysisConfig;
 
 public class GetJobsActionResponseTests extends AbstractStreamableTestCase<GetJobsAction.Response> {
 
@@ -30,9 +33,7 @@ public class GetJobsActionResponseTests extends AbstractStreamableTestCase<GetJo
         int listSize = randomInt(10);
         List<JobDetails> hits = new ArrayList<>(listSize);
         for (int j = 0; j < listSize; j++) {
-            JobConfiguration jobBuilder = new JobConfiguration();
-            jobBuilder.setId(randomAsciiOfLength(10));
-            hits.add(jobBuilder.build());
+            hits.add(buildJobBuilder(randomValidJobId()).build());
         }
         QueryPage<JobDetails> buckets = new QueryPage<>(hits, listSize);
         return new Response(buckets);

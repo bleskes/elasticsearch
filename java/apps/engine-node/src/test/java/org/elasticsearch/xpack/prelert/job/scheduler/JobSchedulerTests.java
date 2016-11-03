@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.job.scheduler;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
@@ -57,6 +56,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.doAnswer;
@@ -407,7 +407,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLatestRecordTimestampIsAfterSchedulerStartTime() {
-        JobDetails job = createScheduledJob();
+        JobDetails.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1450000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(1455000000000L));
@@ -417,7 +417,7 @@ public class JobSchedulerTests extends ESTestCase {
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(newCounts(67, 1450000000000L)));
         jobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        jobScheduler.start(job, allocation);
+        jobScheduler.start(job.build(), allocation);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
         assertEquals(1, dataExtractor.nCleared);
@@ -433,7 +433,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLastFinalBucketEndAfterLatestRecordTimestampAndAfterSchedulerStartTime() {
-        JobDetails job = createScheduledJob();
+        JobDetails.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1450000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(1455000000000L));
@@ -444,7 +444,7 @@ public class JobSchedulerTests extends ESTestCase {
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(newCounts(67, 1455000000000L)));
         jobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        jobScheduler.start(job, allocation);
+        jobScheduler.start(job.build(), allocation);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
         assertEquals(1, dataExtractor.nCleared);
@@ -460,7 +460,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLatestRecordTimestampIsBeforeSchedulerStartTime() {
-        JobDetails job = createScheduledJob();
+        JobDetails.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1455000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(1450000000000L));
@@ -470,7 +470,7 @@ public class JobSchedulerTests extends ESTestCase {
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(newCounts(67, 1455000000000L)));
         jobScheduler = createJobScheduler(dataExtractor, dataProcessor);
 
-        jobScheduler.start(job, allocation);
+        jobScheduler.start(job.build(), allocation);
         waitUntilSchedulerStoppedIsAudited();
         assertEquals(JobSchedulerStatus.STOPPED, currentStatus);
         assertEquals(1, dataExtractor.nCleared);
@@ -547,7 +547,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     private JobDetails createScheduledJob() {
-        return new JobConfiguration(JOB_ID).build();
+        return buildJobBuilder(JOB_ID).build();
     }
 
     private Allocation createAllocation(JobSchedulerStatus status, long startTimeMillis, Long endTimeMillis) {

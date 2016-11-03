@@ -49,7 +49,7 @@ public class PrelertMetadata implements MetaData.Custom {
             Builder::new);
 
     static {
-        PRELERT_METADATA_PARSER.declareObjectArray(Builder::putJobs, JobDetails.PARSER, JOBS_FIELD);
+        PRELERT_METADATA_PARSER.declareObjectArray(Builder::putJobs, (p, c) -> JobDetails.PARSER.apply(p, c).build(), JOBS_FIELD);
         PRELERT_METADATA_PARSER.declareObjectArray(Builder::putAllocations, Allocation.PARSER, ALLOCATIONS_FIELD);
     }
 

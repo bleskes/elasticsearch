@@ -4,7 +4,7 @@
       xpack.prelert.put_job:
         body:  >
           {
-            "id":"farequote",
+            "jobId":"farequote",
             "description":"Analysis of response time by airline",
             "analysisConfig" : {
                 "bucketSpan":3600,

@@ -25,12 +25,13 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -40,9 +41,9 @@ public class PrelertMetadataTests extends ESTestCase {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
 
         // NORELEASE: randomize jobs once it is moved over to ES' xcontent:
-        builder.putJob(new JobConfiguration("job1").build(), false);
-        builder.putJob(new JobConfiguration("job2").build(), false);
-        builder.putJob(new JobConfiguration("job3").build(), false);
+        builder.putJob(buildJobBuilder("job1").build(), false);
+        builder.putJob(buildJobBuilder("job2").build(), false);
+        builder.putJob(buildJobBuilder("job3").build(), false);
 
         builder.putAllocation("job1", "node1");
         builder.putAllocation("job2", "node1");
@@ -61,9 +62,9 @@ public class PrelertMetadataTests extends ESTestCase {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
 
         // NORELEASE: randomize jobs once it is moved over to ES' xcontent:
-        builder.putJob(new JobConfiguration("job1").build(), false);
-        builder.putJob(new JobConfiguration("job2").build(), false);
-        builder.putJob(new JobConfiguration("job3").build(), false);
+        builder.putJob(buildJobBuilder("job1").build(), false);
+        builder.putJob(buildJobBuilder("job2").build(), false);
+        builder.putJob(buildJobBuilder("job3").build(), false);
 
         builder.putAllocation("job1", "node1");
         builder.putAllocation("job2", "node1");
@@ -86,15 +87,15 @@ public class PrelertMetadataTests extends ESTestCase {
 
     public void testPutJob() {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
-        builder.putJob(new JobConfiguration("1").build(), false);
-        builder.putJob(new JobConfiguration("2").build(), false);
+        builder.putJob(buildJobBuilder("1").build(), false);
+        builder.putJob(buildJobBuilder("2").build(), false);
 
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
-                () -> builder.putJob(new JobConfiguration("2").build(), false));
+                () -> builder.putJob(buildJobBuilder("2").build(), false));
         assertThat(e.status(), equalTo(RestStatus.BAD_REQUEST));
         assertThat(e.getHeader("errorCode").get(0), equalTo("10110"));
 
-        builder.putJob(new JobConfiguration("2").build(), true);
+        builder.putJob(buildJobBuilder("2").build(), true);
 
         PrelertMetadata result = builder.build();
         assertThat(result.getJobs().size(), equalTo(2));

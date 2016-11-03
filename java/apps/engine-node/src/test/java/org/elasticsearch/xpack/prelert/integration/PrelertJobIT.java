@@ -166,7 +166,7 @@ public class PrelertJobIT extends ESRestTestCase {
     }
 
     private Response createFarequoteJob(String jobId) throws Exception {
-        String job = "{\n" + "    \"id\":\"" + jobId + "\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
+        String job = "{\n" + "    \"jobId\":\"" + jobId + "\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
                 + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
                 + "        \"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"

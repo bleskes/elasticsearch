@@ -137,7 +137,7 @@ public class ScheduledJobIT extends ESRestTestCase {
     }
 
     private Response createNonScheduledJob() throws Exception {
-        String job = "{\n" + "    \"id\":\"non-scheduled\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
+        String job = "{\n" + "    \"jobId\":\"non-scheduled\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
                 + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
                 + "        \"detectors\" :[{\"function\":\"mean\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
@@ -147,7 +147,7 @@ public class ScheduledJobIT extends ESRestTestCase {
     }
 
     private Response createScheduledJob() throws Exception {
-        String job = "{\n" + "    \"id\":\"scheduled\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
+        String job = "{\n" + "    \"jobId\":\"scheduled\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
                 + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
                 + "        \"detectors\" :[{\"function\":\"mean\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"format\":\"ELASTICSEARCH\",\n"

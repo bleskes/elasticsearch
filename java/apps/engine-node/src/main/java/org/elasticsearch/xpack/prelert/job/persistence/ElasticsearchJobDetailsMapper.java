@@ -30,56 +30,46 @@ import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 import java.io.IOException;
 import java.util.Objects;
 
-class ElasticsearchJobDetailsMapper
-{
+class ElasticsearchJobDetailsMapper {
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchJobDetailsMapper.class);
 
     private final Client client;
     private final ParseFieldMatcher parseFieldMatcher;
 
-    public ElasticsearchJobDetailsMapper(Client client, ParseFieldMatcher parseFieldMatcher)
-    {
+    public ElasticsearchJobDetailsMapper(Client client, ParseFieldMatcher parseFieldMatcher) {
         this.client = Objects.requireNonNull(client);
         this.parseFieldMatcher = Objects.requireNonNull(parseFieldMatcher);
     }
 
     /**
      * Maps an Elasticsearch source map to a {@link JobDetails} object
+     *
      * @param source The source of an Elasticsearch search response
      * @return the {@code JobDetails} object
      */
-    public JobDetails map(BytesReference source)
-    {
-        XContentParser parser;
-        try {
-            parser = XContentFactory.xContent(source).createParser(source);
+    public JobDetails map(BytesReference source) {
+        try (XContentParser parser = XContentFactory.xContent(source).createParser(source)) {
+            JobDetails.Builder builder = JobDetails.PARSER.apply(parser, () -> parseFieldMatcher);
+            ElasticsearchJobId elasticJobId = new ElasticsearchJobId(builder.getId());
+            addModelSizeStats(builder, elasticJobId);
+            addBucketProcessingTime(builder, elasticJobId);
+            return builder.build();
         } catch (IOException e) {
             throw new ElasticsearchParseException("failed to parser job", e);
         }
-        JobDetails job = JobDetails.PARSER.apply(parser, () -> parseFieldMatcher);
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
-
-        addModelSizeStats(job, elasticJobId);
-        addBucketProcessingTime(job, elasticJobId);
-
-        return job;
     }
 
-    private void addModelSizeStats(JobDetails job, ElasticsearchJobId elasticJobId)
-    {
+    private void addModelSizeStats(JobDetails.Builder job, ElasticsearchJobId elasticJobId) {
         // Pull out the modelSizeStats document, and add this to the JobDetails
         LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
                 " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
         GetResponse modelSizeStatsResponse = client.prepareGet(
                 elasticJobId.getIndex(), ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()).get();
 
-        if (!modelSizeStatsResponse.isExists())
-        {
-            String msg = "No memory usage details for job with id " + job.getId();
+        if (!modelSizeStatsResponse.isExists()) {
+            String msg = "No memory usage details for job with id " + elasticJobId.getId();
             LOGGER.warn(msg);
-        }
-        else
-        {
+        } else {
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
             // and replace using the API 'timestamp' key.
             Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
@@ -96,8 +86,7 @@ class ElasticsearchJobDetailsMapper
         }
     }
 
-    private void addBucketProcessingTime(JobDetails job, ElasticsearchJobId elasticJobId)
-    {
+    private void addBucketProcessingTime(JobDetails.Builder job, ElasticsearchJobId elasticJobId) {
         // Pull out the modelSizeStats document, and add this to the JobDetails
         LOGGER.trace("ES API CALL: get ID " + ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE +
                 " type " + ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS + " from index " + elasticJobId.getIndex());
@@ -105,18 +94,14 @@ class ElasticsearchJobDetailsMapper
                 elasticJobId.getIndex(), ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE,
                 ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS).get();
 
-        if (!procTimeResponse.isExists())
-        {
-            String msg = "No average bucket processing time details for job with id " + job.getId();
+        if (!procTimeResponse.isExists()) {
+            String msg = "No average bucket processing time details for job with id " + elasticJobId.getId();
             LOGGER.warn(msg);
-        }
-        else
-        {
+        } else {
             Object averageTime = procTimeResponse.getSource()
                     .get(ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS);
-            if (averageTime instanceof Double)
-            {
-                job.setAverageBucketProcessingTimeMs((Double)averageTime);
+            if (averageTime instanceof Double) {
+                job.setAverageBucketProcessingTimeMs((Double) averageTime);
             }
         }
     }

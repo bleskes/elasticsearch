@@ -32,7 +32,6 @@ import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
@@ -55,6 +54,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -280,18 +280,17 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testCreateJob() throws InterruptedException, ExecutionException {
-        JobDetails job = new JobConfiguration().build();
-        job.setJobId("marscapone");
+        JobDetails.Builder job = buildJobBuilder("marscapone");
         job.setDescription("This is a very cheesy job");
         AnalysisLimits limits = new AnalysisLimits(9878695309134L, null);
         job.setAnalysisLimits(limits);
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).createIndexRequest("prelertresults-" + job.getJobId());
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).createIndexRequest("prelertresults-" + job.getId());
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         AtomicReference<Boolean> resultHolder = new AtomicReference<>();
-        provider.createJob(job, new ActionListener<Boolean>() {
+        provider.createJob(job.build(), new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 resultHolder.set(aBoolean);

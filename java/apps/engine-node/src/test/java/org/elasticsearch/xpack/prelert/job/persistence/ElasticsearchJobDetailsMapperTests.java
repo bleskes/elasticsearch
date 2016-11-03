@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +31,6 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
@@ -66,8 +66,7 @@ public class ElasticsearchJobDetailsMapperTests extends ESTestCase {
         Date now = new Date();
         modelSizeStats.setTimestamp(now);
 
-        JobDetails originalJob = new JobConfiguration().build();
-        originalJob.setId("foo");
+        JobDetails originalJob = buildJobBuilder("foo").build();
 
         BytesReference source = originalJob.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).bytes();
         BytesReference modelSizeStatsSource = modelSizeStats.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).bytes();
@@ -105,8 +104,7 @@ public class ElasticsearchJobDetailsMapperTests extends ESTestCase {
     }
 
     public void testMap_GivenModelSizeStatsDoesNotExist() throws Exception {
-        JobDetails originalJob = new JobConfiguration().build();
-        originalJob.setId("foo");
+        JobDetails originalJob = buildJobBuilder("foo").build();
 
         BytesReference source = originalJob.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).bytes();
 

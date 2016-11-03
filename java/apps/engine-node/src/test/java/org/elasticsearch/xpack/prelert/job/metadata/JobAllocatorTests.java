@@ -26,7 +26,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
+import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -34,6 +34,7 @@ import static org.elasticsearch.mock.orig.Mockito.never;
 import static org.elasticsearch.mock.orig.Mockito.times;
 import static org.elasticsearch.mock.orig.Mockito.verify;
 import static org.elasticsearch.mock.orig.Mockito.when;
+import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
 import static org.mockito.Matchers.any;
 
 public class JobAllocatorTests extends ESTestCase {
@@ -59,7 +60,7 @@ public class JobAllocatorTests extends ESTestCase {
         assertFalse("No jobs, so nothing to allocate", jobAllocator.shouldAllocate(cs));
 
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder(cs.metaData().custom(PrelertMetadata.TYPE));
-        pmBuilder.putJob((new JobConfiguration("_job_id").build()), false);
+        pmBuilder.putJob((buildJobBuilder("_job_id").build()), false);
         cs = ClusterState.builder(cs).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .build();
@@ -75,7 +76,7 @@ public class JobAllocatorTests extends ESTestCase {
 
     public void testAllocateJobs() {
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
-        pmBuilder.putJob(new JobConfiguration("_job_id").build(), false);
+        pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()
@@ -147,7 +148,7 @@ public class JobAllocatorTests extends ESTestCase {
 
         // add an allocated job
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
-        pmBuilder.putJob(new JobConfiguration("_id").build(), false);
+        pmBuilder.putJob(buildJobBuilder("_id").build(), false);
         pmBuilder.putAllocation("_id", "_id");
         cs = ClusterState.builder(new ClusterName("_name"))
                 .nodes(DiscoveryNodes.builder()
@@ -163,7 +164,7 @@ public class JobAllocatorTests extends ESTestCase {
 
         // make job not allocated
         pmBuilder = new PrelertMetadata.Builder();
-        pmBuilder.putJob(new JobConfiguration("_job_id").build(), false);
+        pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
         cs = ClusterState.builder(new ClusterName("_name"))
                 .nodes(DiscoveryNodes.builder()
                         .add(new DiscoveryNode("_id", new LocalTransportAddress("_id"), Version.CURRENT))

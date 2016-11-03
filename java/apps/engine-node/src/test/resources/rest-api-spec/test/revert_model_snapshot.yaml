@@ -3,7 +3,7 @@ setup:
       xpack.prelert.put_job:
         body:  >
           {
-            "id":"foo",
+            "jobId":"foo",
             "description":"Analysis of response time by airline",
             "analysisConfig" : {
                 "bucketSpan":3600,

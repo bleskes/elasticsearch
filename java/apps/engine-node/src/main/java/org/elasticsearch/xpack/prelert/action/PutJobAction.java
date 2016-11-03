@@ -35,10 +35,10 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobConfiguration;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 
@@ -67,22 +67,22 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
     public static class Request extends AcknowledgedRequest<Request> implements ToXContent {
 
         public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier matcherSupplier) {
-            JobConfiguration jobConfiguration = JobConfiguration.PARSER.apply(parser, matcherSupplier);
-            return new Request(jobConfiguration);
+            JobDetails job = JobDetails.PARSER.apply(parser, matcherSupplier).build(true);
+            return new Request(job);
         }
 
-        private JobConfiguration jobConfiguration;
+        private JobDetails job;
         private boolean overwrite;
 
-        public Request(JobConfiguration jobConfiguration) {
-            this.jobConfiguration = jobConfiguration;
+        public Request(JobDetails job) {
+            this.job = job;
         }
 
         Request() {
         }
 
-        public JobConfiguration getJobConfiguration() {
-            return jobConfiguration;
+        public JobDetails getJob() {
+            return job;
         }
 
         public boolean isOverwrite() {
@@ -101,20 +101,20 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            jobConfiguration = new JobConfiguration(in);
+            job = new JobDetails(in);
             overwrite = in.readBoolean();
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            jobConfiguration.writeTo(out);
+            job.writeTo(out);
             out.writeBoolean(overwrite);
         }
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            jobConfiguration.toXContent(builder, params);
+            job.toXContent(builder, params);
             return builder;
         }
 
@@ -124,12 +124,26 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
             if (o == null || getClass() != o.getClass()) return false;
             Request request = (Request) o;
             return overwrite == request.overwrite &&
-                    Objects.equals(jobConfiguration, request.jobConfiguration);
+                    Objects.equals(job, request.job);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobConfiguration, overwrite);
+            return Objects.hash(job, overwrite);
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override
+        public final String toString() {
+            try {
+                XContentBuilder builder = XContentFactory.jsonBuilder();
+                builder.prettyPrint();
+                toXContent(builder, EMPTY_PARAMS);
+                return builder.string();
+            } catch (Exception e) {
+                // So we have a stack trace logged somewhere
+                return "{ \"error\" : \"" + org.elasticsearch.ExceptionsHelper.detailedMessage(e) + "\"}";
+            }
         }
     }
 
@@ -142,36 +156,36 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
 
     public static class Response extends AcknowledgedResponse implements ToXContent {
 
-        private JobDetails jobDetails;
+        private JobDetails job;
 
-        public Response(JobDetails jobDetails) {
+        public Response(JobDetails job) {
             super(true);
-            this.jobDetails = jobDetails;
+            this.job = job;
         }
 
         Response() {
         }
 
         public JobDetails getResponse() {
-            return jobDetails;
+            return job;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            jobDetails = new JobDetails(in);
+            job = new JobDetails(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            jobDetails.writeTo(out);
+            job.writeTo(out);
         }
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             // Don't serialize acknowledged because current api directly serializes the job details
-            jobDetails.doXContentBody(builder, params);
+            job.doXContentBody(builder, params);
             return builder;
         }
 
@@ -180,12 +194,12 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Response response = (Response) o;
-            return Objects.equals(jobDetails, response.jobDetails);
+            return Objects.equals(job, response.job);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobDetails);
+            return Objects.hash(job);
         }
     }
 
