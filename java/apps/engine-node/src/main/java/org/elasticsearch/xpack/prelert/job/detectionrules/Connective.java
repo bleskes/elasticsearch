@@ -14,8 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
 import java.io.IOException;
 import java.util.Locale;
 
@@ -44,7 +42,6 @@ public enum Connective implements Writeable {
      *            String representation
      * @return The connective type
      */
-    @JsonCreator
     public static Connective fromString(String value) {
         return Connective.valueOf(value.toUpperCase(Locale.ROOT));
     }

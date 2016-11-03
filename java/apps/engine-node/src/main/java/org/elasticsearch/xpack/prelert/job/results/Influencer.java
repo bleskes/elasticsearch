@@ -25,9 +25,6 @@ import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.IOException;
 import java.util.Date;
@@ -84,8 +81,7 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     public Influencer() {
     }
 
-    @JsonCreator
-    public Influencer(@JsonProperty("influencerFieldName") String fieldName, @JsonProperty("influencerFieldValue") String fieldValue) {
+    public Influencer(String fieldName, String fieldValue) {
         influenceField = fieldName;
         influenceValue = fieldValue;
     }
@@ -141,12 +137,10 @@ public class Influencer extends ToXContentToBytes implements Writeable {
      * Data store ID of this record. May be null for records that have not been
      * read from the data store.
      */
-    @JsonIgnore
     public String getId() {
         return id;
     }
 
-    @JsonIgnore
     public void setId(String id) {
         this.id = id;
     }
@@ -206,7 +200,6 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         return isInterim;
     }
 
-    @JsonProperty("isInterim")
     public void setInterim(boolean value) {
         isInterim = value;
     }

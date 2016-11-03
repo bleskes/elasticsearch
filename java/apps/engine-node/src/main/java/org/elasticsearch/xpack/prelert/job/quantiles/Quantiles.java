@@ -23,8 +23,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import java.io.IOException;
 import java.util.Date;
@@ -33,7 +31,6 @@ import java.util.Objects;
 /**
  * Quantiles Result POJO
  */
-@JsonInclude(Include.NON_NULL)
 public class Quantiles extends ToXContentToBytes implements Writeable
 {
     public static final String QUANTILES_ID = "hierarchical";

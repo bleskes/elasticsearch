@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -32,7 +31,6 @@ public enum JobStatus implements Writeable {
 
     RUNNING, CLOSING, CLOSED, FAILED, PAUSING, PAUSED;
 
-    @JsonCreator
     public static JobStatus fromString(String name) {
         return valueOf(name.trim().toUpperCase(Locale.ROOT));
     }

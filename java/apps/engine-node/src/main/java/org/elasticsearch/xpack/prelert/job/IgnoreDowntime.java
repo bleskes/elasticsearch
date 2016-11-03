@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -42,7 +41,6 @@ public enum IgnoreDowntime implements Writeable {
      * @param value A String that should match one of the enum values
      * @return the matching enum value
      */
-    @JsonCreator
     public static IgnoreDowntime fromString(String value) {
         return valueOf(value.trim().toUpperCase(Locale.ROOT));
     }

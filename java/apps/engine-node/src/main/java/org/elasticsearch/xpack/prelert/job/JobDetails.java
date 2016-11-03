@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
 import org.elasticsearch.cluster.AbstractDiffable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -53,7 +49,6 @@ import java.util.TreeSet;
  * If the job was created to read data from a list of files FileUrls will be a
  * non-empty list else the expects data to be streamed to it.
  */
-@JsonInclude(Include.NON_NULL)
 public class JobDetails extends AbstractDiffable<JobDetails> implements Writeable, ToXContent {
 
     public static final JobDetails PROTO = new JobDetails();
@@ -248,7 +243,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      *
      * @return The job Id string
      */
-    @JsonView(JsonViews.RestApiView.class)
     public String getId() {
         return jobId;
     }
@@ -271,7 +265,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      *
      * @return The job Id string
      */
-    @JsonView(JsonViews.DatastoreView.class)
     public String getJobId() {
         return jobId;
     }
@@ -316,7 +309,6 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      *
      * @return The date the job was created
      */
-    @JsonView(JsonViews.RestApiView.class)
     public Date getCreateTime() {
         return createTime;
     }
@@ -331,13 +323,10 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
      *
      * @return The date the job was created
      */
-    @JsonView(JsonViews.DatastoreView.class)
-    @JsonProperty("@timestamp")
     public Date getAtTimestamp() {
         return createTime;
     }
 
-    @JsonProperty("@timestamp")
     public void setAtTimestamp(Date time) {
         createTime = time;
     }

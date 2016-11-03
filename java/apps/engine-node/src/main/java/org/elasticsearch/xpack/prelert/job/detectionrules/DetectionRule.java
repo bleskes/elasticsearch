@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,7 +22,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -41,7 +36,6 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
-@JsonInclude(Include.NON_NULL)
 public class DetectionRule extends ToXContentToBytes implements Writeable {
     public static final ParseField DETECTION_RULE_FIELD = new ParseField("detection_rule");
     public static final ParseField RULE_ACTION_FIELD = new ParseField("rule_action");
@@ -57,7 +51,7 @@ public class DetectionRule extends ToXContentToBytes implements Writeable {
                 List<RuleCondition> rules = (List<RuleCondition>) arr[3];
                 return new DetectionRule((String) arr[0], (String) arr[1], (Connective) arr[2], rules);
             }
-    );
+            );
 
     static {
         PARSER.declareString(ConstructingObjectParser.optionalConstructorArg(), TARGET_FIELD_NAME_FIELD);
@@ -115,11 +109,8 @@ public class DetectionRule extends ToXContentToBytes implements Writeable {
         return builder;
     }
 
-    @JsonCreator
-    public DetectionRule(@JsonProperty("targetFieldName") String targetFieldName,
-                         @JsonProperty("targetFieldValue") String targetFieldValue,
-                         @JsonProperty(value = "conditionsConnective") Connective conditionsConnective,
-                         @JsonProperty("ruleConditions") List<RuleCondition> ruleConditions) {
+    public DetectionRule(String targetFieldName, String targetFieldValue, Connective conditionsConnective,
+            List<RuleCondition> ruleConditions) {
         if (targetFieldValue != null && targetFieldName == null) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_MISSING_TARGET_FIELD_NAME, targetFieldValue);
             throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_MISSING_FIELD);

@@ -28,8 +28,6 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -54,7 +52,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 // NORELEASE: this is now a builder only for when a users creates a new job, but it should be for other cases too,
 // for example when a job gets updated. This will also allow us to reuse serialization logic between JobDetails and this class.
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class JobConfiguration extends ToXContentToBytes implements Writeable {
 
     public static final long DEFAULT_TIMEOUT = 600;

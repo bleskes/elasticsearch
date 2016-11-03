@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -49,7 +45,6 @@ import java.util.Objects;
  * serialistion - hence the annotations and the private setter
  */
 
-@JsonInclude(Include.NON_NULL)
 public class DataCounts extends ToXContentToBytes implements Writeable {
 
     public static final String BUCKET_COUNT_STR = "bucketCount";
@@ -220,7 +215,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      *
      * @return Total number of input records read {@code long}
      */
-    @JsonProperty
     public long getInputRecordCount() {
         return processedRecordCount + outOfOrderTimeStampCount
                 + invalidDateCount + excludedRecordCount;
@@ -230,7 +224,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      * Only present to keep jackson serialisation happy.
      * This property should not be deserialised
      */
-    @JsonIgnore
     private void setInputRecordCount(long count) {
         throw new IllegalStateException();
     }

@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -40,7 +36,6 @@ import java.util.Objects;
  * <p>
  * If an option has not been set it shouldn't be used so the default value is picked up instead.
  */
-@JsonInclude(Include.NON_NULL)
 public class AnalysisLimits extends ToXContentToBytes implements Writeable {
     /**
      * Serialisation field names
@@ -69,9 +64,7 @@ public class AnalysisLimits extends ToXContentToBytes implements Writeable {
      */
     private final Long categorizationExamplesLimit;
 
-    @JsonCreator
-    public AnalysisLimits(@JsonProperty("modelMemoryLimit") long modelMemoryLimit,
-            @JsonProperty("categorizationExamplesLimit") Long categorizationExamplesLimit) {
+    public AnalysisLimits(long modelMemoryLimit, Long categorizationExamplesLimit) {
         if (modelMemoryLimit < 0) {
             // All negative numbers mean "no limit"
             this.modelMemoryLimit = -1;

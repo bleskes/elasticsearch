@@ -29,9 +29,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class ListDocument extends ToXContentToBytes implements Writeable {
     public static final ParseField TYPE = new ParseField("list");
     public static final ParseField ID = new ParseField("id");
@@ -49,8 +46,7 @@ public class ListDocument extends ToXContentToBytes implements Writeable {
     private final String id;
     private final List<String> items;
 
-    @JsonCreator
-    public ListDocument(@JsonProperty(value = "id", required = true) String id, @JsonProperty("items") List<String> items) {
+    public ListDocument(String id, List<String> items) {
         this.id = Objects.requireNonNull(id, ID.getPreferredName() + " must not be null");
         this.items = Objects.requireNonNull(items, ITEMS.getPreferredName() + " must not be null");
     }

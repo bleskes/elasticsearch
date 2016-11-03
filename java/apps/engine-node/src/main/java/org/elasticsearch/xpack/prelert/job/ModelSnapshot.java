@@ -14,9 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -38,7 +35,6 @@ import java.util.Objects;
 /**
  * ModelSnapshot Result POJO
  */
-@JsonInclude(Include.NON_NULL)
 public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     /**
      * Field Names

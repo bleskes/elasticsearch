@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.results;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -35,7 +31,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_NULL)
 public class BucketInfluencer extends ToXContentToBytes implements Writeable {
     /**
      * Elasticsearch type
@@ -193,12 +188,10 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         rawAnomalyScore = score;
     }
 
-    @JsonProperty("isInterim")
     public void setIsInterim(boolean isInterim) {
         this.isInterim = isInterim;
     }
 
-    @JsonProperty("isInterim")
     public boolean isInterim() {
         return isInterim;
     }

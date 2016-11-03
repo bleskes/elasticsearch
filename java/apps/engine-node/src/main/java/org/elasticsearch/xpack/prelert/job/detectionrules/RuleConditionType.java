@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -46,7 +45,6 @@ public enum RuleConditionType implements Writeable {
      *            String representation
      * @return The condition type
      */
-    @JsonCreator
     public static RuleConditionType forString(String value) {
         return RuleConditionType.valueOf(value.toUpperCase(Locale.ROOT));
     }

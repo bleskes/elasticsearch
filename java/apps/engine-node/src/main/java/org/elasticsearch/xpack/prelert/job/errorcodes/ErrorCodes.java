@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.errorcodes;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
-
 /**
  * Static error codes returned in response to internal errors in the API.
  * The codes are grouped in the following way:
@@ -633,7 +629,6 @@ public enum ErrorCodes
         valueString = Long.toString(code);
     }
 
-    @JsonValue
     public long getValue()
     {
         return errorCode;
@@ -644,8 +639,7 @@ public enum ErrorCodes
         return valueString;
     }
 
-    @JsonCreator
-    public static ErrorCodes fromCode(@JsonProperty("errorCode") long errorCode)
+    public static ErrorCodes fromCode(long errorCode)
     {
         for (ErrorCodes e : ErrorCodes.values())
         {

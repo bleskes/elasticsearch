@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
@@ -51,7 +47,6 @@ import java.util.stream.Collectors;
  * <code>fieldname</code> must be set and only one of <code>byFieldName</code>
  * and <code>overFieldName</code> should be set.
  */
-@JsonInclude(Include.NON_NULL)
 public class Detector extends ToXContentToBytes implements Writeable {
     public static final ParseField DETECTOR_FIELD = new ParseField("detector");
     public static final ParseField DETECTOR_DESCRIPTION_FIELD = new ParseField("detectorDescription");
@@ -164,7 +159,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     TIME_OF_DAY,
                     TIME_OF_WEEK,
                     LAT_LONG
-            ));
+                    ));
 
     /**
      * The set of functions that do not require a field, by field or over field
@@ -179,7 +174,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     HIGH_NON_ZERO_COUNT, HIGH_NZC,
                     TIME_OF_DAY,
                     TIME_OF_WEEK
-            ));
+                    ));
 
     /**
      * The set of functions that require a fieldname
@@ -209,7 +204,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     LOW_POPULATION_VARIANCE,
                     HIGH_POPULATION_VARIANCE,
                     LAT_LONG
-            ));
+                    ));
 
     /**
      * The set of functions that require a by fieldname
@@ -218,7 +213,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
             new HashSet<>(Arrays.asList(
                     RARE,
                     FREQ_RARE
-            ));
+                    ));
 
     /**
      * The set of functions that require a over fieldname
@@ -226,7 +221,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
     public static final Set<String> OVER_FIELD_NAME_FUNCTIONS =
             new HashSet<>(Arrays.asList(
                     FREQ_RARE
-            ));
+                    ));
 
     /**
      * The set of functions that cannot have a by fieldname
@@ -242,7 +237,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     NON_ZERO_COUNT, NZC,
                     LOW_NON_ZERO_COUNT, LOW_NZC,
                     HIGH_NON_ZERO_COUNT, HIGH_NZC
-            ));
+                    ));
 
     /**
      * The set of functions that must not be used with overlapping buckets
@@ -251,7 +246,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
             new HashSet<>(Arrays.asList(
                     RARE,
                     FREQ_RARE
-            ));
+                    ));
 
     /**
      * The set of functions that should not be used with overlapping buckets
@@ -263,7 +258,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
                     MAX,
                     TIME_OF_DAY,
                     TIME_OF_WEEK
-            ));
+                    ));
 
     /**
      * field names cannot contain any of these characters
@@ -338,12 +333,8 @@ public class Detector extends ToXContentToBytes implements Writeable {
         return builder;
     }
 
-    @JsonCreator
-    private Detector(@JsonProperty("detectorDescription") String detectorDescription, @JsonProperty("function") String function,
-                     @JsonProperty("field_name") String fieldName, @JsonProperty("byFieldName") String byFieldName,
-                     @JsonProperty("overFieldName") String overFieldName, @JsonProperty("partitionFieldName") String partitionFieldName,
-                     @JsonProperty("useNull") boolean useNull, @JsonProperty("excludeFrequent") String excludeFrequent,
-                     @JsonProperty("detectorRules") List<DetectionRule> detectorRules) {
+    private Detector(String detectorDescription, String function, String fieldName, String byFieldName, String overFieldName,
+            String partitionFieldName, boolean useNull, String excludeFrequent, List<DetectionRule> detectorRules) {
         this.function = function;
         this.fieldName = fieldName;
         this.byFieldName = byFieldName;

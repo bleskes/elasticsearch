@@ -14,11 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
@@ -40,7 +35,6 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_NULL)
 public class RuleCondition extends ToXContentToBytes implements Writeable {
     public static final ParseField CONDITION_TYPE_FIELD = new ParseField("conditionType");
     public static final ParseField RULE_CONDITION_FIELD = new ParseField("ruleCondition");
@@ -88,10 +82,7 @@ public class RuleCondition extends ToXContentToBytes implements Writeable {
         out.writeOptionalString(valueList);
     }
 
-    @JsonCreator
-    public RuleCondition(@JsonProperty("conditionType") RuleConditionType conditionType, @JsonProperty("fieldName") String fieldName,
-            @JsonProperty("fieldValue") String fieldValue, @JsonProperty("condition") Condition condition,
-            @JsonProperty("valueList") String valueList) {
+    public RuleCondition(RuleConditionType conditionType, String fieldName, String fieldValue, Condition condition, String valueList) {
         this.conditionType = conditionType;
         this.fieldName = fieldName;
         this.fieldValue = fieldValue;

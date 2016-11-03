@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.job.audit;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -42,7 +41,6 @@ public enum Level implements Writeable {
      *            String representation
      * @return The condition type
      */
-    @JsonCreator
     public static Level forString(String value) {
         return Level.valueOf(value.toUpperCase(Locale.ROOT));
     }

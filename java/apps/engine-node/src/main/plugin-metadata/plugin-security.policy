@@ -18,10 +18,6 @@
  */
 
 grant {
-  // needed because of Jackson (should be removed later)
-  permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
-  permission java.lang.RuntimePermission "accessDeclaredMembers";
-
   // needed for Windows named pipes
   permission java.io.FilePermission "\\\\.\\pipe\\*", "read,write";
 

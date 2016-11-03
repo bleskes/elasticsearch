@@ -14,11 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
@@ -56,7 +51,6 @@ import java.util.TreeMap;
  * used around integral types and booleans so they can take <code>null</code>
  * values.
  */
-@JsonInclude(Include.NON_NULL)
 public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
     /**
@@ -188,16 +182,10 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     private final Boolean retrieveWholeSource;
     private final Integer scrollSize;
 
-    @JsonCreator
-    public SchedulerConfig(@JsonProperty("dataSource") DataSource dataSource, @JsonProperty("queryDelay") Long queryDelay,
-            @JsonProperty("frequency") Long frequency, @JsonProperty("filePath") String filePath,
-            @JsonProperty("tailFile") Boolean tailFile, @JsonProperty("username") String username,
-            @JsonProperty("password") String password, @JsonProperty("encryptedPassword") String encryptedPassword,
-            @JsonProperty("baseUrl") String baseUrl, @JsonProperty("indexes") List<String> indexes,
-            @JsonProperty("types") List<String> types, @JsonProperty("query") Map<String, Object> query,
-            @JsonProperty("aggregations") Map<String, Object> aggregations, @JsonProperty("aggs") Map<String, Object> aggs,
-            @JsonProperty("script_fields") Map<String, Object> scriptFields,
-            @JsonProperty("retrieveWholeSource") Boolean retrieveWholeSource, @JsonProperty("scrollSize") Integer scrollSize) {
+    public SchedulerConfig(DataSource dataSource, Long queryDelay, Long frequency, String filePath, Boolean tailFile, String username,
+            String password, String encryptedPassword, String baseUrl, List<String> indexes, List<String> types, Map<String, Object> query,
+            Map<String, Object> aggregations, Map<String, Object> aggs, Map<String, Object> scriptFields, Boolean retrieveWholeSource,
+            Integer scrollSize) {
         this.dataSource = dataSource;
         this.queryDelay = queryDelay;
         this.frequency = frequency;
@@ -402,7 +390,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
      *
      * @return The script fields, or <code>null</code> if not set.
      */
-    @JsonProperty("script_fields")
     public Map<String, Object> getScriptFields() {
         return this.scriptFields;
     }
@@ -439,7 +426,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
      * @return The aggregations (whether initially specified in aggregations or
      *         aggs), or <code>null</code> if neither are set.
      */
-    @JsonIgnore
     public Map<String, Object> getAggregationsOrAggs() {
         return (this.aggregations != null) ? this.aggregations : this.aggs;
     }
@@ -631,7 +617,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
          *            String representation
          * @return The data source
          */
-        @JsonCreator
         public static DataSource readFromString(String value) {
             String valueUpperCase = value.toUpperCase(Locale.ROOT);
             return DataSource.valueOf(valueUpperCase);
@@ -651,7 +636,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         }
     }
 
-    @JsonInclude(Include.NON_NULL)
     public static class Builder {
 
         private static final int DEFAULT_SCROLL_SIZE = 1000;
@@ -687,8 +671,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
         // NORELEASE: figure out what the required fields are and made part of
         // the only public constructor
-        @JsonCreator
-        public Builder(@JsonProperty("dataSource") DataSource dataSource) {
+        public Builder(DataSource dataSource) {
             this.dataSource = Objects.requireNonNull(dataSource);
             switch (dataSource) {
             case FILE:
@@ -794,7 +777,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             this.aggs = Objects.requireNonNull(aggs);
         }
 
-        @JsonProperty("script_fields")
         public void setScriptFields(Map<String, Object> scriptFields) {
             // NORELEASE: make use of Collections.unmodifiableMap(...)
             this.scriptFields = Objects.requireNonNull(scriptFields);
@@ -875,7 +857,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
          * @return The aggregations (whether initially specified in aggregations
          *         or aggs), or <code>null</code> if neither are set.
          */
-        @JsonIgnore
         public Map<String, Object> getAggregationsOrAggs() {
             return (this.aggregations != null) ? this.aggregations : this.aggs;
         }

@@ -26,13 +26,6 @@ import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonFormat.Feature;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,8 +37,6 @@ import java.util.Objects;
  * Uses the object wrappers Boolean and Double so <code>null</code> values
  * can be returned if the members have not been set.
  */
-@JsonInclude(Include.NON_NULL)
-@JsonIgnoreProperties({"id", "parent"})
 public class AnomalyRecord extends ToXContentToBytes implements Writeable
 {
     /**
@@ -470,37 +461,31 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
         this.functionDescription = functionDescription.intern();
     }
 
-    @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public List<Double> getTypical()
     {
         return typical;
     }
 
-    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setTypical(List<Double> typical)
     {
         this.typical = typical;
     }
 
-    @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public List<Double> getActual()
     {
         return actual;
     }
 
-    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setActual(List<Double> actual)
     {
         this.actual = actual;
     }
 
-    @JsonProperty("isInterim")
     public boolean isInterim()
     {
         return isInterim;
     }
 
-    @JsonProperty("isInterim")
     public void setInterim(boolean isInterim)
     {
         this.isInterim = isInterim;

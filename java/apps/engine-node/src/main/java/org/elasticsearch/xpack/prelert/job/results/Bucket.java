@@ -26,11 +26,6 @@ import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,9 +40,6 @@ import java.util.stream.Collectors;
 /**
  * Bucket Result POJO
  */
-@JsonIgnoreProperties({ "epoch", "normalisable", "id", "perPartitionMaxProbability"
-/* , "partitionScores" */ })
-@JsonInclude(Include.NON_NULL)
 public class Bucket extends ToXContentToBytes implements Writeable {
     /*
      * Field Names
@@ -280,12 +272,10 @@ public class Bucket extends ToXContentToBytes implements Writeable {
         eventCount = value;
     }
 
-    @JsonProperty("isInterim")
     public boolean isInterim() {
         return isInterim;
     }
 
-    @JsonProperty("isInterim")
     public void setInterim(boolean isInterim) {
         this.isInterim = isInterim;
     }

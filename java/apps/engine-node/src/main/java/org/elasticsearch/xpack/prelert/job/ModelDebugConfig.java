@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -35,7 +31,6 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_NULL)
 public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
     /**
      * Enum of the acceptable output destinations.
@@ -62,7 +57,6 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
          *            String representation
          * @return The output destination
          */
-        @JsonCreator
         public static DebugDestination forString(String value) {
             String valueUpperCase = value.toUpperCase(Locale.ROOT);
             return DebugDestination.valueOf(valueUpperCase);
@@ -112,9 +106,7 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
         this(DebugDestination.FILE, boundsPercentile, terms);
     }
 
-    @JsonCreator
-    public ModelDebugConfig(@JsonProperty("writeTo") DebugDestination writeTo, @JsonProperty("boundsPercentile") double boundsPercentile,
-                            @JsonProperty("terms") String terms) {
+    public ModelDebugConfig(DebugDestination writeTo, double boundsPercentile, String terms) {
         if (boundsPercentile < 0.0 || boundsPercentile > MAX_PERCENTILE) {
             String msg = Messages.getMessage(
                     Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE);

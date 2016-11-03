@@ -14,11 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.results;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonFormat.Feature;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -35,7 +30,6 @@ import java.util.Objects;
  * Anomaly Cause POJO.
  * Used as a nested level inside population anomaly records.
  */
-@JsonInclude(Include.NON_NULL)
 public class AnomalyCause extends ToXContentToBytes implements Writeable
 {
     public static final ParseField ANOMALY_CAUSE = new ParseField("anomalyCause");
@@ -284,25 +278,21 @@ public class AnomalyCause extends ToXContentToBytes implements Writeable
         this.functionDescription = functionDescription.intern();
     }
 
-    @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public List<Double> getTypical()
     {
         return typical;
     }
 
-    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setTypical(List<Double> typical)
     {
         this.typical = typical;
     }
 
-    @JsonFormat(with = Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
     public List<Double> getActual()
     {
         return actual;
     }
 
-    @JsonFormat(with = Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
     public void setActual(List<Double> actual)
     {
         this.actual = actual;

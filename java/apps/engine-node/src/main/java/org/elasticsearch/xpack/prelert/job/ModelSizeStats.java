@@ -14,8 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -35,7 +33,6 @@ import java.util.Objects;
 /**
  * Provide access to the C++ model memory usage numbers for the Java process.
  */
-@JsonIgnoreProperties({ "modelSizeStatsId" })
 public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     /**
      * Field Names

@@ -23,9 +23,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -49,8 +46,7 @@ public class TransformConfigs extends ToXContentToBytes implements Writeable {
 
     private List<TransformConfig> transforms;
 
-    @JsonCreator
-    public TransformConfigs(@JsonProperty("transforms") List<TransformConfig> transforms) {
+    public TransformConfigs(List<TransformConfig> transforms) {
         this.transforms = Objects.requireNonNull(transforms);
     }
 

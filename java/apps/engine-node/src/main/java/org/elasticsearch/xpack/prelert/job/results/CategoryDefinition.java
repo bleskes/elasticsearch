@@ -22,8 +22,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,7 +31,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
-@JsonInclude(Include.NON_NULL)
 public class CategoryDefinition extends ToXContentToBytes implements Writeable {
 
     public static final ParseField TYPE = new ParseField("categoryDefinition");

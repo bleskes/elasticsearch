@@ -24,11 +24,6 @@ import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +32,6 @@ import java.util.Objects;
 /**
  * Represents an API data transform
  */
-@JsonInclude(Include.NON_NULL)
 // NORELEASE: to be replaced by ingest (https://github.com/elastic/prelert-legacy/issues/39)
 public class TransformConfig extends ToXContentToBytes implements Writeable {
     // Serialisation strings
@@ -68,8 +62,7 @@ public class TransformConfig extends ToXContentToBytes implements Writeable {
     // lazily initialized:
     private transient TransformType lazyType;
 
-    @JsonCreator
-    public TransformConfig(@JsonProperty("transform") String type) {
+    public TransformConfig(String type) {
         this.type = type;
         lazyType = TransformType.fromString(type);
         try {

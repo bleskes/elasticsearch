@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.results;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -39,8 +35,6 @@ import java.util.Objects;
  * reserved words that are likely to clash with fields in the input data (due to
  * the restrictions on Elasticsearch mappings).
  */
-@JsonIgnoreProperties({"id"})
-@JsonInclude(Include.NON_NULL)
 public class ModelDebugOutput extends ToXContentToBytes implements Writeable
 {
     public static final ParseField TYPE = new ParseField("modelDebugOutput");

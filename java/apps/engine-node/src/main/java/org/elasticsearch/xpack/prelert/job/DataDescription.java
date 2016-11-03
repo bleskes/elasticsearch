@@ -14,11 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
@@ -46,8 +41,6 @@ import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
  * delineated formats is {@value #DEFAULT_QUOTE_CHAR} but any other character can be
  * used.
  */
-@JsonIgnoreProperties({"transformTime", "epochMs"})
-@JsonInclude(Include.NON_NULL)
 public class DataDescription extends ToXContentToBytes implements Writeable {
     /**
      * Enum of the acceptable data formats.
@@ -80,7 +73,6 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
          * @param value String representation
          * @return The data format
          */
-        @JsonCreator
         public static DataFormat forString(String value) {
             String valueUpperCase = value.toUpperCase(Locale.ROOT);
             return DEPRECATED_DELINEATED.equals(valueUpperCase) ? DELIMITED : DataFormat

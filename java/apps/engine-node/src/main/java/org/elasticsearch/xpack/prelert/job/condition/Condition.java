@@ -30,8 +30,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -80,8 +78,7 @@ public class Condition extends ToXContentToBytes implements Writeable {
         out.writeOptionalString(filterValue);
     }
 
-    @JsonCreator
-    public Condition(@JsonProperty(value = "operator") Operator op, @JsonProperty(value = "value") String filterValue) {
+    public Condition(Operator op, String filterValue) {
         if (filterValue == null) {
             throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NULL),
                     ErrorCodes.CONDITION_INVALID_ARGUMENT);

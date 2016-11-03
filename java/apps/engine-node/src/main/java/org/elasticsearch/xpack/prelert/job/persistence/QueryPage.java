@@ -22,9 +22,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +33,6 @@ import java.util.Objects;
  * not be equal to the actual length of the {@linkplain #hits()} list if skip
  * &amp; take or some cursor was used in the database query.
  */
-@JsonPropertyOrder({"hitCount", "hits"})
 public final class QueryPage<T extends ToXContent & Writeable> extends ToXContentToBytes implements Writeable {
 
     public static final ParseField HITS = new ParseField("hits");
@@ -75,12 +71,10 @@ public final class QueryPage<T extends ToXContent & Writeable> extends ToXConten
         return builder;
     }
 
-    @JsonGetter("hits")
     public List<T> hits() {
         return hits;
     }
 
-    @JsonGetter("hitCount")
     public long hitCount() {
         return hitCount;
     }

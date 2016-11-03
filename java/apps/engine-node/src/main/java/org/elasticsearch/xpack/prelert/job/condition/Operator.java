@@ -26,7 +26,6 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -101,7 +100,6 @@ public enum Operator implements Writeable {
         return true;
     }
 
-    @JsonCreator
     public static Operator fromString(String name) {
         Set<Operator> all = EnumSet.allOf(Operator.class);
 

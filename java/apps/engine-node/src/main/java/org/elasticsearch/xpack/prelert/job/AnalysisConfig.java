@@ -23,10 +23,6 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +48,6 @@ import java.util.stream.Collectors;
  * Object wrappers are used around integral types &amp; booleans so they can take
  * <code>null</code> values.
  */
-@JsonInclude(Include.NON_NULL)
 public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     /**
      * Serialisation names
@@ -156,7 +151,6 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         this.bucketSpan = bucketSpan;
     }
 
-    @JsonIgnore
     public long getBucketSpanOrDefault() {
         return bucketSpan == null ? DEFAULT_BUCKET_SPAN : bucketSpan;
     }

@@ -14,9 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.alert;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 
@@ -36,7 +33,6 @@ import java.util.List;
  * <li>Alert Type see {@linkplain AlertType} the default is {@linkplain AlertType#BUCKET}
  * </ol>
  */
-@JsonInclude(Include.NON_NULL)
 public class Alert {
     public static final String TYPE = "alert";
 
@@ -132,12 +128,10 @@ public class Alert {
         this.alertType = value;
     }
 
-    @JsonProperty("isInterim")
     public boolean isInterim() {
         return isInterim;
     }
 
-    @JsonProperty("isInterim")
     public void setInterim(boolean value) {
         this.isInterim = value;
     }
