@@ -177,8 +177,8 @@ public class PrelertJobIT extends ESRestTestCase {
 
     public void testGetBucketResults() throws Exception {
         Map<String, String> params = new HashMap<>();
-        params.put("start", "2016-06-01T00:00:00Z"); // inclusive
-        params.put("end", "2016-06-04T00:00:00Z"); // exclusive
+        params.put("start", "1200"); // inclusive
+        params.put("end", "1400"); // exclusive
 
         ResponseException e = expectThrows(ResponseException.class,
                 () -> client().performRequest("get", "/engine/v2/results/1/buckets", params));
@@ -186,31 +186,31 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(e.getMessage(), containsString("No known job with id '1'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
 
-        addBucketResult("1", "2016-06-01T00:00:00Z");
-        addBucketResult("1", "2016-06-02T00:00:00Z");
-        addBucketResult("1", "2016-06-03T00:00:00Z");
+        addBucketResult("1", "1234");
+        addBucketResult("1", "1235");
+        addBucketResult("1", "1236");
         Response response = client().performRequest("get", "/engine/v2/results/1/buckets", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"hitCount\":3"));
 
-        params.put("end", "2016-06-02T00:00:00Z");
+        params.put("end", "1235");
         response = client().performRequest("get", "/engine/v2/results/1/buckets", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"hitCount\":1"));
 
-        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/2/bucket/2016-06-01T00:00:00Z"));
+        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/2/bucket/1234"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '2'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
 
-        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/1/bucket/2015-06-01T00:00:00Z"));
+        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/1/bucket/1"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, equalTo("{\"exists\":false,\"type\":\"bucket\"}"));
 
-        response = client().performRequest("get", "/engine/v2/results/1/bucket/2016-06-01T00:00:00Z");
+        response = client().performRequest("get", "/engine/v2/results/1/bucket/1234");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, not(isEmptyString()));

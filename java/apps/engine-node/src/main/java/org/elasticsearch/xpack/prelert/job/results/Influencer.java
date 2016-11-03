@@ -22,6 +22,8 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -57,7 +59,14 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         PARSER.declareDouble(Influencer::setAnomalyScore, ANOMALY_SCORE);
         PARSER.declareDouble(Influencer::setInitialAnomalyScore, INITIAL_ANOMALY_SCORE);
         PARSER.declareBoolean(Influencer::setInterim, Bucket.IS_INTERIM);
-        PARSER.declareField(Influencer::setTimestamp, p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
+        PARSER.declareField(Influencer::setTimestamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP.getPreferredName() + "]");
+        }, TIMESTAMP, ValueType.VALUE);
     }
 
     private String id;

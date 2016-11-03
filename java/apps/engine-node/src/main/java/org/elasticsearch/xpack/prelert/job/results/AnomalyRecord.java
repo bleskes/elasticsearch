@@ -22,6 +22,10 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Feature;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -97,9 +101,14 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
         PARSER.declareLong(AnomalyRecord::setBucketSpan, BUCKET_SPAN);
         PARSER.declareInt(AnomalyRecord::setDetectorIndex, DETECTOR_INDEX);
         PARSER.declareBoolean(AnomalyRecord::setInterim, IS_INTERIM);
-        PARSER.declareLong((record, millis) -> {
-            record.setTimestamp(new Date(millis));
-        }, TIMESTAMP);
+        PARSER.declareField(AnomalyRecord::setTimestamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP.getPreferredName() + "]");
+        }, TIMESTAMP, ValueType.VALUE);
         PARSER.declareString(AnomalyRecord::setByFieldName, BY_FIELD_NAME);
         PARSER.declareString(AnomalyRecord::setByFieldValue, BY_FIELD_VALUE);
         PARSER.declareString(AnomalyRecord::setCorrelatedByFieldValue, CORRELATED_BY_FIELD_VALUE);

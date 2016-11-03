@@ -17,19 +17,16 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-
-import static org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider.doPrivilegedCall;
 
 abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocumentsIterator<T> {
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchBatchedDocumentsIterator.class);
@@ -39,17 +36,18 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
 
     private final Client client;
     private final String index;
-    private final ObjectMapper objectMapper;
     private final ResultsFilterBuilder filterBuilder;
     private volatile long count;
     private volatile long totalHits;
     private volatile String scrollId;
     private volatile boolean isScrollInitialised;
+    protected ParseFieldMatcher parseFieldMatcher;
 
-    public ElasticsearchBatchedDocumentsIterator(Client client, String index, ObjectMapper objectMapper) {
+    public ElasticsearchBatchedDocumentsIterator(Client client, String index, ParseFieldMatcher parseFieldMatcher) {
+        this.parseFieldMatcher = parseFieldMatcher;
         this.client = Objects.requireNonNull(client);
         this.index = Objects.requireNonNull(index);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.parseFieldMatcher = Objects.requireNonNull(parseFieldMatcher);
         totalHits = 0;
         count = 0;
         filterBuilder = new ResultsFilterBuilder();
@@ -101,7 +99,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
 
         SearchHit[] hits = searchResponse.getHits().getHits();
         for (SearchHit hit : hits) {
-            T mapped = doPrivilegedCall(() -> map(objectMapper, hit));
+            T mapped = map(hit);
             if (mapped != null) {
                 results.add(mapped);
             }
@@ -118,12 +116,9 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
 
     /**
      * Maps the search hit to the document type
-     *
-     * @param objectMapper
-     *            the object mapper
      * @param hit
      *            the search hit
      * @return The mapped document or {@code null} if the mapping failed
      */
-    protected abstract T map(ObjectMapper objectMapper, SearchHit hit);
+    protected abstract T map(SearchHit hit);
 }

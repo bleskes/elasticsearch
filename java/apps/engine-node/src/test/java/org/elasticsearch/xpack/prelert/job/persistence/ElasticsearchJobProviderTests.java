@@ -21,7 +21,9 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.NoNodeAvailableException;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.node.Node;
@@ -96,7 +98,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         ESTestCase.expectThrows(IndexNotFoundException.class, () -> provider.getQuantiles(JOB_ID));
     }
 
-    public void testGetQuantiles_GivenNoQuantilesForJob() throws InterruptedException, ExecutionException {
+    public void testGetQuantiles_GivenNoQuantilesForJob() throws Exception {
         GetResponse getResponse = createGetResponse(false, null);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
@@ -110,8 +112,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertFalse(quantiles.isPresent());
     }
 
-    public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws InterruptedException, ExecutionException {
+    public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
+        source.put(Quantiles.TIMESTAMP.getPreferredName(), 0L);
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "state");
         GetResponse getResponse = createGetResponse(true, source);
 
@@ -127,9 +130,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals("state", quantiles.get().getQuantileState());
     }
 
-    public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws InterruptedException, ExecutionException {
+    public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
-        source.put(Quantiles.TIMESTAMP.getPreferredName(), new Date(0L));
+        source.put(Quantiles.TIMESTAMP.getPreferredName(), new Date(0L).getTime());
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "");
         GetResponse getResponse = createGetResponse(true, source);
 
@@ -200,7 +203,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         clientBuilder.verifyIndexCreated(index);
     }
 
-    public void testCheckJobExists() throws InterruptedException, ExecutionException {
+    public void testCheckJobExists() throws Exception {
         GetResponse getResponse = createGetResponse(true, null);
         String jobId = "jobThing";
 
@@ -217,7 +220,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         }
     }
 
-    public void testCheckJobExists_GivenInvalidId() throws InterruptedException, ExecutionException {
+    public void testCheckJobExists_GivenInvalidId() throws Exception {
         GetResponse getResponse = createGetResponse(false, null);
         String jobId = "jobThing";
 
@@ -1090,24 +1093,27 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     private ElasticsearchJobProvider createProvider(Client client) {
-        return new ElasticsearchJobProvider(node, client, 0);
+        return new ElasticsearchJobProvider(node, client, 0, ParseFieldMatcher.STRICT);
     }
 
-    private static GetResponse createGetResponse(boolean exists, Map<String, Object> source) {
+    private static GetResponse createGetResponse(boolean exists, Map<String, Object> source) throws IOException {
         GetResponse getResponse = mock(GetResponse.class);
         when(getResponse.isExists()).thenReturn(exists);
-        when(getResponse.getSource()).thenReturn(source);
+        when(getResponse.getSourceAsBytesRef()).thenReturn(XContentFactory.jsonBuilder().map(source).bytes());
         return getResponse;
     }
 
-    private static SearchResponse createSearchResponse(boolean exists, List<Map<String, Object>> source) {
+    private static SearchResponse createSearchResponse(boolean exists, List<Map<String, Object>> source) throws IOException {
         SearchResponse response = mock(SearchResponse.class);
         SearchHits hits = mock(SearchHits.class);
         List<SearchHit> list = new ArrayList<>();
 
         for (Map<String, Object> map : source) {
             SearchHit hit = mock(SearchHit.class);
-            when(hit.getSource()).thenReturn(map);
+            // remove the _parent from the field we use for _source
+            Map<String, Object> _source = new HashMap<>(map);
+            _source.remove("_parent");
+            when(hit.getSourceRef()).thenReturn(XContentFactory.jsonBuilder().map(_source).bytes());
             when(hit.getId()).thenReturn(String.valueOf(map.hashCode()));
             doAnswer(invocation -> {
                 String field = (String) invocation.getArguments()[0];

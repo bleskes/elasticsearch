@@ -26,6 +26,9 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
 import java.util.Date;
@@ -92,13 +95,15 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         PARSER.declareLong(DataCounts::setOutOfOrderTimeStampCount, OUT_OF_ORDER_TIME_COUNT);
         PARSER.declareLong(DataCounts::setFailedTransformCount, FAILED_TRANSFORM_COUNT);
         PARSER.declareLong(DataCounts::setExcludedRecordCount, EXCLUDED_RECORD_COUNT);
-        PARSER.declareField(
-                (p, v, c) -> {
-                    v.setLatestRecordTimeStamp(new Date(p.longValue()));
-                },
-                LATEST_RECORD_TIME,
-                ObjectParser.ValueType.LONG
-                );
+        PARSER.declareField(DataCounts::setLatestRecordTimeStamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + LATEST_RECORD_TIME.getPreferredName() + "]");
+        }, LATEST_RECORD_TIME, ValueType.VALUE);
     }
 
     private long bucketCount;

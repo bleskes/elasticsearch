@@ -23,7 +23,7 @@ setup:
         id:     "foo1"
         body: >
           {
-            "@timestamp": "2016-06-02T00:00:00Z",
+            "timestamp": "2016-06-02T00:00:00Z",
             "restorePriority": "1",
             "snapshotId": "foo1",
             "description": "first",
@@ -59,7 +59,7 @@ setup:
         id:     "foo2"
         body: >
           {
-            "@timestamp": "2016-06-01T00:00:00Z",
+            "timestamp": "2016-06-01T00:00:00Z",
             "restorePriority": "2",
             "snapshotId": "foo2",
             "description": "second",

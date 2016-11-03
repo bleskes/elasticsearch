@@ -15,7 +15,7 @@ setup:
         index:  prelertresults-farequote
         type:   influencer
         id:     1
-        body:   { "timestamp": "2016-06-01T00:00:00Z" }
+        body:   { "timestamp": "2016-06-01T00:00:00Z", "influencerFieldName": "foo", "influencerFieldValue": "bar" }
 
   - do:
       indices.refresh:

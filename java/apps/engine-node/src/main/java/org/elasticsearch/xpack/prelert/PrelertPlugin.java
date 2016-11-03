@@ -20,6 +20,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
@@ -163,7 +164,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         //  `bind(Implementation.class).toInstance(INSTANCE);`
         // For this reason we can't use interfaces in the constructor of transport actions.
         // This ok for now as we will remove Guice soon
-        ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(null, client, 0);
+        ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(null, client, 0, ParseFieldMatcher.STRICT);
         ElasticsearchFactories elasticsearchFactories = new ElasticsearchFactories(client);
         AutodetectCommunicatorFactory autodetectCommunicatorFactory =
                 createAutodetectCommunicatorFactory(elasticsearchFactories, jobProvider);

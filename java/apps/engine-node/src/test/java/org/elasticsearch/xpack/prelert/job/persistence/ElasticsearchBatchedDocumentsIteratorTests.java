@@ -29,6 +29,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -37,24 +38,20 @@ import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 import org.mockito.Mockito;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class ElasticsearchBatchedDocumentsIteratorTests extends ESTestCase {
     private static final String INDEX_NAME = "prelertresults-foo";
     private static final String SCROLL_ID = "someScrollId";
 
     private Client client;
-    private ObjectMapper objectMapper;
     private boolean wasScrollCleared;
 
     private TestIterator testIterator;
 
     @Before
     public void setUpMocks() {
-        objectMapper = Mockito.mock(ObjectMapper.class);
         client = Mockito.mock(Client.class);
         wasScrollCleared = false;
-        testIterator = new TestIterator(client, INDEX_NAME, objectMapper);
+        testIterator = new TestIterator(client, INDEX_NAME, ParseFieldMatcher.STRICT);
         givenClearScrollRequest();
     }
 
@@ -199,8 +196,8 @@ public class ElasticsearchBatchedDocumentsIteratorTests extends ESTestCase {
     }
 
     private static class TestIterator extends ElasticsearchBatchedDocumentsIterator<String> {
-        public TestIterator(Client client, String jobId, ObjectMapper objectMapper) {
-            super(client, jobId, objectMapper);
+        public TestIterator(Client client, String jobId, ParseFieldMatcher parseFieldMatcher) {
+            super(client, jobId, parseFieldMatcher);
         }
 
         @Override
@@ -209,7 +206,7 @@ public class ElasticsearchBatchedDocumentsIteratorTests extends ESTestCase {
         }
 
         @Override
-        protected String map(ObjectMapper objectMapper, SearchHit hit) {
+        protected String map(SearchHit hit) {
             return hit.getSourceAsString();
         }
     }

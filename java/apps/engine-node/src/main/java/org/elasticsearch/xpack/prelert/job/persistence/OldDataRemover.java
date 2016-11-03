@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.bulk.BulkResponse;
 
 import java.util.Date;

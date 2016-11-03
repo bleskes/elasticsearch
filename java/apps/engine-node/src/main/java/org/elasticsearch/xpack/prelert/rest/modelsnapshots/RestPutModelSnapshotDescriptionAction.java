@@ -14,11 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.rest.modelsnapshots;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
@@ -31,10 +27,6 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
-import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-
 import java.io.IOException;
 
 public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
@@ -65,26 +57,5 @@ public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
                 );
 
         return channel -> transportAction.execute(getModelSnapshots, new RestStatusToXContentListener<>(channel));
-    }
-
-    // NORELEASE: this will be removed with ToXContent changes
-    /**
-     * Given a string representing description update JSON, get the description
-     * out of it.  Irrelevant junk in the JSON document is tolerated.
-     */
-    @Nullable
-    private String parseDescriptionFromJson(@Nullable String updateJson) {
-        if (updateJson != null && !updateJson.isEmpty()) {
-            try {
-                ObjectNode objNode = new ObjectMapper().readValue(updateJson, ObjectNode.class);
-                JsonNode descNode = objNode.get(ModelSnapshot.DESCRIPTION.getPreferredName());
-                if (descNode != null) {
-                    return descNode.asText();
-                }
-            } catch (IOException e) {
-                throw ExceptionsHelper.parseException("The input JSON data is malformed.", ErrorCodes.MALFORMED_JSON, e);
-            }
-        }
-        return null;    // this null ok, will catch in Request ctor
     }
 }

@@ -20,6 +20,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.util.Date;
 
@@ -167,7 +168,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
     @Override
     protected ModelSnapshot createTestInstance() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
-        modelSnapshot.setTimestamp(new Date(randomLong()));
+        modelSnapshot.setTimestamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
         modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setRestorePriority(randomLong());
         modelSnapshot.setSnapshotId(randomAsciiOfLengthBetween(1, 20));
@@ -201,9 +202,9 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
             stats.setModelSizeStatsId(randomAsciiOfLengthBetween(1, 20));
         }
         modelSnapshot.setModelSizeStats(stats);
-        modelSnapshot.setLatestResultTimeStamp(new Date(randomLong()));
-        modelSnapshot.setLatestRecordTimeStamp(new Date(randomLong()));
-        Quantiles quantiles = new Quantiles(new Date(randomLong()), randomAsciiOfLengthBetween(0, 1000));
+        modelSnapshot.setLatestResultTimeStamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
+        modelSnapshot.setLatestRecordTimeStamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
+        Quantiles quantiles = new Quantiles(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())), randomAsciiOfLengthBetween(0, 1000));
         modelSnapshot.setQuantiles(quantiles);
         return modelSnapshot;
     }

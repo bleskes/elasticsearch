@@ -14,19 +14,24 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.search.SearchHit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import java.io.IOException;
+
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 
 class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocumentsIterator<Influencer>
 {
     public ElasticsearchBatchedInfluencersIterator(Client client, String jobId,
-            ObjectMapper objectMapper)
+            ParseFieldMatcher parserFieldMatcher)
     {
-        super(client, new ElasticsearchJobId(jobId).getIndex(), objectMapper);
+        super(client, new ElasticsearchJobId(jobId).getIndex(), parserFieldMatcher);
     }
 
     @Override
@@ -36,14 +41,17 @@ class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocume
     }
 
     @Override
-    protected Influencer map(ObjectMapper objectMapper, SearchHit hit)
+    protected Influencer map(SearchHit hit)
     {
-        // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-        // and replace using the API 'timestamp' key.
-        Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), timestamp);
+        BytesReference source = hit.getSourceRef();
+        XContentParser parser;
+        try {
+            parser = XContentFactory.xContent(source).createParser(source);
+        } catch (IOException e) {
+            throw new ElasticsearchParseException("failed to parser influencer", e);
+        }
 
-        Influencer influencer = objectMapper.convertValue(hit.getSource(), Influencer.class);
+        Influencer influencer = Influencer.PARSER.apply(parser, () -> parseFieldMatcher);
         influencer.setId(hit.getId());
         return influencer;
     }

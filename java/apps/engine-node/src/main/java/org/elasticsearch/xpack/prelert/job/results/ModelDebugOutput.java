@@ -26,6 +26,8 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import java.io.IOException;
 import java.util.Date;
@@ -59,7 +61,14 @@ public class ModelDebugOutput extends ToXContentToBytes implements Writeable
             ModelDebugOutput::new);
 
     static {
-        PARSER.declareField(ModelDebugOutput::setTimestamp, p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
+        PARSER.declareField(ModelDebugOutput::setTimestamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP.getPreferredName() + "]");
+        }, TIMESTAMP, ValueType.VALUE);
         PARSER.declareString(ModelDebugOutput::setPartitionFieldName, PARTITION_FIELD_NAME);
         PARSER.declareString(ModelDebugOutput::setPartitionFieldValue, PARTITION_FIELD_VALUE);
         PARSER.declareString(ModelDebugOutput::setOverFieldName, OVER_FIELD_NAME);

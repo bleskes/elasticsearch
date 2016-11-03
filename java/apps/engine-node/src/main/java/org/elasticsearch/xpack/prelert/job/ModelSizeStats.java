@@ -25,6 +25,9 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
+
 import java.io.IOException;
 import java.util.Date;
 import java.util.Objects;
@@ -57,8 +60,24 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         PARSER.declareLong(ModelSizeStats::setTotalByFieldCount, TOTAL_BY_FIELD_COUNT_FIELD);
         PARSER.declareLong(ModelSizeStats::setTotalOverFieldCount, TOTAL_OVER_FIELD_COUNT_FIELD);
         PARSER.declareLong(ModelSizeStats::setTotalPartitionFieldCount, TOTAL_PARTITION_FIELD_COUNT_FIELD);
-        PARSER.declareField(ModelSizeStats::setLogTime, p -> new Date(p.longValue()), LOG_TIME_FIELD, ValueType.LONG);
-        PARSER.declareField(ModelSizeStats::setTimestamp, p -> new Date(p.longValue()), TIMESTAMP_FIELD, ValueType.LONG);
+        PARSER.declareField(ModelSizeStats::setLogTime, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + LOG_TIME_FIELD.getPreferredName() + "]");
+        }, LOG_TIME_FIELD, ValueType.VALUE);
+        PARSER.declareField(ModelSizeStats::setTimestamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP_FIELD.getPreferredName() + "]");
+        }, TIMESTAMP_FIELD, ValueType.VALUE);
         PARSER.declareField(ModelSizeStats::setMemoryStatus, p -> MemoryStatus.fromString(p.text()), MEMORY_STATUS_FIELD, ValueType.STRING);
     }
 

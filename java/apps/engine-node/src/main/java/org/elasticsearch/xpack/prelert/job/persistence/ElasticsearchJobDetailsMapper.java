@@ -15,16 +15,19 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.Map;
+import java.io.IOException;
 import java.util.Objects;
 
 class ElasticsearchJobDetailsMapper
@@ -32,12 +35,12 @@ class ElasticsearchJobDetailsMapper
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchJobDetailsMapper.class);
 
     private final Client client;
-    private final ObjectMapper objectMapper;
+    private final ParseFieldMatcher parseFieldMatcher;
 
-    public ElasticsearchJobDetailsMapper(Client client, ObjectMapper objectMapper)
+    public ElasticsearchJobDetailsMapper(Client client, ParseFieldMatcher parseFieldMatcher)
     {
         this.client = Objects.requireNonNull(client);
-        this.objectMapper = Objects.requireNonNull(objectMapper);
+        this.parseFieldMatcher = Objects.requireNonNull(parseFieldMatcher);
     }
 
     /**
@@ -45,9 +48,15 @@ class ElasticsearchJobDetailsMapper
      * @param source The source of an Elasticsearch search response
      * @return the {@code JobDetails} object
      */
-    public JobDetails map(Map<String, Object> source)
+    public JobDetails map(BytesReference source)
     {
-        JobDetails job = objectMapper.convertValue(source, JobDetails.class);
+        XContentParser parser;
+        try {
+            parser = XContentFactory.xContent(source).createParser(source);
+        } catch (IOException e) {
+            throw new ElasticsearchParseException("failed to parser job", e);
+        }
+        JobDetails job = JobDetails.PARSER.apply(parser, () -> parseFieldMatcher);
         ElasticsearchJobId elasticJobId = new ElasticsearchJobId(job.getId());
 
         addModelSizeStats(job, elasticJobId);
@@ -75,9 +84,14 @@ class ElasticsearchJobDetailsMapper
             // and replace using the API 'timestamp' key.
             Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
             modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), timestamp);
-
-            ModelSizeStats modelSizeStats = objectMapper.convertValue(
-                    modelSizeStatsResponse.getSource(), ModelSizeStats.class);
+            BytesReference source = modelSizeStatsResponse.getSourceAsBytesRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser model size stats", e);
+            }
+            ModelSizeStats modelSizeStats = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
             job.setModelSizeStats(modelSizeStats);
         }
     }

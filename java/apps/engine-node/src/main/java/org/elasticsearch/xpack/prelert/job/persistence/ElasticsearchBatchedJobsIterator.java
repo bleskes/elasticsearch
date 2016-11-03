@@ -15,9 +15,9 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.search.SearchHit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
 
 class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIterator<JobDetails>
@@ -25,10 +25,10 @@ class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIter
     private final ElasticsearchJobDetailsMapper jobMapper;
 
     public ElasticsearchBatchedJobsIterator(Client client, String index,
-            ObjectMapper objectMapper)
+            ParseFieldMatcher parserFieldMatcher)
     {
-        super(client, index, objectMapper);
-        jobMapper = new ElasticsearchJobDetailsMapper(client, objectMapper);
+        super(client, index, parserFieldMatcher);
+        jobMapper = new ElasticsearchJobDetailsMapper(client, parserFieldMatcher);
     }
 
     @Override
@@ -38,8 +38,8 @@ class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIter
     }
 
     @Override
-    protected JobDetails map(ObjectMapper objectMapper, SearchHit hit)
+    protected JobDetails map(SearchHit hit)
     {
-        return jobMapper.map(hit.getSource());
+        return jobMapper.map(hit.getSourceRef());
     }
 }

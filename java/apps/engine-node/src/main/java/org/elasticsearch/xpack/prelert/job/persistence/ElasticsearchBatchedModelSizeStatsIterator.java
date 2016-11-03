@@ -14,18 +14,23 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.search.SearchHit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 
 public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBatchedDocumentsIterator<ModelSizeStats>
 {
-    public ElasticsearchBatchedModelSizeStatsIterator(Client client, String jobId,
-            ObjectMapper objectMapper)
+    public ElasticsearchBatchedModelSizeStatsIterator(Client client, String jobId, ParseFieldMatcher parserFieldMatcher)
     {
-        super(client, new ElasticsearchJobId(jobId).getIndex(), objectMapper);
+        super(client, new ElasticsearchJobId(jobId).getIndex(), parserFieldMatcher);
     }
 
     @Override
@@ -35,14 +40,17 @@ public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBat
     }
 
     @Override
-    protected ModelSizeStats map(ObjectMapper objectMapper, SearchHit hit)
+    protected ModelSizeStats map(SearchHit hit)
     {
-        // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-        // and replace using the API 'timestamp' key.
-        Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-        hit.getSource().put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), timestamp);
+        BytesReference source = hit.getSourceRef();
+        XContentParser parser;
+        try {
+            parser = XContentFactory.xContent(source).createParser(source);
+        } catch (IOException e) {
+            throw new ElasticsearchParseException("failed to parser model size stats", e);
+        }
 
-        ModelSizeStats result = objectMapper.convertValue(hit.getSource(), ModelSizeStats.class);
+        ModelSizeStats result = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
         result.setModelSizeStatsId(hit.getId());
         return result;
     }

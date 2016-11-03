@@ -15,10 +15,8 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.action.ActionListener;
@@ -37,11 +35,15 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
@@ -58,7 +60,6 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.JobDetails;
-import org.elasticsearch.xpack.prelert.job.JsonViews;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
@@ -79,6 +80,7 @@ import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 import org.elasticsearch.xpack.prelert.job.usage.Usage;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -94,7 +96,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
@@ -134,20 +135,13 @@ public class ElasticsearchJobProvider implements JobProvider
     private final Node node;
     private final Client client;
     private final int numberOfReplicas;
+    private final ParseFieldMatcher parseFieldMatcher;
 
-    private final ObjectMapper objectMapper;
-
-    public ElasticsearchJobProvider(Node node, Client client, int numberOfReplicas) {
+    public ElasticsearchJobProvider(Node node, Client client, int numberOfReplicas, ParseFieldMatcher parseFieldMatcher) {
         this.node = node;
+        this.parseFieldMatcher = parseFieldMatcher;
         this.client = Objects.requireNonNull(client);
         this.numberOfReplicas = numberOfReplicas;
-
-        objectMapper = new ObjectMapper();
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
-        // When we serialise objects with multiple views we want to choose the datastore view
-        objectMapper.setConfig(objectMapper.getSerializationConfig().withView(JsonViews.DatastoreView.class));
     }
 
     public void initialize() {
@@ -362,7 +356,7 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator()
     {
-        return new ElasticsearchBatchedJobsIterator(client, ElasticsearchJobId.INDEX_PREFIX + "*",objectMapper);
+        return new ElasticsearchBatchedJobsIterator(client, ElasticsearchJobId.INDEX_PREFIX + "*", parseFieldMatcher);
     }
 
     /**
@@ -552,12 +546,14 @@ public class ElasticsearchJobProvider implements JobProvider
 
         for (SearchHit hit : searchResponse.getHits().getHits())
         {
-            // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-            // and replace using the API 'timestamp' key.
-            Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), timestamp);
-
-            Bucket bucket = doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), Bucket.class));
+            BytesReference source = hit.getSourceRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser bucket", e);
+            }
+            Bucket bucket = Bucket.PARSER.apply(parser, () -> parseFieldMatcher);
             bucket.setId(hit.getId());
 
             if (includeInterim || bucket.isInterim() == false)
@@ -593,12 +589,14 @@ public class ElasticsearchJobProvider implements JobProvider
         Optional<Bucket> doc = Optional.<Bucket>empty();
         if (hits.getTotalHits() == 1L) {
             SearchHit hit = hits.getAt(0);
-            // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-            // and replace using the API 'timestamp' key.
-            Object ts = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-            hit.getSource().put(Bucket.TIMESTAMP.getPreferredName(), ts);
-
-            Bucket bucket = doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), Bucket.class));
+            BytesReference source = hit.getSourceRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser bucket", e);
+            }
+            Bucket bucket = Bucket.PARSER.apply(parser, () -> parseFieldMatcher);
             bucket.setId(hit.getId());
 
             // don't return interim buckets if not requested
@@ -675,6 +673,7 @@ public class ElasticsearchJobProvider implements JobProvider
         // expect 1 document per bucket
         if (searchResponse.getHits().totalHits() > 0)
         {
+
             Map<String, Object> m  = searchResponse.getHits().getAt(0).getSource();
 
             @SuppressWarnings("unchecked")
@@ -684,7 +683,7 @@ public class ElasticsearchJobProvider implements JobProvider
             {
                 if (partitionFieldValue.equals(prob.get(AnomalyRecord.PARTITION_FIELD_VALUE)))
                 {
-                    Date ts = doPrivilegedCall(() -> objectMapper.convertValue(m.get(ElasticsearchMappings.ES_TIMESTAMP), Date.class));
+                    Date ts = new Date(TimeUtils.dateStringToEpoch((String) m.get(ElasticsearchMappings.ES_TIMESTAMP)));
                     results.add(new ScoreTimestamp(ts,
                             (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY)));
                 }
@@ -720,7 +719,7 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public BatchedDocumentsIterator<Bucket> newBatchedBucketsIterator(String jobId)
     {
-        return new ElasticsearchBatchedBucketsIterator(client, jobId, objectMapper);
+        return new ElasticsearchBatchedBucketsIterator(client, jobId, parseFieldMatcher);
     }
 
     @Override
@@ -791,10 +790,19 @@ public class ElasticsearchJobProvider implements JobProvider
         } catch (IndexNotFoundException e) {
             throw ExceptionsHelper.missingJobException(jobId);
         }
-
-        List<CategoryDefinition> results = Arrays.stream(searchResponse.getHits().getHits())
-                .map(hit -> doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), CategoryDefinition.class)))
-                .collect(Collectors.toList());
+        SearchHit[] hits = searchResponse.getHits().getHits();
+        List<CategoryDefinition> results = new ArrayList<>(hits.length);
+        for (SearchHit hit : hits) {
+            BytesReference source = hit.getSourceRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser category definition", e);
+            }
+            CategoryDefinition categoryDefinition = CategoryDefinition.PARSER.apply(parser, () -> parseFieldMatcher);
+            results.add(categoryDefinition);
+        }
 
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
     }
@@ -814,8 +822,14 @@ public class ElasticsearchJobProvider implements JobProvider
         }
 
         if (response.isExists()) {
-            CategoryDefinition definition =
-                    doPrivilegedCall(() -> objectMapper.convertValue(response.getSource(), CategoryDefinition.class));
+            BytesReference source = response.getSourceAsBytesRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser category definition", e);
+            }
+            CategoryDefinition definition = CategoryDefinition.PARSER.apply(parser, () -> parseFieldMatcher);
             return Optional.of(definition);
         } else {
             return Optional.empty();
@@ -823,7 +837,8 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query) {
+    public QueryPage<AnomalyRecord> records(String jobId, RecordsQueryBuilder.RecordsQuery query)
+            throws ResourceNotFoundException {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
                 .score(AnomalyRecord.ANOMALY_SCORE.getPreferredName(), query.getAnomalyScoreThreshold())
@@ -885,12 +900,14 @@ public class ElasticsearchJobProvider implements JobProvider
         List<AnomalyRecord> results = new ArrayList<>();
         for (SearchHit hit : searchResponse.getHits().getHits())
         {
-            Map<String, Object> m  = hit.getSource();
-
-            // replace logstash timestamp name with timestamp
-            m.put(AnomalyRecord.TIMESTAMP.getPreferredName(), m.remove(ElasticsearchMappings.ES_TIMESTAMP));
-
-            AnomalyRecord record = doPrivilegedCall(() -> objectMapper.convertValue(m, AnomalyRecord.class));
+            BytesReference source = hit.getSourceRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser records", e);
+            }
+            AnomalyRecord record = AnomalyRecord.PARSER.apply(parser, () -> parseFieldMatcher);
 
             // set the ID and parent ID
             record.setId(hit.getId());
@@ -945,12 +962,14 @@ public class ElasticsearchJobProvider implements JobProvider
         List<Influencer> influencers = new ArrayList<>();
         for (SearchHit hit : response.getHits().getHits())
         {
-            Map<String, Object> m = hit.getSource();
-
-            // replace logstash timestamp name with timestamp
-            m.put(Influencer.TIMESTAMP.getPreferredName(), m.remove(ElasticsearchMappings.ES_TIMESTAMP));
-
-            Influencer influencer = doPrivilegedCall(() -> objectMapper.convertValue(m, Influencer.class));
+            BytesReference source = hit.getSourceRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser list", e);
+            }
+            Influencer influencer = Influencer.PARSER.apply(parser, () -> parseFieldMatcher);
             influencer.setId(hit.getId());
 
             influencers.add(influencer);
@@ -968,25 +987,25 @@ public class ElasticsearchJobProvider implements JobProvider
     @Override
     public BatchedDocumentsIterator<Influencer> newBatchedInfluencersIterator(String jobId)
     {
-        return new ElasticsearchBatchedInfluencersIterator(client, jobId, objectMapper);
+        return new ElasticsearchBatchedInfluencersIterator(client, jobId, parseFieldMatcher);
     }
 
     @Override
     public BatchedDocumentsIterator<ModelSnapshot> newBatchedModelSnapshotIterator(String jobId)
     {
-        return new ElasticsearchBatchedModelSnapshotIterator(client, jobId, objectMapper);
+        return new ElasticsearchBatchedModelSnapshotIterator(client, jobId, parseFieldMatcher);
     }
 
     @Override
     public BatchedDocumentsIterator<ModelDebugOutput> newBatchedModelDebugOutputIterator(String jobId)
     {
-        return new ElasticsearchBatchedModelDebugOutputIterator(client, jobId, objectMapper);
+        return new ElasticsearchBatchedModelDebugOutputIterator(client, jobId, parseFieldMatcher);
     }
 
     @Override
     public BatchedDocumentsIterator<ModelSizeStats> newBatchedModelSizeStatsIterator(String jobId)
     {
-        return new ElasticsearchBatchedModelSizeStatsIterator(client, jobId, objectMapper);
+        return new ElasticsearchBatchedModelSizeStatsIterator(client, jobId, parseFieldMatcher);
     }
 
     /**
@@ -1117,12 +1136,14 @@ public class ElasticsearchJobProvider implements JobProvider
                 map.put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), ts);
             }
 
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {
-                sm.checkPermission(new SpecialPermission());
+            BytesReference source = hit.getSourceRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parser list", e);
             }
-            ModelSnapshot modelSnapshot =
-                    doPrivilegedCall(() -> objectMapper.convertValue(hit.getSource(), ModelSnapshot.class));
+            ModelSnapshot modelSnapshot = ModelSnapshot.PARSER.apply(parser, () -> parseFieldMatcher);
             results.add(modelSnapshot);
         }
 
@@ -1167,7 +1188,14 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     private Quantiles createQuantiles(String jobId, GetResponse response) {
-        Quantiles quantiles = doPrivilegedCall(() -> objectMapper.convertValue(response.getSource(), Quantiles.class));
+        BytesReference source = response.getSourceAsBytesRef();
+        XContentParser parser;
+        try {
+            parser = XContentFactory.xContent(source).createParser(source);
+        } catch (IOException e) {
+            throw new ElasticsearchParseException("failed to parser quantiles", e);
+        }
+        Quantiles quantiles = Quantiles.PARSER.apply(parser, () -> parseFieldMatcher);
         if (quantiles.getQuantileState() == null)
         {
             LOGGER.error("Inconsistency - no " + Quantiles.QUANTILE_STATE
@@ -1197,13 +1225,14 @@ public class ElasticsearchJobProvider implements JobProvider
             }
             else
             {
-                // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
-                // and replace using the API 'timestamp' key.
-                Object timestamp = modelSizeStatsResponse.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
-                modelSizeStatsResponse.getSource().put(ModelSizeStats.TIMESTAMP_FIELD.getPreferredName(), timestamp);
-
-                ModelSizeStats modelSizeStats =
-                        doPrivilegedCall(() -> objectMapper.convertValue(modelSizeStatsResponse.getSource(), ModelSizeStats.class));
+                BytesReference source = modelSizeStatsResponse.getSourceAsBytesRef();
+                XContentParser parser;
+                try {
+                    parser = XContentFactory.xContent(source).createParser(source);
+                } catch (IOException e) {
+                    throw new ElasticsearchParseException("failed to parser model size stats", e);
+                }
+                ModelSizeStats modelSizeStats = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
                 return Optional.of(modelSizeStats);
             }
         }
@@ -1221,7 +1250,14 @@ public class ElasticsearchJobProvider implements JobProvider
         {
             return Optional.empty();
         }
-        ListDocument listDocument = doPrivilegedCall(() -> objectMapper.convertValue(response.getSource(), ListDocument.class));
+        BytesReference source = response.getSourceAsBytesRef();
+        XContentParser parser;
+        try {
+            parser = XContentFactory.xContent(source).createParser(source);
+        } catch (IOException e) {
+            throw new ElasticsearchParseException("failed to parser list", e);
+        }
+        ListDocument listDocument = ListDocument.PARSER.apply(parser, () -> parseFieldMatcher);
         return Optional.of(listDocument);
     }
 

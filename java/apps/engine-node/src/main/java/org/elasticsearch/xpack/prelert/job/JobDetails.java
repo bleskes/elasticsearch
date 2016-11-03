@@ -26,6 +26,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -33,6 +34,7 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -101,9 +103,32 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     static {
         PARSER.declareString(JobDetails::setId, ID);
         PARSER.declareStringOrNull(JobDetails::setDescription, DESCRIPTION);
-        PARSER.declareField(JobDetails::setCreateTime, (p, c) -> new Date(p.longValue()), CREATE_TIME, ValueType.LONG);
-        PARSER.declareField(JobDetails::setFinishedTime, (p, c) -> new Date(p.longValue()), FINISHED_TIME, ValueType.LONG);
-        PARSER.declareField(JobDetails::setLastDataTime, (p, c) -> new Date(p.longValue()), LAST_DATA_TIME, ValueType.LONG);
+        PARSER.declareField(JobDetails::setCreateTime, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + CREATE_TIME.getPreferredName() + "]");
+        }, CREATE_TIME, ValueType.VALUE);
+        PARSER.declareField(JobDetails::setFinishedTime, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + FINISHED_TIME.getPreferredName() + "]");
+        }, FINISHED_TIME, ValueType.VALUE);
+        PARSER.declareField(JobDetails::setLastDataTime, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + LAST_DATA_TIME.getPreferredName() + "]");
+        }, LAST_DATA_TIME, ValueType.VALUE);
         PARSER.declareLong(JobDetails::setTimeout, TIMEOUT);
         PARSER.declareObject(JobDetails::setAnalysisConfig, AnalysisConfig.PARSER, ANALYSIS_CONFIG);
         PARSER.declareObject(JobDetails::setAnalysisLimits, AnalysisLimits.PARSER, ANALYSIS_LIMITS);
@@ -705,7 +730,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
 
         JobDetails that = (JobDetails) other;
         return Objects.equals(this.jobId, that.jobId) && Objects.equals(this.description, that.description)
-                 && Objects.equals(this.createTime, that.createTime)
+                && Objects.equals(this.createTime, that.createTime)
                 && Objects.equals(this.finishedTime, that.finishedTime) && Objects.equals(this.lastDataTime, that.lastDataTime)
                 && (this.timeout == that.timeout) && Objects.equals(this.analysisConfig, that.analysisConfig)
                 && Objects.equals(this.analysisLimits, that.analysisLimits) && Objects.equals(this.dataDescription, that.dataDescription)

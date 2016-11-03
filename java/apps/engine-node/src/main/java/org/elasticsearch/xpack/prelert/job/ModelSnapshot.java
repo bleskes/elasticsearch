@@ -25,8 +25,10 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
 import java.util.Date;
@@ -57,14 +59,37 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     public static final ObjectParser<ModelSnapshot, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
             ModelSnapshot::new);
     static {
-        PARSER.declareField(ModelSnapshot::setTimestamp, p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
+        PARSER.declareField(ModelSnapshot::setTimestamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP.getPreferredName() + "]");
+        }, TIMESTAMP, ValueType.VALUE);
         PARSER.declareString(ModelSnapshot::setDescription, DESCRIPTION);
         PARSER.declareLong(ModelSnapshot::setRestorePriority, RESTORE_PRIORITY);
         PARSER.declareString(ModelSnapshot::setSnapshotId, SNAPSHOT_ID);
         PARSER.declareInt(ModelSnapshot::setSnapshotDocCount, SNAPSHOT_DOC_COUNT);
         PARSER.declareObject(ModelSnapshot::setModelSizeStats, ModelSizeStats.PARSER, ModelSizeStats.TYPE);
-        PARSER.declareField(ModelSnapshot::setLatestRecordTimeStamp, p -> new Date(p.longValue()), LATEST_RECORD_TIME, ValueType.LONG);
-        PARSER.declareField(ModelSnapshot::setLatestResultTimeStamp, p -> new Date(p.longValue()), LATEST_RESULT_TIME, ValueType.LONG);
+        PARSER.declareField(ModelSnapshot::setLatestRecordTimeStamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + LATEST_RECORD_TIME.getPreferredName() + "]");
+        }, LATEST_RECORD_TIME, ValueType.VALUE);
+        PARSER.declareField(ModelSnapshot::setLatestResultTimeStamp, p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + LATEST_RESULT_TIME.getPreferredName() + "]");
+        }, LATEST_RESULT_TIME, ValueType.VALUE);
         PARSER.declareObject(ModelSnapshot::setQuantiles, Quantiles.PARSER, Quantiles.TYPE);
     }
 
