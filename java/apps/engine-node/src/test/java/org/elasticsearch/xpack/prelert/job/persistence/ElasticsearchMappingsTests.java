@@ -52,7 +52,6 @@ import java.util.Set;
 
 
 public class ElasticsearchMappingsTests extends ESTestCase {
-    // NORELEASE change this test to not use reflection
     private void parseJson(JsonParser parser, Set<String> expected) throws IOException {
         try {
             JsonToken token = parser.nextToken();
