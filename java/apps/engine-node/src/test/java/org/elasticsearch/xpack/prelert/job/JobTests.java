@@ -168,6 +168,11 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         expectThrows(NullPointerException.class, () -> schedulerConfig.setQuery(null));
     }
 
+    public void testEquals_noId() {
+        expectThrows(ElasticsearchStatusException.class, () -> buildJobBuilder("").build(true));
+        assertNotNull(buildJobBuilder(null).build(true).getId()); // test auto id generation
+    }
+
     public void testEquals_GivenDifferentClass() {
         Job job = buildJobBuilder("foo").build();
         assertFalse(job.equals("a string"));

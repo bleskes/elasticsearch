@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -776,14 +777,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         }
 
         public Job build(boolean fromApi) {
-            if (id.length() > MAX_JOB_ID_LENGTH) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
-                        ErrorCodes.JOB_ID_TOO_LONG);
-            }
-            if (!VALID_JOB_ID_CHAR_PATTERN.matcher(id).matches()) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
-            }
             if (analysisConfig == null) {
                 throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
                         ErrorCodes.INCOMPLETE_CONFIGURATION);
@@ -844,7 +837,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             Double averageBucketProcessingTimeMs;
             String modelSnapshotId;
             if (fromApi) {
-                id = this.id == null ? UUIDs.base64UUID(): this.id;
+                id = this.id == null ? UUIDs.base64UUID().toLowerCase(Locale.ROOT): this.id;
                 createTime = this.createTime == null ? new Date() : this.createTime;
                 finishedTime = null;
                 lastDataTime = null;
@@ -861,6 +854,14 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 modelSizeStats = this.modelSizeStats;
                 averageBucketProcessingTimeMs = this.averageBucketProcessingTimeMs;
                 modelSnapshotId = this.modelSnapshotId;
+            }
+            if (id.length() > MAX_JOB_ID_LENGTH) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
+                        ErrorCodes.JOB_ID_TOO_LONG);
+            }
+            if (!VALID_JOB_ID_CHAR_PATTERN.matcher(id).matches()) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS),
+                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
             }
             return new Job(
                     id, description, createTime, finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
