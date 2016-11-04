@@ -49,8 +49,6 @@ licenseHeaders {
 
 dependencies {
     compile group: 'net.sf.supercsv', name: 'super-csv', version:'2.4.0'
-
-    testCompile group: 'org.elasticsearch', name: 'rest-api-spec', version: '5.0.0'
 }
 
 test {
