@@ -91,17 +91,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
     public static final ParseField AVERAGE_BUCKET_PROCESSING_TIME = new ParseField("averageBucketProcessingTimeMs");
     public static final ParseField MODEL_SNAPSHOT_ID = new ParseField("modelSnapshotId");
 
-    /**
-     * Endpoints key names
-     */
-    public static final String ALERT_LONG_POLL_ENDPOINT_KEY = "alertsLongPoll";
-    public static final String BUCKETS_ENDPOINT_KEY = "buckets";
-    public static final String CATEGORY_DEFINITIONS_ENDPOINT_KEY = "categoryDefinitions";
-    public static final String DATA_ENDPOINT_KEY = "data";
-    public static final String LOGS_ENDPOINT_KEY = "logs";
-    public static final String RECORDS_ENDPOINT_KEY = "records";
-    public static final String MODEL_SNAPSHOTS_ENDPOINT_KEY = "modelSnapshots";
-
     public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>("job_details", Builder::new);
 
     static {
@@ -913,7 +902,5 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
 
             return false;
         }
-
     }
-
 }
