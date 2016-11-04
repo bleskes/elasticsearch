@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
@@ -52,6 +53,7 @@ import static org.mockito.Mockito.when;
 
 public class JobScheduledServiceTests extends ESTestCase {
 
+    private Client client;
     private JobProvider jobProvider;
     private JobManager jobManager;
     private DataProcessor dataProcessor;
@@ -63,6 +65,7 @@ public class JobScheduledServiceTests extends ESTestCase {
 
     @Before
     public void setUpTests() {
+        client = mock(Client.class);
         jobProvider = mock(JobProvider.class);
         jobManager = mock(JobManager.class);
         dataProcessor = mock(DataProcessor.class);
@@ -70,7 +73,8 @@ public class JobScheduledServiceTests extends ESTestCase {
         jobLoggerFactory = mock(JobLoggerFactory.class);
         auditor = mock(Auditor.class);
 
-        jobScheduledService = new JobScheduledService(jobProvider, jobManager, dataProcessor, dataExtractorFactory, jobLoggerFactory);
+        jobScheduledService = new JobScheduledService(client, jobProvider, jobManager, dataProcessor, dataExtractorFactory,
+                jobLoggerFactory);
 
         when(jobProvider.audit(anyString())).thenReturn(auditor);
         when(jobProvider.buckets(anyString(), any(BucketsQueryBuilder.BucketsQuery.class))).thenReturn(
@@ -93,8 +97,7 @@ public class JobScheduledServiceTests extends ESTestCase {
 
         jobScheduledService.start(builder.build(), allocation);
 
-        allocation =
-                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
+        allocation = new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
         jobScheduledService.stop(allocation);
 
         verify(dataExtractor).newSearch(anyLong(), anyLong(), eq(jobLogger));

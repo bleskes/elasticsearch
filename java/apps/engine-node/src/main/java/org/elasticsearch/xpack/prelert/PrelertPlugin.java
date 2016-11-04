@@ -60,6 +60,7 @@ import org.elasticsearch.xpack.prelert.action.ResumeJobAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.action.UpdateJobSchedulerStatusAction;
 import org.elasticsearch.xpack.prelert.action.UpdateJobStatusAction;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
@@ -177,8 +178,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
 
         JobManager jobManager = new JobManager(env, settings, jobProvider, clusterService, processActionGuardian);
         DataProcessor dataProcessor = new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager);
-        JobScheduledService jobScheduledService = new JobScheduledService(
-                jobProvider, jobManager, dataProcessor, new HttpDataExtractorFactory(), jobId -> Loggers.getLogger(jobId));
+        JobScheduledService jobScheduledService = new JobScheduledService(client,  jobProvider, jobManager, dataProcessor,
+                new HttpDataExtractorFactory(), jobId -> Loggers.getLogger(jobId));
         return Arrays.asList(
                 jobProvider,
                 jobManager,
@@ -245,6 +246,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(PauseJobAction.INSTANCE, PauseJobAction.TransportAction.class),
                 new ActionHandler<>(ResumeJobAction.INSTANCE, ResumeJobAction.TransportAction.class),
                 new ActionHandler<>(UpdateJobStatusAction.INSTANCE, UpdateJobStatusAction.TransportAction.class),
+                new ActionHandler<>(UpdateJobSchedulerStatusAction.INSTANCE, UpdateJobSchedulerStatusAction.TransportAction.class),
                 new ActionHandler<>(GetListAction.INSTANCE, GetListAction.TransportAction.class),
                 new ActionHandler<>(CreateListAction.INSTANCE, CreateListAction.TransportAction.class),
                 new ActionHandler<>(GetBucketsAction.INSTANCE, GetBucketsAction.TransportAction.class),

@@ -16,7 +16,10 @@ package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.xpack.prelert.action.UpdateJobSchedulerStatusAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
@@ -38,6 +41,7 @@ public class JobScheduledService {
 
     private static final Logger LOGGER = Loggers.getLogger(JobScheduledService.class);
 
+    private final Client client;
     private final Map<String, JobScheduler> jobToScheduler;
     private final JobManager jobManager;
     private final JobProvider jobProvider;
@@ -45,9 +49,10 @@ public class JobScheduledService {
     private final DataExtractorFactory dataExtractorFactory;
     private final JobLoggerFactory jobLoggerFactory;
 
-    public JobScheduledService(JobProvider jobProvider, JobManager jobManager, DataProcessor dataProcessor,
-            DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory) {
+    public JobScheduledService(Client client, JobProvider jobProvider, JobManager jobManager, DataProcessor dataProcessor,
+                               DataExtractorFactory dataExtractorFactory, JobLoggerFactory jobLoggerFactory) {
         jobToScheduler = new HashMap<>();
+        this.client = Objects.requireNonNull(client);
         this.jobManager = Objects.requireNonNull(jobManager);
         this.jobProvider = Objects.requireNonNull(jobProvider);
         this.dataProcessor = Objects.requireNonNull(dataProcessor);
@@ -112,10 +117,18 @@ public class JobScheduledService {
                     LOGGER.error(Messages.getMessage(Messages.JOB_SCHEDULER_FAILED_TO_STOP), e);
                 }
             }
-            // NORELEASE: these operations need to happen via an master node operation,
-            // this service can run on any node. In a non single node setup this would
-            // have failed.
-            jobManager.updateSchedulerStatus(jobId, newStatus);
+            UpdateJobSchedulerStatusAction.Request request = new UpdateJobSchedulerStatusAction.Request(jobId, newStatus);
+            client.execute(UpdateJobSchedulerStatusAction.INSTANCE, request, new ActionListener<UpdateJobSchedulerStatusAction.Response>() {
+                @Override
+                public void onResponse(UpdateJobSchedulerStatusAction.Response response) {
+                    // Do nothing
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    // Do nothing
+                }
+            });
         }
     }
 }

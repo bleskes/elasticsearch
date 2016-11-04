@@ -176,7 +176,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
 
             @Override
             public void onFailure(Exception e) {
-                logger.error("Could not update status for job [" + jobId + "] to [" + status + "]");
+                // Do nothing
             }
         });
     }
