@@ -15,6 +15,8 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
@@ -23,11 +25,7 @@ import org.elasticsearch.xpack.prelert.lists.ListDocument;
 
 import java.util.Optional;
 
-public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
-    /**
-     * Return true if the data store is accessible for the given job Id
-     */
-    boolean isConnected(String jobId);
+public interface JobProvider extends JobResultsProvider {
 
     /**
      * Get the persisted quantiles state for the job
@@ -88,17 +86,24 @@ public interface JobProvider extends JobDetailsProvider, JobResultsProvider {
     Optional<ListDocument> getList(String listId);
 
     /**
-     * Refresh the datastore index so that all recent changes are
-     * available to search operations. This is a synchronous blocking
-     * call that should not return until the index has been refreshed.
-     */
-    void refreshIndex(String jobId);
-
-    /**
      * Get an auditor for the given job
      *
      * @param jobId the job id
      * @return the {@code Auditor}
      */
     Auditor audit(String jobId);
+
+    /**
+     * Save the details of the new job to the datastore.
+     * Throws <code>JobIdAlreadyExistsException</code> if a job with the
+     * same Id already exists.
+     */
+    // TODO: rename and move?
+    void createJobRelatedIndices(Job job, ActionListener<Boolean> listener);
+
+    /**
+     * Delete all the job related documents from the database.
+     */
+    // TODO: should live together with createJobRelatedIndices (in case it moves)?
+    void deleteJobRelatedIndices(String jobId, ActionListener<Boolean> listener);
 }

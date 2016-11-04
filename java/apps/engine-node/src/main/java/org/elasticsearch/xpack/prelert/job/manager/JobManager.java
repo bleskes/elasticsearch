@@ -198,7 +198,7 @@ public class JobManager {
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean acked) {
-                jobProvider.createJob(job, new ActionListener<Boolean>() {
+                jobProvider.createJobRelatedIndices(job, new ActionListener<Boolean>() {
                     @Override
                     public void onResponse(Boolean aBoolean) {
                         // NORELEASE: make auditing async too (we can't do
@@ -289,7 +289,7 @@ public class JobManager {
             ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
                 @Override
                 public void onResponse(Boolean aBoolean) {
-                    jobProvider.deleteJob(request.getJobId(), new ActionListener<Boolean>() {
+                    jobProvider.deleteJobRelatedIndices(request.getJobId(), new ActionListener<Boolean>() {
                         @Override
                         public void onResponse(Boolean aBoolean) {
 

@@ -69,13 +69,9 @@ public class JobManagerTests extends ESTestCase {
 
     @Before
     public void setupMocks() {
-
         clusterService = mock(ClusterService.class);
         jobProvider = mock(JobProvider.class);
         auditor = mock(Auditor.class);
-
-        when(jobProvider.jobIdIsUnique("not-unique")).thenReturn(false);
-        when(jobProvider.jobIdIsUnique(not(eq("not-unique")))).thenReturn(true);
         when(jobProvider.audit(anyString())).thenReturn(auditor);
     }
 
@@ -89,9 +85,7 @@ public class JobManagerTests extends ESTestCase {
         assertTrue(doc.isPresent());
     }
 
-    public void testFilter()
-
-    {
+    public void testFilter() {
         Set<String> running = new HashSet<String>(Arrays.asList("henry", "dim", "dave"));
         Set<String> diff = new HashSet<String>(Arrays.asList("dave", "tom")).stream().filter((s) -> !running.contains(s))
                 .collect(Collectors.toCollection(HashSet::new));
@@ -270,42 +264,4 @@ public class JobManagerTests extends ESTestCase {
             return null;
         }
     }
-    /*
-    private static MockBatchedDocumentsIterator<Job> newBatchedJobsIterator(List<Job> jobs)
-    {
-        Deque<Job> batch1 = new ArrayDeque<>();
-        Deque<Job> batch2 = new ArrayDeque<>();
-        for (int i = 0; i < jobs.size(); i++)
-        {
-            if (i == 0)
-            {
-                batch1.add(jobs.get(i));
-            }
-            else
-            {
-                batch2.add(jobs.get(i));
-            }
-        }
-        List<Deque<Job>> batches = new ArrayList<>();
-        batches.add(batch1);
-        batches.add(batch2);
-        return new MockBatchedDocumentsIterator<>(batches);
-    }
-
-
-    private static Answer<Object> writeToWriter()
-    {
-        return new Answer<Object>()
-        {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws IOException
-            {
-                CsvRecordWriter writer = (CsvRecordWriter) invocation.getArguments()[1];
-                writer.writeRecord(new String [] {"csv","header","one"});
-                writer.flush();
-                return null;
-            }
-        };
-    }
-     */
 }

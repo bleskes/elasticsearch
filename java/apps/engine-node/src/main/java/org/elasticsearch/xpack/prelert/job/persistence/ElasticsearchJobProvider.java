@@ -18,7 +18,6 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ResourceNotFoundException;
-import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -27,8 +26,6 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.admin.indices.flush.FlushRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -40,7 +37,6 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -50,7 +46,6 @@ import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
-import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -63,10 +58,7 @@ import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
-import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
-import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder.BucketsQuery;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -83,8 +75,6 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -95,7 +85,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 
 public class ElasticsearchJobProvider implements JobProvider
 {
@@ -111,8 +100,6 @@ public class ElasticsearchJobProvider implements JobProvider
      * expected by kibana/engineAPI/app/directives/prelertLogUsage.js
      */
     private static final String PRELERT_INFO_INDEX = "prelert-int";
-    private static final String PRELERT_INFO_TYPE = "info";
-    private static final String PRELERT_INFO_ID = "infoStats";
 
     private static final String SETTING_TRANSLOG_DURABILITY = "index.translog.durability";
     private static final String ASYNC = "async";
@@ -132,13 +119,11 @@ public class ElasticsearchJobProvider implements JobProvider
     private static final int RECORDS_TAKE_PARAM = 500;
 
 
-    private final Node node;
     private final Client client;
     private final int numberOfReplicas;
     private final ParseFieldMatcher parseFieldMatcher;
 
-    public ElasticsearchJobProvider(Node node, Client client, int numberOfReplicas, ParseFieldMatcher parseFieldMatcher) {
-        this.node = node;
+    public ElasticsearchJobProvider(Client client, int numberOfReplicas, ParseFieldMatcher parseFieldMatcher) {
         this.parseFieldMatcher = parseFieldMatcher;
         this.client = Objects.requireNonNull(client);
         this.numberOfReplicas = numberOfReplicas;
@@ -173,50 +158,6 @@ public class ElasticsearchJobProvider implements JobProvider
         createUsageMeteringIndex();
     }
 
-    /*
-     * True if the Job index is healthy
-     *
-     * (non-Javadoc)
-     * @see org.elasticsearch.xpack.prelert.job.persistence.JobProvider#isConnected(java.lang.String)
-     */
-    @Override
-    public boolean isConnected(String jobId)
-    {
-        try
-        {
-            client.admin().cluster()
-            .prepareHealth(ElasticsearchPersister.getJobIndexName(jobId))
-            .get(TimeValue.timeValueSeconds(2));
-            return true;
-        }
-        catch (Exception e) // nodenotavailable, estimeout
-        {
-            LOGGER.info(e);
-            return false;
-        }
-    }
-
-    /**
-     * Close the Elasticsearch node or client
-     */
-    public void shutdown()
-    {
-        client.close();
-        LOGGER.info("Elasticsearch client shut down");
-        if (node != null)
-        {
-            try
-            {
-                node.close();
-                LOGGER.info("Elasticsearch node shut down");
-            }
-            catch (IOException e)
-            {
-                LOGGER.error("Failed to shut down elasticsearch node", e);
-            }
-        }
-    }
-
     /**
      * If the {@value ElasticsearchJobProvider#PRELERT_USAGE_INDEX} index does
      * not exist then create it here with the usage document mapping.
@@ -246,73 +187,6 @@ public class ElasticsearchJobProvider implements JobProvider
         } catch (IndexAlreadyExistsException e) {
             LOGGER.debug("Usage metering index already exists", e);
         }
-    }
-
-    /**
-     * If the {@value ElasticsearchJobProvider#PRELERT_INFO_INDEX} index does
-     * not exist then create it here.
-     */
-    private void createInfoIndex()
-    {
-        try
-        {
-            LOGGER.trace("ES API CALL: index exists? " + PRELERT_INFO_INDEX);
-            boolean indexExists = client.admin().indices()
-                    .exists(new IndicesExistsRequest(PRELERT_INFO_INDEX))
-                    .get().isExists();
-
-            if (indexExists == false)
-            {
-                LOGGER.info("Creating the internal '" + PRELERT_INFO_INDEX + "' index");
-
-                LOGGER.trace("ES API CALL: create index " + PRELERT_INFO_INDEX);
-                client.admin().indices().prepareCreate(PRELERT_INFO_INDEX)
-                .setSettings(prelertIndexSettings())
-                .addMapping(AuditActivity.TYPE.getPreferredName(), ElasticsearchMappings.auditActivityMapping())
-                .addMapping(AuditMessage.TYPE.getPreferredName(), ElasticsearchMappings.auditMessageMapping())
-                .get();
-                LOGGER.trace("ES API CALL: wait for yellow status " + PRELERT_INFO_INDEX);
-                client.admin().cluster().prepareHealth(PRELERT_INFO_INDEX).setWaitForYellowStatus().execute().actionGet();
-            }
-        }
-        catch (InterruptedException | ExecutionException | IOException e)
-        {
-            LOGGER.warn("Error checking the info index", e);
-        }
-    }
-
-    @Override
-    public void checkJobExists(String jobId) throws ResourceNotFoundException
-    {
-        try
-        {
-            String indexName = ElasticsearchPersister.getJobIndexName(jobId);
-            LOGGER.trace("ES API CALL: get ID " + jobId + " type " + Job.TYPE + " from index " + indexName);
-            GetResponse response = client.prepareGet(indexName, Job.TYPE, jobId)
-                    .setFetchSource(false)
-                    .get();
-
-            if (response.isExists() == false)
-            {
-                LOGGER.info("No job document with id {}", jobId);
-                String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-                throw ExceptionsHelper.missingJobException(message);
-            }
-        }
-        catch (IndexNotFoundException e)
-        {
-            // the job does not exist
-            LOGGER.info("Missing Index: no job with id {}", jobId);
-            String message = Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId);
-            throw ExceptionsHelper.missingJobException(message);
-        }
-    }
-
-
-    @Override
-    public boolean jobIdIsUnique(String jobId)
-    {
-        return indexExists(jobId) == false;
     }
 
     private boolean indexExists(String jobId)
@@ -352,17 +226,11 @@ public class ElasticsearchJobProvider implements JobProvider
                 .put(SETTING_DEFAULT_ANALYZER_TYPE, KEYWORD);
     }
 
-    @Override
-    public BatchedDocumentsIterator<Job> newBatchedJobsIterator()
-    {
-        return new ElasticsearchBatchedJobsIterator(client, ElasticsearchPersister.INDEX_PREFIX + "*", parseFieldMatcher);
-    }
-
     /**
      * Create the Elasticsearch index and the mappings
      */
     @Override
-    public void createJob(Job job, ActionListener<Boolean> listener) {
+    public void createJobRelatedIndices(Job job, ActionListener<Boolean> listener) {
         Collection<String> termFields = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().termFields() : null;
         Collection<String> influencers = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().getInfluencers() : null;
         try {
@@ -417,7 +285,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public void deleteJob(String jobId, ActionListener<Boolean> listener) {
+    public void deleteJobRelatedIndices(String jobId, ActionListener<Boolean> listener) {
         if (indexExists(jobId) == false) {
             listener.onFailure(ExceptionsHelper.missingJobException(jobId));
             return;
@@ -1009,24 +877,6 @@ public class ElasticsearchJobProvider implements JobProvider
         return new ElasticsearchBatchedModelSizeStatsIterator(client, jobId, parseFieldMatcher);
     }
 
-    /**
-     * Always returns true
-     */
-    @Override
-    public boolean savePrelertInfo(String infoDoc)
-    {
-        createInfoIndex();
-
-        LOGGER.trace("ES API CALL: index type " + PRELERT_INFO_TYPE +
-                " in index " + PRELERT_INFO_INDEX + " with ID " + PRELERT_INFO_ID);
-        client.prepareIndex(PRELERT_INFO_INDEX, PRELERT_INFO_TYPE, PRELERT_INFO_ID)
-        .setSource(infoDoc)
-        .execute().actionGet();
-
-        return true;
-    }
-
-
     @Override
     public Optional<Quantiles> getQuantiles(String jobId)
     {
@@ -1152,16 +1002,6 @@ public class ElasticsearchJobProvider implements JobProvider
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits());
     }
 
-    public static <T> T doPrivilegedCall(Supplier<T> function) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new SpecialPermission());
-        }
-        return AccessController.doPrivileged((PrivilegedAction<T>) () -> {
-            return function.get();
-        });
-    }
-
     @Override
     public void updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
             boolean restoreModelSizeStats)
@@ -1261,18 +1101,6 @@ public class ElasticsearchJobProvider implements JobProvider
         }
         ListDocument listDocument = ListDocument.PARSER.apply(parser, () -> parseFieldMatcher);
         return Optional.of(listDocument);
-    }
-
-    @Override
-    public void refreshIndex(String jobId)
-    {
-        String indexName = ElasticsearchPersister.getJobIndexName(jobId);
-        // Flush should empty the translog into Lucene
-        LOGGER.trace("ES API CALL: flush index " + indexName);
-        client.admin().indices().flush(new FlushRequest(indexName)).actionGet();
-        // Refresh should wait for Lucene to make the data searchable
-        LOGGER.trace("ES API CALL: refresh index " + indexName);
-        client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
     }
 
     @Override

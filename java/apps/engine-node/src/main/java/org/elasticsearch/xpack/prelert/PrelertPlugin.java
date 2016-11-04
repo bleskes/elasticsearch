@@ -164,7 +164,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         //  `bind(Implementation.class).toInstance(INSTANCE);`
         // For this reason we can't use interfaces in the constructor of transport actions.
         // This ok for now as we will remove Guice soon
-        ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(null, client, 0, ParseFieldMatcher.STRICT);
+        ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(client, 0, ParseFieldMatcher.STRICT);
         ElasticsearchFactories elasticsearchFactories = new ElasticsearchFactories(client);
         AutodetectCommunicatorFactory autodetectCommunicatorFactory =
                 createAutodetectCommunicatorFactory(elasticsearchFactories, jobProvider);
