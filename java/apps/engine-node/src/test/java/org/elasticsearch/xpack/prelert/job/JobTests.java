@@ -65,7 +65,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         schedulerConfig.setFilePath("/file/path");
         builder.setSchedulerConfig(schedulerConfig);
         if (randomBoolean()) {
-            builder.setDataDescription(new DataDescription());
+            builder.setDataDescription(new DataDescription.Builder());
         }
         if (randomBoolean()) {
             builder.setModelSizeStats(new ModelSizeStats());
@@ -374,12 +374,12 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         AnalysisLimits limits = new AnalysisLimits(1000L, 4L);
         builder.setAnalysisLimits(limits);
         builder.build();
-        DataDescription dc = new DataDescription();
+        DataDescription.Builder dc = new DataDescription.Builder();
         dc.setTimeFormat("YYY_KKKKajsatp*");
         builder.setDataDescription(dc);
         e = expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").equals(0));
-        dc = new DataDescription();
+        dc = new DataDescription.Builder();
         builder.setDataDescription(dc);
         builder.setTimeout(-1L);
         e = expectThrows(ElasticsearchStatusException.class, builder::build);
@@ -441,7 +441,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
                 Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
                 DataDescription.DataFormat.SINGLE_LINE);
         Job.Builder builder = buildJobBuilder("foo");
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
         builder.setDataDescription(dataDescription);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
@@ -455,7 +455,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
                 DataDescription.DataFormat.SINGLE_LINE);
         Job.Builder builder = buildJobBuilder("foo");
         builder.setTransforms(new ArrayList<>());
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
         builder.setDataDescription(dataDescription);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
@@ -472,7 +472,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         transforms.add(transform);
         Job.Builder builder = buildJobBuilder("foo");
         builder.setTransforms(transforms);
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
         builder.setDataDescription(dataDescription);
         builder.build();
@@ -547,7 +547,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
         AnalysisConfig ac = createAnalysisConfig();
@@ -561,7 +561,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
         AnalysisConfig ac = createAnalysisConfig();
@@ -575,7 +575,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
         Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
         AnalysisConfig ac = createAnalysisConfig();
@@ -593,7 +593,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
         Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
         AnalysisConfig ac = createAnalysisConfig();
@@ -612,7 +612,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
         Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
         AnalysisConfig ac = createAnalysisConfig();
@@ -628,7 +628,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         Job.Builder builder = new Job.Builder(id);
         builder.setCreateTime(new Date());
         AnalysisConfig ac = createAnalysisConfig();
-        DataDescription dc = new DataDescription();
+        DataDescription.Builder dc = new DataDescription.Builder();
         builder.setAnalysisConfig(ac);
         builder.setDataDescription(dc);
         return builder;

@@ -54,7 +54,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     private Logger logger;
 
     private List<TransformConfig> transforms;
-    private DataDescription dataDescription;
+    private DataDescription.Builder dataDescription;
     private AnalysisConfig analysisConfig;
 
     private List<String[]> writtenRecords;
@@ -78,7 +78,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
         transforms = new ArrayList<>();
 
-        dataDescription = new DataDescription();
+        dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataFormat.JSON);
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
@@ -290,7 +290,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
         transforms.add(transform);
 
-        dataDescription = new DataDescription();
+        dataDescription = new DataDescription.Builder();
         dataDescription.setFieldDelimiter(',');
         dataDescription.setTimeField("datetime");
         dataDescription.setFormat(DataFormat.DELIMITED);
@@ -358,7 +358,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     }
 
     private JsonDataToProcessWriter createWriter() {
-        return new JsonDataToProcessWriter(true, autodetectProcess, dataDescription,
+        return new JsonDataToProcessWriter(true, autodetectProcess, dataDescription.build(),
                 analysisConfig, null, new TransformConfigs(transforms),
                 statusReporter, logger);
     }

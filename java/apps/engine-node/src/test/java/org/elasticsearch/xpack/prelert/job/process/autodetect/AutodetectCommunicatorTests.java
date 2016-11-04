@@ -140,7 +140,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
     private Job createJobDetails() {
         Job.Builder builder = new Job.Builder("foo");
 
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();

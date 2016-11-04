@@ -121,7 +121,7 @@ public class DataWithTransformsToProcessWriterTests extends ESTestCase {
     }
 
     private AbstractDataToProcessWriter createWriter(boolean doCsv) {
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setFieldDelimiter(',');
         dd.setFormat(doCsv ? DataFormat.DELIMITED : DataFormat.JSON);
         dd.setTimeFormat(DataDescription.EPOCH);
@@ -137,9 +137,9 @@ public class DataWithTransformsToProcessWriterTests extends ESTestCase {
         TransformConfigs tcs = new TransformConfigs(Arrays.asList(tc));
 
         if (doCsv) {
-            return new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, tcs, statusReporter, logger);
+            return new CsvDataToProcessWriter(true, autodetectProcess, dd.build(), ac, tcs, statusReporter, logger);
         } else {
-            return new JsonDataToProcessWriter(true, autodetectProcess, dd, ac, null, tcs, statusReporter, logger);
+            return new JsonDataToProcessWriter(true, autodetectProcess, dd.build(), ac, null, tcs, statusReporter, logger);
         }
     }
 

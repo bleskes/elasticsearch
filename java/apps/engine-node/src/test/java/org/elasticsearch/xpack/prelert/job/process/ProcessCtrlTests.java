@@ -68,7 +68,7 @@ public class ProcessCtrlTests extends ESTestCase {
         ac.setUsePerPartitionNormalization(true);
         job.setAnalysisConfig(ac);
 
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setFieldDelimiter('|');
         dd.setTimeField("tf");
         job.setDataDescription(dd);

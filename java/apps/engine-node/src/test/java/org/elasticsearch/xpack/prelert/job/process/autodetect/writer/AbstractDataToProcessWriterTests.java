@@ -71,8 +71,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testInputFields_MulitpleInputsSingleOutput() throws IOException {
-
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -87,8 +86,8 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
-                jobLogger);
+        AbstractDataToProcessWriter writer =
+                new CsvDataToProcessWriter(true, autodetectProcess, dd.build(), ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
         assertEquals(4, inputFields.size());
@@ -131,8 +130,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testInputFields_SingleInputMulitpleOutputs() throws IOException {
-
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -146,8 +144,8 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
-                jobLogger);
+        AbstractDataToProcessWriter writer =
+                new CsvDataToProcessWriter(true, autodetectProcess, dd.build(), ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -203,8 +201,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
      */
 
     public void testInputFields_SingleInputMulitpleOutputs_OnlyOneOutputUsed() throws IOException {
-
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("timeField");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -217,8 +214,8 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(tc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
-                jobLogger);
+        AbstractDataToProcessWriter writer =
+                new CsvDataToProcessWriter(true, autodetectProcess, dd.build(), ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -271,8 +268,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
      */
 
     public void testBuildTransforms_ChainedTransforms() throws IOException {
-
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -289,8 +285,8 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(concatTc, hrdTc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
-                jobLogger);
+        AbstractDataToProcessWriter writer =
+                new CsvDataToProcessWriter(true, autodetectProcess, dd.build(), ac, transforms, statusReporter, jobLogger);
 
         Set<String> inputFields = new HashSet<>(writer.inputFields());
 
@@ -326,7 +322,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
     public void testApplyTransforms_transformReturnsExclude()
             throws IOException {
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -340,8 +336,8 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(excludeConfig));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
-                jobLogger);
+        AbstractDataToProcessWriter writer =
+                new CsvDataToProcessWriter(true, autodetectProcess, dd.build(), ac, transforms, statusReporter, jobLogger);
 
         String[] header = { "datetime", "metric", "value" };
 
@@ -371,8 +367,7 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
     }
 
     public void testBuildTransforms_DateTransformsAreSorted() throws IOException {
-
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("datetime");
 
         AnalysisConfig ac = new AnalysisConfig();
@@ -395,8 +390,8 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         TransformConfigs transforms = new TransformConfigs(Arrays.asList(upperTc, concatTc, splitTc));
 
-        AbstractDataToProcessWriter writer = new CsvDataToProcessWriter(true, autodetectProcess, dd, ac, transforms, statusReporter,
-                jobLogger);
+        AbstractDataToProcessWriter writer =
+                new CsvDataToProcessWriter(true, autodetectProcess, dd.build(), ac, transforms, statusReporter, jobLogger);
 
         String[] header = { "date-somethingelse", "time", "type", "value" };
 

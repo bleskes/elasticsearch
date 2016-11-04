@@ -28,6 +28,10 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+import org.elasticsearch.xpack.prelert.utils.time.DateTimeFormatterTimestampConverter;
 
 /**
  * Describes the format of the data used in the job and how it should
@@ -93,7 +97,12 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
         }
     }
 
-    public static final ParseField DATA_DESCRIPTION_FIELD = new ParseField("dataDescription");
+    private static final ParseField DATA_DESCRIPTION_FIELD = new ParseField("dataDescription");
+    private static final ParseField FORMAT_FIELD = new ParseField("format");
+    private static final ParseField TIME_FIELD_NAME_FIELD = new ParseField("timeField");
+    private static final ParseField TIME_FORMAT_FIELD = new ParseField("timeFormat");
+    private static final ParseField FIELD_DELIMITER_FIELD = new ParseField("fieldDelimiter");
+    private static final ParseField QUOTE_CHARACTER_FIELD = new ParseField("quoteCharacter");
 
     /**
      * Special time format string for epoch times (seconds)
@@ -106,31 +115,9 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
     public static final String EPOCH_MS = "epoch_ms";
 
     /**
-     * The format field name
-     */
-    public static final ParseField FORMAT_FIELD = new ParseField("format");
-    /**
-     * The time field name
-     */
-    public static final ParseField TIME_FIELD_NAME_FIELD = new ParseField("timeField");
-
-    /**
      * By default autodetect expects the timestamp in a field with this name
      */
     public static final String DEFAULT_TIME_FIELD = "time";
-
-    /**
-     * The timeFormat field name
-     */
-    public static final ParseField TIME_FORMAT_FIELD = new ParseField("timeFormat");
-    /**
-     * The field delimiter field name
-     */
-    public static final ParseField FIELD_DELIMITER_FIELD = new ParseField("fieldDelimiter");
-    /**
-     * The quote char field name
-     */
-    public static final ParseField QUOTE_CHARACTER_FIELD = new ParseField("quoteCharacter");
 
     /**
      * The default field delimiter expected by the native autodetect
@@ -149,46 +136,29 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
      */
     public static final char DEFAULT_QUOTE_CHAR = '"';
 
-    private DataFormat dataFormat = DataFormat.DELIMITED;;
-    private String timeFieldName = DEFAULT_TIME_FIELD;
-    private String timeFormat = EPOCH;
-    private char fieldDelimiter = DEFAULT_DELIMITER;
-    private char quoteCharacter = DEFAULT_QUOTE_CHAR;
+    private final DataFormat dataFormat;
+    private final String timeFieldName;
+    private final String timeFormat;
+    private final char fieldDelimiter;
+    private final char quoteCharacter;
 
-    public static final ObjectParser<DataDescription, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
-            DATA_DESCRIPTION_FIELD.getPreferredName(), DataDescription::new);
+    public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER =
+            new ObjectParser<>(DATA_DESCRIPTION_FIELD.getPreferredName(), Builder::new);
+
     static {
-        PARSER.declareField(DataDescription::setFormat, p -> {
-            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
-                return DataFormat.forString(p.text());
-            }
-            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
-        }, FORMAT_FIELD, ValueType.STRING);
-        PARSER.declareString(DataDescription::setTimeField, TIME_FIELD_NAME_FIELD);
-        PARSER.declareString(DataDescription::setTimeFormat, TIME_FORMAT_FIELD);
-        PARSER.declareField(DataDescription::setFieldDelimiter, p -> {
-            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
-                String charStr = p.text();
-                if (charStr.length() != 1) {
-                    throw new IllegalArgumentException("String must be a single character, found [" + charStr + "]");
-                }
-                return charStr.charAt(0);
-            }
-            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
-        }, FIELD_DELIMITER_FIELD, ValueType.STRING);
-        PARSER.declareField(DataDescription::setQuoteCharacter, p -> {
-            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
-                String charStr = p.text();
-                if (charStr.length() != 1) {
-                    throw new IllegalArgumentException("String must be a single character, found [" + charStr + "]");
-                }
-                return charStr.charAt(0);
-            }
-            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
-        }, QUOTE_CHARACTER_FIELD, ValueType.STRING);
+        PARSER.declareString(Builder::setFormat, FORMAT_FIELD);
+        PARSER.declareString(Builder::setTimeField, TIME_FIELD_NAME_FIELD);
+        PARSER.declareString(Builder::setTimeFormat, TIME_FORMAT_FIELD);
+        PARSER.declareField(Builder::setFieldDelimiter, DataDescription::extractChar, FIELD_DELIMITER_FIELD, ValueType.STRING);
+        PARSER.declareField(Builder::setQuoteCharacter, DataDescription::extractChar, QUOTE_CHARACTER_FIELD, ValueType.STRING);
     }
 
-    public DataDescription() {
+    public DataDescription(DataFormat dataFormat, String timeFieldName, String timeFormat, char fieldDelimiter, char quoteCharacter) {
+        this.dataFormat = dataFormat;
+        this.timeFieldName = timeFieldName;
+        this.timeFormat = timeFormat;
+        this.fieldDelimiter = fieldDelimiter;
+        this.quoteCharacter = quoteCharacter;
     }
 
     public DataDescription(StreamInput in) throws IOException {
@@ -230,11 +200,6 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
         return dataFormat;
     }
 
-    public void setFormat(DataFormat format) {
-        Objects.requireNonNull(format, FORMAT_FIELD.getPreferredName() + " must not be null");
-        dataFormat = format;
-    }
-
     /**
      * The name of the field containing the timestamp
      *
@@ -242,11 +207,6 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
      */
     public String getTimeField() {
         return timeFieldName;
-    }
-
-    public void setTimeField(String fieldName) {
-        Objects.requireNonNull(fieldName, TIME_FIELD_NAME_FIELD.getPreferredName() + " must not be null");
-        timeFieldName = fieldName;
     }
 
     /**
@@ -261,10 +221,6 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
         return timeFormat;
     }
 
-    public void setTimeFormat(String format) {
-        timeFormat = format;
-    }
-
     /**
      * If the data is in a delineated format with a header e.g. csv or tsv
      * this is the delimiter character used. This is only applicable if
@@ -277,10 +233,6 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
         return fieldDelimiter;
     }
 
-    public void setFieldDelimiter(char delimiter) {
-        fieldDelimiter = delimiter;
-    }
-
     /**
      * The quote character used in delineated formats.
      * Defaults to {@value #DEFAULT_QUOTE_CHAR}
@@ -290,11 +242,6 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
     public char getQuoteCharacter() {
         return quoteCharacter;
     }
-
-    public void setQuoteCharacter(char value) {
-        quoteCharacter = value;
-    }
-
 
     /**
      * Returns true if the data described by this object needs
@@ -308,7 +255,6 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
         return dataFormat == DataFormat.JSON ||
                 isTransformTime();
     }
-
 
     /**
      * Return true if the time is in a format that needs transforming.
@@ -328,6 +274,17 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
      */
     public boolean isEpochMs() {
         return EPOCH_MS.equals(timeFormat);
+    }
+
+    private static char extractChar(XContentParser parser) throws IOException {
+        if (parser.currentToken() == XContentParser.Token.VALUE_STRING) {
+            String charStr = parser.text();
+            if (charStr.length() != 1) {
+                throw new IllegalArgumentException("String must be a single character, found [" + charStr + "]");
+            }
+            return charStr.charAt(0);
+        }
+        throw new IllegalArgumentException("Unsupported token [" + parser.currentToken() + "]");
     }
 
     /**
@@ -358,5 +315,55 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
                 timeFormat, fieldDelimiter);
     }
 
+    public static class Builder {
+
+        private DataFormat dataFormat = DataFormat.DELIMITED;
+        private String timeFieldName = DEFAULT_TIME_FIELD;
+        private String timeFormat = EPOCH;
+        private char fieldDelimiter = DEFAULT_DELIMITER;
+        private char quoteCharacter = DEFAULT_QUOTE_CHAR;
+
+        public void setFormat(DataFormat format) {
+            dataFormat = ExceptionsHelper.requireNonNull(format, FORMAT_FIELD.getPreferredName() + " must not be null");
+        }
+
+        private void setFormat(String format) {
+            setFormat(DataFormat.forString(format));
+        }
+
+        public void setTimeField(String fieldName) {
+            timeFieldName = ExceptionsHelper.requireNonNull(fieldName, TIME_FIELD_NAME_FIELD.getPreferredName() + " must not be null");
+        }
+
+        public void setTimeFormat(String format) {
+            ExceptionsHelper.requireNonNull(format, TIME_FORMAT_FIELD.getPreferredName() + " must not be null");
+            switch (format) {
+                case EPOCH:
+                case EPOCH_MS:
+                    break;
+                default:
+                    try {
+                        DateTimeFormatterTimestampConverter.ofPattern(format);
+                    } catch (IllegalArgumentException e) {
+                        String message = Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, format);
+                        throw ExceptionsHelper.invalidRequestException(message,  ErrorCodes.INVALID_DATE_FORMAT, e);
+                    }
+            }
+            timeFormat = format;
+        }
+
+        public void setFieldDelimiter(char delimiter) {
+            fieldDelimiter = delimiter;
+        }
+
+        public void setQuoteCharacter(char value) {
+            quoteCharacter = value;
+        }
+
+        public DataDescription build() {
+            return new DataDescription(dataFormat, timeFieldName, timeFormat, fieldDelimiter,quoteCharacter);
+        }
+
+    }
 
 }

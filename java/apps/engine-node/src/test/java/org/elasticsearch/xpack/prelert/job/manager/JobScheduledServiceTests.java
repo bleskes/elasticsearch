@@ -145,12 +145,12 @@ public class JobScheduledServiceTests extends ESTestCase {
         schedulerConfig.setIndexes(Arrays.asList("myIndex"));
         schedulerConfig.setTypes(Arrays.asList("myType"));
 
-        Job.Builder jobConfig = new Job.Builder("foo");
-        jobConfig.setAnalysisConfig(analysisConfig);
-        jobConfig.setSchedulerConfig(schedulerConfig);
-        DataDescription dataDescription = new DataDescription();
+        Job.Builder builder = new Job.Builder("foo");
+        builder.setAnalysisConfig(analysisConfig);
+        builder.setSchedulerConfig(schedulerConfig);
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
-        jobConfig.setDataDescription(dataDescription);
-        return jobConfig;
+        builder.setDataDescription(dataDescription);
+        return builder;
     }
 }

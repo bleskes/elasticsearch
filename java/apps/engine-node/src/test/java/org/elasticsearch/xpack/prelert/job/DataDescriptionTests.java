@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -21,6 +22,8 @@ import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import static org.hamcrest.Matchers.containsString;
@@ -28,194 +31,158 @@ import static org.hamcrest.Matchers.instanceOf;;
 
 public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescription> {
 
-
-    public void testTransform_GivenJson() {
-        DataDescription dd = new DataDescription();
-        dd.setFormat(DataFormat.JSON);
-        assertTrue(dd.transform());
+    public void testVerify_GivenValidFormat() {
+        DataDescription.Builder description = new DataDescription.Builder();
+        description.setTimeFormat("epoch");
+        description.setTimeFormat("epoch_ms");
+        description.setTimeFormat("yyyy-MM-dd HH");
+        String goodFormat = "yyyy.MM.dd G 'at' HH:mm:ss z";
+        description.setTimeFormat(goodFormat);
     }
 
+    public void testVerify_GivenInValidFormat() {
+        DataDescription.Builder description = new DataDescription.Builder();
+        expectThrows(IllegalArgumentException.class, () -> description.setTimeFormat(null));
+
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat("invalid"));
+        assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, "invalid"), e.getMessage());
+
+        e = expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat(""));
+        assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, ""), e.getMessage());
+
+        e = expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat("y-M-dd"));
+        assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, "y-M-dd"), e.getMessage());
+        expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat("YYY-mm-UU hh:mm:ssY"));
+    }
 
     public void testTransform_GivenDelimitedAndEpoch() {
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setFormat(DataFormat.DELIMITED);
         dd.setTimeFormat("epoch");
-        assertFalse(dd.transform());
+        assertFalse(dd.build().transform());
     }
-
 
     public void testTransform_GivenDelimitedAndEpochMs() {
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setFormat(DataFormat.DELIMITED);
         dd.setTimeFormat("epoch_ms");
-        assertTrue(dd.transform());
+        assertTrue(dd.build().transform());
     }
-
-
-    public void testIsTransformTime_GivenTimeFormatIsNull() {
-        DataDescription dd = new DataDescription();
-        dd.setTimeFormat(null);
-        assertFalse(dd.isTransformTime());
-    }
-
 
     public void testIsTransformTime_GivenTimeFormatIsEpoch() {
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeFormat("epoch");
-        assertFalse(dd.isTransformTime());
+        assertFalse(dd.build().isTransformTime());
     }
-
 
     public void testIsTransformTime_GivenTimeFormatIsEpochMs() {
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeFormat("epoch_ms");
-        assertTrue(dd.isTransformTime());
+        assertTrue(dd.build().isTransformTime());
     }
-
 
     public void testIsTransformTime_GivenTimeFormatPattern() {
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
-        assertTrue(dd.isTransformTime());
+        assertTrue(dd.build().isTransformTime());
     }
-
-
-    public void testEquals_GivenEqual() {
-        DataDescription description1 = new DataDescription();
-        description1.setFormat(DataFormat.JSON);
-        description1.setQuoteCharacter('"');
-        description1.setTimeField("timestamp");
-        description1.setTimeFormat("epoch");
-        description1.setFieldDelimiter(',');
-
-        DataDescription description2 = new DataDescription();
-        description2.setFormat(DataFormat.JSON);
-        description2.setQuoteCharacter('"');
-        description2.setTimeField("timestamp");
-        description2.setTimeFormat("epoch");
-        description2.setFieldDelimiter(',');
-
-        assertTrue(description1.equals(description2));
-        assertTrue(description2.equals(description1));
-    }
-
 
     public void testEquals_GivenDifferentDateFormat() {
-        DataDescription description1 = new DataDescription();
+        DataDescription.Builder description1 = new DataDescription.Builder();
         description1.setFormat(DataFormat.JSON);
         description1.setQuoteCharacter('"');
         description1.setTimeField("timestamp");
         description1.setTimeFormat("epoch");
         description1.setFieldDelimiter(',');
 
-        DataDescription description2 = new DataDescription();
+        DataDescription.Builder description2 = new DataDescription.Builder();
         description2.setFormat(DataFormat.DELIMITED);
         description2.setQuoteCharacter('"');
         description2.setTimeField("timestamp");
         description2.setTimeFormat("epoch");
         description2.setFieldDelimiter(',');
 
-        assertFalse(description1.equals(description2));
-        assertFalse(description2.equals(description1));
+        assertFalse(description1.build().equals(description2.build()));
+        assertFalse(description2.build().equals(description1.build()));
     }
 
-
     public void testEquals_GivenDifferentQuoteCharacter() {
-        DataDescription description1 = new DataDescription();
+        DataDescription.Builder description1 = new DataDescription.Builder();
         description1.setFormat(DataFormat.JSON);
         description1.setQuoteCharacter('"');
         description1.setTimeField("timestamp");
         description1.setTimeFormat("epoch");
         description1.setFieldDelimiter(',');
 
-        DataDescription description2 = new DataDescription();
+        DataDescription.Builder description2 = new DataDescription.Builder();
         description2.setFormat(DataFormat.JSON);
         description2.setQuoteCharacter('\'');
         description2.setTimeField("timestamp");
         description2.setTimeFormat("epoch");
         description2.setFieldDelimiter(',');
 
-        assertFalse(description1.equals(description2));
-        assertFalse(description2.equals(description1));
+        assertFalse(description1.build().equals(description2.build()));
+        assertFalse(description2.build().equals(description1.build()));
     }
 
-
     public void testEquals_GivenDifferentTimeField() {
-        DataDescription description1 = new DataDescription();
+        DataDescription.Builder description1 = new DataDescription.Builder();
         description1.setFormat(DataFormat.JSON);
         description1.setQuoteCharacter('"');
         description1.setTimeField("timestamp");
         description1.setTimeFormat("epoch");
         description1.setFieldDelimiter(',');
 
-        DataDescription description2 = new DataDescription();
+        DataDescription.Builder description2 = new DataDescription.Builder();
         description2.setFormat(DataFormat.JSON);
         description2.setQuoteCharacter('"');
         description2.setTimeField("time");
         description2.setTimeFormat("epoch");
         description2.setFieldDelimiter(',');
 
-        assertFalse(description1.equals(description2));
-        assertFalse(description2.equals(description1));
+        assertFalse(description1.build().equals(description2.build()));
+        assertFalse(description2.build().equals(description1.build()));
     }
 
-
     public void testEquals_GivenDifferentTimeFormat() {
-        DataDescription description1 = new DataDescription();
+        DataDescription.Builder description1 = new DataDescription.Builder();
         description1.setFormat(DataFormat.JSON);
         description1.setQuoteCharacter('"');
         description1.setTimeField("timestamp");
         description1.setTimeFormat("epoch");
         description1.setFieldDelimiter(',');
 
-        DataDescription description2 = new DataDescription();
+        DataDescription.Builder description2 = new DataDescription.Builder();
         description2.setFormat(DataFormat.JSON);
         description2.setQuoteCharacter('"');
         description2.setTimeField("timestamp");
         description2.setTimeFormat("epoch_ms");
         description2.setFieldDelimiter(',');
 
-        assertFalse(description1.equals(description2));
-        assertFalse(description2.equals(description1));
+        assertFalse(description1.build().equals(description2.build()));
+        assertFalse(description2.build().equals(description1.build()));
     }
 
-
     public void testEquals_GivenDifferentFieldDelimiter() {
-        DataDescription description1 = new DataDescription();
+        DataDescription.Builder description1 = new DataDescription.Builder();
         description1.setFormat(DataFormat.JSON);
         description1.setQuoteCharacter('"');
         description1.setTimeField("timestamp");
         description1.setTimeFormat("epoch");
         description1.setFieldDelimiter(',');
 
-        DataDescription description2 = new DataDescription();
+        DataDescription.Builder description2 = new DataDescription.Builder();
         description2.setFormat(DataFormat.JSON);
         description2.setQuoteCharacter('"');
         description2.setTimeField("timestamp");
         description2.setTimeFormat("epoch");
         description2.setFieldDelimiter(';');
 
-        assertFalse(description1.equals(description2));
-        assertFalse(description2.equals(description1));
-    }
-
-
-    public void testHashCode_GivenEqual() {
-        DataDescription dataDescription1 = new DataDescription();
-        dataDescription1.setFormat(DataFormat.JSON);
-        dataDescription1.setTimeField("timestamp");
-        dataDescription1.setQuoteCharacter('\'');
-        dataDescription1.setTimeFormat("timeFormat");
-        dataDescription1.setFieldDelimiter(',');
-
-        DataDescription dataDescription2 = new DataDescription();
-        dataDescription2.setFormat(DataFormat.JSON);
-        dataDescription2.setTimeField("timestamp");
-        dataDescription2.setQuoteCharacter('\'');
-        dataDescription2.setTimeFormat("timeFormat");
-        dataDescription2.setFieldDelimiter(',');
-
-        assertEquals(dataDescription1.hashCode(), dataDescription2.hashCode());
+        assertFalse(description1.build().equals(description2.build()));
+        assertFalse(description2.build().equals(description1.build()));
     }
 
     public void testInvalidDataFormat() throws Exception {
@@ -258,7 +225,7 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
 
     @Override
     protected DataDescription createTestInstance() {
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         if (randomBoolean()) {
             dataDescription.setFormat(randomFrom(DataFormat.values()));
         }
@@ -266,7 +233,15 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
             dataDescription.setTimeField(randomAsciiOfLengthBetween(1, 20));
         }
         if (randomBoolean()) {
-            dataDescription.setTimeFormat(randomAsciiOfLengthBetween(1, 20));
+            String format;
+            if (randomBoolean()) {
+                format = DataDescription.EPOCH;
+            } else if (randomBoolean()) {
+                format = DataDescription.EPOCH_MS;
+            } else {
+                format = "yyy.MM.dd G 'at' HH:mm:ss z";
+            }
+            dataDescription.setTimeFormat(format);
         }
         if (randomBoolean()) {
             dataDescription.setFieldDelimiter(randomAsciiOfLength(1).charAt(0));
@@ -274,7 +249,7 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
         if (randomBoolean()) {
             dataDescription.setQuoteCharacter(randomAsciiOfLength(1).charAt(0));
         }
-        return dataDescription;
+        return dataDescription.build();
     }
 
     @Override
@@ -284,6 +259,6 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
 
     @Override
     protected DataDescription parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return DataDescription.PARSER.apply(parser, () -> matcher);
+        return DataDescription.PARSER.apply(parser, () -> matcher).build();
     }
 }

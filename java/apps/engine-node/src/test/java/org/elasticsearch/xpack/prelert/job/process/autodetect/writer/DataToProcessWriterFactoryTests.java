@@ -29,31 +29,31 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 
 public class DataToProcessWriterFactoryTests extends ESTestCase {
     public void testCreate_GivenDataFormatIsJson() {
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataFormat.JSON);
 
-        assertTrue(createWriter(dataDescription) instanceof JsonDataToProcessWriter);
+        assertTrue(createWriter(dataDescription.build()) instanceof JsonDataToProcessWriter);
     }
 
     public void testCreate_GivenDataFormatIsElasticsearch() {
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataFormat.ELASTICSEARCH);
 
-        assertTrue(createWriter(dataDescription) instanceof JsonDataToProcessWriter);
+        assertTrue(createWriter(dataDescription.build()) instanceof JsonDataToProcessWriter);
     }
 
     public void testCreate_GivenDataFormatIsCsv() {
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataFormat.DELIMITED);
 
-        assertTrue(createWriter(dataDescription) instanceof CsvDataToProcessWriter);
+        assertTrue(createWriter(dataDescription.build()) instanceof CsvDataToProcessWriter);
     }
 
     public void testCreate_GivenDataFormatIsSingleLine() {
-        DataDescription dataDescription = new DataDescription();
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataFormat.SINGLE_LINE);
 
-        assertTrue(createWriter(dataDescription) instanceof SingleLineDataToProcessWriter);
+        assertTrue(createWriter(dataDescription.build()) instanceof SingleLineDataToProcessWriter);
     }
 
     private static DataToProcessWriter createWriter(DataDescription dataDescription) {

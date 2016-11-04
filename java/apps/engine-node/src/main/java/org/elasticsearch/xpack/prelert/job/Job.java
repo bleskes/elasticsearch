@@ -29,7 +29,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.xpack.prelert.job.config.verification.AnalysisConfigVerifier;
-import org.elasticsearch.xpack.prelert.job.config.verification.DataDescriptionVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
@@ -732,8 +731,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             this.modelSizeStats = modelSizeStats;
         }
 
-        public void setDataDescription(DataDescription description) {
-            dataDescription = description;
+        public void setDataDescription(DataDescription.Builder description) {
+            dataDescription = description.build();
         }
 
         public void setModelDebugConfig(ModelDebugConfig modelDebugConfig) {
@@ -817,11 +816,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                     }
                 }
             }
-
-            if (dataDescription != null) {
-                // Move to DataDescription.Builder once created:
-                DataDescriptionVerifier.verify(dataDescription);
-            }
             if (transforms != null && transforms.isEmpty() == false) {
                 TransformConfigsVerifier.verify(transforms);
                 checkTransformOutputIsUsed();
@@ -834,7 +828,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                     throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
                 }
             }
-
 
             checkValueNotLessThan(0, "timeout", timeout);
             checkValueNotLessThan(0, "renormalizationWindowDays", renormalizationWindowDays);

@@ -210,7 +210,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
 
     private Job createJobDetails(String jobId) {
 
-        DataDescription dd = new DataDescription();
+        DataDescription.Builder dd = new DataDescription.Builder();
         dd.setFormat(DataDescription.DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
 

@@ -54,7 +54,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
 
     private AutodetectProcess autodetectProcess;
     private List<TransformConfig> transforms;
-    private DataDescription dataDescription;
+    private DataDescription.Builder dataDescription;
     private AnalysisConfig analysisConfig;
     private StatusReporter statusReporter;
     private Logger jobLogger;
@@ -80,7 +80,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
 
         transforms = new ArrayList<>();
 
-        dataDescription = new DataDescription();
+        dataDescription = new DataDescription.Builder();
         dataDescription.setFieldDelimiter(',');
         dataDescription.setFormat(DataFormat.DELIMITED);
         dataDescription.setTimeFormat(DataDescription.EPOCH);
@@ -269,7 +269,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
 
         transforms.add(transform);
 
-        dataDescription = new DataDescription();
+        dataDescription = new DataDescription.Builder();
         dataDescription.setFieldDelimiter(',');
         dataDescription.setTimeField("datetime");
         dataDescription.setFormat(DataFormat.DELIMITED);
@@ -360,8 +360,8 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     }
 
     private CsvDataToProcessWriter createWriter() {
-        return new CsvDataToProcessWriter(true, autodetectProcess, dataDescription, analysisConfig, new TransformConfigs(transforms),
-                statusReporter, jobLogger);
+        return new CsvDataToProcessWriter(true, autodetectProcess, dataDescription.build(), analysisConfig,
+                new TransformConfigs(transforms),statusReporter, jobLogger);
     }
 
     private void assertWrittenRecordsEqualTo(List<String[]> expectedRecords) {

@@ -46,7 +46,7 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 
 public class SingleLineDataToProcessWriterTests extends ESTestCase {
     private AutodetectProcess autodetectProcess;
-    private DataDescription dataDescription;
+    private DataDescription.Builder dataDescription;
     private AnalysisConfig analysisConfig;
     private List<TransformConfig> transformConfigs;
     private StatusReporter statusReporter;
@@ -69,7 +69,7 @@ public class SingleLineDataToProcessWriterTests extends ESTestCase {
             }
         }).when(autodetectProcess).writeRecord(any(String[].class));
 
-        dataDescription = new DataDescription();
+        dataDescription = new DataDescription.Builder();
         dataDescription.setFieldDelimiter(',');
         dataDescription.setFormat(DataFormat.SINGLE_LINE);
         dataDescription.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
@@ -181,7 +181,7 @@ public class SingleLineDataToProcessWriterTests extends ESTestCase {
     }
 
     private SingleLineDataToProcessWriter createWriter() {
-        return new SingleLineDataToProcessWriter(true, autodetectProcess, dataDescription,
+        return new SingleLineDataToProcessWriter(true, autodetectProcess, dataDescription.build(),
                 analysisConfig, new TransformConfigs(transformConfigs), statusReporter, Mockito.mock(Logger.class));
     }
 
