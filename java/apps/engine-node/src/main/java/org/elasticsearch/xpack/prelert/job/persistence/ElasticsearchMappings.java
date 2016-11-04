@@ -17,7 +17,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
@@ -173,7 +173,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -260,7 +260,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -308,7 +308,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -361,7 +361,7 @@ public class ElasticsearchMappings {
                 .startObject(CategoryDefinition.CATEGORY_ID.getPreferredName())
                 .field(TYPE, LONG)
                 .endObject()
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(CategoryDefinition.TERMS.getPreferredName())
@@ -398,7 +398,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD).field(INCLUDE_IN_ALL, false)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -600,7 +600,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -623,7 +623,7 @@ public class ElasticsearchMappings {
                 .endObject()
                 .startObject(ModelSizeStats.TYPE.getPreferredName())
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
                 .startObject(ModelSizeStats.MODEL_BYTES_FIELD.getPreferredName())
@@ -731,7 +731,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD).field(INCLUDE_IN_ALL, false)
                 .endObject()
                 .startObject(ES_TIMESTAMP)
@@ -792,7 +792,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(JobDetails.ID.getPreferredName())
+                .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD).field(INCLUDE_IN_ALL, false)
                 .endObject()
                 .startObject(ES_TIMESTAMP)

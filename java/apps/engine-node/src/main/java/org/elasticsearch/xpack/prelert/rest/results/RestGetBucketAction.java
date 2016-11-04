@@ -25,7 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 
 import java.io.IOException;
@@ -39,12 +39,12 @@ public class RestGetBucketAction extends BaseRestHandler {
         super(settings);
         this.transportAction = transportAction;
         controller.registerHandler(RestRequest.Method.GET,
-                "/engine/v2/results/{" + JobDetails.ID.getPreferredName() + "}/bucket/{" + Bucket.TIMESTAMP.getPreferredName() + "}", this);
+                "/engine/v2/results/{" + Job.ID.getPreferredName() + "}/bucket/{" + Bucket.TIMESTAMP.getPreferredName() + "}", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        String jobId = restRequest.param(Job.ID.getPreferredName());
         String timestamp = restRequest.param(Bucket.TIMESTAMP.getPreferredName());
         final GetBucketAction.Request request;
         if (jobId != null) {

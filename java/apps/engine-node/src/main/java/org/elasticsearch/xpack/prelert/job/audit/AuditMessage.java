@@ -25,7 +25,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class AuditMessage extends ToXContentToBytes implements Writeable
             AuditMessage::new);
 
     static {
-        PARSER.declareString(AuditMessage::setJobId, JobDetails.ID);
+        PARSER.declareString(AuditMessage::setJobId, Job.ID);
         PARSER.declareString(AuditMessage::setMessage, MESSAGE);
         PARSER.declareField(AuditMessage::setLevel, p -> {
             if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
@@ -171,7 +171,7 @@ public class AuditMessage extends ToXContentToBytes implements Writeable
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
         if (jobId != null) {
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
         }
         if (message != null) {
             builder.field(MESSAGE.getPreferredName(), message);

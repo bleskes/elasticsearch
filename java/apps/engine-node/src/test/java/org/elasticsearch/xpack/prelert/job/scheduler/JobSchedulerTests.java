@@ -17,7 +17,7 @@ package org.elasticsearch.xpack.prelert.job.scheduler;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
@@ -56,7 +56,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.doAnswer;
@@ -103,7 +103,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenEndIsEarlierThanStart() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1000L, 500L);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         DataProcessor dataProcessor = mock(DataProcessor.class);
@@ -120,7 +120,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenSameStartAndEnd() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1000L, 1000L);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         DataProcessor dataProcessor = mock(DataProcessor.class);
@@ -137,7 +137,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLookbackOnlyAndSingleStream() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, 1400000001000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(newCounts(42, 1400000001000L)));
@@ -166,7 +166,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLookbackOnlyAndMultipleStreams() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, 1400000001000L);
 
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(3));
@@ -196,7 +196,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLookbackOnlyWithSameStartEndTimes() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, 1400000000000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(newCounts(42, 1400000001000L)));
@@ -214,7 +214,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLookbackAndRealtimeWithSingleStreams() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, null);
         long lookbackLatestRecordTime = System.currentTimeMillis() - 100;
         long[] latestRecordTimes = { lookbackLatestRecordTime, lookbackLatestRecordTime + 1000, lookbackLatestRecordTime + 2000 };
@@ -276,7 +276,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLookbackAndRealtimeWithEmptyData() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, null);
         long lookbackLatestRecordTime = new Date().getTime() - 100;
         int numberOfSearches = 2;
@@ -306,7 +306,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLookbackWithEmptyDataAndRealtimeWithEmptyData() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, null);
 
         // Minimise the time the test takes by setting frequency to 1.
@@ -351,7 +351,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenDataProcessorThrows() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, 1400000001000L);
 
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1, 1, 1, 1, 1, 1));
@@ -388,7 +388,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenDataExtractorThrows() throws IOException {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, 1400000001000L);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(dataExtractor.hasNext()).thenReturn(true);
@@ -407,7 +407,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLatestRecordTimestampIsAfterSchedulerStartTime() {
-        JobDetails.Builder job = buildJobBuilder(JOB_ID);
+        Job.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1450000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(1455000000000L));
@@ -433,7 +433,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLastFinalBucketEndAfterLatestRecordTimestampAndAfterSchedulerStartTime() {
-        JobDetails.Builder job = buildJobBuilder(JOB_ID);
+        Job.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1450000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(1455000000000L));
@@ -460,7 +460,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenLatestRecordTimestampIsBeforeSchedulerStartTime() {
-        JobDetails.Builder job = buildJobBuilder(JOB_ID);
+        Job.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1455000000000L, 1460000000000L);
         DataCounts dataCounts = new DataCounts();
         dataCounts.setLatestRecordTimeStamp(new Date(1450000000000L));
@@ -486,7 +486,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStart_GivenAlreadyStarted() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, null);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         DataProcessor dataProcessor = mock(DataProcessor.class);
@@ -508,7 +508,7 @@ public class JobSchedulerTests extends ESTestCase {
             }
         }).when(jobLogger).info("Scheduler started");
 
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, 1500000000000L);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(newCounts(67, 1500000000000L)));
@@ -525,7 +525,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     public void testStopAuto_GivenRealTimeJob() {
-        JobDetails job = createScheduledJob();
+        Job job = createScheduledJob();
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1400000000000L, null);
         MockDataExtractor dataExtractor = new MockDataExtractor(Arrays.asList(1, 1, 1));
         MockDataProcessor dataProcessor = new MockDataProcessor(Arrays.asList(
@@ -546,7 +546,7 @@ public class JobSchedulerTests extends ESTestCase {
         assertEquals(JobSchedulerStatus.STARTED, currentStatus);
     }
 
-    private JobDetails createScheduledJob() {
+    private Job createScheduledJob() {
         return buildJobBuilder(JOB_ID).build();
     }
 

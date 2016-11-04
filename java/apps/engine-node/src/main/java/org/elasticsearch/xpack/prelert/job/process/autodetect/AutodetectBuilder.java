@@ -19,7 +19,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
@@ -50,7 +50,7 @@ public class AutodetectBuilder {
     private static final String MODEL_DEBUG_CONFIG_ARG = "--modeldebugconfig=";
     private static final String FIELD_CONFIG_ARG = "--fieldconfig=";
 
-    private JobDetails jobDetails;
+    private Job job;
     private List<Path> filesToDelete;
     private Logger logger;
     private boolean ignoreDowntime;
@@ -68,10 +68,10 @@ public class AutodetectBuilder {
      *                      deleted when the process completes
      * @param logger        The job's logger
      */
-    public AutodetectBuilder(JobDetails job, List<Path> filesToDelete, Logger logger, Environment env, Settings settings) {
+    public AutodetectBuilder(Job job, List<Path> filesToDelete, Logger logger, Environment env, Settings settings) {
         this.env = env;
         this.settings = settings;
-        jobDetails = Objects.requireNonNull(job);
+        this.job = Objects.requireNonNull(job);
         this.filesToDelete = Objects.requireNonNull(filesToDelete);
         this.logger = Objects.requireNonNull(logger);
         ignoreDowntime = false;
@@ -126,7 +126,7 @@ public class AutodetectBuilder {
     public Process build() throws IOException {
 
         String restoreSnapshotId = modelSnapshot.isPresent() ? modelSnapshot.get().getSnapshotId() : null;
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, jobDetails, logger, restoreSnapshotId, ignoreDowntime);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job, logger, restoreSnapshotId, ignoreDowntime);
 
         buildLimits(command);
         buildModelDebugConfig(command);
@@ -142,10 +142,10 @@ public class AutodetectBuilder {
     }
 
     private void buildLimits(List<String> command) throws IOException {
-        if (jobDetails.getAnalysisLimits() != null) {
+        if (job.getAnalysisLimits() != null) {
             Path limitConfigFile = Files.createTempFile(env.tmpFile(), "limitconfig", CONF_EXTENSION);
             filesToDelete.add(limitConfigFile);
-            writeLimits(jobDetails.getAnalysisLimits(), limitConfigFile);
+            writeLimits(job.getAnalysisLimits(), limitConfigFile);
             String limits = LIMIT_CONFIG_ARG + limitConfigFile.toString();
             command.add(limits);
         }
@@ -162,10 +162,10 @@ public class AutodetectBuilder {
     }
 
     private void buildModelDebugConfig(List<String> command) throws IOException {
-        if (jobDetails.getModelDebugConfig() != null) {
+        if (job.getModelDebugConfig() != null) {
             Path modelDebugConfigFile = Files.createTempFile(env.tmpFile(), "modeldebugconfig", CONF_EXTENSION);
             filesToDelete.add(modelDebugConfigFile);
-            writeModelDebugConfig(jobDetails.getModelDebugConfig(), modelDebugConfigFile);
+            writeModelDebugConfig(job.getModelDebugConfig(), modelDebugConfigFile);
             String modelDebugConfig = MODEL_DEBUG_CONFIG_ARG + modelDebugConfigFile.toString();
             command.add(modelDebugConfig);
         }
@@ -183,10 +183,10 @@ public class AutodetectBuilder {
     private void buildQuantiles(List<String> command) throws IOException {
         if (quantiles.isPresent() && !quantiles.get().getQuantileState().isEmpty()) {
             Quantiles quantiles = this.quantiles.get();
-            logger.info("Restoring quantiles for job '" + jobDetails.getId() + "'");
+            logger.info("Restoring quantiles for job '" + job.getId() + "'");
 
             Path normalisersStateFilePath = ProcessCtrl.writeNormaliserInitState(
-                    jobDetails.getId(), quantiles.getQuantileState(), env);
+                    job.getId(), quantiles.getQuantileState(), env);
 
             String quantilesStateFileArg = ProcessCtrl.QUANTILES_STATE_PATH_ARG + normalisersStateFilePath;
             command.add(quantilesStateFileArg);
@@ -195,14 +195,14 @@ public class AutodetectBuilder {
     }
 
     private void buildFieldConfig(List<String> command) throws IOException, FileNotFoundException {
-        if (jobDetails.getAnalysisConfig() != null) {
+        if (job.getAnalysisConfig() != null) {
             // write to a temporary field config file
             Path fieldConfigFile = Files.createTempFile(env.tmpFile(), "fieldconfig", CONF_EXTENSION);
             filesToDelete.add(fieldConfigFile);
             try (OutputStreamWriter osw = new OutputStreamWriter(
                     Files.newOutputStream(fieldConfigFile),
                     StandardCharsets.UTF_8)) {
-                new FieldConfigWriter(jobDetails.getAnalysisConfig(), referencedLists, osw, logger).write();
+                new FieldConfigWriter(job.getAnalysisConfig(), referencedLists, osw, logger).write();
             }
 
             String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();

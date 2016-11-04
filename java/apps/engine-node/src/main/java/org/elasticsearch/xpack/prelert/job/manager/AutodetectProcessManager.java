@@ -17,7 +17,7 @@ package org.elasticsearch.xpack.prelert.job.manager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
@@ -82,8 +82,8 @@ public class AutodetectProcessManager implements DataProcessor {
     }
 
     private AutodetectCommunicator create(String jobId, boolean ignoreDowntime) {
-        JobDetails jobDetails = jobManager.getJobOrThrowIfUnknown(jobId);
-        return autodetectCommunicatorFactory.create(jobDetails, ignoreDowntime);
+        Job job = jobManager.getJobOrThrowIfUnknown(jobId);
+        return autodetectCommunicatorFactory.create(job, ignoreDowntime);
     }
 
     @Override

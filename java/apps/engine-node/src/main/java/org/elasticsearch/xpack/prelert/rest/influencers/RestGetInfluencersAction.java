@@ -25,7 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
@@ -39,13 +39,13 @@ public class RestGetInfluencersAction extends BaseRestHandler {
     public RestGetInfluencersAction(Settings settings, RestController controller, GetInfluencersAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + JobDetails.ID.getPreferredName() + "}/influencers",
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + Job.ID.getPreferredName() + "}/influencers",
                 this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        String jobId = restRequest.param(Job.ID.getPreferredName());
         String start = restRequest.param(GetInfluencersAction.Request.START.getPreferredName());
         String end = restRequest.param(GetInfluencersAction.Request.END.getPreferredName());
         BytesReference bodyBytes = restRequest.content();

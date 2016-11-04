@@ -20,7 +20,7 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.index.mapper.DateFieldMapper;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
@@ -221,7 +221,7 @@ public class JobScheduler {
         };
     }
 
-    public void start(JobDetails job, Allocation allocation) {
+    public void start(Job job, Allocation allocation) {
         if (logger != null) {
             throw new IllegalStateException("Cannot start while scheduler is already started");
         }
@@ -240,7 +240,7 @@ public class JobScheduler {
         lookbackExecutor.shutdown();
     }
 
-    private void initLastEndTime(JobDetails job) {
+    private void initLastEndTime(Job job) {
         long lastEndTime = Math.max(getLatestFinalBucketEndTimeMs(), getLatestRecordTimestamp(job));
         if (lastEndTime > 0) {
             lastEndTimeMs = lastEndTime;
@@ -266,7 +266,7 @@ public class JobScheduler {
         return latestFinalBucketEndMs;
     }
 
-    private long getLatestRecordTimestamp(JobDetails job) {
+    private long getLatestRecordTimestamp(Job job) {
         long latestRecordTimeMs = -1L;
         if (job.getCounts() != null && job.getCounts().getLatestRecordTimeStamp() != null) {
             latestRecordTimeMs = job.getCounts().getLatestRecordTimeStamp().getTime();

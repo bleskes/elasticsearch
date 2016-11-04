@@ -26,7 +26,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -182,7 +182,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
             builder.startObject()
             .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
-            .field(JobDetails.ID.getPreferredName(), jobId.getId());
+            .field(Job.ID.getPreferredName(), jobId.getId());
             builder.startArray(ReservedFieldNames.PARTITION_NORMALIZED_PROBS);
             for (Entry<String, Double> entry : bucket.getPerPartitionMaxProbability().entrySet())
             {

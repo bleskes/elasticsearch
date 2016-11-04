@@ -20,7 +20,7 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -208,7 +208,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         return Mockito.mock(JobManager.class);
     }
 
-    private JobDetails createJobDetails(String jobId) {
+    private Job createJobDetails(String jobId) {
 
         DataDescription dd = new DataDescription();
         dd.setFormat(DataDescription.DataFormat.DELIMITED);
@@ -219,7 +219,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AnalysisConfig ac = new AnalysisConfig();
         ac.setDetectors(Collections.singletonList(d));
 
-        JobDetails.Builder builder = new JobDetails.Builder(jobId);
+        Job.Builder builder = new Job.Builder(jobId);
         builder.setDataDescription(dd);
         builder.setAnalysisConfig(ac);
 

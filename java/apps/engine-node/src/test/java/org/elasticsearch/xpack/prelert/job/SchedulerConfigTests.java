@@ -121,7 +121,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
                 + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
         XContentParser parser = XContentFactory.xContent(jobConfigStr).createParser(jobConfigStr);
-        JobDetails jobConfig = JobDetails.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT).build();
+        Job jobConfig = Job.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT).build();
         assertNotNull(jobConfig);
 
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(jobConfig.getSchedulerConfig());
@@ -162,7 +162,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
                 + "\"timeField\":\"@timestamp\"," + "\"timeFormat\":\"epoch_ms\"" + "}" + "}";
 
         XContentParser parser = XContentFactory.xContent(jobConfigStr).createParser(jobConfigStr);
-        JobDetails jobConfig = JobDetails.PARSER.parse(parser, () -> ParseFieldMatcher.STRICT).build();
+        Job jobConfig = Job.PARSER.parse(parser, () -> ParseFieldMatcher.STRICT).build();
         assertNotNull(jobConfig);
 
         SchedulerConfig schedulerConfig = jobConfig.getSchedulerConfig();

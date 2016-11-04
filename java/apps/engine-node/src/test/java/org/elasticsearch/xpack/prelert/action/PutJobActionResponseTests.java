@@ -16,17 +16,17 @@ package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.xpack.prelert.action.PutJobAction.Response;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.randomValidJobId;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.randomValidJobId;
 
 public class PutJobActionResponseTests extends AbstractStreamableTestCase<Response> {
 
     @Override
     protected Response createTestInstance() {
-        JobDetails.Builder builder = buildJobBuilder(randomValidJobId());
+        Job.Builder builder = buildJobBuilder(randomValidJobId());
         builder.setIgnoreDowntime(IgnoreDowntime.NEVER);
         return new Response(builder.build());
     }

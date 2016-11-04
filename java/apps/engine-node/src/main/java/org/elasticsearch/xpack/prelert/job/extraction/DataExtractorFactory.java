@@ -14,9 +14,9 @@
  */
 package org.elasticsearch.xpack.prelert.job.extraction;
 
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 public interface DataExtractorFactory
 {
-    DataExtractor newExtractor(JobDetails job);
+    DataExtractor newExtractor(Job job);
 }

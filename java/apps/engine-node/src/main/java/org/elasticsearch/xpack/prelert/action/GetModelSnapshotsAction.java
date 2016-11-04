@@ -38,7 +38,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
@@ -81,7 +81,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
-            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
             PARSER.declareString(Request::setDescriptionString, DESCRIPTION);
             PARSER.declareString(Request::setStart, START);
             PARSER.declareString(Request::setEnd, END);
@@ -110,7 +110,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         }
 
         public Request(String jobId) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
         public String getJobId() {
@@ -201,7 +201,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
             if (description != null) {
                 builder.field(DESCRIPTION.getPreferredName(), description);
             }

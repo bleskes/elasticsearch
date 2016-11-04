@@ -20,7 +20,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
 
@@ -78,7 +78,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
     }
 
     private void handleLocallyAllocatedJob(PrelertMetadata prelertMetadata, Allocation allocation, ClusterChangedEvent event) {
-        JobDetails job = prelertMetadata.getJobs().get(allocation.getJobId());
+        Job job = prelertMetadata.getJobs().get(allocation.getJobId());
         if (localAllocatedJobs.contains(allocation.getJobId()) == false) {
             startJob(job);
         }
@@ -100,7 +100,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         }
     }
 
-    void startJob(JobDetails job) {
+    void startJob(Job job) {
         logger.info("Starting job [" + job.getId() + "]");
         // noop now, but should delegate to a task / ProcessManager that actually starts the job
 

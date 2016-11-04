@@ -27,7 +27,7 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -47,12 +47,12 @@ public class RestStartJobSchedulerAction extends BaseRestHandler {
             StartJobSchedulerAction.TransportAction transportJobSchedulerAction) {
         super(settings);
         this.transportJobSchedulerAction = transportJobSchedulerAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/schedulers/{" + JobDetails.ID.getPreferredName() + "}/start", this);
+        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/schedulers/{" + Job.ID.getPreferredName() + "}/start", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        String jobId = restRequest.param(Job.ID.getPreferredName());
         StartJobSchedulerAction.Request jobSchedulerRequest;
         if (RestActions.hasBodyContent(restRequest)) {
             BytesReference bodyBytes = RestActions.getRestContent(restRequest);

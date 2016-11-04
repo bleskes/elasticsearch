@@ -17,7 +17,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersisterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPeristerFactory;
@@ -49,7 +49,7 @@ public class AutodetectCommunicatorFactory {
         this.jobLoggerFactory = Objects.requireNonNull(loggerFactory);
     }
 
-    public AutodetectCommunicator create(JobDetails job, boolean ignoreDowntime) {
+    public AutodetectCommunicator create(Job job, boolean ignoreDowntime) {
 
         Logger jobLogger = jobLoggerFactory.newLogger(job.getJobId());
         UsageReporter usageReporter = new UsageReporter(settings, job.getJobId(), usagePersisterFactory.getInstance(jobLogger), jobLogger);

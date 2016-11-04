@@ -36,7 +36,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
@@ -75,7 +75,7 @@ PostDataFlushAction.RequestBuilder> {
         private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
-            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
             PARSER.declareBoolean(Request::setCalcInterim, CALC_INTERIM);
             PARSER.declareString(Request::setStart, START);
             PARSER.declareString(Request::setEnd, END);
@@ -100,7 +100,7 @@ PostDataFlushAction.RequestBuilder> {
         }
 
         public Request(String jobId) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
         public String getJobId() {
@@ -186,7 +186,7 @@ PostDataFlushAction.RequestBuilder> {
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
             builder.field(CALC_INTERIM.getPreferredName(), calcInterim);
             if (start != null) {
                 builder.field(START.getPreferredName(), start);

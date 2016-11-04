@@ -39,7 +39,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 
 import java.io.IOException;
@@ -67,21 +67,21 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
     public static class Request extends AcknowledgedRequest<Request> implements ToXContent {
 
         public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier matcherSupplier) {
-            JobDetails job = JobDetails.PARSER.apply(parser, matcherSupplier).build(true);
+            Job job = Job.PARSER.apply(parser, matcherSupplier).build(true);
             return new Request(job);
         }
 
-        private JobDetails job;
+        private Job job;
         private boolean overwrite;
 
-        public Request(JobDetails job) {
+        public Request(Job job) {
             this.job = job;
         }
 
         Request() {
         }
 
-        public JobDetails getJob() {
+        public Job getJob() {
             return job;
         }
 
@@ -101,7 +101,7 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            job = new JobDetails(in);
+            job = new Job(in);
             overwrite = in.readBoolean();
         }
 
@@ -156,9 +156,9 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
 
     public static class Response extends AcknowledgedResponse implements ToXContent {
 
-        private JobDetails job;
+        private Job job;
 
-        public Response(JobDetails job) {
+        public Response(Job job) {
             super(true);
             this.job = job;
         }
@@ -166,14 +166,14 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
         Response() {
         }
 
-        public JobDetails getResponse() {
+        public Job getResponse() {
             return job;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            job = new JobDetails(in);
+            job = new Job(in);
         }
 
         @Override

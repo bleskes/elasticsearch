@@ -39,7 +39,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
@@ -129,22 +129,22 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
 
     public static class Response extends ActionResponse implements ToXContent {
 
-        private QueryPage<JobDetails> jobs;
+        private QueryPage<Job> jobs;
 
-        public Response(QueryPage<JobDetails> jobs) {
+        public Response(QueryPage<Job> jobs) {
             this.jobs = jobs;
         }
 
         public Response() {}
 
-        public QueryPage<JobDetails> getResponse() {
+        public QueryPage<Job> getResponse() {
             return jobs;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            jobs = new QueryPage<>(in, JobDetails::new);
+            jobs = new QueryPage<>(in, Job::new);
         }
 
         @Override
@@ -224,7 +224,7 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            QueryPage<JobDetails> jobsPage = jobManager.getJobs(request.pageParams.getSkip(), request.pageParams.getTake(), state);
+            QueryPage<Job> jobsPage = jobManager.getJobs(request.pageParams.getSkip(), request.pageParams.getTake(), state);
             listener.onResponse(new Response(jobsPage));
         }
 

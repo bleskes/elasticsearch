@@ -26,7 +26,7 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.xpack.prelert.action.PostDataFlushAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 import java.io.IOException;
 
@@ -44,19 +44,19 @@ public class RestPostDataFlushAction extends BaseRestHandler {
             PostDataFlushAction.TransportAction transportPostDataFlushAction) {
         super(settings);
         this.transportPostDataFlushAction = transportPostDataFlushAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/data/{" + JobDetails.ID.getPreferredName() + "}/flush", this);
+        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/data/{" + Job.ID.getPreferredName() + "}/flush", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        String jobId = restRequest.param(Job.ID.getPreferredName());
         BytesReference bodyBytes = RestActions.getRestContent(restRequest);
         final PostDataFlushAction.Request request;
         if (RestActions.hasBodyContent(restRequest)) {
             XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
             request = PostDataFlushAction.Request.parseRequest(jobId, parser, () -> parseFieldMatcher);
         } else {
-            request = new PostDataFlushAction.Request(restRequest.param(JobDetails.ID.getPreferredName()));
+            request = new PostDataFlushAction.Request(restRequest.param(Job.ID.getPreferredName()));
             request.setCalcInterim(restRequest.paramAsBoolean(PostDataFlushAction.Request.CALC_INTERIM.getPreferredName(),
                     DEFAULT_CALC_INTERIM));
             request.setStart(restRequest.param(PostDataFlushAction.Request.START.getPreferredName(), DEFAULT_START));

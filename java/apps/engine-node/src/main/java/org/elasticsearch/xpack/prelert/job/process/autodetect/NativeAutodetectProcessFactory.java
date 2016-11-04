@@ -19,12 +19,10 @@ import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -54,20 +52,20 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
     }
 
     @Override
-    public AutodetectProcess createAutodetectProcess(JobDetails jobDetails, boolean ignoreDowntime) {
+    public AutodetectProcess createAutodetectProcess(Job job, boolean ignoreDowntime) {
         List<Path> filesToDelete = new ArrayList<>();
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new SpecialPermission());
         }
         Process nativeProcess = AccessController.doPrivileged((PrivilegedAction<Process>) () -> {
-            return createNativeProcess(jobDetails, ignoreDowntime, filesToDelete);
+            return createNativeProcess(job, ignoreDowntime, filesToDelete);
         });
-        int numberOfAnalysisFields = jobDetails.getAnalysisConfig().analysisFields().size();
+        int numberOfAnalysisFields = job.getAnalysisConfig().analysisFields().size();
         return new NativeAutodetectProcess(nativeProcess, numberOfAnalysisFields, filesToDelete);
     }
 
-    private Process createNativeProcess(JobDetails job, boolean ignoreDowntime, List<Path> filesToDelete) {
+    private Process createNativeProcess(Job job, boolean ignoreDowntime, List<Path> filesToDelete) {
 
         String jobId = job.getId();
         Optional<Quantiles> quantiles = jobProvider.getQuantiles(jobId);

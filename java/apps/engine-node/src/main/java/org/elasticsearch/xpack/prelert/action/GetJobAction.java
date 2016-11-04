@@ -39,7 +39,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
@@ -76,7 +76,7 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
         }
 
         public Request(String jobId) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
         public String getJobId() {
@@ -127,22 +127,22 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
 
     public static class Response extends ActionResponse implements StatusToXContent {
 
-        private SingleDocument<JobDetails> result;
+        private SingleDocument<Job> result;
 
-        public Response(SingleDocument<JobDetails> job) {
+        public Response(SingleDocument<Job> job) {
             this.result = job;
         }
 
         public Response() {}
 
-        public SingleDocument<JobDetails> getResult() {
+        public SingleDocument<Job> getResult() {
             return result;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            result = new SingleDocument<>(in, JobDetails::new);
+            result = new SingleDocument<>(in, Job::new);
         }
 
         @Override
@@ -222,9 +222,9 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
             logger.debug("Get job '" + request.getJobId() + "'");
-            Optional<JobDetails> optionalJob = jobManager.getJob(request.getJobId(), state);
-            SingleDocument<JobDetails> jobDocument = optionalJob.isPresent() ? createJobDocument(optionalJob.get())
-                    : SingleDocument.empty(JobDetails.TYPE);
+            Optional<Job> optionalJob = jobManager.getJob(request.getJobId(), state);
+            SingleDocument<Job> jobDocument = optionalJob.isPresent() ? createJobDocument(optionalJob.get())
+                    : SingleDocument.empty(Job.TYPE);
             if (jobDocument.isExists()) {
                 logger.debug("Returning job '" + optionalJob.get().getJobId() + "'");
             }
@@ -234,8 +234,8 @@ public class GetJobAction extends Action<GetJobAction.Request, GetJobAction.Resp
             listener.onResponse(new Response(jobDocument));
         }
 
-        private SingleDocument<JobDetails> createJobDocument(JobDetails job) throws JsonProcessingException {
-            return new SingleDocument<JobDetails>(JobDetails.TYPE, job);
+        private SingleDocument<Job> createJobDocument(Job job) throws JsonProcessingException {
+            return new SingleDocument<Job>(Job.TYPE, job);
         }
 
         @Override

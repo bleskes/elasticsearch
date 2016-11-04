@@ -17,7 +17,7 @@ package org.elasticsearch.xpack.prelert.job.manager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.config.DefaultFrequency;
@@ -55,7 +55,7 @@ public class JobScheduledService {
         this.jobLoggerFactory = Objects.requireNonNull(jobLoggerFactory);
     }
 
-    public void start(JobDetails job, Allocation allocation) {
+    public void start(Job job, Allocation allocation) {
         if (!jobToScheduler.containsKey(allocation.getJobId())) {
             SchedulerState schedulerState = allocation.getSchedulerState();
             if (schedulerState != null && schedulerState.getStatus() == JobSchedulerStatus.STARTED) {
@@ -66,7 +66,7 @@ public class JobScheduledService {
         }
     }
 
-    private JobScheduler createJobScheduler(JobDetails job) {
+    private JobScheduler createJobScheduler(Job job) {
         Duration bucketSpan = Duration.ofSeconds(job.getAnalysisConfig().getBucketSpan());
         Duration frequency = getFrequencyOrDefault(job);
         Duration queryDelay = Duration.ofSeconds(job.getSchedulerConfig().getQueryDelay());
@@ -78,7 +78,7 @@ public class JobScheduledService {
         return jobScheduler;
     }
 
-    private static Duration getFrequencyOrDefault(JobDetails job) {
+    private static Duration getFrequencyOrDefault(Job job) {
         Long frequency = job.getSchedulerConfig().getFrequency();
         Long bucketSpan = job.getAnalysisConfig().getBucketSpan();
         return frequency == null ? DefaultFrequency.ofBucketSpan(bucketSpan) : Duration.ofSeconds(frequency);

@@ -59,7 +59,7 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
@@ -289,8 +289,8 @@ public class ElasticsearchJobProvider implements JobProvider
         try
         {
             LOGGER.trace("ES API CALL: get ID " + elasticJobId.getId() +
-                    " type " + JobDetails.TYPE + " from index " + elasticJobId.getIndex());
-            GetResponse response = client.prepareGet(elasticJobId.getIndex(), JobDetails.TYPE, elasticJobId.getId())
+                    " type " + Job.TYPE + " from index " + elasticJobId.getIndex());
+            GetResponse response = client.prepareGet(elasticJobId.getIndex(), Job.TYPE, elasticJobId.getId())
                     .setFetchSource(false)
                     .get();
 
@@ -354,7 +354,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator()
+    public BatchedDocumentsIterator<Job> newBatchedJobsIterator()
     {
         return new ElasticsearchBatchedJobsIterator(client, ElasticsearchJobId.INDEX_PREFIX + "*", parseFieldMatcher);
     }
@@ -363,7 +363,7 @@ public class ElasticsearchJobProvider implements JobProvider
      * Create the Elasticsearch index and the mappings
      */
     @Override
-    public void createJob(JobDetails job, ActionListener<Boolean> listener) {
+    public void createJob(Job job, ActionListener<Boolean> listener) {
         Collection<String> termFields = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().termFields() : null;
         Collection<String> influencers = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().getInfluencers() : null;
         try {

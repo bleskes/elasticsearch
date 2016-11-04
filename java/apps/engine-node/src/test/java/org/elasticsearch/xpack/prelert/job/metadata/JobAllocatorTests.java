@@ -26,7 +26,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -34,7 +33,7 @@ import static org.elasticsearch.mock.orig.Mockito.never;
 import static org.elasticsearch.mock.orig.Mockito.times;
 import static org.elasticsearch.mock.orig.Mockito.verify;
 import static org.elasticsearch.mock.orig.Mockito.when;
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.mockito.Matchers.any;
 
 public class JobAllocatorTests extends ESTestCase {

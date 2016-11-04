@@ -26,7 +26,7 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction.Response;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
@@ -39,12 +39,12 @@ public class RestGetBucketsAction extends BaseRestHandler {
     public RestGetBucketsAction(Settings settings, RestController controller, GetBucketsAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + JobDetails.ID.getPreferredName() + "}/buckets", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + Job.ID.getPreferredName() + "}/buckets", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        String jobId = restRequest.param(Job.ID.getPreferredName());
         BytesReference bodyBytes = restRequest.content();
         final GetBucketsAction.Request request;
         if (bodyBytes != null && bodyBytes.length() > 0) {

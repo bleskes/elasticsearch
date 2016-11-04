@@ -41,11 +41,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
+public class JobTests extends AbstractSerializingTestCase<Job> {
 
     @Override
-    protected JobDetails createTestInstance() {
-        JobDetails.Builder builder = new JobDetails.Builder(randomValidJobId());
+    protected Job createTestInstance() {
+        Job.Builder builder = new Job.Builder(randomValidJobId());
         if (randomBoolean()) {
             builder.setDescription(randomAsciiOfLength(10));
         }
@@ -120,49 +120,49 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     @Override
-    protected Writeable.Reader<JobDetails> instanceReader() {
-        return JobDetails::new;
+    protected Writeable.Reader<Job> instanceReader() {
+        return Job::new;
     }
 
     @Override
-    protected JobDetails parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return JobDetails.PARSER.apply(parser, () -> matcher).build();
+    protected Job parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
+        return Job.PARSER.apply(parser, () -> matcher).build();
     }
 
     public void testConstructor_GivenEmptyJobConfiguration() {
-        JobDetails jobDetails = buildJobBuilder("foo").build(true);
+        Job job = buildJobBuilder("foo").build(true);
 
-        assertEquals("foo", jobDetails.getId());
-        assertNotNull(jobDetails.getCreateTime());
-        assertEquals(600L, jobDetails.getTimeout());
-        assertNotNull(jobDetails.getAnalysisConfig());
-        assertNull(jobDetails.getAnalysisLimits());
-        assertNull(jobDetails.getCustomSettings());
-        assertNotNull(jobDetails.getDataDescription());
-        assertNull(jobDetails.getDescription());
-        assertNull(jobDetails.getFinishedTime());
-        assertNull(jobDetails.getIgnoreDowntime());
-        assertNull(jobDetails.getLastDataTime());
-        assertNull(jobDetails.getModelDebugConfig());
-        assertNull(jobDetails.getModelSizeStats());
-        assertNull(jobDetails.getRenormalizationWindowDays());
-        assertNull(jobDetails.getBackgroundPersistInterval());
-        assertNull(jobDetails.getModelSnapshotRetentionDays());
-        assertNull(jobDetails.getResultsRetentionDays());
-        assertNull(jobDetails.getSchedulerConfig());
-        assertEquals(Collections.emptyList(), jobDetails.getTransforms());
-        assertNotNull(jobDetails.allFields());
-        assertFalse(jobDetails.allFields().isEmpty());
+        assertEquals("foo", job.getId());
+        assertNotNull(job.getCreateTime());
+        assertEquals(600L, job.getTimeout());
+        assertNotNull(job.getAnalysisConfig());
+        assertNull(job.getAnalysisLimits());
+        assertNull(job.getCustomSettings());
+        assertNotNull(job.getDataDescription());
+        assertNull(job.getDescription());
+        assertNull(job.getFinishedTime());
+        assertNull(job.getIgnoreDowntime());
+        assertNull(job.getLastDataTime());
+        assertNull(job.getModelDebugConfig());
+        assertNull(job.getModelSizeStats());
+        assertNull(job.getRenormalizationWindowDays());
+        assertNull(job.getBackgroundPersistInterval());
+        assertNull(job.getModelSnapshotRetentionDays());
+        assertNull(job.getResultsRetentionDays());
+        assertNull(job.getSchedulerConfig());
+        assertEquals(Collections.emptyList(), job.getTransforms());
+        assertNotNull(job.allFields());
+        assertFalse(job.allFields().isEmpty());
     }
 
     public void testConstructor_GivenJobConfigurationWithIgnoreDowntime() {
-        JobDetails.Builder builder = new JobDetails.Builder("foo");
+        Job.Builder builder = new Job.Builder("foo");
         builder.setIgnoreDowntime(IgnoreDowntime.ONCE);
         builder.setAnalysisConfig(createAnalysisConfig());
-        JobDetails jobDetails = builder.build();
+        Job job = builder.build();
 
-        assertEquals("foo", jobDetails.getId());
-        assertEquals(IgnoreDowntime.ONCE, jobDetails.getIgnoreDowntime());
+        assertEquals("foo", job.getId());
+        assertEquals(IgnoreDowntime.ONCE, job.getIgnoreDowntime());
     }
 
     public void testConstructor_GivenJobConfigurationWithElasticsearchScheduler_ShouldFillDefaults() {
@@ -171,66 +171,66 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testEquals_GivenDifferentClass() {
-        JobDetails jobDetails = buildJobBuilder("foo").build();
-        assertFalse(jobDetails.equals("a string"));
+        Job job = buildJobBuilder("foo").build();
+        assertFalse(job.equals("a string"));
     }
 
     public void testEquals_GivenDifferentIds() {
         Date createTime = new Date();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setCreateTime(createTime);
-        JobDetails jobDetails1 = builder.build();
+        Job job1 = builder.build();
         builder.setId("bar");
-        JobDetails jobDetails2 = builder.build();
-        assertFalse(jobDetails1.equals(jobDetails2));
+        Job job2 = builder.build();
+        assertFalse(job1.equals(job2));
     }
 
     public void testEquals_GivenDifferentRenormalizationWindowDays() {
-        JobDetails.Builder jobDetails1 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails1 = new Job.Builder("foo");
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setRenormalizationWindowDays(3L);
-        JobDetails.Builder jobDetails2 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails2 = new Job.Builder("foo");
         jobDetails2.setRenormalizationWindowDays(4L);
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         assertFalse(jobDetails1.build().equals(jobDetails2.build()));
     }
 
     public void testEquals_GivenDifferentBackgroundPersistInterval() {
-        JobDetails.Builder jobDetails1 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails1 = new Job.Builder("foo");
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setBackgroundPersistInterval(10000L);
-        JobDetails.Builder jobDetails2 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails2 = new Job.Builder("foo");
         jobDetails2.setBackgroundPersistInterval(8000L);
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         assertFalse(jobDetails1.build().equals(jobDetails2.build()));
     }
 
     public void testEquals_GivenDifferentModelSnapshotRetentionDays() {
-        JobDetails.Builder jobDetails1 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails1 = new Job.Builder("foo");
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setModelSnapshotRetentionDays(10L);
-        JobDetails.Builder jobDetails2 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails2 = new Job.Builder("foo");
         jobDetails2.setModelSnapshotRetentionDays(8L);
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         assertFalse(jobDetails1.build().equals(jobDetails2.build()));
     }
 
     public void testEquals_GivenDifferentResultsRetentionDays() {
-        JobDetails.Builder jobDetails1 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails1 = new Job.Builder("foo");
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setResultsRetentionDays(30L);
-        JobDetails.Builder jobDetails2 = new JobDetails.Builder("foo");
+        Job.Builder jobDetails2 = new Job.Builder("foo");
         jobDetails2.setResultsRetentionDays(4L);
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         assertFalse(jobDetails1.build().equals(jobDetails2.build()));
     }
 
     public void testEquals_GivenDifferentCustomSettings() {
-        JobDetails.Builder jobDetails1 = buildJobBuilder("foo");
+        Job.Builder jobDetails1 = buildJobBuilder("foo");
         Map<String, Object> customSettings1 = new HashMap<>();
         customSettings1.put("key1", "value1");
         jobDetails1.setCustomSettings(customSettings1);
-        JobDetails.Builder jobDetails2 = buildJobBuilder("foo");
+        Job.Builder jobDetails2 = buildJobBuilder("foo");
         Map<String, Object> customSettings2 = new HashMap<>();
         customSettings2.put("key2", "value2");
         jobDetails2.setCustomSettings(customSettings2);
@@ -238,9 +238,9 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testEquals_GivenDifferentIgnoreDowntime() {
-        JobDetails.Builder job1 = new JobDetails.Builder();
+        Job.Builder job1 = new Job.Builder();
         job1.setIgnoreDowntime(IgnoreDowntime.NEVER);
-        JobDetails.Builder job2 = new JobDetails.Builder();
+        Job.Builder job2 = new Job.Builder();
         job2.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         assertFalse(job1.equals(job2));
@@ -248,7 +248,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testSetAnalysisLimits() {
-        JobDetails.Builder builder = new JobDetails.Builder();
+        Job.Builder builder = new Job.Builder();
         builder.setAnalysisLimits(new AnalysisLimits(42L, null));
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
                 () -> builder.setAnalysisLimits(new AnalysisLimits(41L, null)));
@@ -312,42 +312,42 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
 
     public void testGenerateJobId_doesnotIncludeHost() {
         Pattern pattern = Pattern.compile("[0-9]{14}-[0-9]{5,64}");
-        String jobId = JobDetails.Builder.generateJobId(null);
+        String jobId = Job.Builder.generateJobId(null);
         assertTrue(jobId, pattern.matcher(jobId).matches());
     }
 
     public void testGenerateJobId_IncludesHost() {
         Pattern pattern = Pattern.compile("[0-9]{14}-server-1-[0-9]{5,64}");
-        String jobId = JobDetails.Builder.generateJobId("server-1");
+        String jobId = Job.Builder.generateJobId("server-1");
         assertTrue(jobId, pattern.matcher(jobId).matches());
     }
 
     public void testGenerateJobId_isShorterThanMaxHJobLength() {
-        assertTrue(JobDetails.Builder.generateJobId(null).length() < JobDetails.Builder.MAX_JOB_ID_LENGTH);
+        assertTrue(Job.Builder.generateJobId(null).length() < Job.Builder.MAX_JOB_ID_LENGTH);
     }
 
     public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname() {
-        String id = JobDetails.Builder.generateJobId("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
-        assertEquals("Unexpected id length: " + id, JobDetails.Builder.MAX_JOB_ID_LENGTH, id.length());
+        String id = Job.Builder.generateJobId("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
+        assertEquals("Unexpected id length: " + id, Job.Builder.MAX_JOB_ID_LENGTH, id.length());
         assertTrue(
                 "Unexpected id ending: " + id + ", expected ending: "
-                        + String.format(Locale.ROOT, "%05d", JobDetails.Builder.ID_SEQUENCE.get()),
-                id.endsWith(String.format(Locale.ROOT, "%05d", JobDetails.Builder.ID_SEQUENCE.get())));
+                        + String.format(Locale.ROOT, "%05d", Job.Builder.ID_SEQUENCE.get()),
+                id.endsWith(String.format(Locale.ROOT, "%05d", Job.Builder.ID_SEQUENCE.get())));
     }
 
     public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname_andSixDigitSequence() {
         String id = null;
         for (int i = 0; i < 100000; i++) {
-            id = JobDetails.Builder.generateJobId("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
+            id = Job.Builder.generateJobId("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
         }
-        assertTrue(id.endsWith("-" + JobDetails.Builder.ID_SEQUENCE.get()));
-        assertEquals(JobDetails.Builder.MAX_JOB_ID_LENGTH, id.length());
+        assertTrue(id.endsWith("-" + Job.Builder.ID_SEQUENCE.get()));
+        assertEquals(Job.Builder.MAX_JOB_ID_LENGTH, id.length());
     }
 
     // JobConfigurationVerifierTests:
 
     public void testCheckValidId_IdTooLong()  {
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setId("averyveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryverylongid");
         ElasticsearchStatusException e =
                 ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> builder.build());
@@ -355,14 +355,14 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testCheckValidId_GivenAllValidChars() {
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setId("abcdefghijklmnopqrstuvwxyz-0123456789_.");
         builder.build();
     }
 
     public void testCheckValidId_ProhibitedChars() {
         String invalidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()+?\"'~±/\\[]{},<>=";
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS);
         for (char c : invalidChars.toCharArray()) {
             builder.setId(Character.toString(c));
@@ -373,7 +373,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testCheckValidId_ControlChars() {
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setId("two\nlines");
         ElasticsearchStatusException e =
                 ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
@@ -382,7 +382,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void jobConfigurationTest() {
-        JobDetails.Builder builder = new JobDetails.Builder();
+        Job.Builder builder = new Job.Builder();
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").get(0));
         builder.setId("bad id with spaces");
@@ -425,7 +425,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testCheckTransformOutputIsUsed_throws() {
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("dns"));
         builder.setTransforms(Arrays.asList(tc));
@@ -441,7 +441,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         AnalysisConfig config = createAnalysisConfig();
         config.setSummaryCountFieldName("summaryCountField");
         builder.setAnalysisConfig(config);
@@ -463,7 +463,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     }
 
     public void testCheckTransformOutputIsUsed_transformHasNoOutput() {
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         // The exclude filter has no output
         TransformConfig tc = new TransformConfig(TransformType.Names.EXCLUDE_NAME);
         tc.setCondition(new Condition(Operator.MATCH, "whitelisted_host"));
@@ -476,7 +476,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
         String errorMessage = Messages.getMessage(
                 Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
                 DataDescription.DataFormat.SINGLE_LINE);
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
         builder.setDataDescription(dataDescription);
@@ -489,7 +489,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
         String errorMessage = Messages.getMessage(
                 Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
                 DataDescription.DataFormat.SINGLE_LINE);
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setTransforms(new ArrayList<>());
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
@@ -506,7 +506,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
         transform.setInputs(Arrays.asList("raw"));
         transform.setOutputs(Arrays.asList("time"));
         transforms.add(transform);
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setTransforms(transforms);
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
@@ -517,7 +517,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     public void testVerify_GivenNegativeRenormalizationWindowDays() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
                 "renormalizationWindowDays", 0, -1);
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setRenormalizationWindowDays(-1L);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
@@ -526,7 +526,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
 
     public void testVerify_GivenNegativeModelSnapshotRetentionDays() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "modelSnapshotRetentionDays", 0, -1);
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setModelSnapshotRetentionDays(-1L);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
 
@@ -537,7 +537,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     public void testVerify_GivenLowBackgroundPersistInterval() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
                 "backgroundPersistInterval", 3600, 3599);
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setBackgroundPersistInterval(3599L);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
@@ -547,7 +547,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     public void testVerify_GivenNegativeResultsRetentionDays() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
                 "resultsRetentionDays", 0, -1);
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setResultsRetentionDays(-1L);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
@@ -557,7 +557,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     public void testVerify_GivenSchedulerButNoBucketSpan() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN);
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN.getValueString(), e.getHeader("errorCode").get(0));
@@ -567,7 +567,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
     public void testVerify_GivenElasticsearchSchedulerAndNonZeroLatency() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
         AnalysisConfig ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
@@ -581,7 +581,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
 
     public void testVerify_GivenElasticsearchSchedulerAndZeroLatency() {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
@@ -595,7 +595,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
 
     public void testVerify_GivenElasticsearchSchedulerAndNoLatency() {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
@@ -609,7 +609,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
 
     public void testVerify_GivenElasticsearchSchedulerWithAggsAndCorrectSummaryCountField() throws IOException {
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
@@ -627,7 +627,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
                 Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
                 DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT);
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
@@ -646,7 +646,7 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
                 Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
                 DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT);
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfigWithAggs();
-        JobDetails.Builder builder = buildJobBuilder("foo");
+        Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
         DataDescription dataDescription = new DataDescription();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
@@ -660,8 +660,8 @@ public class JobDetailsTests extends AbstractSerializingTestCase<JobDetails> {
         assertEquals(errorMessage, e.getMessage());
     }
 
-    public static JobDetails.Builder buildJobBuilder(String id) {
-        JobDetails.Builder builder = new JobDetails.Builder(id);
+    public static Job.Builder buildJobBuilder(String id) {
+        Job.Builder builder = new Job.Builder(id);
         builder.setCreateTime(new Date());
         AnalysisConfig ac = createAnalysisConfig();
         DataDescription dc = new DataDescription();

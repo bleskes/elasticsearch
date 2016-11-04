@@ -20,7 +20,7 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
@@ -78,7 +78,7 @@ public class JobScheduledServiceTests extends ESTestCase {
     }
 
     public void testStart_GivenNewlyCreatedJob() throws IOException {
-        JobDetails.Builder builder = createScheduledJob();
+        Job.Builder builder = createScheduledJob();
         Allocation allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();
@@ -106,7 +106,7 @@ public class JobScheduledServiceTests extends ESTestCase {
     }
 
     public void testStop_GivenStartedScheduledJob() throws IOException {
-        JobDetails.Builder builder = createScheduledJob();
+        Job.Builder builder = createScheduledJob();
         Allocation allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts();
@@ -135,7 +135,7 @@ public class JobScheduledServiceTests extends ESTestCase {
         verify(dataProcessor, times(1)).closeJob("foo");
     }
 
-    private static JobDetails.Builder createScheduledJob() {
+    private static Job.Builder createScheduledJob() {
         AnalysisConfig analysisConfig = new AnalysisConfig();
         analysisConfig.setBucketSpan(3600L);
         analysisConfig.setDetectors(Arrays.asList(new Detector.Builder("metric", "field").build()));
@@ -145,7 +145,7 @@ public class JobScheduledServiceTests extends ESTestCase {
         schedulerConfig.setIndexes(Arrays.asList("myIndex"));
         schedulerConfig.setTypes(Arrays.asList("myType"));
 
-        JobDetails.Builder jobConfig = new JobDetails.Builder("foo");
+        Job.Builder jobConfig = new Job.Builder("foo");
         jobConfig.setAnalysisConfig(analysisConfig);
         jobConfig.setSchedulerConfig(schedulerConfig);
         DataDescription dataDescription = new DataDescription();

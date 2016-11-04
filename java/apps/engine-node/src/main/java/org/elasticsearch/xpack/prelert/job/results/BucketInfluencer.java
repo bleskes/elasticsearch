@@ -24,7 +24,7 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
@@ -71,7 +71,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
             }
             throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP.getPreferredName() + "]");
         }, TIMESTAMP, ValueType.VALUE);
-        PARSER.declareString(BucketInfluencer::setJobId, JobDetails.ID);
+        PARSER.declareString(BucketInfluencer::setJobId, Job.ID);
     }
 
     private String influenceField;
@@ -138,7 +138,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         builder.field(RAW_ANOMALY_SCORE.getPreferredName(), rawAnomalyScore);
         builder.field(PROBABILITY.getPreferredName(), probability);
         if (jobId != null) {
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
         }
         if (timestamp != null) {
             builder.field(TIMESTAMP.getPreferredName(), timestamp.getTime());

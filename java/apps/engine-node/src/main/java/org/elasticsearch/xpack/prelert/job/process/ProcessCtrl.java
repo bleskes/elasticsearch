@@ -25,7 +25,7 @@ import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -296,8 +296,8 @@ public class ProcessCtrl {
         return rng.nextInt(SECONDS_IN_HOUR);
     }
 
-    public static List<String> buildAutodetectCommand(Environment env, Settings settings, JobDetails job, Logger logger,
-            String restoreSnapshotId, boolean ignoreDowntime) {
+    public static List<String> buildAutodetectCommand(Environment env, Settings settings, Job job, Logger logger,
+                                                      String restoreSnapshotId, boolean ignoreDowntime) {
         List<String> command = new ArrayList<>();
         command.add(getAutodetectPath(env).toString());
 
@@ -377,7 +377,7 @@ public class ProcessCtrl {
         return command;
     }
 
-    private static String getTimeFieldOrDefault(JobDetails job) {
+    private static String getTimeFieldOrDefault(Job job) {
         DataDescription dataDescription = job.getDataDescription();
         boolean useDefault = dataDescription == null
                 || Strings.isNullOrEmpty(dataDescription.getTimeField());

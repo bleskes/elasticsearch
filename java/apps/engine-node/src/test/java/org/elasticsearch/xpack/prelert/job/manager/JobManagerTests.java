@@ -26,7 +26,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
@@ -49,7 +49,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
@@ -85,7 +85,7 @@ public class JobManagerTests extends ESTestCase {
         builder.putJob(buildJobBuilder("foo").build(), false);
         ClusterState clusterState = ClusterState.builder(new ClusterName("name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, builder.build())).build();
-        Optional<JobDetails> doc = jobManager.getJob("foo", clusterState);
+        Optional<Job> doc = jobManager.getJob("foo", clusterState);
         assertTrue(doc.isPresent());
     }
 
@@ -103,8 +103,8 @@ public class JobManagerTests extends ESTestCase {
     public void testDeleteJob_GivenJobActionIsNotAvailable() throws InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
-        JobDetails jobDetails = buildJobBuilder("foo").build();
-        clusterState = jobManager.innerPutJob(jobDetails, false, clusterState);
+        Job job = buildJobBuilder("foo").build();
+        clusterState = jobManager.innerPutJob(job, false, clusterState);
         PrelertMetadata currentPrelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
         builder.putAllocation("nodeId", "foo");
@@ -134,8 +134,8 @@ public class JobManagerTests extends ESTestCase {
     public void testRemoveJobFromClusterState_GivenExistingMetadata() {
         JobManager jobManager = createJobManager();
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
-        JobDetails jobDetails = buildJobBuilder("foo").build();
-        clusterState = jobManager.innerPutJob(jobDetails, false, clusterState);
+        Job job = buildJobBuilder("foo").build();
+        clusterState = jobManager.innerPutJob(job, false, clusterState);
 
         clusterState = jobManager.removeJobFromClusterState("foo", clusterState);
 
@@ -146,7 +146,7 @@ public class JobManagerTests extends ESTestCase {
     public void testRemoveJobFromClusterState_GivenNoMetadata() {
         JobManager jobManager = createJobManager();
         ClusterState clusterStateBefore = ClusterState.builder(new ClusterName("_name")).build();
-        JobDetails jobDetails = buildJobBuilder("foo").build();
+        Job job = buildJobBuilder("foo").build();
 
         ClusterState clusterStateAfter = jobManager.removeJobFromClusterState("foo", clusterStateBefore);
 
@@ -161,7 +161,7 @@ public class JobManagerTests extends ESTestCase {
 
     public void testGetJobOrThrowIfUnknown_GivenKnownJob() {
         JobManager jobManager = createJobManager();
-        JobDetails job = buildJobBuilder("foo").build();
+        Job job = buildJobBuilder("foo").build();
         PrelertMetadata prelertMetadata = new PrelertMetadata.Builder().putJob(job, false).build();
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata)).build();
@@ -178,7 +178,7 @@ public class JobManagerTests extends ESTestCase {
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata.build())).build();
 
         JobManager jobManager = createJobManager();
-        QueryPage<JobDetails> result = jobManager.getJobs(0, 10, clusterState);
+        QueryPage<Job> result = jobManager.getJobs(0, 10, clusterState);
         assertThat(result.hitCount(), equalTo(10L));
         assertThat(result.hits().get(0).getId(), equalTo("0"));
         assertThat(result.hits().get(1).getId(), equalTo("1"));
@@ -220,17 +220,17 @@ public class JobManagerTests extends ESTestCase {
         JobManager jobManager = createJobManager();
         ClusterState cs = ClusterState.builder(new ClusterName("_name")).build();
 
-        JobDetails jobDetails1 = buildJobBuilder("_id").build();
-        ClusterState result1 = jobManager.innerPutJob(jobDetails1, false, cs);
+        Job job1 = buildJobBuilder("_id").build();
+        ClusterState result1 = jobManager.innerPutJob(job1, false, cs);
         PrelertMetadata pm = result1.getMetaData().custom(PrelertMetadata.TYPE);
-        assertThat(pm.getJobs().get("_id"), sameInstance(jobDetails1));
+        assertThat(pm.getJobs().get("_id"), sameInstance(job1));
 
-        JobDetails jobDetails2 = buildJobBuilder("_id").build();
-        expectThrows(ElasticsearchStatusException.class, () -> jobManager.innerPutJob(jobDetails2, false, result1));
+        Job job2 = buildJobBuilder("_id").build();
+        expectThrows(ElasticsearchStatusException.class, () -> jobManager.innerPutJob(job2, false, result1));
 
-        ClusterState result2 = jobManager.innerPutJob(jobDetails2, true, result1);
+        ClusterState result2 = jobManager.innerPutJob(job2, true, result1);
         pm = result2.getMetaData().custom(PrelertMetadata.TYPE);
-        assertThat(pm.getJobs().get("_id"), sameInstance(jobDetails2));
+        assertThat(pm.getJobs().get("_id"), sameInstance(job2));
     }
 
     private JobManager createJobManager() {
@@ -272,10 +272,10 @@ public class JobManagerTests extends ESTestCase {
         }
     }
     /*
-    private static MockBatchedDocumentsIterator<JobDetails> newBatchedJobsIterator(List<JobDetails> jobs)
+    private static MockBatchedDocumentsIterator<Job> newBatchedJobsIterator(List<Job> jobs)
     {
-        Deque<JobDetails> batch1 = new ArrayDeque<>();
-        Deque<JobDetails> batch2 = new ArrayDeque<>();
+        Deque<Job> batch1 = new ArrayDeque<>();
+        Deque<Job> batch2 = new ArrayDeque<>();
         for (int i = 0; i < jobs.size(); i++)
         {
             if (i == 0)
@@ -287,7 +287,7 @@ public class JobManagerTests extends ESTestCase {
                 batch2.add(jobs.get(i));
             }
         }
-        List<Deque<JobDetails>> batches = new ArrayList<>();
+        List<Deque<Job>> batches = new ArrayList<>();
         batches.add(batch1);
         batches.add(batch2);
         return new MockBatchedDocumentsIterator<>(batches);

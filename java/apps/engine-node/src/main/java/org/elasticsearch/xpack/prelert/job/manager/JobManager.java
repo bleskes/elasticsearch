@@ -31,7 +31,7 @@ import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
@@ -102,17 +102,17 @@ public class JobManager {
      *
      * @param jobId
      *            the jobId
-     * @return An {@code Optional} containing the {@code JobDetails} if a job
+     * @return An {@code Optional} containing the {@code Job} if a job
      *         with the given {@code jobId} exists, or an empty {@code Optional}
      *         otherwise
      */
-    public Optional<JobDetails> getJob(String jobId, ClusterState clusterState) {
+    public Optional<Job> getJob(String jobId, ClusterState clusterState) {
         PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
         if (prelertMetadata == null) {
             return Optional.empty();
         }
 
-        JobDetails job = prelertMetadata.getJobs().get(jobId);
+        Job job = prelertMetadata.getJobs().get(jobId);
         if (job == null) {
             return Optional.empty();
         }
@@ -132,13 +132,13 @@ public class JobManager {
      *         not the only the number returned here as determined by the
      *         <code>take</code> parameter.
      */
-    public QueryPage<JobDetails> getJobs(int skip, int take, ClusterState clusterState) {
+    public QueryPage<Job> getJobs(int skip, int take, ClusterState clusterState) {
         PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
         if (prelertMetadata == null) {
             return new QueryPage<>(Collections.emptyList(), 0);
         }
 
-        List<JobDetails> jobs = prelertMetadata.getJobs().entrySet().stream()
+        List<Job> jobs = prelertMetadata.getJobs().entrySet().stream()
                 .skip(skip)
                 .limit(take)
                 .map(Map.Entry::getValue)
@@ -147,18 +147,18 @@ public class JobManager {
     }
 
     /**
-     * Returns the non-null {@code JobDetails} object for the given
+     * Returns the non-null {@code Job} object for the given
      * {@code jobId} or throws
      * {@link org.elasticsearch.ResourceNotFoundException}
      *
      * @param jobId
      *            the jobId
-     * @return the {@code JobDetails} if a job with the given {@code jobId}
+     * @return the {@code Job} if a job with the given {@code jobId}
      *         exists
      * @throws org.elasticsearch.ResourceNotFoundException
      *             if there is no job with matching the given {@code jobId}
      */
-    public JobDetails getJobOrThrowIfUnknown(String jobId) {
+    public Job getJobOrThrowIfUnknown(String jobId) {
         return getJobOrThrowIfUnknown(clusterService.state(), jobId);
     }
 
@@ -167,23 +167,23 @@ public class JobManager {
     }
 
     /**
-     * Returns the non-null {@code JobDetails} object for the given
+     * Returns the non-null {@code Job} object for the given
      * {@code jobId} or throws
      * {@link org.elasticsearch.ResourceNotFoundException}
      *
      * @param jobId
      *            the jobId
-     * @return the {@code JobDetails} if a job with the given {@code jobId}
+     * @return the {@code Job} if a job with the given {@code jobId}
      *         exists
      * @throws org.elasticsearch.ResourceNotFoundException
      *             if there is no job with matching the given {@code jobId}
      */
-    public JobDetails getJobOrThrowIfUnknown(ClusterState clusterState, String jobId) {
+    public Job getJobOrThrowIfUnknown(ClusterState clusterState, String jobId) {
         PrelertMetadata prelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
         if (prelertMetadata == null) {
             throw ExceptionsHelper.missingJobException(jobId);
         }
-        JobDetails job = prelertMetadata.getJobs().get(jobId);
+        Job job = prelertMetadata.getJobs().get(jobId);
         if (job == null) {
             throw ExceptionsHelper.missingJobException(jobId);
         }
@@ -194,7 +194,7 @@ public class JobManager {
      * Stores a job in the cluster state
      */
     public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) {
-        JobDetails job = request.getJob();
+        Job job = request.getJob();
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean acked) {
@@ -241,7 +241,7 @@ public class JobManager {
         });
     }
 
-    ClusterState innerPutJob(JobDetails jobDetails, boolean overwrite, ClusterState currentState) {
+    ClusterState innerPutJob(Job job, boolean overwrite, ClusterState currentState) {
         PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
         PrelertMetadata.Builder builder;
         if (currentPrelertMetadata != null) {
@@ -250,7 +250,7 @@ public class JobManager {
             builder = new PrelertMetadata.Builder();
         }
 
-        builder.putJob(jobDetails, overwrite);
+        builder.putJob(job, overwrite);
 
         ClusterState.Builder newState = ClusterState.builder(currentState);
         newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
@@ -398,7 +398,7 @@ public class JobManager {
         });
     }
 
-    private void checkJobIsScheduled(JobDetails job) {
+    private void checkJobIsScheduled(Job job) {
         if (job.getSchedulerConfig() == null) {
             throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB, job.getId()),
                     ErrorCodes.NO_SUCH_SCHEDULED_JOB);
@@ -423,8 +423,8 @@ public class JobManager {
 
     private ClusterState innerUpdateSchedulerState(ClusterState currentState, String jobId,
             Function<SchedulerState, SchedulerState> stateUpdater) {
-        JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, jobId);
-        checkJobIsScheduled(jobDetails);
+        Job job = getJobOrThrowIfUnknown(currentState, jobId);
+        checkJobIsScheduled(job);
 
         Allocation allocation = getAllocation(currentState, jobId);
         SchedulerState oldState = allocation.getSchedulerState();
@@ -496,15 +496,15 @@ public class JobManager {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                JobDetails jobDetails = getJobOrThrowIfUnknown(currentState, request.getJobId());
-                JobDetails.Builder builder = new JobDetails.Builder(jobDetails);
+                Job job = getJobOrThrowIfUnknown(currentState, request.getJobId());
+                Job.Builder builder = new Job.Builder(job);
                 builder.setModelSnapshotId(modelSnapshot.getSnapshotId());
                 if (request.getDeleteInterveningResults()) {
                     builder.setIgnoreDowntime(IgnoreDowntime.NEVER);
                     Date latestRecordTime = modelSnapshot.getLatestResultTimeStamp();
                     LOGGER.info("Resetting latest record time to '" + latestRecordTime + "'");
                     builder.setLastDataTime(latestRecordTime);
-                    DataCounts counts = jobDetails.getCounts();
+                    DataCounts counts = job.getCounts();
                     counts.setLatestRecordTimeStamp(latestRecordTime);
                     builder.setCounts(counts);
                 } else {

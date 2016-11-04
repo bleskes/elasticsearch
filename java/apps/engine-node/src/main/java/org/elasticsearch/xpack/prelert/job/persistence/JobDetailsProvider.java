@@ -16,7 +16,7 @@ package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 /**
  * General interface for classes that persist Jobs and job data
@@ -46,7 +46,7 @@ public interface JobDetailsProvider
      *
      * @return a job {@link BatchedDocumentsIterator}
      */
-    BatchedDocumentsIterator<JobDetails> newBatchedJobsIterator();
+    BatchedDocumentsIterator<Job> newBatchedJobsIterator();
 
     /**
      * Save the details of the new job to the datastore.
@@ -54,7 +54,7 @@ public interface JobDetailsProvider
      * same Id already exists.
      */
     // TODO: rename and move?
-    void createJob(JobDetails job, ActionListener<Boolean> listener);
+    void createJob(Job job, ActionListener<Boolean> listener);
 
     /**
      * Delete all the job related documents from the database.

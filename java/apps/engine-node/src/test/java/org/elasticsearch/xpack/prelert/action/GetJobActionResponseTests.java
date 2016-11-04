@@ -20,7 +20,7 @@ import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
@@ -39,9 +39,9 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
 
     @Override
     protected Response createTestInstance() {
-        final SingleDocument<JobDetails> result;
+        final SingleDocument<Job> result;
         if (randomBoolean()) {
-            result = SingleDocument.empty(JobDetails.TYPE);
+            result = SingleDocument.empty(Job.TYPE);
         } else {
             String jobId = randomAsciiOfLength(10);
             String description = randomBoolean() ? randomAsciiOfLength(10) : null;
@@ -71,11 +71,11 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
                     : null;
             Double averageBucketProcessingTimeMs = randomBoolean() ? randomDouble() : null;
             String modelSnapshotId = randomBoolean() ? randomAsciiOfLength(10) : null;
-            JobDetails job = new JobDetails(jobId, description, createTime, finishedTime, lastDataTime,
+            Job job = new Job(jobId, description, createTime, finishedTime, lastDataTime,
                     timeout, analysisConfig, analysisLimits, schedulerConfig.build(), dataDescription, modelSizeStats, transformConfigList,
                     modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
                     modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs, modelSnapshotId);
-            result = new SingleDocument<JobDetails>(JobDetails.TYPE, job);
+            result = new SingleDocument<Job>(Job.TYPE, job);
         }
         return new Response(result);
     }

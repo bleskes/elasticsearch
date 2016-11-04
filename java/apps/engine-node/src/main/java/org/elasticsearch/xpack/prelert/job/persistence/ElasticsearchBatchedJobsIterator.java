@@ -18,9 +18,9 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.search.SearchHit;
 
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 
-class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIterator<JobDetails>
+class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIterator<Job>
 {
     private final ElasticsearchJobDetailsMapper jobMapper;
 
@@ -34,11 +34,11 @@ class ElasticsearchBatchedJobsIterator extends ElasticsearchBatchedDocumentsIter
     @Override
     protected String getType()
     {
-        return JobDetails.TYPE;
+        return Job.TYPE;
     }
 
     @Override
-    protected JobDetails map(SearchHit hit)
+    protected Job map(SearchHit hit)
     {
         return jobMapper.map(hit.getSourceRef());
     }

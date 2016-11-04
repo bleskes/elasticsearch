@@ -25,14 +25,13 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
 import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
 import org.junit.Before;
 import org.mockito.Mockito;
 
 import java.util.HashSet;
 
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 
 public class JobLifeCycleServiceTests extends ESTestCase {
 

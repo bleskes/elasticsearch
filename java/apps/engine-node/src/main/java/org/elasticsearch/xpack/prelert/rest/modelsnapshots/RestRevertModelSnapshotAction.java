@@ -26,7 +26,7 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 import java.io.IOException;
 
@@ -44,13 +44,13 @@ public class RestRevertModelSnapshotAction extends BaseRestHandler {
             RevertModelSnapshotAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/modelsnapshots/{" + JobDetails.ID.getPreferredName() + "}/revert",
+        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/modelsnapshots/{" + Job.ID.getPreferredName() + "}/revert",
                 this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        String jobId = restRequest.param(JobDetails.ID.getPreferredName());
+        String jobId = restRequest.param(Job.ID.getPreferredName());
         RevertModelSnapshotAction.Request request;
         if (RestActions.hasBodyContent(restRequest)) {
             BytesReference bodyBytes = RestActions.getRestContent(restRequest);

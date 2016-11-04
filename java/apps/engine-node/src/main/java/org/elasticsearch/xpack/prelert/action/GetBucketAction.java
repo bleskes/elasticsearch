@@ -38,7 +38,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
@@ -78,7 +78,7 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
-            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
             PARSER.declareString((request, timestamp) -> request.timestamp = timestamp, Bucket.TIMESTAMP);
             PARSER.declareString(Request::setPartitionValue, PARTITION_VALUE);
             PARSER.declareBoolean(Request::setExpand, EXPAND);
@@ -107,7 +107,7 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         }
 
         public Request(String jobId, String timestamp) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
             this.timestamp = ExceptionsHelper.requireNonNull(timestamp, Bucket.TIMESTAMP.getPreferredName());
         }
 
@@ -171,7 +171,7 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
             builder.field(Bucket.TIMESTAMP.getPreferredName(), timestamp);
             builder.field(EXPAND.getPreferredName(), expand);
             builder.field(INCLUDE_INTERIM.getPreferredName(), includeInterim);

@@ -23,7 +23,7 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
 
@@ -42,14 +42,14 @@ class ElasticsearchJobDetailsMapper {
     }
 
     /**
-     * Maps an Elasticsearch source map to a {@link JobDetails} object
+     * Maps an Elasticsearch source map to a {@link Job} object
      *
      * @param source The source of an Elasticsearch search response
-     * @return the {@code JobDetails} object
+     * @return the {@code Job} object
      */
-    public JobDetails map(BytesReference source) {
+    public Job map(BytesReference source) {
         try (XContentParser parser = XContentFactory.xContent(source).createParser(source)) {
-            JobDetails.Builder builder = JobDetails.PARSER.apply(parser, () -> parseFieldMatcher);
+            Job.Builder builder = Job.PARSER.apply(parser, () -> parseFieldMatcher);
             ElasticsearchJobId elasticJobId = new ElasticsearchJobId(builder.getId());
             addModelSizeStats(builder, elasticJobId);
             addBucketProcessingTime(builder, elasticJobId);
@@ -59,8 +59,8 @@ class ElasticsearchJobDetailsMapper {
         }
     }
 
-    private void addModelSizeStats(JobDetails.Builder job, ElasticsearchJobId elasticJobId) {
-        // Pull out the modelSizeStats document, and add this to the JobDetails
+    private void addModelSizeStats(Job.Builder job, ElasticsearchJobId elasticJobId) {
+        // Pull out the modelSizeStats document, and add this to the Job
         LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
                 " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
         GetResponse modelSizeStatsResponse = client.prepareGet(
@@ -86,8 +86,8 @@ class ElasticsearchJobDetailsMapper {
         }
     }
 
-    private void addBucketProcessingTime(JobDetails.Builder job, ElasticsearchJobId elasticJobId) {
-        // Pull out the modelSizeStats document, and add this to the JobDetails
+    private void addBucketProcessingTime(Job.Builder job, ElasticsearchJobId elasticJobId) {
+        // Pull out the modelSizeStats document, and add this to the Job
         LOGGER.trace("ES API CALL: get ID " + ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE +
                 " type " + ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS + " from index " + elasticJobId.getIndex());
         GetResponse procTimeResponse = client.prepareGet(

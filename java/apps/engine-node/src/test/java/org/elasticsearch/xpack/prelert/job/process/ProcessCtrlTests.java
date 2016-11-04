@@ -22,7 +22,7 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 
 public class ProcessCtrlTests extends ESTestCase {
     @Mock
@@ -51,7 +51,7 @@ public class ProcessCtrlTests extends ESTestCase {
     public void testBuildAutodetectCommand() {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(settings);
-        JobDetails.Builder job = buildJobBuilder("unit-test-job");
+        Job.Builder job = buildJobBuilder("unit-test-job");
 
         Detector.Builder d1 = new Detector.Builder("info_content", "domain");
         d1.setOverFieldName("client");
@@ -106,7 +106,7 @@ public class ProcessCtrlTests extends ESTestCase {
     public void testBuildAutodetectCommand_defaultTimeField() {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(settings);
-        JobDetails.Builder job = buildJobBuilder("unit-test-job");
+        Job.Builder job = buildJobBuilder("unit-test-job");
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, false);
 
@@ -117,7 +117,7 @@ public class ProcessCtrlTests extends ESTestCase {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
                 .put(ProcessCtrl.DONT_PERSIST_MODEL_STATE_SETTING.getKey(), true).build();
         Environment env = new Environment(settings);
-        JobDetails.Builder job = buildJobBuilder("unit-test-job");
+        Job.Builder job = buildJobBuilder("unit-test-job");
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
 
@@ -135,7 +135,7 @@ public class ProcessCtrlTests extends ESTestCase {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
                 settings);
-        JobDetails.Builder job = buildJobBuilder("foo");
+        Job.Builder job = buildJobBuilder("foo");
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, false);
 
@@ -146,7 +146,7 @@ public class ProcessCtrlTests extends ESTestCase {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
                 settings);
-        JobDetails.Builder job = buildJobBuilder("foo");
+        Job.Builder job = buildJobBuilder("foo");
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, true);
 

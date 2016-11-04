@@ -60,9 +60,9 @@ import java.util.regex.Pattern;
  * If the job was created to read data from a list of files FileUrls will be a
  * non-empty list else the expects data to be streamed to it.
  */
-public class JobDetails extends AbstractDiffable<JobDetails> implements Writeable, ToXContent {
+public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent {
 
-    public static final JobDetails PROTO = new JobDetails(null, null, null, null, null, 0L, null, null, null, null, null,
+    public static final Job PROTO = new Job(null, null, null, null, null, 0L, null, null, null, null, null,
             null, null, null, null, null, null, null, null, null, null, null);
 
     public static final long DEFAULT_BUCKETSPAN = 300;
@@ -180,12 +180,12 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     private final Double averageBucketProcessingTimeMs;
     private final String modelSnapshotId;
 
-    public JobDetails(String jobId, String description, Date createTime, Date finishedTime,
-            Date lastDataTime, long timeout, AnalysisConfig analysisConfig, AnalysisLimits analysisLimits, SchedulerConfig schedulerConfig,
-            DataDescription dataDescription, ModelSizeStats modelSizeStats, List<TransformConfig> transforms,
-            ModelDebugConfig modelDebugConfig, DataCounts counts, IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays,
-            Long backgroundPersistInterval, Long modelSnapshotRetentionDays, Long resultsRetentionDays, Map<String, Object> customSettings,
-            Double averageBucketProcessingTimeMs, String modelSnapshotId) {
+    public Job(String jobId, String description, Date createTime, Date finishedTime, Date lastDataTime, long timeout,
+               AnalysisConfig analysisConfig, AnalysisLimits analysisLimits, SchedulerConfig schedulerConfig,
+               DataDescription dataDescription, ModelSizeStats modelSizeStats, List<TransformConfig> transforms,
+               ModelDebugConfig modelDebugConfig, DataCounts counts, IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays,
+               Long backgroundPersistInterval, Long modelSnapshotRetentionDays, Long resultsRetentionDays,
+               Map<String, Object> customSettings, Double averageBucketProcessingTimeMs, String modelSnapshotId) {
         this.jobId = jobId;
         this.description = description;
         this.createTime = createTime;
@@ -210,7 +210,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
         this.modelSnapshotId = modelSnapshotId;
     }
 
-    public JobDetails(StreamInput in) throws IOException {
+    public Job(StreamInput in) throws IOException {
         jobId = in.readString();
         description = in.readOptionalString();
         createTime = new Date(in.readVLong());
@@ -236,8 +236,8 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
     }
 
     @Override
-    public JobDetails readFrom(StreamInput in) throws IOException {
-        return new JobDetails(in);
+    public Job readFrom(StreamInput in) throws IOException {
+        return new Job(in);
     }
 
     /**
@@ -567,11 +567,11 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             return true;
         }
 
-        if (other instanceof JobDetails == false) {
+        if (other instanceof Job == false) {
             return false;
         }
 
-        JobDetails that = (JobDetails) other;
+        Job that = (Job) other;
         return Objects.equals(this.jobId, that.jobId) && Objects.equals(this.description, that.description)
                 && Objects.equals(this.createTime, that.createTime)
                 && Objects.equals(this.finishedTime, that.finishedTime) && Objects.equals(this.lastDataTime, that.lastDataTime)
@@ -665,7 +665,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             this.id = id;
         }
 
-        public Builder(JobDetails job) {
+        public Builder(Job job) {
             this.id = job.getId();
             this.description = job.getDescription();
             this.analysisConfig = job.getAnalysisConfig();
@@ -789,11 +789,11 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
             this.modelSnapshotId = modelSnapshotId;
         }
 
-        public JobDetails build() {
+        public Job build() {
             return build(false);
         }
 
-        public JobDetails build(boolean fromApi) {
+        public Job build(boolean fromApi) {
             if (id.length() > MAX_JOB_ID_LENGTH) {
                 throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
                         ErrorCodes.JOB_ID_TOO_LONG);
@@ -886,7 +886,7 @@ public class JobDetails extends AbstractDiffable<JobDetails> implements Writeabl
                 averageBucketProcessingTimeMs = this.averageBucketProcessingTimeMs;
                 modelSnapshotId = this.modelSnapshotId;
             }
-            return new JobDetails(
+            return new Job(
                     id, description, createTime, finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
                     schedulerConfig, dataDescription, modelSizeStats, transforms, modelDebugConfig, counts,
                     ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,

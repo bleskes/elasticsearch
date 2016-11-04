@@ -25,7 +25,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -49,22 +49,22 @@ public class PrelertMetadata implements MetaData.Custom {
             Builder::new);
 
     static {
-        PRELERT_METADATA_PARSER.declareObjectArray(Builder::putJobs, (p, c) -> JobDetails.PARSER.apply(p, c).build(), JOBS_FIELD);
+        PRELERT_METADATA_PARSER.declareObjectArray(Builder::putJobs, (p, c) -> Job.PARSER.apply(p, c).build(), JOBS_FIELD);
         PRELERT_METADATA_PARSER.declareObjectArray(Builder::putAllocations, Allocation.PARSER, ALLOCATIONS_FIELD);
     }
 
     // NORELEASE: A few fields of job details change frequently and this needs to be stored elsewhere
     // performance issue will occur if we don't change that
     // also it needs ot be converted from jackson databind to ES' xcontent
-    private final SortedMap<String, JobDetails> jobs;
+    private final SortedMap<String, Job> jobs;
     private final SortedMap<String, Allocation> allocations;
 
-    private PrelertMetadata(SortedMap<String, JobDetails> jobs, SortedMap<String, Allocation> allocations) {
+    private PrelertMetadata(SortedMap<String, Job> jobs, SortedMap<String, Allocation> allocations) {
         this.jobs = Collections.unmodifiableSortedMap(jobs);
         this.allocations = Collections.unmodifiableSortedMap(allocations);
     }
 
-    public Map<String, JobDetails> getJobs() {
+    public Map<String, Job> getJobs() {
         // NORELEASE jobs should be immutable or a job can be modified in the
         // cluster state of a single node without a cluster state update
         return jobs;
@@ -104,9 +104,9 @@ public class PrelertMetadata implements MetaData.Custom {
     @Override
     public MetaData.Custom readFrom(StreamInput in) throws IOException {
         int size = in.readVInt();
-        TreeMap<String, JobDetails> jobs = new TreeMap<>();
+        TreeMap<String, Job> jobs = new TreeMap<>();
         for (int i = 0; i < size; i++) {
-            jobs.put(in.readString(), new JobDetails(in));
+            jobs.put(in.readString(), new Job(in));
         }
         size = in.readVInt();
         TreeMap<String, Allocation> allocations = new TreeMap<>();
@@ -119,7 +119,7 @@ public class PrelertMetadata implements MetaData.Custom {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(jobs.size());
-        for (Map.Entry<String, JobDetails> entry : jobs.entrySet()) {
+        for (Map.Entry<String, Job> entry : jobs.entrySet()) {
             out.writeString(entry.getKey());
             entry.getValue().writeTo(out);
         }
@@ -133,7 +133,7 @@ public class PrelertMetadata implements MetaData.Custom {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startArray(JOBS_FIELD.getPreferredName());
-        for (JobDetails job : jobs.values()) {
+        for (Job job : jobs.values()) {
             builder.value(job);
         }
         builder.endArray();
@@ -147,7 +147,7 @@ public class PrelertMetadata implements MetaData.Custom {
 
     static class PrelertMetadataDiff implements Diff<MetaData.Custom> {
 
-        final Diff<Map<String, JobDetails>> jobs;
+        final Diff<Map<String, Job>> jobs;
         final Diff<Map<String, Allocation>> allocations;
 
         PrelertMetadataDiff(PrelertMetadata before, PrelertMetadata after) {
@@ -156,13 +156,13 @@ public class PrelertMetadata implements MetaData.Custom {
         }
 
         PrelertMetadataDiff(StreamInput in) throws IOException {
-            jobs = DiffableUtils.readJdkMapDiff(in, DiffableUtils.getStringKeySerializer(), JobDetails.PROTO);
+            jobs = DiffableUtils.readJdkMapDiff(in, DiffableUtils.getStringKeySerializer(), Job.PROTO);
             allocations = DiffableUtils.readJdkMapDiff(in, DiffableUtils.getStringKeySerializer(), Allocation.PROTO);
         }
 
         @Override
         public MetaData.Custom apply(MetaData.Custom part) {
-            TreeMap<String, JobDetails> newJobs = new TreeMap<>(jobs.apply(((PrelertMetadata) part).jobs));
+            TreeMap<String, Job> newJobs = new TreeMap<>(jobs.apply(((PrelertMetadata) part).jobs));
             TreeMap<String, Allocation> newAllocations = new TreeMap<>(allocations.apply(((PrelertMetadata) part).allocations));
             return new PrelertMetadata(newJobs, newAllocations);
         }
@@ -191,7 +191,7 @@ public class PrelertMetadata implements MetaData.Custom {
 
     public static class Builder {
 
-        private TreeMap<String, JobDetails> jobs;
+        private TreeMap<String, Job> jobs;
         private TreeMap<String, Allocation> allocations;
 
         public Builder() {
@@ -204,7 +204,7 @@ public class PrelertMetadata implements MetaData.Custom {
             allocations = new TreeMap<>(previous.allocations);
         }
 
-        public Builder putJob(JobDetails job, boolean overwrite) {
+        public Builder putJob(Job job, boolean overwrite) {
             if (jobs.containsKey(job.getId()) && overwrite == false) {
                 throw ExceptionsHelper.jobAlreadyExists(job.getId());
             }
@@ -243,8 +243,8 @@ public class PrelertMetadata implements MetaData.Custom {
             return this;
         }
 
-        private Builder putJobs(Collection<JobDetails> jobs) {
-            for (JobDetails job : jobs) {
+        private Builder putJobs(Collection<Job> jobs) {
+            for (Job job : jobs) {
                 putJob(job, true);
             }
             return this;

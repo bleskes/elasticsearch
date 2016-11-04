@@ -22,7 +22,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
@@ -36,12 +36,12 @@ public class RestGetRecordsAction extends BaseRestHandler {
     public RestGetRecordsAction(Settings settings, RestController controller, GetRecordsAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + JobDetails.ID.getPreferredName() + "}/records", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + Job.ID.getPreferredName() + "}/records", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetRecordsAction.Request request = new GetRecordsAction.Request(restRequest.param(JobDetails.ID.getPreferredName()),
+        GetRecordsAction.Request request = new GetRecordsAction.Request(restRequest.param(Job.ID.getPreferredName()),
                 restRequest.param(GetRecordsAction.Request.START.getPreferredName()),
                 restRequest.param(GetRecordsAction.Request.END.getPreferredName()));
         request.setIncludeInterim(restRequest.paramAsBoolean(GetRecordsAction.Request.INCLUDE_INTERIM.getPreferredName(), false));

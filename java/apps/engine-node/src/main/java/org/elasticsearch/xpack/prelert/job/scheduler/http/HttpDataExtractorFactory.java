@@ -17,7 +17,7 @@ package org.elasticsearch.xpack.prelert.job.scheduler.http;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractorFactory;
@@ -31,7 +31,7 @@ public class HttpDataExtractorFactory implements DataExtractorFactory {
     public HttpDataExtractorFactory() {}
 
     @Override
-    public DataExtractor newExtractor(JobDetails job) {
+    public DataExtractor newExtractor(Job job) {
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
         if (schedulerConfig.getDataSource() == SchedulerConfig.DataSource.ELASTICSEARCH) {
             return createElasticsearchDataExtractor(job);
@@ -39,7 +39,7 @@ public class HttpDataExtractorFactory implements DataExtractorFactory {
         throw new IllegalArgumentException();
     }
 
-    private DataExtractor createElasticsearchDataExtractor(JobDetails job) {
+    private DataExtractor createElasticsearchDataExtractor(Job job) {
         String timeField = job.getDataDescription().getTimeField();
         SchedulerConfig schedulerConfig = job.getSchedulerConfig();
         ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder(

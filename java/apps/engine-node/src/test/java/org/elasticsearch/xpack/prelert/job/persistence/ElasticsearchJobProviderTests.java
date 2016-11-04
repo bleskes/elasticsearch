@@ -32,7 +32,7 @@ import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -54,7 +54,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -209,7 +209,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, getResponse);
+                .prepareGet("prelertresults-" + jobId, Job.TYPE, jobId, getResponse);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -226,7 +226,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, getResponse);
+                .prepareGet("prelertresults-" + jobId, Job.TYPE, jobId, getResponse);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
@@ -241,7 +241,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         String jobId = "jobThing";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, JobDetails.TYPE, jobId, new IndexNotFoundException("blah"));
+                .prepareGet("prelertresults-" + jobId, Job.TYPE, jobId, new IndexNotFoundException("blah"));
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         try {
@@ -280,7 +280,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testCreateJob() throws InterruptedException, ExecutionException {
-        JobDetails.Builder job = buildJobBuilder("marscapone");
+        Job.Builder job = buildJobBuilder("marscapone");
         job.setDescription("This is a very cheesy job");
         AnalysisLimits limits = new AnalysisLimits(9878695309134L, null);
         job.setAnalysisLimits(limits);

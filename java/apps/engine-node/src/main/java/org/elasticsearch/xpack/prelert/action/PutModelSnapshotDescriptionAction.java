@@ -38,7 +38,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -76,7 +76,7 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
         private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
-            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
             PARSER.declareString((request, snapshotId) -> request.snapshotId = snapshotId, ModelSnapshot.SNAPSHOT_ID);
             PARSER.declareString((request, description) -> request.description = description, ModelSnapshot.DESCRIPTION);
         }
@@ -101,7 +101,7 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
         }
 
         public Request(String jobId, String snapshotId, String description) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
             this.snapshotId = ExceptionsHelper.requireNonNull(snapshotId, ModelSnapshot.SNAPSHOT_ID.getPreferredName());
             this.description = ExceptionsHelper.requireNonNull(description, ModelSnapshot.DESCRIPTION.getPreferredName());
         }
@@ -142,7 +142,7 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
             builder.field(ModelSnapshot.SNAPSHOT_ID.getPreferredName(), snapshotId);
             builder.field(ModelSnapshot.DESCRIPTION.getPreferredName(), description);
             builder.endObject();

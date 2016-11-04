@@ -20,7 +20,7 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
@@ -137,8 +137,8 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         Mockito.verify(process).close();
     }
 
-    private JobDetails createJobDetails() {
-        JobDetails.Builder builder = new JobDetails.Builder("foo");
+    private Job createJobDetails() {
+        Job.Builder builder = new Job.Builder("foo");
 
         DataDescription dd = new DataDescription();
         dd.setTimeField("timeField");

@@ -33,7 +33,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
@@ -169,7 +169,7 @@ public class DeleteModelSnapshotAction extends Action<DeleteModelSnapshotAction.
             //
             // NORELEASE: technically, this could be stale and refuse a delete, but I think that's acceptable
             // since it is non-destructive
-            Optional<JobDetails> job = jobManager.getJob(request.getJobId(), clusterService.state());
+            Optional<Job> job = jobManager.getJob(request.getJobId(), clusterService.state());
             if (job.isPresent()) {
                 String currentModelInUse = job.get().getModelSnapshotId();
                 if (currentModelInUse != null && currentModelInUse.equals(request.getSnapshotId())) {

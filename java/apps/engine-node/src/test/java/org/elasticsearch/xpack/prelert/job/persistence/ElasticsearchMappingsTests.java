@@ -18,7 +18,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.ModelState;
@@ -105,7 +105,7 @@ public class ElasticsearchMappingsTests extends ESTestCase {
         overridden.add(CategorizerState.TYPE);
         overridden.add(CategoryDefinition.TYPE.getPreferredName());
         overridden.add(Influencer.TYPE.getPreferredName());
-        overridden.add(JobDetails.TYPE);
+        overridden.add(Job.TYPE);
         overridden.add(ListDocument.TYPE.getPreferredName());
         overridden.add(ModelDebugOutput.TYPE.getPreferredName());
         overridden.add(ModelState.TYPE);
@@ -121,7 +121,7 @@ public class ElasticsearchMappingsTests extends ESTestCase {
 
         // These are not reserved because they're analyzed strings, i.e. the
         // same type as user-specified fields
-        overridden.add(JobDetails.DESCRIPTION.getPreferredName());
+        overridden.add(Job.DESCRIPTION.getPreferredName());
         overridden.add(Allocation.STATUS.getPreferredName());
         overridden.add(ModelSnapshot.DESCRIPTION.getPreferredName());
         overridden.add(SchedulerConfig.USERNAME.getPreferredName());

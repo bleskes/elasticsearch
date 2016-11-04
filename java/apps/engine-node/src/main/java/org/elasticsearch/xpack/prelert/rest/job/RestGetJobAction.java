@@ -22,7 +22,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 import java.io.IOException;
 
@@ -34,12 +34,12 @@ public class RestGetJobAction extends BaseRestHandler {
     public RestGetJobAction(Settings settings, RestController controller, GetJobAction.TransportAction transportGetJobAction) {
         super(settings);
         this.transportGetJobAction = transportGetJobAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/jobs/{" + JobDetails.ID.getPreferredName() + "}", this);
+        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/jobs/{" + Job.ID.getPreferredName() + "}", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetJobAction.Request getJobRequest = new GetJobAction.Request(restRequest.param(JobDetails.ID.getPreferredName()));
+        GetJobAction.Request getJobRequest = new GetJobAction.Request(restRequest.param(Job.ID.getPreferredName()));
         return channel -> transportGetJobAction.execute(getJobRequest, new RestStatusToXContentListener<>(channel));
     }
 }

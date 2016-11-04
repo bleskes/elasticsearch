@@ -37,7 +37,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
@@ -83,7 +83,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
-            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
             PARSER.declareString((request, start) -> request.start = start, START);
             PARSER.declareString((request, end) -> request.end = end, END);
             PARSER.declareString(Request::setPartitionValue, PARTITION_VALUE);
@@ -118,7 +118,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         }
 
         public Request(String jobId, String start, String end) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
             this.start = ExceptionsHelper.requireNonNull(start, START.getPreferredName());
             this.end = ExceptionsHelper.requireNonNull(end, END.getPreferredName());
         }
@@ -228,7 +228,7 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
             if (start != null) {
                 builder.field(START.getPreferredName(), start);
             }

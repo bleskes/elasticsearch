@@ -44,7 +44,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -96,7 +96,7 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
         private static ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
-            PARSER.declareString((request, jobId) -> request.jobId = jobId, JobDetails.ID);
+            PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
             PARSER.declareString(Request::setTime, TIME);
             PARSER.declareString(Request::setSnapshotId, SNAPSHOT_ID);
             PARSER.declareString(Request::setDescription, DESCRIPTION);
@@ -121,7 +121,7 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
         }
 
         public Request(String jobId) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, JobDetails.ID.getPreferredName());
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
         public String getJobId() {
@@ -193,7 +193,7 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field(JobDetails.ID.getPreferredName(), jobId);
+            builder.field(Job.ID.getPreferredName(), jobId);
             if (time != null) {
                 builder.field(TIME.getPreferredName(), time);
             }
@@ -345,7 +345,7 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
                 throw new IllegalStateException(Messages.getMessage(Messages.REST_INVALID_REVERT_PARAMS));
             }
 
-            Optional<JobDetails> job = jobManager.getJob(request.getJobId(), clusterService.state());
+            Optional<Job> job = jobManager.getJob(request.getJobId(), clusterService.state());
             Allocation allocation = jobManager.getJobAllocation(request.getJobId());
             if (job.isPresent() && allocation.getStatus().equals(JobStatus.RUNNING)) {
                 throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT),

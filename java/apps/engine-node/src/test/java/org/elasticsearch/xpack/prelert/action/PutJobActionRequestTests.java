@@ -17,17 +17,17 @@ package org.elasticsearch.xpack.prelert.action;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.action.PutJobAction.Request;
-import org.elasticsearch.xpack.prelert.job.JobDetails;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
 
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.buildJobBuilder;
-import static org.elasticsearch.xpack.prelert.job.JobDetailsTests.randomValidJobId;
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.randomValidJobId;
 
 public class PutJobActionRequestTests extends AbstractStreamableXContentTestCase<Request> {
 
     @Override
     protected Request createTestInstance() {
-        JobDetails.Builder jobConfiguration = buildJobBuilder(randomValidJobId());
+        Job.Builder jobConfiguration = buildJobBuilder(randomValidJobId());
         return new Request(jobConfiguration.build(true));
     }
 
