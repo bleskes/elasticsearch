@@ -49,7 +49,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     private static final String SCROLL_CONTEXT_DURATION = "5m";
 
     private final Client client;
-    private final ElasticsearchJobId jobId;
+    private final String jobId;
     private final BulkRequestBuilder bulkRequestBuilder;
     private long deletedBucketCount;
     private long deletedRecordCount;
@@ -59,7 +59,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     private long deletedModelStateCount;
     private boolean quiet;
 
-    public ElasticsearchBulkDeleter(Client client, ElasticsearchJobId jobId, boolean quiet) {
+    public ElasticsearchBulkDeleter(Client client, String jobId, boolean quiet) {
         this.client = Objects.requireNonNull(client);
         this.jobId = Objects.requireNonNull(jobId);
         bulkRequestBuilder = client.prepareBulk();
@@ -73,7 +73,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     }
 
     public ElasticsearchBulkDeleter(Client client, String jobId) {
-        this(client, new ElasticsearchJobId(jobId), false);
+        this(client, jobId, false);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
         deleteRecords(bucket);
         deleteBucketInfluencers(bucket);
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), Bucket.TYPE.getPreferredName(), bucket.getId()));
+                client.prepareDelete(ElasticsearchPersister.getJobIndexName(jobId), Bucket.TYPE.getPreferredName(), bucket.getId()));
         ++deletedBucketCount;
     }
 
@@ -103,7 +103,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
         boolean finished = false;
         while (finished == false) {
             SearchResponse searchResponse = SearchAction.INSTANCE.newRequestBuilder(client)
-                    .setIndices(jobId.getIndex())
+                    .setIndices(ElasticsearchPersister.getJobIndexName(jobId))
                     .setTypes(type)
                     .setQuery(query)
                     .addSort(SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC))
@@ -124,7 +124,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
 
     private void addDeleteRequest(SearchHit hit) {
         DeleteRequestBuilder deleteRequest = DeleteAction.INSTANCE.newRequestBuilder(client)
-                .setIndex(jobId.getIndex())
+                .setIndex(ElasticsearchPersister.getJobIndexName(jobId))
                 .setType(hit.getType())
                 .setId(hit.getId());
         SearchHitField parentField = hit.field(ElasticsearchMappings.PARENT);
@@ -160,7 +160,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
             return;
         }
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), Influencer.TYPE.getPreferredName(), id));
+                client.prepareDelete(ElasticsearchPersister.getJobIndexName(jobId), Influencer.TYPE.getPreferredName(), id));
         ++deletedInfluencerCount;
     }
 
@@ -168,19 +168,19 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     public void deleteModelSnapshot(ModelSnapshot modelSnapshot) {
         String snapshotId = modelSnapshot.getSnapshotId();
         int docCount = modelSnapshot.getSnapshotDocCount();
-
+        String indexName = ElasticsearchPersister.getJobIndexName(jobId);
         // Deduce the document IDs of the state documents from the information
         // in the snapshot document - we cannot query the state itself as it's
         // too big and has no mappings
         for (int i = 0; i < docCount; ++i) {
             String stateId = snapshotId + '_' + i;
             bulkRequestBuilder.add(
-                    client.prepareDelete(jobId.getIndex(), ModelState.TYPE, stateId));
+                    client.prepareDelete(indexName, ModelState.TYPE, stateId));
             ++deletedModelStateCount;
         }
 
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), ModelSnapshot.TYPE.getPreferredName(), snapshotId));
+                client.prepareDelete(indexName, ModelSnapshot.TYPE.getPreferredName(), snapshotId));
         ++deletedModelSnapshotCount;
     }
 
@@ -188,20 +188,20 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
     public void deleteModelDebugOutput(ModelDebugOutput modelDebugOutput) {
         String id = modelDebugOutput.getId();
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), ModelDebugOutput.TYPE.getPreferredName(), id));
+                client.prepareDelete(ElasticsearchPersister.getJobIndexName(jobId), ModelDebugOutput.TYPE.getPreferredName(), id));
     }
 
     @Override
     public void deleteModelSizeStats(ModelSizeStats modelSizeStats) {
         String id = modelSizeStats.getModelSizeStatsId();
         bulkRequestBuilder.add(
-                client.prepareDelete(jobId.getIndex(), ModelSizeStats.TYPE.getPreferredName(), id));
+                client.prepareDelete(ElasticsearchPersister.getJobIndexName(jobId), ModelSizeStats.TYPE.getPreferredName(), id));
     }
 
     public void deleteInterimResults() {
         QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM.getPreferredName(), true);
 
-        SearchResponse searchResponse = client.prepareSearch(jobId.getIndex())
+        SearchResponse searchResponse = client.prepareSearch(ElasticsearchPersister.getJobIndexName(jobId))
                 .setTypes(Bucket.TYPE.getPreferredName(), AnomalyRecord.TYPE.getPreferredName(), Influencer.TYPE.getPreferredName(),
                         BucketInfluencer.TYPE.getPreferredName())
                 .setQuery(qb)
@@ -238,6 +238,7 @@ public class ElasticsearchBulkDeleter implements JobDataDeleter {
      * Commits the deletions and if {@code forceMerge} is {@code true}, it
      * forces a merge which removes the data from disk.
      */
+    @Override
     public void commit(ActionListener<BulkResponse> listener) {
         if (bulkRequestBuilder.numberOfActions() == 0) {
             listener.onResponse(new BulkResponse(new BulkItemResponse[0], 0L));

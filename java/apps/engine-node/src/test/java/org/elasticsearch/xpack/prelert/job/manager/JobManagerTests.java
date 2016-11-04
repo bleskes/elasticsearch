@@ -146,7 +146,6 @@ public class JobManagerTests extends ESTestCase {
     public void testRemoveJobFromClusterState_GivenNoMetadata() {
         JobManager jobManager = createJobManager();
         ClusterState clusterStateBefore = ClusterState.builder(new ClusterName("_name")).build();
-        Job job = buildJobBuilder("foo").build();
 
         ClusterState clusterStateAfter = jobManager.removeJobFromClusterState("foo", clusterStateBefore);
 

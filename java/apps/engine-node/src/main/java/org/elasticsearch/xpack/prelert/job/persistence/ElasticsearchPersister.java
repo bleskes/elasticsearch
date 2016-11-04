@@ -72,8 +72,14 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
     private static final Logger LOGGER = Loggers.getLogger(ElasticsearchPersister.class);
 
+    public static final String INDEX_PREFIX = "prelertresults-";
+
+    public static String getJobIndexName(String jobId) {
+        return INDEX_PREFIX + jobId;
+    }
+
     private final Client client;
-    private final ElasticsearchJobId jobId;
+    private final String jobId;
 
     /**
      * Create with the Elasticsearch client. Data will be written to
@@ -84,7 +90,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
      */
     public ElasticsearchPersister(String jobId, Client client)
     {
-        this.jobId = new ElasticsearchJobId(jobId);
+        this.jobId = jobId;
         this.client = client;
     }
 
@@ -100,9 +106,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         {
             XContentBuilder content = serialiseWithJobId(Bucket.TYPE.getPreferredName(), bucket);
 
+            String indexName = getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
-                    " to index " + jobId.getIndex() + " at epoch " + bucket.getEpoch());
-            IndexResponse response = client.prepareIndex(jobId.getIndex(), Bucket.TYPE.getPreferredName())
+                    " to index " + indexName + " at epoch " + bucket.getEpoch());
+            IndexResponse response = client.prepareIndex(indexName, Bucket.TYPE.getPreferredName())
                     .setSource(content)
                     .execute().actionGet();
 
@@ -121,9 +128,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     influencer.setInterim(bucket.isInterim());
                     content = serialiseWithJobId(Influencer.TYPE.getPreferredName(), influencer);
                     LOGGER.trace("ES BULK ACTION: index type " + Influencer.TYPE +
-                            " to index " + jobId.getIndex() + " with auto-generated ID");
+                            " to index " + indexName + " with auto-generated ID");
                     addInfluencersRequest.add(
-                            client.prepareIndex(jobId.getIndex(), Influencer.TYPE.getPreferredName())
+                            client.prepareIndex(indexName, Influencer.TYPE.getPreferredName())
                             .setSource(content));
                 }
 
@@ -145,9 +152,9 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                     content = serialiseWithJobId(AnomalyRecord.TYPE.getPreferredName(), record);
 
                     LOGGER.trace("ES BULK ACTION: index type " + AnomalyRecord.TYPE +
-                            " to index " + jobId.getIndex() + " with auto-generated ID, for bucket "
+                            " to index " + indexName + " with auto-generated ID, for bucket "
                             + bucket.getId());
-                    addRecordsRequest.add(client.prepareIndex(jobId.getIndex(), AnomalyRecord.TYPE.getPreferredName())
+                    addRecordsRequest.add(client.prepareIndex(indexName, AnomalyRecord.TYPE.getPreferredName())
                             .setSource(content)
                             .setParent(bucket.getId()));
                 }
@@ -182,7 +189,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
             builder.startObject()
             .field(ElasticsearchMappings.ES_TIMESTAMP, bucket.getTimestamp())
-            .field(Job.ID.getPreferredName(), jobId.getId());
+                    .field(Job.ID.getPreferredName(), jobId);
             builder.startArray(ReservedFieldNames.PARTITION_NORMALIZED_PROBS);
             for (Entry<String, Double> entry : bucket.getPerPartitionMaxProbability().entrySet())
             {
@@ -193,9 +200,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             }
             builder.endArray().endObject();
 
+            String indexName = getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: index type " + ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE +
-                    " to index " + jobId.getIndex() + " at epoch " + bucket.getEpoch());
-            client.prepareIndex(jobId.getIndex(), ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE)
+                    " to index " + indexName + " at epoch " + bucket.getEpoch());
+            client.prepareIndex(indexName, ReservedFieldNames.PARTITION_NORMALIZED_PROB_TYPE)
             .setSource(builder)
             .setId(bucket.getId())
             .execute().actionGet();
@@ -311,7 +319,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     @Override
     public boolean commitWrites()
     {
-        String indexName = jobId.getIndex();
+        String indexName = getJobIndexName(jobId);
         // Flush should empty the translog into Lucene
         LOGGER.trace("ES API CALL: flush index " + indexName);
         client.admin().indices().flush(new FlushRequest(indexName)).actionGet();
@@ -326,9 +334,10 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     {
         try
         {
+            String indexName = getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: index type " + Bucket.TYPE +
-                    " to index " + jobId.getIndex() + " with ID " + bucket.getId());
-            client.prepareIndex(jobId.getIndex(), Bucket.TYPE.getPreferredName(), bucket.getId())
+                    " to index " + indexName + " with ID " + bucket.getId());
+            client.prepareIndex(indexName, Bucket.TYPE.getPreferredName(), bucket.getId())
             .setSource(serialiseWithJobId(Bucket.TYPE.getPreferredName(), bucket)).execute().actionGet();
         }
         catch (IOException e)
@@ -366,10 +375,11 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
                         bucketTime, isInterim);
                 // Need consistent IDs to ensure overwriting on renormalisation
                 String id = bucketId + bucketInfluencer.getInfluencerFieldName();
+                String indexName = getJobIndexName(jobId);
                 LOGGER.trace("ES BULK ACTION: index type " + BucketInfluencer.TYPE +
-                        " to index " + jobId.getIndex() + " with ID " + id);
+                        " to index " + indexName + " with ID " + id);
                 addBucketInfluencersRequest.add(
-                        client.prepareIndex(jobId.getIndex(), BucketInfluencer.TYPE.getPreferredName(), id)
+                        client.prepareIndex(indexName, BucketInfluencer.TYPE.getPreferredName(), id)
                         .setSource(content));
             }
 
@@ -394,13 +404,13 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
             for (AnomalyRecord record : records)
             {
                 String recordId = record.getId();
-
+                String indexName = getJobIndexName(jobId);
                 LOGGER.trace("ES BULK ACTION: update ID " + recordId + " type " + AnomalyRecord.TYPE +
-                        " in index " + jobId.getIndex() + " using map of new values, for bucket " +
+                        " in index " + indexName + " using map of new values, for bucket " +
                         bucketId);
 
                 bulkRequest.add(
-                        client.prepareIndex(jobId.getIndex(), AnomalyRecord.TYPE.getPreferredName(), recordId)
+                        client.prepareIndex(indexName, AnomalyRecord.TYPE.getPreferredName(), recordId)
                         .setSource(serialiseWithJobId(AnomalyRecord.TYPE.getPreferredName(), record))
                         // Need to specify the parent ID when updating a child
                         .setParent(bucketId));
@@ -479,7 +489,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
             if (object == null)
             {
-                LOGGER.warn("No " + type + " to persist for job " + jobId.getId());
+                LOGGER.warn("No " + type + " to persist for job " + jobId);
                 return false;
             }
 
@@ -487,7 +497,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
             try
             {
-                client.prepareIndex(jobId.getIndex(), type, idSupplier.get())
+                String indexName = getJobIndexName(jobId);
+                client.prepareIndex(indexName, type, idSupplier.get())
                 .setSource(serialiser.serialise())
                 .execute().actionGet();
                 return true;
@@ -501,7 +512,8 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
         private void logCall(String type, String id)
         {
-            String msg = "ES API CALL: index type " + type + " to index " + jobId.getIndex();
+            String indexName = getJobIndexName(jobId);
+            String msg = "ES API CALL: index type " + type + " to index " + indexName;
             if (id != null)
             {
                 msg += " with ID " + idSupplier.get();
@@ -535,7 +547,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         BucketInfluencer influencer = new BucketInfluencer(bucketInfluencer);
         influencer.setIsInterim(isInterim);
         influencer.setTimestamp(bucketTime);
-        influencer.setJobId(jobId.getId());
+        influencer.setJobId(jobId);
         XContentBuilder builder = jsonBuilder();
         influencer.toXContent(builder, ToXContent.EMPTY_PARAMS);
         return builder;

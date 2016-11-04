@@ -46,20 +46,19 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
     @Override
     public void persistDataCounts(String jobId, DataCounts counts) {
         // NORELEASE - Should these stats be stored in memory?
-        ElasticsearchJobId elasticJobId = new ElasticsearchJobId(jobId);
 
 
         try {
             XContentBuilder content = serialiseCounts(counts);
 
-            client.prepareIndex(elasticJobId.getIndex(), DataCounts.TYPE.getPreferredName(), elasticJobId.getId() + "-data-counts")
+            client.prepareIndex(ElasticsearchPersister.getJobIndexName(jobId), DataCounts.TYPE.getPreferredName(), jobId + "-data-counts")
             .setSource(content).execute().actionGet();
         }
         catch (IOException ioe) {
             logger.warn("Error serialising DataCounts stats", ioe);
         }
         catch (IndexNotFoundException e) {
-            String msg = String.format(Locale.ROOT, "Error writing the job '%s' status stats.", elasticJobId.getId());
+            String msg = String.format(Locale.ROOT, "Error writing the job '%s' status stats.", jobId);
             logger.warn(msg, e);
         }
     }

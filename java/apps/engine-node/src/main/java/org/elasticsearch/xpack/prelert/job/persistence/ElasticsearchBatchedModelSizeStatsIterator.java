@@ -30,7 +30,7 @@ public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBat
 {
     public ElasticsearchBatchedModelSizeStatsIterator(Client client, String jobId, ParseFieldMatcher parserFieldMatcher)
     {
-        super(client, new ElasticsearchJobId(jobId).getIndex(), parserFieldMatcher);
+        super(client, ElasticsearchPersister.getJobIndexName(jobId), parserFieldMatcher);
     }
 
     @Override

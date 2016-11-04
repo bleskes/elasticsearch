@@ -31,7 +31,7 @@ class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedDocume
     public ElasticsearchBatchedInfluencersIterator(Client client, String jobId,
             ParseFieldMatcher parserFieldMatcher)
     {
-        super(client, new ElasticsearchJobId(jobId).getIndex(), parserFieldMatcher);
+        super(client, ElasticsearchPersister.getJobIndexName(jobId), parserFieldMatcher);
     }
 
     @Override

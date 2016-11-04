@@ -50,24 +50,24 @@ class ElasticsearchJobDetailsMapper {
     public Job map(BytesReference source) {
         try (XContentParser parser = XContentFactory.xContent(source).createParser(source)) {
             Job.Builder builder = Job.PARSER.apply(parser, () -> parseFieldMatcher);
-            ElasticsearchJobId elasticJobId = new ElasticsearchJobId(builder.getId());
-            addModelSizeStats(builder, elasticJobId);
-            addBucketProcessingTime(builder, elasticJobId);
+            addModelSizeStats(builder, builder.getId());
+            addBucketProcessingTime(builder, builder.getId());
             return builder.build();
         } catch (IOException e) {
             throw new ElasticsearchParseException("failed to parser job", e);
         }
     }
 
-    private void addModelSizeStats(Job.Builder job, ElasticsearchJobId elasticJobId) {
+    private void addModelSizeStats(Job.Builder job, String jobId) {
+        String indexName = ElasticsearchPersister.getJobIndexName(jobId);
         // Pull out the modelSizeStats document, and add this to the Job
         LOGGER.trace("ES API CALL: get ID " + ModelSizeStats.TYPE +
-                " type " + ModelSizeStats.TYPE + " from index " + elasticJobId.getIndex());
+                " type " + ModelSizeStats.TYPE + " from index " + indexName);
         GetResponse modelSizeStatsResponse = client.prepareGet(
-                elasticJobId.getIndex(), ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()).get();
+                indexName, ModelSizeStats.TYPE.getPreferredName(), ModelSizeStats.TYPE.getPreferredName()).get();
 
         if (!modelSizeStatsResponse.isExists()) {
-            String msg = "No memory usage details for job with id " + elasticJobId.getId();
+            String msg = "No memory usage details for job with id " + jobId;
             LOGGER.warn(msg);
         } else {
             // Remove the Kibana/Logstash '@timestamp' entry as stored in Elasticsearch,
@@ -86,16 +86,17 @@ class ElasticsearchJobDetailsMapper {
         }
     }
 
-    private void addBucketProcessingTime(Job.Builder job, ElasticsearchJobId elasticJobId) {
+    private void addBucketProcessingTime(Job.Builder job, String jobId) {
+        String indexName = ElasticsearchPersister.getJobIndexName(jobId);
         // Pull out the modelSizeStats document, and add this to the Job
         LOGGER.trace("ES API CALL: get ID " + ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE +
-                " type " + ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS + " from index " + elasticJobId.getIndex());
+                " type " + ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS + " from index " + indexName);
         GetResponse procTimeResponse = client.prepareGet(
-                elasticJobId.getIndex(), ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE,
+                indexName, ReservedFieldNames.BUCKET_PROCESSING_TIME_TYPE,
                 ReservedFieldNames.AVERAGE_PROCESSING_TIME_MS).get();
 
         if (!procTimeResponse.isExists()) {
-            String msg = "No average bucket processing time details for job with id " + elasticJobId.getId();
+            String msg = "No average bucket processing time details for job with id " + jobId;
             LOGGER.warn(msg);
         } else {
             Object averageTime = procTimeResponse.getSource()
