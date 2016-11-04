@@ -57,8 +57,8 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         if (randomBoolean()) {
             builder.setTimeout(randomPositiveLong());
         }
-        AnalysisConfig analysisConfig = createAnalysisConfig();
-        analysisConfig.setBucketSpan(100);
+        AnalysisConfig.Builder analysisConfig = createAnalysisConfig();
+        analysisConfig.setBucketSpan(100L);
         builder.setAnalysisConfig(analysisConfig);
         builder.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
@@ -72,13 +72,13 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         }
         String[] outputs;
         TransformType[] transformTypes ;
+        AnalysisConfig ac = analysisConfig.build();
         if (randomBoolean()) {
             transformTypes = new TransformType[] {TransformType.TRIM, TransformType.LOWERCASE};
-            outputs = new String[] {analysisConfig.getDetectors().get(0).getFieldName(),
-                    analysisConfig.getDetectors().get(0).getOverFieldName()};
+            outputs = new String[] {ac.getDetectors().get(0).getFieldName(), ac.getDetectors().get(0).getOverFieldName()};
         } else {
             transformTypes = new TransformType[] {TransformType.TRIM};
-            outputs = new String[] {analysisConfig.getDetectors().get(0).getFieldName()};
+            outputs = new String[] {ac.getDetectors().get(0).getFieldName()};
         }
         List<TransformConfig> transformConfigList = new ArrayList<>(transformTypes.length);
         for (int i = 0; i < transformTypes.length; i++) {
@@ -273,11 +273,10 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         Detector.Builder d2 = new Detector.Builder("metric", "field2");
         d2.setOverFieldName("over");
 
-        AnalysisConfig ac = new AnalysisConfig();
+        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Arrays.asList(d1.build(), d2.build()));
         ac.setSummaryCountFieldName("agg");
-        ac.setDetectors(Arrays.asList(d1.build(), d2.build()));
 
-        List<String> analysisFields = ac.analysisFields();
+        List<String> analysisFields = ac.build().analysisFields();
         assertTrue(analysisFields.size() == 5);
 
         assertTrue(analysisFields.contains("agg"));
@@ -294,10 +293,9 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         d3.setByFieldName("by2");
         d3.setPartitionFieldName("partition");
 
-        ac = new AnalysisConfig();
-        ac.setDetectors(Arrays.asList(d1.build(), d2.build(), d3.build()));
+        ac = new AnalysisConfig.Builder(Arrays.asList(d1.build(), d2.build(), d3.build()));
 
-        analysisFields = ac.analysisFields();
+        analysisFields = ac.build().analysisFields();
         assertTrue(analysisFields.size() == 6);
 
         assertTrue(analysisFields.contains("partition"));
@@ -364,14 +362,12 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         e = expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.JOB_ID_TOO_LONG.getValueString(), e.getHeader("errorCode").get(0));
         builder.setId(null);
-        builder.setAnalysisConfig(new AnalysisConfig());
         e = expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").equals(0));
 
-        AnalysisConfig ac = new AnalysisConfig();
         Detector.Builder d = new Detector.Builder("max", "a");
         d.setByFieldName("b");
-        ac.setDetectors(Arrays.asList(new Detector[]{d.build()}));
+        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Collections.singletonList(d.build()));
         builder.setAnalysisConfig(ac);
         builder.build();
         builder.setAnalysisLimits(new AnalysisLimits(-1, null));
@@ -403,15 +399,14 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         Detector.Builder newDetector = new Detector.Builder();
         newDetector.setFunction(Detector.MIN);
         newDetector.setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-        AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Collections.singletonList(newDetector.build()));
+        AnalysisConfig.Builder config = new AnalysisConfig.Builder(Collections.singletonList(newDetector.build()));
         builder.setAnalysisConfig(config);
         builder.build();
     }
 
     public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
         Job.Builder builder = buildJobBuilder("foo");
-        AnalysisConfig config = createAnalysisConfig();
+        AnalysisConfig.Builder config = createAnalysisConfig();
         config.setSummaryCountFieldName("summaryCountField");
         builder.setAnalysisConfig(config);
         TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
@@ -420,11 +415,10 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         builder.setTransforms(Arrays.asList(tc));
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME.getValueString(), e.getHeader("errorCode").get(0));
-        AnalysisConfig ac = createAnalysisConfig();
-        Detector existingDetector = ac.getDetectors().get(0);
+        Detector existingDetector = config.build().getDetectors().get(0);
         Detector.Builder newDetector = new Detector.Builder(existingDetector);
         newDetector.setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-        ac.setDetectors(Collections.singletonList(newDetector.build()));
+        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Collections.singletonList(newDetector.build()));
         builder.setAnalysisConfig(config);
         tc.setOutputs(TransformType.DOMAIN_SPLIT.defaultOutputNames());
         e = expectThrows(ElasticsearchStatusException.class, builder::build);
@@ -523,22 +517,12 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         assertEquals(errorMessage, e.getMessage());
     }
 
-    public void testVerify_GivenSchedulerButNoBucketSpan() {
-        String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN);
-        SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
-        Job.Builder builder = buildJobBuilder("foo");
-        builder.setSchedulerConfig(schedulerConfig);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN.getValueString(), e.getHeader("errorCode").get(0));
-        assertEquals(errorMessage, e.getMessage());
-    }
-
     public void testVerify_GivenElasticsearchSchedulerAndNonZeroLatency() {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
         SchedulerConfig.Builder schedulerConfig = createValidElasticsearchSchedulerConfig();
         Job.Builder builder = buildJobBuilder("foo");
         builder.setSchedulerConfig(schedulerConfig);
-        AnalysisConfig ac = createAnalysisConfig();
+        AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         ac.setLatency(3600L);
         builder.setAnalysisConfig(ac);
@@ -555,7 +539,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
-        AnalysisConfig ac = createAnalysisConfig();
+        AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         ac.setLatency(0L);
         builder.setAnalysisConfig(ac);
@@ -569,9 +553,9 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
-        AnalysisConfig ac = createAnalysisConfig();
+        AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBatchSpan(1800L);
-        ac.setBucketSpan(100);
+        ac.setBucketSpan(100L);
         builder.setAnalysisConfig(ac);
         builder.build();
     }
@@ -583,7 +567,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
-        AnalysisConfig ac = createAnalysisConfig();
+        AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         ac.setSummaryCountFieldName("doc_count");
         builder.setAnalysisConfig(ac);
@@ -601,7 +585,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
-        AnalysisConfig ac = createAnalysisConfig();
+        AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         builder.setAnalysisConfig(ac);
         ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
@@ -620,7 +604,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
         builder.setDataDescription(dataDescription);
-        AnalysisConfig ac = createAnalysisConfig();
+        AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         ac.setSummaryCountFieldName("wrong");
         builder.setAnalysisConfig(ac);
@@ -632,7 +616,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public static Job.Builder buildJobBuilder(String id) {
         Job.Builder builder = new Job.Builder(id);
         builder.setCreateTime(new Date());
-        AnalysisConfig ac = createAnalysisConfig();
+        AnalysisConfig.Builder ac = createAnalysisConfig();
         DataDescription.Builder dc = new DataDescription.Builder();
         builder.setAnalysisConfig(ac);
         builder.setDataDescription(dc);
@@ -684,12 +668,11 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         return generator.ofCodePointsLength(random(), 10, 10);
     }
 
-    public static AnalysisConfig createAnalysisConfig() {
+    public static AnalysisConfig.Builder createAnalysisConfig() {
         Detector.Builder d1 = new Detector.Builder("info_content", "domain");
         d1.setOverFieldName("client");
         Detector.Builder d2 = new Detector.Builder("min", "field");
-        AnalysisConfig ac = new AnalysisConfig();
-        ac.setDetectors(Arrays.asList(new Detector[]{d1.build(), d2.build()}));
+        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Arrays.asList(d1.build(), d2.build()));
         return ac;
     }
 }

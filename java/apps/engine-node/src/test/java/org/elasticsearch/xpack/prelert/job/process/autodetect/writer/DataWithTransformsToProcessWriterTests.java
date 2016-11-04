@@ -126,10 +126,9 @@ public class DataWithTransformsToProcessWriterTests extends ESTestCase {
         dd.setFormat(doCsv ? DataFormat.DELIMITED : DataFormat.JSON);
         dd.setTimeFormat(DataDescription.EPOCH);
 
-        AnalysisConfig ac = new AnalysisConfig();
         Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("concat");
-        ac.setDetectors(Arrays.asList(detector.build()));
+        AnalysisConfig ac = new AnalysisConfig.Builder(Arrays.asList(detector.build())).build();
 
         TransformConfig tc = new TransformConfig(TransformType.Names.CONCAT_NAME);
         tc.setInputs(Arrays.asList("host", "metric"));

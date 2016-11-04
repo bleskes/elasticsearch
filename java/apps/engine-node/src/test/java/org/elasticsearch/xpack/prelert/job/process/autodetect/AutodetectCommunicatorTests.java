@@ -143,10 +143,9 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         DataDescription.Builder dd = new DataDescription.Builder();
         dd.setTimeField("timeField");
 
-        AnalysisConfig ac = new AnalysisConfig();
         Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("host-metric");
-        ac.setDetectors(Collections.singletonList(detector.build()));
+        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Collections.singletonList(detector.build()));
 
         builder.setDataDescription(dd);
         builder.setAnalysisConfig(ac);

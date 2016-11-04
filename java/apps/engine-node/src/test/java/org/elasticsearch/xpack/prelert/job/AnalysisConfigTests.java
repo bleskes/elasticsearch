@@ -14,16 +14,22 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,54 +40,52 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
     @Override
     protected AnalysisConfig createTestInstance() {
-        AnalysisConfig analysisConfig = new AnalysisConfig();
+        List<Detector> detectors = new ArrayList<>();
+        int numDetectors = randomIntBetween(1, 10);
+        for (int i = 0; i < numDetectors; i++) {
+            detectors.add(new Detector.Builder("count", null).build());
+        }
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(detectors);
+
+
         if (randomBoolean()) {
-            analysisConfig.setBatchSpan(randomLong());
+            builder.setBatchSpan(randomPositiveLong());
+        }
+        long bucketSpan = AnalysisConfig.Builder.DEFAULT_BUCKET_SPAN;
+        if (randomBoolean()) {
+            bucketSpan = randomIntBetween(1, 1_000_000);
+            builder.setBucketSpan(bucketSpan);
         }
         if (randomBoolean()) {
-            analysisConfig.setBucketSpan(randomLong());
+            builder.setCategorizationFieldName(randomAsciiOfLength(10));
+            builder.setCategorizationFilters(Arrays.asList(generateRandomStringArray(10, 10, false)));
         }
         if (randomBoolean()) {
-            analysisConfig.setCategorizationFieldName(randomAsciiOfLength(10));
+            builder.setInfluencers(Arrays.asList(generateRandomStringArray(10, 10, false)));
         }
         if (randomBoolean()) {
-            analysisConfig.setCategorizationFilters(Arrays.asList(generateRandomStringArray(10, 10, false)));
-        }
-        if (randomBoolean()) {
-            List<Detector> detectors = new ArrayList<>();
-            int numDetectors = randomIntBetween(0, 10);
-            for (int i = 0; i < numDetectors; i++) {
-                detectors.add(new Detector.Builder("count", null).build());
-            }
-            analysisConfig.setDetectors(detectors);
-        }
-        if (randomBoolean()) {
-            analysisConfig.setInfluencers(Arrays.asList(generateRandomStringArray(10, 10, false)));
-        }
-        if (randomBoolean()) {
-            analysisConfig.setLatency(randomLong());
+            builder.setLatency(randomPositiveLong());
         }
         if (randomBoolean()) {
             int numBucketSpans = randomIntBetween(0, 10);
             List<Long> multipleBucketSpans = new ArrayList<>();
-            for (int i = 0; i < numBucketSpans; i++) {
-                multipleBucketSpans.add(randomLong());
+            for (int i = 2; i <= numBucketSpans; i++) {
+                multipleBucketSpans.add(bucketSpan * i);
             }
-            analysisConfig.setMultipleBucketSpans(multipleBucketSpans);
+            builder.setMultipleBucketSpans(multipleBucketSpans);
         }
         if (randomBoolean()) {
-            analysisConfig.setMultivariateByFields(randomBoolean());
+            builder.setMultivariateByFields(randomBoolean());
         }
         if (randomBoolean()) {
-            analysisConfig.setOverlappingBuckets(randomBoolean());
+            builder.setOverlappingBuckets(randomBoolean());
         }
         if (randomBoolean()) {
-            analysisConfig.setResultFinalizationWindow(randomLong());
+            builder.setResultFinalizationWindow(randomPositiveLong());
         }
-        if (randomBoolean()) {
-            analysisConfig.setUsePerPartitionNormalization(randomBoolean());
-        }
-        return analysisConfig;
+
+        builder.setUsePerPartitionNormalization(false);
+        return builder.build();
     }
 
     @Override
@@ -91,16 +95,15 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
     @Override
     protected AnalysisConfig parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return AnalysisConfig.PARSER.apply(parser, () -> matcher);
+        return AnalysisConfig.PARSER.apply(parser, () -> matcher).build();
     }
 
-    public void testFieldConfiguration() {
+    public void testFieldConfiguration_singleDetector_notPreSummarised() {
         // Single detector, not pre-summarised
-        AnalysisConfig ac = new AnalysisConfig();
         Detector.Builder det = new Detector.Builder("metric", "responsetime");
         det.setByFieldName("airline");
         det.setPartitionFieldName("sourcetype");
-        ac.setDetectors(Arrays.asList(det.build()));
+        AnalysisConfig ac = createConfigWithDetectors(Collections.singletonList(det.build()));
 
         Set<String> termFields = new TreeSet<>(Arrays.asList(new String[]{
                 "airline", "sourcetype"}));
@@ -139,7 +142,9 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         // Single detector, pre-summarised
         analysisFields.add("summaryCount");
-        ac.setSummaryCountFieldName("summaryCount");
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(ac);
+        builder.setSummaryCountFieldName("summaryCount");
+        ac = builder.build();
 
         for (String s : ac.analysisFields()) {
             assertTrue(analysisFields.contains(s));
@@ -150,13 +155,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         }
 
         assertEquals("summaryCount", ac.getSummaryCountFieldName());
+    }
 
+    public void testFieldConfiguration_multipleDetectors_NotPreSummarised() {
         // Multiple detectors, not pre-summarised
         List<Detector> detectors = new ArrayList<>();
 
-        ac = new AnalysisConfig();
-        ac.setInfluencers(Arrays.asList("Influencer_Field"));
-        det = new Detector.Builder("metric", "metric1");
+        Detector.Builder det = new Detector.Builder("metric", "metric1");
         det.setByFieldName("by_one");
         det.setPartitionFieldName("partition_one");
         detectors.add(det.build());
@@ -171,12 +176,15 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         det.setPartitionFieldName("partition_two");
         detectors.add(det.build());
 
-        ac.setDetectors(detectors);
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(detectors);
+        builder.setInfluencers(Collections.singletonList("Influencer_Field"));
+        AnalysisConfig ac = builder.build();
 
-        termFields = new TreeSet<>(Arrays.asList(new String[]{
+
+        Set<String> termFields = new TreeSet<>(Arrays.asList(new String[]{
                 "by_one", "by_two", "over_field",
                 "partition_one", "partition_two", "Influencer_Field"}));
-        analysisFields = new TreeSet<>(Arrays.asList(new String[]{
+        Set<String> analysisFields = new TreeSet<>(Arrays.asList(new String[]{
                 "metric1", "metric2", "by_one", "by_two", "over_field",
                 "partition_one", "partition_two", "Influencer_Field"}));
 
@@ -184,11 +192,11 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertEquals(analysisFields.size(), ac.analysisFields().size());
 
         for (String s : ac.termFields()) {
-            assertTrue(termFields.contains(s));
+            assertTrue(s, termFields.contains(s));
         }
 
         for (String s : termFields) {
-            assertTrue(ac.termFields().contains(s));
+            assertTrue(s, ac.termFields().contains(s));
         }
 
         for (String s : ac.analysisFields()) {
@@ -215,24 +223,21 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertTrue(ac.partitionFields().contains("partition_two"));
 
         assertNull(ac.getSummaryCountFieldName());
+    }
 
+    public void testFieldConfiguration_multipleDetectors_PreSummarised() {
         // Multiple detectors, pre-summarised
-        analysisFields.add("summaryCount");
-        ac.setSummaryCountFieldName("summaryCount");
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setSummaryCountFieldName("summaryCount");
+        AnalysisConfig ac = builder.build();
 
-        for (String s : ac.analysisFields()) {
-            assertTrue(analysisFields.contains(s));
-        }
-
-        for (String s : analysisFields) {
-            assertTrue(ac.analysisFields().contains(s));
-        }
-
+        assertTrue(ac.analysisFields().contains("summaryCount"));
         assertEquals("summaryCount", ac.getSummaryCountFieldName());
 
-        ac = new AnalysisConfig();
-        ac.setBucketSpan(1000L);
-        ac.setMultipleBucketSpans(Arrays.asList(5000L, 10000L, 24000L));
+        builder = createConfigBuilder();
+        builder.setBucketSpan(1000L);
+        builder.setMultipleBucketSpans(Arrays.asList(5000L, 10000L, 24000L));
+        ac = builder.build();
         assertTrue(ac.getMultipleBucketSpans().contains(5000L));
         assertTrue(ac.getMultipleBucketSpans().contains(10000L));
         assertTrue(ac.getMultipleBucketSpans().contains(24000L));
@@ -240,18 +245,18 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenSameReference() {
-        AnalysisConfig config = new AnalysisConfig();
+        AnalysisConfig config = createFullyPopulatedConfig();
         assertTrue(config.equals(config));
     }
 
-
     public void testEquals_GivenDifferentClass() {
-        assertFalse(new AnalysisConfig().equals("a string"));
+
+        assertFalse(createFullyPopulatedConfig().equals("a string"));
     }
 
 
     public void testEquals_GivenNull() {
-        assertFalse(new AnalysisConfig().equals(null));
+        assertFalse(createFullyPopulatedConfig().equals(null));
     }
 
 
@@ -266,11 +271,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenDifferentBatchSpan() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setBatchSpan(86400L);
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setBatchSpan(86400L);
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setBatchSpan(0L);
+        builder = createConfigBuilder();
+        builder.setBatchSpan(0L);
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -278,11 +285,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenDifferentBucketSpan() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setBucketSpan(1800L);
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setBucketSpan(1800L);
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setBucketSpan(3600L);
+        builder = createConfigBuilder();
+        builder.setBucketSpan(3600L);
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -290,11 +299,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenCategorizationField() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setCategorizationFieldName("foo");
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setCategorizationFieldName("foo");
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setCategorizationFieldName("bar");
+        builder = createConfigBuilder();
+        builder.setCategorizationFieldName("bar");
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -302,13 +313,9 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenDifferentDetector() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        Detector detector1 = new Detector.Builder("min", "low_count").build();
-        config1.setDetectors(Arrays.asList(detector1));
+        AnalysisConfig config1 = createConfigWithDetectors(Collections.singletonList(new Detector.Builder("min", "low_count").build()));
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        Detector detector2 = new Detector.Builder("min", "high_count").build();
-        config2.setDetectors(Arrays.asList(detector2));
+        AnalysisConfig config2 = createConfigWithDetectors(Collections.singletonList(new Detector.Builder("min", "high_count").build()));
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -316,11 +323,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenDifferentInfluencers() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setInfluencers(Arrays.asList("foo"));
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setInfluencers(Arrays.asList("foo"));
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setInfluencers(Arrays.asList("bar"));
+        builder = createConfigBuilder();
+        builder.setInfluencers(Arrays.asList("bar"));
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -328,11 +337,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenDifferentLatency() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setLatency(1800L);
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setLatency(1800L);
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setLatency(3600L);
+        builder = createConfigBuilder();
+        builder.setLatency(3600L);
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -340,11 +351,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenDifferentPeriod() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setPeriod(1800L);
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setPeriod(1800L);
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setPeriod(3600L);
+        builder = createConfigBuilder();
+        builder.setPeriod(3600L);
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -352,11 +365,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenSummaryCountField() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setSummaryCountFieldName("foo");
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setSummaryCountFieldName("foo");
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setSummaryCountFieldName("bar");
+        builder = createConfigBuilder();
+        builder.setSummaryCountFieldName("bar");
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -364,11 +379,13 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testEquals_GivenMultivariateByField() {
-        AnalysisConfig config1 = new AnalysisConfig();
-        config1.setMultivariateByFields(true);
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setMultivariateByFields(true);
+        AnalysisConfig config1 = builder.build();
 
-        AnalysisConfig config2 = new AnalysisConfig();
-        config2.setMultivariateByFields(false);
+        builder = createConfigBuilder();
+        builder.setMultivariateByFields(false);
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
@@ -377,21 +394,24 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
     public void testEquals_GivenDifferentCategorizationFilters() {
         AnalysisConfig config1 = createFullyPopulatedConfig();
-        AnalysisConfig config2 = createFullyPopulatedConfig();
-        config2.setCategorizationFilters(Arrays.asList("foo", "bar"));
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setCategorizationFilters(Arrays.asList("foo", "bar"));
+        builder.setCategorizationFieldName("cat");
+        AnalysisConfig config2 = builder.build();
 
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
     }
 
-
     public void testBucketSpanOrDefault() {
-        AnalysisConfig config1 = new AnalysisConfig();
+        AnalysisConfig config1  = new AnalysisConfig.Builder(
+                Collections.singletonList(new Detector.Builder("min", "count").build())).build();
         assertEquals(AnalysisConfig.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
-        config1.setBucketSpan(100L);
+        AnalysisConfig.Builder builder = createConfigBuilder();
+        builder.setBucketSpan(100L);
+        config1 = builder.build();
         assertEquals(100L, config1.getBucketSpanOrDefault());
     }
-
 
     public void testExtractReferencedLists() {
         DetectionRule rule1 = new DetectionRule(null, null, Connective.OR, Arrays.asList(RuleCondition.createCategorical("foo", "list1")));
@@ -402,24 +422,422 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         Detector.Builder detector2 = new Detector.Builder("count", null);
         detector2.setDetectorRules(Arrays.asList(rule2));
         detector2.setByFieldName("foo");
-        AnalysisConfig config = new AnalysisConfig();
-        config.setDetectors(Arrays.asList(detector1.build(), detector2.build(), new Detector.Builder("count", null).build()));
+        AnalysisConfig config = new AnalysisConfig.Builder(
+                Arrays.asList(detector1.build(), detector2.build(), new Detector.Builder("count", null).build())).build();
 
         assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), config.extractReferencedLists());
     }
 
     private static AnalysisConfig createFullyPopulatedConfig() {
-        AnalysisConfig config = new AnalysisConfig();
-        config.setBatchSpan(86400L);
-        config.setBucketSpan(3600L);
-        config.setCategorizationFieldName("cat");
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(
+                Collections.singletonList(new Detector.Builder("min", "count").build()));
+        builder.setBatchSpan(86400L);
+        builder.setBucketSpan(3600L);
+        builder.setCategorizationFieldName("cat");
+        builder.setCategorizationFilters(Arrays.asList("foo"));
+        builder.setInfluencers(Arrays.asList("myInfluencer"));
+        builder.setLatency(3600L);
+        builder.setPeriod(100L);
+        builder.setSummaryCountFieldName("sumCount");
+        return builder.build();
+    }
+
+    private static AnalysisConfig createConfigWithDetectors(List<Detector> detectors) {
+        return new AnalysisConfig.Builder(detectors).build();
+    }
+
+    private static AnalysisConfig.Builder createConfigBuilder() {
+        return new AnalysisConfig.Builder(Collections.singletonList(new Detector.Builder("min", "count").build()));
+    }
+
+    public void testVerify_throws() {
+
+        // count works with no fields
+        Detector d = new Detector.Builder("count", null).build();
+        AnalysisConfig ac = new AnalysisConfig.Builder(Collections.singletonList(d)).build();
+
+        try {
+            d = new Detector.Builder("distinct_count", null).build();
+            ac = new AnalysisConfig.Builder(Collections.singletonList(d)).build();
+            assertTrue(false); // shouldn't get here
+        } catch (ElasticsearchParseException e) {
+            assertEquals(1, e.getHeader("errorCode").size());
+            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION.getValueString(), e.getHeader("errorCode").get(0));
+        }
+
+        // should work now
+        Detector.Builder builder = new Detector.Builder("distinct_count", "somefield");
+        builder.setOverFieldName("over");
+        ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+
+        builder = new Detector.Builder("info_content", "somefield");
+        builder.setOverFieldName("over");
+        d = builder.build();
+        ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+
+        builder.setByFieldName("by");
+        ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+
+        try {
+            builder = new Detector.Builder("made_up_function", "somefield");
+            builder.setOverFieldName("over");
+            ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+            assertTrue(false); // shouldn't get here
+        } catch (ElasticsearchParseException e) {
+            assertEquals(1, e.getHeader("errorCode").size());
+            assertEquals(ErrorCodes.UNKNOWN_FUNCTION.getValueString(), e.getHeader("errorCode").get(0));
+        }
+
+        builder = new Detector.Builder("distinct_count", "somefield");
+        AnalysisConfig.Builder acBuilder = new AnalysisConfig.Builder(Collections.singletonList(builder.build()));
+        acBuilder.setBatchSpan(-1L);
+        try {
+            acBuilder.build();
+            assertTrue(false); // shouldn't get here
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        }
+
+        acBuilder.setBatchSpan(10L);
+        acBuilder.setBucketSpan(-1L);
+        try {
+            acBuilder.build();
+            assertTrue(false); // shouldn't get here
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        }
+
+        acBuilder.setBucketSpan(3600L);
+        acBuilder.setPeriod(-1L);
+        try {
+            acBuilder.build();
+            assertTrue(false); // shouldn't get here
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        }
+
+        acBuilder.setPeriod(1L);
+        acBuilder.setLatency(-1L);
+        try {
+            acBuilder.build();
+            assertTrue(false); // shouldn't get here
+        } catch (ElasticsearchStatusException e) {
+            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        }
+    }
+
+    public void testVerify_GivenNegativeBucketSpan() {
+        AnalysisConfig.Builder config = createValidConfig();
+        config.setBucketSpan(-1L);
+
+        ElasticsearchStatusException e = ESTestCase.expectThrows(
+                ElasticsearchStatusException.class, () -> config.build());
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "bucketSpan", 0, -1), e.getMessage());
+    }
+
+    public void testVerify_GivenNegativeBatchSpan() {
+        AnalysisConfig.Builder analysisConfig = createValidConfig();
+        analysisConfig.setBatchSpan(-1L);
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "batchSpan", 0, -1), e.getMessage());
+    }
+
+
+    public void testVerify_GivenNegativeLatency() {
+        AnalysisConfig.Builder analysisConfig = createValidConfig();
+        analysisConfig.setLatency(-1L);
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "latency", 0, -1), e.getMessage());
+    }
+
+
+    public void testVerify_GivenNegativePeriod() {
+        AnalysisConfig.Builder analysisConfig = createValidConfig();
+        analysisConfig.setPeriod(-1L);
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "period", 0, -1), e.getMessage());
+    }
+
+
+    public void testVerify_GivenDefaultConfig_ShouldBeInvalidDueToNoDetectors() {
+        AnalysisConfig.Builder analysisConfig = createValidConfig();
+        analysisConfig.setDetectors(null);
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+
+        assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS), e.getMessage());
+    }
+
+
+    public void testVerify_GivenValidConfig() {
+        AnalysisConfig.Builder analysisConfig = createValidConfig();
+        analysisConfig.build();
+    }
+
+
+    public void testVerify_GivenValidConfigWithCategorizationFieldNameAndCategorizationFilters() {
+        AnalysisConfig.Builder analysisConfig = createValidConfig();
+        analysisConfig.setCategorizationFieldName("myCategory");
+        analysisConfig.setCategorizationFilters(Arrays.asList("foo", "bar"));
+
+        analysisConfig.build();
+    }
+
+
+    public void testVerify_OverlappingBuckets() {
+        List<Detector> detectors;
+        Detector detector;
+
+        boolean onByDefault = false;
+
+        // Uncomment this when overlappingBuckets turned on by default
+        if (onByDefault) {
+            // Test overlappingBuckets unset
+            AnalysisConfig.Builder analysisConfig = createValidConfig();
+            analysisConfig.setBucketSpan(5000L);
+            analysisConfig.setBatchSpan(0L);
+            detectors = new ArrayList<>();
+            detector = new Detector.Builder("count", null).build();
+            detectors.add(detector);
+            detector = new Detector.Builder("mean", "value").build();
+            detectors.add(detector);
+            analysisConfig.setDetectors(detectors);
+            AnalysisConfig ac = analysisConfig.build();
+            assertTrue(ac.getOverlappingBuckets());
+
+            // Test overlappingBuckets unset
+            analysisConfig = createValidConfig();
+            analysisConfig.setBucketSpan(5000L);
+            analysisConfig.setBatchSpan(0L);
+            detectors = new ArrayList<>();
+            detector = new Detector.Builder("count", null).build();
+            detectors.add(detector);
+            detector = new Detector.Builder("rare", "value").build();
+            detectors.add(detector);
+            analysisConfig.setDetectors(detectors);
+            ac = analysisConfig.build();
+            assertFalse(ac.getOverlappingBuckets());
+
+            // Test overlappingBuckets unset
+            analysisConfig = createValidConfig();
+            analysisConfig.setBucketSpan(5000L);
+            analysisConfig.setBatchSpan(0L);
+            detectors = new ArrayList<>();
+            detector = new Detector.Builder("count", null).build();
+            detectors.add(detector);
+            detector = new Detector.Builder("min", "value").build();
+            detectors.add(detector);
+            detector = new Detector.Builder("max", "value").build();
+            detectors.add(detector);
+            analysisConfig.setDetectors(detectors);
+            ac = analysisConfig.build();
+            assertFalse(ac.getOverlappingBuckets());
+        }
+
+        // Test overlappingBuckets set
+        AnalysisConfig.Builder analysisConfig = createValidConfig();
+        analysisConfig.setBucketSpan(5000L);
+        analysisConfig.setBatchSpan(0L);
+        detectors = new ArrayList<>();
+        detector = new Detector.Builder("count", null).build();
+        detectors.add(detector);
+        Detector.Builder builder = new Detector.Builder("rare", null);
+        builder.setByFieldName("value");
+        detectors.add(builder.build());
+        analysisConfig.setOverlappingBuckets(false);
+        analysisConfig.setDetectors(detectors);
+        assertFalse(analysisConfig.build().getOverlappingBuckets());
+
+        // Test overlappingBuckets set
+        analysisConfig = createValidConfig();
+        analysisConfig.setBucketSpan(5000L);
+        analysisConfig.setBatchSpan(0L);
+        analysisConfig.setOverlappingBuckets(true);
+        detectors = new ArrayList<>();
+        detector = new Detector.Builder("count", null).build();
+        detectors.add(detector);
+        builder = new Detector.Builder("rare", null);
+        builder.setByFieldName("value");
+        detectors.add(builder.build());
+        analysisConfig.setDetectors(detectors);
+        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, analysisConfig::build);
+        assertEquals(ErrorCodes.INVALID_FUNCTION.getValueString(), e.getHeader("errorCode").get(0));
+
+        // Test overlappingBuckets set
+        analysisConfig = createValidConfig();
+        analysisConfig.setBucketSpan(5000L);
+        analysisConfig.setBatchSpan(0L);
+        analysisConfig.setOverlappingBuckets(false);
+        detectors = new ArrayList<>();
+        detector = new Detector.Builder("count", null).build();
+        detectors.add(detector);
+        detector = new Detector.Builder("mean", "value").build();
+        detectors.add(detector);
+        analysisConfig.setDetectors(detectors);
+        AnalysisConfig ac = analysisConfig.build();
+        assertFalse(ac.getOverlappingBuckets());
+    }
+
+
+    public void testMultipleBucketsConfig() {
+        AnalysisConfig.Builder ac = createValidConfig();
+        ac.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
+        List<Detector> detectors = new ArrayList<>();
+        Detector detector = new Detector.Builder("count", null).build();
+        detectors.add(detector);
+        ac.setDetectors(detectors);
+
+        ac.setBucketSpan(4L);
+        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, ac::build);
+        assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 10, 4), e.getMessage());
+
+        ac.setBucketSpan(5L);
+        ac.build();
+
+        AnalysisConfig.Builder ac2 = createValidConfig();
+        ac2.setBucketSpan(5L);
+        ac2.setDetectors(detectors);
+        ac2.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L));
+        assertFalse(ac.equals(ac2));
+        ac2.setMultipleBucketSpans(Arrays.asList(10L, 15L, 20L, 25L, 30L, 35L));
+
+        ac.setBucketSpan(222L);
+        ac.setMultipleBucketSpans(Arrays.asList());
+        ac.build();
+
+        ac.setMultipleBucketSpans(Arrays.asList(222L));
+        e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> ac.build());
+        assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 222, 222), e.getMessage());
+
+        ac.setMultipleBucketSpans(Arrays.asList(-444L, -888L));
+        e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> ac.build());
+        assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, -444, 222), e.getMessage());
+    }
+
+
+    public void testVerify_GivenCategorizationFiltersButNoCategorizationFieldName() {
+
+        AnalysisConfig.Builder config = createValidConfig();
         config.setCategorizationFilters(Arrays.asList("foo"));
-        Detector detector1 = new Detector.Builder("min", "count").build();
-        config.setDetectors(Arrays.asList(detector1));
-        config.setInfluencers(Arrays.asList("myInfluencer"));
-        config.setLatency(3600L);
-        config.setPeriod(100L);
-        config.setSummaryCountFieldName("sumCount");
-        return config;
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+
+        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME), e.getMessage());
+    }
+
+
+    public void testVerify_GivenDuplicateCategorizationFilters() {
+
+        AnalysisConfig.Builder config = createValidConfig();
+        config.setCategorizationFieldName("myCategory");
+        config.setCategorizationFilters(Arrays.asList("foo", "bar", "foo"));
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+
+        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES), e.getMessage());
+    }
+
+
+    public void testVerify_GivenEmptyCategorizationFilter() {
+
+        AnalysisConfig.Builder config = createValidConfig();
+        config.setCategorizationFieldName("myCategory");
+        config.setCategorizationFilters(Arrays.asList("foo", ""));
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY), e.getMessage());
+    }
+
+
+    public void testCheckDetectorsHavePartitionFields() {
+
+        AnalysisConfig.Builder config = createValidConfig();
+        config.setUsePerPartitionNormalization(true);
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+
+        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD), e.getMessage());
+    }
+
+
+    public void testCheckDetectorsHavePartitionFields_doesntThrowWhenValid() {
+        AnalysisConfig.Builder config = createValidConfig();
+        Detector.Builder builder = new Detector.Builder(config.build().getDetectors().get(0));
+        builder.setPartitionFieldName("pField");
+        config.build().getDetectors().set(0, builder.build());
+        config.setUsePerPartitionNormalization(true);
+
+        config.build();
+    }
+
+
+    public void testCheckNoInfluencersAreSet() {
+
+        AnalysisConfig.Builder config = createValidConfig();
+        Detector.Builder builder = new Detector.Builder(config.build().getDetectors().get(0));
+        builder.setPartitionFieldName("pField");
+        config.build().getDetectors().set(0, builder.build());
+        config.setInfluencers(Arrays.asList("inf1", "inf2"));
+        config.setUsePerPartitionNormalization(true);
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+
+        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS), e.getMessage());
+    }
+
+
+    public void testVerify_GivenCategorizationFiltersContainInvalidRegex() {
+
+        AnalysisConfig.Builder config = createValidConfig();
+        config.setCategorizationFieldName("myCategory");
+        config.setCategorizationFilters(Arrays.asList("foo", "("));
+
+        ElasticsearchStatusException e =
+                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+
+        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, "("), e.getMessage());
+    }
+
+    private static AnalysisConfig.Builder createValidConfig() {
+        List<Detector> detectors = new ArrayList<>();
+        Detector detector = new Detector.Builder("count", null).build();
+        detectors.add(detector);
+        AnalysisConfig.Builder analysisConfig = new AnalysisConfig.Builder(detectors);
+        analysisConfig.setBucketSpan(3600L);
+        analysisConfig.setBatchSpan(0L);
+        analysisConfig.setLatency(0L);
+        analysisConfig.setPeriod(0L);
+        return analysisConfig;
     }
 }

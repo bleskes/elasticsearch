@@ -74,11 +74,9 @@ public class SingleLineDataToProcessWriterTests extends ESTestCase {
         dataDescription.setFormat(DataFormat.SINGLE_LINE);
         dataDescription.setTimeFormat("yyyy-MM-dd HH:mm:ssX");
 
-        analysisConfig = new AnalysisConfig();
         Detector.Builder detector = new Detector.Builder("count", null);
         detector.setByFieldName("message");
-        analysisConfig.setDetectors(Arrays.asList(detector.build()));
-
+        analysisConfig = new AnalysisConfig.Builder(Arrays.asList(detector.build())).build();
         transformConfigs = new ArrayList<>();
     }
 

@@ -136,9 +136,9 @@ public class JobScheduledServiceTests extends ESTestCase {
     }
 
     private static Job.Builder createScheduledJob() {
-        AnalysisConfig analysisConfig = new AnalysisConfig();
-        analysisConfig.setBucketSpan(3600L);
-        analysisConfig.setDetectors(Arrays.asList(new Detector.Builder("metric", "field").build()));
+        AnalysisConfig.Builder acBuilder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "field").build()));
+        acBuilder.setBucketSpan(3600L);
+        acBuilder.setDetectors(Arrays.asList(new Detector.Builder("metric", "field").build()));
 
         SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.ELASTICSEARCH);
         schedulerConfig.setBaseUrl("http://localhost");
@@ -146,7 +146,7 @@ public class JobScheduledServiceTests extends ESTestCase {
         schedulerConfig.setTypes(Arrays.asList("myType"));
 
         Job.Builder builder = new Job.Builder("foo");
-        builder.setAnalysisConfig(analysisConfig);
+        builder.setAnalysisConfig(acBuilder);
         builder.setSchedulerConfig(schedulerConfig);
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);

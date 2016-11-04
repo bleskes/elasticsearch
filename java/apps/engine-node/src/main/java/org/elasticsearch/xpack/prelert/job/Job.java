@@ -28,7 +28,6 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
-import org.elasticsearch.xpack.prelert.job.config.verification.AnalysisConfigVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
@@ -609,7 +608,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         private String id;
         private String description;
 
-        private AnalysisConfig analysisConfig = new AnalysisConfig();
+        private AnalysisConfig analysisConfig;
         private AnalysisLimits analysisLimits;
         private SchedulerConfig schedulerConfig;
         private List<TransformConfig> transforms = new ArrayList<>();
@@ -676,8 +675,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             this.description = description;
         }
 
-        public void setAnalysisConfig(AnalysisConfig config) {
-            analysisConfig = config;
+        public void setAnalysisConfig(AnalysisConfig.Builder configBuilder) {
+            analysisConfig = configBuilder.build();
         }
 
         public void setAnalysisLimits(AnalysisLimits analysisLimits) {
@@ -770,8 +769,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
                         ErrorCodes.INCOMPLETE_CONFIGURATION);
             }
-            // Move to AnalysisConfig.Builder once created:
-            AnalysisConfigVerifier.verify(analysisConfig);
 
             if (schedulerConfig != null) {
                 if (analysisConfig.getBucketSpan() == null) {

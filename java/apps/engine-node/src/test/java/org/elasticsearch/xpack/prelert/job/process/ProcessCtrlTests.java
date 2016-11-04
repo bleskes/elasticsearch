@@ -53,20 +53,18 @@ public class ProcessCtrlTests extends ESTestCase {
         Environment env = new Environment(settings);
         Job.Builder job = buildJobBuilder("unit-test-job");
 
-        Detector.Builder d1 = new Detector.Builder("info_content", "domain");
-        d1.setOverFieldName("client");
-        d1.setPartitionFieldName("field");
-        AnalysisConfig ac = new AnalysisConfig();
-        ac.setDetectors(Collections.singletonList(d1.build()));
-        ac.setBatchSpan(100L);
-        ac.setBucketSpan(120L);
-        ac.setLatency(360L);
-        ac.setPeriod(20L);
-        ac.setSummaryCountFieldName("summaryField");
-        ac.setOverlappingBuckets(true);
-        ac.setMultivariateByFields(true);
-        ac.setUsePerPartitionNormalization(true);
-        job.setAnalysisConfig(ac);
+        Detector.Builder detectorBuilder = new Detector.Builder("metric", "value");
+        detectorBuilder.setPartitionFieldName("foo");
+        AnalysisConfig.Builder acBuilder = new AnalysisConfig.Builder(Collections.singletonList(detectorBuilder.build()));
+        acBuilder.setBatchSpan(100L);
+        acBuilder.setBucketSpan(120L);
+        acBuilder.setLatency(360L);
+        acBuilder.setPeriod(20L);
+        acBuilder.setSummaryCountFieldName("summaryField");
+        acBuilder.setOverlappingBuckets(true);
+        acBuilder.setMultivariateByFields(true);
+        acBuilder.setUsePerPartitionNormalization(true);
+        job.setAnalysisConfig(acBuilder);
 
         DataDescription.Builder dd = new DataDescription.Builder();
         dd.setFieldDelimiter('|');

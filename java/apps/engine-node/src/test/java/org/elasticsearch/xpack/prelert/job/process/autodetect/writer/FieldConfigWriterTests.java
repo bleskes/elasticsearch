@@ -25,6 +25,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class FieldConfigWriterTests extends ESTestCase {
 
     @Before
     public void setUpDeps() {
-        analysisConfig = new AnalysisConfig();
+        analysisConfig = new AnalysisConfig.Builder(Collections.singletonList(new Detector.Builder("count", null).build())).build();
         lists = new LinkedHashSet<>();
     }
 
@@ -85,7 +86,7 @@ public class FieldConfigWriterTests extends ESTestCase {
         d6.setOverFieldName("tshash");
         detectors.add(d6.build());
 
-        analysisConfig.setDetectors(detectors);
+        analysisConfig = new AnalysisConfig.Builder(detectors).build();
 
         ByteArrayOutputStream ba = new ByteArrayOutputStream();
         writer = new OutputStreamWriter(ba, StandardCharsets.UTF_8);
@@ -129,8 +130,9 @@ public class FieldConfigWriterTests extends ESTestCase {
         Detector.Builder d = new Detector.Builder("metric", "Integer_Value");
         d.setByFieldName("ts_hash");
 
-        analysisConfig.setDetectors(Arrays.asList(d.build()));
-        analysisConfig.setCategorizationFieldName("foo");
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(d.build()));
+        builder.setCategorizationFieldName("foo");
+        analysisConfig = builder.build();
         writer = mock(OutputStreamWriter.class);
 
         createFieldConfigWriter().write();
@@ -143,8 +145,9 @@ public class FieldConfigWriterTests extends ESTestCase {
         Detector.Builder d = new Detector.Builder("metric", "Integer_Value");
         d.setByFieldName("ts_hash");
 
-        analysisConfig.setDetectors(Arrays.asList(d.build()));
-        analysisConfig.setInfluencers(Arrays.asList("sun", "moon", "earth"));
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(d.build()));
+        builder.setInfluencers(Arrays.asList("sun", "moon", "earth"));
+        analysisConfig = builder.build();
 
         writer = mock(OutputStreamWriter.class);
 
@@ -161,10 +164,11 @@ public class FieldConfigWriterTests extends ESTestCase {
         Detector.Builder d = new Detector.Builder("metric", "Integer_Value");
         d.setByFieldName("ts_hash");
 
-        analysisConfig.setDetectors(Arrays.asList(d.build()));
-        analysisConfig.setInfluencers(Arrays.asList("sun"));
-        analysisConfig.setCategorizationFieldName("myCategory");
-        analysisConfig.setCategorizationFilters(Arrays.asList("foo", " ", "abc,def"));
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(d.build()));
+        builder.setInfluencers(Arrays.asList("sun"));
+        builder.setCategorizationFieldName("myCategory");
+        builder.setCategorizationFilters(Arrays.asList("foo", " ", "abc,def"));
+        analysisConfig = builder.build();
 
         writer = mock(OutputStreamWriter.class);
 
@@ -188,7 +192,8 @@ public class FieldConfigWriterTests extends ESTestCase {
         DetectionRule rule = new DetectionRule("instance", null, Connective.OR, Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        analysisConfig.setDetectors(Arrays.asList(detector.build()));
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(detector.build()));
+        analysisConfig = builder.build();
 
         writer = mock(OutputStreamWriter.class);
 
@@ -209,7 +214,9 @@ public class FieldConfigWriterTests extends ESTestCase {
     public void testWrite_GivenLists() throws IOException {
         Detector d = new Detector.Builder("count", null).build();
 
-        analysisConfig.setDetectors(Arrays.asList(d));
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(d));
+        analysisConfig = builder.build();
+
         lists.add(new ListDocument("list_1", Arrays.asList("a", "b")));
         lists.add(new ListDocument("list_2", Arrays.asList("c", "d")));
         writer = mock(OutputStreamWriter.class);

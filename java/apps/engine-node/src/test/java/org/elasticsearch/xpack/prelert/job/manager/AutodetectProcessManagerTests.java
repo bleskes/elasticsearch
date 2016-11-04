@@ -216,8 +216,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
 
         Detector d = new Detector.Builder("metric", "value").build();
 
-        AnalysisConfig ac = new AnalysisConfig();
-        ac.setDetectors(Collections.singletonList(d));
+        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Collections.singletonList(d));
 
         Job.Builder builder = new Job.Builder(jobId);
         builder.setDataDescription(dd);

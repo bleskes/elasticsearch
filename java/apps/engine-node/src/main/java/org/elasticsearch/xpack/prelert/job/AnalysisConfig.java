@@ -14,14 +14,20 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+
+import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +37,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+
 import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 
@@ -52,6 +61,7 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     /**
      * Serialisation names
      */
+    public static final ParseField ANALYSIS_CONFIG = new ParseField("analysisConfig");
     public static final ParseField BUCKET_SPAN = new ParseField("bucketSpan");
     public static final ParseField BATCH_SPAN = new ParseField("batchSpan");
     public static final ParseField CATEGORIZATION_FIELD_NAME = new ParseField("categorizationFieldName");
@@ -70,29 +80,29 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     public static final long DEFAULT_BUCKET_SPAN = 300;
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
-    public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(
-            Arrays.asList(PRELERT_CATEGORY_FIELD));
+    public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(Arrays.asList(PRELERT_CATEGORY_FIELD));
 
     public static final long DEFAULT_RESULT_FINALIZATION_WINDOW = 2L;
 
-    public static final ObjectParser<AnalysisConfig, ParseFieldMatcherSupplier> PARSER =
-            new ObjectParser<>("schedule_config", AnalysisConfig::new);
+    @SuppressWarnings("unchecked")
+    public static final ConstructingObjectParser<AnalysisConfig.Builder, ParseFieldMatcherSupplier> PARSER =
+            new ConstructingObjectParser<>(ANALYSIS_CONFIG.getPreferredName(), a -> new AnalysisConfig.Builder((List<Detector>) a[0]));
 
     static {
-        PARSER.declareLong(AnalysisConfig::setBucketSpan, BUCKET_SPAN);
-        PARSER.declareLong(AnalysisConfig::setBatchSpan, BATCH_SPAN);
-        PARSER.declareString(AnalysisConfig::setCategorizationFieldName, CATEGORIZATION_FIELD_NAME);
-        PARSER.declareStringArray(AnalysisConfig::setCategorizationFilters, CATEGORIZATION_FILTERS);
-        PARSER.declareLong(AnalysisConfig::setLatency, LATENCY);
-        PARSER.declareLong(AnalysisConfig::setPeriod, PERIOD);
-        PARSER.declareString(AnalysisConfig::setSummaryCountFieldName, SUMMARY_COUNT_FIELD_NAME);
-        PARSER.declareObjectArray(AnalysisConfig::setDetectors, (p, c) -> Detector.PARSER.apply(p, c).build(), DETECTORS);
-        PARSER.declareStringArray(AnalysisConfig::setInfluencers, INFLUENCERS);
-        PARSER.declareBoolean(AnalysisConfig::setOverlappingBuckets, OVERLAPPING_BUCKETS);
-        PARSER.declareLong(AnalysisConfig::setResultFinalizationWindow, RESULT_FINALIZATION_WINDOW);
-        PARSER.declareBoolean(AnalysisConfig::setMultivariateByFields, MULTIVARIATE_BY_FIELDS);
-        PARSER.declareLongArray(AnalysisConfig::setMultipleBucketSpans, MULTIPLE_BUCKET_SPANS);
-        PARSER.declareBoolean(AnalysisConfig::setUsePerPartitionNormalization, USER_PER_PARTITION_NORMALIZATION);
+        PARSER.declareObjectArray(ConstructingObjectParser.constructorArg(), (p, c) -> Detector.PARSER.apply(p, c).build(), DETECTORS);
+        PARSER.declareLong(Builder::setBucketSpan, BUCKET_SPAN);
+        PARSER.declareLong(Builder::setBatchSpan, BATCH_SPAN);
+        PARSER.declareString(Builder::setCategorizationFieldName, CATEGORIZATION_FIELD_NAME);
+        PARSER.declareStringArray(Builder::setCategorizationFilters, CATEGORIZATION_FILTERS);
+        PARSER.declareLong(Builder::setLatency, LATENCY);
+        PARSER.declareLong(Builder::setPeriod, PERIOD);
+        PARSER.declareString(Builder::setSummaryCountFieldName, SUMMARY_COUNT_FIELD_NAME);
+        PARSER.declareStringArray(Builder::setInfluencers, INFLUENCERS);
+        PARSER.declareBoolean(Builder::setOverlappingBuckets, OVERLAPPING_BUCKETS);
+        PARSER.declareLong(Builder::setResultFinalizationWindow, RESULT_FINALIZATION_WINDOW);
+        PARSER.declareBoolean(Builder::setMultivariateByFields, MULTIVARIATE_BY_FIELDS);
+        PARSER.declareLongArray(Builder::setMultipleBucketSpans, MULTIPLE_BUCKET_SPANS);
+        PARSER.declareBoolean(Builder::setUsePerPartitionNormalization, USER_PER_PARTITION_NORMALIZATION);
     }
 
     /**
@@ -113,7 +123,8 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     private List<Long> multipleBucketSpans;
     private boolean usePerPartitionNormalization = false;
 
-    public AnalysisConfig() {
+    private AnalysisConfig() {
+
     }
 
     public AnalysisConfig(StreamInput in) throws IOException {
@@ -137,6 +148,26 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         usePerPartitionNormalization = in.readBoolean();
     }
 
+    private AnalysisConfig(Long bucketSpan, Long batchSpan, String categorizationFieldName, List<String> categorizationFilters,
+                           long latency, Long period, String summaryCountFieldName, List<Detector> detectors, List<String> influencers,
+                           Boolean overlappingBuckets, Long resultFinalizationWindow, Boolean multivariateByFields,
+                           List<Long> multipleBucketSpans, boolean usePerPartitionNormalization) {
+        this.detectors = detectors;
+        this.bucketSpan = bucketSpan;
+        this.batchSpan = batchSpan;
+        this.latency = latency;
+        this.period = period;
+        this.categorizationFieldName = categorizationFieldName;
+        this.categorizationFilters = categorizationFilters;
+        this.summaryCountFieldName = summaryCountFieldName;
+        this.influencers = influencers;
+        this.overlappingBuckets = overlappingBuckets;
+        this.resultFinalizationWindow = resultFinalizationWindow;
+        this.multivariateByFields = multivariateByFields;
+        this.multipleBucketSpans = multipleBucketSpans;
+        this.usePerPartitionNormalization = usePerPartitionNormalization;
+    }
+
     /**
      * The size of the interval the analysis is aggregated into measured in
      * seconds
@@ -145,10 +176,6 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
      */
     public Long getBucketSpan() {
         return bucketSpan;
-    }
-
-    public void setBucketSpan(long bucketSpan) {
-        this.bucketSpan = bucketSpan;
     }
 
     public long getBucketSpanOrDefault() {
@@ -164,24 +191,12 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         return batchSpan;
     }
 
-    public void setBatchSpan(long batchSpan) {
-        this.batchSpan = batchSpan;
-    }
-
     public String getCategorizationFieldName() {
         return categorizationFieldName;
     }
 
-    public void setCategorizationFieldName(String categorizationFieldName) {
-        this.categorizationFieldName = Objects.requireNonNull(categorizationFieldName);
-    }
-
     public List<String> getCategorizationFilters() {
         return categorizationFilters;
-    }
-
-    public void setCategorizationFilters(List<String> filters) {
-        categorizationFilters = Objects.requireNonNull(filters);
     }
 
     /**
@@ -194,15 +209,6 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * Set the latency interval during which out-of-order records should be handled.
-     *
-     * @param latency the latency interval in seconds
-     */
-    public void setLatency(long latency) {
-        this.latency = latency;
-    }
-
-    /**
      * The repeat interval for periodic data in multiples of
      * {@linkplain #getBatchSpan()}
      *
@@ -212,10 +218,6 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         return period;
     }
 
-    public void setPeriod(long period) {
-        this.period = period;
-    }
-
     /**
      * The name of the field that contains counts for pre-summarised input
      *
@@ -223,10 +225,6 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
      */
     public String getSummaryCountFieldName() {
         return summaryCountFieldName;
-    }
-
-    public void setSummaryCountFieldName(String summaryCountFieldName) {
-        this.summaryCountFieldName = Objects.requireNonNull(summaryCountFieldName);
     }
 
     /**
@@ -239,19 +237,11 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         return detectors;
     }
 
-    public void setDetectors(List<Detector> detectors) {
-        this.detectors = Objects.requireNonNull(detectors);
-    }
-
     /**
      * The list of influence field names
      */
     public List<String> getInfluencers() {
         return influencers;
-    }
-
-    public void setInfluencers(List<String> influencers) {
-        this.influencers = Objects.requireNonNull(influencers);
     }
 
     /**
@@ -291,40 +281,20 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         return overlappingBuckets;
     }
 
-    public void setOverlappingBuckets(boolean b) {
-        overlappingBuckets = b;
-    }
-
     public Long getResultFinalizationWindow() {
         return resultFinalizationWindow;
-    }
-
-    public void setResultFinalizationWindow(long l) {
-        resultFinalizationWindow = l;
     }
 
     public Boolean getMultivariateByFields() {
         return multivariateByFields;
     }
 
-    public void setMultivariateByFields(boolean multivariateByFields) {
-        this.multivariateByFields = multivariateByFields;
-    }
-
     public List<Long> getMultipleBucketSpans() {
         return multipleBucketSpans;
     }
 
-    public void setMultipleBucketSpans(List<Long> multipleBucketSpans) {
-        this.multipleBucketSpans = Objects.requireNonNull(multipleBucketSpans);
-    }
-
     public boolean getUsePerPartitionNormalization() {
         return usePerPartitionNormalization;
-    }
-
-    public void setUsePerPartitionNormalization(boolean usePerPartitionNormalization) {
-        this.usePerPartitionNormalization = usePerPartitionNormalization;
     }
 
     /**
@@ -489,6 +459,295 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
                 bucketSpan, batchSpan, categorizationFieldName, categorizationFilters, latency, period,
                 summaryCountFieldName, detectors, influencers, overlappingBuckets, resultFinalizationWindow,
                 multivariateByFields, multipleBucketSpans, usePerPartitionNormalization
-                );
+        );
+    }
+
+    public static class Builder {
+
+        public static final long DEFAULT_BUCKET_SPAN = 300L;
+
+        private List<Detector> detectors;
+        private long bucketSpan = DEFAULT_BUCKET_SPAN;
+        private Long batchSpan;
+        private long latency = 0L;
+        private Long period;
+        private String categorizationFieldName;
+        private List<String> categorizationFilters;
+        private String summaryCountFieldName;
+        private List<String> influencers = new ArrayList<>();
+        private Boolean overlappingBuckets;
+        private Long resultFinalizationWindow;
+        private Boolean multivariateByFields;
+        private List<Long> multipleBucketSpans;
+        private boolean usePerPartitionNormalization = false;
+
+        public Builder(List<Detector> detectors) {
+            this.detectors = detectors;
+        }
+
+        Builder(AnalysisConfig analysisConfig) {
+            this.detectors = analysisConfig.detectors;
+            this.bucketSpan = analysisConfig.bucketSpan;
+            this.batchSpan = analysisConfig.batchSpan;
+            this.latency = analysisConfig.latency;
+            this.period = analysisConfig.period;
+            this.categorizationFieldName = analysisConfig.categorizationFieldName;
+            this.categorizationFilters = analysisConfig.categorizationFilters;
+            this.summaryCountFieldName = analysisConfig.summaryCountFieldName;
+            this.influencers = analysisConfig.influencers;
+            this.overlappingBuckets = analysisConfig.overlappingBuckets;
+            this.resultFinalizationWindow = analysisConfig.resultFinalizationWindow;
+            this.multivariateByFields = analysisConfig.multivariateByFields;
+            this.multipleBucketSpans = analysisConfig.multipleBucketSpans;
+            this.usePerPartitionNormalization = analysisConfig.usePerPartitionNormalization;
+        }
+
+        public void setDetectors(List<Detector> detectors) {
+            this.detectors = detectors;
+        }
+
+        public void setBucketSpan(Long bucketSpan) {
+            this.bucketSpan = bucketSpan;
+        }
+
+        public void setBatchSpan(long batchSpan) {
+            this.batchSpan = batchSpan;
+        }
+
+        public void setLatency(long latency) {
+            this.latency = latency;
+        }
+
+        public void setPeriod(long period) {
+            this.period = period;
+        }
+
+        public void setCategorizationFieldName(String categorizationFieldName) {
+            this.categorizationFieldName = categorizationFieldName;
+        }
+
+        public void setCategorizationFilters(List<String> categorizationFilters) {
+            this.categorizationFilters = categorizationFilters;
+        }
+
+        public void setSummaryCountFieldName(String summaryCountFieldName) {
+            this.summaryCountFieldName = summaryCountFieldName;
+        }
+
+        public void setInfluencers(List<String> influencers) {
+            this.influencers = influencers;
+        }
+
+        public void setOverlappingBuckets(Boolean overlappingBuckets) {
+            this.overlappingBuckets = overlappingBuckets;
+        }
+
+        public void setResultFinalizationWindow(Long resultFinalizationWindow) {
+            this.resultFinalizationWindow = resultFinalizationWindow;
+        }
+
+        public void setMultivariateByFields(Boolean multivariateByFields) {
+            this.multivariateByFields = multivariateByFields;
+        }
+
+        public void setMultipleBucketSpans(List<Long> multipleBucketSpans) {
+            this.multipleBucketSpans = multipleBucketSpans;
+        }
+
+        public void setUsePerPartitionNormalization(boolean usePerPartitionNormalization) {
+            this.usePerPartitionNormalization = usePerPartitionNormalization;
+        }
+
+        /**
+         * Checks the configuration is valid
+         * <ol>
+         * <li>Check that if non-null BucketSpan, BatchSpan, Latency and Period are
+         * &gt;= 0</li>
+         * <li>Check that if non-null Latency is &lt;= MAX_LATENCY</li>
+         * <li>Check there is at least one detector configured</li>
+         * <li>Check all the detectors are configured correctly</li>
+         * <li>Check that OVERLAPPING_BUCKETS is set appropriately</li>
+         * <li>Check that MULTIPLE_BUCKETSPANS are set appropriately</li>
+         * <li>If Per Partition normalization is configured at least one detector
+         * must have a partition field and no influences can be used</li>
+         * </ol>
+         */
+        public AnalysisConfig build() {
+            checkFieldIsNotNegativeIfSpecified(BUCKET_SPAN.getPreferredName(), bucketSpan);
+            checkFieldIsNotNegativeIfSpecified(BATCH_SPAN.getPreferredName(), batchSpan);
+            checkFieldIsNotNegativeIfSpecified(LATENCY.getPreferredName(), latency);
+            checkFieldIsNotNegativeIfSpecified(PERIOD.getPreferredName(), period);
+
+            verifyDetectorAreDefined(detectors);
+            verifyFieldName(summaryCountFieldName);
+            verifyFieldName(categorizationFieldName);
+
+            verifyCategorizationFilters(categorizationFilters, categorizationFieldName);
+            verifyMultipleBucketSpans(multipleBucketSpans, bucketSpan);
+
+            overlappingBuckets = verifyOverlappingBucketsConfig(overlappingBuckets, detectors);
+
+            if (usePerPartitionNormalization) {
+                checkDetectorsHavePartitionFields(detectors);
+                checkNoInfluencersAreSet(influencers);
+            }
+
+            return new AnalysisConfig(bucketSpan, batchSpan, categorizationFieldName, categorizationFilters,
+                    latency, period, summaryCountFieldName, detectors, influencers, overlappingBuckets,
+                    resultFinalizationWindow, multivariateByFields, multipleBucketSpans, usePerPartitionNormalization);
+        }
+
+        private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value) {
+            if (value != null && value < 0) {
+                String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, fieldName, 0, value);
+                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.INVALID_VALUE);
+            }
+        }
+
+        private static void verifyDetectorAreDefined(List<Detector> detectors) {
+            if (detectors == null || detectors.isEmpty()) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS),
+                        ErrorCodes.INCOMPLETE_CONFIGURATION);
+            }
+        }
+
+        private static void verifyCategorizationFilters(List<String> filters, String categorizationFieldName) {
+            if (filters == null || filters.isEmpty()) {
+                return;
+            }
+
+            verifyCategorizationFieldNameSetIfFiltersAreSet(categorizationFieldName);
+            verifyCategorizationFiltersAreDistinct(filters);
+            verifyCategorizationFiltersContainNoneEmpty(filters);
+            verifyCategorizationFiltersAreValidRegex(filters);
+        }
+
+        private static void verifyCategorizationFieldNameSetIfFiltersAreSet(String categorizationFieldName) {
+            if (categorizationFieldName == null) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME),
+                        ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME);
+            }
+        }
+
+        private static void verifyCategorizationFiltersAreDistinct(List<String> filters) {
+            if (filters.stream().distinct().count() != filters.size()) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES),
+                        ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES);
+            }
+        }
+
+        private static void verifyCategorizationFiltersContainNoneEmpty(List<String> filters) {
+            if (filters.stream().anyMatch(f -> f.isEmpty())) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY),
+                        ErrorCodes.INVALID_VALUE);
+            }
+        }
+
+        private static void verifyCategorizationFiltersAreValidRegex(List<String> filters) {
+            for (String filter : filters) {
+                if (!isValidRegex(filter)) {
+                    throw ExceptionsHelper.invalidRequestException(
+                            Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, filter),
+                            ErrorCodes.INVALID_VALUE);
+                }
+            }
+        }
+
+        private static void verifyMultipleBucketSpans(List<Long> multipleBucketSpans, Long bucketSpan) {
+            if (multipleBucketSpans == null) {
+                return;
+            }
+
+            if (bucketSpan == null) {
+                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN),
+                        ErrorCodes.INCOMPLETE_CONFIGURATION);
+            }
+            for (Long span : multipleBucketSpans) {
+                if ((span % bucketSpan != 0L) || (span <= bucketSpan)) {
+                    throw ExceptionsHelper.invalidRequestException(
+                            Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, span, bucketSpan),
+                            ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE);
+                }
+            }
+        }
+
+        private static boolean checkDetectorsHavePartitionFields(List<Detector> detectors) {
+            for (Detector detector : detectors) {
+                if (!Strings.isNullOrEmpty(detector.getPartitionFieldName())) {
+                    return true;
+                }
+            }
+
+            throw ExceptionsHelper.invalidRequestException(
+                    Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD),
+                    ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD);
+        }
+
+        private static boolean checkNoInfluencersAreSet(List<String> influencers) {
+            if (!influencers.isEmpty()) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS),
+                        ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS);
+            }
+
+            return true;
+        }
+
+        /**
+         * Check that the characters used in a field name will not cause problems.
+         *
+         * @param field The field name to be validated
+         * @return true
+         */
+        public static boolean verifyFieldName(String field) throws ElasticsearchParseException {
+            if (field != null && containsInvalidChar(field)) {
+                throw ExceptionsHelper.parseException(
+                        Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS, field, Detector.PROHIBITED),
+                        ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
+
+            }
+            return true;
+        }
+
+        private static boolean containsInvalidChar(String field) {
+            for (Character ch : Detector.PROHIBITED_FIELDNAME_CHARACTERS) {
+                if (field.indexOf(ch) >= 0) {
+                    return true;
+                }
+            }
+            return field.chars().anyMatch(ch -> Character.isISOControl(ch));
+        }
+
+        private static boolean isValidRegex(String exp) {
+            try {
+                Pattern.compile(exp);
+                return true;
+            } catch (PatternSyntaxException e) {
+                return false;
+            }
+        }
+
+        private static Boolean verifyOverlappingBucketsConfig(Boolean overlappingBuckets, List<Detector> detectors) {
+            // If any detector function is rare/freq_rare, mustn't use overlapping buckets
+            boolean mustNotUse = false;
+
+            List<String> illegalFunctions = new ArrayList<>();
+            for (Detector d : detectors) {
+                if (Detector.NO_OVERLAPPING_BUCKETS_FUNCTIONS.contains(d.getFunction())) {
+                    illegalFunctions.add(d.getFunction());
+                    mustNotUse = true;
+                }
+            }
+
+            if (Boolean.TRUE.equals(overlappingBuckets) && mustNotUse) {
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION, illegalFunctions.toString()),
+                        ErrorCodes.INVALID_FUNCTION);
+            }
+
+            return overlappingBuckets;
+        }
     }
 }

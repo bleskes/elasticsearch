@@ -19,6 +19,7 @@ import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
@@ -49,7 +50,8 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
             Date finishedTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
             Date lastDataTime = randomBoolean() ? new Date(randomPositiveLong()) : null;
             long timeout = randomPositiveLong();
-            AnalysisConfig analysisConfig = new AnalysisConfig();
+            AnalysisConfig analysisConfig = new AnalysisConfig.Builder(
+                    Collections.singletonList(new Detector.Builder("metric", "some_field").build())).build();
             AnalysisLimits analysisLimits = new AnalysisLimits(randomPositiveLong(), randomPositiveLong());
             SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
             schedulerConfig.setFilePath("/file/path");

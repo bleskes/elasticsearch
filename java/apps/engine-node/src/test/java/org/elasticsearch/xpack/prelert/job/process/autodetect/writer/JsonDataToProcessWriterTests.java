@@ -82,9 +82,8 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         dataDescription.setFormat(DataFormat.JSON);
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
-        analysisConfig = new AnalysisConfig();
         Detector detector = new Detector.Builder("metric", "value").build();
-        analysisConfig.setDetectors(Arrays.asList(detector));
+        analysisConfig = new AnalysisConfig.Builder(Arrays.asList(detector)).build();
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndDataIsValid() throws Exception {
@@ -132,7 +131,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
             throws Exception {
-        analysisConfig.setLatency(2L);
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
+        builder.setLatency(2L);
+        analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"4\", \"metric\":\"foo\", \"value\":\"4.0\"}");
@@ -161,7 +162,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
     public void testWrite_GivenMalformedJsonWithoutNestedLevels()
             throws Exception {
-        analysisConfig.setLatency(2L);
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
+        builder.setLatency(2L);
+        analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"value\":\"1.0\"}");
@@ -188,8 +191,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_GivenMalformedJsonWithNestedLevels()
             throws Exception {
         Detector detector = new Detector.Builder("metric", "nested.value").build();
-        analysisConfig.setDetectors(Arrays.asList(detector));
-        analysisConfig.setLatency(2L);
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(detector));
+        builder.setLatency(2L);
+        analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"nested\":{\"value\":\"1.0\"}}");
@@ -214,7 +218,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
     public void testWrite_GivenMalformedJsonThatNeverRecovers()
             throws Exception {
-        analysisConfig.setLatency(2L);
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("count", null).build()));
+        builder.setLatency(2L);
+        analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"value\":\"2.0\"}");
@@ -227,7 +233,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
     public void testWrite_GivenJsonWithArrayField()
             throws Exception {
-        analysisConfig.setLatency(2L);
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
+        builder.setLatency(2L);
+        analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"array\":[\"foo\", \"bar\"], \"value\":\"1.0\"}");
@@ -250,7 +258,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
     public void testWrite_GivenJsonWithMissingFields()
             throws Exception {
-        analysisConfig.setLatency(0L);
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
+        builder.setLatency(2L);
+        analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"f1\":\"foo\", \"value\":\"1.0\"}");
@@ -331,7 +341,8 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
         Detector.Builder detector = new Detector.Builder("metric", "value");
         detector.setByFieldName("dns_upper");
-        analysisConfig.setDetectors(Arrays.asList(detector.build()));
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(detector.build()));
+        analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"dns1\":\"www\", \"dns2\":\"foo.com\", \"value\":\"1.0\"}");
