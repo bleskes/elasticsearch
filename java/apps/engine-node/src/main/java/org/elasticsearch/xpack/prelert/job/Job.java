@@ -18,15 +18,16 @@ import org.elasticsearch.cluster.AbstractDiffable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.xpack.prelert.job.config.verification.AnalysisConfigVerifier;
 import org.elasticsearch.xpack.prelert.job.config.verification.DataDescriptionVerifier;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
@@ -38,18 +39,13 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
 /**
@@ -620,19 +616,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         public static final int MAX_JOB_ID_LENGTH = 64;
         public static final long MIN_BACKGROUND_PERSIST_INTERVAL = 3600;
         public static final long DEFAULT_TIMEOUT = 600;
-        private static final int MIN_SEQUENCE_LENGTH = 5;
-        private static final int HOSTNAME_ID_SEPARATORS_LENGTH = 2;
-        static final AtomicLong ID_SEQUENCE = new AtomicLong(); // package protected for testing
-        private static final DateTimeFormatter ID_DATEFORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss", Locale.ROOT);
-        private static final String HOSTNAME;
-
-        static {
-            String hostname = System.getenv("HOSTNAME");
-            if (hostname == null) {
-                hostname = System.getenv("COMPUTERNAME");
-            }
-            HOSTNAME = hostname != null ? hostname.toLowerCase(Locale.ROOT) : null;
-        }
 
         private String id;
         private String description;
@@ -868,7 +851,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             Double averageBucketProcessingTimeMs;
             String modelSnapshotId;
             if (fromApi) {
-                id = this.id == null ? generateJobId(HOSTNAME): this.id;
+                id = this.id == null ? UUIDs.base64UUID(): this.id;
                 createTime = this.createTime == null ? new Date() : this.createTime;
                 finishedTime = null;
                 lastDataTime = null;
@@ -892,33 +875,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                     ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
                     resultsRetentionDays, customSettings, averageBucketProcessingTimeMs, modelSnapshotId
             );
-        }
-
-        /**
-         * If hostname is null the job Id is a concatenation of the date in
-         * 'yyyyMMddHHmmss' format and a sequence number that is a minimum of
-         * 5 digits wide left padded with zeros<br>
-         * If hostname is not null the Id is the concatenation of the date in
-         * 'yyyyMMddHHmmss' format the hostname and a sequence number that is a
-         * minimum of 5 digits wide left padded with zeros. If hostname is long
-         * and it is truncated so the job Id does not exceed the maximum length<br>
-         * <p>
-         * e.g. the first Id created 23rd November 2013 at 11am
-         * '20131125110000-serverA-00001'
-         *
-         * @return The new unique job Id
-         */
-        static String generateJobId(String hostName) {
-            String dateStr = ID_DATEFORMAT.format(LocalDateTime.now(ZoneId.systemDefault()));
-            long sequence = ID_SEQUENCE.incrementAndGet();
-            if (hostName == null) {
-                return String.format(Locale.ROOT, "%s-%05d", dateStr, sequence);
-            } else {
-                int formattedSequenceLen = Math.max(String.valueOf(sequence).length(), MIN_SEQUENCE_LENGTH);
-                int hostnameMaxLen = MAX_JOB_ID_LENGTH - dateStr.length() - formattedSequenceLen - HOSTNAME_ID_SEPARATORS_LENGTH;
-                String trimmedHostName = hostName.substring(0, Math.min(hostName.length(), hostnameMaxLen));
-                return String.format(Locale.ROOT, "%s-%s-%05d", dateStr, trimmedHostName, sequence);
-            }
         }
 
         private static void checkValueNotLessThan(long minVal, String name, Long value) {

@@ -37,9 +37,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class JobTests extends AbstractSerializingTestCase<Job> {
 
@@ -308,40 +306,6 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         assertFalse(analysisFields.contains("max"));
         assertFalse(analysisFields.contains(""));
         assertFalse(analysisFields.contains(null));
-    }
-
-    public void testGenerateJobId_doesnotIncludeHost() {
-        Pattern pattern = Pattern.compile("[0-9]{14}-[0-9]{5,64}");
-        String jobId = Job.Builder.generateJobId(null);
-        assertTrue(jobId, pattern.matcher(jobId).matches());
-    }
-
-    public void testGenerateJobId_IncludesHost() {
-        Pattern pattern = Pattern.compile("[0-9]{14}-server-1-[0-9]{5,64}");
-        String jobId = Job.Builder.generateJobId("server-1");
-        assertTrue(jobId, pattern.matcher(jobId).matches());
-    }
-
-    public void testGenerateJobId_isShorterThanMaxHJobLength() {
-        assertTrue(Job.Builder.generateJobId(null).length() < Job.Builder.MAX_JOB_ID_LENGTH);
-    }
-
-    public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname() {
-        String id = Job.Builder.generateJobId("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
-        assertEquals("Unexpected id length: " + id, Job.Builder.MAX_JOB_ID_LENGTH, id.length());
-        assertTrue(
-                "Unexpected id ending: " + id + ", expected ending: "
-                        + String.format(Locale.ROOT, "%05d", Job.Builder.ID_SEQUENCE.get()),
-                id.endsWith(String.format(Locale.ROOT, "%05d", Job.Builder.ID_SEQUENCE.get())));
-    }
-
-    public void testGenerateJobId_isShorterThanMaxHJobLength_withLongHostname_andSixDigitSequence() {
-        String id = null;
-        for (int i = 0; i < 100000; i++) {
-            id = Job.Builder.generateJobId("averyverylongstringthatcouldbeahostnameorfullyqualifieddomainname");
-        }
-        assertTrue(id.endsWith("-" + Job.Builder.ID_SEQUENCE.get()));
-        assertEquals(Job.Builder.MAX_JOB_ID_LENGTH, id.length());
     }
 
     // JobConfigurationVerifierTests:
