@@ -23,14 +23,20 @@ import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
+import org.elasticsearch.xpack.prelert.job.process.ProcessPipes;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+import org.elasticsearch.xpack.prelert.utils.NamedPipeHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +47,8 @@ import java.util.Set;
 public class NativeAutodetectProcessFactory implements AutodetectProcessFactory {
 
     private static final Logger LOGGER = Loggers.getLogger(NativeAutodetectProcessFactory.class);
+    private static final NamedPipeHelper NAMED_PIPE_HELPER = new NamedPipeHelper();
+    private static final Duration PROCESS_STARTUP_TIMEOUT = Duration.ofSeconds(2);
     private final JobProvider jobProvider;
     private Environment env;
     private Settings settings;
@@ -54,18 +62,21 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
     @Override
     public AutodetectProcess createAutodetectProcess(Job job, boolean ignoreDowntime) {
         List<Path> filesToDelete = new ArrayList<>();
+        ProcessPipes processPipes = new ProcessPipes(env, NAMED_PIPE_HELPER, ProcessCtrl.AUTODETECT, job.getId(),
+                false, false, true, true, false, false);
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new SpecialPermission());
         }
         Process nativeProcess = AccessController.doPrivileged((PrivilegedAction<Process>) () -> {
-            return createNativeProcess(job, ignoreDowntime, filesToDelete);
+            return createNativeProcess(job, processPipes, ignoreDowntime, filesToDelete);
         });
         int numberOfAnalysisFields = job.getAnalysisConfig().analysisFields().size();
-        return new NativeAutodetectProcess(nativeProcess, numberOfAnalysisFields, filesToDelete);
+        return new NativeAutodetectProcess(nativeProcess, processPipes.getProcessInStream().get(),
+                processPipes.getProcessOutStream().get(), numberOfAnalysisFields, filesToDelete);
     }
 
-    private Process createNativeProcess(Job job, boolean ignoreDowntime, List<Path> filesToDelete) {
+    private Process createNativeProcess(Job job, ProcessPipes processPipes, boolean ignoreDowntime, List<Path> filesToDelete) {
 
         String jobId = job.getId();
         Optional<Quantiles> quantiles = jobProvider.getQuantiles(jobId);
@@ -74,7 +85,7 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
         Process nativeProcess = null;
 
         try {
-            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER, env, settings)
+            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER, env, settings, processPipes)
                     .ignoreDowntime(ignoreDowntime)
                     .referencedLists(resolveLists(job.getAnalysisConfig().extractReferencedLists()));
 
@@ -88,6 +99,7 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
                 autodetectBuilder.modelSnapshot(modelSnapshots.get(0));
             }
             nativeProcess = autodetectBuilder.build();
+            processPipes.connectStreams(PROCESS_STARTUP_TIMEOUT);
         } catch (IOException e) {
             String msg = "Failed to launch process for job " + job.getId();
             LOGGER.error(msg);

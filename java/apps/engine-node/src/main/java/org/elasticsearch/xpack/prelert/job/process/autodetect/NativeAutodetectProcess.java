@@ -24,10 +24,12 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.ControlMsgT
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.LengthEncodedWriter;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,18 +44,23 @@ import java.util.Locale;
 public class NativeAutodetectProcess implements AutodetectProcess {
     private static final Logger LOGGER = Loggers.getLogger(NativeAutodetectProcess.class);
 
+    private final Process nativeProcess;
+    private final OutputStream processInStream;
+    private final InputStream processOutStream;
     private final LengthEncodedWriter recordWriter;
     private final ZonedDateTime startTime;
     private final int numberOfAnalysisFields;
-    private final Process nativeProcess;
     private final BufferedReader errorReader;
     private final List<Path> filesToDelete;
 
-    public NativeAutodetectProcess(Process nativeProcess, int numberOfAnalysisFields, List<Path> filesToDelete) {
-        this.recordWriter = new LengthEncodedWriter(nativeProcess.getOutputStream());
+    public NativeAutodetectProcess(Process nativeProcess, OutputStream processInStream, InputStream processOutStream,
+                                   int numberOfAnalysisFields, List<Path> filesToDelete) {
+        this.nativeProcess = nativeProcess;
+        this.processInStream = new BufferedOutputStream(processInStream);
+        this.processOutStream = processOutStream;
+        this.recordWriter = new LengthEncodedWriter(this.processInStream);
         startTime = ZonedDateTime.now();
         this.numberOfAnalysisFields = numberOfAnalysisFields;
-        this.nativeProcess = nativeProcess;
         this.filesToDelete = filesToDelete;
         errorReader = new BufferedReader(new InputStreamReader(this.nativeProcess.getErrorStream(), StandardCharsets.UTF_8));
     }
@@ -91,7 +98,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     public void close() throws IOException {
         try {
             // closing its input causes the process to exit
-            nativeProcess.getOutputStream().close();
+            processInStream.close();
 
             // wait for the process to exit
             int exitValue = nativeProcess.waitFor();
@@ -158,7 +165,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
 
     @Override
     public InputStream out() {
-        return nativeProcess.getInputStream();
+        return processOutStream;
     }
 
     @Override

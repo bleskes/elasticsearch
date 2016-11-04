@@ -84,7 +84,7 @@ public class ProcessCtrl {
      */
     // NORELEASE This is for the process to write state directly to ES
     // which won't happen in the final product. See #18
-    public static final int ES_HTTP_PORT = 8080;
+    public static final int ES_HTTP_PORT = 9200;
 
     /**
      * If this is changed, ElasticsearchJobId should also be changed
@@ -392,12 +392,12 @@ public class ProcessCtrl {
     }
 
     /**
-     * Return true if there is a file PRELERT_HOME/config/prelertmodel.conf
+     * Return true if there is a file ES_HOME/config/prelertmodel.conf
      */
     public static boolean modelConfigFilePresent(Environment env) {
         Path modelConfPath = PrelertPlugin.resolveConfigFile(env, PRELERT_MODEL_CONF);
 
-        return Files.exists(modelConfPath) && (Files.isDirectory(modelConfPath) == false);
+        return Files.isRegularFile(modelConfPath);
     }
 
     /**

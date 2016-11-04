@@ -50,6 +50,8 @@ import java.time.Duration;
  */
 public class NamedPipeHelperNoBootstrapTests extends LuceneTestCase {
 
+    private static final NamedPipeHelper NAMED_PIPE_HELPER = new NamedPipeHelper();
+
     private static final String HELLO_WORLD = "Hello, world!";
     private static final String GOODBYE_WORLD = "Goodbye, world!";
 
@@ -274,12 +276,12 @@ public class NamedPipeHelperNoBootstrapTests extends LuceneTestCase {
     public void testOpenForInput() throws IOException, InterruptedException {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix(env) + "inputPipe" + JvmInfo.jvmInfo().pid();
+        String pipeName = NAMED_PIPE_HELPER.getDefaultPipeDirectoryPrefix(env) + "inputPipe" + JvmInfo.jvmInfo().pid();
 
         PipeWriterServer server = new PipeWriterServer(pipeName, HELLO_WORLD);
         server.start();
         try {
-            InputStream is = NamedPipeHelper.openNamedPipeInputStream(pipeName, Duration.ofSeconds(1));
+            InputStream is = NAMED_PIPE_HELPER.openNamedPipeInputStream(pipeName, Duration.ofSeconds(1));
             assertNotNull(is);
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -296,12 +298,12 @@ public class NamedPipeHelperNoBootstrapTests extends LuceneTestCase {
     public void testOpenForOutput() throws IOException, InterruptedException {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        String pipeName = NamedPipeHelper.getDefaultPipeDirectoryPrefix(env) + "outputPipe" + JvmInfo.jvmInfo().pid();
+        String pipeName = NAMED_PIPE_HELPER.getDefaultPipeDirectoryPrefix(env) + "outputPipe" + JvmInfo.jvmInfo().pid();
 
         PipeReaderServer server = new PipeReaderServer(pipeName);
         server.start();
         try {
-            OutputStream os = NamedPipeHelper.openNamedPipeOutputStream(pipeName, Duration.ofSeconds(1));
+            OutputStream os = NAMED_PIPE_HELPER.openNamedPipeOutputStream(pipeName, Duration.ofSeconds(1));
             assertNotNull(os);
 
             try (OutputStreamWriter writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {

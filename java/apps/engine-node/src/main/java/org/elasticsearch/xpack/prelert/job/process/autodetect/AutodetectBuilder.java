@@ -23,6 +23,7 @@ import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
+import org.elasticsearch.xpack.prelert.job.process.ProcessPipes;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.AnalysisLimitsWriter;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.FieldConfigWriter;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.ModelDebugConfigWriter;
@@ -59,6 +60,7 @@ public class AutodetectBuilder {
     private Optional<ModelSnapshot> modelSnapshot;
     private Environment env;
     private Settings settings;
+    private ProcessPipes processPipes;
 
     /**
      * Constructs an autodetect process builder
@@ -68,9 +70,11 @@ public class AutodetectBuilder {
      *                      deleted when the process completes
      * @param logger        The job's logger
      */
-    public AutodetectBuilder(Job job, List<Path> filesToDelete, Logger logger, Environment env, Settings settings) {
+    public AutodetectBuilder(Job job, List<Path> filesToDelete, Logger logger, Environment env, Settings settings,
+                             ProcessPipes processPipes) {
         this.env = env;
         this.settings = settings;
+        this.processPipes = processPipes;
         this.job = Objects.requireNonNull(job);
         this.filesToDelete = Objects.requireNonNull(filesToDelete);
         this.logger = Objects.requireNonNull(logger);
@@ -138,6 +142,7 @@ public class AutodetectBuilder {
 
         buildQuantiles(command);
         buildFieldConfig(command);
+        processPipes.addArgs(command);
         return buildProcess(command);
     }
 

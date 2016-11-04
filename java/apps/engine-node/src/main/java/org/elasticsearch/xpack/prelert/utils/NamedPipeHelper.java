@@ -65,8 +65,8 @@ public class NamedPipeHelper {
      */
     private static final String WIN_PIPE_PREFIX = "\\\\.\\pipe\\";
 
-    private NamedPipeHelper() {
-        // Do nothing
+    public NamedPipeHelper() {
+        // Do nothing - the only reason there's a constructor is to allow mocking
     }
 
     /**
@@ -75,7 +75,7 @@ public class NamedPipeHelper {
      * be created.
      * @return The directory prefix as a string.
      */
-    public static String getDefaultPipeDirectoryPrefix(Environment env) {
+    public String getDefaultPipeDirectoryPrefix(Environment env) {
         // The return type is String because we don't want any (too) clever path processing removing
         // the seemingly pointless . in the path used on Windows.
         if (Constants.WINDOWS) {
@@ -102,7 +102,7 @@ public class NamedPipeHelper {
      *             if the named pipe cannot be opened.
      */
     @SuppressForbidden(reason = "Environment doesn't have path for Windows named pipes")
-    public static InputStream openNamedPipeInputStream(String path, Duration timeout) throws IOException {
+    public InputStream openNamedPipeInputStream(String path, Duration timeout) throws IOException {
         return openNamedPipeInputStream(PathUtils.get(path), timeout);
     }
 
@@ -113,7 +113,7 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    public static InputStream openNamedPipeInputStream(Path file, Duration timeout) throws IOException {
+    public InputStream openNamedPipeInputStream(Path file, Duration timeout) throws IOException {
         long timeoutMillisRemaining = timeout.toMillis();
 
         // Can't use Files.isRegularFile() on on named pipes on Windows, as it renders them unusable,
@@ -165,7 +165,7 @@ public class NamedPipeHelper {
      *             if the named pipe cannot be opened.
      */
     @SuppressForbidden(reason = "Environment doesn't have path for Windows named pipes")
-    public static OutputStream openNamedPipeOutputStream(String path, Duration timeout) throws IOException {
+    public OutputStream openNamedPipeOutputStream(String path, Duration timeout) throws IOException {
         return openNamedPipeOutputStream(PathUtils.get(path), timeout);
     }
 
@@ -176,7 +176,7 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    public static OutputStream openNamedPipeOutputStream(Path file, Duration timeout) throws IOException {
+    public OutputStream openNamedPipeOutputStream(Path file, Duration timeout) throws IOException {
         if (Constants.WINDOWS) {
             return openNamedPipeOutputStreamWindows(file, timeout);
         }
@@ -191,7 +191,7 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    private static OutputStream openNamedPipeOutputStreamWindows(Path file, Duration timeout) throws IOException {
+    private OutputStream openNamedPipeOutputStreamWindows(Path file, Duration timeout) throws IOException {
         long timeoutMillisRemaining = timeout.toMillis();
 
         // Can't use File.isFile() on Windows, but luckily there's an even simpler check (that's not possible on *nix)
@@ -234,7 +234,7 @@ public class NamedPipeHelper {
      * @return A stream opened to read from the named pipe.
      * @throws IOException if the named pipe cannot be opened.
      */
-    private static OutputStream openNamedPipeOutputStreamUnix(Path file, Duration timeout) throws IOException {
+    private OutputStream openNamedPipeOutputStreamUnix(Path file, Duration timeout) throws IOException {
         long timeoutMillisRemaining = timeout.toMillis();
 
         // Periodically check whether the file exists until the timeout expires, then, if
@@ -272,7 +272,7 @@ public class NamedPipeHelper {
      * it wrapped in a RuntimeException.  However, the privileged calls could also possibly throw other
      * RuntimeExceptions, so this method accounts for this case too.
      */
-    private static void propagatePrivilegedException(RuntimeException e) throws IOException {
+    private void propagatePrivilegedException(RuntimeException e) throws IOException {
         Throwable ioe = ExceptionsHelper.unwrap(e, IOException.class);
         if (ioe != null) {
             throw (IOException)ioe;
