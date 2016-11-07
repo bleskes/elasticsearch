@@ -454,11 +454,11 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         // count works with no fields
         Detector d = new Detector.Builder("count", null).build();
-        AnalysisConfig ac = new AnalysisConfig.Builder(Collections.singletonList(d)).build();
+        new AnalysisConfig.Builder(Collections.singletonList(d)).build();
 
         try {
             d = new Detector.Builder("distinct_count", null).build();
-            ac = new AnalysisConfig.Builder(Collections.singletonList(d)).build();
+            new AnalysisConfig.Builder(Collections.singletonList(d)).build();
             assertTrue(false); // shouldn't get here
         } catch (ElasticsearchParseException e) {
             assertEquals(1, e.getHeader("errorCode").size());
@@ -468,20 +468,20 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         // should work now
         Detector.Builder builder = new Detector.Builder("distinct_count", "somefield");
         builder.setOverFieldName("over");
-        ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+        new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
 
         builder = new Detector.Builder("info_content", "somefield");
         builder.setOverFieldName("over");
         d = builder.build();
-        ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+        new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
 
         builder.setByFieldName("by");
-        ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+        new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
 
         try {
             builder = new Detector.Builder("made_up_function", "somefield");
             builder.setOverFieldName("over");
-            ac = new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
+            new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
             assertTrue(false); // shouldn't get here
         } catch (ElasticsearchParseException e) {
             assertEquals(1, e.getHeader("errorCode").size());

@@ -50,7 +50,7 @@ public class CppLogMessageHandlerTests extends ESTestCase {
         Logger logger = Loggers.getLogger(CppLogMessageHandlerTests.class);
         Loggers.setLevel(logger, Level.DEBUG);
 
-        try (CppLogMessageHandler handler = new CppLogMessageHandler("", is, logger, 100, 3)) {
+        try (CppLogMessageHandler handler = new CppLogMessageHandler(is, logger, 100, 3)) {
             handler.tailStream();
 
             assertEquals("Did not understand verb 'a'\n", handler.getErrors());

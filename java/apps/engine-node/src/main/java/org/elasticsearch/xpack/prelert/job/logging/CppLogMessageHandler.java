@@ -44,7 +44,6 @@ public class CppLogMessageHandler implements Closeable {
     private static final int DEFAULT_READBUF_SIZE = 1024;
     private static final int DEFAULT_ERROR_STORE_SIZE = 5;
 
-    private final String jobId;
     private final Logger logger;
     private final InputStream inputStream;
     private final int readBufSize;
@@ -56,15 +55,14 @@ public class CppLogMessageHandler implements Closeable {
      * @param inputStream May not be null.
      */
     public CppLogMessageHandler(String jobId, InputStream inputStream) {
-        this(jobId, inputStream, Strings.isNullOrEmpty(jobId) ? Loggers.getLogger(CppLogMessageHandler.class) : Loggers.getLogger(jobId),
+        this(inputStream, Strings.isNullOrEmpty(jobId) ? Loggers.getLogger(CppLogMessageHandler.class) : Loggers.getLogger(jobId),
                 DEFAULT_READBUF_SIZE, DEFAULT_ERROR_STORE_SIZE);
     }
 
     /**
      * For testing - allows meddling with the logger, read buffer size and error store size.
      */
-    CppLogMessageHandler(String jobId, InputStream inputStream, Logger logger, int readBufSize, int errorStoreSize) {
-        this.jobId = jobId;
+    CppLogMessageHandler(InputStream inputStream, Logger logger, int readBufSize, int errorStoreSize) {
         this.logger = Objects.requireNonNull(logger);
         this.inputStream = Objects.requireNonNull(inputStream);
         this.readBufSize = readBufSize;
