@@ -182,7 +182,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
     private final Boolean retrieveWholeSource;
     private final Integer scrollSize;
 
-    public SchedulerConfig(DataSource dataSource, Long queryDelay, Long frequency, String filePath, Boolean tailFile, String username,
+    private SchedulerConfig(DataSource dataSource, Long queryDelay, Long frequency, String filePath, Boolean tailFile, String username,
             String password, String encryptedPassword, String baseUrl, List<String> indexes, List<String> types, Map<String, Object> query,
             Map<String, Object> aggregations, Map<String, Object> aggs, Map<String, Object> scriptFields, Boolean retrieveWholeSource,
             Integer scrollSize) {
