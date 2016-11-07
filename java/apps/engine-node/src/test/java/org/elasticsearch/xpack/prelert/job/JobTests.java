@@ -419,7 +419,6 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
 
     public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
         Job.Builder builder = buildJobBuilder("foo");
-        AnalysisConfig.Builder config = createAnalysisConfig();
         TransformConfig tc = new TransformConfig(TransformType.Names.EXTRACT_NAME);
         tc.setInputs(Arrays.asList("dns"));
         tc.setOutputs(Arrays.asList("summaryCountField"));
