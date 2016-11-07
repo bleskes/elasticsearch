@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.xpack.prelert.job.logging.CppLogMessageHandler;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
@@ -26,6 +27,7 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,24 +47,35 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     private static final Logger LOGGER = Loggers.getLogger(NativeAutodetectProcess.class);
 
     private final Process nativeProcess;
+    private final CppLogMessageHandler cppLogHandler;
     private final OutputStream processInStream;
     private final InputStream processOutStream;
     private final LengthEncodedWriter recordWriter;
     private final ZonedDateTime startTime;
     private final int numberOfAnalysisFields;
-    private final BufferedReader errorReader;
     private final List<Path> filesToDelete;
 
-    public NativeAutodetectProcess(Process nativeProcess, OutputStream processInStream, InputStream processOutStream,
-                                   int numberOfAnalysisFields, List<Path> filesToDelete) {
+    public NativeAutodetectProcess(String jobId, Process nativeProcess, InputStream logStream, OutputStream processInStream,
+                                   InputStream processOutStream, int numberOfAnalysisFields, List<Path> filesToDelete) {
         this.nativeProcess = nativeProcess;
+        cppLogHandler = new CppLogMessageHandler(jobId, logStream);
         this.processInStream = new BufferedOutputStream(processInStream);
         this.processOutStream = processOutStream;
         this.recordWriter = new LengthEncodedWriter(this.processInStream);
         startTime = ZonedDateTime.now();
         this.numberOfAnalysisFields = numberOfAnalysisFields;
         this.filesToDelete = filesToDelete;
-        errorReader = new BufferedReader(new InputStreamReader(this.nativeProcess.getErrorStream(), StandardCharsets.UTF_8));
+    }
+
+    public void tailLogsInThread() {
+        new Thread(() -> {
+            try {
+                cppLogHandler.tailStream();
+                cppLogHandler.close();
+            } catch (IOException e) {
+                LOGGER.error("Error tailing C++ process logs", e);
+            }
+        }).start();
     }
 
     @Override
@@ -104,12 +117,9 @@ public class NativeAutodetectProcess implements AutodetectProcess {
             int exitValue = nativeProcess.waitFor();
             String msg = String.format(Locale.ROOT, "Process returned with value %d.", exitValue);
             if (exitValue != 0) {
-                // Read any error output from the process
-                StringBuilder sb = new StringBuilder(msg).append("\n");
-                readProcessErrorOutput(sb);
-
-                LOGGER.error(sb.toString());
-                throw ExceptionsHelper.serverError(sb.toString(), ErrorCodes.NATIVE_PROCESS_ERROR);
+                String errors = cppLogHandler.getErrors();
+                LOGGER.error(errors);
+                throw ExceptionsHelper.serverError(errors, ErrorCodes.NATIVE_PROCESS_ERROR);
             } else {
                 LOGGER.info(msg);
             }
@@ -121,36 +131,13 @@ public class NativeAutodetectProcess implements AutodetectProcess {
         }
     }
 
-    /**
-     * Read the error output from the process into the string builder.
-     *
-     * @param sb This will be modified and returned.
-     * @return The parameter <code>sb</code>
-     */
-    private StringBuilder readProcessErrorOutput(StringBuilder sb) {
-        try {
-            if (errorReader.ready() == false) {
-                return sb;
-            }
-
-            String line;
-            while ((line = errorReader.readLine()) != null) {
-                sb.append(line).append('\n');
-            }
-        } catch (IOException e) {
-            LOGGER.warn("Exception thrown reading the native processes error output", e);
-        }
-
-        return sb;
-    }
-
     public void deleteAssociatedFiles() throws IOException {
         if (filesToDelete == null) {
             return;
         }
 
         for (Path fileToDelete : filesToDelete) {
-            if (Files.deleteIfExists(fileToDelete) == true) {
+            if (Files.deleteIfExists(fileToDelete)) {
                 LOGGER.debug("Deleted file {}", fileToDelete::toString);
             } else {
                 LOGGER.warn("Failed to delete file {}", fileToDelete::toString);
@@ -160,7 +147,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
 
     @Override
     public InputStream error() {
-        return nativeProcess.getErrorStream();
+        return new ByteArrayInputStream(cppLogHandler.getErrors().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -190,6 +177,6 @@ public class NativeAutodetectProcess implements AutodetectProcess {
 
     @Override
     public String readError() {
-        return readProcessErrorOutput(new StringBuilder()).toString();
+        return cppLogHandler.getErrors();
     }
 }

@@ -63,7 +63,7 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
     public AutodetectProcess createAutodetectProcess(Job job, boolean ignoreDowntime) {
         List<Path> filesToDelete = new ArrayList<>();
         ProcessPipes processPipes = new ProcessPipes(env, NAMED_PIPE_HELPER, ProcessCtrl.AUTODETECT, job.getId(),
-                false, false, true, true, false, false);
+                true, false, true, true, false, false);
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new SpecialPermission());
@@ -72,8 +72,10 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
             return createNativeProcess(job, processPipes, ignoreDowntime, filesToDelete);
         });
         int numberOfAnalysisFields = job.getAnalysisConfig().analysisFields().size();
-        return new NativeAutodetectProcess(nativeProcess, processPipes.getProcessInStream().get(),
-                processPipes.getProcessOutStream().get(), numberOfAnalysisFields, filesToDelete);
+        NativeAutodetectProcess autodetect = new NativeAutodetectProcess(job.getId(), nativeProcess, processPipes.getLogStream().get(),
+                processPipes.getProcessInStream().get(), processPipes.getProcessOutStream().get(), numberOfAnalysisFields, filesToDelete);
+        autodetect.tailLogsInThread();
+        return autodetect;
     }
 
     private Process createNativeProcess(Job job, ProcessPipes processPipes, boolean ignoreDowntime, List<Path> filesToDelete) {
