@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.test.ESTestCase;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
@@ -77,7 +77,7 @@ public class ElasticsearchUsagePersisterTests extends ESTestCase {
         Script script = updateScriptCaptor.getValue();
         assertEquals("ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount"
                 + " += params.recordCount;", script.getScript());
-        assertEquals(ScriptService.ScriptType.INLINE, script.getType());
+        assertEquals(ScriptType.INLINE, script.getType());
         assertEquals("painless", script.getLang());
         Map<String, Object> scriptParams = script.getParams();
         assertEquals(3, scriptParams.size());

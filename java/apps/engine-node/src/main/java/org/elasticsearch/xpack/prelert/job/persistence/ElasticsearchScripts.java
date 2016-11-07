@@ -20,7 +20,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -62,7 +62,7 @@ public final class ElasticsearchScripts
     {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(COUNT_PARAM, count);
-        return new Script(UPDATE_BUCKET_COUNT, ScriptService.ScriptType.INLINE, PAINLESS, scriptParams);
+        return new Script(UPDATE_BUCKET_COUNT, ScriptType.INLINE, PAINLESS, scriptParams);
     }
 
     public static Script newUpdateUsage(long additionalBytes, long additionalFields,
@@ -72,14 +72,14 @@ public final class ElasticsearchScripts
         scriptParams.put(BYTES_PARAM, additionalBytes);
         scriptParams.put(FIELD_COUNT_PARAM, additionalFields);
         scriptParams.put(RECORD_COUNT_PARAM, additionalRecords);
-        return new Script(UPDATE_USAGE, ScriptService.ScriptType.INLINE, PAINLESS, scriptParams);
+        return new Script(UPDATE_USAGE, ScriptType.INLINE, PAINLESS, scriptParams);
     }
 
     public static Script updateProcessingTime(Long processingTimeMs)
     {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(PROCESSING_TIME_PARAM, processingTimeMs);
-        return new Script(UPDATE_AVERAGE_PROCESSING_TIME, ScriptService.ScriptType.INLINE,
+        return new Script(UPDATE_AVERAGE_PROCESSING_TIME, ScriptType.INLINE,
                 PAINLESS, scriptParams);
     }
 

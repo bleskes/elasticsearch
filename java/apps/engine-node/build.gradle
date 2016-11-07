@@ -1,27 +1,11 @@
 import org.elasticsearch.gradle.precommit.PrecommitTasks
 
 buildscript {
-    repositories {
-        if (System.getProperty("repos.mavenlocal") != null) {
-            // with -Drepos.mavenlocal=true we can force checking the local .m2 repo which is useful for building against
-            // elasticsearch snapshots
-            mavenLocal()
-        }
-        mavenCentral()
-        maven {
-            name 'sonatype-snapshots'
-            url "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-        jcenter()
-    }
     dependencies {
-        // Version of elasticsearch
         classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}"
     }
 }
 
-apply plugin: 'eclipse'
-apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
 
 esplugin {
@@ -30,8 +14,7 @@ esplugin {
     classname 'org.elasticsearch.xpack.prelert.PrelertPlugin'
 }
 
-group = 'org.elasticsearch.prelert'
-version = '${pluginVersion}'
+version = "${elasticsearchVersion}"
 
 // We need to enable this at some point
 thirdPartyAudit.enabled = false
