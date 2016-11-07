@@ -1,7 +1,5 @@
 import org.elasticsearch.gradle.precommit.PrecommitTasks
 
-description = 'Prelert Engine-Elastic integration'
-
 buildscript {
     repositories {
         if (System.getProperty("repos.mavenlocal") != null) {
@@ -18,7 +16,7 @@ buildscript {
     }
     dependencies {
         // Version of elasticsearch
-        classpath "org.elasticsearch.gradle:build-tools:5.0.0"
+        classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}"
     }
 }
 
@@ -33,11 +31,7 @@ esplugin {
 }
 
 group = 'org.elasticsearch.prelert'
-version = '2.3.0'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
+version = '${pluginVersion}'
 
 // We need to enable this at some point
 thirdPartyAudit.enabled = false
@@ -48,7 +42,7 @@ licenseHeaders {
 }
 
 dependencies {
-    compile group: 'net.sf.supercsv', name: 'super-csv', version:'2.4.0'
+    compile group: 'net.sf.supercsv', name: 'super-csv', version:"${supercsvVersion}"
 }
 
 test {
