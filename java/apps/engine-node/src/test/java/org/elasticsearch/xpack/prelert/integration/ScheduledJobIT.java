@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.integration;
 
+import org.apache.http.HttpHost;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
@@ -147,13 +148,14 @@ public class ScheduledJobIT extends ESRestTestCase {
     }
 
     private Response createScheduledJob() throws Exception {
+        HttpHost httpHost = getClusterHosts().get(0);
         String job = "{\n" + "    \"jobId\":\"scheduled\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
                 + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
                 + "        \"detectors\" :[{\"function\":\"mean\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"format\":\"ELASTICSEARCH\",\n"
                 + "        \"timeField\":\"time\",\n" + "        \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" + "    },\n"
                 + "    \"schedulerConfig\" : {\n" + "        \"dataSource\":\"ELASTICSEARCH\",\n"
-                + "        \"baseUrl\":\"http://localhost:8080\",\n" + "        \"indexes\":[\"airline-data\"],\n"
+                + "        \"baseUrl\":\"" + httpHost.toURI() + "\",\n" + "        \"indexes\":[\"airline-data\"],\n"
                 + "        \"types\":[\"response\"],\n" + "        \"retrieveWholeSource\":true\n" + "    }\n" + "}";
 
         return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));

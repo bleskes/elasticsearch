@@ -67,22 +67,20 @@ public class ElasticsearchDataExtractor implements DataExtractor {
 
     @Override
     public void newSearch(long startEpochMs, long endEpochMs, Logger logger) throws IOException {
+        m_Logger = logger;
+        m_Logger.info("Requesting data from '" + urlBuilder.getBaseUrl() + "' within [" + startEpochMs + ", " + endEpochMs + ")");
         scrollState.reset();
         currentStartTime = startEpochMs;
         currentEndTime = endEpochMs;
         endTime = endEpochMs;
         isCancelled = false;
-        m_Logger = logger;
         if (endEpochMs - startEpochMs > CHUNK_THRESHOLD_MS) {
             setUpChunkedSearch();
         }
-
         if (isFirstSearch) {
             queryBuilder.logQueryInfo(m_Logger);
             isFirstSearch = false;
         }
-
-        m_Logger.info("Requesting data from '" + urlBuilder.getBaseUrl() + "' within [" + startEpochMs + ", " + endEpochMs + ")");
     }
 
     private void setUpChunkedSearch() throws IOException {
