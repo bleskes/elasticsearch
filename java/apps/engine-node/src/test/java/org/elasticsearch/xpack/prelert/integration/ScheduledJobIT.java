@@ -75,6 +75,8 @@ public class ScheduledJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"errorCode\":\"60101"));
     }
 
+    @AwaitsFix(bugUrl = "The lookback is sometimes too quick and then we fail to see that the scheduler_state to see is STARTED. " +
+            "We need to find a different way to assert this.")
     public void testStartJobScheduler_GivenLookbackOnly() throws Exception {
         createAirlineDataIndex();
         createScheduledJob();
