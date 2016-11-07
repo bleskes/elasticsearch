@@ -26,11 +26,9 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.LengthEncod
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

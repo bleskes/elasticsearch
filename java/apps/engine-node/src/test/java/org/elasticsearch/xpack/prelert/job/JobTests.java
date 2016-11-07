@@ -404,7 +404,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         builder.build();
     }
 
-    public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
+    public void testCheckTransformDuplicatOutput_outputIsSummaryCountField() {
         Job.Builder builder = buildJobBuilder("foo");
         AnalysisConfig.Builder config = createAnalysisConfig();
         config.setSummaryCountFieldName("summaryCountField");
@@ -415,13 +415,17 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         builder.setTransforms(Arrays.asList(tc));
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME.getValueString(), e.getHeader("errorCode").get(0));
-        Detector existingDetector = config.build().getDetectors().get(0);
-        Detector.Builder newDetector = new Detector.Builder(existingDetector);
-        newDetector.setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
-        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Collections.singletonList(newDetector.build()));
-        builder.setAnalysisConfig(config);
-        tc.setOutputs(TransformType.DOMAIN_SPLIT.defaultOutputNames());
-        e = expectThrows(ElasticsearchStatusException.class, builder::build);
+    }
+
+    public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
+        Job.Builder builder = buildJobBuilder("foo");
+        AnalysisConfig.Builder config = createAnalysisConfig();
+        TransformConfig tc = new TransformConfig(TransformType.Names.EXTRACT_NAME);
+        tc.setInputs(Arrays.asList("dns"));
+        tc.setOutputs(Arrays.asList("summaryCountField"));
+        tc.setArguments(Arrays.asList("(.*)"));
+        builder.setTransforms(Arrays.asList(tc));
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
         assertEquals(ErrorCodes.TRANSFORM_OUTPUTS_UNUSED.getValueString(), e.getHeader("errorCode").get(0));
     }
 
