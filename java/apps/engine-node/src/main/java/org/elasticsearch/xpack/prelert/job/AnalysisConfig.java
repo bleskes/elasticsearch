@@ -61,23 +61,21 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     /**
      * Serialisation names
      */
-    public static final ParseField ANALYSIS_CONFIG = new ParseField("analysisConfig");
-    public static final ParseField BUCKET_SPAN = new ParseField("bucketSpan");
-    public static final ParseField BATCH_SPAN = new ParseField("batchSpan");
-    public static final ParseField CATEGORIZATION_FIELD_NAME = new ParseField("categorizationFieldName");
-    public static final ParseField CATEGORIZATION_FILTERS = new ParseField("categorizationFilters");
-    public static final ParseField LATENCY = new ParseField("latency");
-    public static final ParseField PERIOD = new ParseField("period");
-    public static final ParseField SUMMARY_COUNT_FIELD_NAME = new ParseField("summaryCountFieldName");
-    public static final ParseField DETECTORS = new ParseField("detectors");
-    public static final ParseField INFLUENCERS = new ParseField("influencers");
-    public static final ParseField OVERLAPPING_BUCKETS = new ParseField("overlappingBuckets");
-    public static final ParseField RESULT_FINALIZATION_WINDOW = new ParseField("resultFinalizationWindow");
-    public static final ParseField MULTIVARIATE_BY_FIELDS = new ParseField("multivariateByFields");
-    public static final ParseField MULTIPLE_BUCKET_SPANS = new ParseField("multipleBucketSpans");
-    public static final ParseField USER_PER_PARTITION_NORMALIZATION = new ParseField("usePerPartitionNormalization");
-
-    public static final long DEFAULT_BUCKET_SPAN = 300;
+    private static final ParseField ANALYSIS_CONFIG = new ParseField("analysisConfig");
+    private static final ParseField BUCKET_SPAN = new ParseField("bucketSpan");
+    private static final ParseField BATCH_SPAN = new ParseField("batchSpan");
+    private static final ParseField CATEGORIZATION_FIELD_NAME = new ParseField("categorizationFieldName");
+    private static final ParseField CATEGORIZATION_FILTERS = new ParseField("categorizationFilters");
+    private static final ParseField LATENCY = new ParseField("latency");
+    private static final ParseField PERIOD = new ParseField("period");
+    private static final ParseField SUMMARY_COUNT_FIELD_NAME = new ParseField("summaryCountFieldName");
+    private static final ParseField DETECTORS = new ParseField("detectors");
+    private static final ParseField INFLUENCERS = new ParseField("influencers");
+    private static final ParseField OVERLAPPING_BUCKETS = new ParseField("overlappingBuckets");
+    private static final ParseField RESULT_FINALIZATION_WINDOW = new ParseField("resultFinalizationWindow");
+    private static final ParseField MULTIVARIATE_BY_FIELDS = new ParseField("multivariateByFields");
+    private static final ParseField MULTIPLE_BUCKET_SPANS = new ParseField("multipleBucketSpans");
+    private static final ParseField USER_PER_PARTITION_NORMALIZATION = new ParseField("usePerPartitionNormalization");
 
     private static final String PRELERT_CATEGORY_FIELD = "prelertcategory";
     public static final Set<String> AUTO_CREATED_FIELDS = new HashSet<>(Arrays.asList(PRELERT_CATEGORY_FIELD));
@@ -108,45 +106,20 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     /**
      * These values apply to all detectors
      */
-    private Long bucketSpan;
-    private Long batchSpan;
-    private String categorizationFieldName;
-    private List<String> categorizationFilters;
-    private long latency = 0L;
-    private Long period;
-    private String summaryCountFieldName;
-    private List<Detector> detectors = new ArrayList<>();
-    private List<String> influencers = new ArrayList<>();
-    private Boolean overlappingBuckets;
-    private Long resultFinalizationWindow;
-    private Boolean multivariateByFields;
-    private List<Long> multipleBucketSpans;
-    private boolean usePerPartitionNormalization = false;
-
-    private AnalysisConfig() {
-
-    }
-
-    public AnalysisConfig(StreamInput in) throws IOException {
-        bucketSpan = in.readOptionalLong();
-        batchSpan = in.readOptionalLong();
-        categorizationFieldName = in.readOptionalString();
-        if (in.readBoolean()) {
-            categorizationFilters = in.readList(StreamInput::readString);
-        }
-        latency = in.readLong();
-        period = in.readOptionalLong();
-        summaryCountFieldName = in.readOptionalString();
-        detectors = in.readList(Detector::new);
-        influencers = in.readList(StreamInput::readString);
-        overlappingBuckets = in.readOptionalBoolean();
-        resultFinalizationWindow = in.readOptionalLong();
-        multivariateByFields = in.readOptionalBoolean();
-        if (in.readBoolean()) {
-            multipleBucketSpans = in.readList(StreamInput::readLong);
-        }
-        usePerPartitionNormalization = in.readBoolean();
-    }
+    private final long bucketSpan;
+    private final Long batchSpan;
+    private final String categorizationFieldName;
+    private final List<String> categorizationFilters;
+    private final long latency;
+    private final Long period;
+    private final String summaryCountFieldName;
+    private final List<Detector> detectors;
+    private final List<String> influencers;
+    private final Boolean overlappingBuckets;
+    private final Long resultFinalizationWindow;
+    private final Boolean multivariateByFields;
+    private final List<Long> multipleBucketSpans;
+    private final boolean usePerPartitionNormalization;
 
     private AnalysisConfig(Long bucketSpan, Long batchSpan, String categorizationFieldName, List<String> categorizationFilters,
                            long latency, Long period, String summaryCountFieldName, List<Detector> detectors, List<String> influencers,
@@ -168,6 +141,54 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         this.usePerPartitionNormalization = usePerPartitionNormalization;
     }
 
+    public AnalysisConfig(StreamInput in) throws IOException {
+        bucketSpan = in.readLong();
+        batchSpan = in.readOptionalLong();
+        categorizationFieldName = in.readOptionalString();
+        categorizationFilters = in.readBoolean() ? in.readList(StreamInput::readString) : null;
+        latency = in.readLong();
+        period = in.readOptionalLong();
+        summaryCountFieldName = in.readOptionalString();
+        detectors = in.readList(Detector::new);
+        influencers = in.readList(StreamInput::readString);
+        overlappingBuckets = in.readOptionalBoolean();
+        resultFinalizationWindow = in.readOptionalLong();
+        multivariateByFields = in.readOptionalBoolean();
+        multipleBucketSpans = in.readBoolean() ? in.readList(StreamInput::readLong) : null;
+        usePerPartitionNormalization = in.readBoolean();
+    }
+
+    @Override
+    public void writeTo(StreamOutput out) throws IOException {
+        out.writeLong(bucketSpan);
+        out.writeOptionalLong(batchSpan);
+        out.writeOptionalString(categorizationFieldName);
+        if (categorizationFilters != null) {
+            out.writeBoolean(true);
+            out.writeStringList(categorizationFilters);
+        } else {
+            out.writeBoolean(false);
+        }
+        out.writeLong(latency);
+        out.writeOptionalLong(period);
+        out.writeOptionalString(summaryCountFieldName);
+        out.writeList(detectors);
+        out.writeStringList(influencers);
+        out.writeOptionalBoolean(overlappingBuckets);
+        out.writeOptionalLong(resultFinalizationWindow);
+        out.writeOptionalBoolean(multivariateByFields);
+        if (multipleBucketSpans != null) {
+            out.writeBoolean(true);
+            out.writeVInt(multipleBucketSpans.size());
+            for (Long bucketSpan : multipleBucketSpans) {
+                out.writeLong(bucketSpan);
+            }
+        } else {
+            out.writeBoolean(false);
+        }
+        out.writeBoolean(usePerPartitionNormalization);
+    }
+
     /**
      * The size of the interval the analysis is aggregated into measured in
      * seconds
@@ -179,7 +200,7 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     }
 
     public long getBucketSpanOrDefault() {
-        return bucketSpan == null ? DEFAULT_BUCKET_SPAN : bucketSpan;
+        return bucketSpan;
     }
 
     /**
@@ -361,42 +382,9 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
     }
 
     @Override
-    public void writeTo(StreamOutput out) throws IOException {
-        out.writeOptionalLong(bucketSpan);
-        out.writeOptionalLong(batchSpan);
-        out.writeOptionalString(categorizationFieldName);
-        if (categorizationFilters != null) {
-            out.writeBoolean(true);
-            out.writeStringList(categorizationFilters);
-        } else {
-            out.writeBoolean(false);
-        }
-        out.writeLong(latency);
-        out.writeOptionalLong(period);
-        out.writeOptionalString(summaryCountFieldName);
-        out.writeList(detectors);
-        out.writeStringList(influencers);
-        out.writeOptionalBoolean(overlappingBuckets);
-        out.writeOptionalLong(resultFinalizationWindow);
-        out.writeOptionalBoolean(multivariateByFields);
-        if (multipleBucketSpans != null) {
-            out.writeBoolean(true);
-            out.writeVInt(multipleBucketSpans.size());
-            for (Long bucketSpan : multipleBucketSpans) {
-                out.writeLong(bucketSpan);
-            }
-        } else {
-            out.writeBoolean(false);
-        }
-        out.writeBoolean(usePerPartitionNormalization);
-    }
-
-    @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        if (bucketSpan != null) {
-            builder.field(BUCKET_SPAN.getPreferredName(), bucketSpan);
-        }
+        builder.field(BUCKET_SPAN.getPreferredName(), bucketSpan);
         if (batchSpan != null) {
             builder.field(BATCH_SPAN.getPreferredName(), batchSpan);
         }
@@ -506,7 +494,7 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
             this.detectors = detectors;
         }
 
-        public void setBucketSpan(Long bucketSpan) {
+        public void setBucketSpan(long bucketSpan) {
             this.bucketSpan = bucketSpan;
         }
 
@@ -640,7 +628,8 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
 
         private static void verifyCategorizationFiltersContainNoneEmpty(List<String> filters) {
             if (filters.stream().anyMatch(f -> f.isEmpty())) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY),
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY),
                         ErrorCodes.INVALID_VALUE);
             }
         }
@@ -661,7 +650,8 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
             }
 
             if (bucketSpan == null) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN),
+                throw ExceptionsHelper.invalidRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN),
                         ErrorCodes.INCOMPLETE_CONFIGURATION);
             }
             for (Long span : multipleBucketSpans) {

@@ -406,7 +406,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
     public void testBucketSpanOrDefault() {
         AnalysisConfig config1  = new AnalysisConfig.Builder(
                 Collections.singletonList(new Detector.Builder("min", "count").build())).build();
-        assertEquals(AnalysisConfig.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
+        assertEquals(AnalysisConfig.Builder.DEFAULT_BUCKET_SPAN, config1.getBucketSpanOrDefault());
         AnalysisConfig.Builder builder = createConfigBuilder();
         builder.setBucketSpan(100L);
         config1 = builder.build();
