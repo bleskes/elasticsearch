@@ -39,7 +39,7 @@ public final class FlushAcknowledgementParser extends FieldNameParser<FlushAckno
     @Override
     protected void handleFieldName(String fieldName, FlushAcknowledgement ack) throws IOException {
         JsonToken token = parser.nextToken();
-        if (FlushAcknowledgement.FLUSH.equals(fieldName)) {
+        if (FlushAcknowledgement.TYPE.getPreferredName().equals(fieldName)) {
             ack.setId(parseAsStringOrNull(fieldName));
         } else {
             LOGGER.warn(String.format(Locale.ROOT, "Parse error unknown field in FlushAcknowledgement %s:%s",

@@ -247,7 +247,7 @@ public class AutodetectResultsParser {
                         ModelDebugOutput modelDebugOutput = new ModelDebugOutputParser(parser).parseJsonAfterStartObject();
                         persister.persistModelDebugOutput(modelDebugOutput);
                         break;
-                    case FlushAcknowledgement.FLUSH:
+                    case "flush":
                         FlushAcknowledgement ack = new FlushAcknowledgementParser(parser).parseJsonAfterStartObject();
                         logger.debug("Flush acknowledgement parsed from output for ID " +
                                 ack.getId());
