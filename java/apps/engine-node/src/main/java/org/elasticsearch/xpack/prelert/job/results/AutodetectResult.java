@@ -32,8 +32,9 @@ public class AutodetectResult extends ToXContentToBytes implements Writeable {
     public static final ParseField TYPE = new ParseField("autodetect_result");
 
     public static final ConstructingObjectParser<AutodetectResult, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
-            TYPE.getPreferredName(), a -> new AutodetectResult((Bucket) a[0], (Quantiles) a[1], (ModelSnapshot) a[2], (ModelSizeStats) a[3],
-                    (ModelDebugOutput) a[4], (CategoryDefinition) a[5], (FlushAcknowledgement) a[6]));
+            TYPE.getPreferredName(), a -> new AutodetectResult((Bucket) a[0], (Quantiles) a[1], (ModelSnapshot) a[2],
+                    a[3] == null ? null : ((ModelSizeStats.Builder) a[3]).build(), (ModelDebugOutput) a[4], (CategoryDefinition) a[5],
+                    (FlushAcknowledgement) a[6]));
 
     static {
         PARSER.declareObject(ConstructingObjectParser.optionalConstructorArg(), Bucket.PARSER, Bucket.TYPE);

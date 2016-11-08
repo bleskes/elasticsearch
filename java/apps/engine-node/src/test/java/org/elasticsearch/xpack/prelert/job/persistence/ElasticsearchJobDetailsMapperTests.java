@@ -14,14 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
@@ -32,10 +24,18 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.Job;
-import org.junit.Before;
-import org.mockito.Mockito;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.results.ReservedFieldNames;
+import org.junit.Before;
+import org.mockito.Mockito;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ElasticsearchJobDetailsMapperTests extends ESTestCase {
     private Client client;
@@ -61,7 +61,7 @@ public class ElasticsearchJobDetailsMapperTests extends ESTestCase {
     }
 
     public void testMap_GivenModelSizeStatsExists() throws Exception {
-        ModelSizeStats modelSizeStats = new ModelSizeStats();
+        ModelSizeStats.Builder modelSizeStats = new ModelSizeStats.Builder();
         modelSizeStats.setModelBytes(42L);
         Date now = new Date();
         modelSizeStats.setTimestamp(now);
@@ -69,7 +69,8 @@ public class ElasticsearchJobDetailsMapperTests extends ESTestCase {
         Job originalJob = buildJobBuilder("foo").build();
 
         BytesReference source = originalJob.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).bytes();
-        BytesReference modelSizeStatsSource = modelSizeStats.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).bytes();
+        BytesReference modelSizeStatsSource = modelSizeStats.build().toXContent(
+                XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).bytes();
 
         GetResponse getModelSizeResponse = mock(GetResponse.class);
         when(getModelSizeResponse.isExists()).thenReturn(true);

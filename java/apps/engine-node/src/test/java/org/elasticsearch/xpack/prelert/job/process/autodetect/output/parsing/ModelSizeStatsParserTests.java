@@ -39,7 +39,7 @@ public class ModelSizeStatsParserTests extends ESTestCase {
         parser.nextToken();
 
         Date d1 = new Date();
-        ModelSizeStats stats = new ModelSizeStatsParser(parser).parseJson();
+        ModelSizeStats stats = new ModelSizeStatsParser(parser).parseJson().build();
         Date d2 = new Date();
 
         assertEquals(1L, stats.getModelBytes());

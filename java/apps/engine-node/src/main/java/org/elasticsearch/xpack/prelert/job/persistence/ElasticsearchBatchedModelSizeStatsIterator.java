@@ -50,8 +50,8 @@ public class ElasticsearchBatchedModelSizeStatsIterator extends ElasticsearchBat
             throw new ElasticsearchParseException("failed to parser model size stats", e);
         }
 
-        ModelSizeStats result = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
-        result.setModelSizeStatsId(hit.getId());
-        return result;
+        ModelSizeStats.Builder result = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
+        result.setId(hit.getId());
+        return result.build();
     }
 }

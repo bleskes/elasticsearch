@@ -112,7 +112,9 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
     public void testEquals_GivenDifferentModelSizeStats() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
-        modelSnapshot2.getModelSizeStats().setModelBytes(42L);
+        ModelSizeStats.Builder modelSizeStats = new ModelSizeStats.Builder();
+        modelSizeStats.setModelBytes(42L);
+        modelSnapshot2.setModelSizeStats(modelSizeStats);
 
         assertFalse(modelSnapshot1.equals(modelSnapshot2));
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
@@ -158,7 +160,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         modelSnapshot.setRestorePriority(DEFAULT_PRIORITY);
         modelSnapshot.setSnapshotId(DEFAULT_ID);
         modelSnapshot.setSnapshotDocCount(DEFAULT_DOC_COUNT);
-        modelSnapshot.setModelSizeStats(new ModelSizeStats());
+        modelSnapshot.setModelSizeStats(new ModelSizeStats.Builder());
         modelSnapshot.setLatestResultTimeStamp(DEFAULT_LATEST_RESULT_TIMESTAMP);
         modelSnapshot.setLatestRecordTimeStamp(DEFAULT_LATEST_RECORD_TIMESTAMP);
         modelSnapshot.setQuantiles(new Quantiles(DEFAULT_TIMESTAMP, "state"));
@@ -173,7 +175,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         modelSnapshot.setRestorePriority(randomLong());
         modelSnapshot.setSnapshotId(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setSnapshotDocCount(randomInt());
-        ModelSizeStats stats = new ModelSizeStats();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
         if (randomBoolean()) {
             stats.setBucketAllocationFailuresCount(randomPositiveLong());
         }
@@ -199,7 +201,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
             stats.setMemoryStatus(randomFrom(MemoryStatus.values()));
         }
         if (randomBoolean()) {
-            stats.setModelSizeStatsId(randomAsciiOfLengthBetween(1, 20));
+            stats.setId(randomAsciiOfLengthBetween(1, 20));
         }
         modelSnapshot.setModelSizeStats(stats);
         modelSnapshot.setLatestResultTimeStamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));

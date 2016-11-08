@@ -232,7 +232,7 @@ public class AutodetectResultsParser {
                         persister.persistModelSnapshot(modelSnapshot);
                         break;
                     case "modelBytes":
-                        ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject();
+                        ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject().build();
                         logger.trace(String.format(Locale.ROOT, "Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
                                 modelSizeStats.getModelBytes(),
                                 modelSizeStats.getTotalByFieldCount(),

@@ -716,8 +716,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             this.transforms = transforms;
         }
 
-        public void setModelSizeStats(ModelSizeStats modelSizeStats) {
-            this.modelSizeStats = modelSizeStats;
+        public void setModelSizeStats(ModelSizeStats.Builder modelSizeStats) {
+            this.modelSizeStats = modelSizeStats.build();
         }
 
         public void setDataDescription(DataDescription.Builder description) {

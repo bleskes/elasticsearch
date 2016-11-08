@@ -21,8 +21,8 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
@@ -47,16 +47,16 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     public static final ParseField LOG_TIME_FIELD = new ParseField("log_time");
     public static final ParseField TIMESTAMP_FIELD = new ParseField("timestamp");
 
-    public static final ObjectParser<ModelSizeStats, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
-            MODEL_SIZE_STATS_FIELD.getPreferredName(), ModelSizeStats::new);
+    public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
+            MODEL_SIZE_STATS_FIELD.getPreferredName(), Builder::new);
 
     static {
-        PARSER.declareLong(ModelSizeStats::setModelBytes, MODEL_BYTES_FIELD);
-        PARSER.declareLong(ModelSizeStats::setBucketAllocationFailuresCount, BUCKET_ALLOCATION_FAILURES_COUNT_FIELD);
-        PARSER.declareLong(ModelSizeStats::setTotalByFieldCount, TOTAL_BY_FIELD_COUNT_FIELD);
-        PARSER.declareLong(ModelSizeStats::setTotalOverFieldCount, TOTAL_OVER_FIELD_COUNT_FIELD);
-        PARSER.declareLong(ModelSizeStats::setTotalPartitionFieldCount, TOTAL_PARTITION_FIELD_COUNT_FIELD);
-        PARSER.declareField(ModelSizeStats::setLogTime, p -> {
+        PARSER.declareLong(Builder::setModelBytes, MODEL_BYTES_FIELD);
+        PARSER.declareLong(Builder::setBucketAllocationFailuresCount, BUCKET_ALLOCATION_FAILURES_COUNT_FIELD);
+        PARSER.declareLong(Builder::setTotalByFieldCount, TOTAL_BY_FIELD_COUNT_FIELD);
+        PARSER.declareLong(Builder::setTotalOverFieldCount, TOTAL_OVER_FIELD_COUNT_FIELD);
+        PARSER.declareLong(Builder::setTotalPartitionFieldCount, TOTAL_PARTITION_FIELD_COUNT_FIELD);
+        PARSER.declareField(Builder::setLogTime, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
             } else if (p.currentToken() == Token.VALUE_STRING) {
@@ -65,7 +65,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
             throw new IllegalArgumentException(
                     "unexpected token [" + p.currentToken() + "] for [" + LOG_TIME_FIELD.getPreferredName() + "]");
         }, LOG_TIME_FIELD, ValueType.VALUE);
-        PARSER.declareField(ModelSizeStats::setTimestamp, p -> {
+        PARSER.declareField(Builder::setTimestamp, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
             } else if (p.currentToken() == Token.VALUE_STRING) {
@@ -74,7 +74,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
             throw new IllegalArgumentException(
                     "unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP_FIELD.getPreferredName() + "]");
         }, TIMESTAMP_FIELD, ValueType.VALUE);
-        PARSER.declareField(ModelSizeStats::setMemoryStatus, p -> MemoryStatus.fromString(p.text()), MEMORY_STATUS_FIELD, ValueType.STRING);
+        PARSER.declareField(Builder::setMemoryStatus, p -> MemoryStatus.fromString(p.text()), MEMORY_STATUS_FIELD, ValueType.STRING);
     }
 
     /**
@@ -124,20 +124,31 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         }
     }
 
-    private long modelBytes = 0;
-    private long totalByFieldCount = 0;
-    private long totalOverFieldCount = 0;
-    private long totalPartitionFieldCount = 0;
-    private long bucketAllocationFailuresCount = 0;
-    private MemoryStatus memoryStatus = MemoryStatus.OK;
-    private Date timestamp;
-    private Date logTime;
-    private String id = TYPE.getPreferredName();
+    private final String id;
+    private final long modelBytes;
+    private final long totalByFieldCount;
+    private final long totalOverFieldCount;
+    private final long totalPartitionFieldCount;
+    private final long bucketAllocationFailuresCount;
+    private final MemoryStatus memoryStatus;
+    private final Date timestamp;
+    private final Date logTime;
 
-    public ModelSizeStats() {
+    private ModelSizeStats(String id, long modelBytes, long totalByFieldCount, long totalOverFieldCount, long totalPartitionFieldCount,
+                           long bucketAllocationFailuresCount, MemoryStatus memoryStatus, Date timestamp, Date logTime) {
+        this.id = id;
+        this.modelBytes = modelBytes;
+        this.totalByFieldCount = totalByFieldCount;
+        this.totalOverFieldCount = totalOverFieldCount;
+        this.totalPartitionFieldCount = totalPartitionFieldCount;
+        this.bucketAllocationFailuresCount = bucketAllocationFailuresCount;
+        this.memoryStatus = memoryStatus;
+        this.timestamp = timestamp;
+        this.logTime = logTime;
     }
 
     public ModelSizeStats(StreamInput in) throws IOException {
+        id = null;
         modelBytes = in.readVLong();
         totalByFieldCount = in.readVLong();
         totalOverFieldCount = in.readVLong();
@@ -145,9 +156,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         bucketAllocationFailuresCount = in.readVLong();
         memoryStatus = MemoryStatus.readFromStream(in);
         logTime = new Date(in.readLong());
-        if (in.readBoolean()) {
-            timestamp = new Date(in.readLong());
-        }
+        timestamp = in.readBoolean() ? new Date(in.readLong()) : null;
     }
 
     @Override
@@ -183,77 +192,40 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         return builder;
     }
 
-    public String getModelSizeStatsId() {
-        return this.id;
-    }
-
-    public void setModelSizeStatsId(String id) {
-        this.id = id;
-    }
-
-    public void setModelBytes(long m) {
-        this.modelBytes = m;
+    public String getId() {
+        return id;
     }
 
     public long getModelBytes() {
-        return this.modelBytes;
-    }
-
-    public void setTotalByFieldCount(long m) {
-        this.totalByFieldCount = m;
+        return modelBytes;
     }
 
     public long getTotalByFieldCount() {
-        return this.totalByFieldCount;
-    }
-
-    public void setTotalPartitionFieldCount(long m) {
-        this.totalPartitionFieldCount = m;
+        return totalByFieldCount;
     }
 
     public long getTotalPartitionFieldCount() {
-        return this.totalPartitionFieldCount;
-    }
-
-    public void setTotalOverFieldCount(long m) {
-        this.totalOverFieldCount = m;
+        return totalPartitionFieldCount;
     }
 
     public long getTotalOverFieldCount() {
-        return this.totalOverFieldCount;
-    }
-
-    public void setBucketAllocationFailuresCount(long m) {
-        this.bucketAllocationFailuresCount = m;
+        return totalOverFieldCount;
     }
 
     public long getBucketAllocationFailuresCount() {
-        return this.bucketAllocationFailuresCount;
-    }
-
-    public void setMemoryStatus(MemoryStatus memoryStatus) {
-        Objects.requireNonNull(memoryStatus, "[" + MEMORY_STATUS_FIELD.getPreferredName() + "] must not be null");
-        this.memoryStatus = memoryStatus;
+        return bucketAllocationFailuresCount;
     }
 
     public MemoryStatus getMemoryStatus() {
-        return this.memoryStatus;
+        return memoryStatus;
     }
 
     public Date getTimestamp() {
-        return this.timestamp;
-    }
-
-    public void setTimestamp(Date d) {
-        this.timestamp = d;
+        return timestamp;
     }
 
     public Date getLogTime() {
-        return this.logTime;
-    }
-
-    public void setLogTime(Date d) {
-        this.logTime = d;
+        return logTime;
     }
 
     @Override
@@ -278,11 +250,72 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
 
         ModelSizeStats that = (ModelSizeStats) other;
 
-        // this.id excluded here as it is generated by the datastore
         return this.modelBytes == that.modelBytes && this.totalByFieldCount == that.totalByFieldCount
                 && this.totalOverFieldCount == that.totalOverFieldCount && this.totalPartitionFieldCount == that.totalPartitionFieldCount
                 && this.bucketAllocationFailuresCount == that.bucketAllocationFailuresCount
                 && Objects.equals(this.memoryStatus, that.memoryStatus) && Objects.equals(this.timestamp, that.timestamp)
                 && Objects.equals(this.logTime, that.logTime);
+    }
+
+    // NORELEASE This will not be needed once we are able to parse ModelSizeStats all at once.
+    public static class Builder {
+
+        private String id;
+        private long modelBytes;
+        private long totalByFieldCount;
+        private long totalOverFieldCount;
+        private long totalPartitionFieldCount;
+        private long bucketAllocationFailuresCount;
+        private MemoryStatus memoryStatus;
+        private Date timestamp;
+        private Date logTime;
+
+        public Builder() {
+            id = TYPE.getPreferredName();
+            memoryStatus = MemoryStatus.OK;
+            logTime = new Date();
+        }
+
+        public void setId(String id) {
+            this.id = Objects.requireNonNull(id);
+        }
+
+        public void setModelBytes(long modelBytes) {
+            this.modelBytes = modelBytes;
+        }
+
+        public void setTotalByFieldCount(long totalByFieldCount) {
+            this.totalByFieldCount = totalByFieldCount;
+        }
+
+        public void setTotalPartitionFieldCount(long totalPartitionFieldCount) {
+            this.totalPartitionFieldCount = totalPartitionFieldCount;
+        }
+
+        public void setTotalOverFieldCount(long totalOverFieldCount) {
+            this.totalOverFieldCount = totalOverFieldCount;
+        }
+
+        public void setBucketAllocationFailuresCount(long bucketAllocationFailuresCount) {
+            this.bucketAllocationFailuresCount = bucketAllocationFailuresCount;
+        }
+
+        public void setMemoryStatus(MemoryStatus memoryStatus) {
+            Objects.requireNonNull(memoryStatus, "[" + MEMORY_STATUS_FIELD.getPreferredName() + "] must not be null");
+            this.memoryStatus = memoryStatus;
+        }
+
+        public void setTimestamp(Date timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public void setLogTime(Date logTime) {
+            this.logTime = logTime;
+        }
+
+        public ModelSizeStats build() {
+            return new ModelSizeStats(id, modelBytes, totalByFieldCount, totalOverFieldCount, totalPartitionFieldCount,
+                    bucketAllocationFailuresCount, memoryStatus, timestamp, logTime);
+        }
     }
 }

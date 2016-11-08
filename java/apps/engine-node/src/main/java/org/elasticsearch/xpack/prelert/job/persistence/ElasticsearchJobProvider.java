@@ -1074,7 +1074,7 @@ public class ElasticsearchJobProvider implements JobProvider
                 } catch (IOException e) {
                     throw new ElasticsearchParseException("failed to parser model size stats", e);
                 }
-                ModelSizeStats modelSizeStats = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
+                ModelSizeStats modelSizeStats = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher).build();
                 return Optional.of(modelSizeStats);
             }
         }

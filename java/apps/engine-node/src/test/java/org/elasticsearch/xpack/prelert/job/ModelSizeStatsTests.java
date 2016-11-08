@@ -14,19 +14,19 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import java.util.Date;
-
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
+import java.util.Date;
+
 public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeStats> {
 
     public void testDefaultConstructor() {
-        ModelSizeStats stats = new ModelSizeStats();
-        assertEquals("modelSizeStats", stats.getModelSizeStatsId());
+        ModelSizeStats stats = new ModelSizeStats.Builder().build();
+        assertEquals("modelSizeStats", stats.getId());
         assertEquals(0, stats.getModelBytes());
         assertEquals(0, stats.getTotalByFieldCount());
         assertEquals(0, stats.getTotalOverFieldCount());
@@ -36,17 +36,17 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
     }
 
 
-    public void testSetModelSizeStatsId() {
-        ModelSizeStats stats = new ModelSizeStats();
+    public void testSetId() {
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
 
-        stats.setModelSizeStatsId("foo");
+        stats.setId("foo");
 
-        assertEquals("foo", stats.getModelSizeStatsId());
+        assertEquals("foo", stats.build().getId());
     }
 
 
     public void testSetMemoryStatus_GivenNull() {
-        ModelSizeStats stats = new ModelSizeStats();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
 
         NullPointerException ex = expectThrows(NullPointerException.class, () -> stats.setMemoryStatus(null));
 
@@ -55,16 +55,16 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
 
     public void testSetMemoryStatus_GivenSoftLimit() {
-        ModelSizeStats stats = new ModelSizeStats();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
 
         stats.setMemoryStatus(MemoryStatus.SOFT_LIMIT);
 
-        assertEquals(MemoryStatus.SOFT_LIMIT, stats.getMemoryStatus());
+        assertEquals(MemoryStatus.SOFT_LIMIT, stats.build().getMemoryStatus());
     }
 
     @Override
     protected ModelSizeStats createTestInstance() {
-        ModelSizeStats stats = new ModelSizeStats();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
         if (randomBoolean()) {
             stats.setBucketAllocationFailuresCount(randomPositiveLong());
         }
@@ -90,9 +90,9 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
             stats.setMemoryStatus(randomFrom(MemoryStatus.values()));
         }
         if (randomBoolean()) {
-            stats.setModelSizeStatsId(randomAsciiOfLengthBetween(1, 20));
+            stats.setId(randomAsciiOfLengthBetween(1, 20));
         }
-        return stats;
+        return stats.build();
     }
 
     @Override
@@ -102,6 +102,6 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
     @Override
     protected ModelSizeStats parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return ModelSizeStats.PARSER.apply(parser, () -> matcher);
+        return ModelSizeStats.PARSER.apply(parser, () -> matcher).build();
     }
 }

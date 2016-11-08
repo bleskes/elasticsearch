@@ -34,7 +34,7 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
         Bucket bucket;
         Quantiles quantiles;
         ModelSnapshot modelSnapshot;
-        ModelSizeStats modelSizeStats;
+        ModelSizeStats.Builder modelSizeStats;
         ModelDebugOutput modelDebugOutput;
         CategoryDefinition categoryDefinition;
         FlushAcknowledgement flushAcknowledgement;
@@ -56,8 +56,8 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
             modelSnapshot = null;
         }
         if (randomBoolean()) {
-            modelSizeStats = new ModelSizeStats();
-            modelSizeStats.setModelSizeStatsId(randomAsciiOfLengthBetween(1, 20));
+            modelSizeStats = new ModelSizeStats.Builder();
+            modelSizeStats.setId(randomAsciiOfLengthBetween(1, 20));
         } else {
             modelSizeStats = null;
         }
@@ -78,8 +78,8 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
         } else {
             flushAcknowledgement = null;
         }
-        return new AutodetectResult(bucket, quantiles, modelSnapshot, modelSizeStats, modelDebugOutput, categoryDefinition,
-                flushAcknowledgement);
+        return new AutodetectResult(bucket, quantiles, modelSnapshot, modelSizeStats == null ? null : modelSizeStats.build(),
+                modelDebugOutput, categoryDefinition, flushAcknowledgement);
     }
 
     @Override

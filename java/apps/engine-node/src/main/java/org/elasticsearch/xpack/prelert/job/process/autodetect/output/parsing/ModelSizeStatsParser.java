@@ -26,7 +26,7 @@ import java.util.Date;
 import java.util.Locale;
 
 // NORELEASE remove this class in favour of ModelSizeStats.PARSER when we remove Jackson
-final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats> {
+final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats.Builder> {
     private static final Logger LOGGER = Loggers.getLogger(ModelSizeStats.class);
 
     public ModelSizeStatsParser(JsonParser jsonParser) {
@@ -34,12 +34,12 @@ final class ModelSizeStatsParser extends FieldNameParser<ModelSizeStats> {
     }
 
     @Override
-    protected ModelSizeStats supply() {
-        return new ModelSizeStats();
+    protected ModelSizeStats.Builder supply() {
+        return new ModelSizeStats.Builder();
     }
 
     @Override
-    protected void handleFieldName(String fieldName, ModelSizeStats modelSizeStats)
+    protected void handleFieldName(String fieldName, ModelSizeStats.Builder modelSizeStats)
             throws IOException {
         JsonToken token = parser.nextToken();
         switch (fieldName) {

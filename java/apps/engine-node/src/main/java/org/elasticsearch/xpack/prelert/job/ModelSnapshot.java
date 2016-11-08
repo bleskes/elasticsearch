@@ -231,8 +231,8 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
         return modelSizeStats;
     }
 
-    public void setModelSizeStats(ModelSizeStats modelSizeStats) {
-        this.modelSizeStats = modelSizeStats;
+    public void setModelSizeStats(ModelSizeStats.Builder modelSizeStats) {
+        this.modelSizeStats = modelSizeStats.build();
     }
 
     public Quantiles getQuantiles() {

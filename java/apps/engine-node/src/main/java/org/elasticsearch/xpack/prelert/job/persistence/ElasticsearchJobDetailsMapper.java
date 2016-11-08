@@ -81,7 +81,7 @@ class ElasticsearchJobDetailsMapper {
             } catch (IOException e) {
                 throw new ElasticsearchParseException("failed to parser model size stats", e);
             }
-            ModelSizeStats modelSizeStats = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
+            ModelSizeStats.Builder modelSizeStats = ModelSizeStats.PARSER.apply(parser, () -> parseFieldMatcher);
             job.setModelSizeStats(modelSizeStats);
         }
     }
