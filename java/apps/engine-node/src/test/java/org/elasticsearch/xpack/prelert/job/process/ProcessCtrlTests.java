@@ -73,7 +73,7 @@ public class ProcessCtrlTests extends ESTestCase {
 
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, false);
         assertEquals(17, command.size());
         assertTrue(command.contains(ProcessCtrl.getAutodetectPath(env).toString()));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
@@ -106,7 +106,7 @@ public class ProcessCtrlTests extends ESTestCase {
         Environment env = new Environment(settings);
         Job.Builder job = buildJobBuilder("unit-test-job");
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, false);
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "time"));
     }
@@ -119,13 +119,13 @@ public class ProcessCtrlTests extends ESTestCase {
 
         int expectedPersistInterval = 10800 + ProcessCtrl.calculateStaggeringInterval(job.getId());
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, false);
         assertFalse(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
 
         settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         env = new Environment(settings);
 
-        command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, false);
+        command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, false);
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
     }
 
@@ -135,7 +135,7 @@ public class ProcessCtrlTests extends ESTestCase {
                 settings);
         Job.Builder job = buildJobBuilder("foo");
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, false);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, false);
 
         assertFalse(command.contains("--ignoreDowntime"));
     }
@@ -146,7 +146,7 @@ public class ProcessCtrlTests extends ESTestCase {
                 settings);
         Job.Builder job = buildJobBuilder("foo");
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, null, true);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, true);
 
         assertTrue(command.contains("--ignoreDowntime"));
     }

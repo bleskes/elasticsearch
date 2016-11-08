@@ -57,7 +57,6 @@ public class AutodetectBuilder {
     private boolean ignoreDowntime;
     private Set<ListDocument> referencedLists;
     private Optional<Quantiles> quantiles;
-    private Optional<ModelSnapshot> modelSnapshot;
     private Environment env;
     private Settings settings;
     private ProcessPipes processPipes;
@@ -81,7 +80,6 @@ public class AutodetectBuilder {
         ignoreDowntime = false;
         referencedLists = new HashSet<>();
         quantiles = Optional.empty();
-        modelSnapshot = Optional.empty();
     }
 
     /**
@@ -111,16 +109,6 @@ public class AutodetectBuilder {
     }
 
     /**
-     * Set model snapshot to restore on startup if required
-     *
-     * @param modelSnapshot The non-null model snapshot to restore on startup
-     */
-    public AutodetectBuilder modelSnapshot(ModelSnapshot modelSnapshot) {
-        this.modelSnapshot = Optional.of(Objects.requireNonNull(modelSnapshot));
-        return this;
-    }
-
-    /**
      * Clears the environment and starts the process in that environment.
      * <code>processName</code> is not the full path it is the relative path of the
      * program from the Elasticsearch plugins directory.
@@ -129,8 +117,7 @@ public class AutodetectBuilder {
      */
     public Process build() throws IOException {
 
-        String restoreSnapshotId = modelSnapshot.isPresent() ? modelSnapshot.get().getSnapshotId() : null;
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job, logger, restoreSnapshotId, ignoreDowntime);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job, logger, ignoreDowntime);
 
         buildLimits(command);
         buildModelDebugConfig(command);

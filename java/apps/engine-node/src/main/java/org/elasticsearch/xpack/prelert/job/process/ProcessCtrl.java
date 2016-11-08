@@ -117,7 +117,6 @@ public class ProcessCtrl {
     public static final String PERIOD_ARG = "--period=";
     public static final String PERSIST_INTERVAL_ARG = "--persistInterval=";
     public static final String MAX_QUANTILE_INTERVAL_ARG = "--maxQuantileInterval=";
-    public static final String RESTORE_SNAPSHOT_ID = "--restoreSnapshotId=";
     public static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
     public static final String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
     public static final String TIME_FIELD_ARG = "--timefield=";
@@ -154,8 +153,6 @@ public class ProcessCtrl {
      * the autodetect program.  All quantiles files have this extension.
      */
     private static final String QUANTILES_FILE_EXTENSION = ".json";
-
-    public static final String PRELERT_HOME_ENV = "PRELERT_HOME";
 
     /**
      * Config setting storing the flag that disables model persistence
@@ -243,45 +240,6 @@ public class ProcessCtrl {
     }
 
     /**
-     * Get the C++ process to print a JSON document containing some of the usage
-     * and license info
-     */
-    public static synchronized String getInfo(Environment env) {
-        List<String> command = new ArrayList<>();
-        command.add(getAutodetectPath(env).toString());
-        command.add(INFO_ARG);
-
-        LOGGER.info("Getting info from " + command);
-
-        // Build the process
-        ProcessBuilder pb = new ProcessBuilder(command);
-        buildEnvironment(pb);
-
-        try {
-            Process proc = pb.start();
-            try {
-                int exitValue = proc.waitFor();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8));
-
-                String output = reader.readLine();
-                LOGGER.debug("autodetect info output = " + output);
-
-                if (exitValue >= 0 && output != null) {
-                    return output;
-                }
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                LOGGER.error("Interrupted reading autodetect info", ie);
-            }
-        } catch (IOException e) {
-            LOGGER.error("Error reading autodetect info", e);
-        }
-
-        // On error return an empty JSON document
-        return "{}";
-    }
-
-    /**
      * This random time of up to 1 hour is added to intervals at which we
      * tell the C++ process to perform periodic operations.  This means that
      * when there are many jobs there is a certain amount of staggering of
@@ -296,8 +254,7 @@ public class ProcessCtrl {
         return rng.nextInt(SECONDS_IN_HOUR);
     }
 
-    public static List<String> buildAutodetectCommand(Environment env, Settings settings, Job job, Logger logger,
-                                                      String restoreSnapshotId, boolean ignoreDowntime) {
+    public static List<String> buildAutodetectCommand(Environment env, Settings settings, Job job, Logger logger, boolean ignoreDowntime) {
         List<String> command = new ArrayList<>();
         command.add(getAutodetectPath(env).toString());
 
@@ -349,10 +306,6 @@ public class ProcessCtrl {
         if (DONT_PERSIST_MODEL_STATE_SETTING.get(settings)) {
             logger.info("Will not persist model state - "  + DONT_PERSIST_MODEL_STATE_SETTING + " setting was set");
         } else {
-            if (Strings.isNullOrEmpty(restoreSnapshotId) == false) {
-                command.add(RESTORE_SNAPSHOT_ID + restoreSnapshotId);
-            }
-
             String persistUrlBase = PERSIST_URL_BASE_ARG + "http://" + ES_HOST + ":" + ES_HTTP_PORT + "/" + ES_INDEX_PREFIX + job.getId();
             command.add(persistUrlBase);
 

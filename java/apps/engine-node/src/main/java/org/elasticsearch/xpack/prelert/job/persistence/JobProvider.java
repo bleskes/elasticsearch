@@ -23,6 +23,8 @@ import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Optional;
 
 public interface JobProvider extends JobResultsProvider {
@@ -71,6 +73,16 @@ public interface JobProvider extends JobResultsProvider {
      */
     void updateModelSnapshot(String jobId, ModelSnapshot modelSnapshot,
             boolean restoreModelSizeStats);
+
+    /**
+     * Given a model snapshot, get the corresponding state and write it to the supplied
+     * stream.  If there are multiple state documents they are separated using <code>'\0'</code>
+     * when written to the stream.
+     * @param jobId         the job id
+     * @param modelSnapshot the model snapshot to be restored
+     * @param restoreStream the stream to write the state to
+     */
+    void restoreStateToStream(String jobId, ModelSnapshot modelSnapshot, OutputStream restoreStream) throws IOException;
 
     /**
      * Get the job's model size stats.

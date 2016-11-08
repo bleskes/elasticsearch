@@ -16,6 +16,8 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefIterator;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
@@ -75,12 +77,14 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -548,11 +552,11 @@ public class ElasticsearchJobProvider implements JobProvider
             m.get(ReservedFieldNames.PARTITION_NORMALIZED_PROBS);
             for (Map<String, Object> prob : probs)
             {
-                if (partitionFieldValue.equals(prob.get(AnomalyRecord.PARTITION_FIELD_VALUE)))
+                if (partitionFieldValue.equals(prob.get(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName())))
                 {
                     Date ts = new Date(TimeUtils.dateStringToEpoch((String) m.get(ElasticsearchMappings.ES_TIMESTAMP)));
                     results.add(new ScoreTimestamp(ts,
-                            (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY)));
+                            (Double) prob.get(Bucket.MAX_NORMALIZED_PROBABILITY.getPreferredName())));
                 }
             }
         }
@@ -979,7 +983,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Object timestamp = hit.getSource().remove(ElasticsearchMappings.ES_TIMESTAMP);
             hit.getSource().put(ModelSnapshot.TIMESTAMP.getPreferredName(), timestamp);
 
-            Object o = hit.getSource().get(ModelSizeStats.TYPE);
+            Object o = hit.getSource().get(ModelSizeStats.TYPE.getPreferredName());
             if (o instanceof Map)
             {
                 @SuppressWarnings("unchecked")
@@ -1028,6 +1032,61 @@ public class ElasticsearchJobProvider implements JobProvider
         persister.commitWrites();
     }
 
+    public void restoreStateToStream(String jobId, ModelSnapshot modelSnapshot, OutputStream restoreStream) throws IOException {
+        String indexName = ElasticsearchPersister.getJobIndexName(jobId);
+
+        // First try to restore categorizer state.  There are no snapshots for this, so the IDs simply
+        // count up until a document is not found.  It's NOT an error to have no categorizer state.
+        int docNum = 0;
+        while (true) {
+            String docId = Integer.toString(++docNum);
+
+            LOGGER.trace("ES API CALL: get ID {} type {} from index {}", docId, CategorizerState.TYPE, indexName);
+
+            GetResponse stateResponse = client.prepareGet(indexName, CategorizerState.TYPE, docId).get();
+            if (!stateResponse.isExists()) {
+                break;
+            }
+            writeStateToStream(stateResponse.getSourceAsBytesRef(), restoreStream);
+        }
+
+        // Finally try to restore model state.  This must come after categorizer state because that's
+        // the order the C++ process expects.
+        int numDocs = modelSnapshot.getSnapshotDocCount();
+        for (docNum = 1; docNum <= numDocs; ++docNum) {
+            String docId = String.format(Locale.ROOT, "%s_%d", modelSnapshot.getSnapshotId(), docNum);
+
+            LOGGER.trace("ES API CALL: get ID {} type {} from index {}", docId, ModelState.TYPE, indexName);
+
+            GetResponse stateResponse = client.prepareGet(indexName, ModelState.TYPE, docId).get();
+            if (!stateResponse.isExists()) {
+                LOGGER.error("Expected {} documents for model state for {} snapshot {} but failed to find {}",
+                        numDocs, jobId, modelSnapshot.getSnapshotId(), docId);
+                break;
+            }
+            writeStateToStream(stateResponse.getSourceAsBytesRef(), restoreStream);
+        }
+    }
+
+    private void writeStateToStream(BytesReference source, OutputStream stream) throws IOException {
+        // The source bytes are already UTF-8.  The C++ process wants UTF-8, so we
+        // can avoid converting to a Java String only to convert back again.
+        BytesRefIterator iterator = source.iterator();
+        for (BytesRef ref = iterator.next(); ref != null; ref = iterator.next()) {
+            // There's a complication that the source can already have trailing 0 bytes
+            int length = ref.bytes.length;
+            while (length > 0 && ref.bytes[length - 1] == 0) {
+                --length;
+            }
+            if (length > 0) {
+                stream.write(ref.bytes, 0, length);
+            }
+        }
+        // This is dictated by RapidJSON on the C++ side; it treats a '\0' as end-of-file
+        // even when it's not really end-of-file, and this is what we need because we're
+        // sending multiple JSON documents via the same named pipe.
+        stream.write(0);
+    }
 
     private Quantiles createQuantiles(String jobId, GetResponse response) {
         BytesReference source = response.getSourceAsBytesRef();

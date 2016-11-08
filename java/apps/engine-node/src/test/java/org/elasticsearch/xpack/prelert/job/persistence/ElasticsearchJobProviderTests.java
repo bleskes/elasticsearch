@@ -28,8 +28,10 @@ import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.ModelState;
 import org.elasticsearch.xpack.prelert.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
@@ -39,7 +41,9 @@ import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -940,6 +944,41 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(0.0, buckets.get(1).getMaxNormalizedProbability(), 0.001);
         assertEquals(0.0, buckets.get(2).getMaxNormalizedProbability(), 0.001);
         assertEquals(0.0, buckets.get(3).getMaxNormalizedProbability(), 0.001);
+    }
+
+    public void testRestoreStateToStream() throws Exception {
+        Map<String, Object> categorizerState = new HashMap<>();
+        categorizerState.put("catName", "catVal");
+        GetResponse categorizerStateGetResponse1 = createGetResponse(true, categorizerState);
+        GetResponse categorizerStateGetResponse2 = createGetResponse(false, null);
+        Map<String, Object> modelState = new HashMap<>();
+        modelState.put("modName", "modVal1");
+        GetResponse modelStateGetResponse1 = createGetResponse(true, modelState);
+        modelState.put("modName", "modVal2");
+        GetResponse modelStateGetResponse2 = createGetResponse(true, modelState);
+
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
+                .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
+                .prepareGet(INDEX_NAME, CategorizerState.TYPE, "1", categorizerStateGetResponse1)
+                .prepareGet(INDEX_NAME, CategorizerState.TYPE, "2", categorizerStateGetResponse2)
+                .prepareGet(INDEX_NAME, ModelState.TYPE, "123_1", modelStateGetResponse1)
+                .prepareGet(INDEX_NAME, ModelState.TYPE, "123_2", modelStateGetResponse2);
+
+        ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
+
+        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setSnapshotId("123");
+        modelSnapshot.setSnapshotDocCount(2);
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+        provider.restoreStateToStream(JOB_ID, modelSnapshot, stream);
+
+        String[] restoreData = stream.toString(StandardCharsets.UTF_8.name()).split("\0");
+        assertEquals(3, restoreData.length);
+        assertEquals("{\"catName\":\"catVal\"}", restoreData[0]);
+        assertEquals("{\"modName\":\"modVal1\"}", restoreData[1]);
+        assertEquals("{\"modName\":\"modVal2\"}", restoreData[2]);
     }
 
     private Bucket createBucketAtEpochTime(long epoch) {

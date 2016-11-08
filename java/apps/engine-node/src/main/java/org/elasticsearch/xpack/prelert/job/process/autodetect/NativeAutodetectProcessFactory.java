@@ -25,14 +25,13 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
 import org.elasticsearch.xpack.prelert.job.process.ProcessPipes;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.NamedPipeHelper;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -62,8 +61,11 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
     @Override
     public AutodetectProcess createAutodetectProcess(Job job, boolean ignoreDowntime) {
         List<Path> filesToDelete = new ArrayList<>();
+        List<ModelSnapshot> modelSnapshots = jobProvider.modelSnapshots(job.getId(), 0, 1).hits();
+        ModelSnapshot modelSnapshot = (modelSnapshots != null && !modelSnapshots.isEmpty()) ? modelSnapshots.get(0) : null;
+
         ProcessPipes processPipes = new ProcessPipes(env, NAMED_PIPE_HELPER, ProcessCtrl.AUTODETECT, job.getId(),
-                true, false, true, true, false, false);
+                true, false, true, true, modelSnapshot != null, false);
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new SpecialPermission());
@@ -75,14 +77,34 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
         NativeAutodetectProcess autodetect = new NativeAutodetectProcess(job.getId(), nativeProcess, processPipes.getLogStream().get(),
                 processPipes.getProcessInStream().get(), processPipes.getProcessOutStream().get(), numberOfAnalysisFields, filesToDelete);
         autodetect.tailLogsInThread();
+        if (modelSnapshot != null) {
+            restoreStateInThread(job.getId(), modelSnapshot, processPipes.getRestoreStream().get());
+        }
         return autodetect;
+    }
+
+    private void restoreStateInThread(String jobId, ModelSnapshot modelSnapshot, OutputStream restoreStream) {
+        new Thread(() -> {
+            try {
+                jobProvider.restoreStateToStream(jobId, modelSnapshot, restoreStream);
+            } catch (Exception e) {
+                LOGGER.error("Error restoring model state for job " + jobId, e);
+            }
+            // The restore stream will not be needed again.  If an error occurred getting state to restore then
+            // it's critical to close the restore stream so that the C++ code can realise that it will never
+            // receive any state to restore.  If restoration went smoothly then this is just good practice.
+            try {
+                restoreStream.close();
+            } catch (IOException e) {
+                LOGGER.error("Error closing restore stream for job " + jobId, e);
+            }
+        }).start();
     }
 
     private Process createNativeProcess(Job job, ProcessPipes processPipes, boolean ignoreDowntime, List<Path> filesToDelete) {
 
         String jobId = job.getId();
         Optional<Quantiles> quantiles = jobProvider.getQuantiles(jobId);
-        List<ModelSnapshot> modelSnapshots = jobProvider.modelSnapshots(jobId, 0, 1).hits();
 
         Process nativeProcess = null;
 
@@ -97,9 +119,6 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
                 autodetectBuilder.quantiles(quantiles);
             }
 
-            if (modelSnapshots != null && !modelSnapshots.isEmpty()) {
-                autodetectBuilder.modelSnapshot(modelSnapshots.get(0));
-            }
             nativeProcess = autodetectBuilder.build();
             processPipes.connectStreams(PROCESS_STARTUP_TIMEOUT);
         } catch (IOException e) {

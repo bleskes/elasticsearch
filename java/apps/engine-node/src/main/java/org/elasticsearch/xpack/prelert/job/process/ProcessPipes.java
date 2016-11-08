@@ -205,7 +205,7 @@ public class ProcessPipes {
         if (restorePipeName == null) {
             return Optional.empty();
         }
-        if (logStream == null) {
+        if (restoreStream == null) {
             throw new IllegalStateException("process streams must be connected before use");
         }
         return Optional.of(restoreStream);
