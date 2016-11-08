@@ -44,11 +44,6 @@ public class PartitionScore extends ToXContentToBytes implements Writeable {
         PARSER.declareDouble(ConstructingObjectParser.constructorArg(), AnomalyRecord.PROBABILITY);
     }
 
-    // NORELEASE Remove me when PartitionScoreParser is gone
-    public PartitionScore() {
-        hadBigNormalisedUpdate = false;
-    }
-
     public PartitionScore(String fieldName, String fieldValue, double anomalyScore, double probability) {
         hadBigNormalisedUpdate = false;
         partitionFieldName = fieldName;

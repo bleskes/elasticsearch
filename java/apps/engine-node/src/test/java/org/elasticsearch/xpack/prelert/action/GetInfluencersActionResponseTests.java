@@ -32,8 +32,6 @@ public class GetInfluencersActionResponseTests extends AbstractStreamableTestCas
         for (int j = 0; j < listSize; j++) {
             Influencer influencer = new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20));
             influencer.setAnomalyScore(randomDouble());
-            influencer.setInfluencerFieldName(randomAsciiOfLengthBetween(1, 20));
-            influencer.setInfluencerFieldValue(randomAsciiOfLengthBetween(1, 20));
             influencer.setInitialAnomalyScore(randomDouble());
             influencer.setProbability(randomDouble());
             influencer.setId(randomAsciiOfLengthBetween(1, 20));

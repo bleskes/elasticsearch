@@ -50,7 +50,7 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
         NullPointerException ex = expectThrows(NullPointerException.class, () -> stats.setMemoryStatus(null));
 
-        assertEquals("[memory_status] must not be null", ex.getMessage());
+        assertEquals("[memoryStatus] must not be null", ex.getMessage());
     }
 
 

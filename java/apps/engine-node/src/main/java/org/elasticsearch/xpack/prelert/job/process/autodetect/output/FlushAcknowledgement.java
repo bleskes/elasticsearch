@@ -45,15 +45,6 @@ public class FlushAcknowledgement extends ToXContentToBytes implements Writeable
 
     private String id;
 
-    // NORELEASE remove this when FlushAcknowledgementParser is gone
-    public FlushAcknowledgement() {
-    }
-
-    // NORELEASE remove this when FlushAcknowledgementParser is gone
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public FlushAcknowledgement(String id) {
         this.id = id;
     }

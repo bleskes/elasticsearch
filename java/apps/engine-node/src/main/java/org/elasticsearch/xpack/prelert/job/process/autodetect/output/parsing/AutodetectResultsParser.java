@@ -16,7 +16,11 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.SuppressForbidden;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
@@ -25,13 +29,10 @@ import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,7 +93,8 @@ public class AutodetectResultsParser {
      * are seen.
      */
     public void parseResults(InputStream inputStream, JobResultsPersister persister,
-            Renormaliser renormaliser, Logger logger) throws ElasticsearchParseException {
+            Renormaliser renormaliser, Logger logger, ParseFieldMatcherSupplier parseFieldMatcherSupplier)
+                    throws ElasticsearchParseException {
         synchronized (acknowledgedFlushes) {
             parsingStarted = true;
             parsingInProgress = true;
@@ -101,7 +103,7 @@ public class AutodetectResultsParser {
         }
 
         try {
-            parseResultsInternal(inputStream, persister, renormaliser, logger);
+            parseResultsInternal(inputStream, persister, renormaliser, logger, parseFieldMatcherSupplier);
         } catch (IOException e) {
             throw new ElasticsearchParseException(e.getMessage(), e);
         } finally {
@@ -158,23 +160,22 @@ public class AutodetectResultsParser {
     }
 
     private void parseResultsInternal(InputStream inputStream, JobResultsPersister persister,
-            Renormaliser renormaliser, Logger logger) throws IOException {
+            Renormaliser renormaliser, Logger logger, ParseFieldMatcherSupplier parseFieldMatcherSupplier) throws IOException {
         logger.debug("Parse Results");
         boolean deleteInterimRequired = true;
-        JsonParser parser = new JsonFactory().createParser(inputStream);
-        parser.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
+        XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(inputStream);
 
-        JsonToken token = parser.nextToken();
+        XContentParser.Token token = parser.nextToken();
         // if start of an array ignore it, we expect an array of buckets
-        if (token == JsonToken.START_ARRAY) {
+        if (token == XContentParser.Token.START_ARRAY) {
             token = parser.nextToken();
             logger.debug("JSON starts with an array");
         }
 
-        if (token == JsonToken.END_ARRAY) {
+        if (token == XContentParser.Token.END_ARRAY) {
             logger.info("Empty results array, 0 buckets parsed");
             return;
-        } else if (token != JsonToken.START_OBJECT) {
+        } else if (token != XContentParser.Token.START_OBJECT) {
             logger.error("Expecting Json Start Object token after the Start Array token");
             throw new ElasticsearchParseException(
                     "Invalid JSON should start with an array of objects or an object = " + token);
@@ -182,31 +183,31 @@ public class AutodetectResultsParser {
 
         // Parse the buckets from the stream
         int bucketCount = 0;
-        while (token != JsonToken.END_ARRAY) {
+        while (token != XContentParser.Token.END_ARRAY) {
             if (token == null) // end of input
             {
                 logger.error("Unexpected end of Json input");
-                break;
-            }
-            if (token == JsonToken.START_OBJECT) {
-                token = parser.nextToken();
-                if (token == JsonToken.FIELD_NAME) {
-                    String fieldName = parser.getCurrentName();
-                    switch (fieldName) {
-                    case "timestamp":
+                throw new ElasticsearchParseException("Invalid JSON  - Unexpected end of Json input");
+            } else if (token == XContentParser.Token.START_OBJECT) {
+                AutodetectResult result = AutodetectResult.PARSER.apply(parser, parseFieldMatcherSupplier);
+                Bucket bucket = result.getBucket();
+                if (bucket != null) {
                         if (deleteInterimRequired == true) {
-                            // Delete any existing interim results at the start of a job upload:
-                            // these are generated by a Flush command, and will be replaced or
+                        // Delete any existing interim results at the start
+                        // of a job upload:
+                        // these are generated by a Flush command, and will
+                        // be replaced or
                             // superseded by new results
                             logger.trace("Deleting interim results");
 
-                            // NOCOMMIT: This feels like an odd side-effect to have in a parser,
-                            // especially since it has to wire up to actionlisteners.  Feels like it should
+                        // NOCOMMIT: This feels like an odd side-effect to
+                        // have in a parser,
+                        // especially since it has to wire up to
+                        // actionlisteners. Feels like it should
                             // be refactored out somewhere, after parsing?
                             persister.deleteInterimResults();
                             deleteInterimRequired = false;
                         }
-                        Bucket bucket = new BucketParser(parser).parseJsonAfterStartObject();
                         if (isPerPartitionNormalization) {
                             bucket.calcMaxNormalizedProbabilityPerPartition();
                         }
@@ -214,70 +215,60 @@ public class AutodetectResultsParser {
                         notifyObservers(bucket);
 
                         logger.trace("Bucket number " + ++bucketCount + " parsed from output");
-                        break;
-                    case "quantileState":
-                        Quantiles quantiles = new QuantilesParser(parser).parseJsonAfterStartObject();
-                        persister.persistQuantiles(quantiles);
-
-                        logger.debug("Quantiles parsed from output - will " +
-                                "trigger renormalisation of scores");
-                        if (isPerPartitionNormalization) {
-                            renormaliser.renormaliseWithPartition(quantiles, logger);
-                        } else {
-                            renormaliser.renormalise(quantiles, logger);
                         }
-                        break;
-                    case "snapshotId":
-                        ModelSnapshot modelSnapshot = new ModelSnapshotParser(parser).parseJsonAfterStartObject();
-                        persister.persistModelSnapshot(modelSnapshot);
-                        break;
-                    case "modelBytes":
-                        ModelSizeStats modelSizeStats = new ModelSizeStatsParser(parser).parseJsonAfterStartObject().build();
-                        logger.trace(String.format(Locale.ROOT, "Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
-                                modelSizeStats.getModelBytes(),
-                                modelSizeStats.getTotalByFieldCount(),
-                                modelSizeStats.getTotalOverFieldCount(),
-                                modelSizeStats.getTotalPartitionFieldCount(),
-                                modelSizeStats.getBucketAllocationFailuresCount(),
-                                modelSizeStats.getMemoryStatus()));
-
-                        persister.persistModelSizeStats(modelSizeStats);
-                        break;
-                    case "debugFeature":
-                        ModelDebugOutput modelDebugOutput = new ModelDebugOutputParser(parser).parseJsonAfterStartObject();
-                        persister.persistModelDebugOutput(modelDebugOutput);
-                        break;
-                    case "flush":
-                        FlushAcknowledgement ack = new FlushAcknowledgementParser(parser).parseJsonAfterStartObject();
-                        logger.debug("Flush acknowledgement parsed from output for ID " +
-                                ack.getId());
+                CategoryDefinition categoryDefinition = result.getCategoryDefinition();
+                if (categoryDefinition != null) {
+                    persister.persistCategoryDefinition(categoryDefinition);
+                }
+                FlushAcknowledgement flushAcknowledgement = result.getFlushAcknowledgement();
+                if (flushAcknowledgement != null) {
+                    logger.debug("Flush acknowledgement parsed from output for ID " + flushAcknowledgement.getId());
                         // Commit previous writes here, effectively continuing
                         // the flush from the C++ autodetect process right
                         // through to the data store
                         persister.commitWrites();
                         synchronized (acknowledgedFlushes) {
-                            acknowledgedFlushes.add(ack.getId());
+                        acknowledgedFlushes.add(flushAcknowledgement.getId());
                             // NOCOMMIT fix this so its not needed
                             acknowledgedFlushes.notifyAll();
                         }
-                        // Interim results may have been produced by the flush, which need to be
+                    // Interim results may have been produced by the flush,
+                    // which need to be
                         // deleted when the next finalized results come through
                         deleteInterimRequired = true;
-                        break;
-                    case "categoryDefinition":
-                        CategoryDefinition category = new CategoryDefinitionParser(parser).parseJsonAfterStartObject();
-                        persister.persistCategoryDefinition(category);
-                        break;
-                    default:
-                        logger.error("Unexpected object parsed from output - first field " + fieldName);
-                        throw new ElasticsearchParseException(
-                                "Invalid JSON  - unexpected object parsed from output - first field " + fieldName);
+                }
+                ModelDebugOutput modelDebugOutput = result.getModelDebugOutput();
+                if (modelDebugOutput != null) {
+                    persister.persistModelDebugOutput(modelDebugOutput);
+                    }
+                ModelSizeStats modelSizeStats = result.getModelSizeStats();
+                if (modelSizeStats != null) {
+                    logger.trace(String.format(Locale.ROOT, "Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
+                            modelSizeStats.getModelBytes(), modelSizeStats.getTotalByFieldCount(), modelSizeStats.getTotalOverFieldCount(),
+                            modelSizeStats.getTotalPartitionFieldCount(), modelSizeStats.getBucketAllocationFailuresCount(),
+                            modelSizeStats.getMemoryStatus()));
+
+                    persister.persistModelSizeStats(modelSizeStats);
+                }
+                ModelSnapshot modelSnapshot = result.getModelSnapshot();
+                if (modelSnapshot != null) {
+                    persister.persistModelSnapshot(modelSnapshot);
+                }
+                Quantiles quantiles = result.getQuantiles();
+                if (quantiles != null) {
+                    persister.persistQuantiles(quantiles);
+
+                    logger.debug("Quantiles parsed from output - will " + "trigger renormalisation of scores");
+                    if (isPerPartitionNormalization) {
+                        renormaliser.renormaliseWithPartition(quantiles, logger);
+                    } else {
+                        renormaliser.renormalise(quantiles, logger);
                     }
                 }
             } else {
                 logger.error("Expecting Json Field name token after the Start Object token");
                 throw new ElasticsearchParseException(
-                        "Invalid JSON  - object should start with a field name, not " + parser.getText());
+                        "Invalid JSON  - object should start with a field name, not " + parser.text());
             }
             token = parser.nextToken();
         }

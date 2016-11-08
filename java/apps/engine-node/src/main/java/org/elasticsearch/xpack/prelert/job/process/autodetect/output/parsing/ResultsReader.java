@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
@@ -38,11 +39,13 @@ public class ResultsReader implements Runnable {
     private final AutodetectResultsParser parser;
     private final Renormaliser renormaliser;
     private final JobResultsPersister resultsPersister;
+    private ParseFieldMatcherSupplier parseFieldMatcherSupplier;
 
     public ResultsReader(Renormaliser renormaliser, JobResultsPersister persister,
-            InputStream stream, Logger logger, boolean isPerPartitionNormalisation) {
+            InputStream stream, Logger logger, boolean isPerPartitionNormalisation, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
         this.stream = stream;
         this.logger = logger;
+        this.parseFieldMatcherSupplier = parseFieldMatcherSupplier;
         parser = new AutodetectResultsParser(isPerPartitionNormalisation);
         this.renormaliser = renormaliser;
         resultsPersister = persister;
@@ -51,7 +54,7 @@ public class ResultsReader implements Runnable {
     @Override
     public void run() {
         try {
-            parser.parseResults(stream, resultsPersister, renormaliser, logger);
+            parser.parseResults(stream, resultsPersister, renormaliser, logger, parseFieldMatcherSupplier);
         } catch (ElasticsearchParseException e) {
             logger.info("Error parsing autodetect output", e);
         } finally {

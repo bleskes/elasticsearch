@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.Job;
@@ -36,12 +37,15 @@ public class AutodetectCommunicatorFactory {
     private final JobLoggerFactory jobLoggerFactory;
     private final Environment env;
     private final Settings settings;
+    private ParseFieldMatcherSupplier parseFieldMatcherSupplier;
 
     public AutodetectCommunicatorFactory(Environment env, Settings settings, AutodetectProcessFactory autodetectProcessFactory,
             JobResultsPeristerFactory persisterFactory, JobDataCountsPersisterFactory dataCountsPersisterFactory,
-            UsagePersisterFactory usagePersisterFactory, JobLoggerFactory loggerFactory) {
+            UsagePersisterFactory usagePersisterFactory, JobLoggerFactory loggerFactory,
+            ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
         this.env = env;
         this.settings = settings;
+        this.parseFieldMatcherSupplier = parseFieldMatcherSupplier;
         this.autodetectProcessFactory = Objects.requireNonNull(autodetectProcessFactory);
         this.persisterFactory = Objects.requireNonNull(persisterFactory);
         this.dataCountsPersisterFactory = Objects.requireNonNull(dataCountsPersisterFactory);
@@ -60,7 +64,7 @@ public class AutodetectCommunicatorFactory {
 
 
         return new AutodetectCommunicator(job, autodetectProcessFactory.createAutodetectProcess(job, ignoreDowntime),
-                jobLogger, persisterFactory.jobResultsPersister(job.getJobId()), statusReporter);
+                jobLogger, persisterFactory.jobResultsPersister(job.getJobId()), statusReporter, parseFieldMatcherSupplier);
 
     }
 }

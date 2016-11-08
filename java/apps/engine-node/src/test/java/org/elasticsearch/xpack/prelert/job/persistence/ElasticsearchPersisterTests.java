@@ -80,11 +80,9 @@ public class ElasticsearchPersisterTests extends ESTestCase {
         bi.setRawAnomalyScore(19.19);
         bucket.addBucketInfluencer(bi);
 
-        Influencer inf = new Influencer();
+        Influencer inf = new Influencer("infName1", "infValue1");
         inf.setAnomalyScore(16);
         inf.setId("infID");
-        inf.setInfluencerFieldName("infName1");
-        inf.setInfluencerFieldValue("infValue1");
         inf.setInitialAnomalyScore(55.5);
         inf.setProbability(0.4);
         inf.setTimestamp(bucket.getTimestamp());

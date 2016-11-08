@@ -77,10 +77,6 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     private boolean hadBigNormalisedUpdate;
     private boolean isInterim;
 
-    // NORELEASE remove me when InfluencerParser is gone
-    public Influencer() {
-    }
-
     public Influencer(String fieldName, String fieldValue) {
         influenceField = fieldName;
         influenceValue = fieldValue;
@@ -149,7 +145,6 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         return probability;
     }
 
-    // NORELEASE remove me when InfluencerParser is gone
     public void setProbability(double probability) {
         this.probability = probability;
     }
@@ -166,18 +161,8 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         return influenceField;
     }
 
-    // NORELEASE remove me when InfluencerParser is gone
-    public void setInfluencerFieldName(String fieldName) {
-        influenceField = fieldName;
-    }
-
     public String getInfluencerFieldValue() {
         return influenceValue;
-    }
-
-    // NORELEASE remove me when InfluencerParser is gone
-    public void setInfluencerFieldValue(String fieldValue) {
-        influenceValue = fieldValue;
     }
 
     public double getInitialAnomalyScore() {

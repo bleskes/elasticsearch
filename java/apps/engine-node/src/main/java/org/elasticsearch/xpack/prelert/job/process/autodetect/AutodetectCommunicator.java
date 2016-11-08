@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
@@ -52,14 +53,14 @@ public class AutodetectCommunicator implements Closeable {
 
 
     public AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger,
-                                  JobResultsPersister resultsPersister, StatusReporter statusReporter) {
+            JobResultsPersister resultsPersister, StatusReporter statusReporter, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
         this.statusReporter = statusReporter;
 
         // TODO Port the normalizer from the old project
         this.resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.out(), this.jobLogger,
-                job.getAnalysisConfig().getUsePerPartitionNormalization());
+                job.getAnalysisConfig().getUsePerPartitionNormalization(), parseFieldMatcherSupplier);
 
         // NORELEASE - use ES ThreadPool
         this.outputParserThread = new Thread(resultsReader, job.getId() + "-Bucket-Parser");
@@ -69,7 +70,7 @@ public class AutodetectCommunicator implements Closeable {
     }
 
     AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger,
-                           StatusReporter statusReporter, ResultsReader resultsReader) {
+            StatusReporter statusReporter, ResultsReader resultsReader) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
         this.statusReporter = statusReporter;

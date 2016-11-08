@@ -37,14 +37,15 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     /**
      * Field Names
      */
-    public static final ParseField MODEL_SIZE_STATS_FIELD = new ParseField("model_size_stats");
-    public static final ParseField MODEL_BYTES_FIELD = new ParseField("model_bytes");
-    public static final ParseField TOTAL_BY_FIELD_COUNT_FIELD = new ParseField("total_by_field_count");
-    public static final ParseField TOTAL_OVER_FIELD_COUNT_FIELD = new ParseField("total_over_field_count");
-    public static final ParseField TOTAL_PARTITION_FIELD_COUNT_FIELD = new ParseField("total_partition_field_count");
-    public static final ParseField BUCKET_ALLOCATION_FAILURES_COUNT_FIELD = new ParseField("bucket_allocation_failures_count");
-    public static final ParseField MEMORY_STATUS_FIELD = new ParseField("memory_status");
-    public static final ParseField LOG_TIME_FIELD = new ParseField("log_time");
+    public static final ParseField MODEL_SIZE_STATS_FIELD = new ParseField("modelSizeStats");
+    public static final ParseField MODEL_BYTES_FIELD = new ParseField("modelBytes");
+    public static final ParseField TOTAL_BY_FIELD_COUNT_FIELD = new ParseField("totalByFieldCount");
+    public static final ParseField TOTAL_OVER_FIELD_COUNT_FIELD = new ParseField("totalOverFieldCount");
+    public static final ParseField TOTAL_PARTITION_FIELD_COUNT_FIELD = new ParseField("totalPartitionFieldCount");
+    public static final ParseField BUCKET_ALLOCATION_FAILURES_COUNT_FIELD = new ParseField("bucketAllocationFailuresCount");
+    public static final ParseField MEMORY_STATUS_FIELD = new ParseField("memoryStatus");
+    public static final ParseField LOG_TIME_FIELD = new ParseField("logTime");
+    public static final ParseField BUCKET_TIME_FIELD = new ParseField("bucketTime");
     public static final ParseField TIMESTAMP_FIELD = new ParseField("timestamp");
 
     public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(

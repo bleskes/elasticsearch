@@ -16,6 +16,9 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 
@@ -27,7 +30,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
-import java.util.Locale;
 
 /**
  * A placeholder class simulating the actions of the native Autodetect process.
@@ -41,7 +43,6 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
 
     private static final Logger LOGGER = Loggers.getLogger(BlackHoleAutodetectProcess.class);
     private static final String FLUSH_ID = "flush-1";
-    private static final String FLUSH_ACK_TEMPLATE = "{\"flush\":\"%s\"}\n";
 
     private final InputStream processError;
     private final PipedInputStream processOut;
@@ -81,7 +82,10 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
      */
     @Override
     public String flushJob(InterimResultsParams params) throws IOException {
-        pipedOutputStream.write(String.format(Locale.ROOT, FLUSH_ACK_TEMPLATE, FLUSH_ID).getBytes(StandardCharsets.UTF_8));
+        FlushAcknowledgement flushAcknowledgement = new FlushAcknowledgement(FLUSH_ID);
+        pipedOutputStream
+        .write(flushAcknowledgement.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).string()
+                        .getBytes(StandardCharsets.UTF_8));
         pipedOutputStream.flush();
         return FLUSH_ID;
     }

@@ -21,6 +21,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
@@ -123,7 +124,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class PrelertPlugin extends Plugin implements ActionPlugin {
-
     public static final String NAME = "prelert";
     public static final String THREAD_POOL_NAME = NAME;
 
@@ -137,6 +137,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
     private final Settings settings;
     private final Environment env;
 
+    private final ParseFieldMatcherSupplier parseFieldMatcherSupplier;
+
     static {
         MetaData.registerPrototype(PrelertMetadata.TYPE, PrelertMetadata.PROTO);
     }
@@ -144,6 +146,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
     public PrelertPlugin(Settings settings) {
         this.settings = settings;
         this.env = new Environment(settings);
+        ParseFieldMatcher matcher = new ParseFieldMatcher(settings);
+        parseFieldMatcherSupplier = () -> matcher;
     }
 
     @Override
@@ -171,7 +175,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         //  `bind(Implementation.class).toInstance(INSTANCE);`
         // For this reason we can't use interfaces in the constructor of transport actions.
         // This ok for now as we will remove Guice soon
-        ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(client, 0, ParseFieldMatcher.STRICT);
+        ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(client, 0, parseFieldMatcherSupplier.getParseFieldMatcher());
         ElasticsearchFactories elasticsearchFactories = new ElasticsearchFactories(client);
         AutodetectCommunicatorFactory autodetectCommunicatorFactory =
                 createAutodetectCommunicatorFactory(elasticsearchFactories, jobProvider);
@@ -201,7 +205,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                                 esFactory.newJobResultsPersisterFactory(),
                                 esFactory.newJobDataCountsPersisterFactory(),
                                 esFactory.newUsagePersisterFactory(),
-                                jobId -> Loggers.getLogger(jobId));
+                jobId -> Loggers.getLogger(jobId), parseFieldMatcherSupplier);
     }
 
     @Override

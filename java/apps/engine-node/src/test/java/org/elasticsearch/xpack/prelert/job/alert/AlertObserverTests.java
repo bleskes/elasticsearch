@@ -185,7 +185,7 @@ public class AlertObserverTests extends ESTestCase {
     private Bucket makeInfluencerBucket(double... anomalyScores) {
         List<Influencer> infs = new ArrayList<>();
         for (double score : anomalyScores) {
-            Influencer inf = new Influencer();
+            Influencer inf = new Influencer("foo", "bar");
             inf.setAnomalyScore(score);
             infs.add(inf);
         }

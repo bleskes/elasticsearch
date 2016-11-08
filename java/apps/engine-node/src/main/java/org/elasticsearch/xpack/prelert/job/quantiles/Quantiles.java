@@ -50,26 +50,12 @@ public class Quantiles extends ToXContentToBytes implements Writeable
             TYPE.getPreferredName(), a -> new Quantiles((Date) a[0], (String) a[1]));
 
     static {
-        PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
+        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(), p -> new Date(p.longValue()), TIMESTAMP, ValueType.LONG);
         PARSER.declareString(ConstructingObjectParser.constructorArg(), QUANTILE_STATE);
     }
 
     private Date timestamp;
     private String quantileState;
-
-    // NORELEASE remove this constructor when QuantilesParser is gone
-    public Quantiles() {
-    }
-
-    // NORELEASE remove this method when QuantilesParser is gone
-    public void setQuantileState(String quantileState) {
-        this.quantileState = quantileState;
-    }
-
-    // NORELEASE remove this method when QuantilesParser is gone
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
-    }
 
     public Quantiles(Date timestamp, String quantilesState) {
         this.timestamp = timestamp;

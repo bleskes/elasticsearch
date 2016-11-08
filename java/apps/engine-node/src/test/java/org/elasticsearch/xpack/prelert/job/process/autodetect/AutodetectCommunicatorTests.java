@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.core.Logger;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
@@ -44,7 +45,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
     public void testAddRemoveAlertObserver() throws IOException {
         AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), mockAutodetectProcessWithOutputStream(), Mockito.mock(Logger.class),
-                        Mockito.mock(JobResultsPersister.class), Mockito.mock(StatusReporter.class));
+                        Mockito.mock(JobResultsPersister.class), Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT);
 
         AlertObserver ao = Mockito.mock(AlertObserver.class);
         communicator.addAlertObserver(ao);
@@ -59,7 +60,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
 
         try (AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class))) {
+                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT)) {
 
             communicator.writeResetBucketsControlMessage(params);
             Mockito.verify(process).writeResetBucketsControlMessage(params);
@@ -71,7 +72,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
 
         try (AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class))) {
+                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT)) {
 
             String config = "";
             communicator.writeUpdateConfigMessage(config);
@@ -85,7 +86,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
 
         try (AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class))) {
+                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT)) {
 
             InterimResultsParams params = InterimResultsParams.builder().build();
             communicator.flushJob(params);
@@ -100,7 +101,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
 
         @SuppressWarnings("resource")
         AutodetectCommunicator communicator = new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class),
-                Mockito.mock(JobResultsPersister.class), Mockito.mock(StatusReporter.class));
+                Mockito.mock(JobResultsPersister.class), Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT);
 
         InterimResultsParams params = InterimResultsParams.builder().build();
         ElasticsearchException e = ESTestCase.expectThrows(ElasticsearchException.class, () -> communicator.flushJob(params));
@@ -131,7 +132,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
 
         AutodetectCommunicator communicator =
                 new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class));
+                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT);
 
         communicator.close();
         Mockito.verify(process).close();

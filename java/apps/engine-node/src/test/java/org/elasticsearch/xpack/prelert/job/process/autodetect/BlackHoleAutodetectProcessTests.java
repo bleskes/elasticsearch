@@ -14,11 +14,12 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.FlushAcknowledgementParser;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 
 public class BlackHoleAutodetectProcessTests extends ESTestCase {
@@ -28,9 +29,10 @@ public class BlackHoleAutodetectProcessTests extends ESTestCase {
 
             String flushId = process.flushJob(InterimResultsParams.builder().build());
 
-            JsonParser jsonParser = new JsonFactory().createParser(process.out());
-            jsonParser.nextToken(); // FlushAcknowledgementParser expects this to be called first
-            FlushAcknowledgement ack = new FlushAcknowledgementParser(jsonParser).parseJson();
+            XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(process.out());
+            parser.nextToken(); // FlushAcknowledgementParser expects this to be
+                                // called first
+            FlushAcknowledgement ack = FlushAcknowledgement.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
             assertEquals(flushId, ack.getId());
         }
     }
