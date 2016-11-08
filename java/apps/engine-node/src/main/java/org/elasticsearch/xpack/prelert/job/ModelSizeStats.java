@@ -45,7 +45,6 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     public static final ParseField BUCKET_ALLOCATION_FAILURES_COUNT_FIELD = new ParseField("bucket_allocation_failures_count");
     public static final ParseField MEMORY_STATUS_FIELD = new ParseField("memory_status");
     public static final ParseField LOG_TIME_FIELD = new ParseField("log_time");
-    public static final ParseField BUCKET_TIME_FIELD = new ParseField("bucket_time");
     public static final ParseField TIMESTAMP_FIELD = new ParseField("timestamp");
 
     public static final ObjectParser<ModelSizeStats, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
@@ -136,7 +135,6 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     private String id = TYPE.getPreferredName();
 
     public ModelSizeStats() {
-        this.logTime = new Date();
     }
 
     public ModelSizeStats(StreamInput in) throws IOException {
