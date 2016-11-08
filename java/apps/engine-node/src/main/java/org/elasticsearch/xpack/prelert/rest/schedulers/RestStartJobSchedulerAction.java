@@ -68,7 +68,7 @@ public class RestStartJobSchedulerAction extends BaseRestHandler {
                 endTimeMillis = parseDateOrThrow(restRequest.param(SchedulerState.END_TIME_MILLIS.getPreferredName()),
                         SchedulerState.END_TIME_MILLIS.getPreferredName());
             }
-            SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, startTimeMillis, endTimeMillis);
+            SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTING, startTimeMillis, endTimeMillis);
             jobSchedulerRequest = new StartJobSchedulerAction.Request(jobId, schedulerState);
         }
         return channel -> transportJobSchedulerAction.execute(jobSchedulerRequest, new AcknowledgedRestListener<>(channel));

@@ -31,7 +31,7 @@ import org.elasticsearch.xpack.prelert.action.UpdateJobStatusAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
-import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
+import org.elasticsearch.xpack.prelert.job.scheduler.ScheduledJobService;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.verify;
 public class JobLifeCycleServiceTests extends ESTestCase {
 
     private ClusterService clusterService;
-    private JobScheduledService jobScheduledService;
+    private ScheduledJobService scheduledJobService;
     private DataProcessor dataProcessor;
     private Client client;
     private JobLifeCycleService jobLifeCycleService;
@@ -54,10 +54,10 @@ public class JobLifeCycleServiceTests extends ESTestCase {
     @Before
     public void instantiateJobAllocator() {
         clusterService = Mockito.mock(ClusterService.class);
-        jobScheduledService = Mockito.mock(JobScheduledService.class);
+        scheduledJobService = Mockito.mock(ScheduledJobService.class);
         dataProcessor = Mockito.mock(DataProcessor.class);
         client = Mockito.mock(Client.class);
-        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, client, clusterService, jobScheduledService, dataProcessor,
+        jobLifeCycleService = new JobLifeCycleService(Settings.EMPTY, client, clusterService, scheduledJobService, dataProcessor,
                 Runnable::run);
     }
 

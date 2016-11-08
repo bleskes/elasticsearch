@@ -177,8 +177,14 @@ public class Allocation extends AbstractDiffable<Allocation> implements ToXConte
                     JobSchedulerStatus.STOPPED : this.schedulerState.getStatus();
             JobSchedulerStatus newSchedulerStatus = schedulerState.getStatus();
             switch (newSchedulerStatus) {
-            case STARTED:
+            case STARTING:
                 if (currentSchedulerStatus != JobSchedulerStatus.STOPPED) {
+                    String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobId, newSchedulerStatus);
+                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                }
+                break;
+            case STARTED:
+                if (currentSchedulerStatus != JobSchedulerStatus.STARTING) {
                     String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobId, newSchedulerStatus);
                     throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_START_JOB_SCHEDULER);
                 }

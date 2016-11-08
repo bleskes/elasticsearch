@@ -23,7 +23,7 @@ import java.util.Locale;
 
 public enum JobSchedulerStatus implements Writeable {
 
-    STARTED, STOPPING, STOPPED;
+    STARTING, STARTED, STOPPING, STOPPED;
 
     public static JobSchedulerStatus fromString(String name) {
         return valueOf(name.trim().toUpperCase(Locale.ROOT));

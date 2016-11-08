@@ -12,11 +12,13 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.manager;
+package org.elasticsearch.xpack.prelert.job.scheduler;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
@@ -30,38 +32,43 @@ import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractorFactory;
-import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
+import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.persistence.BucketsQueryBuilder;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.junit.Before;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Optional;
 
+import static org.elasticsearch.mock.orig.Mockito.never;
 import static org.elasticsearch.mock.orig.Mockito.times;
+import static org.elasticsearch.mock.orig.Mockito.when;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.eq;
 
-public class JobScheduledServiceTests extends ESTestCase {
+public class ScheduledJobServiceTests extends ESTestCase {
 
     private Client client;
+    private ThreadPool threadPool;
     private JobProvider jobProvider;
     private JobManager jobManager;
     private DataProcessor dataProcessor;
     private DataExtractorFactory dataExtractorFactory;
-    private JobLoggerFactory jobLoggerFactory;
     private Auditor auditor;
-
-    private JobScheduledService jobScheduledService;
+    private ScheduledJobService scheduledJobService;
+    private long currentTime = 120000;
 
     @Before
     public void setUpTests() {
@@ -70,68 +77,94 @@ public class JobScheduledServiceTests extends ESTestCase {
         jobManager = mock(JobManager.class);
         dataProcessor = mock(DataProcessor.class);
         dataExtractorFactory = mock(DataExtractorFactory.class);
-        jobLoggerFactory = mock(JobLoggerFactory.class);
         auditor = mock(Auditor.class);
+        threadPool = mock(ThreadPool.class);
+        when(threadPool.executor(anyString())).thenReturn(Runnable::run);
 
-        jobScheduledService = new JobScheduledService(client, jobProvider, jobManager, dataProcessor, dataExtractorFactory,
-                jobLoggerFactory);
+        scheduledJobService =
+                new ScheduledJobService(threadPool, client, jobProvider, dataProcessor, dataExtractorFactory, () -> currentTime);
 
         when(jobProvider.audit(anyString())).thenReturn(auditor);
         when(jobProvider.buckets(anyString(), any(BucketsQueryBuilder.BucketsQuery.class))).thenReturn(
                 new QueryPage<>(Collections.emptyList(), 0));
     }
 
-    public void testStart_GivenNewlyCreatedJob() throws IOException {
+    public void testStart_GivenNewlyCreatedJobLoopBack() throws IOException {
         Job.Builder builder = createScheduledJob();
         Allocation allocation =
-                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
-        DataCounts dataCounts = new DataCounts("foo");
-        dataCounts.setLatestRecordTimeStamp(new Date(0));
+                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTING, 0L, 60000L));
+        DataCounts dataCounts = new DataCounts("foo", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, new Date(0));
         builder.setCounts(dataCounts);
         when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
-        Logger jobLogger = mock(Logger.class);
-        when(jobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(dataExtractorFactory.newExtractor(builder.build())).thenReturn(dataExtractor);
+        when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
+        InputStream in = new ByteArrayInputStream("".getBytes(Charset.forName("utf-8")));
+        when(dataExtractor.next()).thenReturn(Optional.of(in));
+        when(dataProcessor.processData(anyString(), eq(in), any())).thenReturn(dataCounts);
+        scheduledJobService.start(builder.build(), allocation);
 
-        jobScheduledService.start(builder.build(), allocation);
+        verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());
+        verify(threadPool, times(1)).executor(PrelertPlugin.THREAD_POOL_NAME);
+        verify(threadPool, never()).schedule(any(), any(), any());
+        verify(dataProcessor).closeJob("foo");
+    }
 
-        allocation = new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
-        jobScheduledService.stop(allocation);
+    public void testStart_GivenNewlyCreatedJobLoopBackAndRealtime() throws IOException {
+        Job.Builder builder = createScheduledJob();
+        Allocation allocation =
+                new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTING, 0L, null));
+        DataCounts dataCounts = new DataCounts("foo", 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, new Date(0));
+        builder.setCounts(dataCounts);
+        when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
-        verify(dataExtractor).newSearch(anyLong(), anyLong(), eq(jobLogger));
+        DataExtractor dataExtractor = mock(DataExtractor.class);
+        when(dataExtractorFactory.newExtractor(builder.build())).thenReturn(dataExtractor);
+        when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
+        InputStream in = new ByteArrayInputStream("".getBytes(Charset.forName("utf-8")));
+        when(dataExtractor.next()).thenReturn(Optional.of(in));
+        when(dataProcessor.processData(anyString(), eq(in), any())).thenReturn(dataCounts);
+        scheduledJobService.start(builder.build(), allocation);
+
+        verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());
+        verify(threadPool, times(1)).executor(PrelertPlugin.THREAD_POOL_NAME);
+        verify(threadPool, times(1)).schedule(eq(new TimeValue(480100)), eq(PrelertPlugin.THREAD_POOL_NAME), any());
+
+        allocation = new Allocation(allocation.getNodeId(), allocation.getJobId(), allocation.getStatus(),
+                new SchedulerState(JobSchedulerStatus.STOPPING, 0L, 60000L));
+        scheduledJobService.stop(allocation);
         verify(dataProcessor).closeJob("foo");
     }
 
     public void testStop_GivenNonScheduledJob() {
-        jobScheduledService.stop(new Allocation(null, "foo", null, null));
+        Allocation allocation = new Allocation.Builder().build();
+        expectThrows(IllegalStateException.class, () -> scheduledJobService.stop(allocation));
     }
 
     public void testStop_GivenStartedScheduledJob() throws IOException {
         Job.Builder builder = createScheduledJob();
-        Allocation allocation =
+        Allocation allocation1 =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTED, 0, null));
         DataCounts dataCounts = new DataCounts("foo");
         dataCounts.setLatestRecordTimeStamp(new Date(0));
         builder.setCounts(dataCounts);
-        when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
+        when(jobManager.getJobAllocation("foo")).thenReturn(allocation1);
 
-        Logger jobLogger = mock(Logger.class);
-        when(jobLoggerFactory.newLogger("foo")).thenReturn(jobLogger);
         DataExtractor dataExtractor = mock(DataExtractor.class);
         when(dataExtractorFactory.newExtractor(builder.build())).thenReturn(dataExtractor);
 
-        jobScheduledService.start(builder.build(), allocation);
+        Exception e = expectThrows(IllegalStateException.class, () -> scheduledJobService.start(builder.build(), allocation1));
+        assertThat(e.getMessage(), equalTo("expected job scheduler status [STARTING], but got [STARTED] instead"));
 
-        jobScheduledService.stop(allocation);
+        e = expectThrows(IllegalStateException.class, () -> scheduledJobService.stop(allocation1));
+        assertThat(e.getMessage(), equalTo("expected job scheduler status [STOPPING], but got [STARTED] instead"));
 
         // Properly stop it to avoid leaking threads in the test
-        allocation =
+        Allocation allocation2 =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STOPPING, 0, null));
-        jobScheduledService.stop(allocation);
-
-        verify(dataExtractor).newSearch(anyLong(), anyLong(), eq(jobLogger));
+        scheduledJobService.registry.put("foo", scheduledJobService.createJobScheduler(builder.build()));
+        scheduledJobService.stop(allocation2);
 
         // We stopped twice but the first time should have been ignored. We can assert that indirectly
         // by verifying that the job was closed only once.

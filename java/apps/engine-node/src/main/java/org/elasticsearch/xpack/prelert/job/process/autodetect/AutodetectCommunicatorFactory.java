@@ -16,10 +16,10 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.Job;
-import org.elasticsearch.xpack.prelert.job.logging.JobLoggerFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersisterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPeristerFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.UsagePersisterFactory;
@@ -34,15 +34,13 @@ public class AutodetectCommunicatorFactory {
     private final JobResultsPeristerFactory persisterFactory;
     private final JobDataCountsPersisterFactory dataCountsPersisterFactory;
     private final UsagePersisterFactory usagePersisterFactory;
-    private final JobLoggerFactory jobLoggerFactory;
     private final Environment env;
     private final Settings settings;
     private ParseFieldMatcherSupplier parseFieldMatcherSupplier;
 
     public AutodetectCommunicatorFactory(Environment env, Settings settings, AutodetectProcessFactory autodetectProcessFactory,
             JobResultsPeristerFactory persisterFactory, JobDataCountsPersisterFactory dataCountsPersisterFactory,
-            UsagePersisterFactory usagePersisterFactory, JobLoggerFactory loggerFactory,
-            ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+            UsagePersisterFactory usagePersisterFactory, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
         this.env = env;
         this.settings = settings;
         this.parseFieldMatcherSupplier = parseFieldMatcherSupplier;
@@ -50,12 +48,10 @@ public class AutodetectCommunicatorFactory {
         this.persisterFactory = Objects.requireNonNull(persisterFactory);
         this.dataCountsPersisterFactory = Objects.requireNonNull(dataCountsPersisterFactory);
         this.usagePersisterFactory = Objects.requireNonNull(usagePersisterFactory);
-        this.jobLoggerFactory = Objects.requireNonNull(loggerFactory);
     }
 
     public AutodetectCommunicator create(Job job, boolean ignoreDowntime) {
-
-        Logger jobLogger = jobLoggerFactory.newLogger(job.getJobId());
+        Logger jobLogger = Loggers.getLogger(job.getJobId());
         UsageReporter usageReporter = new UsageReporter(settings, job.getJobId(), usagePersisterFactory.getInstance(jobLogger), jobLogger);
 
         StatusReporter statusReporter = new StatusReporter(env, settings, job.getJobId(), job.getCounts(), usageReporter,

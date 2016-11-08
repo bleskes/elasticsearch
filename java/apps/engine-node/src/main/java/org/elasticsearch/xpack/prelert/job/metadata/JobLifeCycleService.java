@@ -28,7 +28,7 @@ import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
-import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
+import org.elasticsearch.xpack.prelert.job.scheduler.ScheduledJobService;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,16 +40,16 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
 
     volatile Set<String> localAllocatedJobs = Collections.emptySet();
     private final Client client;
-    private final JobScheduledService jobScheduledService;
+    private final ScheduledJobService scheduledJobService;
     private DataProcessor dataProcessor;
     private final Executor executor;
 
-    public JobLifeCycleService(Settings settings, Client client, ClusterService clusterService, JobScheduledService jobScheduledService,
+    public JobLifeCycleService(Settings settings, Client client, ClusterService clusterService, ScheduledJobService scheduledJobService,
                                DataProcessor dataProcessor, Executor executor) {
         super(settings);
         clusterService.add(this);
         this.client = Objects.requireNonNull(client);
-        this.jobScheduledService = Objects.requireNonNull(jobScheduledService);
+        this.scheduledJobService = Objects.requireNonNull(scheduledJobService);
         this.dataProcessor = Objects.requireNonNull(dataProcessor);
         this.executor = Objects.requireNonNull(executor);
     }
@@ -71,7 +71,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         DiscoveryNode localNode = event.state().nodes().getLocalNode();
         for (Allocation allocation : prelertMetadata.getAllocations().values()) {
             if (localNode.getId().equals(allocation.getNodeId())) {
-                handleLocallyAllocatedJob(prelertMetadata, allocation, event);
+                handleLocallyAllocatedJob(prelertMetadata, allocation);
             }
         }
 
@@ -87,7 +87,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         }
     }
 
-    private void handleLocallyAllocatedJob(PrelertMetadata prelertMetadata, Allocation allocation, ClusterChangedEvent event) {
+    private void handleLocallyAllocatedJob(PrelertMetadata prelertMetadata, Allocation allocation) {
         Job job = prelertMetadata.getJobs().get(allocation.getJobId());
         if (localAllocatedJobs.contains(allocation.getJobId()) == false) {
             startJob(job);
@@ -119,11 +119,13 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         SchedulerState schedulerState = allocation.getSchedulerState();
         if (schedulerState != null) {
             switch (schedulerState.getStatus()) {
+                case STARTING:
+                    scheduledJobService.start(job, allocation);
+                    break;
                 case STARTED:
-                    jobScheduledService.start(job, allocation);
                     break;
                 case STOPPING:
-                    executor.execute(() -> jobScheduledService.stop(allocation));
+                    scheduledJobService.stop(allocation);
                     break;
                 case STOPPED:
                     break;
@@ -170,13 +172,14 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         client.execute(UpdateJobStatusAction.INSTANCE, request, new ActionListener<UpdateJobStatusAction.Response>() {
             @Override
             public void onResponse(UpdateJobStatusAction.Response response) {
+                logger.info("Successfully set job status to [{}] for job [{}]", status, jobId);
                 // NORELEASE Audit job paused
                 // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_PAUSED));
             }
 
             @Override
             public void onFailure(Exception e) {
-                // Do nothing
+                logger.error("Could not set job status to [" + status + "] for job [" + jobId +"]", e);
             }
         });
     }

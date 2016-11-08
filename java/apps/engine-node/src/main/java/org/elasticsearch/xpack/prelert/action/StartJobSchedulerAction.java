@@ -92,9 +92,9 @@ extends Action<StartJobSchedulerAction.Request, StartJobSchedulerAction.Response
         public Request(String jobId, SchedulerState schedulerState) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
             this.schedulerState = ExceptionsHelper.requireNonNull(schedulerState, SchedulerState.TYPE_FIELD.getPreferredName());
-            if (schedulerState.getStatus() != JobSchedulerStatus.STARTED) {
+            if (schedulerState.getStatus() != JobSchedulerStatus.STARTING) {
                 throw new IllegalStateException(
-                        "Start job scheduler action requires the scheduler status to be [" + JobSchedulerStatus.STARTED + "]");
+                        "Start job scheduler action requires the scheduler status to be [" + JobSchedulerStatus.STARTING + "]");
             }
         }
 

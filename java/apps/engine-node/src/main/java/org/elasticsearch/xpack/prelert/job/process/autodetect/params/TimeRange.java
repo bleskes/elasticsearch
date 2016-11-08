@@ -20,6 +20,8 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
+import java.util.Objects;
+
 public class TimeRange {
 
     public static final String START_PARAM = "start";
@@ -47,6 +49,19 @@ public class TimeRange {
         return new Builder();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TimeRange timeRange = (TimeRange) o;
+        return Objects.equals(start, timeRange.start) &&
+                Objects.equals(end, timeRange.end);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(start, end);
+    }
 
     public static class Builder {
 

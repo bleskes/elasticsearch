@@ -22,7 +22,6 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
-import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
@@ -70,7 +69,7 @@ import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
-import org.elasticsearch.xpack.prelert.job.manager.JobScheduledService;
+import org.elasticsearch.xpack.prelert.job.scheduler.ScheduledJobService;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
@@ -182,13 +181,13 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
 
         JobManager jobManager = new JobManager(env, settings, jobProvider, clusterService, processActionGuardian);
         DataProcessor dataProcessor = new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager);
-        JobScheduledService jobScheduledService = new JobScheduledService(client,  jobProvider, jobManager, dataProcessor,
-                new HttpDataExtractorFactory(), jobId -> Loggers.getLogger(jobId));
+        ScheduledJobService scheduledJobService = new ScheduledJobService(threadPool, client, jobProvider, dataProcessor,
+                new HttpDataExtractorFactory(), System::currentTimeMillis);
         return Arrays.asList(
                 jobProvider,
                 jobManager,
                 new JobAllocator(settings, clusterService, threadPool),
-                new JobLifeCycleService(settings, client, clusterService, jobScheduledService, dataProcessor, threadPool.generic()),
+                new JobLifeCycleService(settings, client, clusterService, scheduledJobService, dataProcessor, threadPool.generic()),
                 new ElasticsearchBulkDeleterFactory(client), //NORELEASE: this should use Delete-by-query
                 dataProcessor
                 );
@@ -213,7 +212,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         return new AutodetectCommunicatorFactory(env, settings, processFactory, esFactory.newJobResultsPersisterFactory(),
                 esFactory.newJobDataCountsPersisterFactory(),
                 esFactory.newUsagePersisterFactory(),
-                jobId -> Loggers.getLogger(jobId), parseFieldMatcherSupplier);
+                parseFieldMatcherSupplier);
     }
 
     @Override

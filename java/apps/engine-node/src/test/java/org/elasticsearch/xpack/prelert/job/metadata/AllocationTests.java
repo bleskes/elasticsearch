@@ -29,7 +29,7 @@ public class AllocationTests extends AbstractSerializingTestCase<Allocation> {
         String nodeId = randomAsciiOfLength(10);
         String jobId = randomAsciiOfLength(10);
         JobStatus jobStatus = randomFrom(JobStatus.values());
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, randomPositiveLong(), randomPositiveLong());
+        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTING, randomPositiveLong(), randomPositiveLong());
         return new Allocation(nodeId, jobId, jobStatus, schedulerState);
     }
 

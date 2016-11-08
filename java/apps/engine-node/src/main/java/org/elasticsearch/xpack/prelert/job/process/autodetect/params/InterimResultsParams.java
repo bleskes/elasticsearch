@@ -59,6 +59,21 @@ public class InterimResultsParams {
         return new Builder();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InterimResultsParams that = (InterimResultsParams) o;
+        return calcInterim == that.calcInterim &&
+                Objects.equals(timeRange, that.timeRange) &&
+                Objects.equals(advanceTimeSeconds, that.advanceTimeSeconds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(calcInterim, timeRange, advanceTimeSeconds);
+    }
+
     public static class Builder {
         private boolean calcInterim = false;
         private TimeRange timeRange;
