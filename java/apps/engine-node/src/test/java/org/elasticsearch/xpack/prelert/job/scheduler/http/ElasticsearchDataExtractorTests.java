@@ -293,7 +293,7 @@ public class ElasticsearchDataExtractorTests extends ESTestCase {
                 + "    \"bool\": {" + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
                 + "            \"time\": {" + "              \"gte\": \"1970-01-17T04:53:20.000Z\","
                 + "              \"lt\": \"1970-01-17T05:53:20.000Z\"," + "              \"format\": \"date_time\"" + "            }"
-                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"fields\": [\"id\"]" + "}";
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"_source\": [\"id\"]" + "}";
         assertEquals(expectedSearchBody.replaceAll(" ", ""), firstRequestParams.requestBody.replaceAll(" ", ""));
 
         RequestParams secondRequestParams = requester.getGetRequestParams(1);

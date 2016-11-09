@@ -228,7 +228,7 @@ public class JobScheduler {
 
         logger = jobLoggerFactory.newLogger(jobId);
         logger.info("Scheduler started");
-        lookbackExecutor = Executors.newSingleThreadExecutor(EsExecutors.daemonThreadFactory("job_scheduler"));
+        lookbackExecutor = Executors.newSingleThreadExecutor(EsExecutors.daemonThreadFactory("job_data_extractor"));
         initLastEndTime(job);
         long startMs = allocation.getSchedulerState().getStartTimeMillis();
         OptionalLong endMs = allocation.getSchedulerState().getEndTimeMillis() == null ? OptionalLong.empty()

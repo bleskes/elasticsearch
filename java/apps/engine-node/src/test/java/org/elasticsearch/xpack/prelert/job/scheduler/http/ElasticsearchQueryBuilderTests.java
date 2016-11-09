@@ -49,7 +49,7 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
                 + "    \"bool\": {" + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
                 + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
                 + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
-                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"fields\": [\"foo\",\"bar\"]" + "}";
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"_source\": [\"foo\",\"bar\"]" + "}";
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 
@@ -66,7 +66,7 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
                 + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
                 + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
                 + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"script_fields\": {\"test1\":{\"script\":\"...\"}},"
-                + "  \"fields\": [\"foo\",\"bar\"]" + "}";
+                + "  \"_source\": [\"foo\",\"bar\"]" + "}";
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 

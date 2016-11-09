@@ -79,7 +79,7 @@ public class ElasticsearchQueryBuilder {
 
     private static final String AGGREGATION_TEMPLATE = ", \"aggs\": %s";
     private static final String SCRIPT_FIELDS_TEMPLATE = ", \"script_fields\": %s";
-    private static final String FIELDS_TEMPLATE = "%s,  \"fields\": %s";
+    private static final String FIELDS_TEMPLATE = "%s,  \"_source\": %s";
 
     private final String search;
     private final String aggregations;

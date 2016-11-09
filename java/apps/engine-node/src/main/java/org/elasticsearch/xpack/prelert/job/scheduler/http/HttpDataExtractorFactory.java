@@ -99,7 +99,7 @@ public class HttpDataExtractorFactory implements DataExtractorFactory {
             }
             builder.endArray();
             builder.endObject();
-            return builder.string().replace("{\"a\":", "}");
+            return builder.string().replace("{\"a\":", "").replace("}", "");
         } catch (IOException e) {
             throw new ElasticsearchParseException("failed to convert map to JSON string", e);
         }
