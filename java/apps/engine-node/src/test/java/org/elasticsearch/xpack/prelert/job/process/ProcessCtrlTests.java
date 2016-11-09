@@ -41,13 +41,6 @@ public class ProcessCtrlTests extends ESTestCase {
         logger = Mockito.mock(Logger.class);
     }
 
-    public void testBuildEnvironment() {
-        ProcessBuilder pb = new ProcessBuilder();
-        ProcessCtrl.buildEnvironment(pb);
-
-        assertEquals(0, pb.environment().size());
-    }
-
     public void testBuildAutodetectCommand() {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(settings);
@@ -74,8 +67,8 @@ public class ProcessCtrlTests extends ESTestCase {
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, false);
-        assertEquals(17, command.size());
-        assertTrue(command.contains(ProcessCtrl.getAutodetectPath(env).toString()));
+        assertEquals(18, command.size());
+        assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
         assertTrue(command.contains(ProcessCtrl.LATENCY_ARG + "360"));
@@ -89,6 +82,7 @@ public class ProcessCtrlTests extends ESTestCase {
 
         assertTrue(command.contains(ProcessCtrl.TIME_FIELD_ARG + "tf"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + "unit-test-job"));
+        assertTrue(command.contains(ProcessCtrl.JOB_ID_ARG + "unit-test-job"));
 
         assertTrue(command.contains(ProcessCtrl.PER_PARTITION_NORMALIZATION));
 
@@ -96,8 +90,9 @@ public class ProcessCtrlTests extends ESTestCase {
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
         int expectedMaxQuantileInterval = 21600 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
+        // NORELEASE - remove this check when persistence goes through a named pipe
         assertTrue(String.join(", ", command), command.contains(
-                ProcessCtrl.PERSIST_URL_BASE_ARG + "http://localhost:" + ProcessCtrl.ES_HTTP_PORT + "/prelertresults-unit-test-job"));
+                ProcessCtrl.PERSIST_URL_BASE_ARG + "http://localhost:9200/prelertresults-unit-test-job"));
         assertTrue(command.contains(ProcessCtrl.IGNORE_DOWNTIME_ARG));
     }
 
@@ -156,9 +151,9 @@ public class ProcessCtrlTests extends ESTestCase {
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
         String jobId = "unit-test-job";
 
-        List<String> command = ProcessCtrl.buildNormaliserCommand(env, jobId, 300, true);
+        List<String> command = ProcessCtrl.buildNormaliserCommand(env, jobId, null, 300, true, logger);
         assertEquals(5, command.size());
-        assertTrue(command.contains(ProcessCtrl.getNormalizePath(env).toString()));
+        assertTrue(command.contains(ProcessCtrl.NORMALIZE_PATH));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "300"));
         assertTrue(command.contains(ProcessCtrl.LOG_ID_ARG + jobId));
         assertTrue(command.contains(ProcessCtrl.LENGTH_ENCODED_INPUT_ARG));

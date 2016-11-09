@@ -34,16 +34,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Locale;
 
 /**
- * Autodetect process based on the old Java API process code.
+ * Autodetect process using native code.
  */
-// NORELEASE This is a temporary solution so the integration tests can be added.
 public class NativeAutodetectProcess implements AutodetectProcess {
     private static final Logger LOGGER = Loggers.getLogger(NativeAutodetectProcess.class);
 
-    private final Process nativeProcess;
     private final CppLogMessageHandler cppLogHandler;
     private final OutputStream processInStream;
     private final InputStream processOutStream;
@@ -51,10 +48,10 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     private final ZonedDateTime startTime;
     private final int numberOfAnalysisFields;
     private final List<Path> filesToDelete;
+    private Thread logTailThread;
 
-    public NativeAutodetectProcess(String jobId, Process nativeProcess, InputStream logStream, OutputStream processInStream,
+    public NativeAutodetectProcess(String jobId, InputStream logStream, OutputStream processInStream,
                                    InputStream processOutStream, int numberOfAnalysisFields, List<Path> filesToDelete) {
-        this.nativeProcess = nativeProcess;
         cppLogHandler = new CppLogMessageHandler(jobId, logStream);
         this.processInStream = new BufferedOutputStream(processInStream);
         this.processOutStream = processOutStream;
@@ -65,14 +62,15 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     }
 
     public void tailLogsInThread() {
-        new Thread(() -> {
+        logTailThread = new Thread(() -> {
             try {
                 cppLogHandler.tailStream();
                 cppLogHandler.close();
             } catch (IOException e) {
                 LOGGER.error("Error tailing C++ process logs", e);
             }
-        }).start();
+        });
+        logTailThread.start();
     }
 
     @Override
@@ -110,16 +108,15 @@ public class NativeAutodetectProcess implements AutodetectProcess {
             // closing its input causes the process to exit
             processInStream.close();
 
-            // wait for the process to exit
-            int exitValue = nativeProcess.waitFor();
-            String msg = String.format(Locale.ROOT, "Process returned with value %d.", exitValue);
-            if (exitValue != 0) {
-                String errors = cppLogHandler.getErrors();
-                LOGGER.error(errors);
-                throw ExceptionsHelper.serverError(errors, ErrorCodes.NATIVE_PROCESS_ERROR);
-            } else {
-                LOGGER.info(msg);
+            // wait for the process to exit by waiting for end-of-file on the named pipe connected to its logger
+            if (logTailThread != null) {
+                logTailThread.join();
             }
+
+            if (cppLogHandler.seenFatalError()) {
+                throw ExceptionsHelper.serverError(cppLogHandler.getErrors(), ErrorCodes.NATIVE_PROCESS_ERROR);
+            }
+            LOGGER.info("Process exited");
         } catch (InterruptedException e) {
             LOGGER.warn("Exception closing the running native process");
             Thread.currentThread().interrupt();
@@ -160,16 +157,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     @Override
     public boolean isProcessAlive() {
         // Sanity check make sure the process hasn't terminated already
-        try {
-            int exitValue = nativeProcess.exitValue();
-
-            // If we get here the process has exited.
-            String msg = String.format(Locale.ROOT, "Process exited with code %d.", exitValue);
-            LOGGER.info(msg);
-            return false;
-        } catch (IllegalThreadStateException e) {
-            return true;
-        }
+        return !cppLogHandler.hasLogStreamEnded();
     }
 
     @Override

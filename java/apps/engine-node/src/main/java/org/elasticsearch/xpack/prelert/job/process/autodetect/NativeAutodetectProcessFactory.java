@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
@@ -23,6 +22,7 @@ import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.process.NativeController;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
 import org.elasticsearch.xpack.prelert.job.process.ProcessPipes;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -33,8 +33,6 @@ import org.elasticsearch.xpack.prelert.utils.NamedPipeHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,11 +49,13 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
     private final JobProvider jobProvider;
     private Environment env;
     private Settings settings;
+    private NativeController nativeController;
 
-    public NativeAutodetectProcessFactory(JobProvider jobProvider, Environment env, Settings settings) {
-        this.env = env;
-        this.settings = settings;
+    public NativeAutodetectProcessFactory(JobProvider jobProvider, Environment env, Settings settings, NativeController nativeController) {
+        this.env = Objects.requireNonNull(env);
+        this.settings = Objects.requireNonNull(settings);
         this.jobProvider = Objects.requireNonNull(jobProvider);
+        this.nativeController = Objects.requireNonNull(nativeController);
     }
 
     @Override
@@ -66,15 +66,9 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
 
         ProcessPipes processPipes = new ProcessPipes(env, NAMED_PIPE_HELPER, ProcessCtrl.AUTODETECT, job.getId(),
                 true, false, true, true, modelSnapshot != null, false);
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new SpecialPermission());
-        }
-        Process nativeProcess = AccessController.doPrivileged((PrivilegedAction<Process>) () -> {
-            return createNativeProcess(job, processPipes, ignoreDowntime, filesToDelete);
-        });
+        createNativeProcess(job, processPipes, ignoreDowntime, filesToDelete);
         int numberOfAnalysisFields = job.getAnalysisConfig().analysisFields().size();
-        NativeAutodetectProcess autodetect = new NativeAutodetectProcess(job.getId(), nativeProcess, processPipes.getLogStream().get(),
+        NativeAutodetectProcess autodetect = new NativeAutodetectProcess(job.getId(), processPipes.getLogStream().get(),
                 processPipes.getProcessInStream().get(), processPipes.getProcessOutStream().get(), numberOfAnalysisFields, filesToDelete);
         autodetect.tailLogsInThread();
         if (modelSnapshot != null) {
@@ -101,15 +95,14 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
         }).start();
     }
 
-    private Process createNativeProcess(Job job, ProcessPipes processPipes, boolean ignoreDowntime, List<Path> filesToDelete) {
+    private void createNativeProcess(Job job, ProcessPipes processPipes, boolean ignoreDowntime, List<Path> filesToDelete) {
 
         String jobId = job.getId();
         Optional<Quantiles> quantiles = jobProvider.getQuantiles(jobId);
 
-        Process nativeProcess = null;
-
         try {
-            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER, env, settings, processPipes)
+            AutodetectBuilder autodetectBuilder = new AutodetectBuilder(job, filesToDelete, LOGGER, env,
+                    settings, nativeController, processPipes)
                     .ignoreDowntime(ignoreDowntime)
                     .referencedLists(resolveLists(job.getAnalysisConfig().extractReferencedLists()));
 
@@ -119,15 +112,13 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
                 autodetectBuilder.quantiles(quantiles);
             }
 
-            nativeProcess = autodetectBuilder.build();
+            autodetectBuilder.build();
             processPipes.connectStreams(PROCESS_STARTUP_TIMEOUT);
         } catch (IOException e) {
             String msg = "Failed to launch process for job " + job.getId();
             LOGGER.error(msg);
             throw ExceptionsHelper.serverError(msg, e, ErrorCodes.NATIVE_PROCESS_START_ERROR);
         }
-
-        return nativeProcess;
     }
 
     private Set<ListDocument> resolveLists(Set<String> listIds) {

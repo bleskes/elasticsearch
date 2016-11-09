@@ -14,7 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert;
 
-import org.apache.lucene.util.Constants;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.Client;
@@ -80,6 +80,7 @@ import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterFactory;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchFactories;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
+import org.elasticsearch.xpack.prelert.job.process.NativeController;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
@@ -115,20 +116,18 @@ import org.elasticsearch.xpack.prelert.rest.schedulers.RestStopJobSchedulerActio
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateDetectorAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformAction;
 import org.elasticsearch.xpack.prelert.rest.validate.RestValidateTransformsAction;
+import org.elasticsearch.xpack.prelert.utils.NamedPipeHelper;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class PrelertPlugin extends Plugin implements ActionPlugin {
     public static final String NAME = "prelert";
     public static final String THREAD_POOL_NAME = NAME;
-
-    // NORELEASE: eventually we won't run programs directly so won't need to know this in this class
-    private static final String PLATFORM_NAME = makePlatformName();
 
     // NORELEASE - temporary solution
     static final Setting<Boolean> USE_NATIVE_PROCESS_OPTION = Setting.boolSetting("useNativeProcess", false, Property.NodeScope,
@@ -197,14 +196,22 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
     private AutodetectCommunicatorFactory createAutodetectCommunicatorFactory(ElasticsearchFactories esFactory,
             ElasticsearchJobProvider jobProvider) {
 
-        AutodetectProcessFactory processFactory = USE_NATIVE_PROCESS_OPTION.get(settings)
-                ? new NativeAutodetectProcessFactory(jobProvider, env, settings)
-                        : (JobDetails, ingnoreDowntime) -> new BlackHoleAutodetectProcess();
-                        return new AutodetectCommunicatorFactory(env, settings,
-                                processFactory,
-                                esFactory.newJobResultsPersisterFactory(),
-                                esFactory.newJobDataCountsPersisterFactory(),
-                                esFactory.newUsagePersisterFactory(),
+        AutodetectProcessFactory processFactory;
+        if (USE_NATIVE_PROCESS_OPTION.get(settings)) {
+            try {
+                NativeController nativeController = new NativeController(env, new NamedPipeHelper());
+                nativeController.tailLogsInThread();
+                processFactory = new NativeAutodetectProcessFactory(jobProvider, env, settings, nativeController);
+            } catch (IOException e) {
+                throw new ElasticsearchException("Failed to create native process factory", e);
+            }
+        } else {
+            processFactory = (JobDetails, ignoreDowntime) -> new BlackHoleAutodetectProcess();
+        }
+
+        return new AutodetectCommunicatorFactory(env, settings, processFactory, esFactory.newJobResultsPersisterFactory(),
+                esFactory.newJobDataCountsPersisterFactory(),
+                esFactory.newUsagePersisterFactory(),
                 jobId -> Loggers.getLogger(jobId), parseFieldMatcherSupplier);
     }
 
@@ -282,41 +289,10 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         return env.logsFile().resolve(NAME).resolve(name);
     }
 
-    // NORELEASE: eventually we won't run programs directly
-    public static Path resolveBinFile(Environment env, String name) {
-        return env.pluginsFile().resolve(NAME).resolve("platform").resolve(PLATFORM_NAME).resolve("bin").resolve(name);
-    }
-
     @Override
     public List<ExecutorBuilder<?>> getExecutorBuilders(Settings settings) {
         final FixedExecutorBuilder builder = new FixedExecutorBuilder(settings, THREAD_POOL_NAME,
                 5 * EsExecutors.boundedNumberOfProcessors(settings), 1000, "xpack.prelert.thread_pool");
         return Collections.singletonList(builder);
-    }
-
-    /**
-     * Make the platform name in the format used in Kibana downloads, for example:
-     * - darwin-x86_64
-     * - linux-x86-64
-     * - windows-x86_64
-     * For *nix platforms this is more-or-less `uname -s`-`uname -m` converted to lower case.
-     * However, for consistency between different operating systems on the same architecture
-     * "amd64" is replaced with "x86_64" and "i386" with "x86".
-     * For Windows it's "windows-" followed by either "x86" or "x86_64".
-     */
-    static String makePlatformName() {
-        String os = Constants.OS_NAME.toLowerCase(Locale.ROOT);
-        if (os.startsWith("windows")) {
-            os = "windows";
-        } else if (os.equals("mac os x")) {
-            os = "darwin";
-        }
-        String cpu = Constants.OS_ARCH.toLowerCase(Locale.ROOT);
-        if (cpu.equals("amd64")) {
-            cpu = "x86_64";
-        } else if (cpu.equals("i386")) {
-            cpu = "x86";
-        }
-        return os + "-" + cpu;
     }
 }

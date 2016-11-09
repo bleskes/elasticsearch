@@ -17,10 +17,10 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig;
+import org.elasticsearch.xpack.prelert.job.process.NativeController;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
 import org.elasticsearch.xpack.prelert.job.process.ProcessPipes;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.AnalysisLimitsWriter;
@@ -58,6 +58,7 @@ public class AutodetectBuilder {
     private Optional<Quantiles> quantiles;
     private Environment env;
     private Settings settings;
+    private NativeController controller;
     private ProcessPipes processPipes;
 
     /**
@@ -69,9 +70,10 @@ public class AutodetectBuilder {
      * @param logger        The job's logger
      */
     public AutodetectBuilder(Job job, List<Path> filesToDelete, Logger logger, Environment env, Settings settings,
-                             ProcessPipes processPipes) {
+                             NativeController controller, ProcessPipes processPipes) {
         this.env = env;
         this.settings = settings;
+        this.controller = controller;
         this.processPipes = processPipes;
         this.job = Objects.requireNonNull(job);
         this.filesToDelete = Objects.requireNonNull(filesToDelete);
@@ -108,28 +110,19 @@ public class AutodetectBuilder {
     }
 
     /**
-     * Clears the environment and starts the process in that environment.
-     * <code>processName</code> is not the full path it is the relative path of the
-     * program from the Elasticsearch plugins directory.
-     *
-     * @return A Java Process object
+     * Requests that the controller daemon start an autodetect process.
      */
-    public Process build() throws IOException {
+    public void build() throws IOException {
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job, logger, ignoreDowntime);
 
         buildLimits(command);
         buildModelDebugConfig(command);
 
-        if (ProcessCtrl.modelConfigFilePresent(env)) {
-            String modelConfigFile = PrelertPlugin.resolveConfigFile(env, ProcessCtrl.PRELERT_MODEL_CONF).toString();
-            command.add(ProcessCtrl.MODEL_CONFIG_ARG + modelConfigFile);
-        }
-
         buildQuantiles(command);
         buildFieldConfig(command);
         processPipes.addArgs(command);
-        return buildProcess(command);
+        controller.startProcess(command);
     }
 
     private void buildLimits(List<String> command) throws IOException {
@@ -199,12 +192,5 @@ public class AutodetectBuilder {
             String fieldConfig = FIELD_CONFIG_ARG + fieldConfigFile.toString();
             command.add(fieldConfig);
         }
-    }
-
-    private Process buildProcess(List<String> command) throws IOException {
-        logger.info("Starting autodetect process with command: " + command);
-        ProcessBuilder pb = new ProcessBuilder(command);
-        ProcessCtrl.buildEnvironment(pb);
-        return pb.start();
     }
 }

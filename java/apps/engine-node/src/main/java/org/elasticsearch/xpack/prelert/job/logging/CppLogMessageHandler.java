@@ -49,6 +49,8 @@ public class CppLogMessageHandler implements Closeable {
     private final int readBufSize;
     private final int errorStoreSize;
     private final Deque<String> errorStore;
+    private volatile boolean hasLogStreamEnded;
+    private volatile boolean seenFatalError;
 
     /**
      * @param jobId May be null or empty if the logs are from a process not associated with a job.
@@ -68,6 +70,7 @@ public class CppLogMessageHandler implements Closeable {
         this.readBufSize = readBufSize;
         this.errorStoreSize = errorStoreSize;
         this.errorStore = ConcurrentCollections.newDeque();
+        hasLogStreamEnded = false;
     }
 
     @Override
@@ -81,18 +84,30 @@ public class CppLogMessageHandler implements Closeable {
      * InputStream throws an exception.
      */
     public void tailStream() throws IOException {
-        XContent xContent = XContentFactory.xContent(XContentType.JSON);
-        BytesReference bytesRef = null;
-        byte[] readBuf = new byte[readBufSize];
-        for (int bytesRead = inputStream.read(readBuf); bytesRead != -1; bytesRead = inputStream.read(readBuf)) {
-            if (bytesRef == null) {
-                bytesRef = new BytesArray(readBuf, 0, bytesRead);
-            } else {
-                bytesRef = new CompositeBytesReference(bytesRef, new BytesArray(readBuf, 0, bytesRead));
+        try {
+            XContent xContent = XContentFactory.xContent(XContentType.JSON);
+            BytesReference bytesRef = null;
+            byte[] readBuf = new byte[readBufSize];
+            for (int bytesRead = inputStream.read(readBuf); bytesRead != -1; bytesRead = inputStream.read(readBuf)) {
+                if (bytesRef == null) {
+                    bytesRef = new BytesArray(readBuf, 0, bytesRead);
+                } else {
+                    bytesRef = new CompositeBytesReference(bytesRef, new BytesArray(readBuf, 0, bytesRead));
+                }
+                bytesRef = parseMessages(xContent, bytesRef);
+                readBuf = new byte[readBufSize];
             }
-            bytesRef = parseMessages(xContent, bytesRef);
-            readBuf = new byte[readBufSize];
+        } finally {
+            hasLogStreamEnded = true;
         }
+    }
+
+    public boolean hasLogStreamEnded() {
+        return hasLogStreamEnded;
+    }
+
+    public boolean seenFatalError() {
+        return seenFatalError;
     }
 
     /**
@@ -133,6 +148,9 @@ public class CppLogMessageHandler implements Closeable {
             } else if (level.isMoreSpecificThan(Level.ERROR)) {
                 // Keep the last few error messages to report if the process dies
                 storeError(msg.getMessage());
+                if (level.isMoreSpecificThan(Level.FATAL)) {
+                    seenFatalError = true;
+                }
             }
             // TODO: Is there a way to preserve the original timestamp when re-logging?
             logger.log(level, "{}/{} {}@{} {}", msg.getLogger(), msg.getPid(), msg.getFile(), msg.getLine(), msg.getMessage());
