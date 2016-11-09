@@ -45,7 +45,6 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
  */
 class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
     private static final String ELASTICSEARCH_SOURCE_FIELD = "_source";
-    private static final String ELASTICSEARCH_FIELDS_FIELD = "fields";
 
     /**
      * Scheduler config.  May be <code>null</code>.
@@ -122,9 +121,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
             if (schedulerConfig != null) {
                 if (schedulerConfig.getAggregationsOrAggs() != null) {
                     return SchedulerConfig.AGGREGATIONS.getPreferredName();
-                }
-                if (!Boolean.TRUE.equals(schedulerConfig.getRetrieveWholeSource())) {
-                    return ELASTICSEARCH_FIELDS_FIELD;
                 }
             }
             return ELASTICSEARCH_SOURCE_FIELD;
