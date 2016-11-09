@@ -45,24 +45,26 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
             bucket = null;
         }
         if (randomBoolean()) {
-            quantiles = new Quantiles(new Date(randomLong()), randomAsciiOfLengthBetween(1, 20));
+            quantiles = new Quantiles("foo", new Date(randomLong()), randomAsciiOfLengthBetween(1, 20));
         } else {
             quantiles = null;
         }
         if (randomBoolean()) {
             modelSnapshot = new ModelSnapshot();
+            modelSnapshot.setJobId(randomAsciiOfLengthBetween(1, 20));
             modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         } else {
             modelSnapshot = null;
         }
         if (randomBoolean()) {
-            modelSizeStats = new ModelSizeStats.Builder();
+            modelSizeStats = new ModelSizeStats.Builder("foo");
             modelSizeStats.setId(randomAsciiOfLengthBetween(1, 20));
         } else {
             modelSizeStats = null;
         }
         if (randomBoolean()) {
             modelDebugOutput = new ModelDebugOutput();
+            modelDebugOutput.setJobId("foo");
             modelDebugOutput.setId(randomAsciiOfLengthBetween(1, 20));
         } else {
             modelDebugOutput = null;

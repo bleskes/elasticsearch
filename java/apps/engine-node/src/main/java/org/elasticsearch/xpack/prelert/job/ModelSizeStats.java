@@ -20,7 +20,7 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
@@ -34,10 +34,12 @@ import java.util.Objects;
  * Provide access to the C++ model memory usage numbers for the Java process.
  */
 public class ModelSizeStats extends ToXContentToBytes implements Writeable {
+
     /**
      * Field Names
      */
-    public static final ParseField MODEL_SIZE_STATS_FIELD = new ParseField("modelSizeStats");
+    private static final ParseField MODEL_SIZE_STATS_FIELD = new ParseField("modelSizeStats");
+    public static final ParseField JOB_ID = new ParseField("jobId");
     public static final ParseField MODEL_BYTES_FIELD = new ParseField("modelBytes");
     public static final ParseField TOTAL_BY_FIELD_COUNT_FIELD = new ParseField("totalByFieldCount");
     public static final ParseField TOTAL_OVER_FIELD_COUNT_FIELD = new ParseField("totalOverFieldCount");
@@ -45,13 +47,13 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     public static final ParseField BUCKET_ALLOCATION_FAILURES_COUNT_FIELD = new ParseField("bucketAllocationFailuresCount");
     public static final ParseField MEMORY_STATUS_FIELD = new ParseField("memoryStatus");
     public static final ParseField LOG_TIME_FIELD = new ParseField("logTime");
-    public static final ParseField BUCKET_TIME_FIELD = new ParseField("bucketTime");
     public static final ParseField TIMESTAMP_FIELD = new ParseField("timestamp");
 
-    public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
-            MODEL_SIZE_STATS_FIELD.getPreferredName(), Builder::new);
+    public static final ConstructingObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
+            MODEL_SIZE_STATS_FIELD.getPreferredName(), a -> new Builder((String) a[0]));
 
     static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), JOB_ID);
         PARSER.declareLong(Builder::setModelBytes, MODEL_BYTES_FIELD);
         PARSER.declareLong(Builder::setBucketAllocationFailuresCount, BUCKET_ALLOCATION_FAILURES_COUNT_FIELD);
         PARSER.declareLong(Builder::setTotalByFieldCount, TOTAL_BY_FIELD_COUNT_FIELD);
@@ -125,6 +127,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         }
     }
 
+    private final String jobId;
     private final String id;
     private final long modelBytes;
     private final long totalByFieldCount;
@@ -135,8 +138,10 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     private final Date timestamp;
     private final Date logTime;
 
-    private ModelSizeStats(String id, long modelBytes, long totalByFieldCount, long totalOverFieldCount, long totalPartitionFieldCount,
-                           long bucketAllocationFailuresCount, MemoryStatus memoryStatus, Date timestamp, Date logTime) {
+    private ModelSizeStats(String jobId, String id, long modelBytes, long totalByFieldCount, long totalOverFieldCount,
+                           long totalPartitionFieldCount, long bucketAllocationFailuresCount, MemoryStatus memoryStatus,
+                           Date timestamp, Date logTime) {
+        this.jobId = jobId;
         this.id = id;
         this.modelBytes = modelBytes;
         this.totalByFieldCount = totalByFieldCount;
@@ -149,6 +154,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     }
 
     public ModelSizeStats(StreamInput in) throws IOException {
+        jobId = in.readString();
         id = null;
         modelBytes = in.readVLong();
         totalByFieldCount = in.readVLong();
@@ -162,6 +168,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(jobId);
         out.writeVLong(modelBytes);
         out.writeVLong(totalByFieldCount);
         out.writeVLong(totalOverFieldCount);
@@ -179,6 +186,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        builder.field(JOB_ID.getPreferredName(), jobId);
         builder.field(MODEL_BYTES_FIELD.getPreferredName(), modelBytes);
         builder.field(TOTAL_BY_FIELD_COUNT_FIELD.getPreferredName(), totalByFieldCount);
         builder.field(TOTAL_OVER_FIELD_COUNT_FIELD.getPreferredName(), totalOverFieldCount);
@@ -232,7 +240,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     @Override
     public int hashCode() {
         // this.id excluded here as it is generated by the datastore
-        return Objects.hash(this.modelBytes, totalByFieldCount, totalOverFieldCount, totalPartitionFieldCount,
+        return Objects.hash(jobId, modelBytes, totalByFieldCount, totalOverFieldCount, totalPartitionFieldCount,
                 this.bucketAllocationFailuresCount, memoryStatus, timestamp, logTime);
     }
 
@@ -255,12 +263,14 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
                 && this.totalOverFieldCount == that.totalOverFieldCount && this.totalPartitionFieldCount == that.totalPartitionFieldCount
                 && this.bucketAllocationFailuresCount == that.bucketAllocationFailuresCount
                 && Objects.equals(this.memoryStatus, that.memoryStatus) && Objects.equals(this.timestamp, that.timestamp)
-                && Objects.equals(this.logTime, that.logTime);
+                && Objects.equals(this.logTime, that.logTime)
+                && Objects.equals(this.jobId, that.jobId);
     }
 
     // NORELEASE This will not be needed once we are able to parse ModelSizeStats all at once.
     public static class Builder {
 
+        private final String jobId;
         private String id;
         private long modelBytes;
         private long totalByFieldCount;
@@ -271,7 +281,8 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         private Date timestamp;
         private Date logTime;
 
-        public Builder() {
+        public Builder(String jobId) {
+            this.jobId = jobId;
             id = TYPE.getPreferredName();
             memoryStatus = MemoryStatus.OK;
             logTime = new Date();
@@ -315,7 +326,7 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         }
 
         public ModelSizeStats build() {
-            return new ModelSizeStats(id, modelBytes, totalByFieldCount, totalOverFieldCount, totalPartitionFieldCount,
+            return new ModelSizeStats(jobId, id, modelBytes, totalByFieldCount, totalOverFieldCount, totalPartitionFieldCount,
                     bucketAllocationFailuresCount, memoryStatus, timestamp, logTime);
         }
     }

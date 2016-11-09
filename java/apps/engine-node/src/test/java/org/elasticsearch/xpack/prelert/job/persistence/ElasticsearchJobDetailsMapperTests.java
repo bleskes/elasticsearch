@@ -61,7 +61,7 @@ public class ElasticsearchJobDetailsMapperTests extends ESTestCase {
     }
 
     public void testMap_GivenModelSizeStatsExists() throws Exception {
-        ModelSizeStats.Builder modelSizeStats = new ModelSizeStats.Builder();
+        ModelSizeStats.Builder modelSizeStats = new ModelSizeStats.Builder("foo");
         modelSizeStats.setModelBytes(42L);
         Date now = new Date();
         modelSizeStats.setTimestamp(now);

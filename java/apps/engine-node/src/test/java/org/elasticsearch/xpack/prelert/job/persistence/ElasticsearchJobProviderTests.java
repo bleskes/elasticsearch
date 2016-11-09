@@ -96,6 +96,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
     public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
+        source.put(Quantiles.JOB_ID.getPreferredName(), "foo");
         source.put(Quantiles.TIMESTAMP.getPreferredName(), 0L);
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "state");
         GetResponse getResponse = createGetResponse(true, source);
@@ -114,6 +115,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
     public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
+        source.put(Quantiles.JOB_ID.getPreferredName(), "foo");
         source.put(Quantiles.TIMESTAMP.getPreferredName(), new Date(0L).getTime());
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "");
         GetResponse getResponse = createGetResponse(true, source);
@@ -663,6 +665,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("jobId", "foo");
         recordMap1.put("probability", 0.555);
         recordMap1.put("influencerFieldName", "Builder");
         recordMap1.put("timestamp", now.getTime());
@@ -670,6 +673,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("initialAnomalyScore", 22.2);
         recordMap1.put("anomalyScore", 22.6);
         Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("jobId", "foo");
         recordMap2.put("probability", 0.99);
         recordMap2.put("influencerFieldName", "Builder");
         recordMap2.put("timestamp", now.getTime());
@@ -698,6 +702,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
 
         List<Influencer> records = page.hits();
+        assertEquals("foo", records.get(0).getJobId());
         assertEquals("Bob", records.get(0).getInfluencerFieldValue());
         assertEquals("Builder", records.get(0).getInfluencerFieldName());
         assertEquals(now, records.get(0).getTimestamp());
@@ -714,12 +719,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testInfluencers_WithInterim()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("jobId", "foo");
         recordMap1.put("probability", 0.555);
         recordMap1.put("influencerFieldName", "Builder");
         recordMap1.put("timestamp", now.getTime());
@@ -727,6 +733,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("initialAnomalyScore", 22.2);
         recordMap1.put("anomalyScore", 22.6);
         Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("jobId", "foo");
         recordMap2.put("probability", 0.99);
         recordMap2.put("influencerFieldName", "Builder");
         recordMap2.put("timestamp", now.getTime());

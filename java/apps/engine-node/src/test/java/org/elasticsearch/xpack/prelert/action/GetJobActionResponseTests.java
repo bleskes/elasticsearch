@@ -56,7 +56,7 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
             SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
             schedulerConfig.setFilePath("/file/path");
             DataDescription dataDescription = randomBoolean() ? new DataDescription.Builder().build() : null;
-            ModelSizeStats modelSizeStats = randomBoolean() ? new ModelSizeStats.Builder().build() : null;
+            ModelSizeStats modelSizeStats = randomBoolean() ? new ModelSizeStats.Builder("foo").build() : null;
             int numTransformers = randomIntBetween(0, 32);
             List<TransformConfig> transformConfigList = new ArrayList<>(numTransformers);
             for (int i = 0; i < numTransformers; i++) {

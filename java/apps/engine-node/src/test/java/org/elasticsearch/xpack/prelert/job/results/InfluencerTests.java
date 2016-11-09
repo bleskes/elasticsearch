@@ -23,7 +23,7 @@ public class InfluencerTests extends AbstractSerializingTestCase<Influencer> {
 
     @Override
     protected Influencer createTestInstance() {
-        return new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20));
+        return new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20));
     }
 
     @Override

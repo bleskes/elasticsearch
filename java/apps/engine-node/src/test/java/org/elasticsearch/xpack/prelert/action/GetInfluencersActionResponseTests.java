@@ -30,7 +30,8 @@ public class GetInfluencersActionResponseTests extends AbstractStreamableTestCas
         int listSize = randomInt(10);
         List<Influencer> hits = new ArrayList<>(listSize);
         for (int j = 0; j < listSize; j++) {
-            Influencer influencer = new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20));
+            Influencer influencer = new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20),
+                    randomAsciiOfLengthBetween(1, 20));
             influencer.setAnomalyScore(randomDouble());
             influencer.setInitialAnomalyScore(randomDouble());
             influencer.setProbability(randomDouble());

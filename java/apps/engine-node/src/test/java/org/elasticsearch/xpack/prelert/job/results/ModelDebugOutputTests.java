@@ -25,6 +25,7 @@ public class ModelDebugOutputTests extends AbstractSerializingTestCase<ModelDebu
     @Override
     protected ModelDebugOutput createTestInstance() {
         ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
+        modelDebugOutput.setJobId("foo");
         if (randomBoolean()) {
             modelDebugOutput.setByFieldName(randomAsciiOfLengthBetween(1, 20));
         }

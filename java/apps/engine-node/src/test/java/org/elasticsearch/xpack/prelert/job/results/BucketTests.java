@@ -62,7 +62,8 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
             int size = randomInt(10);
             List<Influencer> influencers = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
-                Influencer influencer = new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20));
+                Influencer influencer = new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20),
+                        randomAsciiOfLengthBetween(1, 20));
                 influencer.setAnomalyScore(randomDouble());
                 influencer.setInitialAnomalyScore(randomDouble());
                 influencer.setProbability(randomDouble());
@@ -245,7 +246,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
 
     public void testEquals_GivenDifferentInfluencers() {
         Bucket bucket1 = new Bucket();
-        Influencer influencer = new Influencer("inf_field", "inf_value");
+        Influencer influencer = new Influencer("foo", "inf_field", "inf_value");
         Bucket bucket2 = new Bucket();
         bucket2.setInfluencers(Arrays.asList(influencer));
 
@@ -271,7 +272,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
 
     public void testEquals_GivenEqualBuckets() {
         AnomalyRecord record = new AnomalyRecord();
-        Influencer influencer = new Influencer("testField", "testValue");
+        Influencer influencer = new Influencer("jobId", "testField", "testValue");
         BucketInfluencer bucketInfluencer = new BucketInfluencer();
         influencer.setProbability(0.1);
         influencer.setInitialAnomalyScore(10.0);

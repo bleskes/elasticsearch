@@ -39,6 +39,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     /**
      * Field Names
      */
+    public static final ParseField JOB_ID = new ParseField("jobId");
     public static final ParseField TIMESTAMP = new ParseField("timestamp");
     public static final ParseField DESCRIPTION = new ParseField("description");
     public static final ParseField RESTORE_PRIORITY = new ParseField("restorePriority");
@@ -55,6 +56,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     public static final ObjectParser<ModelSnapshot, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
             ModelSnapshot::new);
     static {
+        PARSER.declareString(ModelSnapshot::setJobId, JOB_ID);
         PARSER.declareField(ModelSnapshot::setTimestamp, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
@@ -89,6 +91,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
         PARSER.declareObject(ModelSnapshot::setQuantiles, Quantiles.PARSER, Quantiles.TYPE);
     }
 
+    private String jobId;
     private Date timestamp;
     private String description;
     private long restorePriority;
@@ -103,6 +106,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     }
 
     public ModelSnapshot(StreamInput in) throws IOException {
+        jobId = in.readString();
         if (in.readBoolean()) {
             timestamp = new Date(in.readLong());
         }
@@ -126,6 +130,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(jobId);
         boolean hasTimestamp = timestamp != null;
         out.writeBoolean(hasTimestamp);
         if (hasTimestamp) {
@@ -160,6 +165,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        builder.field(JOB_ID.getPreferredName(), jobId);
         if (timestamp != null) {
             builder.field(TIMESTAMP.getPreferredName(), timestamp.getTime());
         }
@@ -185,6 +191,14 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
         }
         builder.endObject();
         return builder;
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
     }
 
     public Date getTimestamp() {
@@ -261,7 +275,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(timestamp, description, restorePriority, snapshotId, quantiles,
+        return Objects.hash(jobId, timestamp, description, restorePriority, snapshotId, quantiles,
                 snapshotDocCount, modelSizeStats, latestRecordTimeStamp, latestResultTimeStamp);
     }
 
@@ -280,7 +294,8 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
 
         ModelSnapshot that = (ModelSnapshot) other;
 
-        return Objects.equals(this.timestamp, that.timestamp)
+        return Objects.equals(this.jobId, that.jobId)
+                && Objects.equals(this.timestamp, that.timestamp)
                 && Objects.equals(this.description, that.description)
                 && this.restorePriority == that.restorePriority
                 && Objects.equals(this.snapshotId, that.snapshotId)

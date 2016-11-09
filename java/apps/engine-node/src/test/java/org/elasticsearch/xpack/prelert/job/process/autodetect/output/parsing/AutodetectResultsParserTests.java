@@ -56,7 +56,7 @@ public class AutodetectResultsParserTests extends ESTestCase {
     public static final String METRIC_OUTPUT_SAMPLE = "[{\"bucket\": {\"timestamp\":1359450000000,\"records\":[],"
             + "\"maxNormalizedProbability\":0, \"anomalyScore\":0,\"recordCount\":0,\"eventCount\":806,\"bucketInfluencers\":["
             + "{\"anomalyScore\":0, \"probability\":0.0, \"influencerFieldName\":\"bucketTime\",\"initialAnomalyScore\":0.0}]}} ,"
-            + "{\"quantiles\": {\"quantileState\":\"[normaliser 1.1, normaliser 2.1]\"}} ,{\"bucket\": {\"timestamp\":1359453600000,"
+            + "{\"quantiles\": {\"jobId\":\"foo\", \"quantileState\":\"[normaliser 1.1, normaliser 2.1]\"}} ,{\"bucket\": {\"timestamp\":1359453600000,"
             + "\"records\":[{\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\", \"typical\":[1020.08],"
             + "\"actual\":[1042.14],\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\", "
             + "\"partitionFieldValue\":\"\"},{\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\", "
@@ -69,9 +69,9 @@ public class AutodetectResultsParserTests extends ESTestCase {
             + "\"maxNormalizedProbability\":10.5688, \"recordCount\":4,\"eventCount\":820,\"bucketInfluencers\":[{ \"rawAnomalyScore\":"
             + "0.0140005, \"probability\":0.01,\"influencerFieldName\":\"bucketTime\",\"initialAnomalyScore\":20.22688"
             + ",\"anomalyScore\":20.22688} ,{\"rawAnomalyScore\":0.005, \"probability\":0.03,\"influencerFieldName\":\"foo\","
-            + "\"initialAnomalyScore\":10.5,\"anomalyScore\":10.5}]}},{\"quantiles\": {"
+            + "\"initialAnomalyScore\":10.5,\"anomalyScore\":10.5}]}},{\"quantiles\": {\"jobId\":\"foo\", "
             + "\"quantileState\":\"[normaliser 1.2, normaliser 2.2]\"}} ,{\"flush\": {\"id\":\"testing1\"}} ,"
-            + "{\"quantiles\": {\"quantileState\":\"[normaliser 1.3, normaliser 2.3]\"}} ]";
+            + "{\"quantiles\": {\"jobId\":\"foo\", \"quantileState\":\"[normaliser 1.3, normaliser 2.3]\"}} ]";
 
     public static final String POPULATION_OUTPUT_SAMPLE = "[{\"timestamp\":1379590200,\"records\":[{\"probability\":1.38951e-08,"
             + "\"fieldName\":\"sum_cs_bytes_\",\"overFieldName\":\"cs_host\",\"overFieldValue\":\"mail.google.com\",\"function\":\"max\","
@@ -578,7 +578,7 @@ public class AutodetectResultsParserTests extends ESTestCase {
     }
 
     public void testParse_GivenModelSizeStats() throws ElasticsearchParseException, IOException {
-        String json = "[{\"modelSizeStats\": {\"modelBytes\":300}}]";
+        String json = "[{\"modelSizeStats\": {\"jobId\": \"foo\", \"modelBytes\":300}}]";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         Logger logger = mock(Logger.class);
         ResultsPersister persister = new ResultsPersister();

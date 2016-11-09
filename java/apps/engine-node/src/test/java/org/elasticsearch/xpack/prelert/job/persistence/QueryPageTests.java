@@ -26,7 +26,8 @@ public class QueryPageTests extends AbstractWireSerializingTestCase<QueryPage<In
         int hitCount = randomIntBetween(0, 10);
         ArrayList<Influencer> hits = new ArrayList<>();
         for (int i = 0; i < hitCount; i++) {
-            hits.add(new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20)));
+            hits.add(new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20),
+                    randomAsciiOfLengthBetween(1, 20)));
         }
         return new QueryPage<>(hits, hitCount);
     }

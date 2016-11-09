@@ -31,7 +31,8 @@ public class SingleDocumentTests extends AbstractWireSerializingTestCase<SingleD
             document = SingleDocument.empty(randomAsciiOfLengthBetween(1, 20));
         } else {
             document = new SingleDocument<Influencer>(randomAsciiOfLengthBetween(1, 20),
-                    new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20)));
+                    new Influencer(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 20),
+                            randomAsciiOfLengthBetween(1, 20)));
         }
         return document;
     }

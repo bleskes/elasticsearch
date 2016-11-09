@@ -112,7 +112,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
     public void testEquals_GivenDifferentModelSizeStats() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
-        ModelSizeStats.Builder modelSizeStats = new ModelSizeStats.Builder();
+        ModelSizeStats.Builder modelSizeStats = new ModelSizeStats.Builder("foo");
         modelSizeStats.setModelBytes(42L);
         modelSnapshot2.setModelSizeStats(modelSizeStats);
 
@@ -124,7 +124,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
     public void testEquals_GivenDifferentQuantiles() {
         ModelSnapshot modelSnapshot1 = createFullyPopulated();
         ModelSnapshot modelSnapshot2 = createFullyPopulated();
-        modelSnapshot2.setQuantiles(new Quantiles(modelSnapshot2.getQuantiles().getTimestamp(), "different state"));
+        modelSnapshot2.setQuantiles(new Quantiles("foo", modelSnapshot2.getQuantiles().getTimestamp(), "different state"));
 
         assertFalse(modelSnapshot1.equals(modelSnapshot2));
         assertFalse(modelSnapshot2.equals(modelSnapshot1));
@@ -160,22 +160,23 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         modelSnapshot.setRestorePriority(DEFAULT_PRIORITY);
         modelSnapshot.setSnapshotId(DEFAULT_ID);
         modelSnapshot.setSnapshotDocCount(DEFAULT_DOC_COUNT);
-        modelSnapshot.setModelSizeStats(new ModelSizeStats.Builder());
+        modelSnapshot.setModelSizeStats(new ModelSizeStats.Builder("foo"));
         modelSnapshot.setLatestResultTimeStamp(DEFAULT_LATEST_RESULT_TIMESTAMP);
         modelSnapshot.setLatestRecordTimeStamp(DEFAULT_LATEST_RECORD_TIMESTAMP);
-        modelSnapshot.setQuantiles(new Quantiles(DEFAULT_TIMESTAMP, "state"));
+        modelSnapshot.setQuantiles(new Quantiles("foo", DEFAULT_TIMESTAMP, "state"));
         return modelSnapshot;
     }
 
     @Override
     protected ModelSnapshot createTestInstance() {
         ModelSnapshot modelSnapshot = new ModelSnapshot();
+        modelSnapshot.setJobId(randomAsciiOfLengthBetween(1, 10));
         modelSnapshot.setTimestamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
         modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setRestorePriority(randomLong());
         modelSnapshot.setSnapshotId(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setSnapshotDocCount(randomInt());
-        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
         if (randomBoolean()) {
             stats.setBucketAllocationFailuresCount(randomPositiveLong());
         }
@@ -206,7 +207,8 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
         modelSnapshot.setModelSizeStats(stats);
         modelSnapshot.setLatestResultTimeStamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
         modelSnapshot.setLatestRecordTimeStamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
-        Quantiles quantiles = new Quantiles(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())), randomAsciiOfLengthBetween(0, 1000));
+        Quantiles quantiles =
+                new Quantiles("foo", new Date(TimeUtils.dateStringToEpoch(randomTimeValue())), randomAsciiOfLengthBetween(0, 1000));
         modelSnapshot.setQuantiles(quantiles);
         return modelSnapshot;
     }

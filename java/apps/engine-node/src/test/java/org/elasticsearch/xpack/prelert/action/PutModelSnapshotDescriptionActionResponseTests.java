@@ -23,6 +23,7 @@ public class PutModelSnapshotDescriptionActionResponseTests extends AbstractStre
     @Override
     protected Response createTestInstance() {
         ModelSnapshot snapshot = new ModelSnapshot();
+        snapshot.setJobId(randomAsciiOfLengthBetween(1, 20));
         snapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         return new Response(snapshot);
     }

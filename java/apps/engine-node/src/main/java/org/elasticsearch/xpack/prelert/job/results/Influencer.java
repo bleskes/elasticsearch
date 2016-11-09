@@ -39,6 +39,7 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     /*
      * Field names
      */
+    public static final ParseField JOB_ID = new ParseField("jobId");
     public static final ParseField PROBABILITY = new ParseField("probability");
     public static final ParseField TIMESTAMP = new ParseField("timestamp");
     public static final ParseField INFLUENCER_FIELD_NAME = new ParseField("influencerFieldName");
@@ -47,9 +48,10 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     public static final ParseField ANOMALY_SCORE = new ParseField("anomalyScore");
 
     public static final ConstructingObjectParser<Influencer, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
-            TYPE.getPreferredName(), a -> new Influencer((String) a[0], (String) a[1]));
+            TYPE.getPreferredName(), a -> new Influencer((String) a[0], (String) a[1], (String) a[2]));
 
     static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), JOB_ID);
         PARSER.declareString(ConstructingObjectParser.constructorArg(), INFLUENCER_FIELD_NAME);
         PARSER.declareString(ConstructingObjectParser.constructorArg(), INFLUENCER_FIELD_VALUE);
         PARSER.declareDouble(Influencer::setProbability, PROBABILITY);
@@ -66,8 +68,8 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         }, TIMESTAMP, ValueType.VALUE);
     }
 
+    private String jobId;
     private String id;
-
     private Date timestamp;
     private String influenceField;
     private String influenceValue;
@@ -77,12 +79,14 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     private boolean hadBigNormalisedUpdate;
     private boolean isInterim;
 
-    public Influencer(String fieldName, String fieldValue) {
+    public Influencer(String jobId, String fieldName, String fieldValue) {
+        this.jobId = jobId;
         influenceField = fieldName;
         influenceValue = fieldValue;
     }
 
     public Influencer(StreamInput in) throws IOException {
+        jobId = in.readString();
         id = in.readOptionalString();
         if (in.readBoolean()) {
             timestamp = new Date(in.readLong());
@@ -98,6 +102,7 @@ public class Influencer extends ToXContentToBytes implements Writeable {
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(jobId);
         out.writeOptionalString(id);
         boolean hasTimestamp = timestamp != null;
         out.writeBoolean(hasTimestamp);
@@ -116,6 +121,7 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        builder.field(JOB_ID.getPreferredName(), jobId);
         builder.field(INFLUENCER_FIELD_NAME.getPreferredName(), influenceField);
         builder.field(INFLUENCER_FIELD_VALUE.getPreferredName(), influenceValue);
         builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScore);
@@ -127,6 +133,10 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         }
         builder.endObject();
         return builder;
+    }
+
+    public String getJobId() {
+        return jobId;
     }
 
     /**
@@ -209,7 +219,7 @@ public class Influencer extends ToXContentToBytes implements Writeable {
 
         // hadBigNormalisedUpdate is also deliberately excluded from the hash
 
-        return Objects.hash(timestamp, influenceField, influenceValue, initialAnomalyScore, anomalyScore, probability, isInterim);
+        return Objects.hash(jobId, timestamp, influenceField, influenceValue, initialAnomalyScore, anomalyScore, probability, isInterim);
     }
 
     @Override
@@ -233,7 +243,8 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         // from the data store
 
         // hadBigNormalisedUpdate is also deliberately excluded from the test
-        return Objects.equals(timestamp, other.timestamp) && Objects.equals(influenceField, other.influenceField)
+        return Objects.equals(jobId, other.jobId) && Objects.equals(timestamp, other.timestamp)
+                && Objects.equals(influenceField, other.influenceField)
                 && Objects.equals(influenceValue, other.influenceValue)
                 && Double.compare(initialAnomalyScore, other.initialAnomalyScore) == 0
                 && Double.compare(anomalyScore, other.anomalyScore) == 0 && Double.compare(probability, other.probability) == 0

@@ -68,7 +68,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
             builder.setDataDescription(new DataDescription.Builder());
         }
         if (randomBoolean()) {
-            builder.setModelSizeStats(new ModelSizeStats.Builder());
+            builder.setModelSizeStats(new ModelSizeStats.Builder("foo"));
         }
         String[] outputs;
         TransformType[] transformTypes ;

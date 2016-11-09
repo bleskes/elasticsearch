@@ -25,7 +25,7 @@ import java.util.Date;
 public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeStats> {
 
     public void testDefaultConstructor() {
-        ModelSizeStats stats = new ModelSizeStats.Builder().build();
+        ModelSizeStats stats = new ModelSizeStats.Builder("foo").build();
         assertEquals("modelSizeStats", stats.getId());
         assertEquals(0, stats.getModelBytes());
         assertEquals(0, stats.getTotalByFieldCount());
@@ -37,16 +37,16 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
 
     public void testSetId() {
-        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
 
-        stats.setId("foo");
+        stats.setId("bar");
 
-        assertEquals("foo", stats.build().getId());
+        assertEquals("bar", stats.build().getId());
     }
 
 
     public void testSetMemoryStatus_GivenNull() {
-        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
 
         NullPointerException ex = expectThrows(NullPointerException.class, () -> stats.setMemoryStatus(null));
 
@@ -55,7 +55,7 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
 
     public void testSetMemoryStatus_GivenSoftLimit() {
-        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
 
         stats.setMemoryStatus(MemoryStatus.SOFT_LIMIT);
 
@@ -64,7 +64,7 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
     @Override
     protected ModelSizeStats createTestInstance() {
-        ModelSizeStats.Builder stats = new ModelSizeStats.Builder();
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
         if (randomBoolean()) {
             stats.setBucketAllocationFailuresCount(randomPositiveLong());
         }
