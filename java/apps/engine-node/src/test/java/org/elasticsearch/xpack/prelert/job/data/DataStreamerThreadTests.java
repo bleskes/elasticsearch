@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.mockito.Mockito;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,8 +53,7 @@ public class DataStreamerThreadTests extends ESTestCase {
     }
 
     public void testRun() throws Exception {
-        DataCounts counts = new DataCounts();
-        counts.setBucketCount(42L);
+        DataCounts counts = new DataCounts(42L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date());
         when(dataStreamer.streamData(CONTENT_ENCODING, JOB_ID, inputStream, params)).thenReturn(counts);
 
         dataStreamerThread.run();

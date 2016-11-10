@@ -25,17 +25,17 @@ setup:
           {"airline":"AAL","responsetime":"132.2046","sourcetype":"farequote","time":"1403481600"}
           {"airline":"JZA","responsetime":"990.4628","sourcetype":"farequote","time":"1403481600"}
 
-  - match: { processedRecordCount: 2 }
-  - match: { processedFieldCount: 4}
-  - match: { inputBytes: 177 }
-  - match: { inputFieldCount: 6 }
-  - match: { invalidDateCount: 0 }
-  - match: { missingFieldCount: 0 }
-  - match: { outOfOrderTimeStampCount: 0}
-  - match: { failedTransformCount: 0}
-  - match: { excludedRecordCount: 0}
-  - match: { latestRecordTimeStamp: 1403481600000}
-  - match: { bucketCount: 0}
+  - match: { processed_record_count: 2 }
+  - match: { processed_field_count: 4}
+  - match: { input_bytes: 177 }
+  - match: { input_field_count: 6 }
+  - match: { invalid_date_count: 0 }
+  - match: { missing_field_count: 0 }
+  - match: { out_of_order_timestamp_count: 0}
+  - match: { failed_transform_count: 0}
+  - match: { excluded_record_count: 0}
+  - match: { latest_record_timestamp: 1403481600000}
+  - match: { bucket_count: 0}
 
   - do:
       xpack.prelert.flush_data:
@@ -53,17 +53,17 @@ setup:
       type: dataCounts
       id: farequote-data-counts
 
-  - match: { _source.processedRecordCount: 2 }
-  - match: { _source.processedFieldCount: 4}
-  - match: { _source.inputBytes: 177 }
-  - match: { _source.inputFieldCount: 6 }
-  - match: { _source.invalidDateCount: 0 }
-  - match: { _source.missingFieldCount: 0 }
-  - match: { _source.outOfOrderTimeStampCount: 0}
-  - match: { _source.failedTransformCount: 0}
-  - match: { _source.excludedRecordCount: 0}
-  - match: { _source.latestRecordTimeStamp: 1403481600000}
-  - match: { _source.bucketCount: 0}
+  - match: { _source.processed_record_count: 2 }
+  - match: { _source.processed_field_count: 4}
+  - match: { _source.input_bytes: 177 }
+  - match: { _source.input_field_count: 6 }
+  - match: { _source.invalid_date_count: 0 }
+  - match: { _source.missing_field_count: 0 }
+  - match: { _source.out_of_order_timestamp_count: 0}
+  - match: { _source.failed_transform_count: 0}
+  - match: { _source.excluded_record_count: 0}
+  - match: { _source.latest_record_timestamp: 1403481600000}
+  - match: { _source.bucket_count: 0}
 
 ---
 "Test POST data with invalid parameters":

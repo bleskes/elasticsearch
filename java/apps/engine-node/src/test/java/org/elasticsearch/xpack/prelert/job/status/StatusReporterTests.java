@@ -65,26 +65,18 @@ public class StatusReporterTests extends ESTestCase {
         DataCounts stats = statusReporter.incrementalStats();
         assertNotNull(stats);
 
-        assertAllFieldsEqualZero(stats);
+        assertAllCountFieldsEqualZero(stats);
     }
 
     public void testComplexConstructor() throws Exception {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        DataCounts counts = new DataCounts();
-
-        counts.setProcessedRecordCount(1);
-        counts.setInputBytes(2);
-        counts.setInvalidDateCount(3);
-        counts.setMissingFieldCount(4);
-        counts.setOutOfOrderTimeStampCount(5);
-        counts.setFailedTransformCount(6);
-        counts.setExcludedRecordCount(7);
+        DataCounts counts = new DataCounts(0L, 1L, 1L, 2L, 0L, 3L, 4L, 5L, 6L, 7L, new Date());
 
         statusReporter = new StatusReporter(env, settings, JOB_ID, counts, usageReporter, jobDataCountsPersister, mockLogger, 1);
         DataCounts stats = statusReporter.incrementalStats();
         assertNotNull(stats);
-        assertAllFieldsEqualZero(stats);
+        assertAllCountFieldsEqualZero(stats);
 
         assertEquals(1, statusReporter.getProcessedRecordCount());
         assertEquals(2, statusReporter.getBytesRead());
@@ -98,7 +90,7 @@ public class StatusReporterTests extends ESTestCase {
     public void testResetIncrementalCounts() throws Exception {
         DataCounts stats = statusReporter.incrementalStats();
         assertNotNull(stats);
-        assertAllFieldsEqualZero(stats);
+        assertAllCountFieldsEqualZero(stats);
 
         statusReporter.setAnalysedFieldsPerRecord(3);
 
@@ -118,7 +110,7 @@ public class StatusReporterTests extends ESTestCase {
         statusReporter.startNewIncrementalCount();
         stats = statusReporter.incrementalStats();
         assertNotNull(stats);
-        assertAllFieldsEqualZero(stats);
+        assertAllCountFieldsEqualZero(stats);
     }
 
     public void testReportLatestTimeIncrementalStats() {
@@ -233,14 +225,7 @@ public class StatusReporterTests extends ESTestCase {
     public void testFinishReporting() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
-        DataCounts dc = new DataCounts();
-        dc.setExcludedRecordCount(1L);
-        dc.setInputFieldCount(12L);
-        dc.setMissingFieldCount(1L);
-        dc.setProcessedFieldCount(5L);
-        dc.setProcessedRecordCount(2L);
-        dc.setLatestRecordTimeStamp(new Date(3000));
-
+        DataCounts dc = new DataCounts(0L, 2L, 5L, 0L, 12L, 0L, 1L, 0L, 0L, 1L, new Date(3000));
         statusReporter.reportRecordWritten(5, 2000);
         statusReporter.reportRecordWritten(5, 3000);
         statusReporter.reportMissingField();
@@ -253,7 +238,7 @@ public class StatusReporterTests extends ESTestCase {
         assertEquals(dc, statusReporter.incrementalStats());
     }
 
-    private void assertAllFieldsEqualZero(DataCounts stats) throws Exception {
+    private void assertAllCountFieldsEqualZero(DataCounts stats) throws Exception {
         assertEquals(0L, stats.getBucketCount());
         assertEquals(0L, stats.getProcessedRecordCount());
         assertEquals(0L, stats.getProcessedFieldCount());
@@ -265,6 +250,5 @@ public class StatusReporterTests extends ESTestCase {
         assertEquals(0L, stats.getOutOfOrderTimeStampCount());
         assertEquals(0L, stats.getFailedTransformCount());
         assertEquals(0L, stats.getExcludedRecordCount());
-        assertEquals(null, stats.getLatestRecordTimeStamp());
     }
 }

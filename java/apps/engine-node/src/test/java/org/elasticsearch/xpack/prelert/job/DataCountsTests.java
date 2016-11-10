@@ -18,6 +18,7 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+import org.joda.time.DateTime;
 
 import java.util.Date;
 
@@ -27,21 +28,10 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
 
     @Override
     protected DataCounts createTestInstance() {
-        DataCounts dataCounts = new DataCounts();
-        dataCounts.setBucketCount(randomPositiveLong());
-        dataCounts.setExcludedRecordCount(randomPositiveLong());
-        dataCounts.setFailedTransformCount(randomPositiveLong());
-        dataCounts.setInputBytes(randomPositiveLong());
-        dataCounts.setInputFieldCount(randomPositiveLong());
-        dataCounts.setInvalidDateCount(randomPositiveLong());
-        if (randomBoolean()) {
-            dataCounts.setLatestRecordTimeStamp(new Date(randomIntBetween(0, Integer.MAX_VALUE)));
-        }
-        dataCounts.setMissingFieldCount(randomPositiveLong());
-        dataCounts.setOutOfOrderTimeStampCount(randomPositiveLong());
-        dataCounts.setProcessedFieldCount(randomPositiveLong());
-        dataCounts.setProcessedRecordCount(randomPositiveLong());
-        return dataCounts;
+        return new DataCounts(randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
     }
 
     @Override
@@ -124,35 +114,22 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCalcProcessedFieldCount() {
-        DataCounts counts = new DataCounts();
-        counts.setProcessedRecordCount(10);
-        counts.setMissingFieldCount(0);
+        DataCounts counts = new DataCounts(0L, 10L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date());
         counts.calcProcessedFieldCount(3);
 
         assertEquals(30, counts.getProcessedFieldCount());
 
-        counts.setMissingFieldCount(5);
+        counts = new DataCounts(0L, 10L, 0L, 0L, 0L, 0L, 5L, 0L, 0L, 0L, new Date());
         counts.calcProcessedFieldCount(3);
         assertEquals(25, counts.getProcessedFieldCount());
     }
 
     public void testEquals() {
-        DataCounts counts1 = new DataCounts();
-        counts1.setBucketCount(3L);
-        counts1.setFailedTransformCount(15L);
-        counts1.setInputBytes(2000L);
-        counts1.setInputFieldCount(300);
-        counts1.setInvalidDateCount(6L);
-        counts1.setMissingFieldCount(65L);
-        counts1.setOutOfOrderTimeStampCount(40);
-        counts1.setProcessedFieldCount(5000);
-        counts1.setProcessedRecordCount(10);
-        counts1.setLatestRecordTimeStamp(new Date(1435000000L));
-
+        DataCounts counts1 = new DataCounts(3L, 10L, 5000L, 2000L, 300L, 6L, 65L, 40L, 15L, 0L, new Date(1435000000L));
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1, counts2);
-        counts2.setInvalidDateCount(8000L);
+        counts2.incrementExcludedRecordCount(1);
         assertFalse(counts1.equals(counts2));
     }
 
@@ -168,7 +145,6 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
         assertEquals(0L, stats.getOutOfOrderTimeStampCount());
         assertEquals(0L, stats.getFailedTransformCount());
         assertEquals(0L, stats.getExcludedRecordCount());
-        assertEquals(null, stats.getLatestRecordTimeStamp());
     }
 
     private void assertAllFieldsGreaterThanZero(DataCounts stats) throws Exception {
@@ -193,18 +169,10 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
             long invalidDateCount, long missingFieldCount,
             long outOfOrderTimeStampCount, long failedTransformCount,
             long excludedRecordCount, long latestRecordTime) {
-        DataCounts counts = new DataCounts();
-        counts.setBucketCount(bucketCount);
-        counts.setProcessedRecordCount(processedRecordCount);
-        counts.setProcessedFieldCount(processedFieldCount);
-        counts.setInputBytes(inputBytes);
-        counts.setInputFieldCount(inputFieldCount);
-        counts.setInvalidDateCount(invalidDateCount);
-        counts.setMissingFieldCount(missingFieldCount);
-        counts.setOutOfOrderTimeStampCount(outOfOrderTimeStampCount);
-        counts.setFailedTransformCount(failedTransformCount);
-        counts.setExcludedRecordCount(excludedRecordCount);
-        counts.setLatestRecordTimeStamp(new Date(latestRecordTime));
+        DataCounts counts = new DataCounts(bucketCount, processedRecordCount, processedFieldCount, inputBytes, inputFieldCount,
+                invalidDateCount, missingFieldCount, outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
+                new Date(latestRecordTime));
+
         return counts;
     }
 

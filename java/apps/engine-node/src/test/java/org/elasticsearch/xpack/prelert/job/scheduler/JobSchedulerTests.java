@@ -608,9 +608,8 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     private static DataCounts newCounts(int recordCount, Long latestRecordTime) {
-        DataCounts counts = new DataCounts();
-        counts.setProcessedRecordCount(recordCount);
-        counts.setLatestRecordTimeStamp(latestRecordTime == null ? null : new Date(latestRecordTime));
+        DataCounts counts = new DataCounts(0L, recordCount, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
+                latestRecordTime == null ? null : new Date(latestRecordTime));
         return counts;
     }
 

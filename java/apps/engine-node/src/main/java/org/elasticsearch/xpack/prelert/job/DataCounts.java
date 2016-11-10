@@ -20,7 +20,7 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
@@ -28,8 +28,6 @@ import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -41,24 +39,24 @@ import java.util.Objects;
  * Engine.
  * <p>
  * The <code>inputRecordCount</code> field is calculated so it
- * should not be set in deserialisation but it should be read in
- * serialistion - hence the annotations and the private setter
+ * should not be set in deserialisation but it should be serialised
+ * so the field is visible.
  */
 
 public class DataCounts extends ToXContentToBytes implements Writeable {
 
-    public static final String BUCKET_COUNT_STR = "bucketCount";
-    public static final String PROCESSED_RECORD_COUNT_STR = "processedRecordCount";
-    public static final String PROCESSED_FIELD_COUNT_STR = "processedFieldCount";
-    public static final String INPUT_BYTES_STR = "inputBytes";
-    public static final String INPUT_RECORD_COUNT_STR = "inputRecordCount";
-    public static final String INPUT_FIELD_COUNT_STR = "inputFieldCount";
-    public static final String INVALID_DATE_COUNT_STR = "invalidDateCount";
-    public static final String MISSING_FIELD_COUNT_STR = "missingFieldCount";
-    public static final String OUT_OF_ORDER_TIME_COUNT_STR = "outOfOrderTimeStampCount";
-    public static final String FAILED_TRANSFORM_COUNT_STR = "failedTransformCount";
-    public static final String EXCLUDED_RECORD_COUNT_STR = "excludedRecordCount";
-    public static final String LATEST_RECORD_TIME_STR = "latestRecordTimeStamp";
+    public static final String BUCKET_COUNT_STR = "bucket_count";
+    public static final String PROCESSED_RECORD_COUNT_STR = "processed_record_count";
+    public static final String PROCESSED_FIELD_COUNT_STR = "processed_field_count";
+    public static final String INPUT_BYTES_STR = "input_bytes";
+    public static final String INPUT_RECORD_COUNT_STR = "input_record_count";
+    public static final String INPUT_FIELD_COUNT_STR = "input_field_count";
+    public static final String INVALID_DATE_COUNT_STR = "invalid_date_count";
+    public static final String MISSING_FIELD_COUNT_STR = "missing_field_count";
+    public static final String OUT_OF_ORDER_TIME_COUNT_STR = "out_of_order_timestamp_count";
+    public static final String FAILED_TRANSFORM_COUNT_STR = "failed_transform_count";
+    public static final String EXCLUDED_RECORD_COUNT_STR = "excluded_record_count";
+    public static final String LATEST_RECORD_TIME_STR = "latest_record_timestamp";
 
     public static final ParseField BUCKET_COUNT = new ParseField(BUCKET_COUNT_STR);
     public static final ParseField PROCESSED_RECORD_COUNT = new ParseField(PROCESSED_RECORD_COUNT_STR);
@@ -75,22 +73,22 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
 
     public static final ParseField TYPE = new ParseField("dataCounts");
 
-    public static final ObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
-            new ObjectParser<>("data_counts", DataCounts::new);
+    public static final ConstructingObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
+            new ConstructingObjectParser<>("data_counts", a -> new DataCounts((long) a[0], (long) a[1], (long) a[2], (long) a[3],
+                    (long) a[4], (long) a[5], (long) a[6], (long) a[7], (long) a[8], (long) a[9], (Date) a[10]));
 
     static {
-        PARSER.declareLong(DataCounts::setBucketCount, BUCKET_COUNT);
-        PARSER.declareLong(DataCounts::setProcessedRecordCount, PROCESSED_RECORD_COUNT);
-        PARSER.declareLong(DataCounts::setProcessedFieldCount, PROCESSED_FIELD_COUNT);
-        PARSER.declareLong(DataCounts::setInputBytes, INPUT_BYTES);
-        PARSER.declareLong(DataCounts::setInputRecordCount, INPUT_RECORD_COUNT);
-        PARSER.declareLong(DataCounts::setInputFieldCount, INPUT_FIELD_COUNT);
-        PARSER.declareLong(DataCounts::setInvalidDateCount, INVALID_DATE_COUNT);
-        PARSER.declareLong(DataCounts::setMissingFieldCount, MISSING_FIELD_COUNT);
-        PARSER.declareLong(DataCounts::setOutOfOrderTimeStampCount, OUT_OF_ORDER_TIME_COUNT);
-        PARSER.declareLong(DataCounts::setFailedTransformCount, FAILED_TRANSFORM_COUNT);
-        PARSER.declareLong(DataCounts::setExcludedRecordCount, EXCLUDED_RECORD_COUNT);
-        PARSER.declareField(DataCounts::setLatestRecordTimeStamp, p -> {
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), BUCKET_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), PROCESSED_RECORD_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), PROCESSED_FIELD_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), INPUT_BYTES);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), INPUT_FIELD_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), INVALID_DATE_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), MISSING_FIELD_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), OUT_OF_ORDER_TIME_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), FAILED_TRANSFORM_COUNT);
+        PARSER.declareLong(ConstructingObjectParser.constructorArg(), EXCLUDED_RECORD_COUNT);
+        PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
             } else if (p.currentToken() == Token.VALUE_STRING) {
@@ -99,6 +97,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
             throw new IllegalArgumentException(
                     "unexpected token [" + p.currentToken() + "] for [" + LATEST_RECORD_TIME.getPreferredName() + "]");
         }, LATEST_RECORD_TIME, ValueType.VALUE);
+        PARSER.declareLong((t, u) -> {;}, INPUT_RECORD_COUNT);
     }
 
     private long bucketCount;
@@ -114,7 +113,24 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     // NORELEASE: Use Jodatime instead
     private Date latestRecordTimeStamp;
 
+    public DataCounts(long bucketCount, long processedRecordCount, long processedFieldCount, long inputBytes, long inputFieldCount,
+                      long invalidDateCount, long missingFieldCount, long outOfOrderTimeStampCount, long failedTransformCount,
+                      long excludedRecordCount, Date latestRecordTimeStamp) {
+        this.bucketCount = bucketCount;
+        this.processedRecordCount = processedRecordCount;
+        this.processedFieldCount = processedFieldCount;
+        this.inputBytes = inputBytes;
+        this.inputFieldCount = inputFieldCount;
+        this.invalidDateCount = invalidDateCount;
+        this.missingFieldCount = missingFieldCount;
+        this.outOfOrderTimeStampCount = outOfOrderTimeStampCount;
+        this.failedTransformCount = failedTransformCount;
+        this.excludedRecordCount = excludedRecordCount;
+        this.latestRecordTimeStamp = latestRecordTimeStamp;
+    }
+
     public DataCounts() {
+        latestRecordTimeStamp = new Date(0L);
     }
 
     public DataCounts(DataCounts lhs) {
@@ -145,20 +161,17 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         if (in.readBoolean()) {
             latestRecordTimeStamp = new Date(in.readVLong());
         }
+        in.readVLong(); // throw away inputRecordCount
     }
 
 
     /**
      * The number of bucket results
      *
-     * @return May be <code>null</code>
+     * @return The bucket Couunt
      */
     public long getBucketCount() {
         return bucketCount;
-    }
-
-    public void setBucketCount(long count) {
-        bucketCount = count;
     }
 
     /**
@@ -171,10 +184,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      */
     public long getProcessedRecordCount() {
         return processedRecordCount;
-    }
-
-    public void setProcessedRecordCount(long count) {
-        processedRecordCount = count;
     }
 
     public void incrementProcessedRecordCount(long additional) {
@@ -190,10 +199,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      */
     public long getProcessedFieldCount() {
         return processedFieldCount;
-    }
-
-    public void setProcessedFieldCount(long count) {
-        processedFieldCount = count;
     }
 
     public void calcProcessedFieldCount(long analysisFieldsPerRecord) {
@@ -221,14 +226,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     }
 
     /**
-     * Only present to keep jackson serialisation happy.
-     * This property should not be deserialised
-     */
-    private void setInputRecordCount(long count) {
-        throw new IllegalStateException();
-    }
-
-    /**
      * The total number of bytes sent to this job.
      * This value includes the bytes from any  records
      * that have been discarded for any  reason
@@ -238,10 +235,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      */
     public long getInputBytes() {
         return inputBytes;
-    }
-
-    public void setInputBytes(long volume) {
-        inputBytes = volume;
     }
 
     public void incrementInputBytes(long additional) {
@@ -258,10 +251,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         return inputFieldCount;
     }
 
-    public void setInputFieldCount(long count) {
-        inputFieldCount = count;
-    }
-
     public void incrementInputFieldCount(long additional) {
         inputFieldCount += additional;
     }
@@ -274,10 +263,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      */
     public long getInvalidDateCount() {
         return invalidDateCount;
-    }
-
-    public void setInvalidDateCount(long count) {
-        invalidDateCount = count;
     }
 
     public void incrementInvalidDateCount(long additional) {
@@ -295,10 +280,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         return missingFieldCount;
     }
 
-    public void setMissingFieldCount(long count) {
-        missingFieldCount = count;
-    }
-
     public void incrementMissingFieldCount(long additional) {
         missingFieldCount += additional;
     }
@@ -312,10 +293,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      */
     public long getOutOfOrderTimeStampCount() {
         return outOfOrderTimeStampCount;
-    }
-
-    public void setOutOfOrderTimeStampCount(long count) {
-        outOfOrderTimeStampCount = count;
     }
 
     public void incrementOutOfOrderTimeStampCount(long additional) {
@@ -334,10 +311,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         return failedTransformCount;
     }
 
-    public void setFailedTransformCount(long failedTransformCount) {
-        this.failedTransformCount = failedTransformCount;
-    }
-
     public void incrementFailedTransformCount(long additional) {
         failedTransformCount += additional;
     }
@@ -349,10 +322,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      */
     public long getExcludedRecordCount() {
         return excludedRecordCount;
-    }
-
-    public void setExcludedRecordCount(long excludedRecordCount) {
-        this.excludedRecordCount = excludedRecordCount;
     }
 
     public void incrementExcludedRecordCount(long additional) {
@@ -368,26 +337,10 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         return latestRecordTimeStamp;
     }
 
-    public void setLatestRecordTimeStamp(Date latestRecordTime) {
-        latestRecordTimeStamp = latestRecordTime;
+    public void setLatestRecordTimeStamp(Date latestRecordTimeStamp) {
+        this.latestRecordTimeStamp = latestRecordTimeStamp;
     }
 
-    public Map<String, Object> toObjectMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put(BUCKET_COUNT.getPreferredName(), bucketCount);
-        map.put(PROCESSED_RECORD_COUNT.getPreferredName(), processedRecordCount);
-        map.put(PROCESSED_FIELD_COUNT.getPreferredName(), processedFieldCount);
-        map.put(INPUT_BYTES.getPreferredName(), inputBytes);
-        map.put(INPUT_RECORD_COUNT.getPreferredName(), getInputRecordCount());
-        map.put(INPUT_FIELD_COUNT.getPreferredName(), inputFieldCount);
-        map.put(INVALID_DATE_COUNT.getPreferredName(), invalidDateCount);
-        map.put(MISSING_FIELD_COUNT.getPreferredName(), missingFieldCount);
-        map.put(OUT_OF_ORDER_TIME_COUNT.getPreferredName(), outOfOrderTimeStampCount);
-        map.put(FAILED_TRANSFORM_COUNT.getPreferredName(), failedTransformCount);
-        map.put(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp);
-        map.put(EXCLUDED_RECORD_COUNT.getPreferredName(), excludedRecordCount);
-        return map;
-    }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
@@ -407,6 +360,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         } else {
             out.writeBoolean(false);
         }
+        out.writeVLong(getInputRecordCount());
     }
 
     @Override
@@ -431,6 +385,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         if (latestRecordTimeStamp != null) {
             builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
         }
+        builder.field(INPUT_RECORD_COUNT.getPreferredName(), getInputRecordCount());
 
         return builder;
     }

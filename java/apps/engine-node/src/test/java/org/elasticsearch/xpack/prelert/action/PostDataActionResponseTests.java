@@ -24,20 +24,10 @@ public class PostDataActionResponseTests extends AbstractStreamableTestCase<Post
 
     @Override
     protected PostDataAction.Response createTestInstance() {
-        DataCounts counts = new DataCounts();
-        ifRandomTrueSetRandomLong(counts::setBucketCount);
-        ifRandomTrueSetRandomLong(counts::setProcessedRecordCount);
-        ifRandomTrueSetRandomLong(counts::setProcessedFieldCount);
-        ifRandomTrueSetRandomLong(counts::setInputBytes);
-        ifRandomTrueSetRandomLong(counts::setInputFieldCount);
-        ifRandomTrueSetRandomLong(counts::setInvalidDateCount);
-        ifRandomTrueSetRandomLong(counts::setMissingFieldCount);
-        ifRandomTrueSetRandomLong(counts::setOutOfOrderTimeStampCount);
-        ifRandomTrueSetRandomLong(counts::setFailedTransformCount);
-        ifRandomTrueSetRandomLong(counts::setExcludedRecordCount);
-        if (randomBoolean()) {
-            counts.setLatestRecordTimeStamp(new DateTime(randomDateTimeZone()).toDate());
-        }
+        DataCounts counts = new DataCounts(randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
 
         return new PostDataAction.Response(counts);
     }

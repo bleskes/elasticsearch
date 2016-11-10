@@ -18,6 +18,7 @@ import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.usage.Usage;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -167,6 +168,13 @@ public final class ReservedFieldNames {
             ModelSnapshot.LATEST_RESULT_TIME.getPreferredName(),
 
             Quantiles.QUANTILE_STATE.getPreferredName(),
+
+            Usage.INPUT_BYTES,
+            Usage.INPUT_FIELD_COUNT,
+            Usage.INPUT_RECORD_COUNT,
+            Usage.TIMESTAMP,
+            Usage.TYPE,
+
 
             JOB_ID_NAME,
             ES_TIMESTAMP
