@@ -76,7 +76,7 @@ public class ScriptTransformTests extends ESTestCase {
         ScriptService service = mock(ScriptService.class);
         ScriptType type = randomFrom(ScriptType.values());
         Map<String, Object> params = Collections.emptyMap();
-        Script script = new Script("_script", type, "_lang", params);
+        Script script = new Script(type, "_lang", "_script", params);
         CompiledScript compiledScript = mock(CompiledScript.class);
         when(service.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap())).thenReturn(compiledScript);
         ExecutableScriptTransform transform = new ExecutableScriptTransform(new ScriptTransform(script), logger, service);
@@ -104,7 +104,7 @@ public class ScriptTransformTests extends ESTestCase {
         ScriptService service = mock(ScriptService.class);
         ScriptType type = randomFrom(ScriptType.values());
         Map<String, Object> params = Collections.emptyMap();
-        Script script = new Script("_script", type, "_lang", params);
+        Script script = new Script(type, "_lang", "_script", params);
         CompiledScript compiledScript = mock(CompiledScript.class);
         when(service.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap())).thenReturn(compiledScript);
         ExecutableScriptTransform transform = new ExecutableScriptTransform(new ScriptTransform(script), logger, service);
@@ -130,7 +130,7 @@ public class ScriptTransformTests extends ESTestCase {
         ScriptService service = mock(ScriptService.class);
         ScriptType type = randomFrom(ScriptType.values());
         Map<String, Object> params = Collections.emptyMap();
-        Script script = new Script("_script", type, "_lang", params);
+        Script script = new Script(type, "_lang", "_script", params);
         CompiledScript compiledScript = mock(CompiledScript.class);
         when(service.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap())).thenReturn(compiledScript);
         ExecutableScriptTransform transform = new ExecutableScriptTransform(new ScriptTransform(script), logger, service);
@@ -165,7 +165,7 @@ public class ScriptTransformTests extends ESTestCase {
         XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
         parser.nextToken();
         ExecutableScriptTransform transform = new ScriptTransformFactory(Settings.EMPTY, service).parseExecutable("_id", parser, false);
-        Script script = new Script("_script", type, "_lang", singletonMap("key", "value"));
+        Script script = new Script(type, "_lang", "_script", singletonMap("key", "value"));
         assertThat(transform.transform().getScript(), equalTo(script));
     }
 
