@@ -106,6 +106,7 @@ public class ElasticsearchDataExtractor implements DataExtractor {
     }
 
     private String requestAndGetStringResponse(String url, String body) throws IOException {
+        m_Logger.trace("url ={}, body={}", url, body);
         HttpResponse response = httpRequester.get(url, body);
         if (response.getResponseCode() != HttpResponse.OK_STATUS) {
             throw new IOException("Request '" + url + "' failed with status code: "

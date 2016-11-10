@@ -51,9 +51,12 @@ import java.util.Optional;
 import static org.elasticsearch.mock.orig.Mockito.never;
 import static org.elasticsearch.mock.orig.Mockito.times;
 import static org.elasticsearch.mock.orig.Mockito.when;
+import static org.elasticsearch.xpack.prelert.action.UpdateJobSchedulerStatusAction.Request;
+import static org.elasticsearch.xpack.prelert.action.UpdateJobSchedulerStatusAction.INSTANCE;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.eq;
@@ -108,7 +111,7 @@ public class ScheduledJobServiceTests extends ESTestCase {
         verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());
         verify(threadPool, times(1)).executor(PrelertPlugin.THREAD_POOL_NAME);
         verify(threadPool, never()).schedule(any(), any(), any());
-        verify(dataProcessor).closeJob("foo");
+        verify(client).execute(same(INSTANCE), eq(new Request("foo", JobSchedulerStatus.STOPPING)), any());
     }
 
     public void testStart_GivenNewlyCreatedJobLoopBackAndRealtime() throws IOException {

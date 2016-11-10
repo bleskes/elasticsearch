@@ -65,6 +65,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
             for (String localAllocatedJob : localAllocatedJobs) {
                 stopJob(localAllocatedJob);
             }
+            scheduledJobService.stopAllJobs();
             return;
         }
 

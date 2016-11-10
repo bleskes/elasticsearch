@@ -74,9 +74,9 @@ public class ElasticsearchUsagePersister implements UsagePersister {
      * @param additionalRecords Add this value to the running total
      */
     private void updateDocument(String index, String id, long additionalBytes, long additionalFields, long additionalRecords) {
-        upsertMap.put(Usage.INPUT_BYTES, new Long(additionalBytes));
-        upsertMap.put(Usage.INPUT_FIELD_COUNT, new Long(additionalFields));
-        upsertMap.put(Usage.INPUT_RECORD_COUNT, new Long(additionalRecords));
+        upsertMap.put(Usage.INPUT_BYTES, additionalBytes);
+        upsertMap.put(Usage.INPUT_FIELD_COUNT, additionalFields);
+        upsertMap.put(Usage.INPUT_RECORD_COUNT, additionalRecords);
 
         logger.trace("ES API CALL: upsert ID " + id +
                 " type " + Usage.TYPE + " in index " + index +
@@ -89,8 +89,7 @@ public class ElasticsearchUsagePersister implements UsagePersister {
                             additionalRecords),
                     upsertMap);
         } catch (VersionConflictEngineException e) {
-            logger.error("Failed to update the Usage document " + id +
-                    " in index " + index, e);
+            logger.error("Failed to update the Usage document [" + id +"] in index [" + index + "]", e);
         }
     }
 }

@@ -168,6 +168,8 @@ class ScheduledJob {
 
     class AnalysisProblemException extends RuntimeException {
 
+        final long nextDelayInMsSinceEpoch = nextRealtimeTimestamp();
+
         AnalysisProblemException(Throwable cause) {
             super(cause);
         }
@@ -176,12 +178,16 @@ class ScheduledJob {
 
     class ExtractionProblemException extends RuntimeException {
 
+        final long nextDelayInMsSinceEpoch = nextRealtimeTimestamp();
+
         ExtractionProblemException(Throwable cause) {
             super(cause);
         }
     }
 
     class EmptyDataCountException extends RuntimeException {
+
+        final long nextDelayInMsSinceEpoch = nextRealtimeTimestamp();
 
         EmptyDataCountException() {}
     }

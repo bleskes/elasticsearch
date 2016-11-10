@@ -39,6 +39,7 @@ import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
@@ -91,7 +92,7 @@ public class ScheduledJobService extends AbstractComponent {
                     doScheduleRealtime(next, job.getId(), holder);
                 } else {
                     holder.scheduledJob.stop();
-                    performStop(job.getId());
+                    requestStopping(job.getId());
                 }
             } catch (ScheduledJob.ExtractionProblemException e) {
                 holder.problemTracker.reportExtractionProblem(e.getCause().getMessage());
@@ -99,11 +100,11 @@ public class ScheduledJobService extends AbstractComponent {
                 holder.problemTracker.reportAnalysisProblem(e.getCause().getMessage());
             } catch (ScheduledJob.EmptyDataCountException e) {
                 if (holder.problemTracker.updateEmptyDataCount(true)) {
-                    performStop(job.getJobId());
+                    requestStopping(job.getJobId());
                 }
             } catch (Exception e1) {
                 logger.error("Failed lookback import for job[" + job.getId() + "]", e1);
-                performStop(job.getId());
+                requestStopping(job.getId());
             }
             holder.problemTracker.finishReport();
         });
@@ -125,39 +126,56 @@ public class ScheduledJobService extends AbstractComponent {
         }
 
         logger.info("Stopping scheduler for job [{}]", allocation.getJobId());
-        performStop(allocation.getJobId());
+        Holder holder = registry.remove(allocation.getJobId());
+        holder.scheduledJob.stop();
+        dataProcessor.closeJob(allocation.getJobId());
+        setJobSchedulerStatus(allocation.getJobId(), JobSchedulerStatus.STOPPED);
+    }
+
+    public void stopAllJobs() {
+        for (Map.Entry<String, Holder> entry : registry.entrySet()) {
+            entry.getValue().scheduledJob.stop();
+            dataProcessor.closeJob(entry.getKey());
+        }
+        registry.clear();
     }
 
     private void doScheduleRealtime(long delayInMsSinceEpoch, String jobId, Holder holder) {
         if (holder.scheduledJob.isRunning()) {
             TimeValue delay = computeNextDelay(delayInMsSinceEpoch);
+            logger.debug("Waiting [{}] before executing next realtime import for job [{}]", delay, jobId);
             threadPool.schedule(delay, PrelertPlugin.THREAD_POOL_NAME, () -> {
+                long nextDelayInMsSinceEpoch;
                 try {
-                    long nextDelayInMsSinceEpoch = holder.scheduledJob.runRealtime();
-                    doScheduleRealtime(nextDelayInMsSinceEpoch, jobId, holder);
+                    nextDelayInMsSinceEpoch = holder.scheduledJob.runRealtime();
                 } catch (ScheduledJob.ExtractionProblemException e) {
+                    nextDelayInMsSinceEpoch = e.nextDelayInMsSinceEpoch;
                     holder.problemTracker.reportExtractionProblem(e.getCause().getMessage());
                 } catch (ScheduledJob.AnalysisProblemException e) {
+                    nextDelayInMsSinceEpoch = e.nextDelayInMsSinceEpoch;
                     holder.problemTracker.reportAnalysisProblem(e.getCause().getMessage());
                 } catch (ScheduledJob.EmptyDataCountException e) {
+                    nextDelayInMsSinceEpoch = e.nextDelayInMsSinceEpoch;
                     if (holder.problemTracker.updateEmptyDataCount(true)) {
-                        performStop(jobId);
+                        holder.problemTracker.finishReport();
+                        requestStopping(jobId);
+                        return;
                     }
                 } catch (Exception e) {
-                    performStop(jobId);
+                    logger.error("Unexpected scheduler failure for job [" + jobId + "] stopping...", e);
+                    requestStopping(jobId);
+                    return;
                 }
                 holder.problemTracker.finishReport();
+                doScheduleRealtime(nextDelayInMsSinceEpoch, jobId, holder);
             });
         } else {
-           performStop(jobId);
+            requestStopping(jobId);
         }
     }
 
-    private void performStop(String jobId) {
-        Holder holder = registry.remove(jobId);
-        holder.scheduledJob.stop();
-        dataProcessor.closeJob(jobId);
-        setJobSchedulerStatus(jobId, JobSchedulerStatus.STOPPED);
+    private void requestStopping(String jobId) {
+        setJobSchedulerStatus(jobId, JobSchedulerStatus.STOPPING);
     }
 
     Holder createJobScheduler(Job job) {
