@@ -211,7 +211,7 @@ public class JobScheduler {
             logger.error("An error has occurred while submitting data to job '" + jobId + "'", e);
             problemTracker.reportAnalysisProblem(e.getMessage());
         }
-        return new DataCounts();
+        return new DataCounts(jobId);
     }
 
     private Supplier<LocalDateTime> calculateNextTime() {

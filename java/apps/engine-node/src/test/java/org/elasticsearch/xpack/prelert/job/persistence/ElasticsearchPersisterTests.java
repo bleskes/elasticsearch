@@ -72,7 +72,7 @@ public class ElasticsearchPersisterTests extends ESTestCase {
         bucket.setProcessingTimeMs(8888);
         bucket.setRecordCount(1);
 
-        BucketInfluencer bi = new BucketInfluencer();
+        BucketInfluencer bi = new BucketInfluencer("foo");
         bi.setAnomalyScore(14.15);
         bi.setInfluencerFieldName("biOne");
         bi.setInitialAnomalyScore(18.12);
@@ -164,11 +164,11 @@ public class ElasticsearchPersisterTests extends ESTestCase {
     }
 
     private Bucket getBucket(int numRecords, int numInfluencers) {
-        Bucket b = new Bucket();
+        Bucket b = new Bucket("foo");
         b.setTimestamp(new Date());
         List<AnomalyRecord> records = new ArrayList<>();
         for (int i = 0; i < numRecords; ++i) {
-            AnomalyRecord r = new AnomalyRecord();
+            AnomalyRecord r = new AnomalyRecord("foo");
             records.add(r);
         }
         b.setRecords(records);

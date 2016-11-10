@@ -37,7 +37,8 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
         if (randomBoolean()) {
             return new Response();
         } else {
-            Bucket bucket = new Bucket();
+            String jobId = "foo";
+            Bucket bucket = new Bucket(jobId);
             if (randomBoolean()) {
                 bucket.setAnomalyScore(randomDouble());
             }
@@ -45,7 +46,7 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
                 int size = randomInt(10);
                 List<BucketInfluencer> bucketInfluencers = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
-                    BucketInfluencer bucketInfluencer = new BucketInfluencer();
+                    BucketInfluencer bucketInfluencer = new BucketInfluencer("foo");
                     bucketInfluencer.setAnomalyScore(randomDouble());
                     bucketInfluencer.setInfluencerFieldName(randomAsciiOfLengthBetween(1, 20));
                     bucketInfluencer.setInitialAnomalyScore(randomDouble());
@@ -116,7 +117,7 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
                 int size = randomInt(10);
                 List<AnomalyRecord> records = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
-                    AnomalyRecord anomalyRecord = new AnomalyRecord();
+                    AnomalyRecord anomalyRecord = new AnomalyRecord(jobId);
                     anomalyRecord.setAnomalyScore(randomDouble());
                     anomalyRecord.setActual(Collections.singletonList(randomDouble()));
                     anomalyRecord.setTypical(Collections.singletonList(randomDouble()));
@@ -131,7 +132,7 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
             if (randomBoolean()) {
                 bucket.setTimestamp(new Date(randomLong()));
             }
-            SingleDocument<Bucket> result = new SingleDocument<Bucket>(Bucket.TYPE.getPreferredName(), bucket);
+            SingleDocument<Bucket> result = new SingleDocument<>(Bucket.TYPE.getPreferredName(), bucket);
             return new GetBucketAction.Response(result);
         }
     }

@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -208,12 +207,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBuckets_OneBucketNoInterim()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
+        map.put("jobId", "foo");
         map.put("timestamp", now.getTime());
         source.add(map);
 
@@ -240,12 +240,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBuckets_OneBucketInterim()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
+        map.put("jobId", "foo");
         map.put("timestamp", now.getTime());
         source.add(map);
 
@@ -273,12 +274,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBuckets_UsingBuilder()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
+        map.put("jobId", "foo");
         map.put("timestamp", now.getTime());
         source.add(map);
 
@@ -310,7 +312,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBucket_NoBucketNoExpandNoInterim()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Long timestamp = 98765432123456789L;
         Date now = new Date();
@@ -336,12 +338,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBucket_OneBucketNoExpandNoInterim()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
+        map.put("jobId", "foo");
         map.put("timestamp", now.getTime());
         source.add(map);
 
@@ -363,12 +366,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testBucket_OneBucketNoExpandInterim()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
+        map.put("jobId", "foo");
         map.put("timestamp", now.getTime());
         map.put("isInterim", true);
         source.add(map);
@@ -388,12 +392,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertFalse(bucketHolder.isPresent());
     }
 
-    public void testRecords() throws InterruptedException, ExecutionException, JsonParseException, IOException {
+    public void testRecords() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("jobId", "foo");
         recordMap1.put("typical", 22.4);
         recordMap1.put("actual", 33.3);
         recordMap1.put("timestamp", now.getTime());
@@ -401,6 +406,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("bucketSpan", 22);
         recordMap1.put("_parent", "father");
         Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("jobId", "foo");
         recordMap2.put("typical", 1122.4);
         recordMap2.put("actual", 933.3);
         recordMap2.put("timestamp", now.getTime());
@@ -438,12 +444,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testRecords_UsingBuilder()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("jobId", "foo");
         recordMap1.put("typical", 22.4);
         recordMap1.put("actual", 33.3);
         recordMap1.put("timestamp", now.getTime());
@@ -451,6 +458,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("bucketSpan", 22);
         recordMap1.put("_parent", "father");
         Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("jobId", "foo");
         recordMap2.put("typical", 1122.4);
         recordMap2.put("actual", 933.3);
         recordMap2.put("timestamp", now.getTime());
@@ -493,7 +501,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
-    public void testBucketRecords() throws InterruptedException, ExecutionException, JsonParseException, IOException {
+    public void testBucketRecords() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
         Bucket bucket = mock(Bucket.class);
@@ -501,6 +509,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         List<Map<String, Object>> source = new ArrayList<>();
         Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("jobId", "foo");
         recordMap1.put("typical", 22.4);
         recordMap1.put("actual", 33.3);
         recordMap1.put("timestamp", now.getTime());
@@ -508,6 +517,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("bucketSpan", 22);
         recordMap1.put("_parent", "father");
         Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("jobId", "foo");
         recordMap2.put("typical", 1122.4);
         recordMap2.put("actual", 933.3);
         recordMap2.put("timestamp", now.getTime());
@@ -541,15 +551,16 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
-    public void testexpandBucket() throws InterruptedException, ExecutionException, JsonParseException, IOException {
+    public void testexpandBucket() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("foo");
         bucket.setTimestamp(now);
 
         List<Map<String, Object>> source = new ArrayList<>();
         for (int i = 0; i < 400; i++) {
             Map<String, Object> recordMap = new HashMap<>();
+            recordMap.put("jobId", "foo");
             recordMap.put("typical", 22.4 + i);
             recordMap.put("actual", 33.3 + i);
             recordMap.put("timestamp", now.getTime());
@@ -573,15 +584,16 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testexpandBucket_WithManyRecords()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("foo");
         bucket.setTimestamp(now);
 
         List<Map<String, Object>> source = new ArrayList<>();
         for (int i = 0; i < 600; i++) {
             Map<String, Object> recordMap = new HashMap<>();
+            recordMap.put("jobId", "foo");
             recordMap.put("typical", 22.4 + i);
             recordMap.put("actual", 33.3 + i);
             recordMap.put("timestamp", now.getTime());
@@ -608,12 +620,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testCategoryDefinitions()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         String terms = "the terms and conditions are not valid here";
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
+        map.put("jobId", "foo");
         map.put("categoryId", String.valueOf(map.hashCode()));
         map.put("terms", terms);
 
@@ -635,12 +648,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testCategoryDefinition()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         String terms = "the terms and conditions are not valid here";
 
         Map<String, Object> source = new HashMap<>();
         String categoryId = String.valueOf(source.hashCode());
+        source.put("jobId", "foo");
         source.put("categoryId", categoryId);
         source.put("terms", terms);
 
@@ -659,7 +673,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testInfluencers_NoInterim()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
@@ -778,7 +792,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(5.0, records.get(1).getInitialAnomalyScore(), 0.00001);
     }
 
-    public void testInfluencer() throws InterruptedException, ExecutionException, JsonParseException, IOException {
+    public void testInfluencer() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         String influencerId = "ThisIsAnInfluencerId";
 
@@ -795,12 +809,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         }
     }
 
-    public void testModelSnapshots() throws InterruptedException, ExecutionException, JsonParseException, IOException {
+    public void testModelSnapshots() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("jobId", "foo");
         recordMap1.put("description", "snapshot1");
         recordMap1.put("restorePriority", 1);
         recordMap1.put("timestamp", now.getTime());
@@ -808,6 +823,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("latestRecordTimeStamp", now.getTime());
         recordMap1.put("latestResultTimeStamp", now.getTime());
         Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("jobId", "foo");
         recordMap2.put("description", "snapshot2");
         recordMap2.put("restorePriority", 999);
         recordMap2.put("timestamp", now.getTime());
@@ -832,6 +848,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(2L, page.hitCount());
         List<ModelSnapshot> snapshots = page.hits();
 
+        assertEquals("foo", snapshots.get(0).getJobId());
         assertEquals(now, snapshots.get(0).getTimestamp());
         assertEquals(now, snapshots.get(0).getLatestRecordTimeStamp());
         assertEquals(now, snapshots.get(0).getLatestResultTimeStamp());
@@ -848,12 +865,13 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     public void testModelSnapshots_WithDescription()
-            throws InterruptedException, ExecutionException, JsonParseException, IOException {
+            throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
+        recordMap1.put("jobId", "foo");
         recordMap1.put("description", "snapshot1");
         recordMap1.put("restorePriority", 1);
         recordMap1.put("timestamp", now.getTime());
@@ -861,6 +879,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("latestRecordTimeStamp", now.getTime());
         recordMap1.put("latestResultTimeStamp", now.getTime());
         Map<String, Object> recordMap2 = new HashMap<>();
+        recordMap2.put("jobId", "foo");
         recordMap2.put("description", "snapshot2");
         recordMap2.put("restorePriority", 999);
         recordMap2.put("timestamp", now.getTime());
@@ -973,7 +992,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setSnapshotId("123");
         modelSnapshot.setSnapshotDocCount(2);
 
@@ -989,7 +1008,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
     }
 
     private Bucket createBucketAtEpochTime(long epoch) {
-        Bucket b = new Bucket();
+        Bucket b = new Bucket("foo");
         b.setTimestamp(new Date(epoch));
         b.setMaxNormalizedProbability(10.0);
         return b;

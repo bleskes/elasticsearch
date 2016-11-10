@@ -43,7 +43,8 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
 
     @Override
     protected Job createTestInstance() {
-        Job.Builder builder = new Job.Builder(randomValidJobId());
+        String jobId = randomValidJobId();
+        Job.Builder builder = new Job.Builder(jobId);
         if (randomBoolean()) {
             builder.setDescription(randomAsciiOfLength(10));
         }
@@ -91,7 +92,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         if (randomBoolean()) {
             builder.setModelDebugConfig(new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)));
         }
-        builder.setCounts(new DataCounts());
+        builder.setCounts(new DataCounts(jobId));
         builder.setIgnoreDowntime(randomFrom(IgnoreDowntime.values()));
         if (randomBoolean()) {
             builder.setRenormalizationWindowDays(randomPositiveLong());

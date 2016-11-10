@@ -74,10 +74,11 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     public static final ParseField TYPE = new ParseField("dataCounts");
 
     public static final ConstructingObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
-            new ConstructingObjectParser<>("data_counts", a -> new DataCounts((long) a[0], (long) a[1], (long) a[2], (long) a[3],
-                    (long) a[4], (long) a[5], (long) a[6], (long) a[7], (long) a[8], (long) a[9], (Date) a[10]));
+            new ConstructingObjectParser<>("data_counts", a -> new DataCounts((String) a[0], (long) a[1], (long) a[2], (long) a[3],
+                    (long) a[4], (long) a[5], (long) a[6], (long) a[7], (long) a[8], (long) a[9], (long) a[10], (Date) a[11]));
 
     static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), Job.ID);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), BUCKET_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), PROCESSED_RECORD_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), PROCESSED_FIELD_COUNT);
@@ -100,6 +101,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         PARSER.declareLong((t, u) -> {;}, INPUT_RECORD_COUNT);
     }
 
+    private final String jobId;
     private long bucketCount;
     private long processedRecordCount;
     private long processedFieldCount;
@@ -113,9 +115,10 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     // NORELEASE: Use Jodatime instead
     private Date latestRecordTimeStamp;
 
-    public DataCounts(long bucketCount, long processedRecordCount, long processedFieldCount, long inputBytes, long inputFieldCount,
-                      long invalidDateCount, long missingFieldCount, long outOfOrderTimeStampCount, long failedTransformCount,
-                      long excludedRecordCount, Date latestRecordTimeStamp) {
+    public DataCounts(String jobId, long bucketCount, long processedRecordCount, long processedFieldCount, long inputBytes,
+                      long inputFieldCount, long invalidDateCount, long missingFieldCount, long outOfOrderTimeStampCount,
+                      long failedTransformCount,long excludedRecordCount, Date latestRecordTimeStamp) {
+        this.jobId = jobId;
         this.bucketCount = bucketCount;
         this.processedRecordCount = processedRecordCount;
         this.processedFieldCount = processedFieldCount;
@@ -129,11 +132,13 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         this.latestRecordTimeStamp = latestRecordTimeStamp;
     }
 
-    public DataCounts() {
+    public DataCounts(String jobId) {
+        this.jobId = jobId;
         latestRecordTimeStamp = new Date(0L);
     }
 
     public DataCounts(DataCounts lhs) {
+        jobId = lhs.jobId;
         bucketCount = lhs.bucketCount;
         processedRecordCount = lhs.processedRecordCount;
         processedFieldCount = lhs.processedFieldCount;
@@ -148,6 +153,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     }
 
     public DataCounts(StreamInput in) throws IOException {
+        jobId = in.readString();
         bucketCount = in.readVLong();
         processedRecordCount = in.readVLong();
         processedFieldCount = in.readVLong();
@@ -164,6 +170,9 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         in.readVLong(); // throw away inputRecordCount
     }
 
+    public String getJobid() {
+        return jobId;
+    }
 
     /**
      * The number of bucket results
@@ -344,6 +353,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(jobId);
         out.writeVLong(bucketCount);
         out.writeVLong(processedRecordCount);
         out.writeVLong(processedFieldCount);
@@ -372,6 +382,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     }
 
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
+        builder.field(Job.ID.getPreferredName(), jobId);
         builder.field(BUCKET_COUNT.getPreferredName(), bucketCount);
         builder.field(PROCESSED_RECORD_COUNT.getPreferredName(), processedRecordCount);
         builder.field(PROCESSED_FIELD_COUNT.getPreferredName(), processedFieldCount);
@@ -405,7 +416,8 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
 
         DataCounts that = (DataCounts) other;
 
-        return this.bucketCount == that.bucketCount &&
+        return Objects.equals(this.jobId, that.jobId) &&
+                this.bucketCount == that.bucketCount &&
                 this.processedRecordCount == that.processedRecordCount &&
                 this.processedFieldCount == that.processedFieldCount &&
                 this.inputBytes == that.inputBytes &&
@@ -420,7 +432,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(bucketCount, processedRecordCount, processedFieldCount,
+        return Objects.hash(jobId, bucketCount, processedRecordCount, processedFieldCount,
                 inputBytes, inputFieldCount, invalidDateCount, missingFieldCount,
                 outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
                 latestRecordTimeStamp);

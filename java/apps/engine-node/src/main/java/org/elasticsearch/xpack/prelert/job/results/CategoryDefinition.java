@@ -20,8 +20,9 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,10 +41,11 @@ public class CategoryDefinition extends ToXContentToBytes implements Writeable {
     public static final ParseField MAX_MATCHING_LENGTH = new ParseField("maxMatchingLength");
     public static final ParseField EXAMPLES = new ParseField("examples");
 
-    public static final ObjectParser<CategoryDefinition, ParseFieldMatcherSupplier> PARSER =
-            new ObjectParser<>(TYPE.getPreferredName(), CategoryDefinition::new);
+    public static final ConstructingObjectParser<CategoryDefinition, ParseFieldMatcherSupplier> PARSER =
+            new ConstructingObjectParser<>(TYPE.getPreferredName(), a -> new CategoryDefinition((String) a[0]));
 
     static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), Job.ID);
         PARSER.declareLong(CategoryDefinition::setCategoryId, CATEGORY_ID);
         PARSER.declareString(CategoryDefinition::setTerms, TERMS);
         PARSER.declareString(CategoryDefinition::setRegex, REGEX);
@@ -51,17 +53,20 @@ public class CategoryDefinition extends ToXContentToBytes implements Writeable {
         PARSER.declareStringArray(CategoryDefinition::setExamples, EXAMPLES);
     }
 
+    private final String jobId;
     private long id = 0L;
     private String terms = "";
     private String regex = "";
     private long maxMatchingLength = 0L;
     private final Set<String> examples;
 
-    public CategoryDefinition() {
+    public CategoryDefinition(String jobId) {
+        this.jobId = jobId;
         examples = new TreeSet<>();
     }
 
     public CategoryDefinition(StreamInput in) throws IOException {
+        jobId = in.readString();
         id = in.readLong();
         terms = in.readString();
         regex = in.readString();
@@ -71,11 +76,16 @@ public class CategoryDefinition extends ToXContentToBytes implements Writeable {
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(jobId);
         out.writeLong(id);
         out.writeString(terms);
         out.writeString(regex);
         out.writeLong(maxMatchingLength);
         out.writeStringList(new ArrayList<>(examples));
+    }
+
+    public String getJobId() {
+        return jobId;
     }
 
     public long getCategoryId() {
@@ -126,6 +136,7 @@ public class CategoryDefinition extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        builder.field(Job.ID.getPreferredName(), jobId);
         builder.field(CATEGORY_ID.getPreferredName(), id);
         builder.field(TERMS.getPreferredName(), terms);
         builder.field(REGEX.getPreferredName(), regex);
@@ -144,7 +155,8 @@ public class CategoryDefinition extends ToXContentToBytes implements Writeable {
             return false;
         }
         CategoryDefinition that = (CategoryDefinition) other;
-        return Objects.equals(this.id, that.id)
+        return Objects.equals(this.jobId, that.jobId)
+                && Objects.equals(this.id, that.id)
                 && Objects.equals(this.terms, that.terms)
                 && Objects.equals(this.regex, that.regex)
                 && Objects.equals(this.maxMatchingLength, that.maxMatchingLength)
@@ -153,6 +165,6 @@ public class CategoryDefinition extends ToXContentToBytes implements Writeable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, terms, regex, maxMatchingLength, examples);
+        return Objects.hash(jobId, id, terms, regex, maxMatchingLength, examples);
     }
 }

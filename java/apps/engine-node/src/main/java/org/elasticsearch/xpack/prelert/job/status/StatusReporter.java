@@ -76,7 +76,7 @@ public class StatusReporter {
 
     public StatusReporter(Environment env, Settings settings, String jobId, UsageReporter usageReporter,
             JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
-        this(env, settings, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(), bucketSpan);
+        this(env, settings, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(jobId), bucketSpan);
     }
 
     public StatusReporter(Environment env, Settings settings, String jobId, DataCounts counts, UsageReporter usageReporter,
@@ -92,7 +92,7 @@ public class StatusReporter {
         this.logger = logger;
 
         totalRecordStats = totalCounts;
-        incrementalRecordStats = new DataCounts();
+        incrementalRecordStats = new DataCounts(jobId);
 
         lastRecordTimeEpochMs = new AtomicLong();
 
@@ -389,7 +389,7 @@ public class StatusReporter {
 
 
     public void startNewIncrementalCount() {
-        incrementalRecordStats = new DataCounts();
+        incrementalRecordStats = new DataCounts(jobId);
     }
 
     public DataCounts incrementalStats() {

@@ -35,14 +35,14 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
 
 
     public void testEquals_GivenSameObject() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
 
         assertTrue(modelSnapshot.equals(modelSnapshot));
     }
 
 
     public void testEquals_GivenObjectOfDifferentClass() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
 
         assertFalse(modelSnapshot.equals("a string"));
     }
@@ -154,7 +154,7 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
 
 
     private static ModelSnapshot createFullyPopulated() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot("foo");
         modelSnapshot.setTimestamp(DEFAULT_TIMESTAMP);
         modelSnapshot.setDescription(DEFAULT_DESCRIPTION);
         modelSnapshot.setRestorePriority(DEFAULT_PRIORITY);
@@ -169,14 +169,13 @@ public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapsho
 
     @Override
     protected ModelSnapshot createTestInstance() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
-        modelSnapshot.setJobId(randomAsciiOfLengthBetween(1, 10));
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setTimestamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
         modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setRestorePriority(randomLong());
         modelSnapshot.setSnapshotId(randomAsciiOfLengthBetween(1, 20));
         modelSnapshot.setSnapshotDocCount(randomInt());
-        ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
+        ModelSizeStats.Builder stats = new ModelSizeStats.Builder(randomAsciiOfLengthBetween(1, 20));
         if (randomBoolean()) {
             stats.setBucketAllocationFailuresCount(randomPositiveLong());
         }

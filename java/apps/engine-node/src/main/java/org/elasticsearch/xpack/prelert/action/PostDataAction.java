@@ -61,7 +61,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
 
     @Override
     public Response newResponse() {
-        return new Response();
+        return null;
     }
 
     static class RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder> {
@@ -75,8 +75,8 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
 
         private DataCounts dataCounts;
 
-        Response() {
-            dataCounts = new DataCounts();
+        Response(String jobId) {
+            dataCounts = new DataCounts(jobId);
         }
 
         public Response(DataCounts counts) {

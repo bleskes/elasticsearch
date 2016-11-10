@@ -22,6 +22,7 @@ setup:
         id:     "1"
         body: >
           {
+            "jobId": "foo",
             "timestamp": "2016-06-02T00:00:00Z",
             "restorePriority": "1",
             "snapshotId": "foo1",
@@ -37,6 +38,7 @@ setup:
         id:     "2"
         body: >
           {
+            "jobId": "foo",
             "timestamp": "2016-06-01T00:00:00Z",
             "restorePriority": "2",
             "snapshotId": "foo2",
@@ -50,21 +52,21 @@ setup:
         index:  prelertresults-foo
         type:   bucket
         id:     1
-        body:   { "timestamp": "2016-06-02T00:00:00Z" }
+        body:   { "jobId": "foo", "timestamp": "2016-06-02T00:00:00Z" }
 
   - do:
       index:
         index:  prelertresults-foo
         type:   bucket
         id:     2
-        body:   { "timestamp": "2016-06-01T12:00:00Z" }
+        body:   { "jobId": "foo", "timestamp": "2016-06-01T12:00:00Z" }
 
   - do:
       index:
         index:  prelertresults-foo
         type:   bucket
         id:     3
-        body:   { "timestamp": "2016-05-01T00:00:00Z" }
+        body:   { "jobId": "foo", "timestamp": "2016-05-01T00:00:00Z" }
 
   - do:
       indices.refresh:
@@ -110,6 +112,7 @@ setup:
 
   - match: { exists: true }
   - match: { type: "modelSnapshot" }
+  - match: { document.jobId: "foo" }
   - match: { document.timestamp: 1464825600000 }
   - match: { document.restorePriority: 1 }
   - match: { document.snapshotId: "foo1" }
@@ -122,6 +125,7 @@ setup:
 
   - match: { exists: true }
   - match: { type: "modelSnapshot" }
+  - match: { document.jobId: "foo" }
   - match: { document.timestamp: 1464739200000 }
   - match: { document.restorePriority: 2 }
   - match: { document.snapshotId: "foo2" }
@@ -136,6 +140,7 @@ setup:
 
   - match: { exists: true }
   - match: { type: "modelSnapshot" }
+  - match: { document.jobId: "foo" }
   - match: { document.timestamp: 1464825600000 }
   - match: { document.restorePriority: 1 }
   - match: { document.snapshotId: "foo1" }
@@ -148,6 +153,7 @@ setup:
 
   - match: { exists: true }
   - match: { type: "modelSnapshot" }
+  - match: { document.jobId: "foo" }
   - match: { document.timestamp: 1464739200000 }
   - match: { document.restorePriority: 2 }
   - match: { document.snapshotId: "foo2" }
@@ -162,6 +168,7 @@ setup:
 
   - match: { exists: true }
   - match: { type: "modelSnapshot" }
+  - match: { document.jobId: "foo" }
   - match: { document.timestamp: 1464825600000 }
   - match: { document.restorePriority: 1 }
   - match: { document.snapshotId: "foo1" }
@@ -174,6 +181,7 @@ setup:
 
   - match: { exists: true }
   - match: { type: "modelSnapshot" }
+  - match: { document.jobId: "foo" }
   - match: { document.timestamp: 1464739200000 }
   - match: { document.restorePriority: 2 }
   - match: { document.snapshotId: "foo2" }
@@ -206,4 +214,5 @@ setup:
         end: "2016-12-01T00:00:00Z"
 
   - match: { hitCount: 1 }
+  - match: { hits.0.jobId: "foo" }
   - match: { hits.0.timestamp: 1462060800000 }

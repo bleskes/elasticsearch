@@ -45,7 +45,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
     }
 
     public void testModelSnapshots_GivenNoStartOrEndParams() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
         JobProvider jobProvider = mock(JobProvider.class);
@@ -60,7 +60,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
     }
 
     public void testModelSnapshots_GivenEpochStartAndEpochEndParams() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
         JobProvider jobProvider = mock(JobProvider.class);
@@ -77,7 +77,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
     }
 
     public void testModelSnapshots_GivenIsoWithMillisStartAndEpochEndParams() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
         JobProvider jobProvider = mock(JobProvider.class);
@@ -95,7 +95,7 @@ public class GetModelSnapshotsTests extends ESTestCase {
     }
 
     public void testModelSnapshots_GivenIsoWithoutMillisStartAndEpochEndParams() {
-        ModelSnapshot modelSnapshot = new ModelSnapshot();
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
         QueryPage<ModelSnapshot> queryResult = new QueryPage<>(Collections.singletonList(modelSnapshot), 300);
 
         JobProvider jobProvider = mock(JobProvider.class);

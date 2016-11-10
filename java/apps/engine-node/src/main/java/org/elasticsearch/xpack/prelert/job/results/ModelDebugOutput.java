@@ -20,7 +20,7 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
@@ -52,11 +52,11 @@ public class ModelDebugOutput extends ToXContentToBytes implements Writeable
     public static final ParseField DEBUG_MEDIAN = new ParseField("debugMedian");
     public static final ParseField ACTUAL = new ParseField("actual");
 
-    public static final ObjectParser<ModelDebugOutput, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
-            ModelDebugOutput::new);
+    public static final ConstructingObjectParser<ModelDebugOutput, ParseFieldMatcherSupplier> PARSER =
+            new ConstructingObjectParser<>(TYPE.getPreferredName(), a -> new ModelDebugOutput((String) a[0]));
 
     static {
-        PARSER.declareString(ModelDebugOutput::setJobId, JOB_ID);
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), JOB_ID);
         PARSER.declareField(ModelDebugOutput::setTimestamp, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
@@ -78,8 +78,7 @@ public class ModelDebugOutput extends ToXContentToBytes implements Writeable
         PARSER.declareDouble(ModelDebugOutput::setActual, ACTUAL);
     }
 
-    // TODO make final once the class has been made immutable  https://github.com/elastic/prelert-legacy/issues/191
-    private String jobId;
+    private final String jobId;
     private Date timestamp;
     private String id;
     private String partitionFieldName;
@@ -94,7 +93,8 @@ public class ModelDebugOutput extends ToXContentToBytes implements Writeable
     private double debugMedian;
     private double actual;
 
-    public ModelDebugOutput() {
+    public ModelDebugOutput(String jobId) {
+        this.jobId = jobId;
     }
 
     public ModelDebugOutput(StreamInput in) throws IOException {
@@ -176,10 +176,6 @@ public class ModelDebugOutput extends ToXContentToBytes implements Writeable
 
     public String getJobId() {
         return jobId;
-    }
-
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
     }
 
     public String getId()

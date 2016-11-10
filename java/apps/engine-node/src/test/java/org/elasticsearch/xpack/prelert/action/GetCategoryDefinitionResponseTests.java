@@ -26,7 +26,7 @@ public class GetCategoryDefinitionResponseTests extends AbstractStreamableTestCa
         if (randomBoolean()) {
             document = SingleDocument.empty(CategoryDefinition.TYPE.getPreferredName());
         } else {
-            CategoryDefinition categoryDefinition = new CategoryDefinition();
+            CategoryDefinition categoryDefinition = new CategoryDefinition(randomAsciiOfLength(10));
             categoryDefinition.setRegex(randomAsciiOfLength(10));
             categoryDefinition.setTerms(randomAsciiOfLength(10));
             categoryDefinition.setCategoryId(randomLong());

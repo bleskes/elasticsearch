@@ -206,7 +206,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         InputStream inputStream = createInputStream("");
         DataCounts dataCounts = manager.processData("foo", inputStream, mock(DataLoadParams.class));
 
-        assertThat(dataCounts, equalTo(new DataCounts()));
+        assertThat(dataCounts, equalTo(new DataCounts("foo")));
     }
 
     public void testProcessData_GivenPausedJob() {
@@ -222,7 +222,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         InputStream inputStream = createInputStream("");
         DataCounts dataCounts = manager.processData("foo", inputStream, mock(DataLoadParams.class));
 
-        assertThat(dataCounts, equalTo(new DataCounts()));
+        assertThat(dataCounts, equalTo(new DataCounts("foo")));
     }
 
     private AutodetectProcessManager createManager(AutodetectCommunicator communicator) {

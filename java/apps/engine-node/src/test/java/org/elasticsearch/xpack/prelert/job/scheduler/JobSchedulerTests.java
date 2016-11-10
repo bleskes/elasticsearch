@@ -409,7 +409,7 @@ public class JobSchedulerTests extends ESTestCase {
     public void testStart_GivenLatestRecordTimestampIsAfterSchedulerStartTime() {
         Job.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1450000000000L, 1460000000000L);
-        DataCounts dataCounts = new DataCounts();
+        DataCounts dataCounts = new DataCounts(JOB_ID);
         dataCounts.setLatestRecordTimeStamp(new Date(1455000000000L));
         job.setCounts(dataCounts);
 
@@ -435,7 +435,7 @@ public class JobSchedulerTests extends ESTestCase {
     public void testStart_GivenLastFinalBucketEndAfterLatestRecordTimestampAndAfterSchedulerStartTime() {
         Job.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1450000000000L, 1460000000000L);
-        DataCounts dataCounts = new DataCounts();
+        DataCounts dataCounts = new DataCounts(JOB_ID);
         dataCounts.setLatestRecordTimeStamp(new Date(1455000000000L));
         job.setCounts(dataCounts);
         givenLatestFinalBucketTime(1455000000000L);
@@ -462,7 +462,7 @@ public class JobSchedulerTests extends ESTestCase {
     public void testStart_GivenLatestRecordTimestampIsBeforeSchedulerStartTime() {
         Job.Builder job = buildJobBuilder(JOB_ID);
         Allocation allocation = createAllocation(JobSchedulerStatus.STARTED, 1455000000000L, 1460000000000L);
-        DataCounts dataCounts = new DataCounts();
+        DataCounts dataCounts = new DataCounts(JOB_ID);
         dataCounts.setLatestRecordTimeStamp(new Date(1450000000000L));
         job.setCounts(dataCounts);
 
@@ -586,7 +586,7 @@ public class JobSchedulerTests extends ESTestCase {
         if (latestBucketTimeMs == null) {
             buckets = new QueryPage<>(Collections.emptyList(), 0);
         } else {
-            Bucket bucket = new Bucket();
+            Bucket bucket = new Bucket("foo");
             bucket.setTimestamp(new Date(latestBucketTimeMs));
             buckets = new QueryPage<>(Arrays.asList(bucket), 1);
         }
@@ -608,7 +608,7 @@ public class JobSchedulerTests extends ESTestCase {
     }
 
     private static DataCounts newCounts(int recordCount, Long latestRecordTime) {
-        DataCounts counts = new DataCounts(0L, recordCount, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
+        DataCounts counts = new DataCounts(JOB_ID, 0L, recordCount, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
                 latestRecordTime == null ? null : new Date(latestRecordTime));
         return counts;
     }

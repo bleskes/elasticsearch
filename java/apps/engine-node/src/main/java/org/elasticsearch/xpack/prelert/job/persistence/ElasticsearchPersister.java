@@ -545,7 +545,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
         BucketInfluencer influencer = new BucketInfluencer(bucketInfluencer);
         influencer.setIsInterim(isInterim);
         influencer.setTimestamp(bucketTime);
-        influencer.setJobId(jobId);
         XContentBuilder builder = jsonBuilder();
         influencer.toXContent(builder, ToXContent.EMPTY_PARAMS);
         return builder;

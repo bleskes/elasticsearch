@@ -25,7 +25,7 @@ public class CategoryDefinitionTests extends AbstractSerializingTestCase<Categor
 
     @Override
     protected CategoryDefinition createTestInstance() {
-        CategoryDefinition categoryDefinition = new CategoryDefinition();
+        CategoryDefinition categoryDefinition = new CategoryDefinition(randomAsciiOfLength(10));
         categoryDefinition.setCategoryId(randomLong());
         categoryDefinition.setTerms(randomAsciiOfLength(10));
         categoryDefinition.setRegex(randomAsciiOfLength(10));
@@ -45,13 +45,13 @@ public class CategoryDefinitionTests extends AbstractSerializingTestCase<Categor
     }
 
     public void testEquals_GivenSameObject() {
-        CategoryDefinition category = new CategoryDefinition();
+        CategoryDefinition category = new CategoryDefinition(randomAsciiOfLength(10));
 
         assertTrue(category.equals(category));
     }
 
     public void testEquals_GivenObjectOfDifferentClass() {
-        CategoryDefinition category = new CategoryDefinition();
+        CategoryDefinition category = new CategoryDefinition(randomAsciiOfLength(10));
 
         assertFalse(category.equals("a string"));
     }
@@ -111,7 +111,7 @@ public class CategoryDefinitionTests extends AbstractSerializingTestCase<Categor
     }
 
     private static CategoryDefinition createFullyPopulatedCategoryDefinition() {
-        CategoryDefinition category = new CategoryDefinition();
+        CategoryDefinition category = new CategoryDefinition("jobName");
         category.setCategoryId(42);
         category.setTerms("foo bar");
         category.setRegex(".*?foo.*?bar.*");

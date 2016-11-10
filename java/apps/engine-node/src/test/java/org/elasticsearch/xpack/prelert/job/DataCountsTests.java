@@ -28,10 +28,10 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
 
     @Override
     protected DataCounts createTestInstance() {
-        return new DataCounts(randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+        return new DataCounts(randomAsciiOfLength(10), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
-                randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
+                randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
     }
 
     @Override
@@ -67,7 +67,7 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCountCreatedZero() throws Exception {
-        DataCounts counts = new DataCounts();
+        DataCounts counts = new DataCounts(randomAsciiOfLength(16));
         assertAllFieldsEqualZero(counts);
     }
 
@@ -80,7 +80,7 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testIncrements() {
-        DataCounts counts = new DataCounts();
+        DataCounts counts = new DataCounts(randomAsciiOfLength(16));
 
         counts.incrementFailedTransformCount(5);
         assertEquals(5, counts.getFailedTransformCount());
@@ -102,7 +102,7 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testGetInputRecordCount() {
-        DataCounts counts = new DataCounts();
+        DataCounts counts = new DataCounts(randomAsciiOfLength(16));
         counts.incrementProcessedRecordCount(5);
         assertEquals(5, counts.getInputRecordCount());
 
@@ -114,18 +114,19 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCalcProcessedFieldCount() {
-        DataCounts counts = new DataCounts(0L, 10L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date());
+        DataCounts counts = new DataCounts(randomAsciiOfLength(16), 0L, 10L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date());
         counts.calcProcessedFieldCount(3);
 
         assertEquals(30, counts.getProcessedFieldCount());
 
-        counts = new DataCounts(0L, 10L, 0L, 0L, 0L, 0L, 5L, 0L, 0L, 0L, new Date());
+        counts = new DataCounts(randomAsciiOfLength(16), 0L, 10L, 0L, 0L, 0L, 0L, 5L, 0L, 0L, 0L, new Date());
         counts.calcProcessedFieldCount(3);
         assertEquals(25, counts.getProcessedFieldCount());
     }
 
     public void testEquals() {
-        DataCounts counts1 = new DataCounts(3L, 10L, 5000L, 2000L, 300L, 6L, 65L, 40L, 15L, 0L, new Date(1435000000L));
+        DataCounts counts1 =
+                new DataCounts(randomAsciiOfLength(16), 3L, 10L, 5000L, 2000L, 300L, 6L, 65L, 40L, 15L, 0L, new Date(1435000000L));
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1, counts2);
@@ -169,8 +170,8 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
             long invalidDateCount, long missingFieldCount,
             long outOfOrderTimeStampCount, long failedTransformCount,
             long excludedRecordCount, long latestRecordTime) {
-        DataCounts counts = new DataCounts(bucketCount, processedRecordCount, processedFieldCount, inputBytes, inputFieldCount,
-                invalidDateCount, missingFieldCount, outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
+        DataCounts counts = new DataCounts("foo", bucketCount, processedRecordCount, processedFieldCount, inputBytes,
+                inputFieldCount, invalidDateCount, missingFieldCount, outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
                 new Date(latestRecordTime));
 
         return counts;

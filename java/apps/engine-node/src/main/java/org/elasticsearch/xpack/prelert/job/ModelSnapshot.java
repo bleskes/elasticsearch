@@ -20,7 +20,7 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
@@ -53,10 +53,11 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
      */
     public static final ParseField TYPE = new ParseField("modelSnapshot");
 
-    public static final ObjectParser<ModelSnapshot, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
-            ModelSnapshot::new);
+    public static final ConstructingObjectParser<ModelSnapshot, ParseFieldMatcherSupplier> PARSER =
+            new ConstructingObjectParser<>(TYPE.getPreferredName(), a -> new ModelSnapshot((String) a[0]));
+
     static {
-        PARSER.declareString(ModelSnapshot::setJobId, JOB_ID);
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), JOB_ID);
         PARSER.declareField(ModelSnapshot::setTimestamp, p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
@@ -91,7 +92,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
         PARSER.declareObject(ModelSnapshot::setQuantiles, Quantiles.PARSER, Quantiles.TYPE);
     }
 
-    private String jobId;
+    private final String jobId;
     private Date timestamp;
     private String description;
     private long restorePriority;
@@ -102,7 +103,8 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     private Date latestResultTimeStamp;
     private Quantiles quantiles;
 
-    public ModelSnapshot() {
+    public ModelSnapshot(String jobId) {
+        this.jobId = jobId;
     }
 
     public ModelSnapshot(StreamInput in) throws IOException {
@@ -195,10 +197,6 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
 
     public String getJobId() {
         return jobId;
-    }
-
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
     }
 
     public Date getTimestamp() {

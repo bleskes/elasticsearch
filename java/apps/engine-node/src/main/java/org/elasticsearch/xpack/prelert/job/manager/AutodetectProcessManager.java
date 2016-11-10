@@ -56,7 +56,7 @@ public class AutodetectProcessManager implements DataProcessor {
     public DataCounts processData(String jobId, InputStream input, DataLoadParams params) {
         Allocation allocation = jobManager.getJobAllocation(jobId);
         if (allocation.getStatus().isAnyOf(JobStatus.PAUSING, JobStatus.PAUSED)) {
-            return new DataCounts();
+            return new DataCounts(jobId);
         }
 
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);

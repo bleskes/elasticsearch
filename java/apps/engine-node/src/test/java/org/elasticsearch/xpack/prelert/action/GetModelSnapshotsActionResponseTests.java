@@ -29,8 +29,7 @@ public class GetModelSnapshotsActionResponseTests extends AbstractStreamableTest
         int listSize = randomInt(10);
         List<ModelSnapshot> hits = new ArrayList<>(listSize);
         for (int j = 0; j < listSize; j++) {
-            ModelSnapshot snapshot = new ModelSnapshot();
-            snapshot.setJobId("foo");
+            ModelSnapshot snapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
             snapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
             hits.add(snapshot);
         }

@@ -24,8 +24,7 @@ public class ModelDebugOutputTests extends AbstractSerializingTestCase<ModelDebu
 
     @Override
     protected ModelDebugOutput createTestInstance() {
-        ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
-        modelDebugOutput.setJobId("foo");
+        ModelDebugOutput modelDebugOutput = new ModelDebugOutput("foo");
         if (randomBoolean()) {
             modelDebugOutput.setByFieldName(randomAsciiOfLengthBetween(1, 20));
         }
@@ -70,13 +69,13 @@ public class ModelDebugOutputTests extends AbstractSerializingTestCase<ModelDebu
     }
 
     public void testEquals_GivenSameObject() {
-        ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
+        ModelDebugOutput modelDebugOutput = new ModelDebugOutput(randomAsciiOfLength(15));
 
         assertTrue(modelDebugOutput.equals(modelDebugOutput));
     }
 
     public void testEquals_GivenObjectOfDifferentClass() {
-        ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
+        ModelDebugOutput modelDebugOutput = new ModelDebugOutput(randomAsciiOfLength(15));
 
         assertFalse(modelDebugOutput.equals("a string"));
     }
@@ -199,7 +198,7 @@ public class ModelDebugOutputTests extends AbstractSerializingTestCase<ModelDebu
     }
 
     private ModelDebugOutput createFullyPopulated() {
-        ModelDebugOutput modelDebugOutput = new ModelDebugOutput();
+        ModelDebugOutput modelDebugOutput = new ModelDebugOutput("foo");
         modelDebugOutput.setByFieldName("by");
         modelDebugOutput.setByFieldValue("by_val");
         modelDebugOutput.setPartitionFieldName("part");

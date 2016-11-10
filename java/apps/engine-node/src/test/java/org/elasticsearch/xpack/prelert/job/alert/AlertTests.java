@@ -58,7 +58,7 @@ public class AlertTests extends ESTestCase {
         alert.setInterim(true);
         assert (alert.isInterim());
 
-        Bucket b = new Bucket();
+        Bucket b = new Bucket("foo");
         s = "Captain Scarlet";
         b.setId(s);
         alert.setBucket(b);
@@ -66,7 +66,7 @@ public class AlertTests extends ESTestCase {
         assertEquals(s, alert.getBucket().getId());
 
         List<AnomalyRecord> l = new ArrayList<>();
-        AnomalyRecord r = new AnomalyRecord();
+        AnomalyRecord r = new AnomalyRecord("foo");
         s = "Ozimandius";
         r.setId(s);
         l.add(r);

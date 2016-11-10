@@ -4,7 +4,7 @@ setup:
         index:  prelertresults-farequote
         type:   categoryDefinition
         id:     1
-        body:   { "categoryId": 1 }
+        body:   { "jobId": "farequote", "categoryId": 1 }
 
   - do:
       indices.refresh:
@@ -17,6 +17,7 @@ setup:
         jobId: "farequote"
 
   - match: { hitCount: 1 }
+  - match: { hits.0.jobId: farequote }
   - match: { hits.0.categoryId: 1 }
 
 ---
@@ -26,4 +27,5 @@ setup:
         jobId: "farequote"
         categoryId: "1"
 
+  - match: { document.jobId: farequote }
   - match: { document.categoryId: 1 }

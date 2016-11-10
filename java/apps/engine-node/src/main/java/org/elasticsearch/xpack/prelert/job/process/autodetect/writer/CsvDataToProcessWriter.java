@@ -64,8 +64,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
     public CsvDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
             DataDescription dataDescription, AnalysisConfig analysisConfig,
             TransformConfigs transforms, StatusReporter statusReporter, Logger logger) {
-        super(includeControlField, autodetectProcess, dataDescription, analysisConfig, transforms,
-                statusReporter, logger);
+        super(includeControlField, autodetectProcess, dataDescription, analysisConfig, transforms, statusReporter, logger);
     }
 
     /**
@@ -88,7 +87,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
             String[] header = csvReader.getHeader(true);
             if (header == null) // null if EoF
             {
-                return new DataCounts();
+                statusReporter.incrementalStats();
             }
 
             long inputFieldCount = Math.max(header.length - 1, 0); // time field doesn't count

@@ -31,7 +31,9 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
 
     @Override
     protected Bucket createTestInstance() {
-        Bucket bucket = new Bucket();
+        String jobId = "foo";
+        Bucket bucket = new Bucket(jobId);
+
         if (randomBoolean()) {
             bucket.setAnomalyScore(randomDouble());
         }
@@ -39,7 +41,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
             int size = randomInt(10);
             List<BucketInfluencer> bucketInfluencers = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
-                BucketInfluencer bucketInfluencer = new BucketInfluencer();
+                BucketInfluencer bucketInfluencer = new BucketInfluencer(jobId);
                 bucketInfluencer.setAnomalyScore(randomDouble());
                 bucketInfluencer.setInfluencerFieldName(randomAsciiOfLengthBetween(1, 20));
                 bucketInfluencer.setInitialAnomalyScore(randomDouble());
@@ -110,7 +112,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
             int size = randomInt(10);
             List<AnomalyRecord> records = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
-                AnomalyRecord anomalyRecord = new AnomalyRecord();
+                AnomalyRecord anomalyRecord = new AnomalyRecord(jobId);
                 anomalyRecord.setAnomalyScore(randomDouble());
                 anomalyRecord.setActual(Collections.singletonList(randomDouble()));
                 anomalyRecord.setTypical(Collections.singletonList(randomDouble()));
@@ -139,22 +141,22 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenDifferentClass() {
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("foo");
         assertFalse(bucket.equals("a string"));
     }
 
     public void testEquals_GivenTwoDefaultBuckets() {
-        Bucket bucket1 = new Bucket();
-        Bucket bucket2 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
+        Bucket bucket2 = new Bucket("foo");
 
         assertTrue(bucket1.equals(bucket2));
         assertTrue(bucket2.equals(bucket1));
     }
 
     public void testEquals_GivenDifferentAnomalyScore() {
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         bucket1.setAnomalyScore(3.0);
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setAnomalyScore(2.0);
 
         assertFalse(bucket1.equals(bucket2));
@@ -162,17 +164,17 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenSameDates() {
-        Bucket b1 = new Bucket();
+        Bucket b1 = new Bucket("foo");
         b1.setTimestamp(new Date(1234567890L));
-        Bucket b2 = new Bucket();
+        Bucket b2 = new Bucket("foo");
         b2.setTimestamp(new Date(1234567890L));
 
     }
 
     public void testEquals_GivenDifferentMaxNormalizedProbability() {
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         bucket1.setMaxNormalizedProbability(55.0);
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setMaxNormalizedProbability(55.1);
 
         assertFalse(bucket1.equals(bucket2));
@@ -180,9 +182,9 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenDifferentEventCount() {
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         bucket1.setEventCount(3);
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setEventCount(100);
 
         assertFalse(bucket1.equals(bucket2));
@@ -190,9 +192,9 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenDifferentRecordCount() {
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         bucket1.setRecordCount(300);
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setRecordCount(400);
 
         assertFalse(bucket1.equals(bucket2));
@@ -200,9 +202,9 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenOneHasRecordsAndTheOtherDoesNot() {
-        Bucket bucket1 = new Bucket();
-        bucket1.setRecords(Arrays.asList(new AnomalyRecord()));
-        Bucket bucket2 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
+        bucket1.setRecords(Arrays.asList(new AnomalyRecord("foo")));
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setRecords(null);
 
         assertFalse(bucket1.equals(bucket2));
@@ -210,24 +212,24 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenDifferentNumberOfRecords() {
-        Bucket bucket1 = new Bucket();
-        bucket1.setRecords(Arrays.asList(new AnomalyRecord()));
-        Bucket bucket2 = new Bucket();
-        bucket2.setRecords(Arrays.asList(new AnomalyRecord(), new AnomalyRecord()));
+        Bucket bucket1 = new Bucket("foo");
+        bucket1.setRecords(Arrays.asList(new AnomalyRecord("foo")));
+        Bucket bucket2 = new Bucket("foo");
+        bucket2.setRecords(Arrays.asList(new AnomalyRecord("foo"), new AnomalyRecord("foo")));
 
         assertFalse(bucket1.equals(bucket2));
         assertFalse(bucket2.equals(bucket1));
     }
 
     public void testEquals_GivenSameNumberOfRecordsButDifferent() {
-        AnomalyRecord anomalyRecord1 = new AnomalyRecord();
+        AnomalyRecord anomalyRecord1 = new AnomalyRecord("foo");
         anomalyRecord1.setAnomalyScore(1.0);
-        AnomalyRecord anomalyRecord2 = new AnomalyRecord();
+        AnomalyRecord anomalyRecord2 = new AnomalyRecord("foo");
         anomalyRecord1.setAnomalyScore(2.0);
 
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         bucket1.setRecords(Arrays.asList(anomalyRecord1));
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setRecords(Arrays.asList(anomalyRecord2));
 
         assertFalse(bucket1.equals(bucket2));
@@ -235,9 +237,9 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenDifferentIsInterim() {
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         bucket1.setInterim(true);
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setInterim(false);
 
         assertFalse(bucket1.equals(bucket2));
@@ -245,9 +247,9 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenDifferentInfluencers() {
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         Influencer influencer = new Influencer("foo", "inf_field", "inf_value");
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setInfluencers(Arrays.asList(influencer));
 
         assertFalse(bucket1.equals(bucket2));
@@ -255,14 +257,14 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenDifferentBucketInfluencers() {
-        Bucket bucket1 = new Bucket();
-        BucketInfluencer influencer1 = new BucketInfluencer();
+        Bucket bucket1 = new Bucket("foo");
+        BucketInfluencer influencer1 = new BucketInfluencer("foo");
         influencer1.setInfluencerFieldName("foo");
         bucket1.addBucketInfluencer(influencer1);
         ;
 
-        Bucket bucket2 = new Bucket();
-        BucketInfluencer influencer2 = new BucketInfluencer();
+        Bucket bucket2 = new Bucket("foo");
+        BucketInfluencer influencer2 = new BucketInfluencer("foo");
         influencer2.setInfluencerFieldName("bar");
         bucket2.addBucketInfluencer(influencer2);
 
@@ -271,14 +273,14 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testEquals_GivenEqualBuckets() {
-        AnomalyRecord record = new AnomalyRecord();
+        AnomalyRecord record = new AnomalyRecord("jobId");
         Influencer influencer = new Influencer("jobId", "testField", "testValue");
-        BucketInfluencer bucketInfluencer = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer = new BucketInfluencer("foo");
         influencer.setProbability(0.1);
         influencer.setInitialAnomalyScore(10.0);
         Date date = new Date();
 
-        Bucket bucket1 = new Bucket();
+        Bucket bucket1 = new Bucket("foo");
         bucket1.setAnomalyScore(42.0);
         bucket1.setInitialAnomalyScore(92.0);
         bucket1.setEventCount(134);
@@ -291,7 +293,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
         bucket1.setInfluencers(Arrays.asList(influencer));
         bucket1.setTimestamp(date);
 
-        Bucket bucket2 = new Bucket();
+        Bucket bucket2 = new Bucket("foo");
         bucket2.setAnomalyScore(42.0);
         bucket2.setInitialAnomalyScore(92.0);
         bucket2.setEventCount(134);
@@ -310,7 +312,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testIsNormalisable_GivenNullBucketInfluencers() {
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("foo");
         bucket.setBucketInfluencers(null);
         bucket.setAnomalyScore(90.0);
 
@@ -318,7 +320,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testIsNormalisable_GivenEmptyBucketInfluencers() {
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("foo");
         bucket.setBucketInfluencers(Collections.emptyList());
         bucket.setAnomalyScore(90.0);
 
@@ -326,8 +328,8 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testIsNormalisable_GivenAnomalyScoreIsZeroAndRecordCountIsZero() {
-        Bucket bucket = new Bucket();
-        bucket.addBucketInfluencer(new BucketInfluencer());
+        Bucket bucket = new Bucket("foo");
+        bucket.addBucketInfluencer(new BucketInfluencer("foo"));
         bucket.setAnomalyScore(0.0);
         bucket.setRecordCount(0);
 
@@ -335,8 +337,8 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testIsNormalisable_GivenAnomalyScoreIsZeroAndRecordCountIsNonZero() {
-        Bucket bucket = new Bucket();
-        bucket.addBucketInfluencer(new BucketInfluencer());
+        Bucket bucket = new Bucket("foo");
+        bucket.addBucketInfluencer(new BucketInfluencer("foo"));
         bucket.setAnomalyScore(0.0);
         bucket.setRecordCount(1);
 
@@ -344,8 +346,8 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testIsNormalisable_GivenAnomalyScoreIsNonZeroAndRecordCountIsZero() {
-        Bucket bucket = new Bucket();
-        bucket.addBucketInfluencer(new BucketInfluencer());
+        Bucket bucket = new Bucket("foo");
+        bucket.addBucketInfluencer(new BucketInfluencer("foo"));
         bucket.setAnomalyScore(1.0);
         bucket.setRecordCount(0);
 
@@ -353,8 +355,8 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     public void testIsNormalisable_GivenAnomalyScoreIsNonZeroAndRecordCountIsNonZero() {
-        Bucket bucket = new Bucket();
-        bucket.addBucketInfluencer(new BucketInfluencer());
+        Bucket bucket = new Bucket("foo");
+        bucket.addBucketInfluencer(new BucketInfluencer("foo"));
         bucket.setAnomalyScore(1.0);
         bucket.setRecordCount(1);
 
@@ -369,7 +371,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
         records.add(createAnomalyRecord("B", 15.0));
         records.add(createAnomalyRecord("B", 45.0));
 
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("foo");
         bucket.setRecords(records);
 
         Map<String, Double> ppProb = bucket.calcMaxNormalizedProbabilityPerPartition();
@@ -378,7 +380,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
     }
 
     private AnomalyRecord createAnomalyRecord(String partitionFieldValue, double normalizedProbability) {
-        AnomalyRecord record = new AnomalyRecord();
+        AnomalyRecord record = new AnomalyRecord("foo");
         record.setPartitionFieldValue(partitionFieldValue);
         record.setNormalizedProbability(normalizedProbability);
         return record;
@@ -391,7 +393,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
         pScore.add(new PartitionScore("pf", "pv4", 60, 0.1));
         pScore.add(new PartitionScore("pf", "pv2", 40, 0.1));
 
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("foo");
         bucket.setPartitionScores(pScore);
 
         double anomalyScore = bucket.partitionAnomalyScore("pv1");

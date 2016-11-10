@@ -48,7 +48,7 @@ public class DataStreamerTests extends ESTestCase {
         InputStream inputStream = mock(InputStream.class);
         DataLoadParams params = mock(DataLoadParams.class);
 
-        when(dataProcessor.processData("foo", inputStream, params)).thenReturn(new DataCounts());
+        when(dataProcessor.processData("foo", inputStream, params)).thenReturn(new DataCounts("foo"));
 
         dataStreamer.streamData("", "foo", inputStream, params);
 
@@ -83,7 +83,7 @@ public class DataStreamerTests extends ESTestCase {
             when(dataProcessor.processData(Mockito.anyString(),
                     Mockito.any(InputStream.class),
                     Mockito.any(DataLoadParams.class)))
-            .thenReturn(new DataCounts());
+            .thenReturn(new DataCounts("foo"));
 
             dataStreamer.streamData("gzip", "foo", pipedIn, params);
 

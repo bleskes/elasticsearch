@@ -15,14 +15,14 @@ setup:
         index:  prelertresults-foo
         type:   modelSnapshot
         id:     "1"
-        body:   { "timestamp": "2016-06-02T00:00:00Z", "restorePriority": "1" }
+        body:   { "jobId": "foo", "timestamp": "2016-06-02T00:00:00Z", "restorePriority": "1" }
 
   - do:
       index:
         index:  prelertresults-foo
         type:   modelSnapshot
         id:     "2"
-        body:   { "timestamp": "2016-06-01T00:00:00Z", "restorePriority": "2" }
+        body:   { "jobId": "foo", "timestamp": "2016-06-01T00:00:00Z", "restorePriority": "2" }
 
   - do:
       indices.refresh:

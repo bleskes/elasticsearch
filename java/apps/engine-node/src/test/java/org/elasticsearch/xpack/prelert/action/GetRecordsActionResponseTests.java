@@ -28,8 +28,9 @@ public class GetRecordsActionResponseTests extends AbstractStreamableTestCase<Ge
     protected Response createTestInstance() {
         int listSize = randomInt(10);
         List<AnomalyRecord> hits = new ArrayList<>(listSize);
+        String jobId = randomAsciiOfLengthBetween(1, 20);
         for (int j = 0; j < listSize; j++) {
-            AnomalyRecord record = new AnomalyRecord();
+            AnomalyRecord record = new AnomalyRecord(jobId);
             record.setId(randomAsciiOfLengthBetween(1, 20));
             hits.add(record);
         }

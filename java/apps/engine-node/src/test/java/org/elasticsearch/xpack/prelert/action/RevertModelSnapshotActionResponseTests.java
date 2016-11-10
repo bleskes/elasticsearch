@@ -25,8 +25,7 @@ public class RevertModelSnapshotActionResponseTests extends AbstractStreamableTe
         if (randomBoolean()) {
             return new Response();
         } else {
-            ModelSnapshot modelSnapshot = new ModelSnapshot();
-            modelSnapshot.setJobId(randomAsciiOfLengthBetween(1, 20));
+            ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
             modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
             return new RevertModelSnapshotAction.Response(modelSnapshot);
         }

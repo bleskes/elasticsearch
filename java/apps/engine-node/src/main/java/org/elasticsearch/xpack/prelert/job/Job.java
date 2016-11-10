@@ -827,7 +827,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 createTime = this.createTime == null ? new Date() : this.createTime;
                 finishedTime = null;
                 lastDataTime = null;
-                counts = new DataCounts();
+                counts = new DataCounts(id);
                 modelSizeStats = null;
                 averageBucketProcessingTimeMs = null;
                 modelSnapshotId = null;

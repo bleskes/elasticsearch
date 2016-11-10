@@ -30,6 +30,7 @@ setup:
         id:     "2"
         body: >
           {
+            "jobId": "foo",
             "timestamp": "2016-06-01T00:00:00Z",
             "restorePriority": "2",
             "snapshotId": "bar",
@@ -93,6 +94,7 @@ setup:
 
   - match: { hitCount: 1 }
   - length: { hits: 1 }
+  - match: { hits.0.jobId: "foo" }
   - match: { hits.0.description: "bar" }
 
   - do:

@@ -23,6 +23,7 @@ setup:
         id:     "foo1"
         body: >
           {
+            "jobId": "foo",
             "timestamp": "2016-06-02T00:00:00Z",
             "restorePriority": "1",
             "snapshotId": "foo1",
@@ -59,6 +60,7 @@ setup:
         id:     "foo2"
         body: >
           {
+            "jobId": "foo",
             "timestamp": "2016-06-01T00:00:00Z",
             "restorePriority": "2",
             "snapshotId": "foo2",

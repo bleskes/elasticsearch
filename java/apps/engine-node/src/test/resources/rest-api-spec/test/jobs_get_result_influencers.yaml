@@ -6,6 +6,8 @@ setup:
           mappings:
             influencer:
               properties:
+                "jobId":
+                  type: keyword
                 "timestamp":
                   type: date
                 "anomalyScore":

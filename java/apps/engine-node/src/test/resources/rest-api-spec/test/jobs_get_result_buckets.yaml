@@ -13,7 +13,7 @@ setup:
         index:  prelertresults-farequote
         type:   bucket
         id:     1
-        body:   { "timestamp": "2016-06-01T00:00:00Z" }
+        body:   { "jobId": "farequote", "timestamp": "2016-06-01T00:00:00Z" }
 
   - do:
       indices.refresh:
@@ -29,6 +29,7 @@ setup:
 
   - match: { hitCount: 1 }
   - match: { hits.0.timestamp: 1464739200000 }
+  - match: { hits.0.jobId: farequote}
 
 ---
 "Test result bucket api":
@@ -37,4 +38,5 @@ setup:
         jobId: "farequote"
         timestamp: "2016-06-01T00:00:00Z"
 
-  - match: { document.timestamp: 1464739200000 }
+  - match: { document.timestamp: 1464739200000}
+  - match: { document.jobId: farequote }

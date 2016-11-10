@@ -12,6 +12,8 @@ setup:
               _parent:
                 type: "bucket"
               properties:
+                "jobId":
+                  type: keyword
                 "timestamp":
                   type: date
                 "normalizedProbability":
@@ -34,7 +36,7 @@ setup:
         index:  prelertresults-farequote
         type:   bucket
         id:     1
-        body:   { "timestamp": "2016-06-01T00:00:00Z" }
+        body:   { "jobId": "farequote", timestamp": "2016-06-01T00:00:00Z" }
 
   - do:
       index:
@@ -42,7 +44,7 @@ setup:
         type:   record
         id:     2
         parent: 1
-        body:   { "timestamp": "2016-06-01T00:00:00Z" }
+        body:   { "jobId": "farequote", "timestamp": "2016-06-01T00:00:00Z" }
 
   - do:
       indices.refresh:
@@ -58,3 +60,4 @@ setup:
 
   - match: { hitCount: 1 }
   - match: { hits.0.timestamp: 1464739200000 }
+  - match: { hits.0.jobId: farequote}

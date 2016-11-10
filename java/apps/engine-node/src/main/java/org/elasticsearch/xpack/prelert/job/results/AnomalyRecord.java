@@ -20,7 +20,7 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
@@ -37,8 +37,7 @@ import java.util.Objects;
  * Uses the object wrappers Boolean and Double so <code>null</code> values
  * can be returned if the members have not been set.
  */
-public class AnomalyRecord extends ToXContentToBytes implements Writeable
-{
+public class AnomalyRecord extends ToXContentToBytes implements Writeable {
     /**
      * Serialisation fields
      */
@@ -47,6 +46,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
     /**
      * Result fields (all detector types)
      */
+    public static final ParseField JOB_ID = new ParseField("jobId");
     public static final ParseField DETECTOR_INDEX = new ParseField("detectorIndex");
     public static final ParseField PROBABILITY = new ParseField("probability");
     public static final ParseField BY_FIELD_NAME = new ParseField("byFieldName");
@@ -82,9 +82,11 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
     public static final ParseField NORMALIZED_PROBABILITY = new ParseField("normalizedProbability");
     public static final ParseField INITIAL_NORMALIZED_PROBABILITY = new ParseField("initialNormalizedProbability");
 
-    public static final ObjectParser<AnomalyRecord, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(TYPE.getPreferredName(),
-            AnomalyRecord::new);
+    public static final ConstructingObjectParser<AnomalyRecord, ParseFieldMatcherSupplier> PARSER =
+            new ConstructingObjectParser<>(TYPE.getPreferredName(), a -> new AnomalyRecord((String) a[0]));
+
     static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), JOB_ID);
         PARSER.declareDouble(AnomalyRecord::setProbability, PROBABILITY);
         PARSER.declareDouble(AnomalyRecord::setAnomalyScore, ANOMALY_SCORE);
         PARSER.declareDouble(AnomalyRecord::setNormalizedProbability, NORMALIZED_PROBABILITY);
@@ -116,6 +118,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
         PARSER.declareObjectArray(AnomalyRecord::setInfluencers, Influence.PARSER, INFLUENCERS);
     }
 
+    private final String jobId;
     private String id;
     private int detectorIndex;
     private double probability;
@@ -150,11 +153,13 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
 
     private String parent;
 
-    public AnomalyRecord() {
+    public AnomalyRecord(String jobId) {
+        this.jobId = jobId;
     }
 
     @SuppressWarnings("unchecked")
     public AnomalyRecord(StreamInput in) throws IOException {
+        jobId = in.readString();
         id = in.readOptionalString();
         detectorIndex = in.readInt();
         probability = in.readDouble();
@@ -194,6 +199,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
+        out.writeString(jobId);
         out.writeOptionalString(id);
         out.writeInt(detectorIndex);
         out.writeDouble(probability);
@@ -244,6 +250,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        builder.field(JOB_ID.getPreferredName(), jobId);
         builder.field(PROBABILITY.getPreferredName(), probability);
         builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScore);
         builder.field(NORMALIZED_PROBABILITY.getPreferredName(), normalizedProbability);
@@ -300,270 +307,223 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
         return builder;
     }
 
+    public String getJobId() {
+        return this.jobId;
+    }
+
     /**
      * Data store ID of this record.  May be null for records that have not been
      * read from the data store.
      */
-    public String getId()
-    {
+    public String getId() {
         return id;
     }
 
-    public void setId(String id)
-    {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public int getDetectorIndex()
-    {
+    public int getDetectorIndex() {
         return detectorIndex;
     }
 
-    public void setDetectorIndex(int detectorIndex)
-    {
+    public void setDetectorIndex(int detectorIndex) {
         this.detectorIndex = detectorIndex;
     }
 
-    public double getAnomalyScore()
-    {
+    public double getAnomalyScore() {
         return anomalyScore;
     }
 
-    public void setAnomalyScore(double anomalyScore)
-    {
+    public void setAnomalyScore(double anomalyScore) {
         this.anomalyScore = anomalyScore;
     }
 
-    public double getNormalizedProbability()
-    {
+    public double getNormalizedProbability() {
         return normalizedProbability;
     }
 
-    public void setNormalizedProbability(double normalizedProbability)
-    {
+    public void setNormalizedProbability(double normalizedProbability) {
         this.normalizedProbability = normalizedProbability;
     }
 
-    public double getInitialNormalizedProbability()
-    {
+    public double getInitialNormalizedProbability() {
         return initialNormalizedProbability;
     }
 
-    public void setInitialNormalizedProbability(double initialNormalizedProbability)
-    {
+    public void setInitialNormalizedProbability(double initialNormalizedProbability) {
         this.initialNormalizedProbability = initialNormalizedProbability;
     }
 
-    public Date getTimestamp()
-    {
+    public Date getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp)
-    {
+    public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
     }
 
     /**
      * Bucketspan expressed in seconds
      */
-    public long getBucketSpan()
-    {
+    public long getBucketSpan() {
         return bucketSpan;
     }
 
     /**
      * Bucketspan expressed in seconds
      */
-    public void setBucketSpan(long bucketSpan)
-    {
+    public void setBucketSpan(long bucketSpan) {
         this.bucketSpan = bucketSpan;
     }
 
-    public double getProbability()
-    {
+    public double getProbability() {
         return probability;
     }
 
-    public void setProbability(double value)
-    {
+    public void setProbability(double value) {
         probability = value;
     }
 
 
-    public String getByFieldName()
-    {
+    public String getByFieldName() {
         return byFieldName;
     }
 
-    public void setByFieldName(String value)
-    {
+    public void setByFieldName(String value) {
         byFieldName = value.intern();
     }
 
-    public String getByFieldValue()
-    {
+    public String getByFieldValue() {
         return byFieldValue;
     }
 
-    public void setByFieldValue(String value)
-    {
+    public void setByFieldValue(String value) {
         byFieldValue = value.intern();
     }
 
-    public String getCorrelatedByFieldValue()
-    {
+    public String getCorrelatedByFieldValue() {
         return correlatedByFieldValue;
     }
 
-    public void setCorrelatedByFieldValue(String value)
-    {
+    public void setCorrelatedByFieldValue(String value) {
         correlatedByFieldValue = value.intern();
     }
 
-    public String getPartitionFieldName()
-    {
+    public String getPartitionFieldName() {
         return partitionFieldName;
     }
 
-    public void setPartitionFieldName(String field)
-    {
+    public void setPartitionFieldName(String field) {
         partitionFieldName = field.intern();
     }
 
-    public String getPartitionFieldValue()
-    {
+    public String getPartitionFieldValue() {
         return partitionFieldValue;
     }
 
-    public void setPartitionFieldValue(String value)
-    {
+    public void setPartitionFieldValue(String value) {
         partitionFieldValue = value.intern();
     }
 
-    public String getFunction()
-    {
+    public String getFunction() {
         return function;
     }
 
-    public void setFunction(String name)
-    {
+    public void setFunction(String name) {
         function = name.intern();
     }
 
-    public String getFunctionDescription()
-    {
+    public String getFunctionDescription() {
         return functionDescription;
     }
 
-    public void setFunctionDescription(String functionDescription)
-    {
+    public void setFunctionDescription(String functionDescription) {
         this.functionDescription = functionDescription.intern();
     }
 
-    public List<Double> getTypical()
-    {
+    public List<Double> getTypical() {
         return typical;
     }
 
-    public void setTypical(List<Double> typical)
-    {
+    public void setTypical(List<Double> typical) {
         this.typical = typical;
     }
 
-    public List<Double> getActual()
-    {
+    public List<Double> getActual() {
         return actual;
     }
 
-    public void setActual(List<Double> actual)
-    {
+    public void setActual(List<Double> actual) {
         this.actual = actual;
     }
 
-    public boolean isInterim()
-    {
+    public boolean isInterim() {
         return isInterim;
     }
 
-    public void setInterim(boolean isInterim)
-    {
+    public void setInterim(boolean isInterim) {
         this.isInterim = isInterim;
     }
 
-    public String getFieldName()
-    {
+    public String getFieldName() {
         return fieldName;
     }
 
-    public void setFieldName(String field)
-    {
+    public void setFieldName(String field) {
         fieldName = field.intern();
     }
 
-    public String getOverFieldName()
-    {
+    public String getOverFieldName() {
         return overFieldName;
     }
 
-    public void setOverFieldName(String name)
-    {
+    public void setOverFieldName(String name) {
         overFieldName = name.intern();
     }
 
-    public String getOverFieldValue()
-    {
+    public String getOverFieldValue() {
         return overFieldValue;
     }
 
-    public void setOverFieldValue(String value)
-    {
+    public void setOverFieldValue(String value) {
         overFieldValue = value.intern();
     }
 
-    public List<AnomalyCause> getCauses()
-    {
+    public List<AnomalyCause> getCauses() {
         return causes;
     }
 
-    public void setCauses(List<AnomalyCause> causes)
-    {
+    public void setCauses(List<AnomalyCause> causes) {
         this.causes = causes;
     }
 
-    public void addCause(AnomalyCause cause)
-    {
-        if (causes == null)
-        {
+    public void addCause(AnomalyCause cause) {
+        if (causes == null) {
             causes = new ArrayList<>();
         }
         causes.add(cause);
     }
 
-    public String getParent()
-    {
+    public String getParent() {
         return parent;
     }
 
-    public void setParent(String parent)
-    {
+    public void setParent(String parent) {
         this.parent = parent.intern();
     }
 
-    public List<Influence> getInfluencers()
-    {
+    public List<Influence> getInfluencers() {
         return influencers;
     }
 
-    public void setInfluencers(List<Influence> influencers)
-    {
+    public void setInfluencers(List<Influence> influencers) {
         this.influencers = influencers;
     }
 
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         // ID is NOT included in the hash, so that a record from the data store
         // will hash the same as a record representing the same anomaly that did
         // not come from the data store
@@ -574,31 +534,29 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
                 normalizedProbability, typical, actual,
                 function, functionDescription, fieldName, byFieldName, byFieldValue, correlatedByFieldValue,
                 partitionFieldName, partitionFieldValue, overFieldName, overFieldValue,
-                timestamp, parent, isInterim, causes, influencers);
+                timestamp, parent, isInterim, causes, influencers, jobId);
     }
 
 
     @Override
-    public boolean equals(Object other)
-    {
-        if (this == other)
-        {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
 
-        if (other instanceof AnomalyRecord == false)
-        {
+        if (other instanceof AnomalyRecord == false) {
             return false;
         }
 
-        AnomalyRecord that = (AnomalyRecord)other;
+        AnomalyRecord that = (AnomalyRecord) other;
 
         // ID is NOT compared, so that a record from the data store will compare
         // equal to a record representing the same anomaly that did not come
         // from the data store
 
         // hadBigNormalisedUpdate is also deliberately excluded from the test
-        return this.detectorIndex == that.detectorIndex
+        return Objects.equals(this.jobId, that.jobId)
+                && this.detectorIndex == that.detectorIndex
                 && this.probability == that.probability
                 && this.anomalyScore == that.anomalyScore
                 && this.normalizedProbability == that.normalizedProbability
@@ -622,18 +580,15 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable
                 && Objects.equals(this.influencers, that.influencers);
     }
 
-    public boolean hadBigNormalisedUpdate()
-    {
+    public boolean hadBigNormalisedUpdate() {
         return this.hadBigNormalisedUpdate;
     }
 
-    public void resetBigNormalisedUpdateFlag()
-    {
+    public void resetBigNormalisedUpdateFlag() {
         hadBigNormalisedUpdate = false;
     }
 
-    public void raiseBigNormalisedUpdateFlag()
-    {
+    public void raiseBigNormalisedUpdateFlag() {
         hadBigNormalisedUpdate = true;
     }
 }

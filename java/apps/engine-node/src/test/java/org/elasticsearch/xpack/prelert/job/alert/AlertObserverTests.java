@@ -157,7 +157,7 @@ public class AlertObserverTests extends ESTestCase {
         AlertObserver ao = new ConcreteObserver(new AlertTrigger[] { at, atInterim, at2 });
 
         Bucket bucket = makeInterimBucket(91.0, 91.0);
-        BucketInfluencer bf = new BucketInfluencer();
+        BucketInfluencer bf = new BucketInfluencer("foo");
         bf.setAnomalyScore(95.0);
         bucket.setBucketInfluencers(Arrays.asList(bf));
 
@@ -168,14 +168,14 @@ public class AlertObserverTests extends ESTestCase {
     }
 
     private Bucket makeBucket(double normalisedProb, double anomalyScore) {
-        Bucket b = new Bucket();
+        Bucket b = new Bucket("foo");
         b.setAnomalyScore(anomalyScore);
         b.setMaxNormalizedProbability(normalisedProb);
         return b;
     }
 
     private Bucket makeInterimBucket(double normalisedProb, double anomalyScore) {
-        Bucket b = new Bucket();
+        Bucket b = new Bucket("foo");
         b.setInterim(true);
         b.setAnomalyScore(anomalyScore);
         b.setMaxNormalizedProbability(normalisedProb);
@@ -190,7 +190,7 @@ public class AlertObserverTests extends ESTestCase {
             infs.add(inf);
         }
 
-        Bucket b = new Bucket();
+        Bucket b = new Bucket("foo");
         b.setInfluencers(infs);
         return b;
     }
@@ -198,12 +198,12 @@ public class AlertObserverTests extends ESTestCase {
     private Bucket makeBucketInfluencerBucket(double... anomalyScores) {
         List<BucketInfluencer> infs = new ArrayList<>();
         for (double score : anomalyScores) {
-            BucketInfluencer inf = new BucketInfluencer();
+            BucketInfluencer inf = new BucketInfluencer("foo");
             inf.setAnomalyScore(score);
             infs.add(inf);
         }
 
-        Bucket b = new Bucket();
+        Bucket b = new Bucket("foo");
         b.setBucketInfluencers(infs);
         return b;
     }

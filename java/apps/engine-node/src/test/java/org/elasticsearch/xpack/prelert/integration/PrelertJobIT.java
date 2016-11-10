@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -276,7 +277,7 @@ public class PrelertJobIT extends ESRestTestCase {
             assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         }
 
-        String bucketResult = "{\"timestamp\": \"" + timestamp + "\"}";
+        String bucketResult = String.format(Locale.ROOT, "{\"jobId\":\"%s\", \"timestamp\": \"%s\"}", jobId, timestamp);
         return client().performRequest("put", "prelertresults-" + jobId + "/bucket/" + timestamp,
                 Collections.singletonMap("refresh", "true"), new StringEntity(bucketResult));
     }

@@ -63,7 +63,7 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
                 transformConfigList.add(new TransformConfig(TransformType.UPPERCASE.prettyName()));
             }
             ModelDebugConfig modelDebugConfig = randomBoolean() ? new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)) : null;
-            DataCounts counts = randomBoolean() ? new DataCounts() : null;
+            DataCounts counts = randomBoolean() ? new DataCounts(jobId) : null;
             IgnoreDowntime ignoreDowntime = randomFrom(IgnoreDowntime.values());
             Long normalizationWindowDays = randomBoolean() ? randomLong() : null;
             Long backgroundPersistInterval = randomBoolean() ? randomLong() : null;

@@ -53,24 +53,25 @@ import static org.mockito.Mockito.mock;
 public class AutodetectResultsParserTests extends ESTestCase {
     private static final double EPSILON = 0.000001;
 
-    public static final String METRIC_OUTPUT_SAMPLE = "[{\"bucket\": {\"timestamp\":1359450000000,\"records\":[],"
+    public static final String METRIC_OUTPUT_SAMPLE = "[{\"bucket\": {\"jobId\":\"foo\",\"timestamp\":1359450000000,\"records\":[],"
             + "\"maxNormalizedProbability\":0, \"anomalyScore\":0,\"recordCount\":0,\"eventCount\":806,\"bucketInfluencers\":["
-            + "{\"anomalyScore\":0, \"probability\":0.0, \"influencerFieldName\":\"bucketTime\",\"initialAnomalyScore\":0.0}]}} ,"
-            + "{\"quantiles\": {\"jobId\":\"foo\", \"quantileState\":\"[normaliser 1.1, normaliser 2.1]\"}},"
-            + "{\"bucket\": {\"timestamp\":1359453600000,"
-            + "\"records\":[{\"probability\":0.0637541,\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\", \"typical\":[1020.08],"
-            + "\"actual\":[1042.14],\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\", "
-            + "\"partitionFieldValue\":\"\"},{\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\", "
+            + "{\"jobId\":\"foo\",\"anomalyScore\":0, \"probability\":0.0, \"influencerFieldName\":\"bucketTime\","
+            + "\"initialAnomalyScore\":0.0}]}},{\"quantiles\": {\"jobId\":\"foo\", \"quantileState\":\"[normaliser 1.1, normaliser 2.1]\"}}"
+            + ",{\"bucket\": {\"jobId\":\"foo\",\"timestamp\":1359453600000,\"records\":[{\"jobId\":\"foo\",\"probability\":0.0637541,"
+            + "\"byFieldName\":\"airline\",\"byFieldValue\":\"JZA\", \"typical\":[1020.08],\"actual\":[1042.14],"
+            + "\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"},"
+            + "{\"jobId\":\"foo\",\"probability\":0.00748292,\"byFieldName\":\"airline\",\"byFieldValue\":\"AMX\", "
             + "\"typical\":[20.2137],\"actual\":[22.8855],\"fieldName\":\"responsetime\",\"function\":\"max\",\"partitionFieldName\":\"\","
-            + " \"partitionFieldValue\":\"\"},{\"probability\":0.023494,\"byFieldName\":\"airline\",\"byFieldValue\":\"DAL\", "
-            + "\"typical\":[382.177],\"actual\":[358.934],\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\", "
-            + "\"partitionFieldValue\":\"\"},{\"probability\":0.0473552,\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\", "
-            + "\"typical\":[152.148],\"actual\":[96.6425],\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\", "
-            + "\"partitionFieldValue\":\"\"}],\"initialAnomalyScore\":0.0140005, \"anomalyScore\":20.22688, "
-            + "\"maxNormalizedProbability\":10.5688, \"recordCount\":4,\"eventCount\":820,\"bucketInfluencers\":[{ \"rawAnomalyScore\":"
+            + " \"partitionFieldValue\":\"\"},{\"jobId\":\"foo\",\"probability\":0.023494,\"byFieldName\":\"airline\","
+            + "\"byFieldValue\":\"DAL\", \"typical\":[382.177],\"actual\":[358.934],\"fieldName\":\"responsetime\",\"function\":\"min\","
+            + "\"partitionFieldName\":\"\", \"partitionFieldValue\":\"\"},{\"jobId\":\"foo\",\"probability\":0.0473552,"
+            + "\"byFieldName\":\"airline\",\"byFieldValue\":\"SWA\", \"typical\":[152.148],\"actual\":[96.6425],"
+            + "\"fieldName\":\"responsetime\",\"function\":\"min\",\"partitionFieldName\":\"\",\"partitionFieldValue\":\"\"}],"
+            + "\"initialAnomalyScore\":0.0140005, \"anomalyScore\":20.22688, \"maxNormalizedProbability\":10.5688, \"recordCount\":4,"
+            + "\"eventCount\":820,\"bucketInfluencers\":[{\"jobId\":\"foo\", \"rawAnomalyScore\":"
             + "0.0140005, \"probability\":0.01,\"influencerFieldName\":\"bucketTime\",\"initialAnomalyScore\":20.22688"
-            + ",\"anomalyScore\":20.22688} ,{\"rawAnomalyScore\":0.005, \"probability\":0.03,\"influencerFieldName\":\"foo\","
-            + "\"initialAnomalyScore\":10.5,\"anomalyScore\":10.5}]}},{\"quantiles\": {\"jobId\":\"foo\", "
+            + ",\"anomalyScore\":20.22688} ,{\"jobId\":\"foo\",\"rawAnomalyScore\":0.005, \"probability\":0.03,"
+            + "\"influencerFieldName\":\"foo\",\"initialAnomalyScore\":10.5,\"anomalyScore\":10.5}]}},{\"quantiles\": {\"jobId\":\"foo\","
             + "\"quantileState\":\"[normaliser 1.2, normaliser 2.2]\"}} ,{\"flush\": {\"id\":\"testing1\"}} ,"
             + "{\"quantiles\": {\"jobId\":\"foo\", \"quantileState\":\"[normaliser 1.3, normaliser 2.3]\"}} ]";
 
@@ -594,7 +595,7 @@ public class AutodetectResultsParserTests extends ESTestCase {
     }
 
     public void testParse_GivenCategoryDefinition() throws IOException {
-        String json = "[{\"categoryDefinition\": {\"categoryId\":18}}]";
+        String json = "[{\"categoryDefinition\": {\"jobId\":\"foo\", \"categoryId\":18}}]";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         Logger logger = mock(Logger.class);
         ResultsPersister persister = new ResultsPersister();
@@ -652,7 +653,7 @@ public class AutodetectResultsParserTests extends ESTestCase {
     }
 
     public void testParse_GivenInterimBucket_ShouldNotNotifyObserver() throws ElasticsearchParseException, IOException {
-        String json = "[{\"bucket\": {\"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":true}}]";
+        String json = "[{\"bucket\": {\"jobId\":\"foo\", \"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":true}}]";
 
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         Logger logger = mock(Logger.class);
@@ -668,7 +669,7 @@ public class AutodetectResultsParserTests extends ESTestCase {
     }
 
     public void testParse_GivenBucketWithInterimFalse_ShouldNotifyObserver() throws IOException {
-        String json = "[{\"bucket\": {\"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":false}}]";
+        String json = "[{\"bucket\": {\"jobId\":\"foo\", \"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":false}}]";
 
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         Logger logger = mock(Logger.class);

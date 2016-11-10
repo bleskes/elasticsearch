@@ -25,7 +25,7 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
 
     @Override
     protected BucketInfluencer createTestInstance() {
-        BucketInfluencer bucketInfluencer = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer = new BucketInfluencer(randomAsciiOfLengthBetween(1, 20));
         if (randomBoolean()) {
             bucketInfluencer.setAnomalyScore(randomDouble());
         }
@@ -45,9 +45,6 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
             bucketInfluencer.setIsInterim(randomBoolean());
         }
         if (randomBoolean()) {
-            bucketInfluencer.setJobId(randomAsciiOfLengthBetween(1, 20));
-        }
-        if (randomBoolean()) {
             bucketInfluencer.setTimestamp(new Date(randomLong()));
         }
         return bucketInfluencer;
@@ -64,22 +61,22 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
     }
 
     public void testEquals_GivenNull() {
-        assertFalse(new BucketInfluencer().equals(null));
+        assertFalse(new BucketInfluencer(randomAsciiOfLengthBetween(1, 20)).equals(null));
     }
 
     public void testEquals_GivenDifferentClass() {
-        assertFalse(new BucketInfluencer().equals("a string"));
+        assertFalse(new BucketInfluencer(randomAsciiOfLengthBetween(1, 20)).equals("a string"));
     }
 
     public void testEquals_GivenEqualInfluencers() {
-        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer("foo");
         bucketInfluencer1.setAnomalyScore(42.0);
         bucketInfluencer1.setInfluencerFieldName("foo");
         bucketInfluencer1.setInitialAnomalyScore(67.3);
         bucketInfluencer1.setProbability(0.0003);
         bucketInfluencer1.setRawAnomalyScore(3.14);
 
-        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer("foo");
         bucketInfluencer2.setAnomalyScore(42.0);
         bucketInfluencer2.setInfluencerFieldName("foo");
         bucketInfluencer2.setInitialAnomalyScore(67.3);
@@ -92,10 +89,10 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
     }
 
     public void testEquals_GivenDifferentAnomalyScore() {
-        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer("foo");
         bucketInfluencer1.setAnomalyScore(42.0);
 
-        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer("foo");
         bucketInfluencer2.setAnomalyScore(42.1);
 
         assertFalse(bucketInfluencer1.equals(bucketInfluencer2));
@@ -103,10 +100,10 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
     }
 
     public void testEquals_GivenDifferentFieldName() {
-        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer("foo");
         bucketInfluencer1.setInfluencerFieldName("foo");
 
-        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer("foo");
         bucketInfluencer2.setInfluencerFieldName("bar");
 
         assertFalse(bucketInfluencer1.equals(bucketInfluencer2));
@@ -114,10 +111,10 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
     }
 
     public void testEquals_GivenDifferentInitialAnomalyScore() {
-        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer("foo");
         bucketInfluencer1.setInitialAnomalyScore(42.0);
 
-        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer("foo");
         bucketInfluencer2.setInitialAnomalyScore(42.1);
 
         assertFalse(bucketInfluencer1.equals(bucketInfluencer2));
@@ -125,10 +122,10 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
     }
 
     public void testEquals_GivenRawAnomalyScore() {
-        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer("foo");
         bucketInfluencer1.setRawAnomalyScore(42.0);
 
-        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer("foo");
         bucketInfluencer2.setRawAnomalyScore(42.1);
 
         assertFalse(bucketInfluencer1.equals(bucketInfluencer2));
@@ -136,10 +133,10 @@ public class BucketInfluencerTests extends AbstractSerializingTestCase<BucketInf
     }
 
     public void testEquals_GivenDifferentProbability() {
-        BucketInfluencer bucketInfluencer1 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer1 = new BucketInfluencer("foo");
         bucketInfluencer1.setProbability(0.001);
 
-        BucketInfluencer bucketInfluencer2 = new BucketInfluencer();
+        BucketInfluencer bucketInfluencer2 = new BucketInfluencer("foo");
         bucketInfluencer2.setProbability(0.002);
 
         assertFalse(bucketInfluencer1.equals(bucketInfluencer2));

@@ -38,39 +38,38 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
         ModelDebugOutput modelDebugOutput;
         CategoryDefinition categoryDefinition;
         FlushAcknowledgement flushAcknowledgement;
+        String jobId = "foo";
         if (randomBoolean()) {
-            bucket = new Bucket();
+            bucket = new Bucket(jobId);
             bucket.setId(randomAsciiOfLengthBetween(1, 20));
         } else {
             bucket = null;
         }
         if (randomBoolean()) {
-            quantiles = new Quantiles("foo", new Date(randomLong()), randomAsciiOfLengthBetween(1, 20));
+            quantiles = new Quantiles(jobId, new Date(randomLong()), randomAsciiOfLengthBetween(1, 20));
         } else {
             quantiles = null;
         }
         if (randomBoolean()) {
-            modelSnapshot = new ModelSnapshot();
-            modelSnapshot.setJobId(randomAsciiOfLengthBetween(1, 20));
+            modelSnapshot = new ModelSnapshot(jobId);
             modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         } else {
             modelSnapshot = null;
         }
         if (randomBoolean()) {
-            modelSizeStats = new ModelSizeStats.Builder("foo");
+            modelSizeStats = new ModelSizeStats.Builder(jobId);
             modelSizeStats.setId(randomAsciiOfLengthBetween(1, 20));
         } else {
             modelSizeStats = null;
         }
         if (randomBoolean()) {
-            modelDebugOutput = new ModelDebugOutput();
-            modelDebugOutput.setJobId("foo");
+            modelDebugOutput = new ModelDebugOutput(jobId);
             modelDebugOutput.setId(randomAsciiOfLengthBetween(1, 20));
         } else {
             modelDebugOutput = null;
         }
         if (randomBoolean()) {
-            categoryDefinition = new CategoryDefinition();
+            categoryDefinition = new CategoryDefinition(jobId);
             categoryDefinition.setCategoryId(randomLong());
         } else {
             categoryDefinition = null;
