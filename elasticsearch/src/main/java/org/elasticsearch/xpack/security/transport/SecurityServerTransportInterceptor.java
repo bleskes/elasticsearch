@@ -271,6 +271,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
      * are invoked we restore the context.
      */
     static final class ContextRestoreResponseHandler<T extends TransportResponse> implements TransportResponseHandler<T> {
+
         private final TransportResponseHandler<T> delegate;
         private final ThreadContext.StoredContext context;
         private final ThreadContext threadContext;
@@ -308,5 +309,12 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
         public String executor() {
             return delegate.executor();
         }
+
+        @Override
+        public String toString() {
+            return getClass().getName() + "/" + delegate.toString();
+        }
+
     }
+
 }
