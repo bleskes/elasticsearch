@@ -17,6 +17,7 @@ setup:
         id:     "1"
         body: >
           {
+            "jobId" : "foo",
             "timestamp": "2016-06-02T00:00:00Z",
             "restorePriority": "1",
             "snapshotId": "foo"
