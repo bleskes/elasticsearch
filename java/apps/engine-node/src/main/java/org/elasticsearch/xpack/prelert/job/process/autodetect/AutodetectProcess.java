@@ -73,16 +73,16 @@ public interface AutodetectProcess {
     void close() throws IOException;
 
     /**
-     * Autodetect's error stream
-     * @return error inputstream
-     */
-    InputStream error();
-
-    /**
      * Autodetect's output stream
      * @return output stream
      */
-    InputStream out();
+    InputStream getProcessOutStream();
+
+    /**
+     * Autodetect's state persistence stream
+     * @return persist stream
+     */
+    InputStream getPersistStream();
 
     /**
      * The time the process was started
@@ -104,7 +104,5 @@ public interface AutodetectProcess {
      * Read any content in the error output buffer.
      * @return An error message or empty String if no error.
      */
-    // NORELEASE Improve error handling - Once read are errors removed
-    // from the buffer so they won't be read again. Should this be more structured?
     String readError();
 }

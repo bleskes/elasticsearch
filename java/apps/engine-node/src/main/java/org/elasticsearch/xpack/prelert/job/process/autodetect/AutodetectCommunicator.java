@@ -23,6 +23,7 @@ import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.ResultsReader;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.StateReader;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.DataToProcessWriter;
@@ -47,8 +48,10 @@ public class AutodetectCommunicator implements Closeable {
     private final AutodetectProcess autodetectProcess;
     private final Logger jobLogger;
     private final DataToProcessWriter autoDetectWriter;
+    private final StateReader stateReader;
     private final ResultsReader resultsReader;
     private final Thread outputParserThread;
+    private final Thread stateParserThread;
     private final StatusReporter statusReporter;
 
 
@@ -59,25 +62,34 @@ public class AutodetectCommunicator implements Closeable {
         this.statusReporter = statusReporter;
 
         // TODO Port the normalizer from the old project
-        this.resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.out(), this.jobLogger,
+        resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.getProcessOutStream(), this.jobLogger,
                 job.getAnalysisConfig().getUsePerPartitionNormalization(), parseFieldMatcherSupplier);
 
+        stateReader = new StateReader(resultsPersister, process.getPersistStream(), this.jobLogger);
+
         // NORELEASE - use ES ThreadPool
-        this.outputParserThread = new Thread(resultsReader, job.getId() + "-Bucket-Parser");
-        this.outputParserThread.start();
+        outputParserThread = new Thread(resultsReader, job.getId() + "-Bucket-Parser");
+        outputParserThread.start();
+        // NORELEASE - use ES ThreadPool
+        stateParserThread = new Thread(stateReader, job.getId() + "-State-Parser");
+        stateParserThread.start();
 
         this.autoDetectWriter = createProcessWriter(job, process, statusReporter);
     }
 
     AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger,
-            StatusReporter statusReporter, ResultsReader resultsReader) {
+            StatusReporter statusReporter, ResultsReader resultsReader, StateReader stateReader) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
         this.statusReporter = statusReporter;
         this.resultsReader = resultsReader;
+        this.stateReader = stateReader;
         // NORELEASE - use ES ThreadPool
-        this.outputParserThread = new Thread(resultsReader, job.getId() + "-Bucket-Parser");
-        this.outputParserThread.start();
+        outputParserThread = new Thread(resultsReader, job.getId() + "-Bucket-Parser");
+        outputParserThread.start();
+        // NORELEASE - use ES ThreadPool
+        stateParserThread = new Thread(stateReader, job.getId() + "-State-Parser");
+        stateParserThread.start();
 
         this.autoDetectWriter = createProcessWriter(job, process, statusReporter);
     }

@@ -23,6 +23,7 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -308,6 +309,20 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
 
         // Don't commit as we expect masses of these updates and they're not
         // read again by this process
+    }
+
+    @Override
+    public void persistBulkState(BytesReference bytesRef) {
+        try {
+            // No validation - assume the native process has formatted the state correctly
+            byte[] bytes = bytesRef.toBytesRef().bytes;
+            LOGGER.trace("ES API CALL: bulk index");
+            client.prepareBulk()
+                    .add(bytes, 0, bytes.length)
+                    .execute().actionGet();
+        } catch (Exception e) {
+            LOGGER.error("Error persisting bulk state", e);
+        }
     }
 
     /**

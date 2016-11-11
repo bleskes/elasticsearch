@@ -67,7 +67,7 @@ public class ProcessCtrlTests extends ESTestCase {
         job.setIgnoreDowntime(IgnoreDowntime.ONCE);
 
         List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job.build(), logger, false);
-        assertEquals(18, command.size());
+        assertEquals(17, command.size());
         assertTrue(command.contains(ProcessCtrl.AUTODETECT_PATH));
         assertTrue(command.contains(ProcessCtrl.BATCH_SPAN_ARG + "100"));
         assertTrue(command.contains(ProcessCtrl.BUCKET_SPAN_ARG + "120"));
@@ -90,9 +90,6 @@ public class ProcessCtrlTests extends ESTestCase {
         assertTrue(command.contains(ProcessCtrl.PERSIST_INTERVAL_ARG + expectedPersistInterval));
         int expectedMaxQuantileInterval = 21600 + ProcessCtrl.calculateStaggeringInterval(job.getId());
         assertTrue(command.contains(ProcessCtrl.MAX_QUANTILE_INTERVAL_ARG + expectedMaxQuantileInterval));
-        // NORELEASE - remove this check when persistence goes through a named pipe
-        assertTrue(String.join(", ", command), command.contains(
-                ProcessCtrl.PERSIST_URL_BASE_ARG + "http://localhost:9200/prelertresults-unit-test-job"));
         assertTrue(command.contains(ProcessCtrl.IGNORE_DOWNTIME_ARG));
     }
 

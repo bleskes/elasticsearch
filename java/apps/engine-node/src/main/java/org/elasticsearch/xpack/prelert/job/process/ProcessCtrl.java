@@ -124,7 +124,6 @@ public class ProcessCtrl {
     static final String PERIOD_ARG = "--period=";
     static final String PERSIST_INTERVAL_ARG = "--persistInterval=";
     static final String MAX_QUANTILE_INTERVAL_ARG = "--maxQuantileInterval=";
-    static final String PERSIST_URL_BASE_ARG = "--persistUrlBase=";
     static final String SUMMARY_COUNT_FIELD_ARG = "--summarycountfield=";
     static final String TIME_FIELD_ARG = "--timefield=";
 
@@ -238,9 +237,6 @@ public class ProcessCtrl {
         if (DONT_PERSIST_MODEL_STATE_SETTING.get(settings)) {
             logger.info("Will not persist model state - "  + DONT_PERSIST_MODEL_STATE_SETTING + " setting was set");
         } else {
-            String persistUrlBase = PERSIST_URL_BASE_ARG + "http://" + ES_HOST + ":" + ES_HTTP_PORT + "/" + ES_INDEX_PREFIX + job.getId();
-            command.add(persistUrlBase);
-
             // Persist model state every few hours even if the job isn't closed
             long persistInterval = (job.getBackgroundPersistInterval() == null) ?
                     (DEFAULT_BASE_PERSIST_INTERVAL + intervalStagger) :

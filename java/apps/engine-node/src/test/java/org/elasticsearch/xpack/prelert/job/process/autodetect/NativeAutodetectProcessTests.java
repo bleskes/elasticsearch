@@ -24,23 +24,25 @@ import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
-public class LengthEncodedAutodetectProcessTests extends ESTestCase {
+public class NativeAutodetectProcessTests extends ESTestCase {
 
     private static final int NUMBER_ANALYSIS_FIELDS = 3;
 
     public void testProcessStartTime() throws InterruptedException {
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(Mockito.mock(OutputStream.class),
-                NUMBER_ANALYSIS_FIELDS);
+        NativeAutodetectProcess process = new NativeAutodetectProcess("foo", Mockito.mock(InputStream.class),
+                Mockito.mock(OutputStream.class), Mockito.mock(InputStream.class), Mockito.mock(InputStream.class),
+                NUMBER_ANALYSIS_FIELDS, null);
 
         ZonedDateTime startTime = process.getProcessStartTime();
         Thread.sleep(500);
@@ -51,28 +53,17 @@ public class LengthEncodedAutodetectProcessTests extends ESTestCase {
         assertTrue(now.isBefore(startPlus3));
     }
 
-    public void testErrorStream() throws IOException {
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(Mockito.mock(OutputStream.class),
-                NUMBER_ANALYSIS_FIELDS);
-        assertNotNull(process.error());
-        assertThat(process.error().read(), is(equalTo(-1)));
-    }
-
-    public void testOutputStream() throws IOException {
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(Mockito.mock(OutputStream.class),
-                NUMBER_ANALYSIS_FIELDS);
-        assertNotNull(process.out());
-        assertThat(process.out().read(), is(equalTo(-1)));
-    }
-
     public void testWriteRecord() throws IOException {
         String[] record = {"r1", "r2", "r3", "r4", "r5"};
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
 
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(bos, NUMBER_ANALYSIS_FIELDS);
+        NativeAutodetectProcess process = new NativeAutodetectProcess("foo", Mockito.mock(InputStream.class),
+                bos, Mockito.mock(InputStream.class), Mockito.mock(InputStream.class),
+                NUMBER_ANALYSIS_FIELDS, Collections.emptyList());
 
         process.writeRecord(record);
+        process.flushStream();
 
         ByteBuffer bb = ByteBuffer.wrap(bos.toByteArray());
 
@@ -95,7 +86,9 @@ public class LengthEncodedAutodetectProcessTests extends ESTestCase {
 
     public void testFlush() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ControlMsgToProcessWriter.FLUSH_SPACES_LENGTH + 1024);
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(bos, NUMBER_ANALYSIS_FIELDS);
+        NativeAutodetectProcess process = new NativeAutodetectProcess("foo", Mockito.mock(InputStream.class),
+                bos, Mockito.mock(InputStream.class), Mockito.mock(InputStream.class),
+                NUMBER_ANALYSIS_FIELDS, Collections.emptyList());
 
         InterimResultsParams params = InterimResultsParams.builder().build();
         process.flushJob(params);
@@ -106,10 +99,13 @@ public class LengthEncodedAutodetectProcessTests extends ESTestCase {
 
     public void testWriteResetBucketsControlMessage() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(bos, NUMBER_ANALYSIS_FIELDS);
+        NativeAutodetectProcess process = new NativeAutodetectProcess("foo", Mockito.mock(InputStream.class),
+                bos, Mockito.mock(InputStream.class), Mockito.mock(InputStream.class),
+                NUMBER_ANALYSIS_FIELDS, Collections.emptyList());
 
         DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1").endTime("86400").build(), true);
         process.writeResetBucketsControlMessage(params);
+        process.flushStream();
 
         String message = new String(bos.toByteArray(), StandardCharsets.UTF_8);
         assertTrue(message.contains(ControlMsgToProcessWriter.RESET_BUCKETS_MESSAGE_CODE));
@@ -117,20 +113,14 @@ public class LengthEncodedAutodetectProcessTests extends ESTestCase {
 
     public void testWriteUpdateConfigMessage() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(bos, NUMBER_ANALYSIS_FIELDS);
+        NativeAutodetectProcess process = new NativeAutodetectProcess("foo", Mockito.mock(InputStream.class),
+                bos, Mockito.mock(InputStream.class), Mockito.mock(InputStream.class),
+                NUMBER_ANALYSIS_FIELDS, Collections.emptyList());
 
         process.writeUpdateConfigMessage("");
+        process.flushStream();
 
         String message = new String(bos.toByteArray(), StandardCharsets.UTF_8);
         assertTrue(message.contains(ControlMsgToProcessWriter.UPDATE_MESSAGE_CODE));
     }
-
-    public void testClose() throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
-        LengthEncodedAutodetectProcess process = new LengthEncodedAutodetectProcess(bos, NUMBER_ANALYSIS_FIELDS);
-
-        assertThat(process.error().available(), is(equalTo(0)));
-        assertThat(process.out().available(), is(equalTo(0)));
-    }
-
 }

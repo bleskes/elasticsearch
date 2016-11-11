@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
@@ -277,6 +278,7 @@ public class AutodetectResultsParserTests extends ESTestCase {
         final List<ModelSizeStats> modelSizeStats = new ArrayList<>();
         final List<ModelDebugOutput> modelDebugOutput = new ArrayList<>();
         final SortedMap<String, ModelSnapshot> modelSnapshots = new TreeMap<>();
+        final List<BytesReference> bulkState = new ArrayList<>();
         long processingTimeMs;
 
         @Override
@@ -325,6 +327,11 @@ public class AutodetectResultsParserTests extends ESTestCase {
         @Override
         public void persistInfluencer(Influencer influencer) {
             influencers.add(influencer);
+        }
+
+        @Override
+        public void persistBulkState(BytesReference bytesRef) {
+            bulkState.add(bytesRef);
         }
 
         @Override

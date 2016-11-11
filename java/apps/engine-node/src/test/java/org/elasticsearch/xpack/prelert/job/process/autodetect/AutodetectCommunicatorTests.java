@@ -26,6 +26,7 @@ import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.ResultsReader;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.StateReader;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
@@ -118,7 +119,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         when(resultsReader.waitForFlushAcknowledgement(anyString(), any())).thenReturn(false);
 
         try (AutodetectCommunicator communicator = new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class),
-                Mockito.mock(StatusReporter.class), resultsReader)) {
+                Mockito.mock(StatusReporter.class), resultsReader, Mockito.mock(StateReader.class))) {
 
             InterimResultsParams params = InterimResultsParams.builder().build();
             ElasticsearchException e = ESTestCase.expectThrows(ElasticsearchException.class, () -> communicator.flushJob(params, 1, 1));
@@ -157,7 +158,8 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         InputStream io = Mockito.mock(InputStream.class);
         when(io.read(any(byte [].class))).thenReturn(-1);
         AutodetectProcess process = Mockito.mock(AutodetectProcess.class);
-        when(process.out()).thenReturn(io);
+        when(process.getProcessOutStream()).thenReturn(io);
+        when(process.getPersistStream()).thenReturn(io);
         when(process.isProcessAlive()).thenReturn(true);
         return process;
     }

@@ -35,30 +35,28 @@ import java.time.ZonedDateTime;
  * A placeholder class simulating the actions of the native Autodetect process.
  * Most methods consume data without performing any action however, after a call to
  * {@link #flushJob(InterimResultsParams)} a {@link org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement}
- * message is expected on the {@link #out()} stream. This class writes the flush
+ * message is expected on the {@link #getProcessOutStream()} stream. This class writes the flush
  * acknowledgement immediately.
- *
  */
 public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable {
 
     private static final Logger LOGGER = Loggers.getLogger(BlackHoleAutodetectProcess.class);
     private static final String FLUSH_ID = "flush-1";
 
-    private final InputStream processError;
-    private final PipedInputStream processOut;
-    private PipedOutputStream pipedOutputStream;
+    private final PipedInputStream processOutStream;
+    private final PipedInputStream persistStream;
+    private PipedOutputStream pipedProcessOutStream;
+    private PipedOutputStream pipedPersistStream;
     private final ZonedDateTime startTime;
 
     public BlackHoleAutodetectProcess() {
-        processError = new ByteArrayInputStream(new byte[] {});
-
-        processOut = new PipedInputStream();
+        processOutStream = new PipedInputStream();
+        persistStream = new PipedInputStream();
         try {
-            pipedOutputStream = new PipedOutputStream(processOut);
-        }
-        catch (IOException e) {
+            pipedProcessOutStream = new PipedOutputStream(processOutStream);
+            pipedPersistStream = new PipedOutputStream(persistStream);
+        } catch (IOException e) {
             LOGGER.error("Error connecting PipedOutputStream", e);
-            pipedOutputStream = null;
         }
         startTime = ZonedDateTime.now();
     }
@@ -76,17 +74,17 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
     }
 
     /**
-     * Accept the request do nothing with it but write the flush acknowledgement to {@link #out()}
+     * Accept the request do nothing with it but write the flush acknowledgement to {@link #getProcessOutStream()}
      * @param params Should interim results be generated
      * @return {@link #FLUSH_ID}
      */
     @Override
     public String flushJob(InterimResultsParams params) throws IOException {
         FlushAcknowledgement flushAcknowledgement = new FlushAcknowledgement(FLUSH_ID);
-        pipedOutputStream
+        pipedProcessOutStream
         .write(flushAcknowledgement.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).string()
                         .getBytes(StandardCharsets.UTF_8));
-        pipedOutputStream.flush();
+        pipedProcessOutStream.flush();
         return FLUSH_ID;
     }
 
@@ -96,19 +94,18 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
 
     @Override
     public void close() throws IOException {
-        pipedOutputStream.close();
-        processError.close();
-        processOut.close();
+        pipedProcessOutStream.close();
+        pipedPersistStream.close();
     }
 
     @Override
-    public InputStream error() {
-        return this.processError;
+    public InputStream getProcessOutStream() {
+        return processOutStream;
     }
 
     @Override
-    public InputStream out() {
-        return this.processOut;
+    public InputStream getPersistStream() {
+        return persistStream;
     }
 
     @Override

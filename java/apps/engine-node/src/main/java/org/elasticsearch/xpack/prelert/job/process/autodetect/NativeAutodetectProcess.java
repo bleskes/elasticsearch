@@ -25,11 +25,9 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.LengthEncod
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -44,6 +42,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     private final CppLogMessageHandler cppLogHandler;
     private final OutputStream processInStream;
     private final InputStream processOutStream;
+    private final InputStream persistStream;
     private final LengthEncodedWriter recordWriter;
     private final ZonedDateTime startTime;
     private final int numberOfAnalysisFields;
@@ -51,17 +50,19 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     private Thread logTailThread;
 
     public NativeAutodetectProcess(String jobId, InputStream logStream, OutputStream processInStream,
-                                   InputStream processOutStream, int numberOfAnalysisFields, List<Path> filesToDelete) {
+                                   InputStream processOutStream, InputStream persistStream,
+                                   int numberOfAnalysisFields, List<Path> filesToDelete) {
         cppLogHandler = new CppLogMessageHandler(jobId, logStream);
         this.processInStream = new BufferedOutputStream(processInStream);
         this.processOutStream = processOutStream;
+        this.persistStream = persistStream;
         this.recordWriter = new LengthEncodedWriter(this.processInStream);
         startTime = ZonedDateTime.now();
         this.numberOfAnalysisFields = numberOfAnalysisFields;
         this.filesToDelete = filesToDelete;
     }
 
-    public void tailLogsInThread() {
+    void tailLogsInThread() {
         logTailThread = new Thread(() -> {
             try {
                 cppLogHandler.tailStream();
@@ -125,7 +126,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
         }
     }
 
-    public void deleteAssociatedFiles() throws IOException {
+    void deleteAssociatedFiles() throws IOException {
         if (filesToDelete == null) {
             return;
         }
@@ -140,13 +141,13 @@ public class NativeAutodetectProcess implements AutodetectProcess {
     }
 
     @Override
-    public InputStream error() {
-        return new ByteArrayInputStream(cppLogHandler.getErrors().getBytes(StandardCharsets.UTF_8));
+    public InputStream getProcessOutStream() {
+        return processOutStream;
     }
 
     @Override
-    public InputStream out() {
-        return processOutStream;
+    public InputStream getPersistStream() {
+        return persistStream;
     }
 
     @Override
@@ -156,7 +157,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
 
     @Override
     public boolean isProcessAlive() {
-        // Sanity check make sure the process hasn't terminated already
+        // Sanity check: make sure the process hasn't terminated already
         return !cppLogHandler.hasLogStreamEnded();
     }
 

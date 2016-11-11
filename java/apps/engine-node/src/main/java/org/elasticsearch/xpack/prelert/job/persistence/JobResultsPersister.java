@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
@@ -63,6 +64,11 @@ public interface JobResultsPersister
      * Persist the influencer
      */
     void persistInfluencer(Influencer influencer);
+
+    /**
+     * Persist state sent from the native process
+     */
+    void persistBulkState(BytesReference bytesRef);
 
     /**
      * Delete any existing interim results

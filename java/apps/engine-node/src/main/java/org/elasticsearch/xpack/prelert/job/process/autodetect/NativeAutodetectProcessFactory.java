@@ -65,11 +65,12 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
         ModelSnapshot modelSnapshot = (modelSnapshots != null && !modelSnapshots.isEmpty()) ? modelSnapshots.get(0) : null;
 
         ProcessPipes processPipes = new ProcessPipes(env, NAMED_PIPE_HELPER, ProcessCtrl.AUTODETECT, job.getId(),
-                true, false, true, true, modelSnapshot != null, false);
+                true, false, true, true, modelSnapshot != null, !ProcessCtrl.DONT_PERSIST_MODEL_STATE_SETTING.get(settings));
         createNativeProcess(job, processPipes, ignoreDowntime, filesToDelete);
         int numberOfAnalysisFields = job.getAnalysisConfig().analysisFields().size();
         NativeAutodetectProcess autodetect = new NativeAutodetectProcess(job.getId(), processPipes.getLogStream().get(),
-                processPipes.getProcessInStream().get(), processPipes.getProcessOutStream().get(), numberOfAnalysisFields, filesToDelete);
+                processPipes.getProcessInStream().get(), processPipes.getProcessOutStream().get(),
+                processPipes.getPersistStream().get(), numberOfAnalysisFields, filesToDelete);
         autodetect.tailLogsInThread();
         if (modelSnapshot != null) {
             restoreStateInThread(job.getId(), modelSnapshot, processPipes.getRestoreStream().get());

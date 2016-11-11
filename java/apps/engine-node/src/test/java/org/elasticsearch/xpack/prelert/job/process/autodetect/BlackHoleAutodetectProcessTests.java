@@ -29,7 +29,7 @@ public class BlackHoleAutodetectProcessTests extends ESTestCase {
 
             String flushId = process.flushJob(InterimResultsParams.builder().build());
 
-            XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(process.out());
+            XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(process.getProcessOutStream());
             parser.nextToken(); // FlushAcknowledgementParser expects this to be
                                 // called first
             FlushAcknowledgement ack = FlushAcknowledgement.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
