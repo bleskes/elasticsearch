@@ -25,6 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 
@@ -44,7 +45,8 @@ public class RestRevertModelSnapshotAction extends BaseRestHandler {
             RevertModelSnapshotAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/modelsnapshots/{" + Job.ID.getPreferredName() + "}/revert",
+        controller.registerHandler(RestRequest.Method.POST,
+                PrelertPlugin.BASE_PATH + "modelsnapshots/{" + Job.ID.getPreferredName() + "}/revert",
                 this);
     }
 

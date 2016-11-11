@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 
@@ -34,7 +35,7 @@ public class RestDeleteJobAction extends BaseRestHandler {
     public RestDeleteJobAction(Settings settings, RestController controller, DeleteJobAction.TransportAction transportDeleteJobAction) {
         super(settings);
         this.transportDeleteJobAction = transportDeleteJobAction;
-        controller.registerHandler(RestRequest.Method.DELETE, "/engine/v2/jobs/{" + Job.ID.getPreferredName() + "}", this);
+        controller.registerHandler(RestRequest.Method.DELETE, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}", this);
     }
 
     @Override

@@ -26,6 +26,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
 import java.io.IOException;
 
@@ -43,7 +44,8 @@ public class RestPutModelSnapshotDescriptionAction extends BaseRestHandler {
         this.transportAction = transportAction;
 
         // NORELEASE: should be a POST action
-        controller.registerHandler(RestRequest.Method.PUT, "/engine/v2/modelsnapshots/{jobId}/{snapshotId}/description", this);
+        controller.registerHandler(RestRequest.Method.PUT, PrelertPlugin.BASE_PATH + "modelsnapshots/{jobId}/{snapshotId}/description",
+                this);
     }
 
     @Override

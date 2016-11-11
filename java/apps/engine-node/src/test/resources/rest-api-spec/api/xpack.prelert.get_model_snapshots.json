@@ -2,8 +2,8 @@
   "xpack.prelert.get_model_snapshots": {
     "methods": [ "GET" ],
     "url": {
-      "path": "/engine/v2/modelsnapshots/{jobId}",
-      "paths": [ "/engine/v2/modelsnapshots/{jobId}" ],
+      "path": "/_xpack/prelert/modelsnapshots/{jobId}",
+      "paths": [ "/_xpack/prelert/modelsnapshots/{jobId}" ],
       "parts": {
         "jobId": {
           "type": "string",

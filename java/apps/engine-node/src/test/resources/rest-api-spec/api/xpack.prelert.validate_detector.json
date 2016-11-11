@@ -2,8 +2,8 @@
   "xpack.prelert.validate_detector": {
     "methods": [ "POST" ],
     "url": {
-      "path": "/engine/v2/validate/detector",
-      "paths": [ "/engine/v2/validate/detector" ],
+      "path": "/_xpack/prelert/validate/detector",
+      "paths": [ "/_xpack/prelert/validate/detector" ],
       "params": {}
     },
     "body": {

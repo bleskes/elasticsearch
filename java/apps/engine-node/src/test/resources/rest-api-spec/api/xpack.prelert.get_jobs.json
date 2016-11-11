@@ -2,8 +2,8 @@
   "xpack.prelert.get_jobs": {
     "methods": [ "GET" ],
     "url": {
-      "path": "/engine/v2/jobs",
-      "paths": [ "/engine/v2/jobs" ],
+      "path": "/_xpack/prelert/jobs",
+      "paths": [ "/_xpack/prelert/jobs" ],
       "params": {
         "skip": {
           "type": "int",

@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetRecordsAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
@@ -36,7 +37,8 @@ public class RestGetRecordsAction extends BaseRestHandler {
     public RestGetRecordsAction(Settings settings, RestController controller, GetRecordsAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{" + Job.ID.getPreferredName() + "}/records", this);
+        controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "results/{" + Job.ID.getPreferredName() + "}/records",
+                this);
     }
 
     @Override

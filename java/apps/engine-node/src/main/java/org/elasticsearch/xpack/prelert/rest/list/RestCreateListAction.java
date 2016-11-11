@@ -25,6 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.CreateListAction;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ public class RestCreateListAction extends BaseRestHandler {
     public RestCreateListAction(Settings settings, RestController controller, CreateListAction.TransportAction transportCreateListAction) {
         super(settings);
         this.transportCreateListAction = transportCreateListAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/lists", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "lists", this);
     }
 
     @Override

@@ -2,8 +2,8 @@
   "xpack.prelert.get_list": {
     "methods": [ "GET" ],
     "url": {
-      "path": "/engine/v2/lists/{list_id}",
-      "paths": [ "/engine/v2/lists/{list_id}" ],
+      "path": "/_xpack/prelert/lists/{list_id}",
+      "paths": [ "/_xpack/prelert/lists/{list_id}" ],
       "parts": {
         "list_id": {
           "type" : "string",

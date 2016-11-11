@@ -19,6 +19,7 @@ import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.test.rest.ESRestTestCase;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.junit.After;
 
 import java.io.BufferedReader;
@@ -36,7 +37,7 @@ public class ScheduledJobIT extends ESRestTestCase {
 
     public void testStartJobScheduler_GivenMissingJob() {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", "engine/v2/schedulers/invalid-job/start"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "schedulers/invalid-job/start"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
     }
 
@@ -44,7 +45,7 @@ public class ScheduledJobIT extends ESRestTestCase {
         createNonScheduledJob();
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", "engine/v2/schedulers/non-scheduled/start"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "schedulers/non-scheduled/start"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         String responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, containsString("\"reason\":\"There is no job 'non-scheduled' with a scheduler configured\""));
@@ -55,7 +56,7 @@ public class ScheduledJobIT extends ESRestTestCase {
         createScheduledJob();
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", "engine/v2/schedulers/scheduled/start?start=not-a-date"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "schedulers/scheduled/start?start=not-a-date"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         String responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, containsString(
@@ -67,7 +68,7 @@ public class ScheduledJobIT extends ESRestTestCase {
         createScheduledJob();
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", "engine/v2/schedulers/scheduled/start?end=not-a-date"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "schedulers/scheduled/start?end=not-a-date"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         String responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, containsString(
@@ -82,7 +83,7 @@ public class ScheduledJobIT extends ESRestTestCase {
         createScheduledJob();
 
         Response response = client().performRequest("post",
-                "engine/v2/schedulers/scheduled/start?start=2016-06-01T00:00:00Z&end=2016-06-02T00:00:00Z");
+                PrelertPlugin.BASE_PATH + "schedulers/scheduled/start?start=2016-06-01T00:00:00Z&end=2016-06-02T00:00:00Z");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
 
@@ -103,7 +104,8 @@ public class ScheduledJobIT extends ESRestTestCase {
         createAirlineDataIndex();
         createScheduledJob();
 
-        Response response = client().performRequest("post", "engine/v2/schedulers/scheduled/start?start=2016-06-01T00:00:00Z");
+        Response response = client().performRequest("post",
+                PrelertPlugin.BASE_PATH + "schedulers/scheduled/start?start=2016-06-01T00:00:00Z");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
 
@@ -117,7 +119,7 @@ public class ScheduledJobIT extends ESRestTestCase {
             }
         });
 
-        response = client().performRequest("post", "engine/v2/schedulers/scheduled/stop");
+        response = client().performRequest("post", PrelertPlugin.BASE_PATH + "schedulers/scheduled/stop");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
 
@@ -146,7 +148,7 @@ public class ScheduledJobIT extends ESRestTestCase {
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
                 + "        \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" + "    }\n" + "}";
 
-        return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
+        return client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
     }
 
     private Response createScheduledJob() throws Exception {
@@ -160,7 +162,7 @@ public class ScheduledJobIT extends ESRestTestCase {
                 + "        \"baseUrl\":\"" + httpHost.toURI() + "\",\n" + "        \"indexes\":[\"airline-data\"],\n"
                 + "        \"types\":[\"response\"],\n" + "        \"retrieveWholeSource\":true\n" + "    }\n" + "}";
 
-        return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
+        return client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
     }
 
     private static String responseEntityToString(Response response) throws Exception {
@@ -183,6 +185,6 @@ public class ScheduledJobIT extends ESRestTestCase {
 
     @After
     public void clearPrelertState() throws IOException {
-        adminClient().performRequest("DELETE", "/engine/v2/clear");
+        adminClient().performRequest("DELETE", PrelertPlugin.BASE_PATH + "clear");
     }
 }

@@ -127,6 +127,7 @@ import java.util.List;
 
 public class PrelertPlugin extends Plugin implements ActionPlugin {
     public static final String NAME = "prelert";
+    public static final String BASE_PATH = "/_xpack/prelert/";
     public static final String THREAD_POOL_NAME = NAME;
 
     // NORELEASE - temporary solution

@@ -23,6 +23,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class RestPutJobsAction extends BaseRestHandler {
     public RestPutJobsAction(Settings settings, RestController controller, PutJobAction.TransportAction transportPutJobAction) {
         super(settings);
         this.transportPutJobAction = transportPutJobAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/jobs", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "jobs", this);
     }
 
     @Override

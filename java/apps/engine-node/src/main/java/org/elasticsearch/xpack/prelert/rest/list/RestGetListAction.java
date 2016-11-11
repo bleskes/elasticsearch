@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetListAction;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 
@@ -34,7 +35,8 @@ public class RestGetListAction extends BaseRestHandler {
     public RestGetListAction(Settings settings, RestController controller, GetListAction.TransportAction transportGetListAction) {
         super(settings);
         this.transportGetListAction = transportGetListAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/lists/{" + ListDocument.ID.getPreferredName() + "}", this);
+        controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "lists/{" + ListDocument.ID.getPreferredName() + "}",
+                this);
     }
 
     @Override

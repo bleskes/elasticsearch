@@ -22,6 +22,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.DeleteModelSnapshotAction;
 
 import java.io.IOException;
@@ -35,10 +36,10 @@ public class RestDeleteModelSnapshotAction extends BaseRestHandler {
 
     @Inject
     public RestDeleteModelSnapshotAction(Settings settings, RestController controller,
-                                         DeleteModelSnapshotAction.TransportAction transportAction) {
+            DeleteModelSnapshotAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.DELETE, "/engine/v2/modelsnapshots/{jobId}/{snapshotId}", this);
+        controller.registerHandler(RestRequest.Method.DELETE, PrelertPlugin.BASE_PATH + "modelsnapshots/{jobId}/{snapshotId}", this);
     }
 
     @Override

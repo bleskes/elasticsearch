@@ -25,6 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.ValidateTransformAction;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class RestValidateTransformAction extends BaseRestHandler {
             ValidateTransformAction.TransportAction transportValidateAction) {
         super(settings);
         this.transportValidateAction = transportValidateAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/validate/transform", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "validate/transform", this);
     }
 
     @Override

@@ -4,9 +4,9 @@
       "POST"
     ],
     "url": {
-      "path": "/engine/v2/data/{jobId}/flush",
+      "path": "/_xpack/prelert/data/{jobId}/flush",
       "paths": [
-        "/engine/v2/data/{jobId}/flush"
+        "/_xpack/prelert/data/{jobId}/flush"
       ],
       "parts": {
         "jobId": {

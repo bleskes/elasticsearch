@@ -25,6 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class RestValidateDetectorAction extends BaseRestHandler {
             ValidateDetectorAction.TransportAction transportValidateAction) {
         super(settings);
         this.transportValidateAction = transportValidateAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/validate/detector", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "validate/detector", this);
     }
 
     @Override

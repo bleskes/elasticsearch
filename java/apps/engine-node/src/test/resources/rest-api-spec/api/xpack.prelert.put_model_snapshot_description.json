@@ -2,8 +2,8 @@
   "xpack.prelert.put_model_snapshot_description": {
     "methods": [ "PUT" ],
     "url": {
-      "path": "/engine/v2/modelsnapshots/{jobId}/{snapshotId}/description",
-      "paths": [ "/engine/v2/modelsnapshots/{jobId}/{snapshotId}/description" ],
+      "path": "/_xpack/prelert/modelsnapshots/{jobId}/{snapshotId}/description",
+      "paths": [ "/_xpack/prelert/modelsnapshots/{jobId}/{snapshotId}/description" ],
       "parts": {
         "jobId": {
           "type": "string",

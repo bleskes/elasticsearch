@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.PostDataAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 
@@ -38,7 +39,7 @@ public class RestPostDataAction extends BaseRestHandler {
     public RestPostDataAction(Settings settings, RestController controller, PostDataAction.TransportAction transportPostDataAction) {
         super(settings);
         this.transportPostDataAction = transportPostDataAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/data/{jobId}", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "data/{jobId}", this);
     }
 
     @Override

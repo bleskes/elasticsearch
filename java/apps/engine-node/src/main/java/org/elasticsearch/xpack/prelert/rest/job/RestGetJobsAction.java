@@ -25,6 +25,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction.Response;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
@@ -41,7 +42,7 @@ public class RestGetJobsAction extends BaseRestHandler {
     public RestGetJobsAction(Settings settings, RestController controller, GetJobsAction.TransportAction transportGetJobsAction) {
         super(settings);
         this.transportGetJobsAction = transportGetJobsAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/jobs", this);
+        controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "jobs", this);
     }
 
     @Override

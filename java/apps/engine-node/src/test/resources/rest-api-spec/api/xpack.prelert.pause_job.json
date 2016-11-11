@@ -2,8 +2,8 @@
   "xpack.prelert.pause_job": {
     "methods": [ "POST" ],
     "url": {
-      "path": "/engine/v2/jobs/{job_id}/pause",
-      "paths": [ "/engine/v2/jobs/{job_id}/pause" ],
+      "path": "/_xpack/prelert/jobs/{job_id}/pause",
+      "paths": [ "/_xpack/prelert/jobs/{job_id}/pause" ],
       "parts": {
         "job_id": {
           "type": "string",

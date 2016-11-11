@@ -18,6 +18,7 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 import org.elasticsearch.test.rest.yaml.parser.ClientYamlTestParseException;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.junit.After;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class PrelertYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
 
     @After
     public void clearPrelertState() throws IOException {
-        adminClient().performRequest("DELETE", "/engine/v2/clear");
+        adminClient().performRequest("DELETE", PrelertPlugin.BASE_PATH + "clear");
     }
 
 }

@@ -22,6 +22,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.PostDataCloseAction;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ public class RestPostDataCloseAction extends BaseRestHandler {
             PostDataCloseAction.TransportAction transportPostDataCloseAction) {
         super(settings);
         this.transportPostDataCloseAction = transportPostDataCloseAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/data/{jobId}/close", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "data/{jobId}/close", this);
     }
 
     @Override

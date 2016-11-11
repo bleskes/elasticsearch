@@ -22,6 +22,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ public class RestStopJobSchedulerAction extends BaseRestHandler {
             StopJobSchedulerAction.TransportAction transportJobSchedulerAction) {
         super(settings);
         this.transportJobSchedulerAction = transportJobSchedulerAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/schedulers/{jobId}/stop", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "schedulers/{jobId}/stop", this);
     }
 
     @Override

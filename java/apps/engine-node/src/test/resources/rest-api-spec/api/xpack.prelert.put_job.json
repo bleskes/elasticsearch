@@ -2,8 +2,8 @@
   "xpack.prelert.put_job": {
     "methods": [ "POST" ],
     "url": {
-      "path": "/engine/v2/jobs",
-      "paths": [ "/engine/v2/jobs" ],
+      "path": "/_xpack/prelert/jobs",
+      "paths": [ "/_xpack/prelert/jobs" ],
       "params": {
         "overwrite": {
           "type": "boolean",

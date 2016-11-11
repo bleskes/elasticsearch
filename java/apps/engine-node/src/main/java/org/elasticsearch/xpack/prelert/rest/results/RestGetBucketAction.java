@@ -24,6 +24,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -39,7 +40,9 @@ public class RestGetBucketAction extends BaseRestHandler {
         super(settings);
         this.transportAction = transportAction;
         controller.registerHandler(RestRequest.Method.GET,
-                "/engine/v2/results/{" + Job.ID.getPreferredName() + "}/bucket/{" + Bucket.TIMESTAMP.getPreferredName() + "}", this);
+                PrelertPlugin.BASE_PATH + "results/{" + Job.ID.getPreferredName() + "}/bucket/{" + Bucket.TIMESTAMP.getPreferredName()
+                        + "}",
+                this);
     }
 
     @Override

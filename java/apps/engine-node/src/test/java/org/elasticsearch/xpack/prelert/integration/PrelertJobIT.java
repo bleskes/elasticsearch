@@ -18,6 +18,7 @@ import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.test.rest.ESRestTestCase;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.junit.After;
 
 import java.io.BufferedReader;
@@ -48,7 +49,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
     public void testGetJob_GivenNoSuchJob() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", "engine/v2/jobs/non-existing-job"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/non-existing-job"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("\"exists\":false"));
@@ -58,7 +59,7 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testGetJob_GivenJobExists() throws Exception {
         createFarequoteJob();
 
-        Response response = client().performRequest("get", "engine/v2/jobs/farequote");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/farequote");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -68,7 +69,8 @@ public class PrelertJobIT extends ESRestTestCase {
     }
 
     public void testGetJobs_GivenNegativeSkip() throws Exception {
-        ResponseException e = expectThrows(ResponseException.class, () -> client().performRequest("get", "engine/v2/jobs?skip=-1"));
+        ResponseException e = expectThrows(ResponseException.class,
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [skip] cannot be < 0\""));
@@ -76,7 +78,8 @@ public class PrelertJobIT extends ESRestTestCase {
     }
 
     public void testGetJobs_GivenNegativeTake() throws Exception {
-        ResponseException e = expectThrows(ResponseException.class, () -> client().performRequest("get", "engine/v2/jobs?take=-1"));
+        ResponseException e = expectThrows(ResponseException.class,
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?take=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [take] cannot be < 0\""));
@@ -85,7 +88,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
     public void testGetJobs_GivenSkipAndTakeSumTo10001() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", "engine/v2/jobs?skip1000&take=11001"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip1000&take=11001"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"The sum of parameters [skip] and [take] cannot be higher than 10000."));
@@ -95,7 +98,7 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testGetJobs_GivenSingleJob() throws Exception {
         createFarequoteJob();
 
-        Response response = client().performRequest("get", "engine/v2/jobs");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -108,7 +111,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", "engine/v2/jobs");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -123,7 +126,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", "engine/v2/jobs?skip=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -138,7 +141,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", "engine/v2/jobs?take=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?take=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -153,7 +156,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", "engine/v2/jobs?skip=1&take=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip=1&take=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -174,7 +177,7 @@ public class PrelertJobIT extends ESRestTestCase {
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
                 + "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"\n" + "    }\n" + "}";
 
-        return client().performRequest("post", "engine/v2/jobs", Collections.emptyMap(), new StringEntity(job));
+        return client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
     }
 
     public void testGetBucketResults() throws Exception {
@@ -183,7 +186,7 @@ public class PrelertJobIT extends ESRestTestCase {
         params.put("end", "1400"); // exclusive
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", "/engine/v2/results/1/buckets", params));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '1'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
@@ -191,28 +194,28 @@ public class PrelertJobIT extends ESRestTestCase {
         addBucketResult("1", "1234");
         addBucketResult("1", "1235");
         addBucketResult("1", "1236");
-        Response response = client().performRequest("get", "/engine/v2/results/1/buckets", params);
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"hitCount\":3"));
 
         params.put("end", "1235");
-        response = client().performRequest("get", "/engine/v2/results/1/buckets", params);
+        response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"hitCount\":1"));
 
-        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/2/bucket/1234"));
+        e = expectThrows(ResponseException.class, () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/2/bucket/1234"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '2'"));
         assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
 
-        e = expectThrows(ResponseException.class, () -> client().performRequest("get", "/engine/v2/results/1/bucket/1"));
+        e = expectThrows(ResponseException.class, () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/bucket/1"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, equalTo("{\"exists\":false,\"type\":\"bucket\"}"));
 
-        response = client().performRequest("get", "/engine/v2/results/1/bucket/1234");
+        response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/bucket/1234");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, not(isEmptyString()));
@@ -221,11 +224,11 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testPauseAndResumeJob() throws Exception {
         createFarequoteJob();
 
-        client().performRequest("post", "engine/v2/jobs/farequote/pause");
+        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/pause");
 
         assertBusy(() -> {
             try {
-                Response response = client().performRequest("get", "engine/v2/jobs/farequote");
+                Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/farequote");
                 String responseEntityToString = responseEntityToString(response);
                 assertThat(responseEntityToString, containsString("\"ignoreDowntime\":\"ONCE\""));
             } catch (Exception e) {
@@ -233,10 +236,10 @@ public class PrelertJobIT extends ESRestTestCase {
             }
         }, 2, TimeUnit.SECONDS);
 
-        client().performRequest("post", "engine/v2/jobs/farequote/resume");
+        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume");
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", "engine/v2/jobs/farequote/resume"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));
@@ -246,10 +249,10 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testPauseJob_GivenJobIsPaused() throws Exception {
         createFarequoteJob();
 
-        client().performRequest("post", "engine/v2/jobs/farequote/pause");
+        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/pause");
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", "engine/v2/jobs/farequote/pause"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/pause"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("Cannot pause job 'farequote' while its status is PAUSED"));
@@ -260,7 +263,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob();
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", "engine/v2/jobs/farequote/resume"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));
@@ -290,6 +293,6 @@ public class PrelertJobIT extends ESRestTestCase {
 
     @After
     public void clearPrelertState() throws IOException {
-        adminClient().performRequest("DELETE", "/engine/v2/clear");
+        adminClient().performRequest("DELETE", PrelertPlugin.BASE_PATH + "clear");
     }
 }

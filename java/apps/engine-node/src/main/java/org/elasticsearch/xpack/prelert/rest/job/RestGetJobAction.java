@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 
@@ -34,7 +35,7 @@ public class RestGetJobAction extends BaseRestHandler {
     public RestGetJobAction(Settings settings, RestController controller, GetJobAction.TransportAction transportGetJobAction) {
         super(settings);
         this.transportGetJobAction = transportGetJobAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/jobs/{" + Job.ID.getPreferredName() + "}", this);
+        controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}", this);
     }
 
     @Override

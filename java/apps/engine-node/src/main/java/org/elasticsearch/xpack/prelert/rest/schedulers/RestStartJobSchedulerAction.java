@@ -26,6 +26,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
@@ -47,7 +48,8 @@ public class RestStartJobSchedulerAction extends BaseRestHandler {
             StartJobSchedulerAction.TransportAction transportJobSchedulerAction) {
         super(settings);
         this.transportJobSchedulerAction = transportJobSchedulerAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/schedulers/{" + Job.ID.getPreferredName() + "}/start", this);
+        controller.registerHandler(RestRequest.Method.POST,
+                PrelertPlugin.BASE_PATH + "schedulers/{" + Job.ID.getPreferredName() + "}/start", this);
     }
 
     @Override

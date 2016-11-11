@@ -2,8 +2,8 @@
   "xpack.prelert.create_list": {
     "methods": [ "POST" ],
     "url": {
-      "path": "/engine/v2/lists",
-      "paths": [ "/engine/v2/lists" ],
+      "path": "/_xpack/prelert/lists",
+      "paths": [ "/_xpack/prelert/lists" ],
       "params": {}
     },
     "body": {

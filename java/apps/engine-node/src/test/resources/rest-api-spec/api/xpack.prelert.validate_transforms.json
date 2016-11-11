@@ -2,8 +2,8 @@
   "xpack.prelert.validate_transforms": {
     "methods": [ "POST" ],
     "url": {
-      "path": "/engine/v2/validate/transforms",
-      "paths": [ "/engine/v2/validate/transforms" ],
+      "path": "/_xpack/prelert/validate/transforms",
+      "paths": [ "/_xpack/prelert/validate/transforms" ],
       "params": {}
     },
     "body": {

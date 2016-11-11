@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class RestClearPrelertAction extends BaseRestHandler {
     public RestClearPrelertAction(Settings settings, RestController controller, ClearPrelertAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.DELETE, "/engine/v2/clear", this);
+        controller.registerHandler(RestRequest.Method.DELETE, PrelertPlugin.BASE_PATH + "clear", this);
     }
 
     @Override

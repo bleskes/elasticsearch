@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.ResumeJobAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 
@@ -34,7 +35,8 @@ public class RestResumeJobAction extends BaseRestHandler {
     public RestResumeJobAction(Settings settings, RestController controller, ResumeJobAction.TransportAction transportResumeJobAction) {
         super(settings);
         this.transportResumeJobAction = transportResumeJobAction;
-        controller.registerHandler(RestRequest.Method.POST, "/engine/v2/jobs/{" + Job.ID.getPreferredName() + "}/resume", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}/resume",
+                this);
     }
 
     @Override

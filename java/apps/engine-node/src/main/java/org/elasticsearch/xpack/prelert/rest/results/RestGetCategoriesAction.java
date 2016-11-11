@@ -21,6 +21,7 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
@@ -35,7 +36,7 @@ public class RestGetCategoriesAction extends BaseRestHandler {
             GetCategoryDefinitionsAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/results/{jobId}/categorydefinitions", this);
+        controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "results/{jobId}/categorydefinitions", this);
     }
 
     @Override

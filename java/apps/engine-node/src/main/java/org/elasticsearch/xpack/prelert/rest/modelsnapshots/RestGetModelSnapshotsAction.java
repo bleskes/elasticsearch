@@ -26,6 +26,7 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.rest.action.RestToXContentListener;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
@@ -59,7 +60,7 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
             GetModelSnapshotsAction.TransportAction transportGetModelSnapshotsAction) {
         super(settings);
         this.transportGetModelSnapshotsAction = transportGetModelSnapshotsAction;
-        controller.registerHandler(RestRequest.Method.GET, "/engine/v2/modelsnapshots/{jobId}", this);
+        controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "modelsnapshots/{jobId}", this);
     }
 
     @Override
