@@ -24,6 +24,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.config.DefaultDetectorDescription;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
@@ -37,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,6 +50,48 @@ import java.util.stream.Collectors;
  * and <code>overFieldName</code> should be set.
  */
 public class Detector extends ToXContentToBytes implements Writeable {
+
+    public enum ExcludeFrequent implements Writeable {
+        ALL("all"),
+        NONE("none"),
+        BY("by"),
+        OVER("over");
+
+        private final String token;
+
+        ExcludeFrequent(String token) {
+            this.token = token;
+        }
+
+        public String getToken() {
+            return token;
+        }
+
+        /**
+         * Case-insensitive from string method.
+         * Works with either JSON, json, etc.
+         *
+         * @param value String representation
+         * @return The data format
+         */
+        public static ExcludeFrequent forString(String value) {
+            return valueOf(value.toUpperCase(Locale.ROOT));
+        }
+
+        public static ExcludeFrequent readFromStream(StreamInput in) throws IOException {
+            int ordinal = in.readVInt();
+            if (ordinal < 0 || ordinal >= values().length) {
+                throw new IOException("Unknown ExcludeFrequent ordinal [" + ordinal + "]");
+            }
+            return values()[ordinal];
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            out.writeVInt(ordinal());
+        }
+    }
+
     public static final ParseField DETECTOR_FIELD = new ParseField("detector");
     public static final ParseField DETECTOR_DESCRIPTION_FIELD = new ParseField("detectorDescription");
     public static final ParseField FUNCTION_FIELD = new ParseField("function");
@@ -69,7 +113,12 @@ public class Detector extends ToXContentToBytes implements Writeable {
         PARSER.declareString(Builder::setOverFieldName, OVER_FIELD_NAME_FIELD);
         PARSER.declareString(Builder::setPartitionFieldName, PARTITION_FIELD_NAME_FIELD);
         PARSER.declareBoolean(Builder::setUseNull, USE_NULL_FIELD);
-        PARSER.declareString(Builder::setExcludeFrequent, EXCLUDE_FREQUENT_FIELD);
+        PARSER.declareField(Builder::setExcludeFrequent, p -> {
+            if (p.currentToken() == XContentParser.Token.VALUE_STRING) {
+                return ExcludeFrequent.forString(p.text());
+            }
+            throw new IllegalArgumentException("Unsupported token [" + p.currentToken() + "]");
+        }, EXCLUDE_FREQUENT_FIELD, ObjectParser.ValueType.STRING);
         PARSER.declareObjectArray(Builder::setDetectorRules, DetectionRule.PARSER, DETECTOR_RULES_FIELD);
     }
 
@@ -277,7 +326,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
     private final String overFieldName;
     private final String partitionFieldName;
     private final boolean useNull;
-    private final String excludeFrequent;
+    private final ExcludeFrequent excludeFrequent;
     private final List<DetectionRule> detectorRules;
 
     public Detector(StreamInput in) throws IOException {
@@ -288,7 +337,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
         overFieldName = in.readOptionalString();
         partitionFieldName = in.readOptionalString();
         useNull = in.readBoolean();
-        excludeFrequent = in.readOptionalString();
+        excludeFrequent = in.readBoolean() ? ExcludeFrequent.readFromStream(in) : null;
         detectorRules = in.readList(DetectionRule::new);
     }
 
@@ -301,7 +350,12 @@ public class Detector extends ToXContentToBytes implements Writeable {
         out.writeOptionalString(overFieldName);
         out.writeOptionalString(partitionFieldName);
         out.writeBoolean(useNull);
-        out.writeOptionalString(excludeFrequent);
+        if (excludeFrequent != null) {
+            out.writeBoolean(true);
+            excludeFrequent.writeTo(out);
+        } else {
+            out.writeBoolean(false);
+        }
         out.writeList(detectorRules);
     }
 
@@ -334,7 +388,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
     }
 
     private Detector(String detectorDescription, String function, String fieldName, String byFieldName, String overFieldName,
-            String partitionFieldName, boolean useNull, String excludeFrequent, List<DetectionRule> detectorRules) {
+            String partitionFieldName, boolean useNull, ExcludeFrequent excludeFrequent, List<DetectionRule> detectorRules) {
         this.function = function;
         this.fieldName = fieldName;
         this.byFieldName = byFieldName;
@@ -415,7 +469,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
      *
      * @return the value that the user set
      */
-    public String getExcludeFrequent() {
+    public ExcludeFrequent getExcludeFrequent() {
         return excludeFrequent;
     }
 
@@ -489,7 +543,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
         private String overFieldName;
         private String partitionFieldName;
         private boolean useNull = false;
-        private String excludeFrequent;
+        private ExcludeFrequent excludeFrequent;
         private List<DetectionRule> detectorRules = Collections.emptyList();
 
         public Builder() {
@@ -543,7 +597,7 @@ public class Detector extends ToXContentToBytes implements Writeable {
             this.useNull = useNull;
         }
 
-        public void setExcludeFrequent(String excludeFrequent) {
+        public void setExcludeFrequent(ExcludeFrequent excludeFrequent) {
             this.excludeFrequent = excludeFrequent;
         }
 
@@ -625,8 +679,6 @@ public class Detector extends ToXContentToBytes implements Writeable {
                 verifyFieldName(field);
             }
 
-            verifyExcludeFrequent(excludeFrequent);
-
             String function = this.function == null ? Detector.METRIC : this.function;
             if (detectorRules.isEmpty() == false) {
                 if (FUNCTIONS_WITHOUT_RULE_SUPPORT.contains(function)) {
@@ -646,34 +698,6 @@ public class Detector extends ToXContentToBytes implements Writeable {
             List<String> analysisFields = Arrays.asList(byFieldName,
                     overFieldName, partitionFieldName);
             return analysisFields.stream().filter(item -> item != null).collect(Collectors.toList());
-        }
-
-        static final String[] VALID_EXCLUDE_FREQUENT_SETTINGS = { "true", "false", "t", "f", "yes", "no", "y", "n", "on", "off", "by",
-                "over", "all" };
-
-        static boolean verifyExcludeFrequent(String excludeFrequent) throws ElasticsearchParseException {
-            // Not set is fine
-            if (excludeFrequent == null || excludeFrequent.isEmpty()) {
-                return true;
-            }
-
-            // Any of these words are fine
-            for (String word : VALID_EXCLUDE_FREQUENT_SETTINGS) {
-                if (word.equalsIgnoreCase(excludeFrequent)) {
-                    return true;
-                }
-            }
-
-            // Convertible to a number (which will then be interpreted as a boolean)
-            // is fine
-            try {
-                Long.parseLong(excludeFrequent);
-            } catch (NumberFormatException nfe) {
-                throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_EXCLUDEFREQUENT_SETTING,
-                        excludeFrequent), ErrorCodes.INVALID_EXCLUDEFREQUENT_SETTING);
-            }
-
-            return true;
         }
 
         /**

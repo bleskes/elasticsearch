@@ -40,9 +40,9 @@ public class DefaultDetectorDescriptionTests extends ESTestCase {
         detector.setOverFieldName("region");
         detector.setUseNull(true);
         detector.setPartitionFieldName("planet");
-        detector.setExcludeFrequent("true");
+        detector.setExcludeFrequent(Detector.ExcludeFrequent.ALL);
 
-        assertEquals("sum(value) by airline over region usenull=true partitionfield=planet excludefrequent=true",
+        assertEquals("sum(value) by airline over region usenull=true partitionfield=planet excludefrequent=all",
                 DefaultDetectorDescription.of(detector.build()));
     }
 }

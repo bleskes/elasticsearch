@@ -75,7 +75,6 @@ public final class Messages
     public static final String JOB_CANNOT_PAUSE = "job.cannot.pause";
     public static final String JOB_CANNOT_RESUME = "job.cannot.resume";
 
-    public static final String JOB_CONFIG_INVALID_EXCLUDEFREQUENT_SETTING = "job.config.invalid.excludefrequent.setting";
     public static final String JOB_CONFIG_BYFIELD_INCOMPATIBLE_FUNCTION = "job.config.byField.incompatible.function";
     public static final String JOB_CONFIG_BYFIELD_NEEDS_ANOTHER = "job.config.byField.needs.another";
     public static final String JOB_CONFIG_CANNOT_ENCRYPT_PASSWORD = "job.config.cannot.encrypt.password";

@@ -14,14 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
@@ -39,7 +31,13 @@ import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 import org.junit.Assert;
 
-import static org.elasticsearch.xpack.prelert.job.Detector.Builder.VALID_EXCLUDE_FREQUENT_SETTINGS;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class DetectorTests extends AbstractSerializingTestCase<Detector> {
 
@@ -171,11 +169,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
             detector.setByFieldName(fieldName = randomAsciiOfLengthBetween(1, 20));
         }
         if (randomBoolean()) {
-            if (randomBoolean()) {
-                detector.setExcludeFrequent(randomFrom(VALID_EXCLUDE_FREQUENT_SETTINGS));
-            } else {
-                detector.setExcludeFrequent(Long.toString(randomLong()));
-            }
+            detector.setExcludeFrequent(randomFrom(Detector.ExcludeFrequent.values()));
         }
         if (randomBoolean()) {
             int size = randomInt(10);
@@ -627,31 +621,6 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         }
     }
 
-
-    public void testVerifyExcludeFrequent_GivenNotSet() throws ElasticsearchParseException {
-        assertTrue(Detector.Builder.verifyExcludeFrequent(null));
-        assertTrue(Detector.Builder.verifyExcludeFrequent(""));
-    }
-
-
-    public void testVerifyExcludeFrequent_GivenValidWord() throws ElasticsearchParseException {
-        assertTrue(Detector.Builder.verifyExcludeFrequent("true"));
-        assertTrue(Detector.Builder.verifyExcludeFrequent("false"));
-        assertTrue(Detector.Builder.verifyExcludeFrequent("by"));
-        assertTrue(Detector.Builder.verifyExcludeFrequent("over"));
-    }
-
-    public void testVerifyExcludeFrequent_GivenInvalidWord() {
-        ESTestCase.expectThrows(ElasticsearchParseException.class, () -> Detector.Builder.verifyExcludeFrequent("bananas"));
-    }
-
-
-    public void testVerifyExcludeFrequent_GivenNumber() throws ElasticsearchParseException {
-        assertTrue(Detector.Builder.verifyExcludeFrequent("0"));
-        assertTrue(Detector.Builder.verifyExcludeFrequent("1"));
-        assertTrue(Detector.Builder.verifyExcludeFrequent("-1"));
-    }
-
     public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
             throws ElasticsearchParseException {
         Detector.Builder detector = new Detector.Builder("mean", "metricVale");
@@ -682,4 +651,14 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         detector.build();
     }
 
+    public void testExcludeFrequentForString() {
+        assertEquals(Detector.ExcludeFrequent.ALL, Detector.ExcludeFrequent.forString("all"));
+        assertEquals(Detector.ExcludeFrequent.ALL, Detector.ExcludeFrequent.forString("ALL"));
+        assertEquals(Detector.ExcludeFrequent.NONE, Detector.ExcludeFrequent.forString("none"));
+        assertEquals(Detector.ExcludeFrequent.NONE, Detector.ExcludeFrequent.forString("NONE"));
+        assertEquals(Detector.ExcludeFrequent.BY, Detector.ExcludeFrequent.forString("by"));
+        assertEquals(Detector.ExcludeFrequent.BY, Detector.ExcludeFrequent.forString("BY"));
+        assertEquals(Detector.ExcludeFrequent.OVER, Detector.ExcludeFrequent.forString("over"));
+        assertEquals(Detector.ExcludeFrequent.OVER, Detector.ExcludeFrequent.forString("OVER"));
+    }
 }

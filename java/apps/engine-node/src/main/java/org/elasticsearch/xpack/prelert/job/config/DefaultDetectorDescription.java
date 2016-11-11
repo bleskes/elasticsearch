@@ -74,13 +74,11 @@ public final class DefaultDetectorDescription {
         }
 
         if (isNotNullOrEmpty(detector.getPartitionFieldName())) {
-            sb.append(PARTITION_FIELD_OPTION)
-            .append(quoteField(detector.getPartitionFieldName()));
+            sb.append(PARTITION_FIELD_OPTION).append(quoteField(detector.getPartitionFieldName()));
         }
 
-        if (isNotNullOrEmpty(detector.getExcludeFrequent())) {
-            sb.append(EXCLUDE_FREQUENT_OPTION)
-            .append(detector.getExcludeFrequent());
+        if (detector.getExcludeFrequent() != null) {
+            sb.append(EXCLUDE_FREQUENT_OPTION).append(detector.getExcludeFrequent().getToken());
         }
     }
 

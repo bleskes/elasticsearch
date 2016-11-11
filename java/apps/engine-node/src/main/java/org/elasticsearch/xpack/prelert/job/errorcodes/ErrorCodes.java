@@ -145,11 +145,6 @@ public enum ErrorCodes
     ENCRYPTION_FAILURE_ERROR(10118),
 
     /**
-     * The 'excludeFrequent' option is set to an invalid value.
-     */
-    INVALID_EXCLUDEFREQUENT_SETTING(10119),
-
-    /**
      * Categorization filters are specified despite
      * no categorization field name is set.
      */
