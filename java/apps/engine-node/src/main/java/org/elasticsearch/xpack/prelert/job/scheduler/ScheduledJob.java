@@ -126,6 +126,9 @@ class ScheduledJob {
             return;
         }
 
+        logger.trace("Searching data in: [" + start + ", " + end + ")");
+
+        RuntimeException error = null;
         long recordCount = 0;
         dataExtractor.newSearch(start, end, logger);
         while (running && dataExtractor.hasNext()) {
@@ -133,14 +136,16 @@ class ScheduledJob {
             try {
                 extractedData = dataExtractor.next();
             } catch (Exception e) {
-                throw new ExtractionProblemException(e);
+                error = new ExtractionProblemException(e);
+                break;
             }
             if (extractedData.isPresent()) {
                 DataCounts counts;
                 try {
                     counts = dataProcessor.processData(jobId, extractedData.get(), DATA_LOAD_PARAMS);
                 } catch (Exception e) {
-                    throw new AnalysisProblemException(e);
+                    error = new AnalysisProblemException(e);
+                    break;
                 }
                 recordCount += counts.getProcessedRecordCount();
                 if (counts.getLatestRecordTimeStamp() != null) {
@@ -149,11 +154,18 @@ class ScheduledJob {
             }
         }
 
+        lastEndTimeMs = Math.max(lastEndTimeMs == null ? 0 : lastEndTimeMs, end - 1);
+
+        // Ensure time is always advanced in order to avoid importing duplicate data.
+        // This is the reason we store the error rather than throw inline.
+        if (error != null) {
+            throw error;
+        }
+
         if (recordCount == 0) {
             throw new EmptyDataCountException();
         }
 
-        lastEndTimeMs = Math.max(lastEndTimeMs == null ? 0 : lastEndTimeMs, end - 1);
         dataProcessor.flushJob(jobId, flushParams);
     }
 
