@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -118,7 +119,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         assertBusy(() -> {
             DataCounts dataCounts = getDataCounts("_job_id");
             assertThat(dataCounts.getInputRecordCount(), equalTo(numDocs1 + numDocs2));
-        });
+        }, 30, TimeUnit.SECONDS);
 
         StopJobSchedulerAction.Request stopSchedulerRequest = new StopJobSchedulerAction.Request("_job_id");
         client().execute(StopJobSchedulerAction.INSTANCE, stopSchedulerRequest).get();
