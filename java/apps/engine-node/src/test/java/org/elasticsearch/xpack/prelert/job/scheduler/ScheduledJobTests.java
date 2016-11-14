@@ -23,6 +23,7 @@ import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.junit.Before;
+import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +35,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -133,6 +135,17 @@ public class ScheduledJobTests extends ESTestCase {
         ScheduledJob scheduledJob = createScheduledJob(1000, 500, -1, -1);
         SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, 1000L);
         expectThrows(ScheduledJob.ExtractionProblemException.class, () -> scheduledJob.runLookBack(schedulerState));
+
+        currentTime = 3001;
+        expectThrows(ScheduledJob.ExtractionProblemException.class, () -> scheduledJob.runRealtime());
+
+        ArgumentCaptor<Long> startTimeCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> endTimeCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(dataExtractor, times(2)).newSearch(startTimeCaptor.capture(), endTimeCaptor.capture(), any());
+        assertEquals(0L, startTimeCaptor.getAllValues().get(0).longValue());
+        assertEquals(1000L, startTimeCaptor.getAllValues().get(1).longValue());
+        assertEquals(1000L, endTimeCaptor.getAllValues().get(0).longValue());
+        assertEquals(2000L, endTimeCaptor.getAllValues().get(1).longValue());
     }
 
     public void testAnalysisProblem() throws Exception {
@@ -142,6 +155,17 @@ public class ScheduledJobTests extends ESTestCase {
         ScheduledJob scheduledJob = createScheduledJob(1000, 500, -1, -1);
         SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, 1000L);
         expectThrows(ScheduledJob.AnalysisProblemException.class, () -> scheduledJob.runLookBack(schedulerState));
+
+        currentTime = 3001;
+        expectThrows(ScheduledJob.EmptyDataCountException.class, () -> scheduledJob.runRealtime());
+
+        ArgumentCaptor<Long> startTimeCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> endTimeCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(dataExtractor, times(2)).newSearch(startTimeCaptor.capture(), endTimeCaptor.capture(), any());
+        assertEquals(0L, startTimeCaptor.getAllValues().get(0).longValue());
+        assertEquals(1000L, startTimeCaptor.getAllValues().get(1).longValue());
+        assertEquals(1000L, endTimeCaptor.getAllValues().get(0).longValue());
+        assertEquals(2000L, endTimeCaptor.getAllValues().get(1).longValue());
     }
 
     private ScheduledJob createScheduledJob(long frequencyMs, long queryDelayMs, long latestFinalBucketEndTimeMs,

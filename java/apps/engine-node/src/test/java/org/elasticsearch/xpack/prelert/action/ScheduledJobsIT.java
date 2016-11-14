@@ -65,7 +65,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         client().execute(ClearPrelertAction.INSTANCE, new ClearPrelertAction.Request()).get();
     }
 
-    public void testImporting() throws Exception {
+    public void testLookbackOnly() throws Exception {
         client().admin().indices().prepareCreate("data")
                 .addMapping("type", "time", "type=date")
                 .get();
