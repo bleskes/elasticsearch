@@ -43,7 +43,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
 
     public void testNewUpdateBucketCount() {
         Script script = ElasticsearchScripts.newUpdateBucketCount(42L);
-        assertEquals("ctx._source.counts.bucketCount += params.count", script.getScript());
+        assertEquals("ctx._source.counts.bucketCount += params.count", script.getIdOrCode());
         assertEquals(1, script.getParams().size());
         assertEquals(42L, script.getParams().get("count"));
     }
@@ -53,7 +53,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         assertEquals(
                 "ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount"
                         + " += params.recordCount;",
-                        script.getScript());
+                        script.getIdOrCode());
         assertEquals(3, script.getParams().size());
         assertEquals(1L, script.getParams().get("bytes"));
         assertEquals(2L, script.getParams().get("fieldCount"));
@@ -64,7 +64,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         Long time = 135790L;
         Script script = ElasticsearchScripts.updateProcessingTime(time);
         assertEquals("ctx._source.averageProcessingTimeMs = ctx._source.averageProcessingTimeMs * 0.9 + params.timeMs * 0.1",
-                script.getScript());
+                script.getIdOrCode());
         assertEquals(time, script.getParams().get("timeMs"));
     }
 
@@ -75,7 +75,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         Map<String, Object> map = new HashMap<>();
         map.put("testKey", "testValue");
 
-        Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
+        Script script = new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, "test-script-here", map);
         ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
 
         MockClientBuilder clientBuilder = new MockClientBuilder("cluster").prepareUpdateScript(index, type, docId, captor, mapCaptor);
@@ -126,7 +126,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
 
         IllegalArgumentException ex = new IllegalArgumentException("IAE");
 
-        Script script = new Script("test-script-here", ScriptType.INLINE, null, map);
+        Script script = new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, "test-script-here", map);
         ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
 
         MockClientBuilder clientBuilder = new MockClientBuilder("cluster").prepareUpdateScript(index, type, docId, captor, mapCaptor, ex);
@@ -136,7 +136,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
             ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
         } catch (ElasticsearchException e) {
             String msg = e.toString();
-            assertTrue(msg.matches(".*test-script-here.*inline.*params.*testKey.*testValue.*"));
+            assertTrue(msg.matches(".*inline.*test-script-here.*params.*testKey.*testValue.*"));
         }
     }
 

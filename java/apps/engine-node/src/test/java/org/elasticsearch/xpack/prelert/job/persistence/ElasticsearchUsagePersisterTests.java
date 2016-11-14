@@ -76,7 +76,7 @@ public class ElasticsearchUsagePersisterTests extends ESTestCase {
 
         Script script = updateScriptCaptor.getValue();
         assertEquals("ctx._source.inputBytes += params.bytes;ctx._source.inputFieldCount += params.fieldCount;ctx._source.inputRecordCount"
-                + " += params.recordCount;", script.getScript());
+                + " += params.recordCount;", script.getIdOrCode());
         assertEquals(ScriptType.INLINE, script.getType());
         assertEquals("painless", script.getLang());
         Map<String, Object> scriptParams = script.getParams();
