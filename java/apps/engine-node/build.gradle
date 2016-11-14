@@ -44,7 +44,6 @@ noBootstrapTest.mustRunAfter test
 integTest {
     cluster {
         //setting 'useNativeProcess', 'true'
-        setting 'bootstrap.seccomp', 'false'
         distribution = 'zip'
     }
 }
