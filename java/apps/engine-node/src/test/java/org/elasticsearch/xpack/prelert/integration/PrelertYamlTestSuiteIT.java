@@ -23,6 +23,8 @@ import org.junit.After;
 
 import java.io.IOException;
 
+import static org.elasticsearch.xpack.prelert.integration.ScheduledJobIT.clearPrelertMetadata;
+
 /** Rest integration test. Runs against a cluster started by {@code gradle integTest} */
 public class PrelertYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
 
@@ -37,7 +39,7 @@ public class PrelertYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
 
     @After
     public void clearPrelertState() throws IOException {
-        adminClient().performRequest("DELETE", PrelertPlugin.BASE_PATH + "clear");
+        clearPrelertMetadata(adminClient());
     }
 
 }

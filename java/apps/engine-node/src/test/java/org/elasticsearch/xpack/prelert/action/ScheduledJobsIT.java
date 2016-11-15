@@ -19,6 +19,9 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.WriteRequest;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.network.NetworkAddress;
 import org.elasticsearch.common.xcontent.XContentHelper;
@@ -43,6 +46,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -63,7 +68,25 @@ public class ScheduledJobsIT extends ESIntegTestCase {
 
     @After
     public void clearPrelertMetadata() throws Exception {
-        client().execute(ClearPrelertAction.INSTANCE, new ClearPrelertAction.Request()).get();
+        MetaData metaData = client().admin().cluster().prepareState().get().getState().getMetaData();
+        PrelertMetadata prelertMetadata = metaData.custom(PrelertMetadata.TYPE);
+        if (prelertMetadata == null) {
+            return;
+        }
+        for (Map.Entry<String, Job> entry : prelertMetadata.getJobs().entrySet()) {
+            String jobId = entry.getKey();
+            try {
+                client().execute(StopJobSchedulerAction.INSTANCE, new StopJobSchedulerAction.Request(jobId)).get();
+            } catch (Exception e) {
+                // ignore
+            }
+            try {
+                client().execute(PostDataCloseAction.INSTANCE, new PostDataCloseAction.Request(jobId)).get();
+            } catch (Exception e) {
+                // ignore
+            }
+            client().execute(DeleteJobAction.INSTANCE, new DeleteJobAction.Request(jobId)).get();
+        }
     }
 
     public void testLookbackOnly() throws Exception {

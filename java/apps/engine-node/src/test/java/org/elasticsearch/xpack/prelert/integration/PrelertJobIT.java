@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.elasticsearch.xpack.prelert.integration.ScheduledJobIT.clearPrelertMetadata;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isEmptyString;
@@ -283,6 +284,6 @@ public class PrelertJobIT extends ESRestTestCase {
 
     @After
     public void clearPrelertState() throws IOException {
-        adminClient().performRequest("DELETE", PrelertPlugin.BASE_PATH + "clear");
+        clearPrelertMetadata(adminClient());
     }
 }

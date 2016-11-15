@@ -18,6 +18,9 @@ import org.apache.http.HttpHost;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.junit.After;
@@ -27,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -182,6 +187,28 @@ public class ScheduledJobIT extends ESRestTestCase {
 
     @After
     public void clearPrelertState() throws IOException {
-        adminClient().performRequest("DELETE", PrelertPlugin.BASE_PATH + "clear");
+        clearPrelertMetadata(adminClient());
+    }
+
+    public static void clearPrelertMetadata(RestClient client) throws IOException {
+        Map<String, Object> clusterStateAsMap = entityAsMap(client.performRequest("GET", "/_cluster/state",
+                Collections.singletonMap("filter_path", "metadata.prelert.jobs")));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> jobConfigs =
+                (List<Map<String, Object>>) XContentMapValues.extractValue("metadata.prelert.jobs", clusterStateAsMap);
+        for (Map<String, Object> jobConfig : jobConfigs) {
+            String jobId = (String) jobConfig.get("jobId");
+            try {
+                client.performRequest("POST", "/_xpack/prelert/schedulers/" + jobId + "/stop");
+            } catch (Exception e) {
+                // ignore
+            }
+            try {
+                client.performRequest("POST", "/_xpack/prelert/data/" + jobId + "/close");
+            } catch (Exception e) {
+                // ignore
+            }
+            client.performRequest("DELETE", "/_xpack/prelert/jobs/" + jobId);
+        }
     }
 }

@@ -35,8 +35,6 @@ import org.elasticsearch.xpack.prelert.job.scheduler.ScheduledJobService;
 import org.junit.Before;
 import org.mockito.Mockito;
 
-import java.util.HashSet;
-
 import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -91,16 +89,6 @@ public class JobLifeCycleServiceTests extends ESTestCase {
                 .build();
         jobLifeCycleService.clusterChanged(new ClusterChangedEvent("_source", cs2, cs1));
         assertFalse("Expect no allocation, because the job has been removed", jobLifeCycleService.localAllocatedJobs.contains("_job_id"));
-    }
-
-    public void testClusterChanged_prelertMetadataRemoved() {
-        jobLifeCycleService.localAllocatedJobs = new HashSet<>(); // default to an empty set, which is readonly
-        jobLifeCycleService.localAllocatedJobs.add("_job_id1");
-        jobLifeCycleService.localAllocatedJobs.add("_job_id2");
-
-        ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).build();
-        jobLifeCycleService.clusterChanged(new ClusterChangedEvent("_source", cs1, cs1));
-        assertTrue("If prelert metadata gets removed then stop any running job", jobLifeCycleService.localAllocatedJobs.isEmpty());
     }
 
     public void testClusterChanged_GivenJobIsPausing() {

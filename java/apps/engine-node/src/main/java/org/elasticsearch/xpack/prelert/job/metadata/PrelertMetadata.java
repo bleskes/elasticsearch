@@ -55,7 +55,6 @@ public class PrelertMetadata implements MetaData.Custom {
 
     // NORELEASE: A few fields of job details change frequently and this needs to be stored elsewhere
     // performance issue will occur if we don't change that
-    // also it needs ot be converted from jackson databind to ES' xcontent
     private final SortedMap<String, Job> jobs;
     private final SortedMap<String, Allocation> allocations;
 

@@ -60,15 +60,6 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         Set<String> localAllocatedJobs = this.localAllocatedJobs;
 
         PrelertMetadata prelertMetadata = event.state().getMetaData().custom(PrelertMetadata.TYPE);
-        if (prelertMetadata == null) {
-            // if no prelert metadata then stop any allocated jobs:
-            for (String localAllocatedJob : localAllocatedJobs) {
-                stopJob(localAllocatedJob);
-            }
-            scheduledJobService.stopAllJobs();
-            return;
-        }
-
         DiscoveryNode localNode = event.state().nodes().getLocalNode();
         for (Allocation allocation : prelertMetadata.getAllocations().values()) {
             if (localNode.getId().equals(allocation.getNodeId())) {

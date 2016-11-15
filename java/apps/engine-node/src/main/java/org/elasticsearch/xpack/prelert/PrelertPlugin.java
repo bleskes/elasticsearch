@@ -36,7 +36,6 @@ import org.elasticsearch.threadpool.ExecutorBuilder;
 import org.elasticsearch.threadpool.FixedExecutorBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.elasticsearch.xpack.prelert.action.ClearPrelertAction;
 import org.elasticsearch.xpack.prelert.action.CreateListAction;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.DeleteModelSnapshotAction;
@@ -90,7 +89,6 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.NativeAutodetectPr
 import org.elasticsearch.xpack.prelert.job.scheduler.http.HttpDataExtractorFactory;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
-import org.elasticsearch.xpack.prelert.rest.RestClearPrelertAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataCloseAction;
 import org.elasticsearch.xpack.prelert.rest.data.RestPostDataFlushAction;
@@ -236,7 +234,6 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 RestValidateDetectorAction.class,
                 RestValidateTransformAction.class,
                 RestValidateTransformsAction.class,
-                RestClearPrelertAction.class,
                 RestGetCategoriesAction.class,
                 RestGetCategoryAction.class,
                 RestGetModelSnapshotsAction.class,
@@ -270,7 +267,6 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(ValidateDetectorAction.INSTANCE, ValidateDetectorAction.TransportAction.class),
                 new ActionHandler<>(ValidateTransformAction.INSTANCE, ValidateTransformAction.TransportAction.class),
                 new ActionHandler<>(ValidateTransformsAction.INSTANCE, ValidateTransformsAction.TransportAction.class),
-                new ActionHandler<>(ClearPrelertAction.INSTANCE, ClearPrelertAction.TransportAction.class),
                 new ActionHandler<>(GetCategoryDefinitionsAction.INSTANCE, GetCategoryDefinitionsAction.TransportAction.class),
                 new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class),
                 new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class),
