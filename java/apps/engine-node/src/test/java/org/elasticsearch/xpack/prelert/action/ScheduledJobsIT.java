@@ -66,9 +66,6 @@ public class ScheduledJobsIT extends ESIntegTestCase {
     public void clearPrelertMetadata() throws Exception {
         MetaData metaData = client().admin().cluster().prepareState().get().getState().getMetaData();
         PrelertMetadata prelertMetadata = metaData.custom(PrelertMetadata.TYPE);
-        if (prelertMetadata == null) {
-            return;
-        }
         for (Map.Entry<String, Job> entry : prelertMetadata.getJobs().entrySet()) {
             String jobId = entry.getKey();
             try {

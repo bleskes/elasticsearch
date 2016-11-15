@@ -56,10 +56,15 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
 
     @Override
     public void clusterChanged(ClusterChangedEvent event) {
+        PrelertMetadata prelertMetadata = event.state().getMetaData().custom(PrelertMetadata.TYPE);
+        if (prelertMetadata == null) {
+            logger.debug("Prelert metadata not installed");
+            return;
+        }
+
         // Single volatile read:
         Set<String> localAllocatedJobs = this.localAllocatedJobs;
 
-        PrelertMetadata prelertMetadata = event.state().getMetaData().custom(PrelertMetadata.TYPE);
         DiscoveryNode localNode = event.state().nodes().getLocalNode();
         for (Allocation allocation : prelertMetadata.getAllocations().values()) {
             if (localNode.getId().equals(allocation.getNodeId())) {

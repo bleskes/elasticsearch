@@ -87,7 +87,7 @@ public class JobManagerTests extends ESTestCase {
 
     public void testFilter() {
         Set<String> running = new HashSet<String>(Arrays.asList("henry", "dim", "dave"));
-        Set<String> diff = new HashSet<String>(Arrays.asList("dave", "tom")).stream().filter((s) -> !running.contains(s))
+        Set<String> diff = new HashSet<>(Arrays.asList("dave", "tom")).stream().filter((s) -> !running.contains(s))
                 .collect(Collectors.toCollection(HashSet::new));
 
         assertTrue(diff.size() == 1);
@@ -96,7 +96,7 @@ public class JobManagerTests extends ESTestCase {
 
     public void testDeleteJob_GivenJobActionIsNotAvailable() throws InterruptedException, ExecutionException {
         JobManager jobManager = createJobManager();
-        ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
+        ClusterState clusterState = createClusterState();
         Job job = buildJobBuilder("foo").build();
         clusterState = jobManager.innerPutJob(job, false, clusterState);
         PrelertMetadata currentPrelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
@@ -127,7 +127,7 @@ public class JobManagerTests extends ESTestCase {
 
     public void testRemoveJobFromClusterState() {
         JobManager jobManager = createJobManager();
-        ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
+        ClusterState clusterState = createClusterState();
         Job job = buildJobBuilder("foo").build();
         clusterState = jobManager.innerPutJob(job, false, clusterState);
 
@@ -139,23 +139,16 @@ public class JobManagerTests extends ESTestCase {
 
     public void testRemoveJobFromClusterState_jobMissing() {
         JobManager jobManager = createJobManager();
-        ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
+        ClusterState clusterState = createClusterState();
         Job job = buildJobBuilder("foo").build();
         ClusterState clusterState2 = jobManager.innerPutJob(job, false, clusterState);
         Exception e = expectThrows(ResourceNotFoundException.class, () -> jobManager.removeJobFromClusterState("bar", clusterState2));
         assertThat(e.getMessage(), equalTo("job [bar] does not exist"));
     }
 
-    public void testRemoveJobFromClusterState_GivenNoMetadata() {
-        JobManager jobManager = createJobManager();
-        ClusterState clusterStateBefore = ClusterState.builder(new ClusterName("_name")).build();
-        Exception e = expectThrows(ResourceNotFoundException.class, () ->jobManager.removeJobFromClusterState("foo", clusterStateBefore));
-        assertThat(e.getMessage(), equalTo("job [foo] does not exist, prelert metadata missing"));
-    }
-
     public void testGetJobOrThrowIfUnknown_GivenUnknownJob() {
         JobManager jobManager = createJobManager();
-        ClusterState cs = ClusterState.builder(new ClusterName("_name")).build();
+        ClusterState cs = createClusterState();
         ESTestCase.expectThrows(ResourceNotFoundException.class, () -> jobManager.getJobOrThrowIfUnknown(cs, "foo"));
     }
 
@@ -218,7 +211,7 @@ public class JobManagerTests extends ESTestCase {
 
     public void testInnerPutJob() {
         JobManager jobManager = createJobManager();
-        ClusterState cs = ClusterState.builder(new ClusterName("_name")).build();
+        ClusterState cs = createClusterState();
 
         Job job1 = buildJobBuilder("_id").build();
         ClusterState result1 = jobManager.innerPutJob(job1, false, cs);
@@ -270,5 +263,11 @@ public class JobManagerTests extends ESTestCase {
             }
             return null;
         }
+    }
+
+    private ClusterState createClusterState() {
+        ClusterState.Builder builder = ClusterState.builder(new ClusterName("_name"));
+        builder.metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, PrelertMetadata.PROTO));
+        return builder.build();
     }
 }

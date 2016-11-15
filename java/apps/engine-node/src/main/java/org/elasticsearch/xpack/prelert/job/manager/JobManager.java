@@ -22,9 +22,12 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.component.AbstractLifecycleComponent;
+import org.elasticsearch.common.component.Lifecycle;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.gateway.GatewayService;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.PauseJobAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
@@ -51,6 +54,7 @@ import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -111,10 +115,6 @@ public class JobManager {
      */
     public Optional<Job> getJob(String jobId, ClusterState clusterState) {
         PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
-        if (prelertMetadata == null) {
-            return Optional.empty();
-        }
-
         Job job = prelertMetadata.getJobs().get(jobId);
         if (job == null) {
             return Optional.empty();
@@ -137,10 +137,6 @@ public class JobManager {
      */
     public QueryPage<Job> getJobs(int skip, int take, ClusterState clusterState) {
         PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
-        if (prelertMetadata == null) {
-            return new QueryPage<>(Collections.emptyList(), 0);
-        }
-
         List<Job> jobs = prelertMetadata.getJobs().entrySet().stream()
                 .skip(skip)
                 .limit(take)
@@ -183,9 +179,6 @@ public class JobManager {
      */
     public Job getJobOrThrowIfUnknown(ClusterState clusterState, String jobId) {
         PrelertMetadata prelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
-        if (prelertMetadata == null) {
-            throw ExceptionsHelper.missingJobException(jobId);
-        }
         Job job = prelertMetadata.getJobs().get(jobId);
         if (job == null) {
             throw ExceptionsHelper.missingJobException(jobId);
@@ -246,15 +239,8 @@ public class JobManager {
 
     ClusterState innerPutJob(Job job, boolean overwrite, ClusterState currentState) {
         PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
-        PrelertMetadata.Builder builder;
-        if (currentPrelertMetadata != null) {
-            builder = new PrelertMetadata.Builder(currentPrelertMetadata);
-        } else {
-            builder = new PrelertMetadata.Builder();
-        }
-
+        PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
         builder.putJob(job, overwrite);
-
         ClusterState.Builder newState = ClusterState.builder(currentState);
         newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
         return newState.build();
@@ -277,8 +263,6 @@ public class JobManager {
      */
     public void deleteJob(DeleteJobAction.Request request, ActionListener<DeleteJobAction.Response> actionListener) {
         String jobId = request.getJobId();
-
-        LOGGER.debug("Deleting job '" + jobId + "'");
 
         // NORELEASE: Should also delete the running process
 
@@ -342,9 +326,8 @@ public class JobManager {
 
     ClusterState removeJobFromClusterState(String jobId, ClusterState currentState) {
         PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
-        if (currentPrelertMetadata == null) {
-            throw new ResourceNotFoundException("job [" + jobId + "] does not exist, prelert metadata missing");
-        }
+        PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
+        builder.removeJob(jobId);
 
         Allocation allocation = currentPrelertMetadata.getAllocations().get(jobId);
         if (allocation != null) {
@@ -353,9 +336,6 @@ public class JobManager {
                 throw ExceptionsHelper.conflictStatusException(Messages.getMessage(Messages.JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS, jobId));
             }
         }
-
-        PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
-        builder.removeJob(jobId);
         ClusterState.Builder newState = ClusterState.builder(currentState);
         newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
         return newState.build();
@@ -433,9 +413,6 @@ public class JobManager {
 
     private Allocation getAllocation(ClusterState state, String jobId) {
         PrelertMetadata prelertMetadata = state.metaData().custom(PrelertMetadata.TYPE);
-        if (prelertMetadata == null) {
-            throw new IllegalStateException("Expected PrelertMetadata");
-        }
         Allocation allocation = prelertMetadata.getAllocations().get(jobId);
         if (allocation == null) {
             throw new IllegalStateException("Excepted allocation for job with id [" + jobId + "]");
@@ -445,10 +422,6 @@ public class JobManager {
 
     private ClusterState innerUpdateAllocation(Allocation newAllocation, ClusterState currentState) {
         PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
-        if (currentPrelertMetadata == null) {
-            throw new IllegalStateException("PrelertMetaData should already have been created");
-        }
-
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
         builder.updateAllocation(newAllocation.getJobId(), newAllocation);
         ClusterState.Builder newState = ClusterState.builder(currentState);

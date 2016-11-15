@@ -50,10 +50,7 @@ public class JobAllocatorTests extends ESTestCase {
     }
 
     public void testShouldAllocate() {
-        ClusterState cs = ClusterState.builder(new ClusterName("_name")).build();
-        assertFalse("No prelert metadata, so nothing should be allocated", jobAllocator.shouldAllocate(cs));
-
-        cs = ClusterState.builder(cs).metaData(MetaData.builder()
+        ClusterState cs = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, new PrelertMetadata.Builder().build()))
                 .build();
         assertFalse("No jobs, so nothing to allocate", jobAllocator.shouldAllocate(cs));
@@ -124,6 +121,7 @@ public class JobAllocatorTests extends ESTestCase {
         when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(Runnable::run);
 
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, new PrelertMetadata.Builder().build()))
                 .nodes(DiscoveryNodes.builder()
                         .add(new DiscoveryNode("_id", new LocalTransportAddress("_id"), Version.CURRENT))
                         .localNodeId("_id")
@@ -135,6 +133,7 @@ public class JobAllocatorTests extends ESTestCase {
 
         // make node master
         cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, new PrelertMetadata.Builder().build()))
                 .nodes(DiscoveryNodes.builder()
                         .add(new DiscoveryNode("_id", new LocalTransportAddress("_id"), Version.CURRENT))
                         .masterNodeId("_id")
