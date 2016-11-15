@@ -28,7 +28,6 @@ import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.discovery.MasterNotDiscoveredException;
 import org.elasticsearch.discovery.zen.ElectMasterService;
 import org.elasticsearch.discovery.zen.UnicastZenPing;
-import org.elasticsearch.discovery.zen.ZenDiscovery;
 import org.elasticsearch.discovery.zen.ZenPing;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.SuppressLocalMode;
@@ -67,7 +66,8 @@ import static org.hamcrest.core.Is.is;
 //test is just too slow, please fix it to not be sleep-based
 @BadApple(bugUrl = "https://github.com/elastic/x-plugins/issues/1007")
 @TestLogging("org.elasticsearch.discovery:TRACE,org.elasticsearch.watcher:TRACE")
-@ClusterScope(scope = TEST, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, numDataNodes = 0)
+@ClusterScope(scope = TEST, numClientNodes = 0, transportClientRatio = 0, randomDynamicTemplates = false, numDataNodes = 0,
+        autoMinMasterNodes = false)
 @SuppressLocalMode
 public class NoMasterNodeTests extends AbstractWatcherIntegrationTestCase {
     private ClusterDiscoveryConfiguration.UnicastZen config;
