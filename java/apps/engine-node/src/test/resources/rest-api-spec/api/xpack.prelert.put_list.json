@@ -1,6 +1,6 @@
 {
-  "xpack.prelert.create_list": {
-    "methods": [ "POST" ],
+  "xpack.prelert.put_list": {
+    "methods": [ "PUT" ],
     "url": {
       "path": "/_xpack/prelert/lists",
       "paths": [ "/_xpack/prelert/lists" ],

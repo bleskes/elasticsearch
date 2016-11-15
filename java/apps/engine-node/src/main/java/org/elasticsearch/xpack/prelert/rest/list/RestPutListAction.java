@@ -26,27 +26,27 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
-import org.elasticsearch.xpack.prelert.action.CreateListAction;
+import org.elasticsearch.xpack.prelert.action.PutListAction;
 
 import java.io.IOException;
 
-public class RestCreateListAction extends BaseRestHandler {
+public class RestPutListAction extends BaseRestHandler {
 
-    private final CreateListAction.TransportAction transportCreateListAction;
+    private final PutListAction.TransportAction transportCreateListAction;
 
     @Inject
-    public RestCreateListAction(Settings settings, RestController controller, CreateListAction.TransportAction transportCreateListAction) {
+    public RestPutListAction(Settings settings, RestController controller, PutListAction.TransportAction transportCreateListAction) {
         super(settings);
         this.transportCreateListAction = transportCreateListAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "lists", this);
+        controller.registerHandler(RestRequest.Method.PUT, PrelertPlugin.BASE_PATH + "lists", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         BytesReference bodyBytes = RestActions.getRestContent(restRequest);
         XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
-        CreateListAction.Request createListRequest = CreateListAction.Request.parseRequest(parser, () -> parseFieldMatcher);
-        return channel -> transportCreateListAction.execute(createListRequest, new AcknowledgedRestListener<>(channel));
+        PutListAction.Request putListRequest = PutListAction.Request.parseRequest(parser, () -> parseFieldMatcher);
+        return channel -> transportCreateListAction.execute(putListRequest, new AcknowledgedRestListener<>(channel));
     }
 
 }

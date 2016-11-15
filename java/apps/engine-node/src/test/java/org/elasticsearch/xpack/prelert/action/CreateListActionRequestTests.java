@@ -16,14 +16,14 @@ package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.action.CreateListAction.Request;
+import org.elasticsearch.xpack.prelert.action.PutListAction.Request;
 import org.elasticsearch.xpack.prelert.lists.ListDocument;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateListActionRequestTests extends AbstractStreamableXContentTestCase<CreateListAction.Request> {
+public class CreateListActionRequestTests extends AbstractStreamableXContentTestCase<PutListAction.Request> {
 
     @Override
     protected Request createTestInstance() {
@@ -33,17 +33,17 @@ public class CreateListActionRequestTests extends AbstractStreamableXContentTest
             items.add(randomAsciiOfLengthBetween(1, 20));
         }
         ListDocument listDocument = new ListDocument(randomAsciiOfLengthBetween(1, 20), items);
-        return new CreateListAction.Request(listDocument);
+        return new PutListAction.Request(listDocument);
     }
 
     @Override
     protected Request createBlankInstance() {
-        return new CreateListAction.Request();
+        return new PutListAction.Request();
     }
 
     @Override
     protected Request parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return CreateListAction.Request.parseRequest(parser, () -> matcher);
+        return PutListAction.Request.parseRequest(parser, () -> matcher);
     }
 
 }

@@ -50,12 +50,12 @@ import java.io.IOException;
 import java.util.Objects;
 
 
-public class CreateListAction extends Action<CreateListAction.Request, CreateListAction.Response, CreateListAction.RequestBuilder> {
+public class PutListAction extends Action<PutListAction.Request, PutListAction.Response, PutListAction.RequestBuilder> {
 
-    public static final CreateListAction INSTANCE = new CreateListAction();
-    public static final String NAME = "cluster:admin/prelert/list/create";
+    public static final PutListAction INSTANCE = new PutListAction();
+    public static final String NAME = "cluster:admin/prelert/list/put";
 
-    private CreateListAction() {
+    private PutListAction() {
         super(NAME);
     }
 
@@ -133,7 +133,7 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
 
     public static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, CreateListAction action) {
+        public RequestBuilder(ElasticsearchClient client, PutListAction action) {
             super(client, action, new Request());
         }
     }
@@ -158,7 +158,7 @@ public class CreateListAction extends Action<CreateListAction.Request, CreateLis
                 ThreadPool threadPool, ActionFilters actionFilters,
                 IndexNameExpressionResolver indexNameExpressionResolver,
                 TransportIndexAction transportIndexAction) {
-            super(settings, CreateListAction.NAME, transportService, clusterService, threadPool, actionFilters,
+            super(settings, PutListAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.transportIndexAction = transportIndexAction;
         }
