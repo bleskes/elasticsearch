@@ -16,8 +16,6 @@ package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ResourceNotFoundException;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -25,39 +23,24 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
-import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.junit.Before;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.mockito.stubbing.Stubber;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.Collectors;
 
 import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -94,38 +77,7 @@ public class JobManagerTests extends ESTestCase {
         assertTrue(diff.contains("tom"));
     }
 
-    public void testDeleteJob_GivenJobActionIsNotAvailable() throws InterruptedException, ExecutionException {
-        JobManager jobManager = createJobManager();
-        ClusterState clusterState = createClusterState();
-        Job job = buildJobBuilder("foo").build();
-        clusterState = jobManager.innerPutJob(job, false, clusterState);
-        PrelertMetadata currentPrelertMetadata = clusterState.metaData().custom(PrelertMetadata.TYPE);
-        PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
-        builder.putAllocation("nodeId", "foo");
-        clusterState = ClusterState.builder(clusterState).metaData(MetaData.builder(clusterState.getMetaData())
-                .putCustom(PrelertMetadata.TYPE, builder.build()).build()).build();
-        when(clusterService.state()).thenReturn(clusterState);
-
-        doAnswerSleep(200).when(clusterService).submitStateUpdateTask(eq("delete-job-foo"), any(AckedClusterStateUpdateTask.class));
-
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        DeleteJobAction.Request request = new DeleteJobAction.Request("foo");
-        request.setJobId("foo");
-        @SuppressWarnings("unchecked")
-        ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
-        Future<Throwable> task_1_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
-        Future<Throwable> task_2_result = executor.submit(new ExceptionCallable(() -> jobManager.deleteJob(request, actionListener)));
-        executor.shutdown();
-
-        Throwable result1 = task_1_result.get();
-        Throwable result2 = task_2_result.get();
-        assertTrue(result1 == null || result2 == null);
-        Throwable exception = result1 != null ? result1 : result2;
-        assertTrue(exception instanceof RejectedExecutionException);
-        assertEquals("Cannot delete job foo while another connection is deleting the job", exception.getMessage());
-    }
-
-    public void testRemoveJobFromClusterState() {
+    public void testRemoveJobFromClusterState_GivenExistingMetadata() {
         JobManager jobManager = createJobManager();
         ClusterState clusterState = createClusterState();
         Job job = buildJobBuilder("foo").build();
@@ -245,39 +197,7 @@ public class JobManagerTests extends ESTestCase {
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
         Environment env = new Environment(
                 settings);
-        return new JobManager(env, settings, jobProvider, clusterService, new LocalActionGuardian<>(Action.CLOSED));
-    }
-
-    private static Stubber doAnswerSleep(long millis) {
-        return doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Thread.sleep(millis);
-                return null;
-            }
-        });
-    }
-
-    private static class ExceptionCallable implements Callable<Throwable> {
-        private interface ExceptionTask {
-            void run() throws Exception;
-        }
-
-        private final ExceptionTask task;
-
-        private ExceptionCallable(ExceptionTask task) {
-            this.task = task;
-        }
-
-        @Override
-        public Throwable call() {
-            try {
-                task.run();
-            } catch (Exception e) {
-                return e;
-            }
-            return null;
-        }
+        return new JobManager(env, settings, jobProvider, clusterService);
     }
 
     private ClusterState createClusterState() {

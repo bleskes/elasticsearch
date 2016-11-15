@@ -44,8 +44,6 @@ import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
-import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
-import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
@@ -86,7 +84,6 @@ public class JobManager {
     public static final String APP_VER_FIELDNAME = "appVer";
 
     public static final String DEFAULT_RECORD_SORT_FIELD = AnomalyRecord.PROBABILITY.getPreferredName();
-    private final ActionGuardian<Action> processActionGuardian;
     private final JobProvider jobProvider;
     private final ClusterService clusterService;
     private final Environment env;
@@ -95,13 +92,11 @@ public class JobManager {
     /**
      * Create a JobManager
      */
-    public JobManager(Environment env, Settings settings, JobProvider jobProvider, ClusterService clusterService,
-            ActionGuardian<Action> processActionGuardian) {
+    public JobManager(Environment env, Settings settings, JobProvider jobProvider, ClusterService clusterService) {
         this.env = env;
         this.settings = settings;
         this.jobProvider = Objects.requireNonNull(jobProvider);
         this.clusterService = clusterService;
-        this.processActionGuardian = Objects.requireNonNull(processActionGuardian);
     }
 
     /**
@@ -263,65 +258,59 @@ public class JobManager {
      */
     public void deleteJob(DeleteJobAction.Request request, ActionListener<DeleteJobAction.Response> actionListener) {
         String jobId = request.getJobId();
-
+        LOGGER.debug("Deleting job '" + jobId + "'");
         // NORELEASE: Should also delete the running process
+        ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
+            @Override
+            public void onResponse(Boolean aBoolean) {
+                jobProvider.deleteJobRelatedIndices(request.getJobId(), new ActionListener<Boolean>() {
+                    @Override
+                    public void onResponse(Boolean aBoolean) {
 
-        try (ActionGuardian<Action>.ActionTicket actionTicket = processActionGuardian.tryAcquiringAction(jobId, Action.DELETING)) {
-            // NORELEASE fix this so we don't have to call a method on
-            // actionTicket, probably by removing ActionGuardian
-            actionTicket.hashCode();
-            ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
-                @Override
-                public void onResponse(Boolean aBoolean) {
-                    jobProvider.deleteJobRelatedIndices(request.getJobId(), new ActionListener<Boolean>() {
-                        @Override
-                        public void onResponse(Boolean aBoolean) {
+                        new JobLogs(settings).deleteLogs(env, jobId);
+                        // NORELEASE: This is not the place the audit
+                        // log
+                        // (indexes a document), because this method is
+                        // executed on
+                        // the cluster state update task thread and any
+                        // action performed on that thread should be
+                        // quick.
+                        // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
 
-                            new JobLogs(settings).deleteLogs(env, jobId);
-                            // NORELEASE: This is not the place the audit
-                            // log
-                            // (indexes a document), because this method is
-                            // executed on
-                            // the cluster state update task thread and any
-                            // action performed on that thread should be
-                            // quick.
-                            // audit(jobId).info(Messages.getMessage(Messages.JOB_AUDIT_DELETED));
+                        // Also I wonder if we need to audit log infra
+                        // structure in prelert as when we merge into
+                        // xpack
+                        // we can use its audit trailing. See:
+                        // https://github.com/elastic/prelert-legacy/issues/48
+                        actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
+                    }
 
-                            // Also I wonder if we need to audit log infra
-                            // structure in prelert as when we merge into
-                            // xpack
-                            // we can use its audit trailing. See:
-                            // https://github.com/elastic/prelert-legacy/issues/48
-                            actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
-                        }
+                    @Override
+                    public void onFailure(Exception e) {
+                        actionListener.onFailure(e);
+                    }
+                });
+            }
 
-                        @Override
-                        public void onFailure(Exception e) {
-                            actionListener.onFailure(e);
-                        }
-                    });
-                }
+            @Override
+            public void onFailure(Exception e) {
+                actionListener.onFailure(e);
+            }
+        };
 
-                @Override
-                public void onFailure(Exception e) {
-                    actionListener.onFailure(e);
-                }
-            };
+        clusterService.submitStateUpdateTask("delete-job-" + jobId,
+                new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
 
-            clusterService.submitStateUpdateTask("delete-job-" + jobId,
-                    new AckedClusterStateUpdateTask<Boolean>(request, delegateListener) {
+            @Override
+            protected Boolean newResponse(boolean acknowledged) {
+                return acknowledged;
+            }
 
-                @Override
-                protected Boolean newResponse(boolean acknowledged) {
-                    return acknowledged;
-                }
-
-                @Override
-                public ClusterState execute(ClusterState currentState) throws Exception {
-                    return removeJobFromClusterState(jobId, currentState);
-                }
-            });
-        }
+            @Override
+            public ClusterState execute(ClusterState currentState) throws Exception {
+                return removeJobFromClusterState(jobId, currentState);
+            }
+        });
     }
 
     ClusterState removeJobFromClusterState(String jobId, ClusterState currentState) {

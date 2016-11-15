@@ -73,9 +73,6 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.Aut
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutodetectResultsParser;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.noop.NoOpRenormaliser;
 import org.elasticsearch.xpack.prelert.job.scheduler.ScheduledJobService;
-import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
-import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
-import org.elasticsearch.xpack.prelert.job.manager.actions.LocalActionGuardian;
 import org.elasticsearch.xpack.prelert.job.metadata.JobAllocator;
 import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
@@ -163,8 +160,6 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
             ResourceWatcherService resourceWatcherService, ScriptService scriptService,
             SearchRequestParsers searchRequestParsers) {
 
-        ActionGuardian<Action> processActionGuardian =
-                new LocalActionGuardian<>(Action.startingState());
         // All components get binded in the guice context to the instances returned here
         // and interfaces are not bound to their concrete classes.
         // instead of `bind(Interface.class).to(Implementation.class);` this happens:
@@ -173,7 +168,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         // This ok for now as we will remove Guice soon
         ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(client, 0, parseFieldMatcherSupplier.getParseFieldMatcher());
 
-        JobManager jobManager = new JobManager(env, settings, jobProvider, clusterService, processActionGuardian);
+        JobManager jobManager = new JobManager(env, settings, jobProvider, clusterService);
         AutodetectProcessFactory processFactory;
         if (USE_NATIVE_PROCESS_OPTION.get(settings)) {
             try {
