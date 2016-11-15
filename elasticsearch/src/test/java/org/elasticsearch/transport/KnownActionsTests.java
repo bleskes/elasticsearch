@@ -21,10 +21,12 @@ import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.io.Streams;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.Licensing;
 import org.elasticsearch.xpack.security.action.SecurityActionModule;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.SecurityIntegTestCase;
+import org.elasticsearch.test.discovery.TestZenDiscovery;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.graph.Graph;
 import org.junit.BeforeClass;
@@ -60,9 +62,11 @@ public class KnownActionsTests extends SecurityIntegTestCase {
     private static Set<String> knownHandlers;
     private static Set<String> codeActions;
 
+
     @Override
-    protected boolean addMockZenPings() {
-        return false; // make sure unicasthost zen ping actions are loaded
+    protected Settings nodeSettings(int nodeOrdinal) {
+        return Settings.builder().put(super.nodeSettings(nodeOrdinal))
+            .put(TestZenDiscovery.USE_MOCK_PINGS.getKey(), false).build();
     }
 
     @BeforeClass

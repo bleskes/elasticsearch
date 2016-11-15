@@ -44,6 +44,8 @@ import org.elasticsearch.test.InternalTestCluster;
 import org.elasticsearch.test.NodeConfigurationSource;
 import org.elasticsearch.test.TestCluster;
 import org.elasticsearch.test.discovery.MockZenPing;
+import org.elasticsearch.test.discovery.TestZenDiscovery;
+import org.elasticsearch.transport.MockTcpTransportPlugin;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -151,7 +153,7 @@ public abstract class TribeTransportTestCase extends ESIntegTestCase {
                 .put("transport.type", "local")
                 .build();
 
-        final List<Class<? extends Plugin>> mockPlugins = Collections.singletonList(MockZenPing.TestPlugin.class);
+        final List<Class<? extends Plugin>> mockPlugins = Collections.singletonList(TestZenDiscovery.TestPlugin.class);
         final Node tribeNode = new MockNode(merged, mockPlugins).start();
         Client tribeClient = tribeNode.client();
 

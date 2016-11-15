@@ -17,6 +17,12 @@
 
 package org.elasticsearch.xpack.security.transport;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.elasticsearch.common.network.NetworkAddress;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
@@ -28,7 +34,7 @@ import org.elasticsearch.node.MockNode;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeValidationException;
 import org.elasticsearch.test.SecurityIntegTestCase;
-import org.elasticsearch.test.discovery.MockZenPing;
+import org.elasticsearch.test.discovery.TestZenDiscovery;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.security.Security;
@@ -36,12 +42,7 @@ import org.elasticsearch.xpack.security.authc.file.FileRealm;
 import org.elasticsearch.xpack.ssl.SSLClientAuth;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
 
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.test.SecuritySettingsSource.getSSLSettingsForStore;
@@ -117,7 +118,7 @@ public class ServerTransportFilterIntegrationTests extends SecurityIntegTestCase
                 .put(NetworkModule.HTTP_ENABLED.getKey(), false)
                 .put(Node.NODE_MASTER_SETTING.getKey(), false)
                 .build();
-        try (Node node = new MockNode(nodeSettings, Arrays.asList(XPackPlugin.class, MockZenPing.TestPlugin.class))) {
+        try (Node node = new MockNode(nodeSettings, Arrays.asList(XPackPlugin.class, TestZenDiscovery.TestPlugin.class))) {
             node.start();
             assertGreenClusterState(node.client());
         }
