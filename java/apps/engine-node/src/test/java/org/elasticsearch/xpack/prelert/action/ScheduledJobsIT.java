@@ -36,6 +36,7 @@ import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchPersister;
+import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         return nodePlugins();
     }
 
-    @Before
+    @After
     public void clearPrelertMetadata() throws Exception {
         client().execute(ClearPrelertAction.INSTANCE, new ClearPrelertAction.Request()).get();
     }

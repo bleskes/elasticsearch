@@ -102,8 +102,8 @@ public class ScheduledJobService extends AbstractComponent {
                 if (holder.problemTracker.updateEmptyDataCount(true)) {
                     requestStopping(job.getJobId());
                 }
-            } catch (Exception e1) {
-                logger.error("Failed lookback import for job[" + job.getId() + "]", e1);
+            } catch (Exception e) {
+                logger.error("Failed lookback import for job[" + job.getId() + "]", e);
                 requestStopping(job.getId());
             }
             holder.problemTracker.finishReport();
@@ -232,12 +232,16 @@ public class ScheduledJobService extends AbstractComponent {
         client.execute(UpdateJobSchedulerStatusAction.INSTANCE, request, new ActionListener<UpdateJobSchedulerStatusAction.Response>() {
             @Override
             public void onResponse(UpdateJobSchedulerStatusAction.Response response) {
-                logger.info("Successfully set job scheduler status to [{}] for job [{}]", status, jobId);
+                if (response.isAcknowledged()) {
+                    logger.debug("successfully set job scheduler status to [{}] for job [{}]", status, jobId);
+                } else {
+                    logger.info("set job scheduler status to [{}] for job [{}], but was not acknowledged", status, jobId);
+                }
             }
 
             @Override
             public void onFailure(Exception e) {
-                logger.error("Could not set job scheduler status to [" + status + "] for job [" + jobId +"]", e);
+                logger.error("could not set job scheduler status to [" + status + "] for job [" + jobId +"]", e);
             }
         });
     }
