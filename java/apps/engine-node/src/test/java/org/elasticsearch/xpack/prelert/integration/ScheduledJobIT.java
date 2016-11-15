@@ -196,6 +196,10 @@ public class ScheduledJobIT extends ESRestTestCase {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> jobConfigs =
                 (List<Map<String, Object>>) XContentMapValues.extractValue("metadata.prelert.jobs", clusterStateAsMap);
+        if (jobConfigs == null) {
+            return;
+        }
+
         for (Map<String, Object> jobConfig : jobConfigs) {
             String jobId = (String) jobConfig.get("jobId");
             try {

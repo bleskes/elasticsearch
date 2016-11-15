@@ -125,7 +125,7 @@ public class JobManagerTests extends ESTestCase {
         assertEquals("Cannot delete job foo while another connection is deleting the job", exception.getMessage());
     }
 
-    public void testRemoveJobFromClusterState_GivenExistingMetadata() {
+    public void testRemoveJobFromClusterState() {
         JobManager jobManager = createJobManager();
         ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
         Job job = buildJobBuilder("foo").build();
@@ -137,13 +137,20 @@ public class JobManagerTests extends ESTestCase {
         assertThat(prelertMetadata.getJobs().containsKey("foo"), is(false));
     }
 
+    public void testRemoveJobFromClusterState_jobMissing() {
+        JobManager jobManager = createJobManager();
+        ClusterState clusterState = ClusterState.builder(new ClusterName("_name")).build();
+        Job job = buildJobBuilder("foo").build();
+        ClusterState clusterState2 = jobManager.innerPutJob(job, false, clusterState);
+        Exception e = expectThrows(ResourceNotFoundException.class, () -> jobManager.removeJobFromClusterState("bar", clusterState2));
+        assertThat(e.getMessage(), equalTo("job [bar] does not exist"));
+    }
+
     public void testRemoveJobFromClusterState_GivenNoMetadata() {
         JobManager jobManager = createJobManager();
         ClusterState clusterStateBefore = ClusterState.builder(new ClusterName("_name")).build();
-
-        ClusterState clusterStateAfter = jobManager.removeJobFromClusterState("foo", clusterStateBefore);
-
-        assertThat(clusterStateAfter, is(equalTo(clusterStateBefore)));
+        Exception e = expectThrows(ResourceNotFoundException.class, () ->jobManager.removeJobFromClusterState("foo", clusterStateBefore));
+        assertThat(e.getMessage(), equalTo("job [foo] does not exist, prelert metadata missing"));
     }
 
     public void testGetJobOrThrowIfUnknown_GivenUnknownJob() {

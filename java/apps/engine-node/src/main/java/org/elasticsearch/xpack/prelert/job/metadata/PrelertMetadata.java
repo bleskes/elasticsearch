@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.metadata;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.cluster.Diff;
 import org.elasticsearch.cluster.DiffableUtils;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -212,7 +213,9 @@ public class PrelertMetadata implements MetaData.Custom {
         }
 
         public Builder removeJob(String jobId) {
-            this.jobs.remove(jobId);
+            if (jobs.remove(jobId) == null) {
+                throw new ResourceNotFoundException("job [" + jobId + "] does not exist");
+            }
             this.allocations.remove(jobId);
             return this;
         }

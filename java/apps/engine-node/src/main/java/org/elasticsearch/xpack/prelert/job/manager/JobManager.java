@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
@@ -285,9 +286,6 @@ public class JobManager {
             // NORELEASE fix this so we don't have to call a method on
             // actionTicket, probably by removing ActionGuardian
             actionTicket.hashCode();
-
-            checkJobHasNoRunningScheduler(jobId);
-
             ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
                 @Override
                 public void onResponse(Boolean aBoolean) {
@@ -342,23 +340,22 @@ public class JobManager {
         }
     }
 
-    private void checkJobHasNoRunningScheduler(String jobId) {
-        Allocation allocation = getAllocation(clusterService.state(), jobId);
-        SchedulerState schedulerState = allocation.getSchedulerState();
-        if (schedulerState != null && schedulerState.getStatus() != JobSchedulerStatus.STOPPED) {
-            throw ExceptionsHelper.conflictStatusException(Messages.getMessage(Messages.JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS, jobId));
-        }
-    }
-
     ClusterState removeJobFromClusterState(String jobId, ClusterState currentState) {
         PrelertMetadata currentPrelertMetadata = currentState.metaData().custom(PrelertMetadata.TYPE);
         if (currentPrelertMetadata == null) {
-            return currentState;
+            throw new ResourceNotFoundException("job [" + jobId + "] does not exist, prelert metadata missing");
+        }
+
+        Allocation allocation = currentPrelertMetadata.getAllocations().get(jobId);
+        if (allocation != null) {
+            SchedulerState schedulerState = allocation.getSchedulerState();
+            if (schedulerState != null && schedulerState.getStatus() != JobSchedulerStatus.STOPPED) {
+                throw ExceptionsHelper.conflictStatusException(Messages.getMessage(Messages.JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS, jobId));
+            }
         }
 
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder(currentPrelertMetadata);
         builder.removeJob(jobId);
-
         ClusterState.Builder newState = ClusterState.builder(currentState);
         newState.metaData(MetaData.builder(currentState.getMetaData()).putCustom(PrelertMetadata.TYPE, builder.build()).build());
         return newState.build();
