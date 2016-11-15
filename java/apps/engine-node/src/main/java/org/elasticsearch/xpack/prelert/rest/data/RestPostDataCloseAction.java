@@ -38,7 +38,7 @@ public class RestPostDataCloseAction extends BaseRestHandler {
             PostDataCloseAction.TransportAction transportPostDataCloseAction) {
         super(settings);
         this.transportPostDataCloseAction = transportPostDataCloseAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "data/{jobId}/close", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "data/{jobId}/_close", this);
     }
 
     @Override

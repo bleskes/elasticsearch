@@ -48,7 +48,7 @@ public class RestStartJobSchedulerAction extends BaseRestHandler {
         super(settings);
         this.transportJobSchedulerAction = transportJobSchedulerAction;
         controller.registerHandler(RestRequest.Method.POST,
-                PrelertPlugin.BASE_PATH + "schedulers/{" + Job.ID.getPreferredName() + "}/start", this);
+                PrelertPlugin.BASE_PATH + "schedulers/{" + Job.ID.getPreferredName() + "}/_start", this);
     }
 
     @Override

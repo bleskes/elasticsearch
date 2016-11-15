@@ -2,8 +2,8 @@
   "xpack.prelert.revert_model_snapshot": {
     "methods": [ "POST" ],
     "url": {
-      "path": "/_xpack/prelert/modelsnapshots/{jobId}/revert",
-      "paths": [ "/_xpack/prelert/modelsnapshots/{jobId}/revert" ],
+      "path": "/_xpack/prelert/modelsnapshots/{jobId}/_revert",
+      "paths": [ "/_xpack/prelert/modelsnapshots/{jobId}/_revert" ],
       "parts": {
         "jobId": {
           "type": "string",

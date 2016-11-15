@@ -45,7 +45,7 @@ public class RestPostDataFlushAction extends BaseRestHandler {
             PostDataFlushAction.TransportAction transportPostDataFlushAction) {
         super(settings);
         this.transportPostDataFlushAction = transportPostDataFlushAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "data/{" + Job.ID.getPreferredName() + "}/flush",
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "data/{" + Job.ID.getPreferredName() + "}/_flush",
                 this);
     }
 

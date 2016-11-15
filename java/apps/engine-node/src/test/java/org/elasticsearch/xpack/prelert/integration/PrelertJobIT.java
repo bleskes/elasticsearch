@@ -218,7 +218,7 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testPauseAndResumeJob() throws Exception {
         createFarequoteJob();
 
-        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/pause");
+        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/_pause");
 
         assertBusy(() -> {
             try {
@@ -230,10 +230,10 @@ public class PrelertJobIT extends ESRestTestCase {
             }
         }, 2, TimeUnit.SECONDS);
 
-        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume");
+        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/_resume");
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/_resume"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(409));
         assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));
@@ -242,10 +242,10 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testPauseJob_GivenJobIsPaused() throws Exception {
         createFarequoteJob();
 
-        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/pause");
+        client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/_pause");
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/pause"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/_pause"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(409));
         assertThat(e.getMessage(), containsString("Cannot pause job 'farequote' while its status is PAUSED"));
@@ -255,7 +255,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob();
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume"));
+                () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/_resume"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(409));
         assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));

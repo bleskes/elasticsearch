@@ -39,7 +39,7 @@ public class RestValidateTransformsAction extends BaseRestHandler {
             ValidateTransformsAction.TransportAction transportValidateAction) {
         super(settings);
         this.transportValidateAction = transportValidateAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "validate/transforms", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "_validate/transforms", this);
     }
 
     @Override

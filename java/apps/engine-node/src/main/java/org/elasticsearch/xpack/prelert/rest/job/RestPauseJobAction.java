@@ -35,7 +35,7 @@ public class RestPauseJobAction extends BaseRestHandler {
     public RestPauseJobAction(Settings settings, RestController controller, PauseJobAction.TransportAction transportPauseJobAction) {
         super(settings);
         this.transportPauseJobAction = transportPauseJobAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}/pause",
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}/_pause",
                 this);
     }
 

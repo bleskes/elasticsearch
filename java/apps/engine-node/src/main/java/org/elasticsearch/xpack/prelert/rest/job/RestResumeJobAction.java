@@ -35,7 +35,7 @@ public class RestResumeJobAction extends BaseRestHandler {
     public RestResumeJobAction(Settings settings, RestController controller, ResumeJobAction.TransportAction transportResumeJobAction) {
         super(settings);
         this.transportResumeJobAction = transportResumeJobAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}/resume",
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}/_resume",
                 this);
     }
 

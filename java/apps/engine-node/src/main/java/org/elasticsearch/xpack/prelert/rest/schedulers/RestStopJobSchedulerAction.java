@@ -38,7 +38,7 @@ public class RestStopJobSchedulerAction extends BaseRestHandler {
             StopJobSchedulerAction.TransportAction transportJobSchedulerAction) {
         super(settings);
         this.transportJobSchedulerAction = transportJobSchedulerAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "schedulers/{jobId}/stop", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "schedulers/{jobId}/_stop", this);
     }
 
     @Override

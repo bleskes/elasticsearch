@@ -2,8 +2,8 @@
   "xpack.prelert.start_job_scheduler": {
     "methods": [ "POST" ],
     "url": {
-      "path": "/_xpack/prelert/schedulers/{job_id}/start",
-      "paths": [ "/_xpack/prelert/schedulers/{job_id}/start" ],
+      "path": "/_xpack/prelert/schedulers/{job_id}/_start",
+      "paths": [ "/_xpack/prelert/schedulers/{job_id}/_start" ],
       "parts": {
         "job_id": {
           "type": "string",

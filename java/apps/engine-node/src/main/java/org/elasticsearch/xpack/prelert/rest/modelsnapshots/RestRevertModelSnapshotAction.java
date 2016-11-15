@@ -46,7 +46,7 @@ public class RestRevertModelSnapshotAction extends BaseRestHandler {
         super(settings);
         this.transportAction = transportAction;
         controller.registerHandler(RestRequest.Method.POST,
-                PrelertPlugin.BASE_PATH + "modelsnapshots/{" + Job.ID.getPreferredName() + "}/revert",
+                PrelertPlugin.BASE_PATH + "modelsnapshots/{" + Job.ID.getPreferredName() + "}/_revert",
                 this);
     }
 
