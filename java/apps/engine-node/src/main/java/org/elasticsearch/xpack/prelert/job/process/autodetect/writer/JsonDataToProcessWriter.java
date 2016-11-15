@@ -128,6 +128,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
         return "";
     }
 
+    // TODO norelease: Feels like this is checked in the wrong place. The fact that there is a different format, should
+    // be specified to this class and this class shouldn't know about the existence of SchedulerConfig
     private JsonRecordReader makeRecordReader(JsonParser parser) {
         List<String> nestingOrder = (schedulerConfig != null) ?
                 schedulerConfig.buildAggregatedFieldList() : Collections.emptyList();
