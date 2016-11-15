@@ -65,7 +65,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testCreateProcessBySubmittingData()  {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
         assertEquals(0, manager.numberOfRunningJobs());
@@ -87,7 +86,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testCloseJob() {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectCommunicatorFactory factory = mockCommunicatorFactory(communicator);
         when(jobManager.getJobOrThrowIfUnknown("foo")).thenReturn(createJobDetails("foo"));
@@ -103,7 +101,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testBucketResetMessageIsSent() throws IOException {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
 
@@ -116,7 +113,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testFlush() throws IOException {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectCommunicatorFactory factory = mockCommunicatorFactory(communicator);
         when(jobManager.getJobOrThrowIfUnknown("foo")).thenReturn(createJobDetails("foo"));
@@ -133,7 +129,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testFlushThrows() throws IOException {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
 
@@ -145,7 +140,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testWriteUpdateConfigMessage() throws IOException {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
         manager.writeUpdateConfigMessage("foo", "go faster");
@@ -153,7 +147,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testJobHasActiveAutodetectProcess() throws IOException {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
         assertFalse(manager.jobHasActiveAutodetectProcess("foo"));
@@ -165,7 +158,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testAddAlertObserver_OnClosedJob() {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManager(communicator);
 
@@ -174,7 +166,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     public void testAddRemoveAlertObserver() {
-
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
 
@@ -227,7 +218,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     private AutodetectProcessManager createManager(AutodetectCommunicator communicator) {
         AutodetectCommunicatorFactory factory = mockCommunicatorFactory(communicator);
         when(jobManager.getJobOrThrowIfUnknown("foo")).thenReturn(createJobDetails("foo"));
-
         return new AutodetectProcessManager(factory, jobManager);
     }
 
@@ -244,16 +234,12 @@ public class AutodetectProcessManagerTests extends ESTestCase {
     }
 
     private AutodetectCommunicatorFactory mockCommunicatorFactory(AutodetectCommunicator instanceReturnedByFactory) {
-
         AutodetectCommunicatorFactory factory = mock(AutodetectCommunicatorFactory.class);
-
         when(factory.create(any(), anyBoolean())).thenReturn(instanceReturnedByFactory);
-
         return factory;
     }
 
     private Job createJobDetails(String jobId) {
-
         DataDescription.Builder dd = new DataDescription.Builder();
         dd.setFormat(DataDescription.DataFormat.DELIMITED);
         dd.setFieldDelimiter(',');
@@ -269,8 +255,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         return builder.build();
     }
 
-    private static InputStream createInputStream(String input)
-    {
+    private static InputStream createInputStream(String input) {
         return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
     }
 }

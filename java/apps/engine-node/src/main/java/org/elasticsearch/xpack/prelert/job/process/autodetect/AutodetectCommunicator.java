@@ -54,14 +54,14 @@ public class AutodetectCommunicator implements Closeable {
     private final StatusReporter statusReporter;
 
 
-    public AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger,
-            JobResultsPersister resultsPersister, StatusReporter statusReporter, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+    public AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger, JobResultsPersister resultsPersister,
+                                  StatusReporter statusReporter, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
         this.statusReporter = statusReporter;
 
         // TODO Port the normalizer from the old project
-        resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.getProcessOutStream(), this.jobLogger,
+        resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.getProcessOutStream(), jobLogger,
                 job.getAnalysisConfig().getUsePerPartitionNormalization(), parseFieldMatcherSupplier);
 
         stateReader = new StateReader(resultsPersister, process.getPersistStream(), this.jobLogger);
@@ -76,8 +76,8 @@ public class AutodetectCommunicator implements Closeable {
         this.autoDetectWriter = createProcessWriter(job, process, statusReporter);
     }
 
-    AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger,
-            StatusReporter statusReporter, ResultsReader resultsReader, StateReader stateReader) {
+    AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger, StatusReporter statusReporter,
+                           ResultsReader resultsReader, StateReader stateReader) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
         this.statusReporter = statusReporter;
@@ -98,11 +98,8 @@ public class AutodetectCommunicator implements Closeable {
                 job.getSchedulerConfig(), new TransformConfigs(job.getTransforms()) , statusReporter, jobLogger);
     }
 
-    public DataCounts writeToJob(InputStream inputStream)
-            throws IOException {
-
+    public DataCounts writeToJob(InputStream inputStream) throws IOException {
         checkProcessIsAlive();
-
         CountingInputStream countingStream = new CountingInputStream(inputStream, statusReporter);
         DataCounts results = autoDetectWriter.write(countingStream);
         autoDetectWriter.flush();

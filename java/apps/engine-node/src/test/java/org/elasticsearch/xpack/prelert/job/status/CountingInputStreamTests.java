@@ -28,7 +28,6 @@ import org.junit.Assert;
 import org.mockito.Mockito;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
 
-
 public class CountingInputStreamTests extends ESTestCase {
 
     public void testRead_OneByteAtATime() throws IOException {

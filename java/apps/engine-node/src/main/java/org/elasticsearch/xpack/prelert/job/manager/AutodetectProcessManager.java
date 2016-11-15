@@ -44,7 +44,6 @@ public class AutodetectProcessManager implements DataProcessor {
     private final JobManager jobManager;
     private final ConcurrentMap<String, AutodetectCommunicator> autoDetectCommunicatorByJob;
 
-
     public AutodetectProcessManager(AutodetectCommunicatorFactory autodetectCommunicatorFactory, JobManager jobManager) {
         this.autodetectCommunicatorFactory = autodetectCommunicatorFactory;
         this.jobManager = jobManager;
@@ -68,19 +67,14 @@ public class AutodetectProcessManager implements DataProcessor {
             if (params.isResettingBuckets()) {
                 communicator.writeResetBucketsControlMessage(params);
             }
-
             return communicator.writeToJob(input);
             // TODO check for errors from autodetect
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             String msg = String.format(Locale.ROOT, "Exception writing to process for job %s", jobId);
-
-            if (e.getCause() instanceof TimeoutException)
-            {
+            if (e.getCause() instanceof TimeoutException) {
                 LOGGER.warn("Connection to process was dropped due to a timeout - if you are feeding this job from a connector it " +
                         "may be that your connector stalled for too long", e.getCause());
             }
-
             throw ExceptionsHelper.serverError(msg);
         }
     }
@@ -93,19 +87,15 @@ public class AutodetectProcessManager implements DataProcessor {
     @Override
     public void flushJob(String jobId, InterimResultsParams params) {
         LOGGER.debug("Flushing job {}", jobId);
-
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
         if (communicator == null) {
             LOGGER.debug("Cannot flush: no active autodetect process for job {}", jobId);
             return;
         }
-
         try {
             communicator.flushJob(params);
             // TODO check for errors from autodetect
-        }
-        catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             String msg = String.format(Locale.ROOT, "Exception flushing process for job %s", jobId);
             LOGGER.warn(msg);
             throw ExceptionsHelper.serverError(msg, ioe);
@@ -113,13 +103,11 @@ public class AutodetectProcessManager implements DataProcessor {
     }
 
     public void writeUpdateConfigMessage(String jobId, String config) throws IOException {
-
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
         if (communicator == null) {
             LOGGER.debug("Cannot update config: no active autodetect process for job {}", jobId);
             return;
         }
-
         communicator.writeUpdateConfigMessage(config);
         // TODO check for errors from autodetect
     }
@@ -137,23 +125,19 @@ public class AutodetectProcessManager implements DataProcessor {
             communicator.close();
             // TODO check for errors from autodetect
             // TODO delete associated files (model config etc)
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOGGER.info("Exception closing stopped process input stream", e);
-        }
-        finally {
+        } finally {
             autoDetectCommunicatorByJob.remove(jobId);
             setJobFinishedTimeAndStatus(jobId, JobStatus.CLOSED);
         }
     }
 
-    public int numberOfRunningJobs()
-    {
+    public int numberOfRunningJobs() {
         return autoDetectCommunicatorByJob.size();
     }
 
-    public boolean jobHasActiveAutodetectProcess(String jobId)
-    {
+    public boolean jobHasActiveAutodetectProcess(String jobId) {
         return autoDetectCommunicatorByJob.get(jobId) != null;
     }
 
@@ -162,7 +146,6 @@ public class AutodetectProcessManager implements DataProcessor {
         if (communicator == null) {
             return Duration.ZERO;
         }
-
         return Duration.between(communicator.getProcessStartTime(), ZonedDateTime.now());
     }
 
