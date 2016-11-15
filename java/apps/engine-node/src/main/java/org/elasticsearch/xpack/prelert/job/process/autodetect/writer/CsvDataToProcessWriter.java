@@ -14,6 +14,16 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
+import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.prefs.CsvPreference;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,19 +33,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import org.apache.logging.log4j.Logger;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
-
-import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
-import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.DataDescription;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 /**
  * A writer for transforming and piping CSV data from an
@@ -162,7 +159,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
                         field, Arrays.toString(header));
 
                 logger.error(msg);
-                throw ExceptionsHelper.parseException(msg, ErrorCodes.MISSING_FIELD);
+                throw new IllegalArgumentException(msg);
             }
         }
 

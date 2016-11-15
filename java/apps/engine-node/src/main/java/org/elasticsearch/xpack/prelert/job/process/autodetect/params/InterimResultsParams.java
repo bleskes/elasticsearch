@@ -14,9 +14,8 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.params;
 
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.util.Objects;
@@ -112,7 +111,7 @@ public class InterimResultsParams {
                 checkFlushParamIsEmpty(TimeRange.END_PARAM, timeRange.getEnd());
             } else if (!isValidTimeRange(timeRange)) {
                 String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_MISSING, "start");
-                throwInvalidFlushParamsException(msg, ErrorCodes.INVALID_FLUSH_PARAMS);
+                throw new IllegalArgumentException(msg);
             }
         }
 
@@ -132,7 +131,7 @@ public class InterimResultsParams {
                 epoch = TimeUtils.dateStringToEpoch(date);
                 if (epoch < 0) {
                     String msg = Messages.getMessage(Messages.REST_INVALID_DATETIME_PARAMS, paramName, date);
-                    throwInvalidFlushParamsException(msg, ErrorCodes.UNPARSEABLE_DATE_ARGUMENT);
+                    throw new ElasticsearchParseException(msg);
                 }
             }
             return epoch;
@@ -141,16 +140,12 @@ public class InterimResultsParams {
         private void checkFlushParamIsEmpty(String paramName, String paramValue) {
             if (!paramValue.isEmpty()) {
                 String msg = Messages.getMessage(Messages.REST_INVALID_FLUSH_PARAMS_UNEXPECTED, paramName);
-                throwInvalidFlushParamsException(msg, ErrorCodes.INVALID_FLUSH_PARAMS);
+                throw new IllegalArgumentException(msg);
             }
         }
 
         private boolean isValidTimeRange(TimeRange timeRange) {
             return !timeRange.getStart().isEmpty() || (timeRange.getStart().isEmpty() && timeRange.getEnd().isEmpty());
-        }
-
-        private void throwInvalidFlushParamsException(String msg, ErrorCodes errorCode) {
-            throw ExceptionsHelper.invalidRequestException(msg, errorCode);
         }
     }
 }

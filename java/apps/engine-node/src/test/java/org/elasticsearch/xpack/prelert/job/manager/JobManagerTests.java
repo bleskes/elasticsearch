@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.Collectors;
 
 import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
@@ -120,7 +121,7 @@ public class JobManagerTests extends ESTestCase {
         Throwable result2 = task_2_result.get();
         assertTrue(result1 == null || result2 == null);
         Throwable exception = result1 != null ? result1 : result2;
-        assertTrue(exception instanceof ElasticsearchStatusException);
+        assertTrue(exception instanceof RejectedExecutionException);
         assertEquals("Cannot delete job foo while another connection is deleting the job", exception.getMessage());
     }
 

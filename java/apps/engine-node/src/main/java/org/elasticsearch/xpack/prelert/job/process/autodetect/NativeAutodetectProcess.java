@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.logging.CppLogMessageHandler;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
@@ -115,7 +114,7 @@ public class NativeAutodetectProcess implements AutodetectProcess {
             }
 
             if (cppLogHandler.seenFatalError()) {
-                throw ExceptionsHelper.serverError(cppLogHandler.getErrors(), ErrorCodes.NATIVE_PROCESS_ERROR);
+                throw ExceptionsHelper.serverError(cppLogHandler.getErrors());
             }
             LOGGER.info("Process exited");
         } catch (InterruptedException e) {

@@ -14,14 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -29,12 +21,18 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DetectionRule extends ToXContentToBytes implements Writeable {
     public static final ParseField DETECTION_RULE_FIELD = new ParseField("detection_rule");
@@ -113,17 +111,17 @@ public class DetectionRule extends ToXContentToBytes implements Writeable {
             List<RuleCondition> ruleConditions) {
         if (targetFieldValue != null && targetFieldName == null) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_MISSING_TARGET_FIELD_NAME, targetFieldValue);
-            throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_MISSING_FIELD);
+            throw new IllegalArgumentException(msg);
         }
         if (ruleConditions == null || ruleConditions.isEmpty()) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_REQUIRES_AT_LEAST_ONE_CONDITION);
-            throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_REQUIRES_ONE_OR_MORE_CONDITIONS);
+            throw new IllegalArgumentException(msg);
         }
         for (RuleCondition condition : ruleConditions) {
             if (condition.getConditionType() == RuleConditionType.CATEGORICAL && targetFieldName != null) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_CONDITION_CATEGORICAL_INVALID_OPTION,
                         DetectionRule.TARGET_FIELD_NAME_FIELD.getPreferredName());
-                throw ExceptionsHelper.parseException(msg, ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION);
+                throw new IllegalArgumentException(msg);
             }
         }
 

@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.rest.schedulers;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
@@ -31,9 +32,7 @@ import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 
@@ -79,7 +78,7 @@ public class RestStartJobSchedulerAction extends BaseRestHandler {
             return DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.parser().parseMillis(date);
         } catch (IllegalArgumentException e) {
             String msg = Messages.getMessage(Messages.REST_INVALID_DATETIME_PARAMS, paramName, date);
-            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.UNPARSEABLE_DATE_ARGUMENT);
+            throw new ElasticsearchParseException(msg, e);
         }
     }
 }

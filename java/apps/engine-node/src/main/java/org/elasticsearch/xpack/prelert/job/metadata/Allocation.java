@@ -26,7 +26,6 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
@@ -180,25 +179,25 @@ public class Allocation extends AbstractDiffable<Allocation> implements ToXConte
             case STARTING:
                 if (currentSchedulerStatus != JobSchedulerStatus.STOPPED) {
                     String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobId, newSchedulerStatus);
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                    throw ExceptionsHelper.conflictStatusException(msg);
                 }
                 break;
             case STARTED:
                 if (currentSchedulerStatus != JobSchedulerStatus.STARTING) {
                     String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_START, jobId, newSchedulerStatus);
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_START_JOB_SCHEDULER);
+                    throw ExceptionsHelper.conflictStatusException(msg);
                 }
                 break;
             case STOPPING:
                 if (currentSchedulerStatus != JobSchedulerStatus.STARTED) {
                     String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, jobId, newSchedulerStatus);
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                    throw ExceptionsHelper.conflictStatusException(msg);
                 }
                 break;
             case STOPPED:
                 if (currentSchedulerStatus != JobSchedulerStatus.STOPPING) {
                     String msg = Messages.getMessage(Messages.JOB_SCHEDULER_CANNOT_STOP_IN_CURRENT_STATE, jobId, newSchedulerStatus);
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.CANNOT_STOP_JOB_SCHEDULER);
+                    throw ExceptionsHelper.conflictStatusException(msg);
                 }
                 break;
             default:

@@ -20,7 +20,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.process.NativeController;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
@@ -118,7 +117,7 @@ public class NativeAutodetectProcessFactory implements AutodetectProcessFactory 
         } catch (IOException e) {
             String msg = "Failed to launch process for job " + job.getId();
             LOGGER.error(msg);
-            throw ExceptionsHelper.serverError(msg, e, ErrorCodes.NATIVE_PROCESS_START_ERROR);
+            throw ExceptionsHelper.serverError(msg, e);
         }
     }
 

@@ -14,8 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-
 /**
  *  Functions for actions
  */
@@ -69,9 +67,4 @@ public interface ActionState<T>
      * Description of the {@code T} type
      */
     String typename();
-
-    /**
-     * The error code associated with the failure to perform the action
-     */
-    ErrorCodes getErrorCode();
 }

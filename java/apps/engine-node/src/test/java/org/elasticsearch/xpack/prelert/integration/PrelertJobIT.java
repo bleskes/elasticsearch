@@ -74,7 +74,6 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [skip] cannot be < 0\""));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"60110"));
     }
 
     public void testGetJobs_GivenNegativeTake() throws Exception {
@@ -83,7 +82,6 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [take] cannot be < 0\""));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"60111"));
     }
 
     public void testGetJobs_GivenSkipAndTakeSumTo10001() throws Exception {
@@ -92,7 +90,6 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"The sum of parameters [skip] and [take] cannot be higher than 10000."));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"60111"));
     }
 
     public void testGetJobs_GivenSingleJob() throws Exception {
@@ -189,7 +186,6 @@ public class PrelertJobIT extends ESRestTestCase {
                 () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '1'"));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
 
         addBucketResult("1", "1234");
         addBucketResult("1", "1235");
@@ -208,12 +204,9 @@ public class PrelertJobIT extends ESRestTestCase {
         e = expectThrows(ResponseException.class, () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/2/bucket/1234"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '2'"));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"20101"));
 
         e = expectThrows(ResponseException.class, () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/bucket/1"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
-        responseAsString = responseEntityToString(e.getResponse());
-        assertThat(responseAsString, equalTo("{\"exists\":false,\"type\":\"bucket\"}"));
 
         response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/bucket/1234");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
@@ -241,9 +234,8 @@ public class PrelertJobIT extends ESRestTestCase {
         ResponseException e = expectThrows(ResponseException.class,
                 () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume"));
 
-        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(409));
         assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"60124"));
     }
 
     public void testPauseJob_GivenJobIsPaused() throws Exception {
@@ -254,9 +246,8 @@ public class PrelertJobIT extends ESRestTestCase {
         ResponseException e = expectThrows(ResponseException.class,
                 () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/pause"));
 
-        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(409));
         assertThat(e.getMessage(), containsString("Cannot pause job 'farequote' while its status is PAUSED"));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"60123"));
     }
 
     public void testResumeJob_GivenJobIsClosed() throws Exception {
@@ -265,9 +256,8 @@ public class PrelertJobIT extends ESRestTestCase {
         ResponseException e = expectThrows(ResponseException.class,
                 () -> client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs/farequote/resume"));
 
-        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
+        assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(409));
         assertThat(e.getMessage(), containsString("Cannot resume job 'farequote' while its status is CLOSED"));
-        assertThat(e.getMessage(), containsString("\"errorCode\":\"60124"));
     }
 
     private Response addBucketResult(String jobId, String timestamp) throws Exception {

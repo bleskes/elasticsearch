@@ -16,30 +16,27 @@ package org.elasticsearch.xpack.prelert.job.manager.actions;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Prevents concurrent actions on a job based on the contents of a local
  * map. If a job currently partaking in an action {@linkplain #tryAcquiringAction(String, Enum)}
  * will throw otherwise an ActionTicket is returned
  */
-public class LocalActionGuardian<T extends Enum<T> & ActionState<T>>
-extends ActionGuardian<T>
-{
+public class LocalActionGuardian<T extends Enum<T> & ActionState<T>> extends ActionGuardian<T> {
+
     private static final Logger LOGGER = Loggers.getLogger(LocalActionGuardian.class);
 
     private final Map<String, T> actionsByJob = new HashMap<>();
 
-    public LocalActionGuardian(T defaultAction)
-    {
+    public LocalActionGuardian(T defaultAction) {
         super(defaultAction);
     }
 
-    public LocalActionGuardian(T defaultAction, ActionGuardian<T> guardian)
-    {
+    public LocalActionGuardian(T defaultAction, ActionGuardian<T> guardian) {
         super(defaultAction, guardian);
     }
 
@@ -47,10 +44,8 @@ extends ActionGuardian<T>
      * Get the action the job is currently processing
      * or NoneAction if the job is not active
      */
-    public T currentAction(String jobId)
-    {
-        synchronized (this)
-        {
+    public T currentAction(String jobId) {
+        synchronized (this) {
             return actionsByJob.getOrDefault(jobId, noneAction);
         }
     }
@@ -65,40 +60,32 @@ extends ActionGuardian<T>
      */
     @Override
     public ActionTicket tryAcquiringAction(String jobId, T action) {
-        synchronized (this)
-        {
+        synchronized (this) {
             T currentAction = actionsByJob.getOrDefault(jobId, noneAction);
 
-            if (currentAction.isValidTransition(action))
-            {
-                if (nextGuardian.isPresent())
-                {
+            if (currentAction.isValidTransition(action)) {
+                if (nextGuardian.isPresent()) {
                     nextGuardian.get().tryAcquiringAction(jobId, action);
                 }
 
                 actionsByJob.put(jobId, action);
 
                 return newActionTicket(jobId, action.nextState(currentAction));
-            }
-            else
-            {
+            } else {
                 String msg = action.getBusyActionError(jobId, currentAction);
                 LOGGER.warn(msg);
-                throw ExceptionsHelper.invalidRequestException(msg, action.getErrorCode());
+                throw new RejectedExecutionException(msg);
             }
         }
     }
 
 
     @Override
-    public void releaseAction(String jobId, T nextState)
-    {
-        synchronized (this)
-        {
+    public void releaseAction(String jobId, T nextState) {
+        synchronized (this) {
             actionsByJob.put(jobId, nextState);
 
-            if (nextGuardian.isPresent())
-            {
+            if (nextGuardian.isPresent()) {
                 nextGuardian.get().releaseAction(jobId, nextState);
             }
         }

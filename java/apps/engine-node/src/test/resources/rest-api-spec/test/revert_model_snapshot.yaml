@@ -90,7 +90,7 @@ setup:
 ---
 "Test revert model with invalid snapshotId":
   - do:
-      catch: request
+      catch: /resource_not_found_exception/
       xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         snapshotId: "not_exist"
@@ -98,7 +98,7 @@ setup:
 ---
 "Test revert model with invalid description":
   - do:
-      catch: request
+      catch: /resource_not_found_exception/
       xpack.prelert.revert_model_snapshot:
         jobId: "foo"
         description: "foo"

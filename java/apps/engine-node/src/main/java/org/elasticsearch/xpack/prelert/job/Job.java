@@ -28,12 +28,10 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 import org.elasticsearch.xpack.prelert.job.transform.verification.TransformConfigsVerifier;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.io.IOException;
@@ -684,9 +682,9 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 long oldMemoryLimit = this.analysisLimits.getModelMemoryLimit();
                 long newMemoryLimit = analysisLimits.getModelMemoryLimit();
                 if (newMemoryLimit < oldMemoryLimit) {
-                    throw ExceptionsHelper.invalidRequestException(
+                    throw new IllegalArgumentException(
                             Messages.getMessage(Messages.JOB_CONFIG_UPDATE_ANALYSIS_LIMITS_MODEL_MEMORY_LIMIT_CANNOT_BE_DECREASED,
-                                    oldMemoryLimit, newMemoryLimit), ErrorCodes.INVALID_VALUE);
+                                    oldMemoryLimit, newMemoryLimit));
                 }
             }
             this.analysisLimits = analysisLimits;
@@ -766,32 +764,27 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
 
         public Job build(boolean fromApi) {
             if (analysisConfig == null) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG),
-                        ErrorCodes.INCOMPLETE_CONFIGURATION);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_MISSING_ANALYSISCONFIG));
             }
 
             if (schedulerConfig != null) {
                 if (analysisConfig.getBucketSpan() == null) {
-                    throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN),
-                            ErrorCodes.SCHEDULER_REQUIRES_BUCKET_SPAN);
+                    throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_REQUIRES_BUCKET_SPAN));
                 }
                 if (schedulerConfig.getDataSource() == SchedulerConfig.DataSource.ELASTICSEARCH) {
                     if (analysisConfig.getLatency() != null && analysisConfig.getLatency() > 0) {
-                        throw ExceptionsHelper.invalidRequestException(
-                                Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY),
-                                ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY);
+                        throw new IllegalArgumentException(
+                                Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY));
                     }
                     if (schedulerConfig.getAggregationsOrAggs() != null
                             && !SchedulerConfig.DOC_COUNT.equals(analysisConfig.getSummaryCountFieldName())) {
-                        throw ExceptionsHelper.invalidRequestException(
+                        throw new IllegalArgumentException(
                                 Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
-                                        SchedulerConfig.DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT),
-                                ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD);
+                                                    SchedulerConfig.DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT));
                     }
                     if (dataDescription == null || dataDescription.getFormat() != DataDescription.DataFormat.ELASTICSEARCH) {
-                        throw ExceptionsHelper.invalidRequestException(
-                                Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH),
-                                ErrorCodes.SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH);
+                        throw new IllegalArgumentException(
+                                Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_ELASTICSEARCH_REQUIRES_DATAFORMAT_ELASTICSEARCH));
                     }
                 }
             }
@@ -804,7 +797,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                             Messages.JOB_CONFIG_DATAFORMAT_REQUIRES_TRANSFORM,
                             DataDescription.DataFormat.SINGLE_LINE);
 
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS);
+                    throw new IllegalArgumentException(msg);
                 }
             }
 
@@ -842,12 +835,10 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 modelSnapshotId = this.modelSnapshotId;
             }
             if (id.length() > MAX_JOB_ID_LENGTH) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH),
-                        ErrorCodes.JOB_ID_TOO_LONG);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_ID_TOO_LONG, MAX_JOB_ID_LENGTH));
             }
             if (!VALID_JOB_ID_CHAR_PATTERN.matcher(id).matches()) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS));
             }
             return new Job(
                     id, description, createTime, finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
@@ -859,8 +850,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
 
         private static void checkValueNotLessThan(long minVal, String name, Long value) {
             if (value != null && value < minVal) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, name, minVal, value), ErrorCodes.INVALID_VALUE);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, name, minVal, value));
             }
         }
 
@@ -887,13 +877,13 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
 
                 if (isSummarised && tc.getOutputs().contains(summaryCountFieldName)) {
                     String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_DUPLICATED_OUTPUT_NAME, tc.type().prettyName());
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME);
+                    throw new IllegalArgumentException(msg);
                 }
 
                 if (!usesAnOutput) {
                     String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUTS_UNUSED,
                             tc.type().prettyName());
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.TRANSFORM_OUTPUTS_UNUSED);
+                    throw new IllegalArgumentException(msg);
                 }
             }
 

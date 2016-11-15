@@ -22,8 +22,6 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -59,16 +57,14 @@ public class PageParams extends ToXContentToBytes implements Writeable {
 
     public PageParams(int skip, int take) {
         if (skip < 0) {
-            throw ExceptionsHelper.invalidRequestException("Parameter [" + SKIP.getPreferredName() + "] cannot be < 0",
-                    ErrorCodes.INVALID_SKIP_PARAM);
+            throw new IllegalArgumentException("Parameter [" + SKIP.getPreferredName() + "] cannot be < 0");
         }
         if (take < 0) {
-            throw ExceptionsHelper.invalidRequestException("Parameter [" + TAKE.getPreferredName() + "] cannot be < 0",
-                    ErrorCodes.INVALID_TAKE_PARAM);
+            throw new IllegalArgumentException("Parameter [" + TAKE.getPreferredName() + "] cannot be < 0");
         }
         if (skip + take > MAX_SKIP_TAKE_SUM) {
-            throw ExceptionsHelper.invalidRequestException("The sum of parameters [" + SKIP.getPreferredName() + "] and ["
-                    + TAKE.getPreferredName() + "] cannot be higher than " + MAX_SKIP_TAKE_SUM + ".", ErrorCodes.INVALID_TAKE_PARAM);
+            throw new IllegalArgumentException("The sum of parameters [" + SKIP.getPreferredName() + "] and ["
+                    + TAKE.getPreferredName() + "] cannot be higher than " + MAX_SKIP_TAKE_SUM + ".");
         }
         this.skip = skip;
         this.take = take;

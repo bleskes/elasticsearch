@@ -14,11 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.condition;
 
-import java.io.IOException;
-import java.util.Objects;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -26,13 +21,15 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
+import java.io.IOException;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * A class that describes a condition.
@@ -80,8 +77,7 @@ public class Condition extends ToXContentToBytes implements Writeable {
 
     public Condition(Operator op, String filterValue) {
         if (filterValue == null) {
-            throw ExceptionsHelper.parseException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NULL),
-                    ErrorCodes.CONDITION_INVALID_ARGUMENT);
+            throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NULL));
         }
 
         if (op.expectsANumericArgument()) {
@@ -89,14 +85,14 @@ public class Condition extends ToXContentToBytes implements Writeable {
                 Double.parseDouble(filterValue);
             } catch (NumberFormatException nfe) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, filterValue);
-                throw ExceptionsHelper.parseException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
+                throw new IllegalArgumentException(msg);
             }
         } else {
             try {
                 Pattern.compile(filterValue);
             } catch (PatternSyntaxException e) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_REGEX, filterValue);
-                throw ExceptionsHelper.parseException(msg, ErrorCodes.CONDITION_INVALID_ARGUMENT);
+                throw new IllegalArgumentException(msg);
             }
         }
         this.op = op;

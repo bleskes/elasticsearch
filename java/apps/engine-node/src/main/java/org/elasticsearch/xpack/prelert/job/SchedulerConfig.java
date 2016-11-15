@@ -26,9 +26,7 @@ import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -714,7 +712,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             if (queryDelay < 0) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
                         SchedulerConfig.QUERY_DELAY.getPreferredName(), queryDelay);
-                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+                throw new IllegalArgumentException(msg);
             }
             this.queryDelay = queryDelay;
         }
@@ -723,7 +721,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             if (frequency <= 0) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
                         SchedulerConfig.FREQUENCY.getPreferredName(), frequency);
-                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+                throw new IllegalArgumentException(msg);
             }
             this.frequency = frequency;
         }
@@ -790,7 +788,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             if (scrollSize < 0) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE,
                         SchedulerConfig.SCROLL_SIZE.getPreferredName(), scrollSize);
-                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+                throw new IllegalArgumentException(msg);
             }
             this.scrollSize = scrollSize;
         }
@@ -923,11 +921,11 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
                 boolean isMultiplePasswordSet = password != null && encryptedPassword != null;
                 if ((username != null && isNoPasswordSet) || (isNoPasswordSet == false && username == null)) {
                     String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS);
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS);
+                    throw new IllegalArgumentException(msg);
                 }
                 if (isMultiplePasswordSet) {
                     String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS);
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS);
+                    throw new IllegalArgumentException(msg);
                 }
                 if (indexes == null || indexes.isEmpty() || indexes.contains(null) || indexes.contains("")) {
                     throw invalidOptionValue(INDEXES.getPreferredName(), indexes);
@@ -937,7 +935,7 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
                 }
                 if (aggregations != null && aggs != null) {
                     String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS);
-                    throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS);
+                    throw new IllegalArgumentException(msg);
                 }
                 if (Boolean.TRUE.equals(retrieveWholeSource)) {
                     if (scriptFields != null) {
@@ -960,12 +958,12 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
 
         private static ElasticsearchException invalidOptionValue(String fieldName, Object value) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, fieldName, value);
-            return ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE);
+            throw new IllegalArgumentException(msg);
         }
 
         private static ElasticsearchException notSupportedValue(ParseField field, DataSource dataSource, String key) {
             String msg = Messages.getMessage(key, field.getPreferredName(), dataSource.toString());
-            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE);
+            throw new IllegalArgumentException(msg);
         }
 
     }

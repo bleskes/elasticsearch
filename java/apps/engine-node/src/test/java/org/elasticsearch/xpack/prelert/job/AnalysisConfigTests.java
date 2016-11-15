@@ -14,8 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -23,7 +21,6 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
@@ -460,9 +457,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
             d = new Detector.Builder("distinct_count", null).build();
             new AnalysisConfig.Builder(Collections.singletonList(d)).build();
             assertTrue(false); // shouldn't get here
-        } catch (ElasticsearchParseException e) {
-            assertEquals(1, e.getHeader("errorCode").size());
-            assertEquals(ErrorCodes.INVALID_FIELD_SELECTION.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertEquals("Unless the function is 'count' one of fieldName, byFieldName or overFieldName must be set", e.getMessage());
         }
 
         // should work now
@@ -483,9 +479,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
             builder.setOverFieldName("over");
             new AnalysisConfig.Builder(Collections.singletonList(builder.build())).build();
             assertTrue(false); // shouldn't get here
-        } catch (ElasticsearchParseException e) {
-            assertEquals(1, e.getHeader("errorCode").size());
-            assertEquals(ErrorCodes.UNKNOWN_FUNCTION.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertEquals("Unknown function 'made_up_function'", e.getMessage());
         }
 
         builder = new Detector.Builder("distinct_count", "somefield");
@@ -494,8 +489,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         try {
             acBuilder.build();
             assertTrue(false); // shouldn't get here
-        } catch (ElasticsearchStatusException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertEquals("batchSpan cannot be less than 0. Value = -1", e.getMessage());
         }
 
         acBuilder.setBatchSpan(10L);
@@ -503,8 +498,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         try {
             acBuilder.build();
             assertTrue(false); // shouldn't get here
-        } catch (ElasticsearchStatusException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertEquals("bucketSpan cannot be less than 0. Value = -1", e.getMessage());
         }
 
         acBuilder.setBucketSpan(3600L);
@@ -512,8 +507,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         try {
             acBuilder.build();
             assertTrue(false); // shouldn't get here
-        } catch (ElasticsearchStatusException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertEquals("period cannot be less than 0. Value = -1", e.getMessage());
         }
 
         acBuilder.setPeriod(1L);
@@ -521,8 +516,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         try {
             acBuilder.build();
             assertTrue(false); // shouldn't get here
-        } catch (ElasticsearchStatusException e) {
-            assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertEquals("latency cannot be less than 0. Value = -1", e.getMessage());
         }
     }
 
@@ -530,10 +525,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         AnalysisConfig.Builder config = createValidConfig();
         config.setBucketSpan(-1L);
 
-        ElasticsearchStatusException e = ESTestCase.expectThrows(
-                ElasticsearchStatusException.class, () -> config.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> config.build());
 
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "bucketSpan", 0, -1), e.getMessage());
     }
 
@@ -541,10 +534,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         AnalysisConfig.Builder analysisConfig = createValidConfig();
         analysisConfig.setBatchSpan(-1L);
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> analysisConfig.build());
 
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "batchSpan", 0, -1), e.getMessage());
     }
 
@@ -553,10 +544,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         AnalysisConfig.Builder analysisConfig = createValidConfig();
         analysisConfig.setLatency(-1L);
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> analysisConfig.build());
 
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "latency", 0, -1), e.getMessage());
     }
 
@@ -565,10 +554,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         AnalysisConfig.Builder analysisConfig = createValidConfig();
         analysisConfig.setPeriod(-1L);
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> analysisConfig.build());
 
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "period", 0, -1), e.getMessage());
     }
 
@@ -577,10 +564,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         AnalysisConfig.Builder analysisConfig = createValidConfig();
         analysisConfig.setDetectors(null);
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> analysisConfig.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> analysisConfig.build());
 
-        assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS), e.getMessage());
     }
 
@@ -676,8 +661,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         builder.setByFieldName("value");
         detectors.add(builder.build());
         analysisConfig.setDetectors(detectors);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, analysisConfig::build);
-        assertEquals(ErrorCodes.INVALID_FUNCTION.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, analysisConfig::build);
+        assertEquals("Overlapping buckets cannot be used with function '[rare]'", e.getMessage());
 
         // Test overlappingBuckets set
         analysisConfig = createValidConfig();
@@ -704,8 +689,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         ac.setDetectors(detectors);
 
         ac.setBucketSpan(4L);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, ac::build);
-        assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, ac::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 10, 4), e.getMessage());
 
         ac.setBucketSpan(5L);
@@ -723,13 +707,11 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         ac.build();
 
         ac.setMultipleBucketSpans(Arrays.asList(222L));
-        e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> ac.build());
-        assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
+        e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> ac.build());
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, 222, 222), e.getMessage());
 
         ac.setMultipleBucketSpans(Arrays.asList(-444L, -888L));
-        e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> ac.build());
-        assertEquals(ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE.getValueString(), e.getHeader("errorCode").get(0));
+        e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> ac.build());
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, -444, 222), e.getMessage());
     }
 
@@ -739,10 +721,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         AnalysisConfig.Builder config = createValidConfig();
         config.setCategorizationFilters(Arrays.asList("foo"));
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> config.build());
 
-        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME), e.getMessage());
     }
 
@@ -753,10 +733,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", "bar", "foo"));
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> config.build());
 
-        assertEquals(ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES), e.getMessage());
     }
 
@@ -767,10 +745,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", ""));
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> config.build());
 
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY), e.getMessage());
     }
 
@@ -780,10 +756,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         AnalysisConfig.Builder config = createValidConfig();
         config.setUsePerPartitionNormalization(true);
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> config.build());
 
-        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD), e.getMessage());
     }
 
@@ -808,10 +782,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         config.setInfluencers(Arrays.asList("inf1", "inf2"));
         config.setUsePerPartitionNormalization(true);
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> config.build());
 
-        assertEquals(ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS), e.getMessage());
     }
 
@@ -822,10 +794,8 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", "("));
 
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> config.build());
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> config.build());
 
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, "("), e.getMessage());
     }
 

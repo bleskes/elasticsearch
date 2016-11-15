@@ -14,18 +14,16 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchParseException;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
-
-import org.apache.logging.log4j.Logger;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 
 abstract class AbstractJsonRecordReader implements JsonRecordReader {
     static final int PARSE_ERRORS_LIMIT = 100;
@@ -114,7 +112,7 @@ abstract class AbstractJsonRecordReader implements JsonRecordReader {
                 ++errorCounter;
                 if (errorCounter >= PARSE_ERRORS_LIMIT) {
                     logger.error("Failed to recover from malformed JSON data.", e);
-                    throw ExceptionsHelper.parseException("The input JSON data is malformed.", ErrorCodes.MALFORMED_JSON);
+                    throw new ElasticsearchParseException("The input JSON data is malformed.");
                 }
             }
         }

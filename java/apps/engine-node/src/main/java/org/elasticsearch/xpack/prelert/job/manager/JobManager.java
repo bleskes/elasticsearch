@@ -39,7 +39,6 @@ import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
@@ -347,8 +346,7 @@ public class JobManager {
         Allocation allocation = getAllocation(clusterService.state(), jobId);
         SchedulerState schedulerState = allocation.getSchedulerState();
         if (schedulerState != null && schedulerState.getStatus() != JobSchedulerStatus.STOPPED) {
-            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS, jobId),
-                    ErrorCodes.CANNOT_DELETE_JOB_SCHEDULER);
+            throw ExceptionsHelper.conflictStatusException(Messages.getMessage(Messages.JOB_CANNOT_DELETE_WHILE_SCHEDULER_RUNS, jobId));
         }
     }
 
@@ -403,8 +401,7 @@ public class JobManager {
 
     private void checkJobIsScheduled(Job job) {
         if (job.getSchedulerConfig() == null) {
-            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB, job.getId()),
-                    ErrorCodes.NO_SUCH_SCHEDULED_JOB);
+            throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_SCHEDULER_NO_SUCH_SCHEDULED_JOB, job.getId()));
         }
     }
 
@@ -534,9 +531,8 @@ public class JobManager {
                         Allocation allocation = getAllocation(currentState, job.getId());
                         checkJobIsNotScheduled(job);
                         if (!allocation.getStatus().isAnyOf(JobStatus.RUNNING, JobStatus.CLOSED)) {
-                            throw ExceptionsHelper.invalidRequestException(
-                                    Messages.getMessage(Messages.JOB_CANNOT_PAUSE, job.getId(), allocation.getStatus()),
-                                    ErrorCodes.CANNOT_PAUSE_JOB);
+                            throw ExceptionsHelper.conflictStatusException(
+                                    Messages.getMessage(Messages.JOB_CANNOT_PAUSE, job.getId(), allocation.getStatus()));
                         }
 
                         ClusterState newState = innerSetJobStatus(job.getId(), JobStatus.PAUSING, currentState);
@@ -555,9 +551,8 @@ public class JobManager {
                 getJobOrThrowIfUnknown(request.getJobId());
                 Allocation allocation = getJobAllocation(request.getJobId());
                 if (allocation.getStatus() != JobStatus.PAUSED) {
-                    throw ExceptionsHelper.invalidRequestException(
-                            Messages.getMessage(Messages.JOB_CANNOT_RESUME, request.getJobId(), allocation.getStatus()),
-                            ErrorCodes.CANNOT_RESUME_JOB);
+                    throw ExceptionsHelper.conflictStatusException(
+                            Messages.getMessage(Messages.JOB_CANNOT_RESUME, request.getJobId(), allocation.getStatus()));
                 }
                 Allocation.Builder builder = new Allocation.Builder(allocation);
                 builder.setStatus(JobStatus.CLOSED);
@@ -595,8 +590,7 @@ public class JobManager {
 
     private void checkJobIsNotScheduled(Job job) {
         if (job.getSchedulerConfig() != null) {
-            throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB),
-                    ErrorCodes.ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB);
+            throw ExceptionsHelper.conflictStatusException(Messages.getMessage(Messages.REST_ACTION_NOT_ALLOWED_FOR_SCHEDULED_JOB));
         }
     }
 }

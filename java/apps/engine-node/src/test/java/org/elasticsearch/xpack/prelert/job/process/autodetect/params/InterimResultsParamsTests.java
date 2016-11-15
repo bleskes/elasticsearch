@@ -14,9 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.params;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 
 public class InterimResultsParamsTests extends ESTestCase {
     public void testBuilder_GivenDefault() {
@@ -49,14 +47,13 @@ public class InterimResultsParamsTests extends ESTestCase {
     }
 
     public void testBuilder_GivenCalcInterimAndEnd_throws() {
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> InterimResultsParams.builder()
                 .calcInterim(true)
                 .forTimeRange(TimeRange.builder().endTime("100").build())
                 .build());
 
         assertEquals("Invalid flush parameters: 'start' has not been specified.", e.getMessage());
-        assertEquals(ErrorCodes.INVALID_FLUSH_PARAMS.getValueString(), e.getHeader("errorCode").get(0));
     }
 
 
@@ -109,27 +106,24 @@ public class InterimResultsParamsTests extends ESTestCase {
     }
 
     public void testValidate_GivenOnlyStartSpecified() {
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> InterimResultsParams.builder().forTimeRange(TimeRange.builder().startTime("1").build()).build());
 
         assertEquals("Invalid flush parameters: unexpected 'start'.", e.getMessage());
-        assertEquals(ErrorCodes.INVALID_FLUSH_PARAMS.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testFlushUpload_GivenOnlyEndSpecified() {
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> InterimResultsParams.builder().forTimeRange(TimeRange.builder().endTime("1").build()).build());
 
         assertEquals("Invalid flush parameters: unexpected 'end'.", e.getMessage());
-        assertEquals(ErrorCodes.INVALID_FLUSH_PARAMS.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testFlushUpload_GivenInterimResultsAndOnlyEndSpecified() {
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> InterimResultsParams.builder().calcInterim(true).forTimeRange(TimeRange.builder().endTime("1").build()).build());
 
         assertEquals("Invalid flush parameters: 'start' has not been specified.", e.getMessage());
-        assertEquals(ErrorCodes.INVALID_FLUSH_PARAMS.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testFlushUpload_GivenInterimResultsAndStartAndEndSpecifiedAsEpochs() {

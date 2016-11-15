@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 
 public class ActionTests extends ESTestCase {
 
@@ -151,20 +150,5 @@ public class ActionTests extends ESTestCase {
 
     public void testStartingState() {
         assertEquals(Action.CLOSED, Action.startingState());
-    }
-
-
-    public void testErrorCode() {
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.CLOSED.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.CLOSING.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.DELETING.getErrorCode());
-        assertEquals(ErrorCodes.CANNOT_PAUSE_JOB, Action.PAUSING.getErrorCode());
-        assertEquals(ErrorCodes.CANNOT_RESUME_JOB, Action.RESUMING.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.REVERTING.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.SLEEPING.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.FLUSHING.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.UPDATING.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.UPDATING.getErrorCode());
-        assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, Action.WRITING.getErrorCode());
     }
 }

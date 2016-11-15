@@ -23,8 +23,9 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.job.JobTests;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,14 +40,17 @@ public class PrelertMetadataTests extends ESTestCase {
     public void testSerialization() throws Exception {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
 
-        // NORELEASE: randomize jobs once it is moved over to ES' xcontent:
-        builder.putJob(buildJobBuilder("job1").build(), false);
-        builder.putJob(buildJobBuilder("job2").build(), false);
-        builder.putJob(buildJobBuilder("job3").build(), false);
+        Job job1 = JobTests.createRandomizedJob();
+        Job job2 = JobTests.createRandomizedJob();
+        Job job3 = JobTests.createRandomizedJob();
 
-        builder.putAllocation("job1", "node1");
-        builder.putAllocation("job2", "node1");
-        builder.putAllocation("job3", "node1");
+        builder.putJob(job1, false);
+        builder.putJob(job2, false);
+        builder.putJob(job3, false);
+
+        builder.putAllocation(job1.getId(), "node1");
+        builder.putAllocation(job2.getId(), "node1");
+        builder.putAllocation(job3.getId(), "node1");
 
         PrelertMetadata expected = builder.build();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -60,14 +64,17 @@ public class PrelertMetadataTests extends ESTestCase {
     public void testFromXContent() throws IOException {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
 
-        // NORELEASE: randomize jobs once it is moved over to ES' xcontent:
-        builder.putJob(buildJobBuilder("job1").build(), false);
-        builder.putJob(buildJobBuilder("job2").build(), false);
-        builder.putJob(buildJobBuilder("job3").build(), false);
+        Job job1 = JobTests.createRandomizedJob();
+        Job job2 = JobTests.createRandomizedJob();
+        Job job3 = JobTests.createRandomizedJob();
 
-        builder.putAllocation("job1", "node1");
-        builder.putAllocation("job2", "node1");
-        builder.putAllocation("job3", "node1");
+        builder.putJob(job1, false);
+        builder.putJob(job2, false);
+        builder.putJob(job3, false);
+
+        builder.putAllocation(job1.getId(), "node1");
+        builder.putAllocation(job2.getId(), "node1");
+        builder.putAllocation(job3.getId(), "node1");
 
         PrelertMetadata expected = builder.build();
 
@@ -91,8 +98,7 @@ public class PrelertMetadataTests extends ESTestCase {
 
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
                 () -> builder.putJob(buildJobBuilder("2").build(), false));
-        assertThat(e.status(), equalTo(RestStatus.BAD_REQUEST));
-        assertThat(e.getHeader("errorCode").get(0), equalTo("10110"));
+        assertEquals("The job cannot be created with the Id '2'. The Id is already used.", e.getMessage());
 
         builder.putJob(buildJobBuilder("2").build(), true);
 

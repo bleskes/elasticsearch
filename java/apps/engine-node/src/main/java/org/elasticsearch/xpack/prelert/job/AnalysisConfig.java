@@ -24,10 +24,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +34,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -588,14 +584,13 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value) {
             if (value != null && value < 0) {
                 String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, fieldName, 0, value);
-                throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.INVALID_VALUE);
+                throw new IllegalArgumentException(msg);
             }
         }
 
         private static void verifyDetectorAreDefined(List<Detector> detectors) {
             if (detectors == null || detectors.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS),
-                        ErrorCodes.INCOMPLETE_CONFIGURATION);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_NO_DETECTORS));
             }
         }
 
@@ -612,34 +607,28 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
 
         private static void verifyCategorizationFieldNameSetIfFiltersAreSet(String categorizationFieldName) {
             if (categorizationFieldName == null) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME),
-                        ErrorCodes.CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME);
+                throw new IllegalArgumentException(Messages.getMessage(
+                        Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME));
             }
         }
 
         private static void verifyCategorizationFiltersAreDistinct(List<String> filters) {
             if (filters.stream().distinct().count() != filters.size()) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES),
-                        ErrorCodes.CATEGORIZATION_FILTERS_CONTAIN_DUPLICATES);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES));
             }
         }
 
         private static void verifyCategorizationFiltersContainNoneEmpty(List<String> filters) {
             if (filters.stream().anyMatch(f -> f.isEmpty())) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY),
-                        ErrorCodes.INVALID_VALUE);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_EMPTY));
             }
         }
 
         private static void verifyCategorizationFiltersAreValidRegex(List<String> filters) {
             for (String filter : filters) {
                 if (!isValidRegex(filter)) {
-                    throw ExceptionsHelper.invalidRequestException(
-                            Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, filter),
-                            ErrorCodes.INVALID_VALUE);
+                    throw new IllegalArgumentException(
+                            Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_INVALID_REGEX, filter));
                 }
             }
         }
@@ -650,15 +639,12 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
             }
 
             if (bucketSpan == null) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN),
-                        ErrorCodes.INCOMPLETE_CONFIGURATION);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_REQUIRE_BUCKETSPAN));
             }
             for (Long span : multipleBucketSpans) {
                 if ((span % bucketSpan != 0L) || (span <= bucketSpan)) {
-                    throw ExceptionsHelper.invalidRequestException(
-                            Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, span, bucketSpan),
-                            ErrorCodes.MULTIPLE_BUCKETSPANS_NOT_MULTIPLE);
+                    throw new IllegalArgumentException(
+                            Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, span, bucketSpan));
                 }
             }
         }
@@ -669,17 +655,14 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
                     return true;
                 }
             }
-
-            throw ExceptionsHelper.invalidRequestException(
-                    Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD),
-                    ErrorCodes.PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD);
+            throw new IllegalArgumentException(Messages.getMessage(
+                    Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD));
         }
 
         private static boolean checkNoInfluencersAreSet(List<String> influencers) {
             if (!influencers.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS),
-                        ErrorCodes.PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS);
+                throw new IllegalArgumentException(Messages.getMessage(
+                        Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS));
             }
 
             return true;
@@ -693,10 +676,8 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
          */
         public static boolean verifyFieldName(String field) throws ElasticsearchParseException {
             if (field != null && containsInvalidChar(field)) {
-                throw ExceptionsHelper.parseException(
-                        Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS, field, Detector.PROHIBITED),
-                        ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME);
-
+                throw new IllegalArgumentException(
+                        Messages.getMessage(Messages.JOB_CONFIG_INVALID_FIELDNAME_CHARS, field, Detector.PROHIBITED));
             }
             return true;
         }
@@ -732,9 +713,8 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
             }
 
             if (Boolean.TRUE.equals(overlappingBuckets) && mustNotUse) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION, illegalFunctions.toString()),
-                        ErrorCodes.INVALID_FUNCTION);
+                throw new IllegalArgumentException(
+                        Messages.getMessage(Messages.JOB_CONFIG_OVERLAPPING_BUCKETS_INCOMPATIBLE_FUNCTION, illegalFunctions.toString()));
             }
 
             return overlappingBuckets;

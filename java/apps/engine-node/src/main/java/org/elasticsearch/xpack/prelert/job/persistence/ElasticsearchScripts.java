@@ -15,14 +15,11 @@
 package org.elasticsearch.xpack.prelert.job.persistence;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.util.HashMap;
@@ -97,21 +94,13 @@ public final class ElasticsearchScripts
      *            the script the performs the update
      * @return {@code} true if successful, {@code} false otherwise
      */
-    public static boolean updateViaScript(Client client, String index, String type, String docId,
-            Script script) {
-        try
-        {
+    public static boolean updateViaScript(Client client, String index, String type, String docId, Script script) {
+        try {
             client.prepareUpdate(index, type, docId)
             .setScript(script)
             .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
-        }
-        catch (IndexNotFoundException e)
-        {
+        } catch (IndexNotFoundException e) {
             throw ExceptionsHelper.missingJobException(index);
-        }
-        catch (IllegalArgumentException e)
-        {
-            handleIllegalArgumentException(e, script);
         }
         return true;
     }
@@ -134,34 +123,16 @@ public final class ElasticsearchScripts
      *            document does not exists
      * @return {@code} true if successful, {@code} false otherwise
      */
-    public static boolean upsertViaScript(Client client, String index, String type, String docId,
-            Script script, Map<String, Object> upsertMap) {
-        try
-        {
+    public static boolean upsertViaScript(Client client, String index, String type, String docId, Script script,
+                                          Map<String, Object> upsertMap) {
+        try {
             client.prepareUpdate(index, type, docId)
             .setScript(script)
             .setUpsert(upsertMap)
             .setRetryOnConflict(UPDATE_JOB_RETRY_COUNT).get();
-        }
-        catch (IndexNotFoundException e)
-        {
+        } catch (IndexNotFoundException e) {
             throw ExceptionsHelper.missingJobException(index);
-        }
-        catch (IllegalArgumentException e)
-        {
-            handleIllegalArgumentException(e, script);
         }
         return true;
     }
-
-    private static void handleIllegalArgumentException(IllegalArgumentException e, Script script)
-    {
-        String msg = Messages.getMessage(Messages.DATASTORE_ERROR_EXECUTING_SCRIPT, script);
-        LOGGER.warn(msg);
-        Throwable th = (e.getCause() == null) ? e : e.getCause();
-        ElasticsearchException exception = new ElasticsearchException(msg, th);
-        exception.addHeader("errorCode", ErrorCodes.DATA_STORE_ERROR.getValueString());
-        throw exception;
-    }
-
 }

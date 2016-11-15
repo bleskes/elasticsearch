@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.logging.Loggers;
@@ -23,7 +22,6 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
@@ -364,16 +362,14 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
 
     public void testCheckValidFile_NoPath() {
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.FILE);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "filePath", "null"), e.getMessage());
     }
 
     public void testCheckValidFile_EmptyPath() {
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.FILE);
         conf.setFilePath("");
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "filePath", ""), e.getMessage());
     }
 
@@ -381,8 +377,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.FILE);
         conf.setFilePath("myfile.csv");
         conf.setBaseUrl("http://localhost:9200/");
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "baseUrl", DataSource.FILE), e.getMessage());
     }
 
@@ -437,8 +432,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setIndexes(Arrays.asList("myindex"));
         conf.setTypes(Arrays.asList("mytype"));
         conf.setPassword("secret");
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_INCOMPLETE_CREDENTIALS.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INCOMPLETE_CREDENTIALS), e.getMessage());
     }
 
@@ -450,8 +444,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setUsername("dave");
         conf.setPassword("secret");
         conf.setEncryptedPassword("already_encrypted");
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_MULTIPLE_PASSWORDS.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_PASSWORDS), e.getMessage());
     }
 
@@ -472,8 +465,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         XContentParser parser = XContentFactory.xContent(json).createParser(json);
         conf.setQuery(parser.map());
         conf.setTailFile(true);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_FIELD_NOT_SUPPORTED, "tailFile", DataSource.ELASTICSEARCH),
                 e.getMessage());
     }
@@ -501,8 +493,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         XContentParser parser = XContentFactory.xContent(json).createParser(json);
         conf.setScriptFields(parser.map());
         conf.setRetrieveWholeSource(true);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_FIELD_NOT_SUPPORTED_FOR_DATASOURCE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
     }
 
     public void testCheckValidElasticsearch_GivenNullIndexes() throws IOException {
@@ -516,8 +507,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(Collections.emptyList());
         conf.setTypes(Arrays.asList("mytype"));
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "[]"), e.getMessage());
     }
 
@@ -529,8 +519,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "[null, null]"), e.getMessage());
     }
 
@@ -542,36 +531,31 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         conf.setBaseUrl("http://localhost:9200/");
         conf.setIndexes(indexes);
         conf.setTypes(Arrays.asList("mytype"));
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "indexes", "[, ]"), e.getMessage());
     }
 
     public void testCheckValidElasticsearch_GivenNegativeQueryDelay() throws IOException {
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> conf.setQueryDelay(-10L));
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> conf.setQueryDelay(-10L));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "queryDelay", -10L), e.getMessage());
     }
 
     public void testCheckValidElasticsearch_GivenZeroFrequency() throws IOException {
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> conf.setFrequency(0L));
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> conf.setFrequency(0L));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "frequency", 0L), e.getMessage());
     }
 
     public void testCheckValidElasticsearch_GivenNegativeFrequency() throws IOException {
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> conf.setFrequency(-600L));
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> conf.setFrequency(-600L));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "frequency", -600L), e.getMessage());
     }
 
     public void testCheckValidElasticsearch_GivenNegativeScrollSize() throws IOException {
         SchedulerConfig.Builder conf = new SchedulerConfig.Builder(DataSource.ELASTICSEARCH);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> conf.setScrollSize(-1000));
-        assertEquals(ErrorCodes.SCHEDULER_INVALID_OPTION_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> conf.setScrollSize(-1000));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_INVALID_OPTION_VALUE, "scrollSize", -1000L), e.getMessage());
     }
 
@@ -584,8 +568,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         Map<String, Object> aggs = new HashMap<>();
         conf.setAggregations(aggs);
         conf.setAggs(aggs);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, conf::build);
-        assertEquals(ErrorCodes.SCHEDULER_MULTIPLE_AGGREGATIONS.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_SCHEDULER_MULTIPLE_AGGREGATIONS), e.getMessage());
     }
 }

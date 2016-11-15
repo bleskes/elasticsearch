@@ -17,10 +17,8 @@ package org.elasticsearch.xpack.prelert.job.data;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,7 +58,7 @@ public class DataStreamer {
                 return new GZIPInputStream(input);
             } catch (ZipException ze) {
                 LOGGER.error("Failed to decompress data file", ze);
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_GZIP_ERROR), ErrorCodes.UNCOMPRESSED_DATA);
+                throw new IllegalArgumentException(Messages.getMessage(Messages.REST_GZIP_ERROR), ze);
             }
         }
         return input;

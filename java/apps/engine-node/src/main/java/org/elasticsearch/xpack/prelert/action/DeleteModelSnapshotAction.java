@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.action;
 
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -35,7 +36,6 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleter;
@@ -159,9 +159,7 @@ public class DeleteModelSnapshotAction extends Action<DeleteModelSnapshotAction.
             }
 
             if (deleteCandidates.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, request.getJobId()),
-                        ErrorCodes.NO_SUCH_MODEL_SNAPSHOT);
+                throw new ResourceNotFoundException(Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, request.getJobId()));
             }
             ModelSnapshot deleteCandidate = deleteCandidates.get(0);
 
@@ -173,10 +171,8 @@ public class DeleteModelSnapshotAction extends Action<DeleteModelSnapshotAction.
             if (job.isPresent()) {
                 String currentModelInUse = job.get().getModelSnapshotId();
                 if (currentModelInUse != null && currentModelInUse.equals(request.getSnapshotId())) {
-                    throw ExceptionsHelper.invalidRequestException(
-                            Messages.getMessage(Messages.REST_CANNOT_DELETE_HIGHEST_PRIORITY,
-                                    request.getSnapshotId(), request.getJobId()),
-                            ErrorCodes.CANNOT_DELETE_HIGHEST_PRIORITY);
+                    throw new IllegalArgumentException(Messages.getMessage(Messages.REST_CANNOT_DELETE_HIGHEST_PRIORITY,
+                            request.getSnapshotId(), request.getJobId()));
                 }
             }
 
@@ -198,8 +194,6 @@ public class DeleteModelSnapshotAction extends Action<DeleteModelSnapshotAction.
 
             jobManager.audit(request.getJobId()).info(Messages.getMessage(Messages.JOB_AUDIT_SNAPSHOT_DELETED,
                     deleteCandidate.getDescription()));
-
         }
     }
-
 }

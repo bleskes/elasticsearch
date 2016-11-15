@@ -14,11 +14,9 @@
  */
 package org.elasticsearch.xpack.prelert.modelsnapshots;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
@@ -31,17 +29,15 @@ import static org.mockito.Mockito.mock;
 public class GetModelSnapshotsTests extends ESTestCase {
 
     public void testModelSnapshots_GivenNegativeSkip() {
-        ElasticsearchException e = expectThrows(ElasticsearchException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new GetModelSnapshotsAction.Request("foo").setPageParams(new PageParams(-5, 10)));
         assertEquals("Parameter [skip] cannot be < 0", e.getMessage());
-        assertEquals(ErrorCodes.INVALID_SKIP_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testModelSnapshots_GivenNegativeTake() {
-        ElasticsearchException e = expectThrows(ElasticsearchException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new GetModelSnapshotsAction.Request("foo").setPageParams(new PageParams(10, -5)));
         assertEquals("Parameter [take] cannot be < 0", e.getMessage());
-        assertEquals(ErrorCodes.INVALID_TAKE_PARAM.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testModelSnapshots_GivenNoStartOrEndParams() {

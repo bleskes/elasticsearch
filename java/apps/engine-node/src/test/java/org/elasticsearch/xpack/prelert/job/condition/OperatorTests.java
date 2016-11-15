@@ -14,18 +14,16 @@
  */
 package org.elasticsearch.xpack.prelert.job.condition;
 
-import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 
 public class OperatorTests extends ESTestCase {
 
@@ -185,10 +183,7 @@ public class OperatorTests extends ESTestCase {
     }
 
     public void testVerify_unknownOp() {
-        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class, () -> Operator.fromString("bad_op"));
-
-        assertEquals(1, e.getHeader("errorCode").size());
-        assertEquals(ErrorCodes.CONDITION_UNKNOWN_OPERATOR.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> Operator.fromString("bad_op"));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, "bad_op"), e.getMessage());
     }
 }

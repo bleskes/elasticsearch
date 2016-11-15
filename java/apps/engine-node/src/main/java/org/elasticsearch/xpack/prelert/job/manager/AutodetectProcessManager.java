@@ -21,7 +21,6 @@ import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicator;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
@@ -82,7 +81,7 @@ public class AutodetectProcessManager implements DataProcessor {
                         "may be that your connector stalled for too long", e.getCause());
             }
 
-            throw ExceptionsHelper.serverError(msg, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+            throw ExceptionsHelper.serverError(msg);
         }
     }
 
@@ -109,7 +108,7 @@ public class AutodetectProcessManager implements DataProcessor {
         {
             String msg = String.format(Locale.ROOT, "Exception flushing process for job %s", jobId);
             LOGGER.warn(msg);
-            throw ExceptionsHelper.serverError(msg, ioe, ErrorCodes.NATIVE_PROCESS_WRITE_ERROR);
+            throw ExceptionsHelper.serverError(msg, ioe);
         }
     }
 
@@ -167,35 +166,27 @@ public class AutodetectProcessManager implements DataProcessor {
         return Duration.between(communicator.getProcessStartTime(), ZonedDateTime.now());
     }
 
-    private void setJobFinishedTimeAndStatus(String jobId, JobStatus status)
-    {
+    private void setJobFinishedTimeAndStatus(String jobId, JobStatus status) {
         // NORELEASE Implement this.
         // Perhaps move the JobStatus and finish time to a separate document stored outside the cluster state
         LOGGER.error("Cannot set finished job status and time- Not Implemented");
     }
 
-    public void addAlertObserver(String jobId, AlertObserver alertObserver)
-    {
+    public void addAlertObserver(String jobId, AlertObserver alertObserver) {
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
-        if (communicator != null)
-        {
+        if (communicator != null) {
             communicator.addAlertObserver(alertObserver);
-        }
-        else
-        {
-            throw ExceptionsHelper.jobClosed(jobId);
+        } else {
+            String message = String.format(Locale.ROOT, "Cannot alert on job '%s' because the job is not running", jobId);
+            throw ExceptionsHelper.conflictStatusException(message);
         }
     }
 
-    public boolean removeAlertObserver(String jobId, AlertObserver alertObserver)
-    {
+    public boolean removeAlertObserver(String jobId, AlertObserver alertObserver) {
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
-        if (communicator != null)
-        {
+        if (communicator != null) {
             return communicator.removeAlertObserver(alertObserver);
         }
-
         return false;
     }
-
 }

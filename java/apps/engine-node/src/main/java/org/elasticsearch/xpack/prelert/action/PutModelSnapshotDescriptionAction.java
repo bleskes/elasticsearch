@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -40,7 +41,6 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -289,7 +289,7 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
         private List<ModelSnapshot> getChangeCandidates(Request request) {
             List<ModelSnapshot> changeCandidates = getModelSnapshots(request.getJobId(), request.getSnapshotId(), null);
             if (changeCandidates == null || changeCandidates.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, ErrorCodes.NO_SUCH_MODEL_SNAPSHOT);
+                throw new ResourceNotFoundException(Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, request.getJobId()));
             }
             return changeCandidates;
         }
@@ -297,7 +297,8 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
         private void checkForClashes(Request request) {
             List<ModelSnapshot> clashCandidates = getModelSnapshots(request.getJobId(), null, request.getDescriptionString());
             if (clashCandidates != null && !clashCandidates.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(Messages.REST_DESCRIPTION_ALREADY_USED, ErrorCodes.DESCRIPTION_ALREADY_USED);
+                throw new IllegalArgumentException(Messages.getMessage(
+                        Messages.REST_DESCRIPTION_ALREADY_USED, request.getDescriptionString(), request.getJobId()));
             }
         }
 

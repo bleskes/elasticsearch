@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -47,7 +48,6 @@ import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
@@ -348,8 +348,7 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
             Optional<Job> job = jobManager.getJob(request.getJobId(), clusterService.state());
             Allocation allocation = jobManager.getJobAllocation(request.getJobId());
             if (job.isPresent() && allocation.getStatus().equals(JobStatus.RUNNING)) {
-                throw ExceptionsHelper.invalidRequestException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT),
-                        ErrorCodes.JOB_NOT_CLOSED);
+                throw ExceptionsHelper.conflictStatusException(Messages.getMessage(Messages.REST_JOB_NOT_CLOSED_REVERT));
             }
 
             ModelSnapshot modelSnapshot = getModelSnapshot(request, jobProvider);
@@ -367,8 +366,7 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
                     ModelSnapshot.TIMESTAMP.getPreferredName(), true, request.getSnapshotId(), request.getDescription()).hits();
 
             if (revertCandidates == null || revertCandidates.isEmpty()) {
-                throw ExceptionsHelper.invalidRequestException(
-                        Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, request.getJobId()), ErrorCodes.NO_SUCH_MODEL_SNAPSHOT);
+                throw new ResourceNotFoundException(Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, request.getJobId()));
             }
             ModelSnapshot modelSnapshot = revertCandidates.get(0);
 

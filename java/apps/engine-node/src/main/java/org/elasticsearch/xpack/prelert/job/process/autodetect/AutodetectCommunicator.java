@@ -19,7 +19,6 @@ import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.ResultsReader;
@@ -150,7 +149,7 @@ public class AutodetectCommunicator implements Closeable {
 
                 String msg = Messages.getMessage(Messages.AUTODETECT_FLUSH_UNEXPTECTED_DEATH) + " " + autodetectProcess.readError();
                 jobLogger.error(msg);
-                throw ExceptionsHelper.serverError(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
+                throw ExceptionsHelper.serverError(msg);
             }
             isFlushComplete = resultsReader.waitForFlushAcknowledgement(flushId, intermittentTimeout);
         }
@@ -158,7 +157,7 @@ public class AutodetectCommunicator implements Closeable {
         if (!isFlushComplete) {
             String msg = Messages.getMessage(Messages.AUTODETECT_FLUSH_TIMEOUT) + " " + autodetectProcess.readError();
             jobLogger.error(msg);
-            throw ExceptionsHelper.serverError(msg, ErrorCodes.NATIVE_PROCESS_ERROR);
+            throw ExceptionsHelper.serverError(msg);
         }
 
         // We also have to wait for the normaliser to become idle so that we block
@@ -173,7 +172,7 @@ public class AutodetectCommunicator implements Closeable {
         if (!autodetectProcess.isProcessAlive()) {
             String errorMsg = "Unexpected death of autodetect: " + autodetectProcess.readError();
             jobLogger.error(errorMsg);
-            throw ExceptionsHelper.serverError(errorMsg, ErrorCodes.NATIVE_PROCESS_ERROR);
+            throw ExceptionsHelper.serverError(errorMsg);
         }
     }
 

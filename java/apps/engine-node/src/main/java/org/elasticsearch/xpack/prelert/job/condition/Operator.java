@@ -14,21 +14,18 @@
  */
 package org.elasticsearch.xpack.prelert.job.condition;
 
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.io.stream.Writeable;
-
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
-import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 /**
  * Enum representing logical comparisons on doubles
@@ -109,10 +106,7 @@ public enum Operator implements Writeable {
                 return type;
             }
         }
-        throw ExceptionsHelper.parseException(
-                Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, name),
-                ErrorCodes.CONDITION_UNKNOWN_OPERATOR
-                );
+        throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, name));
     }
 
     public static Operator readFromStream(StreamInput in) throws IOException {

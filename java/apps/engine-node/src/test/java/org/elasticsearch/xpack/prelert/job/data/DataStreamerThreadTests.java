@@ -16,12 +16,12 @@ package org.elasticsearch.xpack.prelert.job.data;
 
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.mockito.Mockito;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -76,8 +76,7 @@ public class DataStreamerThreadTests extends ESTestCase {
     }
 
     public void testRun_GivenJobException() throws Exception {
-        when(dataStreamer.streamData(CONTENT_ENCODING, JOB_ID, inputStream, params))
-        .thenThrow(ExceptionsHelper.invalidRequestException("job failed", ErrorCodes.JOB_ID_TAKEN));
+        when(dataStreamer.streamData(CONTENT_ENCODING, JOB_ID, inputStream, params)).thenThrow(ExceptionsHelper.serverError("job failed"));
 
         dataStreamerThread.run();
 

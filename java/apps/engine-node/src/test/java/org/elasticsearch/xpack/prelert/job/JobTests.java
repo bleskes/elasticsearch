@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import com.carrotsearch.randomizedtesting.generators.CodepointSetGenerator;
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -24,7 +23,6 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig.DataSource;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformType;
@@ -43,79 +41,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
 
     @Override
     protected Job createTestInstance() {
-        String jobId = randomValidJobId();
-        Job.Builder builder = new Job.Builder(jobId);
-        if (randomBoolean()) {
-            builder.setDescription(randomAsciiOfLength(10));
-        }
-        builder.setCreateTime(new Date(randomPositiveLong()));
-        if (randomBoolean()) {
-            builder.setFinishedTime(new Date(randomPositiveLong()));
-        }
-        if (randomBoolean()) {
-            builder.setLastDataTime(new Date(randomPositiveLong()));
-        }
-        if (randomBoolean()) {
-            builder.setTimeout(randomPositiveLong());
-        }
-        AnalysisConfig.Builder analysisConfig = createAnalysisConfig();
-        analysisConfig.setBucketSpan(100L);
-        builder.setAnalysisConfig(analysisConfig);
-        builder.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
-        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
-        schedulerConfig.setFilePath("/file/path");
-        builder.setSchedulerConfig(schedulerConfig);
-        if (randomBoolean()) {
-            builder.setDataDescription(new DataDescription.Builder());
-        }
-        if (randomBoolean()) {
-            builder.setModelSizeStats(new ModelSizeStats.Builder("foo"));
-        }
-        String[] outputs;
-        TransformType[] transformTypes ;
-        AnalysisConfig ac = analysisConfig.build();
-        if (randomBoolean()) {
-            transformTypes = new TransformType[] {TransformType.TRIM, TransformType.LOWERCASE};
-            outputs = new String[] {ac.getDetectors().get(0).getFieldName(), ac.getDetectors().get(0).getOverFieldName()};
-        } else {
-            transformTypes = new TransformType[] {TransformType.TRIM};
-            outputs = new String[] {ac.getDetectors().get(0).getFieldName()};
-        }
-        List<TransformConfig> transformConfigList = new ArrayList<>(transformTypes.length);
-        for (int i = 0; i < transformTypes.length; i++) {
-            TransformConfig tc = new TransformConfig(transformTypes[i].prettyName());
-            tc.setInputs(Collections.singletonList("input" + i));
-            tc.setOutputs(Collections.singletonList(outputs[i]));
-            transformConfigList.add(tc);
-        }
-        builder.setTransforms(transformConfigList);
-        if (randomBoolean()) {
-            builder.setModelDebugConfig(new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)));
-        }
-        builder.setCounts(new DataCounts(jobId));
-        builder.setIgnoreDowntime(randomFrom(IgnoreDowntime.values()));
-        if (randomBoolean()) {
-            builder.setRenormalizationWindowDays(randomPositiveLong());
-        }
-        if (randomBoolean()) {
-            builder.setBackgroundPersistInterval(randomPositiveLong());
-        }
-        if (randomBoolean()) {
-            builder.setModelSnapshotRetentionDays(randomPositiveLong());
-        }
-        if (randomBoolean()) {
-            builder.setResultsRetentionDays(randomPositiveLong());
-        }
-        if (randomBoolean()) {
-            builder.setCustomSettings(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
-        }
-        if (randomBoolean()) {
-            builder.setAverageBucketProcessingTimeMs(randomDouble());
-        }
-        if (randomBoolean()) {
-            builder.setModelSnapshotId(randomAsciiOfLength(10));
-        }
-        return builder.build();
+        return createRandomizedJob();
     }
 
     @Override
@@ -170,7 +96,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     }
 
     public void testEquals_noId() {
-        expectThrows(ElasticsearchStatusException.class, () -> buildJobBuilder("").build(true));
+        expectThrows(IllegalArgumentException.class, () -> buildJobBuilder("").build(true));
         assertNotNull(buildJobBuilder(null).build(true).getId()); // test auto id generation
     }
 
@@ -254,11 +180,10 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testSetAnalysisLimits() {
         Job.Builder builder = new Job.Builder();
         builder.setAnalysisLimits(new AnalysisLimits(42L, null));
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> builder.setAnalysisLimits(new AnalysisLimits(41L, null)));
         assertEquals("Invalid update value for analysisLimits: modelMemoryLimit cannot be decreased; existing is 42, update had 41",
                 e.getMessage());
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     // JobConfigurationTests:
@@ -317,9 +242,8 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testCheckValidId_IdTooLong()  {
         Job.Builder builder = buildJobBuilder("foo");
         builder.setId("averyveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryverylongid");
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, () -> builder.build());
-        assertEquals(ErrorCodes.JOB_ID_TOO_LONG.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e =
+                ESTestCase.expectThrows(IllegalArgumentException.class, () -> builder.build());
     }
 
     public void testCheckValidId_GivenAllValidChars() {
@@ -334,8 +258,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_INVALID_JOBID_CHARS);
         for (char c : invalidChars.toCharArray()) {
             builder.setId(Character.toString(c));
-            ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
-            assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
+            IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
             assertEquals(errorMessage, e.getMessage());
         }
     }
@@ -343,28 +266,21 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testCheckValidId_ControlChars() {
         Job.Builder builder = buildJobBuilder("foo");
         builder.setId("two\nlines");
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
-
-        assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e =
+                ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
     }
 
     public void jobConfigurationTest() {
         Job.Builder builder = new Job.Builder();
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId("bad id with spaces");
-        e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
+        e = expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId("bad_id_with_UPPERCASE_chars");
-        e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.PROHIBITIED_CHARACTER_IN_JOB_ID.getValueString(), e.getHeader("errorCode").get(0));
+        e = expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId("a very  very very very very very very very very very very very very very very very very very very very long id");
-        e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.JOB_ID_TOO_LONG.getValueString(), e.getHeader("errorCode").get(0));
+        e = expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId(null);
-        e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.INCOMPLETE_CONFIGURATION.getValueString(), e.getHeader("errorCode").equals(0));
+        e = expectThrows(IllegalArgumentException.class, builder::build);
 
         Detector.Builder d = new Detector.Builder("max", "a");
         d.setByFieldName("b");
@@ -372,20 +288,18 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         builder.setAnalysisConfig(ac);
         builder.build();
         builder.setAnalysisLimits(new AnalysisLimits(-1, null));
-        expectThrows(ElasticsearchStatusException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         AnalysisLimits limits = new AnalysisLimits(1000L, 4L);
         builder.setAnalysisLimits(limits);
         builder.build();
         DataDescription.Builder dc = new DataDescription.Builder();
         dc.setTimeFormat("YYY_KKKKajsatp*");
         builder.setDataDescription(dc);
-        e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").equals(0));
+        e = expectThrows(IllegalArgumentException.class, builder::build);
         dc = new DataDescription.Builder();
         builder.setDataDescription(dc);
         builder.setTimeout(-1L);
-        e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").equals(0));
+        e = expectThrows(IllegalArgumentException.class, builder::build);
         builder.setTimeout(300L);
         builder.build();
     }
@@ -395,8 +309,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("dns"));
         builder.setTransforms(Arrays.asList(tc));
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.TRANSFORM_OUTPUTS_UNUSED.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
         Detector.Builder newDetector = new Detector.Builder();
         newDetector.setFunction(Detector.MIN);
         newDetector.setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
@@ -414,8 +327,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         tc.setInputs(Arrays.asList("dns"));
         tc.setOutputs(Arrays.asList("summaryCountField"));
         builder.setTransforms(Arrays.asList(tc));
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.DUPLICATED_TRANSFORM_OUTPUT_NAME.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
     }
 
     public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
@@ -425,8 +337,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         tc.setOutputs(Arrays.asList("summaryCountField"));
         tc.setArguments(Arrays.asList("(.*)"));
         builder.setTransforms(Arrays.asList(tc));
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.TRANSFORM_OUTPUTS_UNUSED.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
     }
 
     public void testCheckTransformOutputIsUsed_transformHasNoOutput() {
@@ -447,8 +358,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
         builder.setDataDescription(dataDescription);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -461,9 +371,8 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
         dataDescription.setFormat(DataDescription.DataFormat.SINGLE_LINE);
         builder.setDataDescription(dataDescription);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
 
-        assertEquals(ErrorCodes.DATA_FORMAT_IS_SINGLE_LINE_BUT_NO_TRANSFORMS.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -486,8 +395,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
                 "renormalizationWindowDays", 0, -1);
         Job.Builder builder = buildJobBuilder("foo");
         builder.setRenormalizationWindowDays(-1L);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -495,19 +403,16 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "modelSnapshotRetentionDays", 0, -1);
         Job.Builder builder = buildJobBuilder("foo");
         builder.setModelSnapshotRetentionDays(-1L);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
 
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
     public void testVerify_GivenLowBackgroundPersistInterval() {
-        String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
-                "backgroundPersistInterval", 3600, 3599);
+        String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, "backgroundPersistInterval", 3600, 3599);
         Job.Builder builder = buildJobBuilder("foo");
         builder.setBackgroundPersistInterval(3599L);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -516,8 +421,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
                 "resultsRetentionDays", 0, -1);
         Job.Builder builder = buildJobBuilder("foo");
         builder.setResultsRetentionDays(-1L);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -530,9 +434,8 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         ac.setBucketSpan(1800L);
         ac.setLatency(3600L);
         builder.setAnalysisConfig(ac);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
 
-        assertEquals(ErrorCodes.SCHEDULER_ELASTICSEARCH_DOES_NOT_SUPPORT_LATENCY.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -578,8 +481,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         builder.build();
     }
 
-    public void testVerify_GivenElasticsearchSchedulerWithAggsAndNoSummaryCountField()
-            throws IOException {
+    public void testVerify_GivenElasticsearchSchedulerWithAggsAndNoSummaryCountField() throws IOException {
         String errorMessage = Messages.getMessage(
                 Messages.JOB_CONFIG_SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD,
                 DataSource.ELASTICSEARCH.toString(), SchedulerConfig.DOC_COUNT);
@@ -592,9 +494,8 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         builder.setAnalysisConfig(ac);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
 
-        assertEquals(ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -612,8 +513,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         ac.setBucketSpan(1800L);
         ac.setSummaryCountFieldName("wrong");
         builder.setAnalysisConfig(ac);
-        ElasticsearchStatusException e = ESTestCase.expectThrows(ElasticsearchStatusException.class, builder::build);
-        assertEquals(ErrorCodes.SCHEDULER_AGGREGATIONS_REQUIRES_SUMMARY_COUNT_FIELD.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
         assertEquals(errorMessage, e.getMessage());
     }
 
@@ -678,5 +578,81 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         Detector.Builder d2 = new Detector.Builder("min", "field");
         AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Arrays.asList(d1.build(), d2.build()));
         return ac;
+    }
+
+    public static Job createRandomizedJob() {
+        String jobId = randomValidJobId();
+        Job.Builder builder = new Job.Builder(jobId);
+        if (randomBoolean()) {
+            builder.setDescription(randomAsciiOfLength(10));
+        }
+        builder.setCreateTime(new Date(randomPositiveLong()));
+        if (randomBoolean()) {
+            builder.setFinishedTime(new Date(randomPositiveLong()));
+        }
+        if (randomBoolean()) {
+            builder.setLastDataTime(new Date(randomPositiveLong()));
+        }
+        if (randomBoolean()) {
+            builder.setTimeout(randomPositiveLong());
+        }
+        AnalysisConfig.Builder analysisConfig = createAnalysisConfig();
+        analysisConfig.setBucketSpan(100L);
+        builder.setAnalysisConfig(analysisConfig);
+        builder.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(SchedulerConfig.DataSource.FILE);
+        schedulerConfig.setFilePath("/file/path");
+        builder.setSchedulerConfig(schedulerConfig);
+        if (randomBoolean()) {
+            builder.setDataDescription(new DataDescription.Builder());
+        }
+        if (randomBoolean()) {
+            builder.setModelSizeStats(new ModelSizeStats.Builder("foo"));
+        }
+        String[] outputs;
+        TransformType[] transformTypes ;
+        AnalysisConfig ac = analysisConfig.build();
+        if (randomBoolean()) {
+            transformTypes = new TransformType[] {TransformType.TRIM, TransformType.LOWERCASE};
+            outputs = new String[] {ac.getDetectors().get(0).getFieldName(), ac.getDetectors().get(0).getOverFieldName()};
+        } else {
+            transformTypes = new TransformType[] {TransformType.TRIM};
+            outputs = new String[] {ac.getDetectors().get(0).getFieldName()};
+        }
+        List<TransformConfig> transformConfigList = new ArrayList<>(transformTypes.length);
+        for (int i = 0; i < transformTypes.length; i++) {
+            TransformConfig tc = new TransformConfig(transformTypes[i].prettyName());
+            tc.setInputs(Collections.singletonList("input" + i));
+            tc.setOutputs(Collections.singletonList(outputs[i]));
+            transformConfigList.add(tc);
+        }
+        builder.setTransforms(transformConfigList);
+        if (randomBoolean()) {
+            builder.setModelDebugConfig(new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)));
+        }
+        builder.setCounts(new DataCounts(jobId));
+        builder.setIgnoreDowntime(randomFrom(IgnoreDowntime.values()));
+        if (randomBoolean()) {
+            builder.setRenormalizationWindowDays(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            builder.setBackgroundPersistInterval(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            builder.setModelSnapshotRetentionDays(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            builder.setResultsRetentionDays(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            builder.setCustomSettings(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
+        }
+        if (randomBoolean()) {
+            builder.setAverageBucketProcessingTimeMs(randomDouble());
+        }
+        if (randomBoolean()) {
+            builder.setModelSnapshotId(randomAsciiOfLength(10));
+        }
+        return builder.build();
     }
 }

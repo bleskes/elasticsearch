@@ -14,13 +14,11 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelDebugConfig.DebugDestination;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
@@ -51,20 +49,12 @@ public class ModelDebugConfigTests extends AbstractSerializingTestCase<ModelDebu
     }
 
     public void testVerify_GivenBoundPercentileLessThanZero() {
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class,
-                        () -> new ModelDebugConfig(-1.0, ""));
-
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> new ModelDebugConfig(-1.0, ""));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE, ""), e.getMessage());
     }
 
     public void testVerify_GivenBoundPercentileGreaterThan100() {
-        ElasticsearchStatusException e =
-                ESTestCase.expectThrows(ElasticsearchStatusException.class,
-                        () -> new ModelDebugConfig(100.1, ""));
-
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, () -> new ModelDebugConfig(100.1, ""));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE, ""), e.getMessage());
     }
 

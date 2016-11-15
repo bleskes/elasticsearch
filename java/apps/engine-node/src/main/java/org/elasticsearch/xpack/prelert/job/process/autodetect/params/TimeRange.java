@@ -14,10 +14,9 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.params;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
 
 import java.util.Objects;
@@ -101,7 +100,7 @@ public class TimeRange {
                 }
                 if (epochEnd < epochStart) {
                     String msg = Messages.getMessage(Messages.REST_START_AFTER_END, end, start);
-                    throwInvalidFlushParamsException(msg, ErrorCodes.END_DATE_BEFORE_START_DATE);
+                    throw new IllegalArgumentException(msg);
                 }
             } else {
                 if (!end.isEmpty()) {
@@ -123,15 +122,11 @@ public class TimeRange {
                 epoch = TimeUtils.dateStringToEpoch(date);
                 if (epoch < 0) {
                     String msg = Messages.getMessage(Messages.REST_INVALID_DATETIME_PARAMS, paramName, date);
-                    throwInvalidFlushParamsException(msg, ErrorCodes.UNPARSEABLE_DATE_ARGUMENT);
+                    throw new ElasticsearchParseException(msg);
                 }
             }
 
             return epoch;
-        }
-
-        private void throwInvalidFlushParamsException(String msg, ErrorCodes errorCode) {
-            throw ExceptionsHelper.invalidRequestException(msg, errorCode);
         }
     }
 }

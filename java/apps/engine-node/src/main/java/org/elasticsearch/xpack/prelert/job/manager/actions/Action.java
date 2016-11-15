@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.util.HashSet;
@@ -26,12 +25,12 @@ import java.util.Set;
 public enum Action implements ActionState<Action>
 {
     CLOSED("", Messages.PROCESS_ACTION_CLOSED_JOB),
-    SLEEPING("", Messages.PROCESS_ACTION_SLEEPING_JOB, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, true),
+    SLEEPING("", Messages.PROCESS_ACTION_SLEEPING_JOB, true),
     CLOSING(Messages.JOB_DATA_CONCURRENT_USE_CLOSE, Messages.PROCESS_ACTION_CLOSING_JOB),
     DELETING(Messages.JOB_DATA_CONCURRENT_USE_DELETE, Messages.PROCESS_ACTION_DELETING_JOB),
     FLUSHING(Messages.JOB_DATA_CONCURRENT_USE_FLUSH, Messages.PROCESS_ACTION_FLUSHING_JOB),
-    PAUSING(Messages.JOB_DATA_CONCURRENT_USE_PAUSE, Messages.PROCESS_ACTION_PAUSING_JOB, ErrorCodes.CANNOT_PAUSE_JOB),
-    RESUMING(Messages.JOB_DATA_CONCURRENT_USE_RESUME, Messages.PROCESS_ACTION_RESUMING_JOB, ErrorCodes.CANNOT_RESUME_JOB),
+    PAUSING(Messages.JOB_DATA_CONCURRENT_USE_PAUSE, Messages.PROCESS_ACTION_PAUSING_JOB),
+    RESUMING(Messages.JOB_DATA_CONCURRENT_USE_RESUME, Messages.PROCESS_ACTION_RESUMING_JOB),
     REVERTING(Messages.JOB_DATA_CONCURRENT_USE_REVERT, Messages.PROCESS_ACTION_REVERTING_JOB),
     UPDATING(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, Messages.PROCESS_ACTION_UPDATING_JOB),
     WRITING(Messages.JOB_DATA_CONCURRENT_USE_UPLOAD, Messages.PROCESS_ACTION_WRITING_JOB);
@@ -39,7 +38,6 @@ public enum Action implements ActionState<Action>
     private final String messageKey;
     private final String verbKey;
     private final boolean keepDistributedLock;
-    private final ErrorCodes errorCode;
 
     /**
      * The set of valid transitions from SLEEPING
@@ -66,20 +64,14 @@ public enum Action implements ActionState<Action>
 
     private Action(String messageKey, String verbKey)
     {
-        this(messageKey, verbKey, ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR, false);
+        this(messageKey, verbKey, false);
     }
 
-    private Action(String messageKey, String verbKey, ErrorCodes errorCode)
-    {
-        this(messageKey, verbKey, errorCode, false);
-    }
-
-    private Action(String messageKey, String verbKey, ErrorCodes errorCode, boolean keepDistributedLock)
+    private Action(String messageKey, String verbKey, boolean keepDistributedLock)
     {
         this.messageKey = messageKey;
         this.verbKey = verbKey;
         this.keepDistributedLock = keepDistributedLock;
-        this.errorCode = errorCode;
     }
 
     @Override
@@ -109,12 +101,6 @@ public enum Action implements ActionState<Action>
                 jobId,
                 Messages.getMessage(actionInUse.getActionVerb()),
                 Messages.getMessage(Messages.ON_HOST, host + " "));
-    }
-
-    @Override
-    public ErrorCodes getErrorCode()
-    {
-        return errorCode;
     }
 
     /**

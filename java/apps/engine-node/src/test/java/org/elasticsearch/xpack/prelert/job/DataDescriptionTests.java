@@ -22,12 +22,11 @@ import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.instanceOf;;
+import static org.hamcrest.Matchers.instanceOf;
 
 public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescription> {
 
@@ -44,18 +43,15 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
         DataDescription.Builder description = new DataDescription.Builder();
         expectThrows(IllegalArgumentException.class, () -> description.setTimeFormat(null));
 
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat("invalid"));
-        assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").get(0));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> description.setTimeFormat("invalid"));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, "invalid"), e.getMessage());
 
-        e = expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat(""));
-        assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").get(0));
+        e = expectThrows(IllegalArgumentException.class, () -> description.setTimeFormat(""));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, ""), e.getMessage());
 
-        e = expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat("y-M-dd"));
-        assertEquals(ErrorCodes.INVALID_DATE_FORMAT.getValueString(), e.getHeader("errorCode").get(0));
+        e = expectThrows(IllegalArgumentException.class, () -> description.setTimeFormat("y-M-dd"));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, "y-M-dd"), e.getMessage());
-        expectThrows(ElasticsearchStatusException.class, () -> description.setTimeFormat("YYY-mm-UU hh:mm:ssY"));
+        expectThrows(IllegalArgumentException.class, () -> description.setTimeFormat("YYY-mm-UU hh:mm:ssY"));
     }
 
     public void testTransform_GivenDelimitedAndEpoch() {

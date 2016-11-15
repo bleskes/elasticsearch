@@ -14,11 +14,9 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
@@ -112,12 +110,10 @@ public class AnalysisLimitsTests extends AbstractSerializingTestCase<AnalysisLim
     }
 
     public void testVerify_GivenNegativeCategorizationExamplesLimit() {
-        ElasticsearchStatusException e =
-                expectThrows(ElasticsearchStatusException.class, () -> new AnalysisLimits(1L, -1L));
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> new AnalysisLimits(1L, -1L));
         String errorMessage = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW,
                 AnalysisLimits.CATEGORIZATION_EXAMPLES_LIMIT, 0, -1L);
         assertEquals(errorMessage, e.getMessage());
-        assertEquals(ErrorCodes.INVALID_VALUE.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenValid() {

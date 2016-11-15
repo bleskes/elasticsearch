@@ -14,8 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -26,7 +24,6 @@ import org.elasticsearch.xpack.prelert.job.detectionrules.Connective;
 import org.elasticsearch.xpack.prelert.job.detectionrules.DetectionRule;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleCondition;
 import org.elasticsearch.xpack.prelert.job.detectionrules.RuleConditionType;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 import org.junit.Assert;
@@ -233,55 +230,49 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
     private static void verifyFieldName(Detector.Builder detector, String character, boolean valid) {
         Detector.Builder updated = createDetectorWithSpecificFieldName(detector.build().getFieldName() + character);
         if (valid == false) {
-            expectElasticsearchParseException(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, updated::build);
+            expectThrows(IllegalArgumentException.class , () -> updated.build());
         }
     }
 
     private static void verifyByFieldName(Detector.Builder detector, String character, boolean valid) {
         detector.setByFieldName(detector.build().getByFieldName() + character);
         if (valid == false) {
-            expectElasticsearchParseException(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, detector::build);
+            expectThrows(IllegalArgumentException.class , () -> detector.build());
         }
     }
 
     private static void verifyOverFieldName(Detector.Builder detector, String character, boolean valid) {
         detector.setOverFieldName(detector.build().getOverFieldName() + character);
         if (valid == false) {
-            expectElasticsearchParseException(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, detector::build);
+            expectThrows(IllegalArgumentException.class , () -> detector.build());
         }
     }
 
     private static void verifyPartitionFieldName(Detector.Builder detector, String character, boolean valid) {
         detector.setPartitionFieldName(detector.build().getPartitionFieldName() + character);
         if (valid == false) {
-            expectElasticsearchParseException(ErrorCodes.PROHIBITIED_CHARACTER_IN_FIELD_NAME, detector::build);
+            expectThrows(IllegalArgumentException.class , () -> detector.build());
         }
     }
 
     private static void verifyFieldNameGivenPresummarised(Detector.Builder detector, String character, boolean valid) {
         Detector.Builder updated = createDetectorWithSpecificFieldName(detector.build().getFieldName() + character);
-        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> updated.build(true));
+        expectThrows(IllegalArgumentException.class , () -> updated.build(true));
     }
 
     private static void verifyByFieldNameGivenPresummarised(Detector.Builder detector, String character, boolean valid) {
         detector.setByFieldName(detector.build().getByFieldName() + character);
-        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> detector.build(true));
+        expectThrows(IllegalArgumentException.class , () -> detector.build(true));
     }
 
     private static void verifyOverFieldNameGivenPresummarised(Detector.Builder detector, String character, boolean valid) {
         detector.setOverFieldName(detector.build().getOverFieldName() + character);
-        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> detector.build(true));
+        expectThrows(IllegalArgumentException.class , () -> detector.build(true));
     }
 
     private static void verifyPartitionFieldNameGivenPresummarised(Detector.Builder detector, String character, boolean valid) {
         detector.setPartitionFieldName(detector.build().getPartitionFieldName() + character);
-        expectElasticsearchParseException(ErrorCodes.INVALID_FUNCTION, () -> detector.build(true));
-    }
-
-    private static void expectElasticsearchParseException(ErrorCodes errorCode, LuceneTestCase.ThrowingRunnable runner) {
-        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class, runner);
-        assertEquals(1, e.getHeader("errorCode").size());
-        assertEquals(errorCode.getValueString(), e.getHeader("errorCode").get(0));
+        expectThrows(IllegalArgumentException.class , () -> detector.build(true));
     }
 
     private static Detector.Builder createDetectorWithValidFieldNames() {
@@ -339,13 +330,13 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         for (String f : difference) {
             try {
                 new Detector.Builder(f, null).build();
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
             try {
                 new Detector.Builder(f, null).build(true);
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
         }
 
@@ -358,13 +349,13 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
             builder.setOverFieldName("over");
             try {
                 builder.build();
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
             try {
                 builder.build(true);
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
         }
 
@@ -380,13 +371,13 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
             builder.setOverFieldName("over");
             try {
                 builder.build();
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
             try {
                 builder.build(true);
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
         }
 
@@ -423,7 +414,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
             try {
                 builder.build(true);
                 Assert.assertFalse(Detector.METRIC.equals(f));
-            } catch (ElasticsearchParseException e) {
+            } catch (IllegalArgumentException e) {
                 // "metric" is not allowed as the function for pre-summarised input
                 Assert.assertEquals(Detector.METRIC, f);
             }
@@ -465,13 +456,13 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
             builder.setOverFieldName("over");
             try {
                 builder.build();
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
             try {
                 builder.build(true);
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
         }
 
@@ -512,7 +503,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
             try {
                 builder.build(true);
                 Assert.assertFalse(Detector.METRIC.equals(f));
-            } catch (ElasticsearchParseException e) {
+            } catch (IllegalArgumentException e) {
                 // "metric" is not allowed as the function for pre-summarised input
                 Assert.assertEquals(Detector.METRIC, f);
             }
@@ -528,15 +519,15 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
                 builder = new Detector.Builder(f, "field");
                 builder.setByFieldName("b");
                 builder.build();
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
             try {
                 builder = new Detector.Builder(f, "field");
                 builder.setByFieldName("b");
                 builder.build(true);
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
         }
 
@@ -549,15 +540,15 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
                 builder = new Detector.Builder(f, "field");
                 builder.setByFieldName("b");
                 builder.build();
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
             try {
                 builder = new Detector.Builder(f, "field");
                 builder.setByFieldName("b");
                 builder.build(true);
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
         }
 
@@ -566,13 +557,13 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         builder.setOverFieldName("over");
         try {
             builder.build();
-            Assert.fail("ElasticsearchParseException not thrown when expected");
-        } catch (ElasticsearchParseException e) {
+            Assert.fail("IllegalArgumentException not thrown when expected");
+        } catch (IllegalArgumentException e) {
         }
         try {
             builder.build(true);
-            Assert.fail("ElasticsearchParseException not thrown when expected");
-        } catch (ElasticsearchParseException e) {
+            Assert.fail("IllegalArgumentException not thrown when expected");
+        } catch (IllegalArgumentException e) {
         }
 
 
@@ -607,22 +598,21 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
                 builder.setByFieldName("by");
                 builder.setOverFieldName("over");
                 builder.build();
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
             try {
                 builder = new Detector.Builder(f, "field");
                 builder.setByFieldName("by");
                 builder.setOverFieldName("over");
                 builder.build(true);
-                Assert.fail("ElasticsearchParseException not thrown when expected");
-            } catch (ElasticsearchParseException e) {
+                Assert.fail("IllegalArgumentException not thrown when expected");
+            } catch (IllegalArgumentException e) {
             }
         }
     }
 
-    public void testVerify_GivenInvalidDetectionRuleTargetFieldName()
-            throws ElasticsearchParseException {
+    public void testVerify_GivenInvalidDetectionRuleTargetFieldName() {
         Detector.Builder detector = new Detector.Builder("mean", "metricVale");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");
@@ -631,16 +621,14 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         DetectionRule rule = new DetectionRule("instancE", null, Connective.OR, Arrays.asList(ruleCondition));
         detector.setDetectorRules(Arrays.asList(rule));
 
-        ElasticsearchParseException e = ESTestCase.expectThrows(ElasticsearchParseException.class, detector::build);
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, detector::build);
 
-        assertEquals(1, e.getHeader("errorCode").size());
-        assertEquals(ErrorCodes.DETECTOR_RULE_INVALID_TARGET_FIELD.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_DETECTION_RULE_INVALID_TARGET_FIELD_NAME,
                 "[metricName, instance]", "instancE"),
                 e.getMessage());
     }
 
-    public void testVerify_GivenValidDetectionRule() throws ElasticsearchParseException {
+    public void testVerify_GivenValidDetectionRule() {
         Detector.Builder detector = new Detector.Builder("mean", "metricVale");
         detector.setByFieldName("metricName");
         detector.setPartitionFieldName("instance");

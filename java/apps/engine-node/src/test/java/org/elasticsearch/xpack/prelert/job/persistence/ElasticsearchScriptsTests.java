@@ -14,11 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.IndexNotFoundException;
@@ -29,6 +24,10 @@ import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.Matchers.containsString;
 
@@ -124,7 +123,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         Map<String, Object> map = new HashMap<>();
         map.put("testKey", "testValue");
 
-        IllegalArgumentException ex = new IllegalArgumentException("IAE");
+        IllegalArgumentException ex = new IllegalArgumentException();
 
         Script script = new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, "test-script-here", map);
         ArgumentCaptor<Script> captor = ArgumentCaptor.forClass(Script.class);
@@ -132,12 +131,7 @@ public class ElasticsearchScriptsTests extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder("cluster").prepareUpdateScript(index, type, docId, captor, mapCaptor, ex);
         Client client = clientBuilder.build();
 
-        try {
-            ElasticsearchScripts.updateViaScript(client, index, type, docId, script);
-        } catch (ElasticsearchException e) {
-            String msg = e.toString();
-            assertTrue(msg.matches(".*inline.*test-script-here.*params.*testKey.*testValue.*"));
-        }
+        expectThrows(IllegalArgumentException.class, () -> ElasticsearchScripts.updateViaScript(client, index, type, docId, script));
     }
 
 }

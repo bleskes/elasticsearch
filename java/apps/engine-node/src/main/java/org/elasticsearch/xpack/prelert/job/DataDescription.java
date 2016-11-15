@@ -14,10 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Objects;
-
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
@@ -25,13 +21,16 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
+import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.prelert.utils.time.DateTimeFormatterTimestampConverter;
+
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Describes the format of the data used in the job and how it should
@@ -345,8 +344,7 @@ public class DataDescription extends ToXContentToBytes implements Writeable {
                     try {
                         DateTimeFormatterTimestampConverter.ofPattern(format);
                     } catch (IllegalArgumentException e) {
-                        String message = Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, format);
-                        throw ExceptionsHelper.invalidRequestException(message,  ErrorCodes.INVALID_DATE_FORMAT, e);
+                        throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_INVALID_TIMEFORMAT, format));
                     }
             }
             timeFormat = format;

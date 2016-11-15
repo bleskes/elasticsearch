@@ -14,10 +14,8 @@
  */
 package org.elasticsearch.xpack.prelert.job.data;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -65,8 +63,8 @@ public class DataStreamerTests extends ESTestCase {
         try {
             dataStreamer.streamData("gzip", "foo", inputStream, params);
             fail("content encoding : gzip with uncompressed data should throw");
-        } catch (ElasticsearchStatusException e) {
-            assertEquals(ErrorCodes.UNCOMPRESSED_DATA.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertEquals("Content-Encoding = gzip but the data is not in gzip format", e.getMessage());
         }
     }
 

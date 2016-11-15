@@ -49,7 +49,6 @@ public class ScheduledJobIT extends ESRestTestCase {
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         String responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, containsString("\"reason\":\"There is no job 'non-scheduled' with a scheduler configured\""));
-        assertThat(responseAsString, containsString("\"errorCode\":\"60116"));
     }
 
     public void testStartJobScheduler_GivenInvalidStartParam() throws Exception {
@@ -61,7 +60,6 @@ public class ScheduledJobIT extends ESRestTestCase {
         String responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, containsString(
                 "\"reason\":\"Query param 'start' with value 'not-a-date' cannot be parsed as a date or converted to a number (epoch).\""));
-        assertThat(responseAsString, containsString("\"errorCode\":\"60101"));
     }
 
     public void testStartJobScheduler_GivenInvalidEndParam() throws Exception {
@@ -73,7 +71,6 @@ public class ScheduledJobIT extends ESRestTestCase {
         String responseAsString = responseEntityToString(e.getResponse());
         assertThat(responseAsString, containsString(
                 "\"reason\":\"Query param 'end' with value 'not-a-date' cannot be parsed as a date or converted to a number (epoch).\""));
-        assertThat(responseAsString, containsString("\"errorCode\":\"60101"));
     }
 
     @AwaitsFix(bugUrl = "The lookback is sometimes too quick and then we fail to see that the scheduler_state to see is STARTED. " +

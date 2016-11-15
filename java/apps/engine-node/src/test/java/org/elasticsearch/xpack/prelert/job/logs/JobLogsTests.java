@@ -14,13 +14,12 @@
  */
 package org.elasticsearch.xpack.prelert.job.logs;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.io.PathUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.hamcrest.core.StringStartsWith;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -39,8 +38,8 @@ public class JobLogsTests extends ESTestCase {
             JobLogs jobLogs = new JobLogs(settings);
             jobLogs.deleteLogs(env, pathOutsideLogsDir.toString());
             fail();
-        } catch (ElasticsearchException e) {
-            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH.getValueString(), e.getHeader("errorCode").get(0));
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), StringStartsWith.startsWith("Invalid log file path."));
         }
     }
 
@@ -52,11 +51,8 @@ public class JobLogsTests extends ESTestCase {
             Path rootDir = PathUtils.getDefaultFileSystem().getPath("/opt", "prelert");
             new JobLogs(settings).sanitizePath(filePath, rootDir);
             fail();
-        } catch (ElasticsearchException e) {
-            assertEquals(ErrorCodes.INVALID_LOG_FILE_PATH.getValueString(), e.getHeader("errorCode").get(0));
-            assertEquals(
-                    Messages.getMessage(Messages.LOGFILE_INVALID_PATH, filePath),
-                    e.getMessage());
+        } catch (IllegalArgumentException e) {
+            assertEquals(Messages.getMessage(Messages.LOGFILE_INVALID_PATH, filePath), e.getMessage());
         }
     }
 

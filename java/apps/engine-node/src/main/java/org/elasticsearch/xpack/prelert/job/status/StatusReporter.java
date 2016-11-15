@@ -14,12 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.status;
 
-import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
@@ -27,7 +22,10 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
+import java.util.Date;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -36,8 +34,6 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
  * to update the records counts if {@linkplain #isReportingBoundary(long)}
  * returns true then the count will be logged and the counts persisted
  * via the {@linkplain JobDataCountsPersister}.
- * If there is a high proportion of errors the
- * {@linkplain StatusReporter#checkStatus(long)} method throws an exception.
  */
 public class StatusReporter {
     /**
@@ -133,13 +129,6 @@ public class StatusReporter {
             logStatus(totalRecords);
 
             dataCountsPersister.persistDataCounts(jobId, runningTotalStats());
-            try {
-                checkStatus(totalRecords);
-            } catch (ElasticsearchException e) {
-                // report usage and re-throw
-                usageReporter.reportUsage();
-                throw e;
-            }
         }
     }
 
@@ -295,14 +284,7 @@ public class StatusReporter {
      */
     public void finishReporting() {
         usageReporter.reportUsage();
-
-        long totalRecords = getInputRecordCount();
         dataCountsPersister.persistDataCounts(jobId, runningTotalStats());
-
-        if (totalRecords > 0) // because of a divide by zero error
-        {
-            checkStatus(totalRecords);
-        }
     }
 
     /**
@@ -368,25 +350,6 @@ public class StatusReporter {
 
         return false;
     }
-
-    /**
-     * Throws an exception if too high a proportion of the records contains
-     * errors (bad dates, out of order). See
-     * {@linkplain #ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_SETTING} and
-     * {@linkplain #ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_SETTING}
-     */
-    protected void checkStatus(long totalRecords) {
-        long percentBadDate = (getDateParseErrorsCount() * 100) / totalRecords;
-        if (percentBadDate > getAcceptablePercentDateParseErrors()) {
-            throw ExceptionsHelper.highProportionOfBadTimestamps(getDateParseErrorsCount(), totalRecords);
-        }
-
-        long percentOutOfOrder = (getOutOfOrderRecordCount() * 100) / totalRecords;
-        if (percentOutOfOrder > getAcceptablePercentOutOfOrderErrors()) {
-            throw ExceptionsHelper.outOfOrderRecords(getOutOfOrderRecordCount(), totalRecords);
-        }
-    }
-
 
     public void startNewIncrementalCount() {
         incrementalRecordStats = new DataCounts(jobId);

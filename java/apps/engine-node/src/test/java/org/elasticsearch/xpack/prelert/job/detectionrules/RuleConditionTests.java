@@ -14,13 +14,11 @@
  */
 package org.elasticsearch.xpack.prelert.job.detectionrules;
 
-import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.condition.Condition;
 import org.elasticsearch.xpack.prelert.job.condition.Operator;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
@@ -124,104 +122,90 @@ public class RuleConditionTests extends AbstractSerializingTestCase<RuleConditio
 
     public void testVerify_GivenCategoricalWithCondition() {
         Condition condition = new Condition(Operator.MATCH, "text");
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.CATEGORICAL, null, null, condition, null));
         assertEquals("Invalid detector rule: a categorical ruleCondition does not support condition", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenCategoricalWithFieldValue() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.CATEGORICAL, "metric", "CPU", null, null));
         assertEquals("Invalid detector rule: a categorical ruleCondition does not support fieldValue", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenCategoricalWithoutValueList() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.CATEGORICAL, null, null, null, null));
         assertEquals("Invalid detector rule: a categorical ruleCondition requires valueList to be set", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalActualWithValueList() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, null, "myList"));
         assertEquals("Invalid detector rule: a numerical ruleCondition does not support valueList", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalActualWithoutCondition() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, null, null));
         assertEquals("Invalid detector rule: a numerical ruleCondition requires condition to be set", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalActualWithFieldNameButNoFieldValue() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metric", null, new Condition(Operator.LT, "5"), null));
         assertEquals("Invalid detector rule: a numerical ruleCondition with fieldName requires that fieldValue is set", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalTypicalWithValueList() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, null, "myList"));
         assertEquals("Invalid detector rule: a numerical ruleCondition does not support valueList", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalTypicalWithoutCondition() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, null, null));
         assertEquals("Invalid detector rule: a numerical ruleCondition requires condition to be set", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalDiffAbsWithValueList() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_DIFF_ABS, null, null, null, "myList"));
         assertEquals("Invalid detector rule: a numerical ruleCondition does not support valueList", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_INVALID_OPTION.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalDiffAbsWithoutCondition() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_DIFF_ABS, null, null, null, null));
         assertEquals("Invalid detector rule: a numerical ruleCondition requires condition to be set", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenFieldValueWithoutFieldName() {
         Condition condition = new Condition(Operator.LTE, "5");
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_DIFF_ABS, null, "foo", condition, null));
         assertEquals("Invalid detector rule: missing fieldName in ruleCondition where fieldValue 'foo' is set", e.getMessage());
-        assertEquals(ErrorCodes.DETECTOR_RULE_CONDITION_MISSING_FIELD.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalAndOperatorEquals() {
         Condition condition = new Condition(Operator.EQ, "5");
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, condition, null));
         assertEquals("Invalid detector rule: operator 'EQ' is not allowed", e.getMessage());
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenNumericalAndOperatorMatch() {
         Condition condition = new Condition(Operator.MATCH, "aaa");
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, condition, null));
         assertEquals("Invalid detector rule: operator 'MATCH' is not allowed", e.getMessage());
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
     }
 
     public void testVerify_GivenDetectionRuleWithInvalidCondition() {
-        ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "metricName", "CPU", new Condition(Operator.LT, "invalid"),
                         null));
-        assertEquals(ErrorCodes.CONDITION_INVALID_ARGUMENT.getValueString(), e.getHeader("errorCode").get(0));
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_INVALID_VALUE_NUMBER, "invalid"), e.getMessage());
     }
 

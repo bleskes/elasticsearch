@@ -23,9 +23,7 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser.ValueType;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
-import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -108,9 +106,8 @@ public class ModelDebugConfig extends ToXContentToBytes implements Writeable {
 
     public ModelDebugConfig(DebugDestination writeTo, double boundsPercentile, String terms) {
         if (boundsPercentile < 0.0 || boundsPercentile > MAX_PERCENTILE) {
-            String msg = Messages.getMessage(
-                    Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE);
-            throw ExceptionsHelper.invalidRequestException(msg, ErrorCodes.INVALID_VALUE);
+            String msg = Messages.getMessage(Messages.JOB_CONFIG_MODEL_DEBUG_CONFIG_INVALID_BOUNDS_PERCENTILE);
+            throw new IllegalArgumentException(msg);
         }
         this.writeTo = writeTo;
         this.boundsPercentile = boundsPercentile;

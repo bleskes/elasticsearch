@@ -14,10 +14,10 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager.actions;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.errorcodes.ErrorCodes;
 import org.mockito.Mockito;
+
+import java.util.concurrent.RejectedExecutionException;
 
 public class LocalActionGuardianTests extends ESTestCase {
 
@@ -38,9 +38,8 @@ public class LocalActionGuardianTests extends ESTestCase {
             try (ActionGuardian<Action>.ActionTicket writing = actionGuardian.tryAcquiringAction("foo", Action.WRITING)) {
                 fail();
                 writing.hashCode();
-            } catch (ElasticsearchStatusException e) {
+            } catch (RejectedExecutionException e) {
                 assertEquals("Cannot write to job foo while another connection is deleting the job", e.getMessage());
-                assertEquals(ErrorCodes.NATIVE_PROCESS_CONCURRENT_USE_ERROR.getValueString(), e.getHeader("errorCode").get(0));
             }
             assertEquals(Action.DELETING, actionGuardian.currentAction("foo"));
             deleting.hashCode();
