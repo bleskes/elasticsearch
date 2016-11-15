@@ -33,7 +33,6 @@ import org.elasticsearch.transport.TcpTransportChannel;
 import org.elasticsearch.transport.TransportChannel;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.security.action.SecurityActionMapper;
-import org.elasticsearch.xpack.security.authc.Authentication;
 import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authc.pki.PkiRealm;
 import org.elasticsearch.xpack.security.authz.AuthorizationService;
@@ -128,13 +127,15 @@ public interface ServerTransportFilter {
                     }
                 }
             }
-            final Authentication authentication = authcService.authenticate(securityAction, request, null);
-            final AuthorizationUtils.AsyncAuthorizer asyncAuthorizer = new AuthorizationUtils.AsyncAuthorizer(authentication, listener,
-                (userRoles, runAsRoles) -> {
-                    authzService.authorize(authentication, securityAction, request, userRoles, runAsRoles);
-                    listener.onResponse(null);
-                });
-            asyncAuthorizer.authorize(authzService);
+
+            authcService.authenticate(securityAction, request, null, ActionListener.wrap((authentication) -> {
+                    final AuthorizationUtils.AsyncAuthorizer asyncAuthorizer =
+                            new AuthorizationUtils.AsyncAuthorizer(authentication, listener, (userRoles, runAsRoles) -> {
+                                authzService.authorize(authentication, securityAction, request, userRoles, runAsRoles);
+                                listener.onResponse(null);
+                            });
+                    asyncAuthorizer.authorize(authzService);
+                }, listener::onFailure));
         }
 
         private void extactClientCertificates(SSLEngine sslEngine, Object channel) {

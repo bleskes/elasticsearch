@@ -213,7 +213,6 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
                 }
             };
             try (ThreadContext.StoredContext ctx = threadContext.newStoredContext()) {
-
                 if (licenseState.isAuthAllowed()) {
                     String profile = channel.getProfileName();
                     ServerTransportFilter filter = profileFilters.get(profile);

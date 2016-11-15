@@ -104,7 +104,12 @@ public class SecurityActionFilterTests extends ESTestCase {
         Task task = mock(Task.class);
         User user = new User("username", "r1", "r2");
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[3];
+            callback.onResponse(authentication);
+            return Void.TYPE;
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
         doAnswer((i) -> {
             ActionListener callback =
                     (ActionListener) i.getArguments()[1];
@@ -127,7 +132,12 @@ public class SecurityActionFilterTests extends ESTestCase {
         Task task = mock(Task.class);
         User user = new User("username", "r1", "r2");
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
-        when(authcService.authenticate(action, request, SystemUser.INSTANCE)).thenReturn(authentication);
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[3];
+            callback.onResponse(authentication);
+            return Void.TYPE;
+        }).when(authcService).authenticate(eq(action), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
         doAnswer((i) -> {
             ActionListener callback =
                     (ActionListener) i.getArguments()[1];
@@ -152,7 +162,12 @@ public class SecurityActionFilterTests extends ESTestCase {
         Task task = mock(Task.class);
         User user = new User("username", "r1", "r2");
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[3];
+            callback.onResponse(authentication);
+            return Void.TYPE;
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
         doAnswer((i) -> {
             ActionListener callback =
                     (ActionListener) i.getArguments()[1];
@@ -173,7 +188,12 @@ public class SecurityActionFilterTests extends ESTestCase {
         User user = mock(User.class);
         Task task = mock(Task.class);
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[3];
+            callback.onResponse(authentication);
+            return Void.TYPE;
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
         when(cryptoService.isSigned("signed_scroll_id")).thenReturn(true);
         when(cryptoService.unsignAndVerify("signed_scroll_id")).thenReturn("scroll_id");
         doAnswer((i) -> {
@@ -197,7 +217,12 @@ public class SecurityActionFilterTests extends ESTestCase {
         User user = mock(User.class);
         Task task = mock(Task.class);
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
-        when(authcService.authenticate("_action", request, SystemUser.INSTANCE)).thenReturn(authentication);
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[3];
+            callback.onResponse(authentication);
+            return Void.TYPE;
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
         when(cryptoService.isSigned("scroll_id")).thenReturn(true);
         doThrow(sigException).when(cryptoService).unsignAndVerify("scroll_id");
         doAnswer((i) -> {
