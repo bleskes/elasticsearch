@@ -29,7 +29,7 @@ import java.util.Locale;
 /**
  *
  */
-public class XPackInfoRequest extends ActionRequest<XPackInfoRequest> {
+public class XPackInfoRequest extends ActionRequest {
 
     public enum Category {
         BUILD, LICENSE, FEATURES;
