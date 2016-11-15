@@ -1,6 +1,6 @@
 {
   "xpack.prelert.put_job": {
-    "methods": [ "POST" ],
+    "methods": [ "PUT" ],
     "url": {
       "path": "/_xpack/prelert/jobs",
       "paths": [ "/_xpack/prelert/jobs" ],

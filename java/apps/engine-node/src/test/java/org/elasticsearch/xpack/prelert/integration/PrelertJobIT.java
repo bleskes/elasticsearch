@@ -175,7 +175,7 @@ public class PrelertJobIT extends ESRestTestCase {
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
                 + "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"\n" + "    }\n" + "}";
 
-        return client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
+        return client().performRequest("put", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
     }
 
     public void testGetBucketResults() throws Exception {

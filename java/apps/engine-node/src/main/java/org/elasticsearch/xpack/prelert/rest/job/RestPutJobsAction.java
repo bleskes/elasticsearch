@@ -36,7 +36,7 @@ public class RestPutJobsAction extends BaseRestHandler {
     public RestPutJobsAction(Settings settings, RestController controller, PutJobAction.TransportAction transportPutJobAction) {
         super(settings);
         this.transportPutJobAction = transportPutJobAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "jobs", this);
+        controller.registerHandler(RestRequest.Method.PUT, PrelertPlugin.BASE_PATH + "jobs", this);
     }
 
     @Override

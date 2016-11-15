@@ -150,7 +150,7 @@ public class ScheduledJobIT extends ESRestTestCase {
                 + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
                 + "        \"timeFormat\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" + "    }\n" + "}";
 
-        return client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
+        return client().performRequest("put", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
     }
 
     private Response createScheduledJob() throws Exception {
@@ -164,7 +164,7 @@ public class ScheduledJobIT extends ESRestTestCase {
                 + "        \"baseUrl\":\"" + httpHost.toURI() + "\",\n" + "        \"indexes\":[\"airline-data\"],\n"
                 + "        \"types\":[\"response\"],\n" + "        \"retrieveWholeSource\":true\n" + "    }\n" + "}";
 
-        return client().performRequest("post", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
+        return client().performRequest("put", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
     }
 
     private static String responseEntityToString(Response response) throws Exception {
