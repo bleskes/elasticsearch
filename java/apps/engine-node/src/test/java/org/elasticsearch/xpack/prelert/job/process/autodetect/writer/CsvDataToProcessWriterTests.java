@@ -34,6 +34,7 @@ import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.junit.Before;
 import org.mockito.Mockito;
@@ -262,6 +263,21 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         verify(statusReporter, times(1)).reportRecordWritten(2, 4000);
         verify(statusReporter, times(1)).reportDateParseError(2);
         verify(statusReporter).finishReporting();
+    }
+
+    public void testWrite_EmpytInput() throws IOException {
+        AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
+        builder.setLatency(0L);
+        analysisConfig = builder.build();
+
+        when(statusReporter.incrementalStats()).thenReturn(new DataCounts("foo"));
+
+        InputStream inputStream = createInputStream("");
+        CsvDataToProcessWriter writer = createWriter();
+
+        DataCounts counts = writer.write(inputStream);
+        assertEquals(0L, counts.getInputBytes());
+        assertEquals(0L, counts.getInputRecordCount());
     }
 
     public void testWrite_GivenDateTimeFieldIsOutputOfTransform()

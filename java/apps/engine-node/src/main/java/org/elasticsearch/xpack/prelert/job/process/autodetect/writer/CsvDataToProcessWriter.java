@@ -84,7 +84,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
             String[] header = csvReader.getHeader(true);
             if (header == null) // null if EoF
             {
-                statusReporter.incrementalStats();
+                return statusReporter.incrementalStats();
             }
 
             long inputFieldCount = Math.max(header.length - 1, 0); // time field doesn't count
