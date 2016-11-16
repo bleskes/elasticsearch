@@ -82,7 +82,7 @@ import static org.hamcrest.Matchers.hasSize;
  *  <li>This document in {@code index3}: {@code {"title": "bwc_test_user should not see this index"}}</li>
  * </ul>
  **/
-public class OldSecurityIndexBackwardsCompatibilityIT extends AbstractOldXPackIndicesBackwardsCompatibilityTestCase {
+public class OldSecurityIndexBackwardsCompatibilityTests extends AbstractOldXPackIndicesBackwardsCompatibilityTestCase {
     @Override
     protected boolean shouldTestVersion(Version version) {
         return version.onOrAfter(Version.V_2_3_0); // native realm only supported from 2.3.0 on
