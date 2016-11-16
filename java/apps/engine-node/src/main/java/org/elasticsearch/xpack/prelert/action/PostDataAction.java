@@ -125,7 +125,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         }
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest {
 
         public static final ParseField IGNORE_DOWNTIME = new ParseField("ignoreDowntime");
         public static final ParseField RESET_START = new ParseField("resetStart");

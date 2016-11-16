@@ -71,7 +71,7 @@ extends Action<ValidateTransformsAction.Request, ValidateTransformsAction.Respon
 
     }
 
-    public static class Request extends ActionRequest<Request> implements ToXContent {
+    public static class Request extends ActionRequest implements ToXContent {
 
         public static final ParseField TRANSFORMS = new ParseField("transforms");
 

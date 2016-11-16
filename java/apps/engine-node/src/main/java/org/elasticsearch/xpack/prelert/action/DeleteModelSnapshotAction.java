@@ -68,7 +68,7 @@ public class DeleteModelSnapshotAction extends Action<DeleteModelSnapshotAction.
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest {
 
         private String jobId;
         private String snapshotId;

@@ -68,7 +68,7 @@ extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetI
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> implements ToXContent {
+    public static class Request extends ActionRequest implements ToXContent {
 
         public static final ParseField START = new ParseField("start");
         public static final ParseField END = new ParseField("end");

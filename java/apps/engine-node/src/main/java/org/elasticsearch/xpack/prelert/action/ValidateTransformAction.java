@@ -69,7 +69,7 @@ extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response
 
     }
 
-    public static class Request extends ActionRequest<Request> implements ToXContent {
+    public static class Request extends ActionRequest implements ToXContent {
 
         private TransformConfig transform;
 

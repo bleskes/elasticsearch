@@ -56,7 +56,7 @@ PostDataCloseAction.RequestBuilder> {
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest {
 
         private String jobId;
 

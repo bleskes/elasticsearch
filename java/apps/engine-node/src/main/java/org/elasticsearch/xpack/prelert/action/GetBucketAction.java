@@ -69,7 +69,7 @@ public class GetBucketAction extends Action<GetBucketAction.Request, GetBucketAc
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> implements ToXContent {
+    public static class Request extends ActionRequest implements ToXContent {
 
         public static final ParseField EXPAND = new ParseField("expand");
         public static final ParseField INCLUDE_INTERIM = new ParseField("includeInterim");

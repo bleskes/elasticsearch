@@ -61,7 +61,7 @@ Action<GetCategoryDefinitionsAction.Request, GetCategoryDefinitionsAction.Respon
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest {
 
         private String jobId;
         private PageParams pageParams = new PageParams(0, 100);

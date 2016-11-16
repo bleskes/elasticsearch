@@ -245,7 +245,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
     }
 
     @Override
-    public List<ActionHandler<? extends ActionRequest<?>, ? extends ActionResponse>> getActions() {
+    public List<ActionHandler<? extends ActionRequest, ? extends ActionResponse>> getActions() {
         return Arrays.asList(
                 new ActionHandler<>(GetJobAction.INSTANCE, GetJobAction.TransportAction.class),
                 new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),

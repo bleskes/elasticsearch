@@ -68,7 +68,7 @@ extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, 
 
     }
 
-    public static class Request extends ActionRequest<Request> implements ToXContent {
+    public static class Request extends ActionRequest implements ToXContent {
 
         private Detector detector;
 

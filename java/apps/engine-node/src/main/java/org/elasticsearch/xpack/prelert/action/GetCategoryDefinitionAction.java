@@ -63,7 +63,7 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> {
+    public static class Request extends ActionRequest {
 
         private String jobId;
         private String categoryId;

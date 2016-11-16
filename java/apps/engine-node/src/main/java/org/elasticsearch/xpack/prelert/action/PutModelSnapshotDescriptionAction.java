@@ -71,7 +71,7 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> implements ToXContent {
+    public static class Request extends ActionRequest implements ToXContent {
 
         private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
 

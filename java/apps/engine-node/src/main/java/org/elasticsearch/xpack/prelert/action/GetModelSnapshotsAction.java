@@ -70,7 +70,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         return new Response();
     }
 
-    public static class Request extends ActionRequest<Request> implements ToXContent {
+    public static class Request extends ActionRequest implements ToXContent {
 
         public static final ParseField SORT = new ParseField("sort");
         public static final ParseField DESCRIPTION = new ParseField("description");
