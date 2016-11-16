@@ -333,9 +333,6 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     public boolean commitWrites()
     {
         String indexName = getJobIndexName(jobId);
-        // Flush should empty the translog into Lucene
-        LOGGER.trace("ES API CALL: flush index " + indexName);
-        client.admin().indices().flush(new FlushRequest(indexName)).actionGet();
         // Refresh should wait for Lucene to make the data searchable
         LOGGER.trace("ES API CALL: refresh index " + indexName);
         client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
