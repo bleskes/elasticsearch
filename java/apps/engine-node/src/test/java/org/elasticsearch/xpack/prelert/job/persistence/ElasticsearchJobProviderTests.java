@@ -404,7 +404,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
         recordMap1.put("bucketSpan", 22);
-        recordMap1.put("_parent", "father");
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("jobId", "foo");
         recordMap2.put("typical", 1122.4);
@@ -412,7 +411,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
         recordMap2.put("bucketSpan", 22);
-        recordMap2.put("_parent", "father");
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -456,7 +454,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
         recordMap1.put("bucketSpan", 22);
-        recordMap1.put("_parent", "father");
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("jobId", "foo");
         recordMap2.put("typical", 1122.4);
@@ -464,7 +461,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
         recordMap2.put("bucketSpan", 22);
-        recordMap2.put("_parent", "father");
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -515,7 +511,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
         recordMap1.put("bucketSpan", 22);
-        recordMap1.put("_parent", "father");
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("jobId", "foo");
         recordMap2.put("typical", 1122.4);
@@ -523,7 +518,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
         recordMap2.put("bucketSpan", 22);
-        recordMap2.put("_parent", "father");
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -566,7 +560,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
             recordMap.put("timestamp", now.getTime());
             recordMap.put("function", "irritable");
             recordMap.put("bucketSpan", 22);
-            recordMap.put("_parent", "father");
             source.add(recordMap);
         }
 
@@ -599,7 +592,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
             recordMap.put("timestamp", now.getTime());
             recordMap.put("function", "irritable");
             recordMap.put("bucketSpan", 22);
-            recordMap.put("_parent", "father");
             source.add(recordMap);
         }
 
@@ -1034,7 +1026,6 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
             SearchHit hit = mock(SearchHit.class);
             // remove the _parent from the field we use for _source
             Map<String, Object> _source = new HashMap<>(map);
-            _source.remove("_parent");
             when(hit.getSourceRef()).thenReturn(XContentFactory.jsonBuilder().map(_source).bytes());
             when(hit.getId()).thenReturn(String.valueOf(map.hashCode()));
             doAnswer(invocation -> {

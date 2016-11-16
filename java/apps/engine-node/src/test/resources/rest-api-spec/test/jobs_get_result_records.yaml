@@ -4,15 +4,11 @@ setup:
         index:  prelertresults-farequote
         body:
           mappings:
-            bucket:
-              properties:
-                "timestamp":
-                  type: date
-            record:
-              _parent:
-                type: "bucket"
+            results:
               properties:
                 "jobId":
+                  type: keyword
+                "result_type":
                   type: keyword
                 "timestamp":
                   type: date
@@ -34,17 +30,9 @@ setup:
   - do:
       index:
         index:  prelertresults-farequote
-        type:   bucket
-        id:     1
-        body:   { "jobId": "farequote", timestamp": "2016-06-01T00:00:00Z" }
-
-  - do:
-      index:
-        index:  prelertresults-farequote
-        type:   record
+        type:   results
         id:     2
-        parent: 1
-        body:   { "jobId": "farequote", "timestamp": "2016-06-01T00:00:00Z" }
+        body:   { "jobId": "farequote", "timestamp": "2016-06-01T00:00:00Z", "result_type": "record" }
 
   - do:
       indices.refresh:
@@ -61,3 +49,4 @@ setup:
   - match: { hitCount: 1 }
   - match: { hits.0.timestamp: 1464739200000 }
   - match: { hits.0.jobId: farequote}
+  - match: { hits.0.result_type: record}

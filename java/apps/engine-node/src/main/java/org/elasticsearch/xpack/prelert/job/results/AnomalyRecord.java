@@ -41,12 +41,13 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
     /**
      * Serialisation fields
      */
-    public static final ParseField TYPE = new ParseField("record");
+    public static final ParseField TYPE = new ParseField("results");
 
     /**
      * Result fields (all detector types)
      */
     public static final ParseField JOB_ID = new ParseField("jobId");
+    public static final ParseField RESULT_TYPE = new ParseField("result_type");
     public static final ParseField DETECTOR_INDEX = new ParseField("detectorIndex");
     public static final ParseField PROBABILITY = new ParseField("probability");
     public static final ParseField BY_FIELD_NAME = new ParseField("byFieldName");
@@ -87,6 +88,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
 
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), JOB_ID);
+        PARSER.declareString((anomalyRecord, s) -> {}, RESULT_TYPE);
         PARSER.declareDouble(AnomalyRecord::setProbability, PROBABILITY);
         PARSER.declareDouble(AnomalyRecord::setAnomalyScore, ANOMALY_SCORE);
         PARSER.declareDouble(AnomalyRecord::setNormalizedProbability, NORMALIZED_PROBABILITY);
@@ -117,6 +119,8 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
         PARSER.declareObjectArray(AnomalyRecord::setCauses, AnomalyCause.PARSER, CAUSES);
         PARSER.declareObjectArray(AnomalyRecord::setInfluencers, Influence.PARSER, INFLUENCERS);
     }
+
+    public static final String RESULT_TYPE_VALUE = "record";
 
     private final String jobId;
     private String id;
@@ -150,8 +154,6 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
     private List<Influence> influencers;
 
     private boolean hadBigNormalisedUpdate;
-
-    private String parent;
 
     public AnomalyRecord(String jobId) {
         this.jobId = jobId;
@@ -194,7 +196,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
             influencers = in.readList(Influence::new);
         }
         hadBigNormalisedUpdate = in.readBoolean();
-        parent = in.readOptionalString();
+
     }
 
     @Override
@@ -244,13 +246,13 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
             out.writeList(influencers);
         }
         out.writeBoolean(hadBigNormalisedUpdate);
-        out.writeOptionalString(parent);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
         builder.field(JOB_ID.getPreferredName(), jobId);
+        builder.field(RESULT_TYPE.getPreferredName(), RESULT_TYPE_VALUE);
         builder.field(PROBABILITY.getPreferredName(), probability);
         builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScore);
         builder.field(NORMALIZED_PROBABILITY.getPreferredName(), normalizedProbability);
@@ -505,14 +507,6 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
         causes.add(cause);
     }
 
-    public String getParent() {
-        return parent;
-    }
-
-    public void setParent(String parent) {
-        this.parent = parent.intern();
-    }
-
     public List<Influence> getInfluencers() {
         return influencers;
     }
@@ -534,7 +528,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
                 normalizedProbability, typical, actual,
                 function, functionDescription, fieldName, byFieldName, byFieldValue, correlatedByFieldValue,
                 partitionFieldName, partitionFieldValue, overFieldName, overFieldValue,
-                timestamp, parent, isInterim, causes, influencers, jobId);
+                timestamp, isInterim, causes, influencers, jobId, RESULT_TYPE_VALUE);
     }
 
 
@@ -574,7 +568,6 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
                 && Objects.equals(this.overFieldName, that.overFieldName)
                 && Objects.equals(this.overFieldValue, that.overFieldValue)
                 && Objects.equals(this.timestamp, that.timestamp)
-                && Objects.equals(this.parent, that.parent)
                 && Objects.equals(this.isInterim, that.isInterim)
                 && Objects.equals(this.causes, that.causes)
                 && Objects.equals(this.influencers, that.influencers);

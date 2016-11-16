@@ -47,6 +47,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -745,12 +746,16 @@ public class ElasticsearchJobProvider implements JobProvider
             QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
             boolean descending) throws ResourceNotFoundException {
         String indexName = ElasticsearchPersister.getJobIndexName(jobId);
+
+        recordFilter = new BoolQueryBuilder()
+                .filter(recordFilter)
+                .filter(new TermsQueryBuilder(AnomalyRecord.RESULT_TYPE.getPreferredName(), AnomalyRecord.RESULT_TYPE_VALUE));
+
         SearchRequestBuilder searchBuilder = client.prepareSearch(indexName)
                 .setTypes(AnomalyRecord.TYPE.getPreferredName())
-                .setPostFilter(recordFilter)
+                .setQuery(recordFilter)
                 .setFrom(skip).setSize(take)
                 .addSort(sb == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC) : sb)
-                .addDocValueField(ElasticsearchMappings.PARENT)   // include the parent id
                 .setFetchSource(true);  // the field option turns off source so request it explicitly
 
         for (String sortField : secondarySort)
@@ -783,8 +788,6 @@ public class ElasticsearchJobProvider implements JobProvider
 
             // set the ID and parent ID
             record.setId(hit.getId());
-            record.setParent(hit.field(ElasticsearchMappings.PARENT).getValue().toString());
-
             results.add(record);
         }
 

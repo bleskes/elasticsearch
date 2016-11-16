@@ -203,6 +203,7 @@ public class BucketTests extends AbstractSerializingTestCase<Bucket> {
 
     public void testEquals_GivenOneHasRecordsAndTheOtherDoesNot() {
         Bucket bucket1 = new Bucket("foo");
+        bucket1.setId("1");
         bucket1.setRecords(Arrays.asList(new AnomalyRecord("foo")));
         Bucket bucket2 = new Bucket("foo");
         bucket2.setRecords(null);

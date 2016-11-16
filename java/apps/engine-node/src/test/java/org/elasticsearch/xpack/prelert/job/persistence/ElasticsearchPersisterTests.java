@@ -165,6 +165,7 @@ public class ElasticsearchPersisterTests extends ESTestCase {
 
     private Bucket getBucket(int numRecords, int numInfluencers) {
         Bucket b = new Bucket("foo");
+        b.setId("1");
         b.setTimestamp(new Date());
         List<AnomalyRecord> records = new ArrayList<>();
         for (int i = 0; i < numRecords; ++i) {
