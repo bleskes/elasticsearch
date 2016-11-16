@@ -55,9 +55,10 @@ import java.util.Set;
 public class AutodetectResultsParser {
     private final List<AlertObserver> observers = new ArrayList<>();
     private final Set<String> acknowledgedFlushes = new HashSet<>();
+    private final boolean isPerPartitionNormalization;
+
     private volatile boolean parsingStarted;
     private volatile boolean parsingInProgress;
-    private boolean isPerPartitionNormalization;
 
     public AutodetectResultsParser() {
         this(false);
