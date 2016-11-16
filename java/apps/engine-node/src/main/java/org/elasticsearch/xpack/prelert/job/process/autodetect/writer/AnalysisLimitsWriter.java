@@ -42,7 +42,7 @@ public class AnalysisLimitsWriter {
 
     public void write() throws IOException {
         StringBuilder contents = new StringBuilder(MEMORY_STANZA_STR).append(NEW_LINE);
-        if (limits.getModelMemoryLimit() != 0) {
+        if (limits.getModelMemoryLimit() != null && limits.getModelMemoryLimit() != 0L) {
             contents.append(MODEL_MEMORY_LIMIT_CONFIG_STR + EQUALS)
             .append(limits.getModelMemoryLimit()).append(NEW_LINE);
         }

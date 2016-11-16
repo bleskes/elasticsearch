@@ -285,7 +285,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Collections.singletonList(d.build()));
         builder.setAnalysisConfig(ac);
         builder.build();
-        builder.setAnalysisLimits(new AnalysisLimits(-1, null));
+        builder.setAnalysisLimits(new AnalysisLimits(-1L, null));
         expectThrows(IllegalArgumentException.class, builder::build);
         AnalysisLimits limits = new AnalysisLimits(1000L, 4L);
         builder.setAnalysisLimits(limits);

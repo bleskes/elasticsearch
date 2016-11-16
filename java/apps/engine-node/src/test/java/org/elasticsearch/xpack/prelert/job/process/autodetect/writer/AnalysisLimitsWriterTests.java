@@ -14,17 +14,17 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.junit.After;
+import org.junit.Before;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-import org.elasticsearch.test.ESTestCase;
-import org.junit.After;
-import org.junit.Before;
-import org.mockito.Mockito;
-import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class AnalysisLimitsWriterTests extends ESTestCase {
     private OutputStreamWriter writer;
@@ -40,6 +40,15 @@ public class AnalysisLimitsWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenUnsetValues() throws IOException {
+        AnalysisLimits limits = new AnalysisLimits(null, null);
+        AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
+
+        analysisLimitsWriter.write();
+
+        verify(writer).write("[memory]\n[results]\n");
+    }
+
+    public void testWrite_GivenModelMemoryLimitIsZero() throws IOException {
         AnalysisLimits limits = new AnalysisLimits(0L, null);
         AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
 
@@ -67,7 +76,7 @@ public class AnalysisLimitsWriterTests extends ESTestCase {
     }
 
     public void testWrite_GivenAllFieldsSet() throws IOException {
-        AnalysisLimits limits = new AnalysisLimits(1024, 3L);
+        AnalysisLimits limits = new AnalysisLimits(1024L, 3L);
         AnalysisLimitsWriter analysisLimitsWriter = new AnalysisLimitsWriter(limits, writer);
 
         analysisLimitsWriter.write();

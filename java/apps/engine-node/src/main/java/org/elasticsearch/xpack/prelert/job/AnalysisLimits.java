@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job;
 
 import org.elasticsearch.action.support.ToXContentToBytes;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -25,8 +26,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -45,30 +44,24 @@ public class AnalysisLimits extends ToXContentToBytes implements Writeable {
             "analysis_limits", a -> new AnalysisLimits((Long) a[0], (Long) a[1]));
 
     static {
-        PARSER.declareLong(ConstructingObjectParser.constructorArg(), MODEL_MEMORY_LIMIT);
+        PARSER.declareLong(ConstructingObjectParser.optionalConstructorArg(), MODEL_MEMORY_LIMIT);
         PARSER.declareLong(ConstructingObjectParser.optionalConstructorArg(), CATEGORIZATION_EXAMPLES_LIMIT);
     }
 
     /**
-     * It is initialised to 0.  A value of 0 indicates it was not set, which in
-     * turn causes the C++ process to use its own default limit.  A negative
-     * value means no limit.  All negative input values are stored as -1.
+     * It is initialised to <code>null</code>.
+     * A value of <code>null</code> or <code>0</code> will result to the default being used.
      */
-    private final long modelMemoryLimit;
+    private final Long modelMemoryLimit;
 
     /**
      * It is initialised to <code>null</code>.
-     * A value of <code>null</code> indicates it was not set.
+     * A value of <code>null</code> will result to the default being used.
      */
     private final Long categorizationExamplesLimit;
 
-    public AnalysisLimits(long modelMemoryLimit, Long categorizationExamplesLimit) {
-        if (modelMemoryLimit < 0) {
-            // All negative numbers mean "no limit"
-            this.modelMemoryLimit = -1;
-        } else {
-            this.modelMemoryLimit = modelMemoryLimit;
-        }
+    public AnalysisLimits(Long modelMemoryLimit, Long categorizationExamplesLimit) {
+        this.modelMemoryLimit = modelMemoryLimit;
         if (categorizationExamplesLimit != null && categorizationExamplesLimit < 0) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_FIELD_VALUE_TOO_LOW, CATEGORIZATION_EXAMPLES_LIMIT, 0,
                     categorizationExamplesLimit);
@@ -78,7 +71,7 @@ public class AnalysisLimits extends ToXContentToBytes implements Writeable {
     }
 
     public AnalysisLimits(StreamInput in) throws IOException {
-        this(in.readLong(), in.readOptionalLong());
+        this(in.readOptionalLong(), in.readOptionalLong());
     }
 
     /**
@@ -86,9 +79,10 @@ public class AnalysisLimits extends ToXContentToBytes implements Writeable {
      * will drop new samples to prevent the model using any more
      * memory
      *
-     * @return The set memory limit or 0 if not set
+     * @return The set memory limit or <code>null</code> if not set
      */
-    public long getModelMemoryLimit() {
+    @Nullable
+    public Long getModelMemoryLimit() {
         return modelMemoryLimit;
     }
 
@@ -97,20 +91,23 @@ public class AnalysisLimits extends ToXContentToBytes implements Writeable {
      *
      * @return the limit or <code>null</code> if not set
      */
+    @Nullable
     public Long getCategorizationExamplesLimit() {
         return categorizationExamplesLimit;
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        out.writeLong(modelMemoryLimit);
+        out.writeOptionalLong(modelMemoryLimit);
         out.writeOptionalLong(categorizationExamplesLimit);
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(MODEL_MEMORY_LIMIT.getPreferredName(), modelMemoryLimit);
+        if (modelMemoryLimit != null) {
+            builder.field(MODEL_MEMORY_LIMIT.getPreferredName(), modelMemoryLimit);
+        }
         if (categorizationExamplesLimit != null) {
             builder.field(CATEGORIZATION_EXAMPLES_LIMIT.getPreferredName(), categorizationExamplesLimit);
         }
@@ -132,21 +129,12 @@ public class AnalysisLimits extends ToXContentToBytes implements Writeable {
         }
 
         AnalysisLimits that = (AnalysisLimits) other;
-        return this.modelMemoryLimit == that.modelMemoryLimit &&
+        return Objects.equals(this.modelMemoryLimit, that.modelMemoryLimit) &&
                 Objects.equals(this.categorizationExamplesLimit, that.categorizationExamplesLimit);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(modelMemoryLimit, categorizationExamplesLimit);
-    }
-
-    public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put(MODEL_MEMORY_LIMIT.getPreferredName(), modelMemoryLimit);
-        if (categorizationExamplesLimit != null) {
-            map.put(CATEGORIZATION_EXAMPLES_LIMIT.getPreferredName(), categorizationExamplesLimit);
-        }
-        return map;
     }
 }
