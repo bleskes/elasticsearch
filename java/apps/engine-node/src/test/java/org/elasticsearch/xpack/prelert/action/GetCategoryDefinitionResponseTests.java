@@ -14,25 +14,20 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
+
+import java.util.Collections;
 
 public class GetCategoryDefinitionResponseTests extends AbstractStreamableTestCase<GetCategoryDefinitionAction.Response> {
 
     @Override
     protected GetCategoryDefinitionAction.Response createTestInstance() {
-        SingleDocument<CategoryDefinition> document;
-        if (randomBoolean()) {
-            document = SingleDocument.empty(CategoryDefinition.TYPE.getPreferredName());
-        } else {
-            CategoryDefinition categoryDefinition = new CategoryDefinition(randomAsciiOfLength(10));
-            categoryDefinition.setRegex(randomAsciiOfLength(10));
-            categoryDefinition.setTerms(randomAsciiOfLength(10));
-            categoryDefinition.setCategoryId(randomLong());
-            document = new SingleDocument<>(CategoryDefinition.TYPE.getPreferredName(), categoryDefinition);
-        }
-        return new GetCategoryDefinitionAction.Response(document);
+        QueryPage<CategoryDefinition> queryPage =
+                new QueryPage<>(Collections.singletonList(new CategoryDefinition(randomAsciiOfLength(10))), 1L);
+        return new GetCategoryDefinitionAction.Response(queryPage);
     }
 
     @Override

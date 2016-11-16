@@ -658,10 +658,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
-        Optional<CategoryDefinition> categoryDefinition = provider.categoryDefinition(jobId, categoryId);
-        assertTrue(categoryDefinition.isPresent());
-        CategoryDefinition category = categoryDefinition.get();
-        assertEquals(terms, category.getTerms());
+        QueryPage<CategoryDefinition> categoryDefinitions = provider.categoryDefinition(jobId, categoryId);
+        assertEquals(1L, categoryDefinitions.hitCount());
+        assertEquals(terms, categoryDefinitions.hits().get(0).getTerms());
     }
 
     public void testInfluencers_NoInterim()

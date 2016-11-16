@@ -20,9 +20,12 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.action.RestStatusToXContentListener;
+import org.elasticsearch.rest.action.RestToXContentListener;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
+import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction.Request;
+import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 
 import java.io.IOException;
 
@@ -35,15 +38,28 @@ public class RestGetCategoryAction extends BaseRestHandler {
             GetCategoryDefinitionAction.TransportAction transportAction) {
         super(settings);
         this.transportAction = transportAction;
-        controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "results/{jobId}/categorydefinitions/{categoryId}",
-                this);
+        controller.registerHandler(RestRequest.Method.GET,
+                PrelertPlugin.BASE_PATH + "results/{jobId}/categorydefinition/{categoryId}", this);
+        controller.registerHandler(RestRequest.Method.GET,
+                PrelertPlugin.BASE_PATH + "results/{jobId}/categorydefinition", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        GetCategoryDefinitionAction.Request request = new GetCategoryDefinitionAction.Request(restRequest.param("jobId"),
-                restRequest.param("categoryId"));
-        return channel -> transportAction.execute(request, new RestStatusToXContentListener<>(channel));
+        Request request = new Request(restRequest.param(Job.ID.getPreferredName()));
+
+        String categoryId = restRequest.param(Request.CATEGORY_ID.getPreferredName());
+        if (categoryId != null && !categoryId.isEmpty()) {
+            request.setCategoryId(categoryId);
+        } else {
+            PageParams pageParams = new PageParams(
+                    restRequest.paramAsInt(Request.SKIP.getPreferredName(), 0),
+                    restRequest.paramAsInt(Request.TAKE.getPreferredName(), 100)
+            );
+            request.setPageParams(pageParams);
+        }
+
+        return channel -> transportAction.execute(request, new RestToXContentListener<>(channel));
     }
 
 }

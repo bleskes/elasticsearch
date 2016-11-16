@@ -81,9 +81,9 @@ public interface JobResultsProvider
      *
      * @param jobId the job id
      * @param categoryId Unique id
-     * @return Optional CategoryDefinition
+     * @return QueryPage CategoryDefinition
      */
-    Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId);
+    QueryPage<CategoryDefinition> categoryDefinition(String jobId, String categoryId);
 
     /**
      * Search for anomaly records with the parameters in the

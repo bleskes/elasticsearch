@@ -42,7 +42,6 @@ import org.elasticsearch.xpack.prelert.action.DeleteModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketAction;
 import org.elasticsearch.xpack.prelert.action.GetBucketsAction;
 import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionAction;
-import org.elasticsearch.xpack.prelert.action.GetCategoryDefinitionsAction;
 import org.elasticsearch.xpack.prelert.action.GetInfluencersAction;
 import org.elasticsearch.xpack.prelert.action.GetJobAction;
 import org.elasticsearch.xpack.prelert.action.GetJobsAction;
@@ -107,7 +106,6 @@ import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestPutModelSnapshotD
 import org.elasticsearch.xpack.prelert.rest.modelsnapshots.RestRevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetBucketsAction;
-import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoriesAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetCategoryAction;
 import org.elasticsearch.xpack.prelert.rest.results.RestGetRecordsAction;
 import org.elasticsearch.xpack.prelert.rest.schedulers.RestStartJobSchedulerAction;
@@ -234,7 +232,6 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 RestValidateDetectorAction.class,
                 RestValidateTransformAction.class,
                 RestValidateTransformsAction.class,
-                RestGetCategoriesAction.class,
                 RestGetCategoryAction.class,
                 RestGetModelSnapshotsAction.class,
                 RestRevertModelSnapshotAction.class,
@@ -267,7 +264,6 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(ValidateDetectorAction.INSTANCE, ValidateDetectorAction.TransportAction.class),
                 new ActionHandler<>(ValidateTransformAction.INSTANCE, ValidateTransformAction.TransportAction.class),
                 new ActionHandler<>(ValidateTransformsAction.INSTANCE, ValidateTransformsAction.TransportAction.class),
-                new ActionHandler<>(GetCategoryDefinitionsAction.INSTANCE, GetCategoryDefinitionsAction.TransportAction.class),
                 new ActionHandler<>(GetCategoryDefinitionAction.INSTANCE, GetCategoryDefinitionAction.TransportAction.class),
                 new ActionHandler<>(GetModelSnapshotsAction.INSTANCE, GetModelSnapshotsAction.TransportAction.class),
                 new ActionHandler<>(RevertModelSnapshotAction.INSTANCE, RevertModelSnapshotAction.TransportAction.class),

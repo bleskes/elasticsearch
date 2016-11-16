@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 
 public class GetCategoryDefinitionRequestTests extends AbstractStreamableTestCase<GetCategoryDefinitionAction.Request> {
@@ -21,8 +22,16 @@ public class GetCategoryDefinitionRequestTests extends AbstractStreamableTestCas
     @Override
     protected GetCategoryDefinitionAction.Request createTestInstance() {
         String jobId = randomAsciiOfLength(10);
-        String categoryId = randomAsciiOfLength(10);
-        return new GetCategoryDefinitionAction.Request(jobId, categoryId);
+        GetCategoryDefinitionAction.Request request = new GetCategoryDefinitionAction.Request(jobId);
+        if (randomBoolean()) {
+            request.setCategoryId(randomAsciiOfLength(10));
+        } else {
+            int skip = randomInt(PageParams.MAX_SKIP_TAKE_SUM);
+            int maxTake = PageParams.MAX_SKIP_TAKE_SUM - skip;
+            int take = randomInt(maxTake);
+            request.setPageParams(new PageParams(skip, take));
+        }
+        return request;
     }
 
     @Override

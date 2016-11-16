@@ -24,24 +24,25 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.StatusToXContent;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.prelert.utils.SingleDocument;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 
 public class GetCategoryDefinitionAction extends
 Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response, GetCategoryDefinitionAction.RequestBuilder> {
@@ -65,15 +66,35 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
 
     public static class Request extends ActionRequest {
 
+        public static final ParseField CATEGORY_ID = new ParseField("categoryId");
+        public static final ParseField SKIP = new ParseField("skip");
+        public static final ParseField TAKE = new ParseField("take");
+
         private String jobId;
         private String categoryId;
+        private PageParams pageParams = null;
 
-        public Request(String jobId, String categoryId) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, "jobId");
-            this.categoryId = ExceptionsHelper.requireNonNull(categoryId, "categoryId");
+        public Request(String jobId) {
+            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
         Request() {
+        }
+
+        public String getCategoryId() {
+            return categoryId;
+        }
+
+        public void setCategoryId(String categoryId) {
+            this.categoryId = ExceptionsHelper.requireNonNull(categoryId, CATEGORY_ID.getPreferredName());
+        }
+
+        public PageParams getPageParams() {
+            return pageParams;
+        }
+
+        public void setPageParams(PageParams pageParams) {
+            this.pageParams = pageParams;
         }
 
         @Override
@@ -85,14 +106,16 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
             jobId = in.readString();
-            categoryId = in.readString();
+            categoryId = in.readOptionalString();
+            pageParams = in.readOptionalWriteable(PageParams::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
-            out.writeString(categoryId);
+            out.writeOptionalString(categoryId);
+            out.writeOptionalWriteable(pageParams);
         }
 
         @Override
@@ -102,12 +125,14 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
             if (o == null || getClass() != o.getClass())
                 return false;
             Request request = (Request) o;
-            return Objects.equals(jobId, request.jobId) && Objects.equals(categoryId, request.categoryId);
+            return Objects.equals(jobId, request.jobId)
+                    && Objects.equals(categoryId, request.categoryId)
+                    && Objects.equals(pageParams, request.pageParams);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId, categoryId);
+            return Objects.hash(jobId, categoryId, pageParams);
         }
     }
 
@@ -118,37 +143,37 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
         }
     }
 
-    public static class Response extends ActionResponse implements StatusToXContent {
+    public static class Response extends ActionResponse implements ToXContent {
 
-        private SingleDocument<CategoryDefinition> result;
+        private QueryPage<CategoryDefinition> result;
 
-        public Response(SingleDocument<CategoryDefinition> result) {
+        public Response(QueryPage<CategoryDefinition> result) {
             this.result = result;
         }
 
         Response() {
         }
 
-        @Override
-        public RestStatus status() {
-            return result.isExists() ? RestStatus.OK : RestStatus.NOT_FOUND;
-        }
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            return result.toXContent(builder, params);
+        public QueryPage<CategoryDefinition> getResult() {
+            return result;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            result = new SingleDocument<>(in, CategoryDefinition::new);
+            result = new QueryPage<>(in, CategoryDefinition::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             result.writeTo(out);
+        }
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            result.doXContentBody(builder, params);
+            return builder;
         }
 
         @Override
@@ -180,14 +205,14 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            Optional<CategoryDefinition> result = jobProvider.categoryDefinition(request.jobId, request.categoryId);
-            SingleDocument<CategoryDefinition> singleDocument;
-            if (result.isPresent()) {
-                singleDocument = new SingleDocument<>(CategoryDefinition.TYPE.getPreferredName(), result.get());
+            QueryPage<CategoryDefinition> result;
+            if (request.categoryId != null ) {
+                result = jobProvider.categoryDefinition(request.jobId, request.categoryId);
             } else {
-                singleDocument = SingleDocument.empty(CategoryDefinition.TYPE.getPreferredName());
+                result = jobProvider.categoryDefinitions(request.jobId, request.pageParams.getSkip(),
+                        request.pageParams.getTake());
             }
-            listener.onResponse(new Response(singleDocument));
+            listener.onResponse(new Response(result));
         }
     }
 }

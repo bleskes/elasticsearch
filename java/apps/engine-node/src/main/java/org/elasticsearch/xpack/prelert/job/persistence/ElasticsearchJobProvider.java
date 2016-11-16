@@ -82,6 +82,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -681,7 +682,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Optional<CategoryDefinition> categoryDefinition(String jobId, String categoryId) {
+    public QueryPage<CategoryDefinition> categoryDefinition(String jobId, String categoryId) {
         String indexName = ElasticsearchPersister.getJobIndexName(jobId);
         GetResponse response;
 
@@ -702,10 +703,9 @@ public class ElasticsearchJobProvider implements JobProvider
                 throw new ElasticsearchParseException("failed to parser category definition", e);
             }
             CategoryDefinition definition = CategoryDefinition.PARSER.apply(parser, () -> parseFieldMatcher);
-            return Optional.of(definition);
-        } else {
-            return Optional.empty();
+            return new QueryPage<>(Collections.singletonList(definition), 1);
         }
+        return new QueryPage<>(Collections.emptyList(), 0);
     }
 
     @Override
