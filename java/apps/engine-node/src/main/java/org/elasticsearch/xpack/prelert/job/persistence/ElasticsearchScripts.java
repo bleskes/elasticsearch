@@ -14,9 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -28,9 +26,7 @@ import java.util.Map;
 /**
  * Create methods for the custom scripts that are run on Elasticsearch
  */
-public final class ElasticsearchScripts
-{
-    private static final Logger LOGGER = Loggers.getLogger(ElasticsearchScripts.class);
+public final class ElasticsearchScripts {
 
     private static final String PAINLESS = "painless";
 
@@ -124,7 +120,7 @@ public final class ElasticsearchScripts
      * @return {@code} true if successful, {@code} false otherwise
      */
     public static boolean upsertViaScript(Client client, String index, String type, String docId, Script script,
-                                          Map<String, Object> upsertMap) {
+            Map<String, Object> upsertMap) {
         try {
             client.prepareUpdate(index, type, docId)
             .setScript(script)

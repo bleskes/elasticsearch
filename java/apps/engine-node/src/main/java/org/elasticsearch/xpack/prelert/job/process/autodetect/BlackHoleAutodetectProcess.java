@@ -22,7 +22,6 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknow
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;

@@ -18,8 +18,6 @@ import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 import org.joda.time.DateTime;
 
-import java.util.function.Consumer;
-
 public class PostDataActionResponseTests extends AbstractStreamableTestCase<PostDataAction.Response> {
 
     @Override
@@ -30,12 +28,6 @@ public class PostDataActionResponseTests extends AbstractStreamableTestCase<Post
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
 
         return new PostDataAction.Response(counts);
-    }
-
-    private void ifRandomTrueSetRandomLong(Consumer<Long> consumer) {
-        if (randomBoolean()) {
-            consumer.accept(randomPositiveLong());
-        }
     }
 
     @Override

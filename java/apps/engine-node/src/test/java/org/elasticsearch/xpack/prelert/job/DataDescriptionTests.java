@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.bytes.BytesArray;

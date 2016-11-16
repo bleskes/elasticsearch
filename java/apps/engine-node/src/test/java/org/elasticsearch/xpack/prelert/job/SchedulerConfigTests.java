@@ -493,7 +493,7 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         XContentParser parser = XContentFactory.xContent(json).createParser(json);
         conf.setScriptFields(parser.map());
         conf.setRetrieveWholeSource(true);
-        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, conf::build);
+        expectThrows(IllegalArgumentException.class, conf::build);
     }
 
     public void testCheckValidElasticsearch_GivenNullIndexes() throws IOException {

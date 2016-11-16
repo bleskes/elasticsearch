@@ -14,12 +14,12 @@
  */
 package org.elasticsearch.xpack.prelert.integration;
 
-import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 import org.elasticsearch.test.rest.yaml.parser.ClientYamlTestParseException;
-import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.junit.After;
+
+import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 
 import java.io.IOException;
 

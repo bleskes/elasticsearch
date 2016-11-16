@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.prelert.job.process;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
@@ -42,7 +41,6 @@ import java.util.Random;
  * The process runs in a clean environment.
  */
 public class ProcessCtrl {
-    private static final Logger LOGGER = Loggers.getLogger(ProcessCtrl.class);
 
     /**
      * Autodetect API native program name - always loaded from the same directory as the controller process
@@ -78,28 +76,6 @@ public class ProcessCtrl {
      * General arguments
      */
     static final String JOB_ID_ARG = "--jobid=";
-
-
-    /**
-     * Host for the Elasticsearch we'll pass on to the Autodetect API program
-     */
-    // NORELEASE This is for the process to write state directly to ES
-    // which won't happen in the final product. See #18
-    private static final String ES_HOST = "localhost";
-
-    /**
-     * Default Elasticsearch HTTP port
-     */
-    // NORELEASE This is for the process to write state directly to ES
-    // which won't happen in the final product. See #18
-    private static final int ES_HTTP_PORT = 9200;
-
-    /**
-     * If this is changed, ElasticsearchJobId should also be changed
-     */
-    // NORELEASE This is for the process to write state directly to ES
-    // which won't happen in the final product. See #18
-    private static final String ES_INDEX_PREFIX = "prelertresults-";
 
 
     /*

@@ -242,8 +242,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testCheckValidId_IdTooLong()  {
         Job.Builder builder = buildJobBuilder("foo");
         builder.setId("averyveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryverylongid");
-        IllegalArgumentException e =
-                ESTestCase.expectThrows(IllegalArgumentException.class, () -> builder.build());
+        expectThrows(IllegalArgumentException.class, () -> builder.build());
     }
 
     public void testCheckValidId_GivenAllValidChars() {
@@ -266,21 +265,20 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testCheckValidId_ControlChars() {
         Job.Builder builder = buildJobBuilder("foo");
         builder.setId("two\nlines");
-        IllegalArgumentException e =
-                ESTestCase.expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
     }
 
     public void jobConfigurationTest() {
         Job.Builder builder = new Job.Builder();
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId("bad id with spaces");
-        e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId("bad_id_with_UPPERCASE_chars");
-        e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId("a very  very very very very very very very very very very very very very very very very very very very long id");
-        e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         builder.setId(null);
-        e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
 
         Detector.Builder d = new Detector.Builder("max", "a");
         d.setByFieldName("b");
@@ -295,11 +293,11 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         DataDescription.Builder dc = new DataDescription.Builder();
         dc.setTimeFormat("YYY_KKKKajsatp*");
         builder.setDataDescription(dc);
-        e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         dc = new DataDescription.Builder();
         builder.setDataDescription(dc);
         builder.setTimeout(-1L);
-        e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         builder.setTimeout(300L);
         builder.build();
     }
@@ -309,7 +307,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         TransformConfig tc = new TransformConfig(TransformType.Names.DOMAIN_SPLIT_NAME);
         tc.setInputs(Arrays.asList("dns"));
         builder.setTransforms(Arrays.asList(tc));
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
         Detector.Builder newDetector = new Detector.Builder();
         newDetector.setFunction(Detector.MIN);
         newDetector.setFieldName(TransformType.DOMAIN_SPLIT.defaultOutputNames().get(0));
@@ -327,7 +325,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         tc.setInputs(Arrays.asList("dns"));
         tc.setOutputs(Arrays.asList("summaryCountField"));
         builder.setTransforms(Arrays.asList(tc));
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
     }
 
     public void testCheckTransformOutputIsUsed_outputIsSummaryCountField() {
@@ -337,7 +335,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         tc.setOutputs(Arrays.asList("summaryCountField"));
         tc.setArguments(Arrays.asList("(.*)"));
         builder.setTransforms(Arrays.asList(tc));
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
+        expectThrows(IllegalArgumentException.class, builder::build);
     }
 
     public void testCheckTransformOutputIsUsed_transformHasNoOutput() {
