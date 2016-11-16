@@ -162,6 +162,21 @@ public class JobManagerTests extends ESTestCase {
         assertEquals(job, jobManager.getJobOrThrowIfUnknown(cs, "foo"));
     }
 
+    public void tesGetJobAllocation() {
+        JobManager jobManager = createJobManager();
+        Job job = buildJobBuilder("foo").build();
+        PrelertMetadata prelertMetadata = new PrelertMetadata.Builder()
+                .putJob(job, false)
+                .putAllocation("nodeId", "foo")
+                .build();
+        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, prelertMetadata)).build();
+        when(clusterService.state()).thenReturn(cs);
+
+        assertEquals("nodeId", jobManager.getJobAllocation("foo").getNodeId());
+        expectThrows(ResourceNotFoundException.class, () -> jobManager.getJobAllocation("bar"));
+    }
+
     public void testGetJobs() {
         PrelertMetadata.Builder prelertMetadata = new PrelertMetadata.Builder();
         for (int i = 0; i < 10; i++) {

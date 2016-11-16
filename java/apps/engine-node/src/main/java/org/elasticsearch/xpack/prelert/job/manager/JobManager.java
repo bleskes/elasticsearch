@@ -415,7 +415,7 @@ public class JobManager {
         PrelertMetadata prelertMetadata = state.metaData().custom(PrelertMetadata.TYPE);
         Allocation allocation = prelertMetadata.getAllocations().get(jobId);
         if (allocation == null) {
-            throw new IllegalStateException("Excepted allocation for job with id [" + jobId + "]");
+            throw new ResourceNotFoundException("No allocation found for job with id [" + jobId + "]");
         }
         return allocation;
     }
