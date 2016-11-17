@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
@@ -27,8 +26,6 @@ import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
-import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
-import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicator;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
@@ -36,7 +33,6 @@ import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.Aut
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
-import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.junit.Before;
 import org.mockito.Mockito;
 
