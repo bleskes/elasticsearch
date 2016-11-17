@@ -104,6 +104,8 @@ public class AutodetectProcessManager extends AbstractComponent implements DataP
         }
     }
 
+    // TODO (norelease) : here we must validate whether we have enough threads in TP in order start analytical process
+    // Otherwise we are not able to communicate via all the named pipes and we can run into deadlock
     AutodetectCommunicator create(String jobId, boolean ignoreDowntime) {
         Job job = jobManager.getJobOrThrowIfUnknown(jobId);
         Logger jobLogger = Loggers.getLogger(job.getJobId());
