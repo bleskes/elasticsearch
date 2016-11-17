@@ -85,7 +85,7 @@ task pluginAll() {
   def zipFile = "${esplugin.name}-${elasticsearchVersion}.zip"
   def sourceFile = "${projectDir}/build/distributions/" + zipFile
   def destFile = project.ext.nasDirectory + zipFile.replace('.zip', project.ext.nasExtension)
-  Files.copy(Paths.get(sourceFile), Paths.get(destFile), StandardCopyOption.REPLACE_EXISTING)
+  // temp fix Files.copy(Paths.get(sourceFile), Paths.get(destFile), StandardCopyOption.REPLACE_EXISTING)
 }
 
 pluginAll.dependsOn check
