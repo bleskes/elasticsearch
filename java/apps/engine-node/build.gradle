@@ -18,12 +18,6 @@ project.ext.nasExtension = '_' + (System.getenv()['GIT_COMMIT'] ?: 'xxxxxxxxxxxx
     (isWindows ? "_windows-x86_64.zip" : (isMacOsX ? "_darwin-x86_64.zip" :
     (isLinux ? "_linux-x86_64.zip" : "_sunos-x86_64.zip")))
 
-buildscript {
-    dependencies {
-        classpath "org.elasticsearch.gradle:build-tools:${elasticsearchVersion}"
-    }
-}
-
 apply plugin: 'elasticsearch.esplugin'
 
 esplugin {
@@ -37,13 +31,9 @@ version = "${elasticsearchVersion}"
 // We need to enable this at some point
 thirdPartyAudit.enabled = false
 
-licenseHeaders {
-    approvedLicenses = ['Elasticsearch Confidential']
-    additionalLicense 'ESCON', 'Elasticsearch Confidential', 'ELASTICSEARCH CONFIDENTIAL'
-}
-
 dependencies {
     compile group: 'net.sf.supercsv', name: 'super-csv', version:"${supercsvVersion}"
+    testCompile group: 'org.ini4j', name: 'ini4j', version:'0.5.2'
 }
 
 test {
