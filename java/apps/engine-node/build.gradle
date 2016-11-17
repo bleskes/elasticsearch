@@ -79,13 +79,23 @@ bundlePlugin {
   }
 }
 
+// norelease: this won't be needed when the pluginAll task below is removed
+class SimpleCopy extends DefaultTask {
+  String sourceFile;
+  String destFile;
+
+  @TaskAction
+  def copy() {
+    Files.copy(Paths.get(sourceFile), Paths.get(destFile), StandardCopyOption.REPLACE_EXISTING)
+  }
+}
+
 // norelease: by the time we move to x-plugins we cannot use the Prelert NAS at all
-task pluginAll() {
+task pluginAll(type: SimpleCopy) {
   // This doesn't use a Copy task because that builds hashes for a huge number of files on the NAS
-  def zipFile = "${esplugin.name}-${elasticsearchVersion}.zip"
-  def sourceFile = "${projectDir}/build/distributions/" + zipFile
-  def destFile = project.ext.nasDirectory + zipFile.replace('.zip', project.ext.nasExtension)
-  // temp fix Files.copy(Paths.get(sourceFile), Paths.get(destFile), StandardCopyOption.REPLACE_EXISTING)
+  String zipFile = "${esplugin.name}-${elasticsearchVersion}.zip"
+  sourceFile = "${projectDir}/build/distributions/" + zipFile
+  destFile = project.ext.nasDirectory + zipFile.replace('.zip', project.ext.nasExtension)
 }
 
 pluginAll.dependsOn check
