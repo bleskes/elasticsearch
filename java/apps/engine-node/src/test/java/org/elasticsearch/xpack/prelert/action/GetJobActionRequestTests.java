@@ -19,10 +19,13 @@ import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 
 public class GetJobActionRequestTests extends AbstractStreamableTestCase<GetJobAction.Request> {
 
-
     @Override
     protected Request createTestInstance() {
-        return new Request(randomAsciiOfLengthBetween(1, 20));
+        Request instance = new Request(randomAsciiOfLengthBetween(1, 20));
+        instance.config(randomBoolean());
+        instance.dataCounts(randomBoolean());
+        instance.modelSizeStats(randomBoolean());
+        return instance;
     }
 
     @Override

@@ -223,7 +223,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 RestPutModelSnapshotDescriptionAction.class,
                 RestStartJobSchedulerAction.class,
                 RestStopJobSchedulerAction.class,
-                RestDeleteModelSnapshotAction.class);
+                RestDeleteModelSnapshotAction.class
+        );
     }
 
     @Override
@@ -255,7 +256,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(PutModelSnapshotDescriptionAction.INSTANCE, PutModelSnapshotDescriptionAction.TransportAction.class),
                 new ActionHandler<>(StartJobSchedulerAction.INSTANCE, StartJobSchedulerAction.TransportAction.class),
                 new ActionHandler<>(StopJobSchedulerAction.INSTANCE, StopJobSchedulerAction.TransportAction.class),
-                new ActionHandler<>(DeleteModelSnapshotAction.INSTANCE, DeleteModelSnapshotAction.TransportAction.class));
+                new ActionHandler<>(DeleteModelSnapshotAction.INSTANCE, DeleteModelSnapshotAction.TransportAction.class)
+        );
     }
 
     public static Path resolveConfigFile(Environment env, String name) {

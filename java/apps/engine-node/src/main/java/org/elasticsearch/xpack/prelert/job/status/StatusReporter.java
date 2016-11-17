@@ -360,8 +360,9 @@ public class StatusReporter {
         return incrementalRecordStats;
     }
 
-    public DataCounts runningTotalStats() {
+    public synchronized DataCounts runningTotalStats() {
         totalRecordStats.calcProcessedFieldCount(getAnalysedFieldsPerRecord());
+        DataCounts tempResonse = new DataCounts(totalRecordStats);
         return totalRecordStats;
     }
 }

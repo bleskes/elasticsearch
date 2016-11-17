@@ -24,6 +24,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobDataCountsPersister;
@@ -48,6 +49,7 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
@@ -192,5 +194,23 @@ public class AutodetectProcessManager extends AbstractComponent implements DataP
         // NORELEASE Implement this.
         // Perhaps move the JobStatus and finish time to a separate document stored outside the cluster state
         logger.error("Cannot set finished job status and time- Not Implemented");
+    }
+
+    public Optional<ModelSizeStats> getModelSizeStats(String jobId) {
+        AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
+        if (communicator == null) {
+            return Optional.empty();
+        }
+
+        return communicator.getModelSizeStats();
+    }
+
+    public Optional<DataCounts> getDataCounts(String jobId) {
+        AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
+        if (communicator == null) {
+            return Optional.empty();
+        }
+
+        return communicator.getDataCounts();
     }
 }

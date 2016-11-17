@@ -186,6 +186,12 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        doXContentBody(builder);
+        builder.endObject();
+        return builder;
+    }
+
+    public XContentBuilder doXContentBody(XContentBuilder builder) throws IOException {
         builder.field(JOB_ID.getPreferredName(), jobId);
         builder.field(MODEL_BYTES_FIELD.getPreferredName(), modelBytes);
         builder.field(TOTAL_BY_FIELD_COUNT_FIELD.getPreferredName(), totalByFieldCount);
@@ -197,8 +203,12 @@ public class ModelSizeStats extends ToXContentToBytes implements Writeable {
         if (timestamp != null) {
             builder.field(TIMESTAMP_FIELD.getPreferredName(), timestamp.getTime());
         }
-        builder.endObject();
+
         return builder;
+    }
+
+    public String getJobId() {
+        return jobId;
     }
 
     public String getId() {

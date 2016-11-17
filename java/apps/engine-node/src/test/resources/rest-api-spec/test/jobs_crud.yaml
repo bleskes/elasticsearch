@@ -35,7 +35,7 @@
         job_id: "farequote"
   - match: { exists: true }
   - match: { type: "job" }
-  - match: { document.jobId: "farequote" }
+  - match: { document.config.jobId: "farequote" }
 
   - do:
       xpack.prelert.delete_job:

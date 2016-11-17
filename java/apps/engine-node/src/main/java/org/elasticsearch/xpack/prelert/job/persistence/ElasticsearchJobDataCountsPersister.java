@@ -51,7 +51,8 @@ public class ElasticsearchJobDataCountsPersister implements JobDataCountsPersist
         try {
             XContentBuilder content = serialiseCounts(counts);
 
-            client.prepareIndex(ElasticsearchPersister.getJobIndexName(jobId), DataCounts.TYPE.getPreferredName(), jobId + "-data-counts")
+            client.prepareIndex(ElasticsearchPersister.getJobIndexName(jobId), DataCounts.TYPE.getPreferredName(),
+                    jobId + DataCounts.DOCUMENT_SUFFIX)
             .setSource(content).execute().actionGet();
         }
         catch (IOException ioe) {

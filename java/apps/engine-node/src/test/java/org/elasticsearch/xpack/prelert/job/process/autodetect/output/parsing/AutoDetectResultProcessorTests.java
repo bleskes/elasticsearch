@@ -213,6 +213,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
 
         verify(persister, times(1)).persistModelSizeStats(modelSizeStats);
         verifyNoMoreInteractions(persister);
+        assertEquals(modelSizeStats, processor.modelSizeStats().get());
     }
 
     public void testProcessResult_modelSnapshot() {

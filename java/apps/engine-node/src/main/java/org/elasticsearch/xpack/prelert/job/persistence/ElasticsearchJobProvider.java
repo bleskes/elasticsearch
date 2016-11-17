@@ -28,6 +28,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -314,6 +315,30 @@ public class ElasticsearchJobProvider implements JobProvider
             });
         } catch (Exception e) {
             listener.onFailure(e);
+        }
+    }
+
+    public DataCounts dataCounts(String jobId) {
+        String indexName = ElasticsearchPersister.getJobIndexName(jobId);
+
+        try {
+            GetResponse response = client.prepareGet(indexName, DataCounts.TYPE.getPreferredName(),
+                    jobId + DataCounts.DOCUMENT_SUFFIX).get();
+            if (response.isExists() == false) {
+                return new DataCounts(jobId);
+            } else {
+                BytesReference source = response.getSourceAsBytesRef();
+                XContentParser parser;
+                try {
+                    parser = XContentFactory.xContent(source).createParser(source);
+                    return DataCounts.PARSER.apply(parser, () -> parseFieldMatcher);
+                } catch (IOException e) {
+                    throw new ElasticsearchParseException("failed to parser bucket", e);
+                }
+            }
+
+        } catch (IndexNotFoundException e) {
+            throw ExceptionsHelper.missingJobException(jobId);
         }
     }
 

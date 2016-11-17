@@ -29,6 +29,7 @@ import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
 import org.elasticsearch.xpack.prelert.job.transform.TransformType;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 import org.elasticsearch.xpack.prelert.utils.SingleDocument;
+import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,9 +41,9 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
 
     @Override
     protected Response createTestInstance() {
-        final SingleDocument<Job> result;
+        final Response result;
         if (randomBoolean()) {
-            result = SingleDocument.empty(Job.TYPE);
+            result = new Response();
         } else {
             String jobId = randomAsciiOfLength(10);
             String description = randomBoolean() ? randomAsciiOfLength(10) : null;
@@ -77,9 +78,24 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
                     timeout, analysisConfig, analysisLimits, schedulerConfig.build(), dataDescription, modelSizeStats, transformConfigList,
                     modelDebugConfig, counts, ignoreDowntime, normalizationWindowDays, backgroundPersistInterval,
                     modelSnapshotRetentionDays, resultsRetentionDays, customConfig, averageBucketProcessingTimeMs, modelSnapshotId);
-            result = new SingleDocument<Job>(Job.TYPE, job);
+
+
+            DataCounts dataCounts = null;
+            ModelSizeStats sizeStats = null;
+
+            if (randomBoolean()) {
+            dataCounts = new DataCounts(randomAsciiOfLength(10), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                        randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                        randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+                        randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
+            }
+            if (randomBoolean()) {
+                sizeStats = new ModelSizeStats.Builder("foo").build();
+            }
+            result = new Response(new GetJobAction.Response.JobInfo(job, dataCounts, sizeStats));
         }
-        return new Response(result);
+
+        return result;
     }
 
     @Override

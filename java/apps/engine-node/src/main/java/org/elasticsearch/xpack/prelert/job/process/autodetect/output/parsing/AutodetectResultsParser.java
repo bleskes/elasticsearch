@@ -27,6 +27,7 @@ import org.elasticsearch.xpack.prelert.utils.CloseableIterator;
 import java.io.IOException;
 import java.io.InputStream;
 
+
 /**
  * Parses the JSON output of the autodetect program.
  * <p>

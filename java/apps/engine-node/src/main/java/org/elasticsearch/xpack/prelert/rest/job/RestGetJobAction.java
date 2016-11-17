@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.rest.job;
 
 import org.elasticsearch.client.node.NodeClient;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -26,6 +27,7 @@ import org.elasticsearch.xpack.prelert.action.GetJobAction;
 import org.elasticsearch.xpack.prelert.job.Job;
 
 import java.io.IOException;
+import java.util.Set;
 
 public class RestGetJobAction extends BaseRestHandler {
 
@@ -36,11 +38,23 @@ public class RestGetJobAction extends BaseRestHandler {
         super(settings);
         this.transportGetJobAction = transportGetJobAction;
         controller.registerHandler(RestRequest.Method.GET, PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}", this);
+        controller.registerHandler(RestRequest.Method.GET,
+                PrelertPlugin.BASE_PATH + "jobs/{" + Job.ID.getPreferredName() + "}/{metric}", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         GetJobAction.Request getJobRequest = new GetJobAction.Request(restRequest.param(Job.ID.getPreferredName()));
+        Set<String> stats = Strings.splitStringByCommaToSet(restRequest.param("metric", "config"));
+        if (stats.contains("_all")) {
+            getJobRequest.all();
+        }
+        else {
+            getJobRequest.config(stats.contains("config"));
+            getJobRequest.dataCounts(stats.contains("data_counts"));
+            getJobRequest.modelSizeStats(stats.contains("model_size_stats"));
+        }
+
         return channel -> transportGetJobAction.execute(getJobRequest, new RestStatusToXContentListener<>(channel));
     }
 }

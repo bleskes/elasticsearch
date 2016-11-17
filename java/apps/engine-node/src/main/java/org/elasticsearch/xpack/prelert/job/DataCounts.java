@@ -45,6 +45,7 @@ import java.util.Objects;
 
 public class DataCounts extends ToXContentToBytes implements Writeable {
 
+    public static final String DOCUMENT_SUFFIX = "-data-counts";
     public static final String BUCKET_COUNT_STR = "bucket_count";
     public static final String PROCESSED_RECORD_COUNT_STR = "processed_record_count";
     public static final String PROCESSED_FIELD_COUNT_STR = "processed_field_count";

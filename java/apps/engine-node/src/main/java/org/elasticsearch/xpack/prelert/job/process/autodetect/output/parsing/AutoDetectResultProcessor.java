@@ -30,6 +30,7 @@ import org.elasticsearch.xpack.prelert.utils.CloseableIterator;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -48,6 +49,8 @@ public class AutoDetectResultProcessor {
 
     private final CountDownLatch latch = new CountDownLatch(1);
     private final FlushListener flushListener;
+
+    private volatile ModelSizeStats latestModelSizeStats;
 
     public AutoDetectResultProcessor(Renormaliser renormaliser, JobResultsPersister persister, AutodetectResultsParser parser) {
         this.renormaliser = renormaliser;
@@ -124,6 +127,7 @@ public class AutoDetectResultProcessor {
                     modelSizeStats.getTotalPartitionFieldCount(), modelSizeStats.getBucketAllocationFailuresCount(),
                     modelSizeStats.getMemoryStatus()));
 
+            latestModelSizeStats = modelSizeStats;
             persister.persistModelSizeStats(modelSizeStats);
         }
         ModelSnapshot modelSnapshot = result.getModelSnapshot();
@@ -192,6 +196,10 @@ public class AutoDetectResultProcessor {
             this.isPerPartitionNormalization = isPerPartitionNormalization;
             this.deleteInterimRequired = true;
         }
+    }
+
+    public Optional<ModelSizeStats> modelSizeStats() {
+        return Optional.ofNullable(latestModelSizeStats);
     }
 
 }

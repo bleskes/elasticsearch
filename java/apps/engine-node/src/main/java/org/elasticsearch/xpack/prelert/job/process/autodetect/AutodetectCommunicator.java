@@ -20,6 +20,7 @@ import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutoDetectResultProcessor;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 public class AutodetectCommunicator implements Closeable {
 
@@ -52,6 +54,7 @@ public class AutodetectCommunicator implements Closeable {
 
     private final StateReader stateReader;
     private final Thread stateParserThread;
+
 
     public AutodetectCommunicator(ThreadPool threadPool, Job job, AutodetectProcess process, Logger jobLogger,
                                   JobResultsPersister persister, StatusReporter statusReporter,
@@ -155,4 +158,11 @@ public class AutodetectCommunicator implements Closeable {
         return autodetectProcess.getProcessStartTime();
     }
 
+    public Optional<ModelSizeStats> getModelSizeStats() {
+        return autoDetectResultProcessor.modelSizeStats();
+    }
+
+    public Optional<DataCounts> getDataCounts() {
+        return Optional.ofNullable(statusReporter.runningTotalStats());
+    }
 }
