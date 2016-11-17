@@ -153,7 +153,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         BulkRequestBuilder bulkRequestBuilder = client().prepareBulk();
         long timestamp = start;
         for (int i = 0; i < numDocs; i++) {
-            IndexRequest indexRequest = new IndexRequest("data", "type", Integer.toString(i));
+            IndexRequest indexRequest = new IndexRequest("data", "type");
             indexRequest.source("time", timestamp);
             bulkRequestBuilder.add(indexRequest);
             timestamp += randomIntBetween(1, maxIncrement);
