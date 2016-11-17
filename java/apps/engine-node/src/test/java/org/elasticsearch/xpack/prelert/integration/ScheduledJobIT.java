@@ -55,6 +55,7 @@ public class ScheduledJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"reason\":\"There is no job 'non-scheduled' with a scheduler configured\""));
     }
 
+    @AwaitsFix(bugUrl = "https://internal-ci.elastic.co/job/elastic+prelert-legacy+master+es-plugin/41/console")
     public void testStartJobScheduler_GivenInvalidStartParam() throws Exception {
         createScheduledJob();
 
