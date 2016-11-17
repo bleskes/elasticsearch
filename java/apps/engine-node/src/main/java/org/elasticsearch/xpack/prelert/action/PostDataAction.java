@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -252,8 +253,8 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
                 try {
                     DataCounts dataCounts = processManager.processData(request.getJobId(), request.content.streamInput(), params);
                     listener.onResponse(new Response(dataCounts));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                } catch (IOException | ElasticsearchException e) {
+                    listener.onFailure(e);
                 }
             });
         }
