@@ -14,39 +14,23 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcher;
-import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
-import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
-import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
-import org.elasticsearch.xpack.prelert.job.alert.AlertType;
-import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
-import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
-import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
-import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
-import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
-import static org.mockito.Mockito.mock;
+import java.util.stream.Collectors;
 
 /**
  * Tests for parsing the JSON output of autodetect
@@ -233,151 +217,14 @@ public class AutodetectResultsParserTests extends ESTestCase {
             + "\"anomalyScore\":1.19192}],\"rawAnomalyScore\":1.26918,\"anomalyScore\":1.19192,\"maxNormalizedProbability\":93.6213,"
             + "\"recordCount\":34,\"eventCount\":1159}" + "]";
 
-    /**
-     * Simple results persister stores buckets and state in a local array.
-     */
-    public class FlushWaiterThread extends Thread {
-        private final AutodetectResultsParser resultsParser;
-        private final String flushId;
-        private volatile boolean gotAcknowledgement;
-
-        public FlushWaiterThread(AutodetectResultsParser resultsParser, String flushId) {
-            this.resultsParser = resultsParser;
-            this.flushId = flushId;
-        }
-
-        @Override
-        public void run() {
-            resultsParser.waitForParseStart();
-            while (!gotAcknowledgement) {
-                gotAcknowledgement = resultsParser.waitForFlushAcknowledgement(flushId, Duration.ofMillis(1000));
-            }
-        }
-
-        public void joinNoInterrupt() {
-            try {
-                join();
-            } catch (InterruptedException e) {
-                fail("Flush waiter join should not have been interrupted");
-            }
-        }
-
-        public boolean gotAcknowledgement() {
-            return gotAcknowledgement;
-        }
-    }
-
-    /**
-     * Simple results persister stores buckets and state in a local array.
-     */
-    public class ResultsPersister implements JobResultsPersister {
-        final List<Bucket> buckets = new ArrayList<>();
-        final SortedMap<String, Quantiles> quantiles = new TreeMap<>();
-        final List<Influencer> influencers = new ArrayList<>();
-        final List<CategoryDefinition> categoryDefinitions = new ArrayList<>();
-        final List<ModelSizeStats> modelSizeStats = new ArrayList<>();
-        final List<ModelDebugOutput> modelDebugOutput = new ArrayList<>();
-        final SortedMap<String, ModelSnapshot> modelSnapshots = new TreeMap<>();
-        final List<BytesReference> bulkState = new ArrayList<>();
-        long processingTimeMs;
-
-        @Override
-        public void persistBucket(Bucket bucket) {
-            buckets.add(bucket);
-        }
-
-        @Override
-        public void persistCategoryDefinition(CategoryDefinition category) {
-            categoryDefinitions.add(category);
-        }
-
-        @Override
-        public void persistQuantiles(Quantiles quantiles) {
-            this.quantiles.put(Quantiles.QUANTILES_ID, quantiles);
-        }
-
-        @Override
-        public void persistModelSnapshot(ModelSnapshot modelSnapshot) {
-            modelSnapshots.put(modelSnapshot.getSnapshotId(), modelSnapshot);
-        }
-
-        @Override
-        public void persistModelSizeStats(ModelSizeStats memUsagae) {
-            modelSizeStats.add(memUsagae);
-        }
-
-        @Override
-        public void persistModelDebugOutput(ModelDebugOutput modelDebugOutput) {
-            this.modelDebugOutput.add(modelDebugOutput);
-        }
-
-        @Override
-        public boolean commitWrites() {
-            return true;
-        }
-
-        public List<Bucket> getBuckets() {
-            return buckets;
-        }
-
-        public SortedMap<String, Quantiles> getQuantiles() {
-            return quantiles;
-        }
-
-        @Override
-        public void persistInfluencer(Influencer influencer) {
-            influencers.add(influencer);
-        }
-
-        @Override
-        public void persistBulkState(BytesReference bytesRef) {
-            bulkState.add(bytesRef);
-        }
-
-        @Override
-        public void deleteInterimResults() {
-        }
-    }
-
-    public class AlertListener extends AlertObserver {
-        public AlertListener(double normlizedProbThreshold, double anomalyThreshold) {
-            super(new AlertTrigger[] { new AlertTrigger(normlizedProbThreshold, anomalyThreshold, AlertType.BUCKET) }, "foo-job");
-        }
-
-        private boolean alertFired = false;
-        public double anomalyScore;
-        public double normalisedProb;
-
-        @Override
-        public void fire(Bucket bucket, AlertTrigger trigger) {
-            alertFired = true;
-            anomalyScore = bucket.getAnomalyScore();
-            normalisedProb = bucket.getMaxNormalizedProbability();
-        }
-
-        public boolean isFired() {
-            return alertFired;
-        }
-    }
-
     public void testParser() throws IOException {
-        Logger logger = Loggers.getLogger(AutodetectResultsParserTests.class);
-
         InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
-
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-
-        FlushWaiterThread flushWaiter = new FlushWaiterThread(parser, "testing1");
-        flushWaiter.start();
-
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        flushWaiter.joinNoInterrupt();
-        assertTrue(flushWaiter.gotAcknowledgement());
-
-        List<Bucket> buckets = persister.getBuckets();
+        AutodetectResultsParser parser = new AutodetectResultsParser(Settings.EMPTY, () -> ParseFieldMatcher.STRICT);
+        List<AutodetectResult> results = new ArrayList<>();
+        parser.parseResults(inputStream).forEachRemaining(results::add);
+        List<Bucket> buckets = results.stream().map(AutodetectResult::getBucket)
+                .filter(b -> b != null)
+                .collect(Collectors.toList());
 
         assertEquals(2, buckets.size());
         assertEquals(new Date(1359450000000L), buckets.get(0).getTimestamp());
@@ -449,31 +296,30 @@ public class AutodetectResultsParserTests extends ESTestCase {
         assertEquals("", secondBucket.getRecords().get(3).getPartitionFieldName());
         assertEquals("", secondBucket.getRecords().get(3).getPartitionFieldValue());
 
-        SortedMap<String, Quantiles> quantiles = persister.getQuantiles();
-
-        assertEquals(1, quantiles.size());
-        assertNotNull(quantiles.get("hierarchical"));
+        List<Quantiles> quantiles = results.stream().map(AutodetectResult::getQuantiles)
+                .filter(q -> q != null)
+                .collect(Collectors.toList());
+        assertEquals(3, quantiles.size());
+        assertEquals("foo", quantiles.get(0).getJobId());
+        assertNull(quantiles.get(0).getTimestamp());
+        assertEquals("[normaliser 1.1, normaliser 2.1]", quantiles.get(0).getQuantileState());
+        assertEquals("foo", quantiles.get(1).getJobId());
+        assertNull(quantiles.get(1).getTimestamp());
+        assertEquals("[normaliser 1.2, normaliser 2.2]", quantiles.get(1).getQuantileState());
+        assertEquals("foo", quantiles.get(2).getJobId());
+        assertNull(quantiles.get(2).getTimestamp());
+        assertEquals("[normaliser 1.3, normaliser 2.3]", quantiles.get(2).getQuantileState());
     }
 
     @AwaitsFix(bugUrl = "rewrite this test so it doesn't use ~200 lines of json")
     public void testPopulationParser() throws IOException {
-        Logger logger = Loggers.getLogger(AutodetectResultsParserTests.class);
-
         InputStream inputStream = new ByteArrayInputStream(POPULATION_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
-
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-
-        FlushWaiterThread flushWaiter = new FlushWaiterThread(parser, "testing2");
-        flushWaiter.start();
-
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        flushWaiter.joinNoInterrupt();
-        assertTrue(flushWaiter.gotAcknowledgement());
-
-        List<Bucket> buckets = persister.getBuckets();
+        AutodetectResultsParser parser = new AutodetectResultsParser(Settings.EMPTY, () -> ParseFieldMatcher.STRICT);
+        List<AutodetectResult> results = new ArrayList<>();
+        parser.parseResults(inputStream).forEachRemaining(results::add);
+        List<Bucket> buckets = results.stream().map(AutodetectResult::getBucket)
+                .filter(b -> b != null)
+                .collect(Collectors.toList());
 
         assertEquals(2, buckets.size());
         assertEquals(new Date(1379590200000L), buckets.get(0).getTimestamp());
@@ -493,201 +339,52 @@ public class AutodetectResultsParserTests extends ESTestCase {
         assertEquals(buckets.get(1).getEventCount(), 1159);
     }
 
-    /**
-     * Register an alert listener and test it is fired
-     */
-    public void testAlerting() throws IOException {
-        Logger logger = Loggers.getLogger(AutodetectResultsParserTests.class);
-
-        // 1. normalised prob threshold
-        InputStream inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = Mockito.mock(Renormaliser.class);
-
-        double probThreshold = 9.0;
-        double scoreThreshold = 100.0;
-        AlertListener listener = new AlertListener(probThreshold, scoreThreshold);
-
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-        parser.addObserver(listener);
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertEquals(0, parser.observerCount());
-        assertTrue(listener.isFired());
-        assertTrue(listener.normalisedProb >= probThreshold);
-
-        // 2. anomaly score threshold
-        inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
-
-        probThreshold = 100.0;
-        scoreThreshold = 18.0;
-        listener = new AlertListener(probThreshold, scoreThreshold);
-
-        parser = new AutodetectResultsParser();
-        parser.addObserver(listener);
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertEquals(0, parser.observerCount());
-        assertTrue(listener.isFired());
-        assertTrue(listener.anomalyScore >= scoreThreshold);
-
-        // 3. neither threshold is reached
-        inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
-
-        probThreshold = 100.0;
-        scoreThreshold = 100.0;
-        listener = new AlertListener(probThreshold, scoreThreshold);
-
-        parser = new AutodetectResultsParser();
-        parser.addObserver(listener);
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertEquals(1, parser.observerCount());
-        assertFalse(listener.isFired());
-        assertTrue(listener.anomalyScore < scoreThreshold && listener.normalisedProb < probThreshold);
-
-        // 4. register 2 listeners only one of which is fired
-        inputStream = new ByteArrayInputStream(METRIC_OUTPUT_SAMPLE.getBytes(StandardCharsets.UTF_8));
-
-        probThreshold = 100.0;
-        scoreThreshold = 100.0;
-        listener = new AlertListener(probThreshold, scoreThreshold);
-
-        parser = new AutodetectResultsParser();
-        parser.addObserver(listener);
-
-        probThreshold = 2.0;
-        scoreThreshold = 1.0;
-        AlertListener firedListener = new AlertListener(probThreshold, scoreThreshold);
-        parser.addObserver(firedListener);
-
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertEquals(1, parser.observerCount());
-        assertFalse(listener.isFired());
-        assertTrue(listener.anomalyScore < scoreThreshold && listener.normalisedProb < probThreshold);
-
-        assertTrue(firedListener.isFired());
-        assertTrue(firedListener.anomalyScore >= scoreThreshold || firedListener.normalisedProb >= probThreshold);
-    }
-
     public void testParse_GivenEmptyArray() throws ElasticsearchParseException, IOException {
         String json = "[]";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        Logger logger = mock(Logger.class);
-        JobResultsPersister persister = mock(JobResultsPersister.class);
-
-        Renormaliser renormaliser = mock(Renormaliser.class);
-
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        Mockito.verifyZeroInteractions(persister);
+        AutodetectResultsParser parser = new AutodetectResultsParser(Settings.EMPTY, () -> ParseFieldMatcher.STRICT);
+        assertFalse(parser.parseResults(inputStream).hasNext());
     }
 
     public void testParse_GivenModelSizeStats() throws ElasticsearchParseException, IOException {
         String json = "[{\"modelSizeStats\": {\"jobId\": \"foo\", \"modelBytes\":300}}]";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        Logger logger = mock(Logger.class);
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = mock(Renormaliser.class);
 
-        AutodetectResultsParser parser = new AutodetectResultsParser();
+        AutodetectResultsParser parser = new AutodetectResultsParser(Settings.EMPTY, () -> ParseFieldMatcher.STRICT);
+        List<AutodetectResult> results = new ArrayList<>();
+        parser.parseResults(inputStream).forEachRemaining(results::add);
 
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertEquals(1, persister.modelSizeStats.size());
-        assertEquals(300, persister.modelSizeStats.get(0).getModelBytes());
+        assertEquals(1, results.size());
+        assertEquals(300, results.get(0).getModelSizeStats().getModelBytes());
     }
 
     public void testParse_GivenCategoryDefinition() throws IOException {
         String json = "[{\"categoryDefinition\": {\"jobId\":\"foo\", \"categoryId\":18}}]";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        Logger logger = mock(Logger.class);
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = mock(Renormaliser.class);
+        AutodetectResultsParser parser = new AutodetectResultsParser(Settings.EMPTY, () -> ParseFieldMatcher.STRICT);
+        List<AutodetectResult> results = new ArrayList<>();
+        parser.parseResults(inputStream).forEachRemaining(results::add);
 
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertEquals(1, persister.categoryDefinitions.size());
-        assertEquals(18, persister.categoryDefinitions.get(0).getCategoryId());
+        assertEquals(1, results.size());
+        assertEquals(18, results.get(0).getCategoryDefinition().getCategoryId());
     }
 
     public void testParse_GivenUnknownObject() throws ElasticsearchParseException, IOException {
         String json = "[{\"unknown\":{\"id\": 18}}]";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        Logger logger = mock(Logger.class);
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = mock(Renormaliser.class);
-
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-
+        AutodetectResultsParser parser = new AutodetectResultsParser(Settings.EMPTY, () -> ParseFieldMatcher.STRICT);
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT));
-
-        assertEquals(e.getMessage(), "[autodetect_result] unknown field [unknown], parser not found");
+                () -> parser.parseResults(inputStream).forEachRemaining(a -> {}));
+        assertEquals("[autodetect_result] unknown field [unknown], parser not found", e.getMessage());
     }
 
     public void testParse_GivenArrayContainsAnotherArray() throws ElasticsearchParseException, IOException {
-
         String json = "[[]]";
         InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        Logger logger = mock(Logger.class);
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = mock(Renormaliser.class);
-
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-
+        AutodetectResultsParser parser = new AutodetectResultsParser(Settings.EMPTY, () -> ParseFieldMatcher.STRICT);
         ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
-                () -> parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT));
-
-        assertEquals(e.getMessage(), "Invalid JSON should start with an array of objects or an object = START_ARRAY");
+                () -> parser.parseResults(inputStream).forEachRemaining(a -> {}));
+        assertEquals("unexpected token [START_ARRAY]", e.getMessage());
     }
 
-    public void testRemoveObserver() throws ElasticsearchParseException, IOException {
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-        AlertObserver alertObserver = mock(AlertObserver.class);
-        parser.addObserver(alertObserver);
-
-        assertEquals(1, parser.observerCount());
-
-        parser.removeObserver(alertObserver);
-
-        assertEquals(0, parser.observerCount());
-    }
-
-    public void testParse_GivenInterimBucket_ShouldNotNotifyObserver() throws ElasticsearchParseException, IOException {
-        String json = "[{\"bucket\": {\"jobId\":\"foo\", \"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":true}}]";
-
-        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        Logger logger = mock(Logger.class);
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = mock(Renormaliser.class);
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-        AlertListener alertListener = new AlertListener(90.0, 90.0);
-        parser.addObserver(alertListener);
-
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertFalse(alertListener.isFired());
-    }
-
-    public void testParse_GivenBucketWithInterimFalse_ShouldNotifyObserver() throws IOException {
-        String json = "[{\"bucket\": {\"jobId\":\"foo\", \"timestamp\":1359450000,\"anomalyScore\":99.0, \"isInterim\":false}}]";
-
-        InputStream inputStream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-        Logger logger = mock(Logger.class);
-        ResultsPersister persister = new ResultsPersister();
-        Renormaliser renormaliser = mock(Renormaliser.class);
-        AutodetectResultsParser parser = new AutodetectResultsParser();
-        AlertListener alertListener = new AlertListener(90.0, 90.0);
-        parser.addObserver(alertListener);
-
-        parser.parseResults(inputStream, persister, renormaliser, logger, () -> ParseFieldMatcher.STRICT);
-
-        assertTrue(alertListener.isFired());
-    }
 }

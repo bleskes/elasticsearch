@@ -15,19 +15,19 @@
 package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.Job;
-import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.ResultsReader;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutoDetectResultProcessor;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.StateReader;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.DataToProcessWriter;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.writer.DataToProcessWriterFactory;
-import org.elasticsearch.xpack.prelert.job.process.normalizer.noop.NoOpRenormaliser;
 import org.elasticsearch.xpack.prelert.job.status.CountingInputStream;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
@@ -44,48 +44,28 @@ public class AutodetectCommunicator implements Closeable {
     private static final int DEFAULT_TRY_COUNT = 5;
     private static final int DEFAULT_TRY_TIMEOUT_SECS = 6;
 
-    private final AutodetectProcess autodetectProcess;
     private final Logger jobLogger;
-    private final DataToProcessWriter autoDetectWriter;
-    private final StateReader stateReader;
-    private final ResultsReader resultsReader;
-    private final Thread outputParserThread;
-    private final Thread stateParserThread;
     private final StatusReporter statusReporter;
+    private final AutodetectProcess autodetectProcess;
+    private final DataToProcessWriter autoDetectWriter;
+    private final AutoDetectResultProcessor autoDetectResultProcessor;
 
+    private final StateReader stateReader;
+    private final Thread stateParserThread;
 
-    public AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger, JobResultsPersister resultsPersister,
-                                  StatusReporter statusReporter, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+    public AutodetectCommunicator(ThreadPool threadPool, Job job, AutodetectProcess process, Logger jobLogger,
+                                  JobResultsPersister persister, StatusReporter statusReporter,
+                                  AutoDetectResultProcessor autoDetectResultProcessor) {
         this.autodetectProcess = process;
         this.jobLogger = jobLogger;
         this.statusReporter = statusReporter;
+        this.autoDetectResultProcessor = autoDetectResultProcessor;
+        this.stateReader = new StateReader(persister, process.getPersistStream(), this.jobLogger);
 
-        // TODO Port the normalizer from the old project
-        resultsReader = new ResultsReader(new NoOpRenormaliser(), resultsPersister, process.getProcessOutStream(), jobLogger,
-                job.getAnalysisConfig().getUsePerPartitionNormalization(), parseFieldMatcherSupplier);
-
-        stateReader = new StateReader(resultsPersister, process.getPersistStream(), this.jobLogger);
-
-        // NORELEASE - use ES ThreadPool
-        outputParserThread = new Thread(resultsReader, job.getId() + "-Bucket-Parser");
-        outputParserThread.start();
-        // NORELEASE - use ES ThreadPool
-        stateParserThread = new Thread(stateReader, job.getId() + "-State-Parser");
-        stateParserThread.start();
-
-        this.autoDetectWriter = createProcessWriter(job, process, statusReporter);
-    }
-
-    AutodetectCommunicator(Job job, AutodetectProcess process, Logger jobLogger, StatusReporter statusReporter,
-                           ResultsReader resultsReader, StateReader stateReader) {
-        this.autodetectProcess = process;
-        this.jobLogger = jobLogger;
-        this.statusReporter = statusReporter;
-        this.resultsReader = resultsReader;
-        this.stateReader = stateReader;
-        // NORELEASE - use ES ThreadPool
-        outputParserThread = new Thread(resultsReader, job.getId() + "-Bucket-Parser");
-        outputParserThread.start();
+        threadPool.executor(PrelertPlugin.THREAD_POOL_NAME).execute(() -> {
+            AnalysisConfig analysisConfig = job.getAnalysisConfig();
+            this.autoDetectResultProcessor.process(jobLogger, process.getPersistStream(), analysisConfig.getUsePerPartitionNormalization());
+        });
         // NORELEASE - use ES ThreadPool
         stateParserThread = new Thread(stateReader, job.getId() + "-State-Parser");
         stateParserThread.start();
@@ -110,15 +90,7 @@ public class AutodetectCommunicator implements Closeable {
     public void close() throws IOException {
         checkProcessIsAlive();
         autodetectProcess.close();
-        waitForResultsParser();
-    }
-
-    private void waitForResultsParser() {
-        try {
-            outputParserThread.join();
-        } catch (InterruptedException e) {
-            jobLogger.error("Error joining parser thread", e);
-        }
+        autoDetectResultProcessor.awaitCompletion();
     }
 
     public void writeResetBucketsControlMessage(DataLoadParams params) throws IOException {
@@ -148,7 +120,7 @@ public class AutodetectCommunicator implements Closeable {
                 jobLogger.error(msg);
                 throw ExceptionsHelper.serverError(msg);
             }
-            isFlushComplete = resultsReader.waitForFlushAcknowledgement(flushId, intermittentTimeout);
+            isFlushComplete = autoDetectResultProcessor.waitForFlushAcknowledgement(flushId, intermittentTimeout);
         }
 
         if (!isFlushComplete) {
@@ -159,7 +131,7 @@ public class AutodetectCommunicator implements Closeable {
 
         // We also have to wait for the normaliser to become idle so that we block
         // clients from querying results in the middle of normalisation.
-        resultsReader.waitUntilRenormaliserIsIdle();
+        autoDetectResultProcessor.waitUntilRenormaliserIsIdle();
     }
 
     /**
@@ -171,14 +143,6 @@ public class AutodetectCommunicator implements Closeable {
             jobLogger.error(errorMsg);
             throw ExceptionsHelper.serverError(errorMsg);
         }
-    }
-
-    public void addAlertObserver(AlertObserver ao) {
-        resultsReader.addAlertObserver(ao);
-    }
-
-    public boolean removeAlertObserver(AlertObserver ao) {
-        return resultsReader.removeAlertObserver(ao);
     }
 
     public ZonedDateTime getProcessStartTime() {

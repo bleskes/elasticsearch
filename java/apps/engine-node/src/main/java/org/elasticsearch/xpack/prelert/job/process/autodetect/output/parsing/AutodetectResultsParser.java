@@ -14,35 +14,18 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
-import org.elasticsearch.common.SuppressForbidden;
+import org.elasticsearch.common.component.AbstractComponent;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
-import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
-import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
-import org.elasticsearch.xpack.prelert.job.alert.AlertTrigger;
-import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
-import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
-import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
-import org.elasticsearch.xpack.prelert.job.results.Bucket;
-import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
-import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
+import org.elasticsearch.xpack.prelert.utils.CloseableIterator;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 /**
  * Parses the JSON output of the autodetect program.
@@ -50,267 +33,95 @@ import java.util.Set;
  * Expects an array of buckets so the first element will always be the
  * start array symbol and the data must be terminated with the end array symbol.
  */
-// NORELEASE remove this class when Jackson is gone
-@SuppressForbidden(reason = "This class uses notify and wait but will be removed when jackson is gone")
-public class AutodetectResultsParser {
-    private final List<AlertObserver> observers = new ArrayList<>();
-    private final Set<String> acknowledgedFlushes = new HashSet<>();
-    private final boolean isPerPartitionNormalization;
+public class AutodetectResultsParser extends AbstractComponent {
 
-    private volatile boolean parsingStarted;
-    private volatile boolean parsingInProgress;
+    private final ParseFieldMatcherSupplier parseFieldMatcherSupplier;
 
-    public AutodetectResultsParser() {
-        this(false);
+    public AutodetectResultsParser(Settings settings, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
+        super(settings);
+        this.parseFieldMatcherSupplier = parseFieldMatcherSupplier;
     }
 
-    public AutodetectResultsParser(boolean isPerPartition) {
-        isPerPartitionNormalization = isPerPartition;
-    }
-
-    public void addObserver(AlertObserver obs) {
-        synchronized (observers) {
-            observers.add(obs);
-        }
-    }
-
-    public boolean removeObserver(AlertObserver obs) {
-        synchronized (observers) {
-            // relies on obj reference id for equality
-            return observers.remove(obs);
-        }
-    }
-
-    public int observerCount() {
-        return observers.size();
-    }
-
-
-    /**
-     * Parse the bucket results from inputstream and perist
-     * via the JobDataPersister.
-     * <p>
-     * Trigger renormalisation of past results when new quantiles
-     * are seen.
-     */
-    public void parseResults(InputStream inputStream, JobResultsPersister persister,
-            Renormaliser renormaliser, Logger logger, ParseFieldMatcherSupplier parseFieldMatcherSupplier)
-                    throws ElasticsearchParseException {
-        synchronized (acknowledgedFlushes) {
-            parsingStarted = true;
-            parsingInProgress = true;
-            // NOCOMMIT fix this so its not needed
-            acknowledgedFlushes.notifyAll();
-        }
-
+    CloseableIterator<AutodetectResult> parseResults(InputStream in) throws ElasticsearchParseException {
         try {
-            parseResultsInternal(inputStream, persister, renormaliser, logger, parseFieldMatcherSupplier);
+            XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(in);
+            XContentParser.Token token = parser.nextToken();
+            // if start of an array ignore it, we expect an array of buckets
+            if (token == XContentParser.Token.START_ARRAY) {
+                token = parser.nextToken();
+                logger.debug("JSON starts with an array");
+            }
+
+            if (token == XContentParser.Token.END_ARRAY) {
+                logger.info("Empty results array, 0 buckets parsed");
+                return CloseableIterator.empty();
+            } else if (token != XContentParser.Token.START_OBJECT) {
+                logger.error("Expecting Json Start Object token after the Start Array token");
+                throw new ElasticsearchParseException("unexpected token [" + token + "]");
+            }
+            return new BucketIterator(in, parser);
         } catch (IOException e) {
+            consumeAndCloseStream(in);
             throw new ElasticsearchParseException(e.getMessage(), e);
-        } finally {
-            // Don't leave any threads waiting for flushes in the lurch
-            synchronized (acknowledgedFlushes) {
-                // Leave parsingStarted set to true to avoid deadlock in the
-                // case where the entire parse happens without the interested
-                // thread getting scheduled
-                parsingInProgress = false;
-                // NOCOMMIT fix this so its not needed
-                acknowledgedFlushes.notifyAll();
-            }
         }
     }
 
-    /**
-     * Wait for a particular flush ID to be received by the parser.  In
-     * order to wait, this method must be called after parsing has started.
-     * It will give up waiting if parsing finishes before the flush ID is
-     * seen or the timeout expires.
-     *
-     * @param flushId The ID to wait for.
-     * @param timeout the timeout
-     * @return true if the supplied flush ID was seen or the parsing finished; false if the timeout expired.
-     */
-    public boolean waitForFlushAcknowledgement(String flushId, Duration timeout) {
-        synchronized (acknowledgedFlushes) {
-            // NOCOMMIT fix this so its not needed
-            try {
-                acknowledgedFlushes.wait(timeout.toMillis());
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+    private void consumeAndCloseStream(InputStream in) {
+        try {
+            // read anything left in the stream before
+            // closing the stream otherwise if the process
+            // tries to write more after the close it gets
+            // a SIGPIPE
+            byte[] buff = new byte[512];
+            while (in.read(buff) >= 0) {
+                // Do nothing
             }
-            boolean isFlushAcknowledged = acknowledgedFlushes.remove(flushId);
-            return isFlushAcknowledged || !parsingInProgress;
+            in.close();
+        } catch (IOException e) {
+            logger.warn("Error closing result parser input stream", e);
         }
     }
 
-    /**
-     * Can be used by unit tests to ensure the pre-condition of the
-     * {@link #waitForFlushAcknowledgement(String, Duration) waitForFlushAcknowledgement} method is met.
-     */
-    void waitForParseStart() {
-        synchronized (acknowledgedFlushes) {
-            while (!parsingStarted) {
-                // NOCOMMIT fix this so its not needed
-                try {
-                    acknowledgedFlushes.wait();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-    }
+    private class BucketIterator implements CloseableIterator<AutodetectResult> {
 
-    private void parseResultsInternal(InputStream inputStream, JobResultsPersister persister,
-            Renormaliser renormaliser, Logger logger, ParseFieldMatcherSupplier parseFieldMatcherSupplier) throws IOException {
-        logger.debug("Parse Results");
-        boolean deleteInterimRequired = true;
-        XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(inputStream);
+        private final InputStream in;
+        private final XContentParser parser;
 
-        XContentParser.Token token = parser.nextToken();
-        // if start of an array ignore it, we expect an array of buckets
-        if (token == XContentParser.Token.START_ARRAY) {
-            token = parser.nextToken();
-            logger.debug("JSON starts with an array");
+        private XContentParser.Token token;
+
+        private BucketIterator(InputStream in, XContentParser parser) {
+            this.in = in;
+            this.parser = parser;
+            token = parser.currentToken();
         }
 
-        if (token == XContentParser.Token.END_ARRAY) {
-            logger.info("Empty results array, 0 buckets parsed");
-            return;
-        } else if (token != XContentParser.Token.START_OBJECT) {
-            logger.error("Expecting Json Start Object token after the Start Array token");
-            throw new ElasticsearchParseException(
-                    "Invalid JSON should start with an array of objects or an object = " + token);
-        }
-
-        // Parse the buckets from the stream
-        int bucketCount = 0;
-        while (token != XContentParser.Token.END_ARRAY) {
-            if (token == null) // end of input
-            {
-                logger.error("Unexpected end of Json input");
-                throw new ElasticsearchParseException("Invalid JSON  - Unexpected end of Json input");
-            } else if (token == XContentParser.Token.START_OBJECT) {
-                AutodetectResult result = AutodetectResult.PARSER.apply(parser, parseFieldMatcherSupplier);
-                Bucket bucket = result.getBucket();
-                if (bucket != null) {
-                        if (deleteInterimRequired == true) {
-                        // Delete any existing interim results at the start
-                        // of a job upload:
-                        // these are generated by a Flush command, and will
-                        // be replaced or
-                            // superseded by new results
-                            logger.trace("Deleting interim results");
-
-                        // NOCOMMIT: This feels like an odd side-effect to
-                        // have in a parser,
-                        // especially since it has to wire up to
-                        // actionlisteners. Feels like it should
-                            // be refactored out somewhere, after parsing?
-                            persister.deleteInterimResults();
-                            deleteInterimRequired = false;
-                        }
-                        if (isPerPartitionNormalization) {
-                            bucket.calcMaxNormalizedProbabilityPerPartition();
-                        }
-                        persister.persistBucket(bucket);
-                        notifyObservers(bucket);
-
-                        logger.trace("Bucket number " + ++bucketCount + " parsed from output");
-                        }
-                CategoryDefinition categoryDefinition = result.getCategoryDefinition();
-                if (categoryDefinition != null) {
-                    persister.persistCategoryDefinition(categoryDefinition);
-                }
-                FlushAcknowledgement flushAcknowledgement = result.getFlushAcknowledgement();
-                if (flushAcknowledgement != null) {
-                    logger.debug("Flush acknowledgement parsed from output for ID " + flushAcknowledgement.getId());
-                        // Commit previous writes here, effectively continuing
-                        // the flush from the C++ autodetect process right
-                        // through to the data store
-                        persister.commitWrites();
-                        synchronized (acknowledgedFlushes) {
-                        acknowledgedFlushes.add(flushAcknowledgement.getId());
-                            // NOCOMMIT fix this so its not needed
-                            acknowledgedFlushes.notifyAll();
-                        }
-                    // Interim results may have been produced by the flush,
-                    // which need to be
-                        // deleted when the next finalized results come through
-                        deleteInterimRequired = true;
-                }
-                ModelDebugOutput modelDebugOutput = result.getModelDebugOutput();
-                if (modelDebugOutput != null) {
-                    persister.persistModelDebugOutput(modelDebugOutput);
-                    }
-                ModelSizeStats modelSizeStats = result.getModelSizeStats();
-                if (modelSizeStats != null) {
-                    logger.trace(String.format(Locale.ROOT, "Parsed ModelSizeStats: %d / %d / %d / %d / %d / %s",
-                            modelSizeStats.getModelBytes(), modelSizeStats.getTotalByFieldCount(), modelSizeStats.getTotalOverFieldCount(),
-                            modelSizeStats.getTotalPartitionFieldCount(), modelSizeStats.getBucketAllocationFailuresCount(),
-                            modelSizeStats.getMemoryStatus()));
-
-                    persister.persistModelSizeStats(modelSizeStats);
-                }
-                ModelSnapshot modelSnapshot = result.getModelSnapshot();
-                if (modelSnapshot != null) {
-                    persister.persistModelSnapshot(modelSnapshot);
-                }
-                Quantiles quantiles = result.getQuantiles();
-                if (quantiles != null) {
-                    persister.persistQuantiles(quantiles);
-
-                    logger.debug("Quantiles parsed from output - will " + "trigger renormalisation of scores");
-                    if (isPerPartitionNormalization) {
-                        renormaliser.renormaliseWithPartition(quantiles, logger);
-                    } else {
-                        renormaliser.renormalise(quantiles, logger);
-                    }
-                }
-            } else {
+        @Override
+        public boolean hasNext() {
+            if (token == XContentParser.Token.END_ARRAY) {
+                return false;
+            } else if (token != XContentParser.Token.START_OBJECT) {
                 logger.error("Expecting Json Field name token after the Start Object token");
-                throw new ElasticsearchParseException(
-                        "Invalid JSON  - object should start with a field name, not " + parser.text());
+                throw new ElasticsearchParseException("unexpected token [" + token + "]");
             }
-            token = parser.nextToken();
+            return true;
         }
 
-        logger.info(bucketCount + " buckets parsed from autodetect output - about to refresh indexes");
-
-        // commit data to the datastore
-        persister.commitWrites();
-    }
-
-    private final class ObserverTriggerPair {
-        AlertObserver observer;
-        AlertTrigger trigger;
-
-        private ObserverTriggerPair(AlertObserver observer, AlertTrigger trigger) {
-            this.observer = observer;
-            this.trigger = trigger;
-        }
-    }
-
-    private void notifyObservers(Bucket bucket) {
-        List<ObserverTriggerPair> observersToFire = new ArrayList<>();
-
-        // one-time alerts so remove them from the list before firing
-        synchronized (observers) {
-            Iterator<AlertObserver> iter = observers.iterator();
-            while (iter.hasNext()) {
-                AlertObserver ao = iter.next();
-
-                List<AlertTrigger> triggeredAlerts = ao.triggeredAlerts(bucket);
-                if (triggeredAlerts.isEmpty() == false) {
-                    // only fire on the first alert trigger
-                    observersToFire.add(new ObserverTriggerPair(ao, triggeredAlerts.get(0)));
-                    iter.remove();
-                }
+        @Override
+        public AutodetectResult next() {
+            AutodetectResult result = AutodetectResult.PARSER.apply(parser, parseFieldMatcherSupplier);
+            try {
+                token = parser.nextToken();
+            } catch (IOException e) {
+                throw new ElasticsearchParseException(e.getMessage(), e);
             }
+            return result;
         }
 
-        for (ObserverTriggerPair pair : observersToFire) {
-            pair.observer.fire(bucket, pair.trigger);
+        @Override
+        public void close() throws IOException {
+            consumeAndCloseStream(in);
         }
+
     }
 
 }

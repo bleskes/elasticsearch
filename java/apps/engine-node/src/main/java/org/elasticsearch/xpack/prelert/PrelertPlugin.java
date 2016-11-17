@@ -68,10 +68,10 @@ import org.elasticsearch.xpack.prelert.job.logs.JobLogs;
 import org.elasticsearch.xpack.prelert.job.manager.AutodetectProcessManager;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchBulkDeleterFactory;
-import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobDataCountsPersister;
 import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
-import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchPersister;
-import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchUsagePersister;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutoDetectResultProcessor;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutodetectResultsParser;
+import org.elasticsearch.xpack.prelert.job.process.normalizer.noop.NoOpRenormaliser;
 import org.elasticsearch.xpack.prelert.job.scheduler.ScheduledJobService;
 import org.elasticsearch.xpack.prelert.job.manager.actions.Action;
 import org.elasticsearch.xpack.prelert.job.manager.actions.ActionGuardian;
@@ -81,7 +81,6 @@ import org.elasticsearch.xpack.prelert.job.metadata.JobLifeCycleService;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.process.NativeController;
 import org.elasticsearch.xpack.prelert.job.process.ProcessCtrl;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.BlackHoleAutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.NativeAutodetectProcessFactory;
@@ -173,25 +172,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         // For this reason we can't use interfaces in the constructor of transport actions.
         // This ok for now as we will remove Guice soon
         ElasticsearchJobProvider jobProvider = new ElasticsearchJobProvider(client, 0, parseFieldMatcherSupplier.getParseFieldMatcher());
-        AutodetectCommunicatorFactory autodetectCommunicatorFactory = createAutodetectCommunicatorFactory(client, jobProvider);
 
         JobManager jobManager = new JobManager(env, settings, jobProvider, clusterService, processActionGuardian);
-        DataProcessor dataProcessor = new AutodetectProcessManager(autodetectCommunicatorFactory, jobManager);
-        ScheduledJobService scheduledJobService = new ScheduledJobService(threadPool, client, jobProvider, dataProcessor,
-                new HttpDataExtractorFactory(), System::currentTimeMillis);
-        return Arrays.asList(
-                jobProvider,
-                jobManager,
-                new JobAllocator(settings, clusterService, threadPool),
-                new JobLifeCycleService(settings, client, clusterService, scheduledJobService, dataProcessor, threadPool.generic()),
-                new ElasticsearchBulkDeleterFactory(client), //NORELEASE: this should use Delete-by-query
-                dataProcessor
-                );
-    }
-
-    private AutodetectCommunicatorFactory createAutodetectCommunicatorFactory(Client client,
-            ElasticsearchJobProvider jobProvider) {
-
         AutodetectProcessFactory processFactory;
         if (USE_NATIVE_PROCESS_OPTION.get(settings)) {
             try {
@@ -204,11 +186,19 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
         } else {
             processFactory = (JobDetails, ignoreDowntime) -> new BlackHoleAutodetectProcess();
         }
-
-        return new AutodetectCommunicatorFactory(env, settings, processFactory, jobId -> new ElasticsearchPersister(jobId, client),
-                logger -> new ElasticsearchJobDataCountsPersister(client, logger),
-                logger -> new ElasticsearchUsagePersister(client, logger),
-                parseFieldMatcherSupplier);
+        AutodetectResultsParser autodetectResultsParser = new AutodetectResultsParser(settings, parseFieldMatcherSupplier);
+        DataProcessor dataProcessor =
+                new AutodetectProcessManager(settings, client, env, threadPool, jobManager, autodetectResultsParser, processFactory);
+        ScheduledJobService scheduledJobService = new ScheduledJobService(threadPool, client, jobProvider, dataProcessor,
+                new HttpDataExtractorFactory(), System::currentTimeMillis);
+        return Arrays.asList(
+            jobProvider,
+            jobManager,
+            new JobAllocator(settings, clusterService, threadPool),
+            new JobLifeCycleService(settings, client, clusterService, scheduledJobService, dataProcessor, threadPool.generic()),
+            new ElasticsearchBulkDeleterFactory(client), //NORELEASE: this should use Delete-by-query
+            dataProcessor
+        );
     }
 
     @Override

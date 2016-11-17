@@ -16,16 +16,14 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 
 import org.apache.logging.log4j.core.Logger;
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.Job;
-import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.ResultsReader;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.StateReader;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutoDetectResultProcessor;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
@@ -38,30 +36,15 @@ import java.util.Collections;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class AutodetectCommunicatorTests extends ESTestCase {
 
-    public void testAddRemoveAlertObserver() throws IOException {
-        AutodetectCommunicator communicator =
-                new AutodetectCommunicator(createJobDetails(), mockAutodetectProcessWithOutputStream(), Mockito.mock(Logger.class),
-                        Mockito.mock(JobResultsPersister.class), Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT);
-
-        AlertObserver ao = Mockito.mock(AlertObserver.class);
-        communicator.addAlertObserver(ao);
-        assertTrue(communicator.removeAlertObserver(ao));
-
-        communicator.close();
-    }
-
     public void testWriteResetBucketsControlMessage() throws IOException {
         DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1").endTime("2").build());
         AutodetectProcess process = mockAutodetectProcessWithOutputStream();
-
-        try (AutodetectCommunicator communicator =
-                new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT)) {
-
+        try (AutodetectCommunicator communicator = createAutodetectCommunicator(process, mock(AutoDetectResultProcessor.class))) {
             communicator.writeResetBucketsControlMessage(params);
             Mockito.verify(process).writeResetBucketsControlMessage(params);
         }
@@ -69,11 +52,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
 
     public void tesWriteUpdateConfigMessage() throws IOException {
         AutodetectProcess process = mockAutodetectProcessWithOutputStream();
-
-        try (AutodetectCommunicator communicator =
-                new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT)) {
-
+        try (AutodetectCommunicator communicator = createAutodetectCommunicator(process, mock(AutoDetectResultProcessor.class))) {
             String config = "";
             communicator.writeUpdateConfigMessage(config);
             Mockito.verify(process).writeUpdateConfigMessage(config);
@@ -83,11 +62,9 @@ public class AutodetectCommunicatorTests extends ESTestCase {
     public void testFlushJob() throws IOException {
         AutodetectProcess process = mockAutodetectProcessWithOutputStream();
         when(process.isProcessAlive()).thenReturn(true);
-
-        try (AutodetectCommunicator communicator =
-                new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT)) {
-
+        AutoDetectResultProcessor processor = mock(AutoDetectResultProcessor.class);
+        when(processor.waitForFlushAcknowledgement(anyString(), any())).thenReturn(true);
+        try (AutodetectCommunicator communicator = createAutodetectCommunicator(process, processor)) {
             InterimResultsParams params = InterimResultsParams.builder().build();
             communicator.flushJob(params);
             Mockito.verify(process).flushJob(params);
@@ -98,11 +75,8 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         AutodetectProcess process = mockAutodetectProcessWithOutputStream();
         when(process.isProcessAlive()).thenReturn(false);
         when(process.readError()).thenReturn("Mock process is dead");
-
         @SuppressWarnings("resource")
-        AutodetectCommunicator communicator = new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class),
-                Mockito.mock(JobResultsPersister.class), Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT);
-
+        AutodetectCommunicator communicator = createAutodetectCommunicator(process, mock(AutoDetectResultProcessor.class));
         InterimResultsParams params = InterimResultsParams.builder().build();
         ElasticsearchException e = ESTestCase.expectThrows(ElasticsearchException.class, () -> communicator.flushJob(params));
         assertEquals("Flush failed: Unexpected death of the Autodetect process flushing job. Mock process is dead", e.getMessage());
@@ -112,13 +86,9 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         AutodetectProcess process = mockAutodetectProcessWithOutputStream();
         when(process.isProcessAlive()).thenReturn(true);
         when(process.readError()).thenReturn("Mock process has stalled");
-
-        ResultsReader resultsReader = Mockito.mock(ResultsReader.class);
-        when(resultsReader.waitForFlushAcknowledgement(anyString(), any())).thenReturn(false);
-
-        try (AutodetectCommunicator communicator = new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class),
-                Mockito.mock(StatusReporter.class), resultsReader, Mockito.mock(StateReader.class))) {
-
+        AutoDetectResultProcessor autoDetectResultProcessor = Mockito.mock(AutoDetectResultProcessor.class);
+        when(autoDetectResultProcessor.waitForFlushAcknowledgement(anyString(), any())).thenReturn(false);
+        try (AutodetectCommunicator communicator = createAutodetectCommunicator(process, mock(AutoDetectResultProcessor.class))) {
             InterimResultsParams params = InterimResultsParams.builder().build();
             ElasticsearchException e = ESTestCase.expectThrows(ElasticsearchException.class, () -> communicator.flushJob(params, 1, 1));
             assertEquals("Timed out flushing job. Mock process has stalled", e.getMessage());
@@ -127,11 +97,7 @@ public class AutodetectCommunicatorTests extends ESTestCase {
 
     public void testClose() throws IOException {
         AutodetectProcess process = mockAutodetectProcessWithOutputStream();
-
-        AutodetectCommunicator communicator =
-                new AutodetectCommunicator(createJobDetails(), process, Mockito.mock(Logger.class), Mockito.mock(JobResultsPersister.class),
-                        Mockito.mock(StatusReporter.class), () -> ParseFieldMatcher.STRICT);
-
+        AutodetectCommunicator communicator = createAutodetectCommunicator(process, mock(AutoDetectResultProcessor.class));
         communicator.close();
         Mockito.verify(process).close();
     }
@@ -159,6 +125,17 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         when(process.getPersistStream()).thenReturn(io);
         when(process.isProcessAlive()).thenReturn(true);
         return process;
+    }
+
+    private AutodetectCommunicator createAutodetectCommunicator(AutodetectProcess autodetectProcess,
+                                                                AutoDetectResultProcessor autoDetectResultProcessor) throws IOException {
+        ThreadPool threadPool = mock(ThreadPool.class);
+        when(threadPool.executor(anyString())).thenReturn(Runnable::run);
+        Logger jobLogger = Mockito.mock(Logger.class);
+        JobResultsPersister resultsPersister = mock(JobResultsPersister.class);
+        StatusReporter statusReporter = mock(StatusReporter.class);
+        return new AutodetectCommunicator(threadPool, createJobDetails(), autodetectProcess, jobLogger, resultsPersister,
+                statusReporter, autoDetectResultProcessor);
     }
 
 }

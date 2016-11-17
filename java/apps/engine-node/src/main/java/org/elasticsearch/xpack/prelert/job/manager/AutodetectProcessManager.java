@@ -15,17 +15,33 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.alert.AlertObserver;
 import org.elasticsearch.xpack.prelert.job.data.DataProcessor;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobDataCountsPersister;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchPersister;
+import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchUsagePersister;
+import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
+import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicator;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicatorFactory;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutoDetectResultProcessor;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing.AutodetectResultsParser;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
+import org.elasticsearch.xpack.prelert.job.process.normalizer.noop.NoOpRenormaliser;
+import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
+import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -37,15 +53,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
 
-public class AutodetectProcessManager implements DataProcessor {
+public class AutodetectProcessManager extends AbstractComponent implements DataProcessor {
 
-    private static final Logger LOGGER = Loggers.getLogger(AutodetectProcessManager.class);
-    private final AutodetectCommunicatorFactory autodetectCommunicatorFactory;
+    private final Client client;
+    private final Environment env;
+    private final ThreadPool threadPool;
     private final JobManager jobManager;
+    private final AutodetectResultsParser parser;
+    private final AutodetectProcessFactory autodetectProcessFactory;
+
     private final ConcurrentMap<String, AutodetectCommunicator> autoDetectCommunicatorByJob;
 
-    public AutodetectProcessManager(AutodetectCommunicatorFactory autodetectCommunicatorFactory, JobManager jobManager) {
-        this.autodetectCommunicatorFactory = autodetectCommunicatorFactory;
+    public AutodetectProcessManager(Settings settings, Client client, Environment env, ThreadPool threadPool, JobManager jobManager,
+                                    AutodetectResultsParser parser, AutodetectProcessFactory autodetectProcessFactory) {
+        super(settings);
+        this.client = client;
+        this.env = env;
+        this.threadPool = threadPool;
+        this.parser = parser;
+        this.autodetectProcessFactory = autodetectProcessFactory;
         this.jobManager = jobManager;
         this.autoDetectCommunicatorByJob = new ConcurrentHashMap<>();
     }
@@ -72,24 +98,36 @@ public class AutodetectProcessManager implements DataProcessor {
         } catch (IOException e) {
             String msg = String.format(Locale.ROOT, "Exception writing to process for job %s", jobId);
             if (e.getCause() instanceof TimeoutException) {
-                LOGGER.warn("Connection to process was dropped due to a timeout - if you are feeding this job from a connector it " +
+                logger.warn("Connection to process was dropped due to a timeout - if you are feeding this job from a connector it " +
                         "may be that your connector stalled for too long", e.getCause());
             }
             throw ExceptionsHelper.serverError(msg);
         }
     }
 
-    private AutodetectCommunicator create(String jobId, boolean ignoreDowntime) {
+    AutodetectCommunicator create(String jobId, boolean ignoreDowntime) {
         Job job = jobManager.getJobOrThrowIfUnknown(jobId);
-        return autodetectCommunicatorFactory.create(job, ignoreDowntime);
+        Logger jobLogger = Loggers.getLogger(job.getJobId());
+        ElasticsearchUsagePersister usagePersister = new ElasticsearchUsagePersister(client, jobLogger);
+        UsageReporter usageReporter = new UsageReporter(settings, job.getJobId(), usagePersister, jobLogger);
+
+        JobDataCountsPersister jobDataCountsPersister = new ElasticsearchJobDataCountsPersister(client, jobLogger);
+        StatusReporter statusReporter = new StatusReporter(env, settings, job.getJobId(), job.getCounts(), usageReporter,
+                jobDataCountsPersister, jobLogger, job.getAnalysisConfig().getBucketSpanOrDefault());
+
+        AutodetectProcess process = autodetectProcessFactory.createAutodetectProcess(job, ignoreDowntime);
+        JobResultsPersister persister = new ElasticsearchPersister(jobId, client);
+        // TODO Port the normalizer from the old project
+        AutoDetectResultProcessor processor =  new AutoDetectResultProcessor(new NoOpRenormaliser(), persister, parser);
+        return new AutodetectCommunicator(threadPool, job, process, jobLogger, persister, statusReporter, processor);
     }
 
     @Override
     public void flushJob(String jobId, InterimResultsParams params) {
-        LOGGER.debug("Flushing job {}", jobId);
+        logger.debug("Flushing job {}", jobId);
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
         if (communicator == null) {
-            LOGGER.debug("Cannot flush: no active autodetect process for job {}", jobId);
+            logger.debug("Cannot flush: no active autodetect process for job {}", jobId);
             return;
         }
         try {
@@ -97,7 +135,7 @@ public class AutodetectProcessManager implements DataProcessor {
             // TODO check for errors from autodetect
         } catch (IOException ioe) {
             String msg = String.format(Locale.ROOT, "Exception flushing process for job %s", jobId);
-            LOGGER.warn(msg);
+            logger.warn(msg);
             throw ExceptionsHelper.serverError(msg, ioe);
         }
     }
@@ -105,7 +143,7 @@ public class AutodetectProcessManager implements DataProcessor {
     public void writeUpdateConfigMessage(String jobId, String config) throws IOException {
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
         if (communicator == null) {
-            LOGGER.debug("Cannot update config: no active autodetect process for job {}", jobId);
+            logger.debug("Cannot update config: no active autodetect process for job {}", jobId);
             return;
         }
         communicator.writeUpdateConfigMessage(config);
@@ -114,10 +152,10 @@ public class AutodetectProcessManager implements DataProcessor {
 
     @Override
     public void closeJob(String jobId) {
-        LOGGER.debug("Closing job {}", jobId);
+        logger.debug("Closing job {}", jobId);
         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
         if (communicator == null) {
-            LOGGER.debug("Cannot close: no active autodetect process for job {}", jobId);
+            logger.debug("Cannot close: no active autodetect process for job {}", jobId);
             return;
         }
 
@@ -126,7 +164,7 @@ public class AutodetectProcessManager implements DataProcessor {
             // TODO check for errors from autodetect
             // TODO delete associated files (model config etc)
         } catch (IOException e) {
-            LOGGER.info("Exception closing stopped process input stream", e);
+            logger.info("Exception closing stopped process input stream", e);
         } finally {
             autoDetectCommunicatorByJob.remove(jobId);
             setJobFinishedTimeAndStatus(jobId, JobStatus.CLOSED);
@@ -152,24 +190,6 @@ public class AutodetectProcessManager implements DataProcessor {
     private void setJobFinishedTimeAndStatus(String jobId, JobStatus status) {
         // NORELEASE Implement this.
         // Perhaps move the JobStatus and finish time to a separate document stored outside the cluster state
-        LOGGER.error("Cannot set finished job status and time- Not Implemented");
-    }
-
-    public void addAlertObserver(String jobId, AlertObserver alertObserver) {
-        AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
-        if (communicator != null) {
-            communicator.addAlertObserver(alertObserver);
-        } else {
-            String message = String.format(Locale.ROOT, "Cannot alert on job '%s' because the job is not running", jobId);
-            throw ExceptionsHelper.conflictStatusException(message);
-        }
-    }
-
-    public boolean removeAlertObserver(String jobId, AlertObserver alertObserver) {
-        AutodetectCommunicator communicator = autoDetectCommunicatorByJob.get(jobId);
-        if (communicator != null) {
-            return communicator.removeAlertObserver(alertObserver);
-        }
-        return false;
+        logger.error("Cannot set finished job status and time- Not Implemented");
     }
 }
