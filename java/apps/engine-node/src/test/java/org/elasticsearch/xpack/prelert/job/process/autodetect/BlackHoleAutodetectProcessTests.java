@@ -21,6 +21,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
+import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
 
 public class BlackHoleAutodetectProcessTests extends ESTestCase {
 
@@ -32,7 +33,8 @@ public class BlackHoleAutodetectProcessTests extends ESTestCase {
             XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(process.getProcessOutStream());
             parser.nextToken(); // FlushAcknowledgementParser expects this to be
                                 // called first
-            FlushAcknowledgement ack = FlushAcknowledgement.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
+            AutodetectResult result = AutodetectResult.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
+            FlushAcknowledgement ack = result.getFlushAcknowledgement();
             assertEquals(flushId, ack.getId());
         }
     }

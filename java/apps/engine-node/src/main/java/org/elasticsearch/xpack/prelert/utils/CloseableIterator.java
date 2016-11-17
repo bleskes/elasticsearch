@@ -25,27 +25,4 @@ import java.util.NoSuchElementException;
  */
 public interface CloseableIterator<T> extends Iterator<T>, Closeable {
 
-    /**
-     * Returns a closable iterator that has no elements.
-     */
-    @SuppressWarnings("unchecked")
-    static <T> CloseableIterator<T> empty() {
-        return (CloseableIterator<T>) EMPTY;
-    }
-
-    CloseableIterator<Object> EMPTY = new CloseableIterator<Object>() {
-        @Override
-        public void close() throws IOException {}
-
-        @Override
-        public boolean hasNext() {
-            return false;
-        }
-
-        @Override
-        public Object next() {
-            throw new NoSuchElementException();
-        }
-    };
-
 }

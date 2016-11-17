@@ -35,7 +35,7 @@ public class FlushListenerTests extends ESTestCase {
         assertBusy(() -> assertTrue(bool.get()));
     }
 
-    public void testAcknowledgeAllFlushes() throws Exception {
+    public void testClear() throws Exception {
         FlushListener listener = new FlushListener();
 
         int numWaits = 9;
@@ -53,11 +53,13 @@ public class FlushListenerTests extends ESTestCase {
         for (AtomicBoolean bool : bools) {
             assertFalse(bool.get());
         }
-        listener.acknowledgeAllFlushes();
+        assertFalse(listener.cleared.get());
+        listener.clear();
         for (AtomicBoolean bool : bools) {
             assertBusy(() -> assertTrue(bool.get()));
         }
         assertTrue(listener.awaitingFlushed.isEmpty());
+        assertTrue(listener.cleared.get());
     }
 
 }

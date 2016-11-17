@@ -80,7 +80,7 @@ public class AutoDetectResultProcessor {
             jobLogger.info("Error parsing autodetect output", e);
         } finally {
             latch.countDown();
-            flushListener.acknowledgeAllFlushes();
+            flushListener.clear();
             renormaliser.shutdown(jobLogger);
         }
     }
@@ -113,19 +113,6 @@ public class AutoDetectResultProcessor {
         if (categoryDefinition != null) {
             persister.persistCategoryDefinition(categoryDefinition);
         }
-        FlushAcknowledgement flushAcknowledgement = result.getFlushAcknowledgement();
-        if (flushAcknowledgement != null) {
-            context.jobLogger.debug("Flush acknowledgement parsed from output for ID " + flushAcknowledgement.getId());
-            // Commit previous writes here, effectively continuing
-            // the flush from the C++ autodetect process right
-            // through to the data store
-            persister.commitWrites();
-            flushListener.acknowledgeFlush(flushAcknowledgement.getId());
-            // Interim results may have been produced by the flush,
-            // which need to be
-            // deleted when the next finalized results come through
-            context.deleteInterimRequired = true;
-        }
         ModelDebugOutput modelDebugOutput = result.getModelDebugOutput();
         if (modelDebugOutput != null) {
             persister.persistModelDebugOutput(modelDebugOutput);
@@ -153,6 +140,19 @@ public class AutoDetectResultProcessor {
             } else {
                 renormaliser.renormalise(quantiles, context.jobLogger);
             }
+        }
+        FlushAcknowledgement flushAcknowledgement = result.getFlushAcknowledgement();
+        if (flushAcknowledgement != null) {
+            context.jobLogger.debug("Flush acknowledgement parsed from output for ID " + flushAcknowledgement.getId());
+            // Commit previous writes here, effectively continuing
+            // the flush from the C++ autodetect process right
+            // through to the data store
+            persister.commitWrites();
+            flushListener.acknowledgeFlush(flushAcknowledgement.getId());
+            // Interim results may have been produced by the flush,
+            // which need to be
+            // deleted when the next finalized results come through
+            context.deleteInterimRequired = true;
         }
     }
 

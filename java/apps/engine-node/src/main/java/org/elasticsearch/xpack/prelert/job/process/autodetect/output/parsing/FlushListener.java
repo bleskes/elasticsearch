@@ -19,12 +19,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class FlushListener {
 
     final ConcurrentMap<String, CountDownLatch> awaitingFlushed = new ConcurrentHashMap<>();
+    final AtomicBoolean cleared = new AtomicBoolean(false);
 
     boolean waitForFlush(String flushId, long timeout) {
+        if (cleared.get()) {
+            return false;
+        }
+
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch previous = awaitingFlushed.putIfAbsent(flushId, latch);
         if (previous != null) {
@@ -47,11 +53,13 @@ class FlushListener {
         latch.countDown();
     }
 
-    void acknowledgeAllFlushes() {
-        Iterator<ConcurrentMap.Entry<String, CountDownLatch>> latches = awaitingFlushed.entrySet().iterator();
-        while (latches.hasNext()) {
-            latches.next().getValue().countDown();
-            latches.remove();
+    void clear() {
+        if (cleared.compareAndSet(false, true)) {
+            Iterator<ConcurrentMap.Entry<String, CountDownLatch>> latches = awaitingFlushed.entrySet().iterator();
+            while (latches.hasNext()) {
+                latches.next().getValue().countDown();
+                latches.remove();
+            }
         }
     }
 

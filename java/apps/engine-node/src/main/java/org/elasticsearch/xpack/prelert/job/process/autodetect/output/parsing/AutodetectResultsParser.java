@@ -47,19 +47,10 @@ public class AutodetectResultsParser extends AbstractComponent {
             XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(in);
             XContentParser.Token token = parser.nextToken();
             // if start of an array ignore it, we expect an array of buckets
-            if (token == XContentParser.Token.START_ARRAY) {
-                token = parser.nextToken();
-                logger.debug("JSON starts with an array");
-            }
-
-            if (token == XContentParser.Token.END_ARRAY) {
-                logger.info("Empty results array, 0 buckets parsed");
-                return CloseableIterator.empty();
-            } else if (token != XContentParser.Token.START_OBJECT) {
-                logger.error("Expecting Json Start Object token after the Start Array token");
+            if (token != XContentParser.Token.START_ARRAY) {
                 throw new ElasticsearchParseException("unexpected token [" + token + "]");
             }
-            return new BucketIterator(in, parser);
+            return new AutodetectResultIterator(in, parser);
         } catch (IOException e) {
             consumeAndCloseStream(in);
             throw new ElasticsearchParseException(e.getMessage(), e);
@@ -82,14 +73,14 @@ public class AutodetectResultsParser extends AbstractComponent {
         }
     }
 
-    private class BucketIterator implements CloseableIterator<AutodetectResult> {
+    private class AutodetectResultIterator implements CloseableIterator<AutodetectResult> {
 
         private final InputStream in;
         private final XContentParser parser;
 
         private XContentParser.Token token;
 
-        private BucketIterator(InputStream in, XContentParser parser) {
+        private AutodetectResultIterator(InputStream in, XContentParser parser) {
             this.in = in;
             this.parser = parser;
             token = parser.currentToken();
@@ -97,6 +88,11 @@ public class AutodetectResultsParser extends AbstractComponent {
 
         @Override
         public boolean hasNext() {
+            try {
+                token = parser.nextToken();
+            } catch (IOException e) {
+                throw new ElasticsearchParseException(e.getMessage(), e);
+            }
             if (token == XContentParser.Token.END_ARRAY) {
                 return false;
             } else if (token != XContentParser.Token.START_OBJECT) {
@@ -108,13 +104,7 @@ public class AutodetectResultsParser extends AbstractComponent {
 
         @Override
         public AutodetectResult next() {
-            AutodetectResult result = AutodetectResult.PARSER.apply(parser, parseFieldMatcherSupplier);
-            try {
-                token = parser.nextToken();
-            } catch (IOException e) {
-                throw new ElasticsearchParseException(e.getMessage(), e);
-            }
-            return result;
+            return AutodetectResult.PARSER.apply(parser, parseFieldMatcherSupplier);
         }
 
         @Override

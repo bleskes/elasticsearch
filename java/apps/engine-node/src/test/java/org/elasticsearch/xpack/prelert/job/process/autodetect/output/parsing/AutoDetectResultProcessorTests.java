@@ -27,10 +27,12 @@ import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 import org.elasticsearch.xpack.prelert.utils.CloseableIterator;
+import org.mockito.InOrder;
 
 import java.io.InputStream;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -149,6 +151,32 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
 
         verify(flushListener, times(1)).acknowledgeFlush("_id");
         verify(persister, times(1)).commitWrites();
+        verifyNoMoreInteractions(persister);
+        assertTrue(context.deleteInterimRequired);
+    }
+
+    public void testProcessResult_flushAcknowledgementMustBeProcessedLast() {
+        Renormaliser renormaliser = mock(Renormaliser.class);
+        JobResultsPersister persister = mock(JobResultsPersister.class);
+        FlushListener flushListener = mock(FlushListener.class);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null, flushListener);
+
+        Logger jobLogger = mock(Logger.class);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        context.deleteInterimRequired = false;
+        AutodetectResult result = mock(AutodetectResult.class);
+        FlushAcknowledgement flushAcknowledgement = mock(FlushAcknowledgement.class);
+        when(flushAcknowledgement.getId()).thenReturn("_id");
+        when(result.getFlushAcknowledgement()).thenReturn(flushAcknowledgement);
+        CategoryDefinition categoryDefinition = mock(CategoryDefinition.class);
+        when(result.getCategoryDefinition()).thenReturn(categoryDefinition);
+
+        InOrder inOrder = inOrder(persister, flushListener);
+        processor.processResult(context, result);
+
+        inOrder.verify(persister, times(1)).persistCategoryDefinition(categoryDefinition);
+        inOrder.verify(persister, times(1)).commitWrites();
+        inOrder.verify(flushListener, times(1)).acknowledgeFlush("_id");
         verifyNoMoreInteractions(persister);
         assertTrue(context.deleteInterimRequired);
     }

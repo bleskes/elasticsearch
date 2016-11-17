@@ -80,7 +80,7 @@ public class ElasticsearchPersister implements JobResultsPersister, JobRenormali
     }
 
     private final Client client;
-    // TODO: remove this field, the job id can be interred from most of method's paramters here and for cases
+    // TODO norelease: remove this field, the job id can be interred from most of method's paramters here and for cases
     // where there are now parameters we can supply the job id. This way we don't have to create an instance of the class
     // per job
     private final String jobId;

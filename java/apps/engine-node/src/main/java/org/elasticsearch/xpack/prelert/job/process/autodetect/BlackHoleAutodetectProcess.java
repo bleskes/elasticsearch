@@ -17,10 +17,14 @@ package org.elasticsearch.xpack.prelert.job.process.autodetect;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
+import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -80,9 +84,12 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess, Closeable 
     @Override
     public String flushJob(InterimResultsParams params) throws IOException {
         FlushAcknowledgement flushAcknowledgement = new FlushAcknowledgement(FLUSH_ID);
-        pipedProcessOutStream
-        .write(flushAcknowledgement.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS).string()
-                        .getBytes(StandardCharsets.UTF_8));
+        AutodetectResult result = new AutodetectResult(null, null, null, null, null, null, flushAcknowledgement);
+        XContentBuilder builder = XContentBuilder.builder(XContentType.JSON.xContent());
+        builder.startArray();
+        builder.value(result);
+        builder.endArray();
+        pipedProcessOutStream.write(builder.string().getBytes(StandardCharsets.UTF_8));
         pipedProcessOutStream.flush();
         return FLUSH_ID;
     }

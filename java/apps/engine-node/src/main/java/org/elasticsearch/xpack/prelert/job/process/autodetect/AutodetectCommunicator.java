@@ -62,9 +62,12 @@ public class AutodetectCommunicator implements Closeable {
         this.autoDetectResultProcessor = autoDetectResultProcessor;
         this.stateReader = new StateReader(persister, process.getPersistStream(), this.jobLogger);
 
+        // TODO norelease: prevent that we fail to start any of the required threads for interacting with analytical process:
+        // We should before we start the analytical process (and scheduler) verify that have enough threads.
+        AnalysisConfig analysisConfig = job.getAnalysisConfig();
+        boolean usePerPartitionNormalization = analysisConfig.getUsePerPartitionNormalization();
         threadPool.executor(PrelertPlugin.THREAD_POOL_NAME).execute(() -> {
-            AnalysisConfig analysisConfig = job.getAnalysisConfig();
-            this.autoDetectResultProcessor.process(jobLogger, process.getPersistStream(), analysisConfig.getUsePerPartitionNormalization());
+            this.autoDetectResultProcessor.process(jobLogger, process.getProcessOutStream(), usePerPartitionNormalization);
         });
         // NORELEASE - use ES ThreadPool
         stateParserThread = new Thread(stateReader, job.getId() + "-State-Parser");
@@ -110,6 +113,8 @@ public class AutodetectCommunicator implements Closeable {
     void flushJob(InterimResultsParams params, int tryCount, int tryTimeoutSecs) throws IOException {
         String flushId = autodetectProcess.flushJob(params);
 
+        // TODO: norelease: I think waiting once 30 seconds will have the same effect as 5 * 6 seconds.
+        // So we may want to remove this retry logic here
         Duration intermittentTimeout = Duration.ofSeconds(tryTimeoutSecs);
         boolean isFlushComplete = false;
         while (isFlushComplete == false && --tryCount >= 0) {
@@ -121,6 +126,7 @@ public class AutodetectCommunicator implements Closeable {
                 throw ExceptionsHelper.serverError(msg);
             }
             isFlushComplete = autoDetectResultProcessor.waitForFlushAcknowledgement(flushId, intermittentTimeout);
+            jobLogger.info("isFlushComplete={}", isFlushComplete);
         }
 
         if (!isFlushComplete) {
