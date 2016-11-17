@@ -126,20 +126,20 @@ public class JobManager {
     /**
      * Get details of all Jobs.
      *
-     * @param skip
+     * @param from
      *            Skip the first N Jobs. This parameter is for paging results if
      *            not required set to 0.
-     * @param take
+     * @param size
      *            Take only this number of Jobs
      * @return A query page object with hitCount set to the total number of jobs
      *         not the only the number returned here as determined by the
-     *         <code>take</code> parameter.
+     *         <code>size</code> parameter.
      */
-    public QueryPage<Job> getJobs(int skip, int take, ClusterState clusterState) {
+    public QueryPage<Job> getJobs(int from, int size, ClusterState clusterState) {
         PrelertMetadata prelertMetadata = clusterState.getMetaData().custom(PrelertMetadata.TYPE);
         List<Job> jobs = prelertMetadata.getJobs().entrySet().stream()
-                .skip(skip)
-                .limit(take)
+                .skip(from)
+                .limit(size)
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
         return new QueryPage<>(jobs, prelertMetadata.getJobs().size());

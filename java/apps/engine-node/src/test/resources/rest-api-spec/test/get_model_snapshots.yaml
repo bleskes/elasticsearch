@@ -65,11 +65,11 @@ setup:
   - match: { hits.0.timestamp: 1464825600000 }
 
 ---
-"Test get model snapshots API with take":
+"Test get model snapshots API with size":
   - do:
       xpack.prelert.get_model_snapshots:
         jobId: "foo"
-        take: 1
+        size: 1
 
 
   - match: { hitCount: 2 }
@@ -78,11 +78,11 @@ setup:
   - length: { hits: 1 }
 
 ---
-"Test get model snapshots API with skip":
+"Test get model snapshots API with from":
   - do:
       xpack.prelert.get_model_snapshots:
         jobId: "foo"
-        skip: 1
+        from: 1
 
 
   - match: { hitCount: 2 }

@@ -21,10 +21,10 @@ import java.util.Objects;
 /**
  * One time query builder for buckets.
  * <ul>
- * <li>Skip- Skip the first N Buckets. This parameter is for paging if not
+ * <li>From- Skip the first N Buckets. This parameter is for paging if not
  * required set to 0. Default = 0</li>
- * <li>Take- Take only this number of Buckets. Default =
- * {@value DEFAULT_TAKE_SIZE}</li>
+ * <li>Size- Take only this number of Buckets. Default =
+ * {@value DEFAULT_SIZE}</li>
  * <li>Expand- Include anomaly records. Default= false</li>
  * <li>IncludeInterim- Include interim results. Default = false</li>
  * <li>anomalyScoreThreshold- Return only buckets with an anomalyScore &gt;=
@@ -42,17 +42,17 @@ import java.util.Objects;
  * </ul>
  */
 public final class InfluencersQueryBuilder {
-    public static final int DEFAULT_TAKE_SIZE = 100;
+    public static final int DEFAULT_SIZE = 100;
 
     private InfluencersQuery influencersQuery = new InfluencersQuery();
 
-    public InfluencersQueryBuilder skip(int skip) {
-        influencersQuery.skip = skip;
+    public InfluencersQueryBuilder from(int from) {
+        influencersQuery.from = from;
         return this;
     }
 
-    public InfluencersQueryBuilder take(int take) {
-        influencersQuery.take = take;
+    public InfluencersQueryBuilder size(int size) {
+        influencersQuery.size = size;
         return this;
     }
 
@@ -102,8 +102,8 @@ public final class InfluencersQueryBuilder {
 
 
     public class InfluencersQuery {
-        private int skip = 0;
-        private int take = DEFAULT_TAKE_SIZE;
+        private int from = 0;
+        private int size = DEFAULT_SIZE;
         private boolean includeInterim = false;
         private double anomalyScoreFilter = 0.0d;
         private String epochStart;
@@ -111,12 +111,12 @@ public final class InfluencersQueryBuilder {
         private String sortField = Influencer.ANOMALY_SCORE.getPreferredName();
         private boolean sortDescending = false;
 
-        public int getSkip() {
-            return skip;
+        public int getFrom() {
+            return from;
         }
 
-        public int getTake() {
-            return take;
+        public int getSize() {
+            return size;
         }
 
         public boolean isIncludeInterim() {
@@ -145,7 +145,7 @@ public final class InfluencersQueryBuilder {
 
         @Override
         public int hashCode() {
-            return Objects.hash(skip, take, includeInterim, anomalyScoreFilter, epochStart, epochEnd,
+            return Objects.hash(from, size, includeInterim, anomalyScoreFilter, epochStart, epochEnd,
                     sortField, sortDescending);
         }
 
@@ -163,8 +163,8 @@ public final class InfluencersQueryBuilder {
             }
 
             InfluencersQuery other = (InfluencersQuery) obj;
-            return Objects.equals(skip, other.skip) &&
-                    Objects.equals(take, other.take) &&
+            return Objects.equals(from, other.from) &&
+                    Objects.equals(size, other.size) &&
                     Objects.equals(includeInterim, other.includeInterim) &&
                     Objects.equals(epochStart, other.epochStart) &&
                     Objects.equals(epochStart, other.epochStart) &&

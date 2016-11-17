@@ -14,11 +14,11 @@
         "includeInterim": {
           "type": "boolean"
         },
-        "skip": {
+        "from": {
           "type": "int",
           "description": "skips a number of influencers"
         },
-        "take": {
+        "size": {
           "type": "int",
           "description": "specifies a max number of influencers to get"
         },

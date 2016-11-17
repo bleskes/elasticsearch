@@ -22,10 +22,10 @@ import java.util.Objects;
 /**
  * One time query builder for buckets.
  * <ul>
- * <li>Skip- Skip the first N Buckets. This parameter is for paging if not
+ * <li>From- Skip the first N Buckets. This parameter is for paging if not
  * required set to 0. Default = 0</li>
- * <li>Take- Take only this number of Buckets. Default =
- * {@value DEFAULT_TAKE_SIZE}</li>
+ * <li>Size- Take only this number of Buckets. Default =
+ * {@value DEFAULT_SIZE}</li>
  * <li>Expand- Include anomaly records. Default= false</li>
  * <li>IncludeInterim- Include interim results. Default = false</li>
  * <li>anomalyScoreThreshold- Return only buckets with an anomalyScore &gt;=
@@ -43,17 +43,17 @@ import java.util.Objects;
  * </ul>
  */
 public final class BucketsQueryBuilder {
-    public static final int DEFAULT_TAKE_SIZE = 100;
+    public static final int DEFAULT_SIZE = 100;
 
     private BucketsQuery bucketsQuery = new BucketsQuery();
 
-    public BucketsQueryBuilder skip(int skip) {
-        bucketsQuery.skip = skip;
+    public BucketsQueryBuilder from(int from) {
+        bucketsQuery.from = from;
         return this;
     }
 
-    public BucketsQueryBuilder take(int take) {
-        bucketsQuery.take = take;
+    public BucketsQueryBuilder size(int size) {
+        bucketsQuery.size = size;
         return this;
     }
 
@@ -123,8 +123,8 @@ public final class BucketsQueryBuilder {
 
 
     public class BucketsQuery {
-        private int skip = 0;
-        private int take = DEFAULT_TAKE_SIZE;
+        private int from = 0;
+        private int size = DEFAULT_SIZE;
         private boolean expand = false;
         private boolean includeInterim = false;
         private double anomalyScoreFilter = 0.0d;
@@ -135,12 +135,12 @@ public final class BucketsQueryBuilder {
         private String sortField = Bucket.TIMESTAMP.getPreferredName();
         private boolean sortDescending = false;
 
-        public int getSkip() {
-            return skip;
+        public int getFrom() {
+            return from;
         }
 
-        public int getTake() {
-            return take;
+        public int getSize() {
+            return size;
         }
 
         public boolean isExpand() {
@@ -184,7 +184,7 @@ public final class BucketsQueryBuilder {
 
         @Override
         public int hashCode() {
-            return Objects.hash(skip, take, expand, includeInterim, anomalyScoreFilter, normalizedProbability, epochStart, epochEnd,
+            return Objects.hash(from, size, expand, includeInterim, anomalyScoreFilter, normalizedProbability, epochStart, epochEnd,
                     partitionValue, sortField, sortDescending);
         }
 
@@ -202,8 +202,8 @@ public final class BucketsQueryBuilder {
             }
 
             BucketsQuery other = (BucketsQuery) obj;
-            return Objects.equals(skip, other.skip) &&
-                    Objects.equals(take, other.take) &&
+            return Objects.equals(from, other.from) &&
+                    Objects.equals(size, other.size) &&
                     Objects.equals(expand, other.expand) &&
                     Objects.equals(includeInterim, other.includeInterim) &&
                     Objects.equals(epochStart, other.epochStart) &&

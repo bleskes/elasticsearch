@@ -53,8 +53,8 @@ public class RestGetCategoryAction extends BaseRestHandler {
             request.setCategoryId(categoryId);
         } else {
             PageParams pageParams = new PageParams(
-                    restRequest.paramAsInt(Request.SKIP.getPreferredName(), 0),
-                    restRequest.paramAsInt(Request.TAKE.getPreferredName(), 100)
+                    restRequest.paramAsInt(Request.FROM.getPreferredName(), 0),
+                    restRequest.paramAsInt(Request.SIZE.getPreferredName(), 100)
             );
             request.setPageParams(pageParams);
         }

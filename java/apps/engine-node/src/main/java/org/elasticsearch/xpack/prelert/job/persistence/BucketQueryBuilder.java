@@ -29,7 +29,7 @@ import java.util.Objects;
  * </ul>
  */
 public final class BucketQueryBuilder {
-    public static int DEFAULT_TAKE_SIZE = 100;
+    public static int DEFAULT_SIZE = 100;
 
     private BucketQuery bucketQuery;
 

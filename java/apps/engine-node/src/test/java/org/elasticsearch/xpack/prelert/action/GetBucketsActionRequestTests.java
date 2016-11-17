@@ -47,10 +47,10 @@ public class GetBucketsActionRequestTests extends AbstractStreamableXContentTest
             request.setPartitionValue(randomAsciiOfLengthBetween(1, 20));
         }
         if (randomBoolean()) {
-            int skip = randomInt(PageParams.MAX_SKIP_TAKE_SUM);
-            int maxTake = PageParams.MAX_SKIP_TAKE_SUM - skip;
-            int take = randomInt(maxTake);
-            request.setPageParams(new PageParams(skip, take));
+            int from = randomInt(PageParams.MAX_FROM_SIZE_SUM);
+            int maxSize = PageParams.MAX_FROM_SIZE_SUM - from;
+            int size = randomInt(maxSize);
+            request.setPageParams(new PageParams(from, size));
         }
         return request;
     }

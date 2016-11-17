@@ -37,8 +37,8 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
     private static final ParseField JOB_ID = new ParseField("jobId");
     private static final ParseField SORT = new ParseField("sort");
     private static final ParseField DESC_ORDER = new ParseField("desc");
-    private static final ParseField TAKE = new ParseField("take");
-    private static final ParseField SKIP = new ParseField("skip");
+    private static final ParseField SIZE = new ParseField("size");
+    private static final ParseField FROM = new ParseField("from");
     private static final ParseField START = new ParseField("start");
     private static final ParseField END = new ParseField("end");
     private static final ParseField DESCRIPTION = new ParseField("description");
@@ -50,8 +50,8 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
     private final String DEFAULT_END = null;
     private final String DEFAULT_DESCRIPTION = null;
     private final boolean DEFAULT_DESC_ORDER = true;
-    private final int DEFAULT_SKIP = 0;
-    private final int DEFAULT_TAKE = 100;
+    private final int DEFAULT_FROM = 0;
+    private final int DEFAULT_SIZE = 100;
 
     private final GetModelSnapshotsAction.TransportAction transportGetModelSnapshotsAction;
 
@@ -84,8 +84,8 @@ public class RestGetModelSnapshotsAction extends BaseRestHandler {
                 getModelSnapshots.setDescriptionString(restRequest.param(DESCRIPTION.getPreferredName(), DEFAULT_DESCRIPTION));
             }
             getModelSnapshots.setDescOrder(restRequest.paramAsBoolean(DESC_ORDER.getPreferredName(), DEFAULT_DESC_ORDER));
-            getModelSnapshots.setPageParams(new PageParams(restRequest.paramAsInt(SKIP.getPreferredName(), DEFAULT_SKIP),
-                    restRequest.paramAsInt(TAKE.getPreferredName(), DEFAULT_TAKE)));
+            getModelSnapshots.setPageParams(new PageParams(restRequest.paramAsInt(FROM.getPreferredName(), DEFAULT_FROM),
+                    restRequest.paramAsInt(SIZE.getPreferredName(), DEFAULT_SIZE)));
         }
 
         return channel -> transportGetModelSnapshotsAction.execute(getModelSnapshots, new RestToXContentListener<>(channel));

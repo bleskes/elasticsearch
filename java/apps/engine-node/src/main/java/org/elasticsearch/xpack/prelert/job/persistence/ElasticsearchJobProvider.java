@@ -122,7 +122,7 @@ public class ElasticsearchJobProvider implements JobProvider
             AnomalyRecord.FUNCTION.getPreferredName()
             );
 
-    private static final int RECORDS_TAKE_PARAM = 500;
+    private static final int RECORDS_SIZE_PARAM = 500;
 
 
     private final Client client;
@@ -330,7 +330,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         SortBuilder<?> sortBuilder = new FieldSortBuilder(esSortField(query.getSortField()))
                 .order(query.isSortDescending() ? SortOrder.DESC : SortOrder.ASC);
-        QueryPage<Bucket> buckets = buckets(jobId, query.isIncludeInterim(), query.getSkip(), query.getTake(), fb, sortBuilder);
+        QueryPage<Bucket> buckets = buckets(jobId, query.isIncludeInterim(), query.getFrom(), query.getSize(), fb, sortBuilder);
 
         if (Strings.isNullOrEmpty(query.getPartitionValue()))
         {
@@ -396,19 +396,19 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     private QueryPage<Bucket> buckets(String jobId, boolean includeInterim,
-            int skip, int take, QueryBuilder fb, SortBuilder<?> sb) throws ResourceNotFoundException
+            int from, int size, QueryBuilder fb, SortBuilder<?> sb) throws ResourceNotFoundException
     {
         SearchResponse searchResponse;
         try {
             String indexName = ElasticsearchPersister.getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: search all of type " + Bucket.TYPE +
                     " from index " + indexName + " sort ascending " + ElasticsearchMappings.ES_TIMESTAMP +
-                    " with filter after sort skip " + skip + " take " + take);
+                    " with filter after sort from " + from + " size " + size);
             searchResponse = client.prepareSearch(indexName)
                     .setTypes(Bucket.TYPE.getPreferredName())
                     .addSort(sb)
                     .setPostFilter(fb)
-                    .setFrom(skip).setSize(take)
+                    .setFrom(from).setSize(size)
                     .get();
         } catch (IndexNotFoundException e) {
             throw ExceptionsHelper.missingJobException(jobId);
@@ -569,18 +569,18 @@ public class ElasticsearchJobProvider implements JobProvider
     public int expandBucketForPartitionValue(String jobId, boolean includeInterim, Bucket bucket,
             String partitionFieldValue) throws ResourceNotFoundException
     {
-        int skip = 0;
+        int from = 0;
 
         QueryPage<AnomalyRecord> page = bucketRecords(
-                jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
+                jobId, bucket, from, RECORDS_SIZE_PARAM, includeInterim,
                 AnomalyRecord.PROBABILITY.getPreferredName(), false, partitionFieldValue);
         bucket.setRecords(page.hits());
 
-        while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
+        while (page.hitCount() > from + RECORDS_SIZE_PARAM)
         {
-            skip += RECORDS_TAKE_PARAM;
+            from += RECORDS_SIZE_PARAM;
             page = bucketRecords(
-                    jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
+                    jobId, bucket, from, RECORDS_SIZE_PARAM, includeInterim,
                     AnomalyRecord.PROBABILITY.getPreferredName(), false, partitionFieldValue);
             bucket.getRecords().addAll(page.hits());
         }
@@ -597,18 +597,18 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public int expandBucket(String jobId, boolean includeInterim, Bucket bucket) throws ResourceNotFoundException {
-        int skip = 0;
+        int from = 0;
 
         QueryPage<AnomalyRecord> page = bucketRecords(
-                jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
+                jobId, bucket, from, RECORDS_SIZE_PARAM, includeInterim,
                 AnomalyRecord.PROBABILITY.getPreferredName(), false, null);
         bucket.setRecords(page.hits());
 
-        while (page.hitCount() > skip + RECORDS_TAKE_PARAM)
+        while (page.hitCount() > from + RECORDS_SIZE_PARAM)
         {
-            skip += RECORDS_TAKE_PARAM;
+            from += RECORDS_SIZE_PARAM;
             page = bucketRecords(
-                    jobId, bucket, skip, RECORDS_TAKE_PARAM, includeInterim,
+                    jobId, bucket, from, RECORDS_SIZE_PARAM, includeInterim,
                     AnomalyRecord.PROBABILITY.getPreferredName(), false, null);
             bucket.getRecords().addAll(page.hits());
         }
@@ -617,7 +617,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     QueryPage<AnomalyRecord> bucketRecords(String jobId,
-            Bucket bucket, int skip, int take, boolean includeInterim,
+            Bucket bucket, int from, int size, boolean includeInterim,
             String sortField, boolean descending, String partitionFieldValue)
                     throws ResourceNotFoundException
     {
@@ -642,19 +642,19 @@ public class ElasticsearchJobProvider implements JobProvider
                     .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
 
-        return records(jobId, skip, take, recordFilter, sb, SECONDARY_SORT,
+        return records(jobId, from, size, recordFilter, sb, SECONDARY_SORT,
                 descending);
     }
 
     @Override
-    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take) {
+    public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int from, int size) {
         String indexName = ElasticsearchPersister.getJobIndexName(jobId);
         LOGGER.trace("ES API CALL: search all of type " + CategoryDefinition.TYPE +
                 " from index " + indexName + " sort ascending " + CategoryDefinition.CATEGORY_ID +
-                " skip " + skip + " take " + take);
+                " from " + from + " size " + size);
         SearchRequestBuilder searchBuilder = client.prepareSearch(indexName)
                 .setTypes(CategoryDefinition.TYPE.getPreferredName())
-                .setFrom(skip).setSize(take)
+                .setFrom(from).setSize(size)
                 .addSort(new FieldSortBuilder(CategoryDefinition.CATEGORY_ID.getPreferredName()).order(SortOrder.ASC));
 
         SearchResponse searchResponse;
@@ -718,12 +718,12 @@ public class ElasticsearchJobProvider implements JobProvider
                 .interim(AnomalyRecord.IS_INTERIM.getPreferredName(), query.isIncludeInterim())
                 .term(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), query.getPartitionFieldValue()).build();
 
-        return records(jobId, query.getSkip(), query.getTake(), fb, query.getSortField(), query.isSortDescending());
+        return records(jobId, query.getFrom(), query.getSize(), fb, query.getSortField(), query.isSortDescending());
     }
 
 
     private QueryPage<AnomalyRecord> records(String jobId,
-            int skip, int take, QueryBuilder recordFilter,
+            int from, int size, QueryBuilder recordFilter,
             String sortField, boolean descending)
                     throws ResourceNotFoundException
     {
@@ -735,14 +735,14 @@ public class ElasticsearchJobProvider implements JobProvider
                     .order(descending ? SortOrder.DESC : SortOrder.ASC);
         }
 
-        return records(jobId, skip, take, recordFilter, sb, SECONDARY_SORT, descending);
+        return records(jobId, from, size, recordFilter, sb, SECONDARY_SORT, descending);
     }
 
 
     /**
      * The returned records have the parent bucket id set.
      */
-    private QueryPage<AnomalyRecord> records(String jobId, int skip, int take,
+    private QueryPage<AnomalyRecord> records(String jobId, int from, int size,
             QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
             boolean descending) throws ResourceNotFoundException {
         String indexName = ElasticsearchPersister.getJobIndexName(jobId);
@@ -754,7 +754,7 @@ public class ElasticsearchJobProvider implements JobProvider
         SearchRequestBuilder searchBuilder = client.prepareSearch(indexName)
                 .setTypes(AnomalyRecord.TYPE.getPreferredName())
                 .setQuery(recordFilter)
-                .setFrom(skip).setSize(take)
+                .setFrom(from).setSize(size)
                 .addSort(sb == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC) : sb)
                 .setFetchSource(true);  // the field option turns off source so request it explicitly
 
@@ -768,7 +768,7 @@ public class ElasticsearchJobProvider implements JobProvider
             LOGGER.trace("ES API CALL: search all of type " + AnomalyRecord.TYPE +
                     " from index " + indexName + ((sb != null) ? " with sort" : "") +
                     (secondarySort.isEmpty() ? "" : " with secondary sort") +
-                    " with filter after sort skip " + skip + " take " + take);
+                    " with filter after sort from " + from + " size " + size);
             searchResponse = searchBuilder.get();
         } catch (IndexNotFoundException e) {
             throw ExceptionsHelper.missingJobException(jobId);
@@ -804,22 +804,22 @@ public class ElasticsearchJobProvider implements JobProvider
                 .interim(Bucket.IS_INTERIM.getPreferredName(), query.isIncludeInterim())
                 .build();
 
-        return influencers(jobId, query.getSkip(), query.getTake(), fb, query.getSortField(),
+        return influencers(jobId, query.getFrom(), query.getSize(), fb, query.getSortField(),
                 query.isSortDescending());
     }
 
-    private QueryPage<Influencer> influencers(String jobId, int skip, int take, QueryBuilder filterBuilder, String sortField,
+    private QueryPage<Influencer> influencers(String jobId, int from, int size, QueryBuilder filterBuilder, String sortField,
             boolean sortDescending) throws ResourceNotFoundException {
         String indexName = ElasticsearchPersister.getJobIndexName(jobId);
         LOGGER.trace("ES API CALL: search all of type " + Influencer.TYPE + " from index " + indexName
                 + ((sortField != null)
                         ? " with sort " + (sortDescending ? "descending" : "ascending") + " on field " + esSortField(sortField) : "")
-                + " with filter after sort skip " + skip + " take " + take);
+                + " with filter after sort from " + from + " size " + size);
 
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(indexName)
                 .setTypes(Influencer.TYPE.getPreferredName())
                 .setPostFilter(filterBuilder)
-                .setFrom(skip).setSize(take);
+                .setFrom(from).setSize(size);
 
         FieldSortBuilder sb = sortField == null ? SortBuilders.fieldSort(ElasticsearchMappings.ES_DOC)
                 : new FieldSortBuilder(esSortField(sortField)).order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
@@ -909,15 +909,15 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int from, int size)
     {
-        return modelSnapshots(jobId, skip, take, null, null, null, true, null, null);
+        return modelSnapshots(jobId, from, size, null, null, null, true, null, null);
     }
 
     @Override
-    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
-            String startEpochMs, String endEpochMs, String sortField, boolean sortDescending,
-            String snapshotId, String description)
+    public QueryPage<ModelSnapshot> modelSnapshots(String jobId, int from, int size,
+                                                   String startEpochMs, String endEpochMs, String sortField, boolean sortDescending,
+                                                   String snapshotId, String description)
     {
         boolean haveId = snapshotId != null && !snapshotId.isEmpty();
         boolean haveDescription = description != null && !description.isEmpty();
@@ -941,13 +941,13 @@ public class ElasticsearchJobProvider implements JobProvider
             fb = new ResultsFilterBuilder();
         }
 
-        return modelSnapshots(jobId, skip, take,
+        return modelSnapshots(jobId, from, size,
                 (sortField == null || sortField.isEmpty()) ? ModelSnapshot.RESTORE_PRIORITY.getPreferredName() : sortField,
                         sortDescending, fb.timeRange(
                                 ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs).build());
     }
 
-    private QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
+    private QueryPage<ModelSnapshot> modelSnapshots(String jobId, int from, int size,
             String sortField, boolean sortDescending, QueryBuilder fb)
     {
         FieldSortBuilder sb = new FieldSortBuilder(esSortField(sortField))
@@ -963,12 +963,12 @@ public class ElasticsearchJobProvider implements JobProvider
             String indexName = ElasticsearchPersister.getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: search all of type " + ModelSnapshot.TYPE +
                     " from index " + indexName + " sort ascending " + esSortField(sortField) +
-                    " with filter after sort skip " + skip + " take " + take);
+                    " with filter after sort from " + from + " size " + size);
             searchResponse = client.prepareSearch(indexName)
                     .setTypes(ModelSnapshot.TYPE.getPreferredName())
                     .addSort(sb)
                     .setQuery(fb)
-                    .setFrom(skip).setSize(take)
+                    .setFrom(from).setSize(size)
                     .get();
         }
         catch (IndexNotFoundException e)

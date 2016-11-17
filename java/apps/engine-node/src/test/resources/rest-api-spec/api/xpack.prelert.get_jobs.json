@@ -5,11 +5,11 @@
       "path": "/_xpack/prelert/jobs",
       "paths": [ "/_xpack/prelert/jobs" ],
       "params": {
-        "skip": {
+        "from": {
           "type": "int",
           "description": "skips a number of jobs"
         },
-        "take": {
+        "size": {
           "type": "int",
           "description": "specifies a max number of jobs to get"
         }

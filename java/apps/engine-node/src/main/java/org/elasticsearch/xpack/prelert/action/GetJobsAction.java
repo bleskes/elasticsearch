@@ -224,7 +224,7 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            QueryPage<Job> jobsPage = jobManager.getJobs(request.pageParams.getSkip(), request.pageParams.getTake(), state);
+            QueryPage<Job> jobsPage = jobManager.getJobs(request.pageParams.getFrom(), request.pageParams.getSize(), state);
             listener.onResponse(new Response(jobsPage));
         }
 

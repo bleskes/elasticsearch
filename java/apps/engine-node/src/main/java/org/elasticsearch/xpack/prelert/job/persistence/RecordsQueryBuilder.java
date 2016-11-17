@@ -18,10 +18,10 @@ package org.elasticsearch.xpack.prelert.job.persistence;
  * One time query builder for records. Sets default values for the following
  * parameters:
  * <ul>
- * <li>Skip- Skip the first N records. This parameter is for paging if not
+ * <li>From- Skip the first N records. This parameter is for paging if not
  * required set to 0. Default = 0</li>
- * <li>Take- Take only this number of records. Default =
- * {@value DEFAULT_TAKE_SIZE}</li>
+ * <li>Size- Take only this number of records. Default =
+ * {@value DEFAULT_SIZE}</li>
  * <li>IncludeInterim- Include interim results. Default = false</li>
  * <li>SortField- The field to sort results by if <code>null</code> no sort is
  * applied. Default = null</li>
@@ -40,19 +40,19 @@ package org.elasticsearch.xpack.prelert.job.persistence;
  */
 public final class RecordsQueryBuilder
 {
-    public static final int DEFAULT_TAKE_SIZE = 100;
+    public static final int DEFAULT_SIZE = 100;
 
     private RecordsQuery recordsQuery = new RecordsQuery();
 
-    public RecordsQueryBuilder skip(int skip)
+    public RecordsQueryBuilder from(int from)
     {
-        recordsQuery.skip = skip;
+        recordsQuery.from = from;
         return this;
     }
 
-    public RecordsQueryBuilder take(int take)
+    public RecordsQueryBuilder size(int size)
     {
-        recordsQuery.take = take;
+        recordsQuery.size = size;
         return this;
     }
 
@@ -116,8 +116,8 @@ public final class RecordsQueryBuilder
 
     public class RecordsQuery
     {
-        private int skip = 0;
-        private int take = DEFAULT_TAKE_SIZE;
+        private int from = 0;
+        private int size = DEFAULT_SIZE;
         private boolean includeInterim = false;
         private String sortField;
         private boolean sortDescending = true;
@@ -128,9 +128,9 @@ public final class RecordsQueryBuilder
         private String epochEnd;
 
 
-        public int getTake()
+        public int getSize()
         {
-            return take;
+            return size;
         }
 
         public boolean isIncludeInterim()
@@ -163,9 +163,9 @@ public final class RecordsQueryBuilder
             return partitionFieldValue;
         }
 
-        public int getSkip()
+        public int getFrom()
         {
-            return skip;
+            return from;
         }
 
         public String getEpochStart()

@@ -30,7 +30,7 @@ import java.util.Objects;
  * Generic wrapper class for a page of query results and the total number of
  * query hits.<br>
  * {@linkplain #hitCount()} is the total number of results but that value may
- * not be equal to the actual length of the {@linkplain #hits()} list if skip
+ * not be equal to the actual length of the {@linkplain #hits()} list if from
  * &amp; take or some cursor was used in the database query.
  */
 public final class QueryPage<T extends ToXContent & Writeable> extends ToXContentToBytes implements Writeable {

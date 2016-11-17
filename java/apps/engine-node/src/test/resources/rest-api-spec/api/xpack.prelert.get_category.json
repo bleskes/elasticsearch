@@ -17,11 +17,11 @@
         }
       },
       "params": {
-        "skip": {
+        "from": {
           "type": "int",
           "description": "skips a number of categories"
         },
-        "take": {
+        "size": {
           "type": "int",
           "description": "specifies a max number of categories to get"
         }

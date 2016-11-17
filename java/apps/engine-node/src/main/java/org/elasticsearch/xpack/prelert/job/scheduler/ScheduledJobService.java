@@ -194,7 +194,7 @@ public class ScheduledJobService extends AbstractComponent {
         long latestFinalBucketEndMs = -1L;
         BucketsQueryBuilder.BucketsQuery latestBucketQuery = new BucketsQueryBuilder()
                 .sortField(Bucket.TIMESTAMP.getPreferredName())
-                .sortDescending(true).take(1)
+                .sortDescending(true).size(1)
                 .includeInterim(false)
                 .build();
         QueryPage<Bucket> buckets;

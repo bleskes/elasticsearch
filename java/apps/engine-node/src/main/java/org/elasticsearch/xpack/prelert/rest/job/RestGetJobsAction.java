@@ -33,8 +33,8 @@ import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import java.io.IOException;
 
 public class RestGetJobsAction extends BaseRestHandler {
-    private static final int DEFAULT_SKIP = 0;
-    private static final int DEFAULT_TAKE = 100;
+    private static final int DEFAULT_FROM = 0;
+    private static final int DEFAULT_SIZE = 100;
 
     private final GetJobsAction.TransportAction transportGetJobsAction;
 
@@ -54,8 +54,8 @@ public class RestGetJobsAction extends BaseRestHandler {
             request = GetJobsAction.Request.PARSER.apply(parser, () -> parseFieldMatcher);
         } else {
             request = new GetJobsAction.Request();
-            request.setPageParams(new PageParams(restRequest.paramAsInt(PageParams.SKIP.getPreferredName(), DEFAULT_SKIP),
-                    restRequest.paramAsInt(PageParams.TAKE.getPreferredName(), DEFAULT_TAKE)));
+            request.setPageParams(new PageParams(restRequest.paramAsInt(PageParams.FROM.getPreferredName(), DEFAULT_FROM),
+                    restRequest.paramAsInt(PageParams.SIZE.getPreferredName(), DEFAULT_SIZE)));
         }
         return channel -> transportGetJobsAction.execute(request, new RestToXContentListener<Response>(channel));
     }

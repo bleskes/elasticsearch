@@ -327,9 +327,9 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
             logger.debug(String.format(Locale.ROOT,
-                    "Get model snapshots for job %s. skip = %d, take = %d"
+                    "Get model snapshots for job %s. from = %d, size = %d"
                             + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
-                    request.getJobId(), request.pageParams.getSkip(), request.pageParams.getTake(), request.getStart(), request.getEnd(),
+                    request.getJobId(), request.pageParams.getFrom(), request.pageParams.getSize(), request.getStart(), request.getEnd(),
                     request.getSort(), request.getDescOrder(), request.getDescriptionString()));
 
             QueryPage<ModelSnapshot> page = doGetPage(jobProvider, request);
@@ -339,8 +339,8 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         }
 
         public static QueryPage<ModelSnapshot> doGetPage(JobProvider jobProvider, Request request) {
-            QueryPage<ModelSnapshot> page = jobProvider.modelSnapshots(request.getJobId(), request.pageParams.getSkip(),
-                    request.pageParams.getTake(), request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(), null,
+            QueryPage<ModelSnapshot> page = jobProvider.modelSnapshots(request.getJobId(), request.pageParams.getFrom(),
+                    request.pageParams.getSize(), request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(), null,
                     request.getDescriptionString());
 
             // The quantiles can be large, and totally dominate the output -

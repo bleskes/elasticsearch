@@ -67,8 +67,8 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
     public static class Request extends ActionRequest {
 
         public static final ParseField CATEGORY_ID = new ParseField("categoryId");
-        public static final ParseField SKIP = new ParseField("skip");
-        public static final ParseField TAKE = new ParseField("take");
+        public static final ParseField FROM = new ParseField("from");
+        public static final ParseField SIZE = new ParseField("size");
 
         private String jobId;
         private String categoryId;
@@ -209,8 +209,8 @@ Action<GetCategoryDefinitionAction.Request, GetCategoryDefinitionAction.Response
             if (request.categoryId != null ) {
                 result = jobProvider.categoryDefinition(request.jobId, request.categoryId);
             } else {
-                result = jobProvider.categoryDefinitions(request.jobId, request.pageParams.getSkip(),
-                        request.pageParams.getTake());
+                result = jobProvider.categoryDefinitions(request.jobId, request.pageParams.getFrom(),
+                        request.pageParams.getSize());
             }
             listener.onResponse(new Response(result));
         }

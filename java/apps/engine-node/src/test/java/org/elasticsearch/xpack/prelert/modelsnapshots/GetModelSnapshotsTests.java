@@ -28,16 +28,16 @@ import static org.mockito.Mockito.mock;
 
 public class GetModelSnapshotsTests extends ESTestCase {
 
-    public void testModelSnapshots_GivenNegativeSkip() {
+    public void testModelSnapshots_GivenNegativeFrom() {
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new GetModelSnapshotsAction.Request("foo").setPageParams(new PageParams(-5, 10)));
-        assertEquals("Parameter [skip] cannot be < 0", e.getMessage());
+        assertEquals("Parameter [from] cannot be < 0", e.getMessage());
     }
 
-    public void testModelSnapshots_GivenNegativeTake() {
+    public void testModelSnapshots_GivenNegativeSize() {
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
                 () -> new GetModelSnapshotsAction.Request("foo").setPageParams(new PageParams(10, -5)));
-        assertEquals("Parameter [take] cannot be < 0", e.getMessage());
+        assertEquals("Parameter [size] cannot be < 0", e.getMessage());
     }
 
     public void testModelSnapshots_GivenNoStartOrEndParams() {

@@ -12,7 +12,7 @@
         }
       },
       "params": {
-        "skip": {
+        "from": {
           "type": "integer",
           "description": ""
         },

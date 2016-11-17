@@ -21,8 +21,8 @@ public class BucketsQueryBuilderTests extends ESTestCase {
     public void testDefaultBuild() throws Exception {
         BucketsQueryBuilder.BucketsQuery query = new BucketsQueryBuilder().build();
 
-        assertEquals(0, query.getSkip());
-        assertEquals(BucketsQueryBuilder.DEFAULT_TAKE_SIZE, query.getTake());
+        assertEquals(0, query.getFrom());
+        assertEquals(BucketsQueryBuilder.DEFAULT_SIZE, query.getSize());
         assertEquals(false, query.isIncludeInterim());
         assertEquals(false, query.isExpand());
         assertEquals(0.0, query.getAnomalyScoreFilter(), 0.0001);
@@ -35,8 +35,8 @@ public class BucketsQueryBuilderTests extends ESTestCase {
 
     public void testAll() {
         BucketsQueryBuilder.BucketsQuery query = new BucketsQueryBuilder()
-                .skip(20)
-                .take(40)
+                .from(20)
+                .size(40)
                 .includeInterim(true)
                 .expand(true)
                 .anomalyScoreThreshold(50.0d)
@@ -48,8 +48,8 @@ public class BucketsQueryBuilderTests extends ESTestCase {
                 .sortDescending(true)
                 .build();
 
-        assertEquals(20, query.getSkip());
-        assertEquals(40, query.getTake());
+        assertEquals(20, query.getFrom());
+        assertEquals(40, query.getSize());
         assertEquals(true, query.isIncludeInterim());
         assertEquals(true, query.isExpand());
         assertEquals(50.0d, query.getAnomalyScoreFilter(), 0.00001);
@@ -63,8 +63,8 @@ public class BucketsQueryBuilderTests extends ESTestCase {
 
     public void testEqualsHash() {
         BucketsQueryBuilder query = new BucketsQueryBuilder()
-                .skip(20)
-                .take(40)
+                .from(20)
+                .size(40)
                 .includeInterim(true)
                 .expand(true)
                 .anomalyScoreThreshold(50.0d)
@@ -74,8 +74,8 @@ public class BucketsQueryBuilderTests extends ESTestCase {
                 .partitionValue("foo");
 
         BucketsQueryBuilder query2 = new BucketsQueryBuilder()
-                .skip(20)
-                .take(40)
+                .from(20)
+                .size(40)
                 .includeInterim(true)
                 .expand(true)
                 .anomalyScoreThreshold(50.0d)
@@ -89,8 +89,8 @@ public class BucketsQueryBuilderTests extends ESTestCase {
         query2.clear();
         assertFalse(query.build().equals(query2.build()));
 
-        query2.skip(20)
-        .take(40)
+        query2.from(20)
+        .size(40)
         .includeInterim(true)
         .expand(true)
         .anomalyScoreThreshold(50.0d)
@@ -101,8 +101,8 @@ public class BucketsQueryBuilderTests extends ESTestCase {
         assertEquals(query.build(), query2.build());
 
         query2.clear();
-        query2.skip(20)
-        .take(40)
+        query2.from(20)
+        .size(40)
         .includeInterim(true)
         .expand(true)
         .anomalyScoreThreshold(50.1d)

@@ -70,11 +70,11 @@ public interface JobResultsProvider
      * Get a page of {@linkplain CategoryDefinition}s for the given <code>jobId</code>.
      *
      * @param jobId the job id
-     * @param skip Skip the first N categories. This parameter is for paging
-     * @param take Take only this number of categories
+     * @param from Skip the first N categories. This parameter is for paging
+     * @param size Take only this number of categories
      * @return QueryPage of CategoryDefinition
      */
-    QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int skip, int take);
+    QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int from, int size);
 
     /**
      * Get the specific CategoryDefinition for the given job and category id.

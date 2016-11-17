@@ -219,16 +219,16 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        int skip = 0;
-        int take = 10;
+        int from = 0;
+        int size = 10;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        BucketsQueryBuilder bq = new BucketsQueryBuilder().skip(skip).take(take).anomalyScoreThreshold(0.0)
+        BucketsQueryBuilder bq = new BucketsQueryBuilder().from(from).size(size).anomalyScoreThreshold(0.0)
                 .normalizedProbabilityThreshold(1.0);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
@@ -252,16 +252,16 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        int skip = 99;
-        int take = 17;
+        int from = 99;
+        int size = 17;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        BucketsQueryBuilder bq = new BucketsQueryBuilder().skip(skip).take(take).anomalyScoreThreshold(5.1)
+        BucketsQueryBuilder bq = new BucketsQueryBuilder().from(from).size(size).anomalyScoreThreshold(5.1)
                 .normalizedProbabilityThreshold(10.9).includeInterim(true);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
@@ -286,18 +286,18 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        int skip = 99;
-        int take = 17;
+        int from = 99;
+        int size = 17;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, Bucket.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
         BucketsQueryBuilder bq = new BucketsQueryBuilder();
-        bq.skip(skip);
-        bq.take(take);
+        bq.from(from);
+        bq.size(size);
         bq.anomalyScoreThreshold(5.1);
         bq.normalizedProbabilityThreshold(10.9);
         bq.includeInterim(true);
@@ -414,19 +414,19 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         source.add(recordMap1);
         source.add(recordMap2);
 
-        int skip = 14;
-        int take = 2;
+        int from = 14;
+        int size = 2;
         String sortfield = "minefield";
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        RecordsQueryBuilder rqb = new RecordsQueryBuilder().skip(skip).take(take).epochStart(String.valueOf(now.getTime()))
+        RecordsQueryBuilder rqb = new RecordsQueryBuilder().from(from).size(size).epochStart(String.valueOf(now.getTime()))
                 .epochEnd(String.valueOf(now.getTime())).includeInterim(true).sortField(sortfield).anomalyScoreThreshold(11.1)
                 .normalizedProbability(2.2);
 
@@ -464,21 +464,21 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         source.add(recordMap1);
         source.add(recordMap2);
 
-        int skip = 14;
-        int take = 2;
+        int from = 14;
+        int size = 2;
         String sortfield = "minefield";
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
         RecordsQueryBuilder rqb = new RecordsQueryBuilder();
-        rqb.skip(skip);
-        rqb.take(take);
+        rqb.from(from);
+        rqb.size(size);
         rqb.epochStart(String.valueOf(now.getTime()));
         rqb.epochEnd(String.valueOf(now.getTime()));
         rqb.includeInterim(true);
@@ -521,19 +521,19 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         source.add(recordMap1);
         source.add(recordMap2);
 
-        int skip = 14;
-        int take = 2;
+        int from = 14;
+        int size = 2;
         String sortfield = "minefield";
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, AnomalyRecord.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<AnomalyRecord> recordPage = provider.bucketRecords(jobId, bucket, skip, take, true, sortfield, true, "");
+        QueryPage<AnomalyRecord> recordPage = provider.bucketRecords(jobId, bucket, from, size, true, sortfield, true, "");
 
         assertEquals(2L, recordPage.hitCount());
         List<AnomalyRecord> records = recordPage.hits();
@@ -626,15 +626,15 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        int skip = 0;
-        int take = 10;
+        int from = 0;
+        int size = 10;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
-        QueryPage<CategoryDefinition> categoryDefinitions = provider.categoryDefinitions(jobId, skip, take);
+        QueryPage<CategoryDefinition> categoryDefinitions = provider.categoryDefinitions(jobId, from, size);
         assertEquals(1L, categoryDefinitions.hitCount());
         assertEquals(terms, categoryDefinitions.hits().get(0).getTerms());
     }
@@ -688,18 +688,18 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         source.add(recordMap1);
         source.add(recordMap2);
 
-        int skip = 4;
-        int take = 3;
+        int from = 4;
+        int size = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Influencer.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, Influencer.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        InfluencersQuery query = new InfluencersQueryBuilder().skip(skip).take(take).includeInterim(false).build();
+        InfluencersQuery query = new InfluencersQueryBuilder().from(from).size(size).includeInterim(false).build();
         QueryPage<Influencer> page = provider.influencers(jobId, query);
         assertEquals(2L, page.hitCount());
 
@@ -748,18 +748,18 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         source.add(recordMap1);
         source.add(recordMap2);
 
-        int skip = 4;
-        int take = 3;
+        int from = 4;
+        int size = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Influencer.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, Influencer.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        InfluencersQuery query = new InfluencersQueryBuilder().skip(skip).take(take).epochStart("0").epochEnd("0").sortField("sort")
+        InfluencersQuery query = new InfluencersQueryBuilder().from(from).size(size).epochStart("0").epochEnd("0").sortField("sort")
                 .sortDescending(true).anomalyScoreThreshold(0.0).includeInterim(true).build();
         QueryPage<Influencer> page = provider.influencers(jobId, query);
         assertEquals(2L, page.hitCount());
@@ -824,18 +824,18 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         source.add(recordMap1);
         source.add(recordMap2);
 
-        int skip = 4;
-        int take = 3;
+        int from = 4;
+        int size = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take);
+        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, from, size);
         assertEquals(2L, page.hitCount());
         List<ModelSnapshot> snapshots = page.hits();
 
@@ -880,18 +880,18 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         source.add(recordMap1);
         source.add(recordMap2);
 
-        int skip = 4;
-        int take = 3;
+        int from = 4;
+        int size = 3;
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), skip, take, response, queryBuilder);
+                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
 
-        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, skip, take, null, null, "sortfield", true, "snappyId",
+        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, from, size, null, null, "sortfield", true, "snappyId",
                 "description1");
         assertEquals(2L, page.hitCount());
         List<ModelSnapshot> snapshots = page.hits();

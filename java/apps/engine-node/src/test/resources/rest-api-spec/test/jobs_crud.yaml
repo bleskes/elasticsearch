@@ -25,8 +25,8 @@
 
   - do:
       xpack.prelert.get_jobs:
-        skip: 0
-        take: 100
+        from: 0
+        size: 100
   - match: { hitCount: 1 }
   - match: { hits.0.jobId: "farequote" }
 

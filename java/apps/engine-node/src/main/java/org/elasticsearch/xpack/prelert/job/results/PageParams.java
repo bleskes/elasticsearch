@@ -29,21 +29,21 @@ import java.util.Objects;
 public class PageParams extends ToXContentToBytes implements Writeable {
 
     public static final ParseField PAGE = new ParseField("page");
-    public static final ParseField SKIP = new ParseField("skip");
-    public static final ParseField TAKE = new ParseField("take");
+    public static final ParseField FROM = new ParseField("from");
+    public static final ParseField SIZE = new ParseField("size");
 
     public static final ConstructingObjectParser<PageParams, ParseFieldMatcherSupplier> PARSER = new ConstructingObjectParser<>(
             PAGE.getPreferredName(), a -> new PageParams((int) a[0], (int) a[1]));
 
-    public static final int MAX_SKIP_TAKE_SUM = 10000;
+    public static final int MAX_FROM_SIZE_SUM = 10000;
 
     static {
-        PARSER.declareInt(ConstructingObjectParser.constructorArg(), SKIP);
-        PARSER.declareInt(ConstructingObjectParser.constructorArg(), TAKE);
+        PARSER.declareInt(ConstructingObjectParser.constructorArg(), FROM);
+        PARSER.declareInt(ConstructingObjectParser.constructorArg(), SIZE);
     }
 
-    private final int skip;
-    private final int take;
+    private final int from;
+    private final int size;
 
     public PageParams(StreamInput in) throws IOException {
         this(in.readVInt(), in.readVInt());
@@ -51,45 +51,45 @@ public class PageParams extends ToXContentToBytes implements Writeable {
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
-        out.writeVInt(skip);
-        out.writeVInt(take);
+        out.writeVInt(from);
+        out.writeVInt(size);
     }
 
-    public PageParams(int skip, int take) {
-        if (skip < 0) {
-            throw new IllegalArgumentException("Parameter [" + SKIP.getPreferredName() + "] cannot be < 0");
+    public PageParams(int from, int SIZE) {
+        if (from < 0) {
+            throw new IllegalArgumentException("Parameter [" + FROM.getPreferredName() + "] cannot be < 0");
         }
-        if (take < 0) {
-            throw new IllegalArgumentException("Parameter [" + TAKE.getPreferredName() + "] cannot be < 0");
+        if (SIZE < 0) {
+            throw new IllegalArgumentException("Parameter [" + PageParams.SIZE.getPreferredName() + "] cannot be < 0");
         }
-        if (skip + take > MAX_SKIP_TAKE_SUM) {
-            throw new IllegalArgumentException("The sum of parameters [" + SKIP.getPreferredName() + "] and ["
-                    + TAKE.getPreferredName() + "] cannot be higher than " + MAX_SKIP_TAKE_SUM + ".");
+        if (from + SIZE > MAX_FROM_SIZE_SUM) {
+            throw new IllegalArgumentException("The sum of parameters [" + FROM.getPreferredName() + "] and ["
+                    + PageParams.SIZE.getPreferredName() + "] cannot be higher than " + MAX_FROM_SIZE_SUM + ".");
         }
-        this.skip = skip;
-        this.take = take;
+        this.from = from;
+        this.size = SIZE;
     }
 
-    public int getSkip() {
-        return skip;
+    public int getFrom() {
+        return from;
     }
 
-    public int getTake() {
-        return take;
+    public int getSize() {
+        return size;
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(SKIP.getPreferredName(), skip);
-        builder.field(TAKE.getPreferredName(), take);
+        builder.field(FROM.getPreferredName(), from);
+        builder.field(SIZE.getPreferredName(), size);
         builder.endObject();
         return builder;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(skip, take);
+        return Objects.hash(from, size);
     }
 
     @Override
@@ -101,8 +101,8 @@ public class PageParams extends ToXContentToBytes implements Writeable {
             return false;
         }
         PageParams other = (PageParams) obj;
-        return Objects.equals(skip, other.skip) &&
-                Objects.equals(take, other.take);
+        return Objects.equals(from, other.from) &&
+                Objects.equals(size, other.size);
     }
 
 }

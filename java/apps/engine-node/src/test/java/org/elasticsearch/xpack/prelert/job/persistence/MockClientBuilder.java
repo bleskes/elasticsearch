@@ -253,26 +253,26 @@ public class MockClientBuilder {
         return this;
     }
 
-    public MockClientBuilder prepareSearch(String index, String type, int skip, int take, SearchResponse response) {
+    public MockClientBuilder prepareSearch(String index, String type, int from, int size, SearchResponse response) {
         SearchRequestBuilder searchRequestBuilder = mock(SearchRequestBuilder.class);
         when(searchRequestBuilder.get()).thenReturn(response);
         when(searchRequestBuilder.setTypes(eq(type))).thenReturn(searchRequestBuilder);
-        when(searchRequestBuilder.setFrom(eq(skip))).thenReturn(searchRequestBuilder);
-        when(searchRequestBuilder.setSize(eq(take))).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.setFrom(eq(from))).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.setSize(eq(size))).thenReturn(searchRequestBuilder);
         when(searchRequestBuilder.addSort(any(SortBuilder.class))).thenReturn(searchRequestBuilder);
         when(client.prepareSearch(eq(index))).thenReturn(searchRequestBuilder);
         return this;
     }
 
-    public MockClientBuilder prepareSearch(String index, String type, int skip, int take, SearchResponse response,
+    public MockClientBuilder prepareSearch(String index, String type, int from, int size, SearchResponse response,
             ArgumentCaptor<QueryBuilder> filter) {
         SearchRequestBuilder builder = mock(SearchRequestBuilder.class);
         when(builder.setTypes(eq(type))).thenReturn(builder);
         when(builder.addSort(any(SortBuilder.class))).thenReturn(builder);
         when(builder.setQuery(filter.capture())).thenReturn(builder);
         when(builder.setPostFilter(filter.capture())).thenReturn(builder);
-        when(builder.setFrom(eq(skip))).thenReturn(builder);
-        when(builder.setSize(eq(take))).thenReturn(builder);
+        when(builder.setFrom(eq(from))).thenReturn(builder);
+        when(builder.setSize(eq(size))).thenReturn(builder);
         when(builder.setFetchSource(eq(true))).thenReturn(builder);
         when(builder.addDocValueField(any(String.class))).thenReturn(builder);
         when(builder.addSort(any(String.class), any(SortOrder.class))).thenReturn(builder);

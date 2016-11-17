@@ -12,11 +12,11 @@
         }
       },
       "params": {
-        "skip": {
+        "from": {
           "type": "integer",
           "description": ""
         },
-        "take": {
+        "size": {
           "type": "integer",
           "description": "The default number of documents returned in queries as a string."
         },

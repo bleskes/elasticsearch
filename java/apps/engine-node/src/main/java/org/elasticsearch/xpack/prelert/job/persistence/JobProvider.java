@@ -38,18 +38,18 @@ public interface JobProvider extends JobResultsProvider {
      * Get model snapshots for the job ordered by descending restore priority.
      *
      * @param jobId the job id
-     * @param skip  number of snapshots to skip
-     * @param take  number of snapshots to retrieve
+     * @param from  number of snapshots to from
+     * @param size  number of snapshots to retrieve
      * @return page of model snapshots
      */
-    QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take);
+    QueryPage<ModelSnapshot> modelSnapshots(String jobId, int from, int size);
 
     /**
      * Get model snapshots for the job ordered by descending restore priority.
      *
      * @param jobId          the job id
-     * @param skip           number of snapshots to skip
-     * @param take           number of snapshots to retrieve
+     * @param from           number of snapshots to from
+     * @param size           number of snapshots to retrieve
      * @param startEpochMs   earliest time to include (inclusive)
      * @param endEpochMs     latest time to include (exclusive)
      * @param sortField      optional sort field name (may be null)
@@ -58,7 +58,7 @@ public interface JobProvider extends JobResultsProvider {
      * @param description    optional description to match (null for all)
      * @return page of model snapshots
      */
-    QueryPage<ModelSnapshot> modelSnapshots(String jobId, int skip, int take,
+    QueryPage<ModelSnapshot> modelSnapshots(String jobId, int from, int size,
             String startEpochMs, String endEpochMs, String sortField, boolean sortDescending,
             String snapshotId, String description);
 

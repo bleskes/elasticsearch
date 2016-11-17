@@ -69,28 +69,28 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
     }
 
-    public void testGetJobs_GivenNegativeSkip() throws Exception {
+    public void testGetJobs_GivenNegativeFrom() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip=-1"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
-        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [skip] cannot be < 0\""));
+        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [from] cannot be < 0\""));
     }
 
-    public void testGetJobs_GivenNegativeTake() throws Exception {
+    public void testGetJobs_GivenNegativeSize() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?take=-1"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?size=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
-        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [take] cannot be < 0\""));
+        assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [size] cannot be < 0\""));
     }
 
-    public void testGetJobs_GivenSkipAndTakeSumTo10001() throws Exception {
+    public void testGetJobs_GivenFromAndSizeSumTo10001() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip1000&take=11001"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=1000&size=11001"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
-        assertThat(e.getMessage(), containsString("\"reason\":\"The sum of parameters [skip] and [take] cannot be higher than 10000."));
+        assertThat(e.getMessage(), containsString("\"reason\":\"The sum of parameters [from] and [size] cannot be higher than 10000."));
     }
 
     public void testGetJobs_GivenSingleJob() throws Exception {
@@ -119,12 +119,12 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_3\""));
     }
 
-    public void testGetJobs_GivenMultipleJobsAndSkipIsOne() throws Exception {
+    public void testGetJobs_GivenMultipleJobsAndFromIsOne() throws Exception {
         createFarequoteJob("farequote_1");
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -134,12 +134,12 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_3\""));
     }
 
-    public void testGetJobs_GivenMultipleJobsAndTakeIsOne() throws Exception {
+    public void testGetJobs_GivenMultipleJobsAndSizeIsOne() throws Exception {
         createFarequoteJob("farequote_1");
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?take=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?size=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -149,12 +149,12 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_3\"")));
     }
 
-    public void testGetJobs_GivenMultipleJobsAndSkipIsOneAndTakeIsOne() throws Exception {
+    public void testGetJobs_GivenMultipleJobsAndFromIsOneAndSizeIsOne() throws Exception {
         createFarequoteJob("farequote_1");
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?skip=1&take=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=1&size=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);

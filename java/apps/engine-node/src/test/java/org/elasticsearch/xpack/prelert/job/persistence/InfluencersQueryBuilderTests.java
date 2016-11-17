@@ -22,8 +22,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
     public void testDefaultBuild() throws Exception {
         InfluencersQueryBuilder.InfluencersQuery query = new InfluencersQueryBuilder().build();
 
-        assertEquals(0, query.getSkip());
-        assertEquals(InfluencersQueryBuilder.DEFAULT_TAKE_SIZE, query.getTake());
+        assertEquals(0, query.getFrom());
+        assertEquals(InfluencersQueryBuilder.DEFAULT_SIZE, query.getSize());
         assertEquals(false, query.isIncludeInterim());
         assertEquals(0.0, query.getAnomalyScoreFilter(), 0.0001);
         assertNull(query.getEpochStart());
@@ -34,8 +34,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
 
     public void testAll() {
         InfluencersQueryBuilder.InfluencersQuery query = new InfluencersQueryBuilder()
-                .skip(20)
-                .take(40)
+                .from(20)
+                .size(40)
                 .includeInterim(true)
                 .anomalyScoreThreshold(50.0d)
                 .epochStart("1000")
@@ -44,8 +44,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
                 .sortDescending(true)
                 .build();
 
-        assertEquals(20, query.getSkip());
-        assertEquals(40, query.getTake());
+        assertEquals(20, query.getFrom());
+        assertEquals(40, query.getSize());
         assertEquals(true, query.isIncludeInterim());
         assertEquals(50.0d, query.getAnomalyScoreFilter(), 0.00001);
         assertEquals("1000", query.getEpochStart());
@@ -56,16 +56,16 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
 
     public void testEqualsHash() {
         InfluencersQueryBuilder query = new InfluencersQueryBuilder()
-                .skip(20)
-                .take(40)
+                .from(20)
+                .size(40)
                 .includeInterim(true)
                 .anomalyScoreThreshold(50.0d)
                 .epochStart("1000")
                 .epochEnd("2000");
 
         InfluencersQueryBuilder query2 = new InfluencersQueryBuilder()
-                .skip(20)
-                .take(40)
+                .from(20)
+                .size(40)
                 .includeInterim(true)
                 .anomalyScoreThreshold(50.0d)
                 .epochStart("1000")
@@ -76,8 +76,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
         query2.clear();
         assertFalse(query.build().equals(query2.build()));
 
-        query2.skip(20)
-        .take(40)
+        query2.from(20)
+        .size(40)
         .includeInterim(true)
         .anomalyScoreThreshold(50.0d)
         .epochStart("1000")
@@ -85,8 +85,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
         assertEquals(query.build(), query2.build());
 
         query2.clear();
-        query2.skip(20)
-        .take(40)
+        query2.from(20)
+        .size(40)
         .includeInterim(true)
         .anomalyScoreThreshold(50.1d)
         .epochStart("1000")
