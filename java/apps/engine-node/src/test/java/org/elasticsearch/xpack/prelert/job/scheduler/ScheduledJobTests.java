@@ -57,7 +57,7 @@ public class ScheduledJobTests extends ESTestCase {
         when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
         InputStream inputStream = mock(InputStream.class);
         when(dataExtractor.next()).thenReturn(Optional.of(inputStream));
-        DataCounts dataCounts = new DataCounts("_job_id", 1, 0, 0, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
+        DataCounts dataCounts = new DataCounts("_job_id", 1, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
         when(dataProcessor.processData(eq("_job_id"), same(inputStream), any())).thenReturn(dataCounts);
     }
 

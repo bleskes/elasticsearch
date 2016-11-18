@@ -71,7 +71,7 @@ public class StatusReporterTests extends ESTestCase {
     public void testComplexConstructor() throws Exception {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        DataCounts counts = new DataCounts("foo", 1L, 1L, 2L, 0L, 3L, 4L, 5L, 6L, 7L, new Date(), new Date());
+        DataCounts counts = new DataCounts("foo", 1L, 1L, 2L, 0L, 3L, 4L, 5L, new Date(), new Date());
 
         statusReporter = new StatusReporter(env, settings, JOB_ID, counts, usageReporter, jobDataCountsPersister, mockLogger, 1);
         DataCounts stats = statusReporter.incrementalStats();
@@ -83,8 +83,6 @@ public class StatusReporterTests extends ESTestCase {
         assertEquals(3, statusReporter.getDateParseErrorsCount());
         assertEquals(4, statusReporter.getMissingFieldErrorCount());
         assertEquals(5, statusReporter.getOutOfOrderRecordCount());
-        assertEquals(6, statusReporter.getFailedTransformCount());
-        assertEquals(7, statusReporter.getExcludedRecordCount());
         assertNull(stats.getEarliestRecordTimeStamp());
     }
 
@@ -96,14 +94,11 @@ public class StatusReporterTests extends ESTestCase {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
         statusReporter.reportRecordWritten(5, 1000);
-        statusReporter.reportFailedTransform();
-        statusReporter.reportExcludedRecord(5);
+        statusReporter.reportRecordWritten(5, 1000);
         assertEquals(2, statusReporter.incrementalStats().getInputRecordCount());
         assertEquals(10, statusReporter.incrementalStats().getInputFieldCount());
-        assertEquals(1, statusReporter.incrementalStats().getProcessedRecordCount());
-        assertEquals(3, statusReporter.incrementalStats().getProcessedFieldCount());
-        assertEquals(1, statusReporter.incrementalStats().getFailedTransformCount());
-        assertEquals(1, statusReporter.incrementalStats().getExcludedRecordCount());
+        assertEquals(2, statusReporter.incrementalStats().getProcessedRecordCount());
+        assertEquals(6, statusReporter.incrementalStats().getProcessedFieldCount());
         assertEquals(1000, statusReporter.incrementalStats().getLatestRecordTimeStamp().getTime());
 
         assertEquals(statusReporter.incrementalStats(), statusReporter.runningTotalStats());
@@ -226,11 +221,10 @@ public class StatusReporterTests extends ESTestCase {
     public void testFinishReporting() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
-        DataCounts dc = new DataCounts(JOB_ID, 2L, 5L, 0L, 12L, 0L, 1L, 0L, 0L, 1L, new Date(2000), new Date(3000));
+        DataCounts dc = new DataCounts(JOB_ID, 2L, 5L, 0L, 10L, 0L, 1L, 0L, new Date(2000), new Date(3000));
         statusReporter.reportRecordWritten(5, 2000);
         statusReporter.reportRecordWritten(5, 3000);
         statusReporter.reportMissingField();
-        statusReporter.reportExcludedRecord(2);
         statusReporter.finishReporting();
 
         Mockito.verify(usageReporter, Mockito.times(1)).reportUsage();
@@ -248,7 +242,5 @@ public class StatusReporterTests extends ESTestCase {
         assertEquals(0L, stats.getInvalidDateCount());
         assertEquals(0L, stats.getMissingFieldCount());
         assertEquals(0L, stats.getOutOfOrderTimeStampCount());
-        assertEquals(0L, stats.getFailedTransformCount());
-        assertEquals(0L, stats.getExcludedRecordCount());
     }
 }

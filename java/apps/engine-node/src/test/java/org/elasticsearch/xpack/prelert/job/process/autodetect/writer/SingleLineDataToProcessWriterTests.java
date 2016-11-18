@@ -137,7 +137,6 @@ public class SingleLineDataToProcessWriterTests extends ESTestCase {
         verify(statusReporter, times(1)).setAnalysedFieldsPerRecord(1);
         verify(statusReporter, times(1)).reportRecordWritten(1, 1430301600000L);
         verify(statusReporter, times(1)).reportRecordWritten(1, 1430308800000L);
-        verify(statusReporter, times(2)).reportFailedTransform();
         verify(statusReporter, times(3)).reportDateParseError(1);
         verify(statusReporter, times(1)).incrementalStats();
 

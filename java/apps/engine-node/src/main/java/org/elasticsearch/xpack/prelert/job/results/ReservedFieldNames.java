@@ -130,8 +130,6 @@ public final class ReservedFieldNames {
             DataCounts.INVALID_DATE_COUNT.getPreferredName(),
             DataCounts.MISSING_FIELD_COUNT.getPreferredName(),
             DataCounts.OUT_OF_ORDER_TIME_COUNT.getPreferredName(),
-            DataCounts.FAILED_TRANSFORM_COUNT.getPreferredName(),
-            DataCounts.EXCLUDED_RECORD_COUNT.getPreferredName(),
             DataCounts.LATEST_RECORD_TIME.getPreferredName(),
 
             Influence.INFLUENCER_FIELD_NAME.getPreferredName(),

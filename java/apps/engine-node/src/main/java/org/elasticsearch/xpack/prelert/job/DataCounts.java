@@ -54,8 +54,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     public static final String INVALID_DATE_COUNT_STR = "invalid_date_count";
     public static final String MISSING_FIELD_COUNT_STR = "missing_field_count";
     public static final String OUT_OF_ORDER_TIME_COUNT_STR = "out_of_order_timestamp_count";
-    public static final String FAILED_TRANSFORM_COUNT_STR = "failed_transform_count";
-    public static final String EXCLUDED_RECORD_COUNT_STR = "excluded_record_count";
     public static final String EARLIEST_RECORD_TIME_STR = "earliest_record_timestamp";
     public static final String LATEST_RECORD_TIME_STR = "latest_record_timestamp";
 
@@ -67,8 +65,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     public static final ParseField INVALID_DATE_COUNT = new ParseField(INVALID_DATE_COUNT_STR);
     public static final ParseField MISSING_FIELD_COUNT = new ParseField(MISSING_FIELD_COUNT_STR);
     public static final ParseField OUT_OF_ORDER_TIME_COUNT = new ParseField(OUT_OF_ORDER_TIME_COUNT_STR);
-    public static final ParseField FAILED_TRANSFORM_COUNT = new ParseField(FAILED_TRANSFORM_COUNT_STR);
-    public static final ParseField EXCLUDED_RECORD_COUNT = new ParseField(EXCLUDED_RECORD_COUNT_STR);
     public static final ParseField EARLIEST_RECORD_TIME = new ParseField(EARLIEST_RECORD_TIME_STR);
     public static final ParseField LATEST_RECORD_TIME = new ParseField(LATEST_RECORD_TIME_STR);
 
@@ -76,7 +72,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
 
     public static final ConstructingObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
             new ConstructingObjectParser<>("data_counts", a -> new DataCounts((String) a[0], (long) a[1], (long) a[2], (long) a[3],
-                    (long) a[4], (long) a[5], (long) a[6], (long) a[7], (long) a[8], (long) a[9], (Date) a[10], (Date) a[11]));
+                    (long) a[4], (long) a[5], (long) a[6], (long) a[7], (Date) a[8], (Date) a[9]));
 
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), Job.ID);
@@ -87,8 +83,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), INVALID_DATE_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), MISSING_FIELD_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), OUT_OF_ORDER_TIME_COUNT);
-        PARSER.declareLong(ConstructingObjectParser.constructorArg(), FAILED_TRANSFORM_COUNT);
-        PARSER.declareLong(ConstructingObjectParser.constructorArg(), EXCLUDED_RECORD_COUNT);
         PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(), p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
@@ -118,15 +112,13 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     private long invalidDateCount;
     private long missingFieldCount;
     private long outOfOrderTimeStampCount;
-    private long failedTransformCount;
-    private long excludedRecordCount;
     // NORELEASE: Use Jodatime instead
     private Date earliestRecordTimeStamp;
     private Date latestRecordTimeStamp;
 
     public DataCounts(String jobId, long processedRecordCount, long processedFieldCount, long inputBytes,
                       long inputFieldCount, long invalidDateCount, long missingFieldCount, long outOfOrderTimeStampCount,
-                      long failedTransformCount,long excludedRecordCount, Date earliestRecordTimeStamp, Date latestRecordTimeStamp) {
+                      Date earliestRecordTimeStamp, Date latestRecordTimeStamp) {
         this.jobId = jobId;
         this.processedRecordCount = processedRecordCount;
         this.processedFieldCount = processedFieldCount;
@@ -135,8 +127,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         this.invalidDateCount = invalidDateCount;
         this.missingFieldCount = missingFieldCount;
         this.outOfOrderTimeStampCount = outOfOrderTimeStampCount;
-        this.failedTransformCount = failedTransformCount;
-        this.excludedRecordCount = excludedRecordCount;
         this.latestRecordTimeStamp = latestRecordTimeStamp;
         this.earliestRecordTimeStamp = earliestRecordTimeStamp;
     }
@@ -154,8 +144,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         invalidDateCount = lhs.invalidDateCount;
         missingFieldCount = lhs.missingFieldCount;
         outOfOrderTimeStampCount = lhs.outOfOrderTimeStampCount;
-        failedTransformCount = lhs.failedTransformCount;
-        excludedRecordCount = lhs.excludedRecordCount;
         latestRecordTimeStamp = lhs.latestRecordTimeStamp;
         earliestRecordTimeStamp = lhs.earliestRecordTimeStamp;
     }
@@ -169,8 +157,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         invalidDateCount = in.readVLong();
         missingFieldCount = in.readVLong();
         outOfOrderTimeStampCount = in.readVLong();
-        failedTransformCount = in.readVLong();
-        excludedRecordCount = in.readVLong();
         if (in.readBoolean()) {
             latestRecordTimeStamp = new Date(in.readVLong());
         }
@@ -232,7 +218,7 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
      */
     public long getInputRecordCount() {
         return processedRecordCount + outOfOrderTimeStampCount
-                + invalidDateCount + excludedRecordCount;
+                + invalidDateCount;
     }
 
     /**
@@ -309,35 +295,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         outOfOrderTimeStampCount += additional;
     }
 
-
-    /**
-     * The number of transforms that failed.
-     * In theory this could be more than the number of records
-     * if multiple transforms are applied to each record
-     *
-     * @return The number of transforms that failed
-     */
-    public long getFailedTransformCount() {
-        return failedTransformCount;
-    }
-
-    public void incrementFailedTransformCount(long additional) {
-        failedTransformCount += additional;
-    }
-
-    /**
-     * The number of records excluded by a transform
-     *
-     * @return Number of excluded records
-     */
-    public long getExcludedRecordCount() {
-        return excludedRecordCount;
-    }
-
-    public void incrementExcludedRecordCount(long additional) {
-        excludedRecordCount += additional;
-    }
-
     /**
      * The time of the first record seen.
      *
@@ -385,8 +342,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         out.writeVLong(invalidDateCount);
         out.writeVLong(missingFieldCount);
         out.writeVLong(outOfOrderTimeStampCount);
-        out.writeVLong(failedTransformCount);
-        out.writeVLong(excludedRecordCount);
         if (latestRecordTimeStamp != null) {
             out.writeBoolean(true);
             out.writeVLong(latestRecordTimeStamp.getTime());
@@ -419,8 +374,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         builder.field(INVALID_DATE_COUNT.getPreferredName(), invalidDateCount);
         builder.field(MISSING_FIELD_COUNT.getPreferredName(), missingFieldCount);
         builder.field(OUT_OF_ORDER_TIME_COUNT.getPreferredName(), outOfOrderTimeStampCount);
-        builder.field(FAILED_TRANSFORM_COUNT.getPreferredName(), failedTransformCount);
-        builder.field(EXCLUDED_RECORD_COUNT.getPreferredName(), excludedRecordCount);
         if (earliestRecordTimeStamp != null) {
             builder.field(EARLIEST_RECORD_TIME.getPreferredName(), earliestRecordTimeStamp.getTime());
         }
@@ -455,8 +408,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
                 this.invalidDateCount == that.invalidDateCount &&
                 this.missingFieldCount == that.missingFieldCount &&
                 this.outOfOrderTimeStampCount == that.outOfOrderTimeStampCount &&
-                this.failedTransformCount == that.failedTransformCount &&
-                this.excludedRecordCount == that.excludedRecordCount &&
                 Objects.equals(this.latestRecordTimeStamp, that.latestRecordTimeStamp) &&
                 Objects.equals(this.earliestRecordTimeStamp, that.earliestRecordTimeStamp);
 
@@ -466,7 +417,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     public int hashCode() {
         return Objects.hash(jobId, processedRecordCount, processedFieldCount,
                 inputBytes, inputFieldCount, invalidDateCount, missingFieldCount,
-                outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
-                latestRecordTimeStamp, earliestRecordTimeStamp);
+                outOfOrderTimeStampCount, latestRecordTimeStamp, earliestRecordTimeStamp);
     }
 }

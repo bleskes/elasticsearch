@@ -346,7 +346,6 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         verify(autodetectProcess, never()).writeRecord(output);
         verify(statusReporter, never()).reportRecordWritten(anyLong(), anyLong());
-        verify(statusReporter, times(1)).reportExcludedRecord(3);
 
         // reset the call counts etc.
         Mockito.reset(statusReporter);
@@ -358,7 +357,6 @@ public class AbstractDataToProcessWriterTests extends ESTestCase {
 
         verify(autodetectProcess, times(1)).writeRecord(expectedOutput);
         verify(statusReporter, times(1)).reportRecordWritten(3, 2000);
-        verify(statusReporter, never()).reportExcludedRecord(anyLong());
     }
 
     public void testBuildTransforms_DateTransformsAreSorted() throws IOException {

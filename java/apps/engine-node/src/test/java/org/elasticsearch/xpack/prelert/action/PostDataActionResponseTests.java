@@ -25,8 +25,7 @@ public class PostDataActionResponseTests extends AbstractStreamableTestCase<Post
         DataCounts counts = new DataCounts(randomAsciiOfLength(10), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
-                randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate(),
-                new DateTime(randomDateTimeZone()).toDate());
+                new DateTime(randomDateTimeZone()).toDate(), new DateTime(randomDateTimeZone()).toDate());
 
         return new PostDataAction.Response(counts);
     }

@@ -53,7 +53,7 @@ public class DataStreamerThreadTests extends ESTestCase {
     }
 
     public void testRun() throws Exception {
-        DataCounts counts = new DataCounts("foo", 42L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date(), new Date());
+        DataCounts counts = new DataCounts("foo", 42L, 0L, 0L, 0L, 0L, 0L, 0L, new Date(), new Date());
         when(dataStreamer.streamData(CONTENT_ENCODING, JOB_ID, inputStream, params)).thenReturn(counts);
 
         dataStreamerThread.run();

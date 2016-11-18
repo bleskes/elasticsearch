@@ -103,7 +103,7 @@ public class ScheduledJobServiceTests extends ESTestCase {
         Job.Builder builder = createScheduledJob();
         Allocation allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTING, 0L, 60000L));
-        DataCounts dataCounts = new DataCounts("foo", 1, 0, 0, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
+        DataCounts dataCounts = new DataCounts("foo", 1, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
         builder.setCounts(dataCounts);
         when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
@@ -126,7 +126,7 @@ public class ScheduledJobServiceTests extends ESTestCase {
         Job.Builder builder = createScheduledJob();
         Allocation allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTING, 0L, null));
-        DataCounts dataCounts = new DataCounts("foo", 1, 0, 0, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
+        DataCounts dataCounts = new DataCounts("foo", 1, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
         builder.setCounts(dataCounts);
         when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 

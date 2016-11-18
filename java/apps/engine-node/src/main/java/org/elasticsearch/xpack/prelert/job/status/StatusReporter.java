@@ -69,17 +69,17 @@ public class StatusReporter {
     private final int acceptablePercentOutOfOrderErrors;
 
     public StatusReporter(Environment env, Settings settings, String jobId, UsageReporter usageReporter,
-            JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
+                          JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
         this(env, settings, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(jobId), bucketSpan);
     }
 
     public StatusReporter(Environment env, Settings settings, String jobId, DataCounts counts, UsageReporter usageReporter,
-            JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
+                          JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
         this(env, settings, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(counts), bucketSpan);
     }
 
     private StatusReporter(Environment env, Settings settings, String jobId, UsageReporter usageReporter,
-            JobDataCountsPersister dataCountsPersister, Logger logger, DataCounts totalCounts, long bucketSpan) {
+                           JobDataCountsPersister dataCountsPersister, Logger logger, DataCounts totalCounts, long bucketSpan) {
         this.jobId = jobId;
         this.usageReporter = usageReporter;
         this.dataCountsPersister = dataCountsPersister;
@@ -96,11 +96,11 @@ public class StatusReporter {
      * Increment the number of records written by 1 and increment
      * the total number of fields read.
      *
-     * @param inputFieldCount    Number of fields in the record.
-     *                           Note this is not the number of processed fields (by field etc)
-     *                           but the actual number of fields in the record
-     * @param recordTimeMs The time of the latest record written
-     *                           in milliseconds from the epoch.
+     * @param inputFieldCount Number of fields in the record.
+     *                        Note this is not the number of processed fields (by field etc)
+     *                        but the actual number of fields in the record
+     * @param recordTimeMs    The time of the latest record written
+     *                        in milliseconds from the epoch.
      */
     public void reportRecordWritten(long inputFieldCount, long recordTimeMs) {
         usageReporter.addFieldsRecordsRead(inputFieldCount);
@@ -139,18 +139,6 @@ public class StatusReporter {
     }
 
     /**
-     * Increment the excluded record count by 1 and the input field
-     * count by <code>inputFieldCount</code>
-     */
-    public void reportExcludedRecord(long inputFieldCount) {
-        totalRecordStats.incrementExcludedRecordCount(1);
-        totalRecordStats.incrementInputFieldCount(inputFieldCount);
-
-        incrementalRecordStats.incrementExcludedRecordCount(1);
-        incrementalRecordStats.incrementInputFieldCount(inputFieldCount);
-    }
-
-    /**
      * Increments the date parse error count
      */
     public void reportDateParseError(long inputFieldCount) {
@@ -170,14 +158,6 @@ public class StatusReporter {
     public void reportMissingField() {
         totalRecordStats.incrementMissingFieldCount(1);
         incrementalRecordStats.incrementMissingFieldCount(1);
-    }
-
-    /**
-     * Increments by 1 the failed transform count
-     */
-    public void reportFailedTransform() {
-        totalRecordStats.incrementFailedTransformCount(1);
-        incrementalRecordStats.incrementFailedTransformCount(1);
     }
 
     public void reportMissingFields(long missingCount) {
@@ -210,7 +190,7 @@ public class StatusReporter {
     /**
      * Total records seen = records written to the Engine (processed record
      * count) + date parse error records count + out of order record count.
-     *
+     * <p>
      * Records with missing fields are counted as they are still written.
      */
     public long getInputRecordCount() {
@@ -237,10 +217,6 @@ public class StatusReporter {
         return totalRecordStats.getInputBytes();
     }
 
-    public long getFailedTransformCount() {
-        return totalRecordStats.getFailedTransformCount();
-    }
-
     public Date getLatestRecordTime() {
         return totalRecordStats.getLatestRecordTimeStamp();
     }
@@ -252,10 +228,6 @@ public class StatusReporter {
 
     public long getInputFieldCount() {
         return totalRecordStats.getInputFieldCount();
-    }
-
-    public long getExcludedRecordCount() {
-        return totalRecordStats.getExcludedRecordCount();
     }
 
     public int getAcceptablePercentDateParseErrors() {
@@ -295,10 +267,8 @@ public class StatusReporter {
         }
 
         String status = String.format(Locale.ROOT,
-                "%d records written to autodetect; missingFieldCount=%d, "
-                        + "invalidDateCount=%d, outOfOrderCount=%d, failedTransformCount=%d",
-                        getProcessedRecordCount(), getMissingFieldErrorCount(), getDateParseErrorsCount(),
-                        getOutOfOrderRecordCount(), getFailedTransformCount());
+                "%d records written to autodetect; missingFieldCount=%d, invalidDateCount=%d, outOfOrderCount=%d",
+                getProcessedRecordCount(), getMissingFieldErrorCount(), getDateParseErrorsCount(), getOutOfOrderRecordCount());
 
         logger.info(status);
 

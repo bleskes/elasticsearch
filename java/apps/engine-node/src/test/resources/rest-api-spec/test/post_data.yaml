@@ -32,8 +32,6 @@ setup:
   - match: { invalid_date_count: 0 }
   - match: { missing_field_count: 0 }
   - match: { out_of_order_timestamp_count: 0}
-  - match: { failed_transform_count: 0}
-  - match: { excluded_record_count: 0}
   - match: { earliest_record_timestamp: 1403481600000}
   - match: { latest_record_timestamp: 1403481700000}
 
@@ -60,8 +58,6 @@ setup:
   - match: { _source.invalid_date_count: 0 }
   - match: { _source.missing_field_count: 0 }
   - match: { _source.out_of_order_timestamp_count: 0}
-  - match: { _source.failed_transform_count: 0}
-  - match: { _source.excluded_record_count: 0}
   - match: { _source.earliest_record_timestamp: 1403481600000}
   - match: { _source.latest_record_timestamp: 1403481700000}
 

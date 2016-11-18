@@ -29,10 +29,10 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
 
     @Override
     protected DataCounts createTestInstance() {
-        return new DataCounts(randomAsciiOfLength(10), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
+        return new DataCounts(randomAsciiOfLength(10), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
-                randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate(), new DateTime(randomDateTimeZone()).toDate());
+                new DateTime(randomDateTimeZone()).toDate(), new DateTime(randomDateTimeZone()).toDate());
     }
 
     @Override
@@ -46,22 +46,22 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCountsEquals_GivenEqualCounts() {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
         assertTrue(counts1.equals(counts2));
         assertTrue(counts2.equals(counts1));
     }
 
     public void testCountsHashCode_GivenEqualCounts() {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
-        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        DataCounts counts2 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
     }
 
     public void testCountsCopyConstructor() {
-        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+        DataCounts counts1 = createCounts(1, 2, 3, 4, 5, 6, 7, 8, 9);
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1.hashCode(), counts2.hashCode());
@@ -73,7 +73,7 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCountCopyCreatedFieldsNotZero() throws Exception {
-        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 1479211200000L, 1479384000000L);
+        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 1479211200000L, 1479384000000L);
         assertAllFieldsGreaterThanZero(counts1);
 
         DataCounts counts2 = new DataCounts(counts1);
@@ -82,9 +82,6 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
 
     public void testIncrements() {
         DataCounts counts = new DataCounts(randomAsciiOfLength(16));
-
-        counts.incrementFailedTransformCount(5);
-        assertEquals(5, counts.getFailedTransformCount());
 
         counts.incrementInputBytes(15);
         assertEquals(15, counts.getInputBytes());
@@ -115,23 +112,23 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCalcProcessedFieldCount() {
-        DataCounts counts = new DataCounts(randomAsciiOfLength(16), 10L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date(), new Date());
+        DataCounts counts = new DataCounts(randomAsciiOfLength(16), 10L, 0L, 0L, 0L, 0L, 0L, 0L, new Date(), new Date());
         counts.calcProcessedFieldCount(3);
 
         assertEquals(30, counts.getProcessedFieldCount());
 
-        counts = new DataCounts(randomAsciiOfLength(16), 10L, 0L, 0L, 0L, 0L, 5L, 0L, 0L, 0L, new Date(), new Date());
+        counts = new DataCounts(randomAsciiOfLength(16), 10L, 0L, 0L, 0L, 0L, 5L, 0L, new Date(), new Date());
         counts.calcProcessedFieldCount(3);
         assertEquals(25, counts.getProcessedFieldCount());
     }
 
     public void testEquals() {
         DataCounts counts1 = new DataCounts(
-                randomAsciiOfLength(16), 10L, 5000L, 2000L, 300L, 6L, 65L, 40L, 15L, 0L, new Date(), new Date(1435000000L));
+                randomAsciiOfLength(16), 10L, 5000L, 2000L, 300L, 6L, 15L, 0L, new Date(), new Date(1435000000L));
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1, counts2);
-        counts2.incrementExcludedRecordCount(1);
+        counts2.incrementInputBytes(1);
         assertFalse(counts1.equals(counts2));
     }
 
@@ -140,7 +137,6 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
         counts.setEarliestRecordTimeStamp(new Date(100L));
 
         ESTestCase.expectThrows(IllegalStateException.class, () -> counts.setEarliestRecordTimeStamp(new Date(200L)));
-
         assertEquals(new Date(100L), counts.getEarliestRecordTimeStamp());
     }
 
@@ -153,8 +149,6 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
         assertEquals(0L, stats.getInvalidDateCount());
         assertEquals(0L, stats.getMissingFieldCount());
         assertEquals(0L, stats.getOutOfOrderTimeStampCount());
-        assertEquals(0L, stats.getFailedTransformCount());
-        assertEquals(0L, stats.getExcludedRecordCount());
     }
 
     private void assertAllFieldsGreaterThanZero(DataCounts stats) throws Exception {
@@ -167,19 +161,15 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
         assertThat(stats.getInvalidDateCount(), greaterThan(0L));
         assertThat(stats.getMissingFieldCount(), greaterThan(0L));
         assertThat(stats.getOutOfOrderTimeStampCount(), greaterThan(0L));
-        assertThat(stats.getFailedTransformCount(), greaterThan(0L));
-        assertThat(stats.getExcludedRecordCount(), greaterThan(0L));
         assertThat(stats.getLatestRecordTimeStamp().getTime(), greaterThan(0L));
     }
 
     private static DataCounts createCounts(
-            long processedRecordCount, long processedFieldCount,
-            long inputBytes, long inputFieldCount,
-            long invalidDateCount, long missingFieldCount,
-            long outOfOrderTimeStampCount, long failedTransformCount,
-            long excludedRecordCount, long earliestRecordTime, long latestRecordTime) {
+            long processedRecordCount, long processedFieldCount, long inputBytes, long inputFieldCount,
+            long invalidDateCount, long missingFieldCount, long outOfOrderTimeStampCount, long earliestRecordTime, long latestRecordTime) {
+
         DataCounts counts = new DataCounts("foo", processedRecordCount, processedFieldCount, inputBytes,
-                inputFieldCount, invalidDateCount, missingFieldCount, outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
+                inputFieldCount, invalidDateCount, missingFieldCount, outOfOrderTimeStampCount,
                 new Date(earliestRecordTime), new Date(latestRecordTime));
 
         return counts;

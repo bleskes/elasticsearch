@@ -274,10 +274,7 @@ public abstract class AbstractDataToProcessWriter implements DataToProcessWriter
         for (Transform tr : transforms) {
             try {
                 TransformResult result = tr.transform(readWriteArea);
-                if (result == TransformResult.FAIL) {
-                    statusReporter.reportFailedTransform();
-                } else if (result == TransformResult.EXCLUDE) {
-                    statusReporter.reportExcludedRecord(inputFieldCount);
+                if (result == TransformResult.EXCLUDE) {
                     return false;
                 }
             } catch (TransformException e) {
