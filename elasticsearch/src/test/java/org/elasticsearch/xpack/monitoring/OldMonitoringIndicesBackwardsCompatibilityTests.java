@@ -101,7 +101,7 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
         } finally {
             /* Shut down monitoring after every test because we've shrunk the collection interval enough that we'll have trouble shutting
              * down cleanly unless we force monitoring to stop. */
-            internalCluster().getInstance(AgentService.class).stop();
+            internalCluster().getInstances(AgentService.class).forEach(AgentService::stop);
         }
     }
 
@@ -122,59 +122,67 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
             assertThat(response.getHits().totalHits(), greaterThanOrEqualTo(20L));
             return;
         }
-        /* Indexes created from 2.3 onwards get aliased to the place they'd be if they were created in 5.0 so queries should just work.
-         * Monitoring doesn't really have a Java API so we can't test that, but we can test that we write the data we expected to write. */
+        try {
+            /* Indexes created from 2.3 onwards get aliased to the place they'd be if they were created in 5.0 so queries should just work.
+             * Monitoring doesn't really have a Java API so we can't test that, but we can test that we write the data we expected to write. */
+            if (httpExporter) {
+                // If we're using the http exporter we need feed it the port and enable it
+                NodesInfoResponse nodeInfos = client().admin().cluster().prepareNodesInfo().get();
+                TransportAddress publishAddress = nodeInfos.getNodes().get(0).getHttp().address().publishAddress();
+                assertEquals(1, publishAddress.uniqueAddressTypeId());
+                InetSocketAddress address = ((InetSocketTransportAddress) publishAddress).address();
+                Settings.Builder settings = Settings.builder();
+                setupHttpExporter(settings, address.getPort());
+                logger.info("--> Enabling http exporter pointing to [localhost:{}]", address.getPort());
+                client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get();
+            }
 
-        if (httpExporter) {
-            // If we're using the http exporter we need feed it the port and enable it
-            NodesInfoResponse nodeInfos = client().admin().cluster().prepareNodesInfo().get();
-            TransportAddress publishAddress = nodeInfos.getNodes().get(0).getHttp().address().publishAddress();
-            assertEquals(1, publishAddress.uniqueAddressTypeId());
-            InetSocketAddress address = ((InetSocketTransportAddress) publishAddress).address();
-            Settings.Builder settings = Settings.builder();
-            setupHttpExporter(settings, address.getPort());
-            logger.info("--> Enabling http exporter pointing to [localhost:{}]", address.getPort());
-            client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get();
+            IndexStatsResolver resolver = new IndexStatsResolver(MonitoredSystem.ES, Settings.EMPTY);
+            logger.info("--> {} Waiting for [{}]", Thread.currentThread().getName(), resolver.indexPattern());
+            assertBusy(() -> assertTrue(client().admin().indices().prepareExists(resolver.indexPattern()).get().isExists()));
+            // Slow down monitoring from its previously super fast pace so we can shut down without trouble
+            Settings.Builder settings = Settings.builder()
+                    .put(MonitoringSettings.INTERVAL.getKey(), timeValueSeconds(10).getStringRep());
+            assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get());
+
+            SearchResponse firstIndexStats = search(resolver, greaterThanOrEqualTo(10L));
+
+            // All the other aliases should have been created by now so we can assert that we have the data we saved in the bwc indexes
+            SearchResponse firstShards = search(new ShardsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(10L));
+            SearchResponse firstIndicesStats = search(new IndicesStatsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
+            SearchResponse firstNodeStats = search(new NodeStatsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
+            SearchResponse firstClusterState = search(new ClusterStateResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
+
+            ClusterStateResponse clusterStateResponse = client().admin().cluster().prepareState().clear().setNodes(true).get();
+            final String masterNodeId = clusterStateResponse.getState().getNodes().getMasterNodeId();
+
+            // Verify some stuff about the stuff in the backwards compatibility indexes
+            Arrays.stream(firstIndexStats.getHits().hits()).forEach(hit -> checkIndexStats(version, hit.sourceAsMap()));
+            Arrays.stream(firstShards.getHits().hits()).forEach(hit -> checkShards(version, hit.sourceAsMap()));
+            Arrays.stream(firstIndicesStats.getHits().hits()).forEach(hit -> checkIndicesStats(version, hit.sourceAsMap()));
+            Arrays.stream(firstNodeStats.getHits().hits()).forEach(hit -> checkNodeStats(version, masterNodeId, hit.sourceAsMap()));
+            Arrays.stream(firstClusterState.getHits().hits()).forEach(hit -> checkClusterState(version, hit.sourceAsMap()));
+
+            // Wait for monitoring to accumulate some data about the current cluster
+            long indexStatsCount = firstIndexStats.getHits().totalHits();
+            assertBusy(() -> search(new IndexStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
+                    greaterThan(indexStatsCount)), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(new ShardsResolver(MonitoredSystem.ES, Settings.EMPTY),
+                    greaterThan(firstShards.getHits().totalHits())), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(new IndicesStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
+                    greaterThan(firstIndicesStats.getHits().totalHits())), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(new NodeStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
+                    greaterThan(firstNodeStats.getHits().totalHits())), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(new ClusterStateResolver(MonitoredSystem.ES, Settings.EMPTY),
+                    greaterThan(firstClusterState.getHits().totalHits())), 1, TimeUnit.MINUTES);
+        } finally {
+            if (httpExporter) {
+                Settings.Builder settings = Settings.builder();
+                setupHttpExporter(settings, null);
+                logger.info("--> Disabling http exporter after test");
+                client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get();
+            }
         }
-
-        IndexStatsResolver resolver = new IndexStatsResolver(MonitoredSystem.ES, Settings.EMPTY);
-        logger.info("--> {} Waiting for [{}]", Thread.currentThread().getName(), resolver.indexPattern());
-        assertBusy(() -> assertTrue(client().admin().indices().prepareExists(resolver.indexPattern()).get().isExists()));
-        // Slow down monitoring from its previously super fast pace so we can shut down without trouble
-        Settings.Builder settings = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), timeValueSeconds(10).getStringRep());
-        assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get());
-
-        SearchResponse firstIndexStats = search(resolver, greaterThanOrEqualTo(10L));
-
-        // All the other aliases should have been created by now so we can assert that we have the data we saved in the bwc indexes
-        SearchResponse firstShards = search(new ShardsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(10L));
-        SearchResponse firstIndicesStats = search(new IndicesStatsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
-        SearchResponse firstNodeStats = search(new NodeStatsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
-        SearchResponse firstClusterState = search(new ClusterStateResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
-
-        ClusterStateResponse clusterStateResponse = client().admin().cluster().prepareState().clear().setNodes(true).get();
-        final String masterNodeId = clusterStateResponse.getState().getNodes().getMasterNodeId();
-
-        // Verify some stuff about the stuff in the backwards compatibility indexes
-        Arrays.stream(firstIndexStats.getHits().hits()).forEach(hit -> checkIndexStats(version, hit.sourceAsMap()));
-        Arrays.stream(firstShards.getHits().hits()).forEach(hit -> checkShards(version, hit.sourceAsMap()));
-        Arrays.stream(firstIndicesStats.getHits().hits()).forEach(hit -> checkIndicesStats(version, hit.sourceAsMap()));
-        Arrays.stream(firstNodeStats.getHits().hits()).forEach(hit -> checkNodeStats(version, masterNodeId, hit.sourceAsMap()));
-        Arrays.stream(firstClusterState.getHits().hits()).forEach(hit -> checkClusterState(version, hit.sourceAsMap()));
-
-        // Wait for monitoring to accumulate some data about the current cluster
-        long indexStatsCount = firstIndexStats.getHits().totalHits();
-        assertBusy(() -> search(new IndexStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
-                greaterThan(indexStatsCount)), 1, TimeUnit.MINUTES);
-        assertBusy(() -> search(new ShardsResolver(MonitoredSystem.ES, Settings.EMPTY),
-                greaterThan(firstShards.getHits().totalHits())), 1, TimeUnit.MINUTES);
-        assertBusy(() -> search(new IndicesStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
-                greaterThan(firstIndicesStats.getHits().totalHits())), 1, TimeUnit.MINUTES);
-        assertBusy(() -> search(new NodeStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
-                greaterThan(firstNodeStats.getHits().totalHits())), 1, TimeUnit.MINUTES);
-        assertBusy(() -> search(new ClusterStateResolver(MonitoredSystem.ES, Settings.EMPTY),
-                greaterThan(firstClusterState.getHits().totalHits())), 1, TimeUnit.MINUTES);
     }
 
     private SearchResponse search(MonitoringIndexNameResolver<?> resolver, Matcher<Long> hitCount) {
