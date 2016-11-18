@@ -14,7 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.metadata;
 
-import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.io.stream.InputStreamStreamInput;
 import org.elasticsearch.common.io.stream.OutputStreamStreamOutput;
@@ -96,7 +96,7 @@ public class PrelertMetadataTests extends ESTestCase {
         builder.putJob(buildJobBuilder("1").build(), false);
         builder.putJob(buildJobBuilder("2").build(), false);
 
-        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
+        ResourceAlreadyExistsException e = expectThrows(ResourceAlreadyExistsException.class,
                 () -> builder.putJob(buildJobBuilder("2").build(), false));
         assertEquals("The job cannot be created with the Id '2'. The Id is already used.", e.getMessage());
 

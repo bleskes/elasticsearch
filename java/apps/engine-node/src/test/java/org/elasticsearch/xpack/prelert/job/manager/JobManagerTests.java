@@ -14,7 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.manager;
 
-import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
@@ -186,7 +186,7 @@ public class JobManagerTests extends ESTestCase {
         assertThat(pm.getJobs().get("_id"), sameInstance(job1));
 
         Job job2 = buildJobBuilder("_id").build();
-        expectThrows(ElasticsearchStatusException.class, () -> jobManager.innerPutJob(job2, false, result1));
+        expectThrows(ResourceAlreadyExistsException.class, () -> jobManager.innerPutJob(job2, false, result1));
 
         ClusterState result2 = jobManager.innerPutJob(job2, true, result1);
         pm = result2.getMetaData().custom(PrelertMetadata.TYPE);

@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.prelert.utils;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -27,11 +28,8 @@ public class ExceptionsHelper {
         return new ResourceNotFoundException(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId));
     }
 
-    public static ElasticsearchStatusException jobAlreadyExists(String jobId) {
-        String msg = Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId);
-        // norelease: Replace with ResourceAlreadyExistsException
-        ElasticsearchStatusException e = new ElasticsearchStatusException(msg, RestStatus.BAD_REQUEST);
-        return e;
+    public static ResourceAlreadyExistsException jobAlreadyExists(String jobId) {
+        throw new ResourceAlreadyExistsException(Messages.getMessage(Messages.JOB_CONFIG_ID_ALREADY_TAKEN, jobId));
     }
 
     public static ElasticsearchException serverError(String msg) {
