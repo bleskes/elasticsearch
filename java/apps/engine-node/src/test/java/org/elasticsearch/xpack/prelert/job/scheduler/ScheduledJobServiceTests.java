@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.prelert.job.scheduler;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.mock.orig.Mockito;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
@@ -50,10 +49,10 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
-import static org.elasticsearch.mock.orig.Mockito.doAnswer;
-import static org.elasticsearch.mock.orig.Mockito.never;
-import static org.elasticsearch.mock.orig.Mockito.times;
-import static org.elasticsearch.mock.orig.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 import static org.elasticsearch.xpack.prelert.action.UpdateJobSchedulerStatusAction.Request;
 import static org.elasticsearch.xpack.prelert.action.UpdateJobSchedulerStatusAction.INSTANCE;
 import static org.hamcrest.Matchers.equalTo;
@@ -85,12 +84,12 @@ public class ScheduledJobServiceTests extends ESTestCase {
         dataExtractorFactory = mock(DataExtractorFactory.class);
         auditor = mock(Auditor.class);
         threadPool = mock(ThreadPool.class);
-        ExecutorService executorService = Mockito.mock(ExecutorService.class);
+        ExecutorService executorService = mock(ExecutorService.class);
         doAnswer(invocation -> {
             ((Runnable) invocation.getArguments()[0]).run();
             return null;
-        }).when(executorService).submit(any(Runnable.class));
-        when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
+        }).when(executorService).execute(any(Runnable.class));
+        when(threadPool.executor(PrelertPlugin.THREAD_POOL_NAME)).thenReturn(executorService);
 
         scheduledJobService =
                 new ScheduledJobService(threadPool, client, jobProvider, dataProcessor, dataExtractorFactory, () -> currentTime);

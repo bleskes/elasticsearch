@@ -18,6 +18,7 @@ import org.apache.logging.log4j.core.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
@@ -136,8 +137,8 @@ public class AutodetectCommunicatorTests extends ESTestCase {
         doAnswer(invocation -> {
             ((Runnable) invocation.getArguments()[0]).run();
             return null;
-        }).when(executorService).submit(any(Runnable.class));
-        Mockito.when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
+        }).when(executorService).execute(any(Runnable.class));
+        Mockito.when(threadPool.executor(PrelertPlugin.THREAD_POOL_NAME)).thenReturn(executorService);
         Logger jobLogger = Mockito.mock(Logger.class);
         JobResultsPersister resultsPersister = mock(JobResultsPersister.class);
         StatusReporter statusReporter = mock(StatusReporter.class);

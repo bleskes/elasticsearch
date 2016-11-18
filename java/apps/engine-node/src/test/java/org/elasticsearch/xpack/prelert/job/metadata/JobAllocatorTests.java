@@ -27,18 +27,15 @@ import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.junit.Before;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.ExecutorService;
 
-import static org.elasticsearch.mock.orig.Mockito.doAnswer;
-import static org.elasticsearch.mock.orig.Mockito.mock;
-import static org.elasticsearch.mock.orig.Mockito.never;
-import static org.elasticsearch.mock.orig.Mockito.times;
-import static org.elasticsearch.mock.orig.Mockito.verify;
-import static org.elasticsearch.mock.orig.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.mockito.Matchers.any;
 
@@ -50,8 +47,8 @@ public class JobAllocatorTests extends ESTestCase {
 
     @Before
     public void instantiateJobAllocator() {
-        clusterService = Mockito.mock(ClusterService.class);
-        threadPool = Mockito.mock(ThreadPool.class);
+        clusterService = mock(ClusterService.class);
+        threadPool = mock(ThreadPool.class);
         jobAllocator = new JobAllocator(Settings.EMPTY, clusterService, threadPool);
     }
 
@@ -128,7 +125,7 @@ public class JobAllocatorTests extends ESTestCase {
         doAnswer(invocation -> {
             ((Runnable) invocation.getArguments()[0]).run();
             return null;
-        }).when(executorService).submit(any(Runnable.class));
+        }).when(executorService).execute(any(Runnable.class));
         when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
 
 
