@@ -73,7 +73,7 @@ public class RestStartJobSchedulerAction extends BaseRestHandler {
         return channel -> transportJobSchedulerAction.execute(jobSchedulerRequest, new AcknowledgedRestListener<>(channel));
     }
 
-    private long parseDateOrThrow(String date, String paramName) {
+    static long parseDateOrThrow(String date, String paramName) {
         try {
             return DateFieldMapper.DEFAULT_DATE_TIME_FORMATTER.parser().parseMillis(date);
         } catch (IllegalArgumentException e) {
