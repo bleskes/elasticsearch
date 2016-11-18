@@ -388,7 +388,7 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
             // acknowledged responses
             return ActionListener.wrap(response -> {
                 if (response.isAcknowledged()) {
-                    Date deleteAfter = modelSnapshot.getLatestRecordTimeStamp();
+                    Date deleteAfter = modelSnapshot.getLatestResultTimeStamp();
                     logger.debug("Removing intervening records: last record: " + deleteAfter + ", last result: "
                             + modelSnapshot.getLatestResultTimeStamp());
 
