@@ -184,20 +184,20 @@ public class PrelertJobIT extends ESRestTestCase {
         params.put("end", "1400"); // exclusive
 
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/bucket", params));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("No known job with id '1'"));
 
         addBucketResult("1", "1234");
         addBucketResult("1", "1235");
         addBucketResult("1", "1236");
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params);
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/bucket", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"hitCount\":3"));
 
         params.put("end", "1235");
-        response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params);
+        response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/bucket", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"hitCount\":1"));

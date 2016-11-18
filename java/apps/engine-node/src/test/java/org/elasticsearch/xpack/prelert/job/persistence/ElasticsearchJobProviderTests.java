@@ -53,6 +53,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -333,8 +335,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(timestamp));
 
-        Optional<Bucket> bucket = provider.bucket(jobId, bq.build());
-        assertFalse(bucket.isPresent());
+        QueryPage<Bucket> bucket = provider.bucket(jobId, bq.build());
+        assertThat(bucket.hitCount(), equalTo(0L));
+        assertThat(bucket.hits(), empty());
     }
 
     public void testBucket_OneBucketNoExpandNoInterim()
@@ -359,9 +362,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
 
-        Optional<Bucket> bucketHolder = provider.bucket(jobId, bq.build());
-        assertTrue(bucketHolder.isPresent());
-        Bucket b = bucketHolder.get();
+        QueryPage<Bucket> bucketHolder = provider.bucket(jobId, bq.build());
+        assertThat(bucketHolder.hitCount(), equalTo(1L));
+        Bucket b = bucketHolder.hits().get(0);
         assertEquals(now, b.getTimestamp());
     }
 
@@ -388,8 +391,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
 
-        Optional<Bucket> bucketHolder = provider.bucket(jobId, bq.build());
-        assertFalse(bucketHolder.isPresent());
+        QueryPage<Bucket> bucketHolder = provider.bucket(jobId, bq.build());
+        assertThat(bucketHolder.hitCount(), equalTo(0L));
+        assertThat(bucketHolder.hits(), empty());
     }
 
     public void testRecords() throws InterruptedException, ExecutionException, IOException {

@@ -22,7 +22,7 @@ setup:
 ---
 "Test result buckets api":
   - do:
-      xpack.prelert.get_buckets:
+      xpack.prelert.get_bucket:
         jobId: "farequote"
         start: "2016-05-01T00:00:00Z"
         end: "2016-07-01T00:00:00Z"
@@ -38,5 +38,5 @@ setup:
         jobId: "farequote"
         timestamp: "2016-06-01T00:00:00Z"
 
-  - match: { document.timestamp: 1464739200000}
-  - match: { document.jobId: farequote }
+  - match: { hits.0.timestamp: 1464739200000}
+  - match: { hits.0.jobId: farequote }

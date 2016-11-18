@@ -105,7 +105,7 @@ class ResultsFilterBuilder {
         }
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         for (QueryBuilder query : filters) {
-            boolQueryBuilder.must(query);
+            boolQueryBuilder.filter(query);
         }
         return boolQueryBuilder;
     }

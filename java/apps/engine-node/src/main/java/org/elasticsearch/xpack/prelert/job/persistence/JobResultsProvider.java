@@ -41,10 +41,10 @@ public interface JobResultsProvider
      *
      * @param jobId the job id
      * @param query The bucket query
-     * @return Optional Bucket
+     * @return QueryPage Bucket
      * @throws ResourceNotFoundException If the job id is not recognised
      */
-    Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query)
+    QueryPage<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query)
             throws ResourceNotFoundException;
 
     /**

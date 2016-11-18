@@ -343,8 +343,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
     @Override
     public QueryPage<Bucket> buckets(String jobId, BucketsQuery query)
-            throws ResourceNotFoundException
-    {
+            throws ResourceNotFoundException {
         QueryBuilder fb = new ResultsFilterBuilder()
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, query.getEpochStart(), query.getEpochEnd())
                 .score(Bucket.ANOMALY_SCORE.getPreferredName(), query.getAnomalyScoreFilter())
@@ -356,36 +355,24 @@ public class ElasticsearchJobProvider implements JobProvider
                 .order(query.isSortDescending() ? SortOrder.DESC : SortOrder.ASC);
         QueryPage<Bucket> buckets = buckets(jobId, query.isIncludeInterim(), query.getFrom(), query.getSize(), fb, sortBuilder);
 
-        if (Strings.isNullOrEmpty(query.getPartitionValue()))
-        {
-            for (Bucket b : buckets.hits())
-            {
-                if (query.isExpand()  && b.getRecordCount() > 0)
-                {
+        if (Strings.isNullOrEmpty(query.getPartitionValue())) {
+            for (Bucket b : buckets.hits()) {
+                if (query.isExpand() && b.getRecordCount() > 0) {
                     expandBucket(jobId, query.isIncludeInterim(), b);
                 }
             }
-        }
-        else
-        {
+        } else {
             List<ScoreTimestamp> scores =
-                    partitionScores(jobId,
-                            query.getEpochStart(), query.getEpochEnd(),
-                            query.getPartitionValue());
+                    partitionScores(jobId, query.getEpochStart(), query.getEpochEnd(), query.getPartitionValue());
 
             mergePartitionScoresIntoBucket(scores, buckets.hits());
 
-            for (Bucket b : buckets.hits())
-            {
-                if (query.isExpand() && b.getRecordCount() > 0)
-                {
-                    this.expandBucketForPartitionValue(jobId,
-                            query.isIncludeInterim(),
-                            b, query.getPartitionValue());
+            for (Bucket b : buckets.hits()) {
+                if (query.isExpand() && b.getRecordCount() > 0) {
+                    this.expandBucketForPartitionValue(jobId, query.isIncludeInterim(), b, query.getPartitionValue());
                 }
 
-                b.setAnomalyScore(
-                        b.partitionAnomalyScore(query.getPartitionValue()));
+                b.setAnomalyScore(b.partitionAnomalyScore(query.getPartitionValue()));
             }
 
         }
@@ -393,35 +380,25 @@ public class ElasticsearchJobProvider implements JobProvider
         return buckets;
     }
 
-    void mergePartitionScoresIntoBucket(List<ScoreTimestamp> scores,
-            List<Bucket> buckets)
-    {
+    void mergePartitionScoresIntoBucket(List<ScoreTimestamp> scores, List<Bucket> buckets) {
         Iterator<ScoreTimestamp> itr = scores.iterator();
         ScoreTimestamp score = itr.hasNext() ? itr.next() : null;
-        for (Bucket b : buckets)
-        {
-            if (score ==  null)
-            {
+        for (Bucket b : buckets) {
+            if (score == null) {
                 b.setMaxNormalizedProbability(0.0);
-            }
-            else
-            {
-                if (score.timestamp.equals(b.getTimestamp()))
-                {
+            } else {
+                if (score.timestamp.equals(b.getTimestamp())) {
                     b.setMaxNormalizedProbability(score.score);
                     score = itr.hasNext() ? itr.next() : null;
-                }
-                else
-                {
+                } else {
                     b.setMaxNormalizedProbability(0.0);
                 }
             }
         }
     }
 
-    private QueryPage<Bucket> buckets(String jobId, boolean includeInterim,
-            int from, int size, QueryBuilder fb, SortBuilder<?> sb) throws ResourceNotFoundException
-    {
+    private QueryPage<Bucket> buckets(String jobId, boolean includeInterim, int from, int size,
+                                      QueryBuilder fb, SortBuilder<?> sb) throws ResourceNotFoundException {
         SearchResponse searchResponse;
         try {
             String indexName = ElasticsearchPersister.getJobIndexName(jobId);
@@ -431,7 +408,7 @@ public class ElasticsearchJobProvider implements JobProvider
             searchResponse = client.prepareSearch(indexName)
                     .setTypes(Bucket.TYPE.getPreferredName())
                     .addSort(sb)
-                    .setPostFilter(fb)
+                    .setQuery(new ConstantScoreQueryBuilder(fb))
                     .setFrom(from).setSize(size)
                     .get();
         } catch (IndexNotFoundException e) {
@@ -440,9 +417,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
         List<Bucket> results = new ArrayList<>();
 
-
-        for (SearchHit hit : searchResponse.getHits().getHits())
-        {
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
             BytesReference source = hit.getSourceRef();
             XContentParser parser;
             try {
@@ -453,8 +428,7 @@ public class ElasticsearchJobProvider implements JobProvider
             Bucket bucket = Bucket.PARSER.apply(parser, () -> parseFieldMatcher);
             bucket.setId(hit.getId());
 
-            if (includeInterim || bucket.isInterim() == false)
-            {
+            if (includeInterim || bucket.isInterim() == false) {
                 results.add(bucket);
             }
         }
@@ -464,7 +438,7 @@ public class ElasticsearchJobProvider implements JobProvider
 
 
     @Override
-    public Optional<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query) throws ResourceNotFoundException {
+    public QueryPage<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query) throws ResourceNotFoundException {
         String indexName = ElasticsearchPersister.getJobIndexName(jobId);
         SearchHits hits;
         try {
@@ -483,50 +457,50 @@ public class ElasticsearchJobProvider implements JobProvider
             throw ExceptionsHelper.missingJobException(jobId);
         }
 
-        Optional<Bucket> doc = Optional.<Bucket>empty();
-        if (hits.getTotalHits() == 1L) {
-            SearchHit hit = hits.getAt(0);
-            BytesReference source = hit.getSourceRef();
-            XContentParser parser;
-            try {
-                parser = XContentFactory.xContent(source).createParser(source);
-            } catch (IOException e) {
-                throw new ElasticsearchParseException("failed to parser bucket", e);
-            }
-            Bucket bucket = Bucket.PARSER.apply(parser, () -> parseFieldMatcher);
-            bucket.setId(hit.getId());
-
-            // don't return interim buckets if not requested
-            if (bucket.isInterim() && query.isIncludeInterim() == false) {
-                return doc;
-            }
-
-            if (Strings.isNullOrEmpty(query.getPartitionValue())) {
-                if (query.isExpand() && bucket.getRecordCount() > 0) {
-                    expandBucket(jobId, query.isIncludeInterim(), bucket);
-                }
-            } else {
-                List<ScoreTimestamp> scores =
-                        partitionScores(jobId,
-                                query.getTimestamp(), query.getTimestamp() +1,
-                                query.getPartitionValue());
-
-
-                bucket.setMaxNormalizedProbability(scores.isEmpty() == false ?
-                        scores.get(0).score : 0.0d);
-                if (query.isExpand() && bucket.getRecordCount() > 0) {
-                    this.expandBucketForPartitionValue(jobId, query.isIncludeInterim(),
-                            bucket, query.getPartitionValue());
-                }
-
-                bucket.setAnomalyScore(
-                        bucket.partitionAnomalyScore(query.getPartitionValue()));
-            }
-
-            doc = Optional.of(bucket);
+        if (hits.getTotalHits() == 0) {
+            return new QueryPage<>(Collections.emptyList(), 0);
+        } else if (hits.getTotalHits() > 1L) {
+            LOGGER.error("Found more than one bucket with timestamp [" + query.getTimestamp() + "]" +
+                    " from index " + indexName);
         }
 
-        return doc;
+        SearchHit hit = hits.getAt(0);
+        BytesReference source = hit.getSourceRef();
+        XContentParser parser;
+        try {
+            parser = XContentFactory.xContent(source).createParser(source);
+        } catch (IOException e) {
+            throw new ElasticsearchParseException("failed to parser bucket", e);
+        }
+        Bucket bucket = Bucket.PARSER.apply(parser, () -> parseFieldMatcher);
+        bucket.setId(hit.getId());
+
+        // don't return interim buckets if not requested
+        if (bucket.isInterim() && query.isIncludeInterim() == false) {
+            return new QueryPage<>(Collections.emptyList(), 0);
+        }
+
+        if (Strings.isNullOrEmpty(query.getPartitionValue())) {
+            if (query.isExpand() && bucket.getRecordCount() > 0) {
+                expandBucket(jobId, query.isIncludeInterim(), bucket);
+            }
+        } else {
+            List<ScoreTimestamp> scores =
+                    partitionScores(jobId,
+                            query.getTimestamp(), query.getTimestamp() + 1,
+                            query.getPartitionValue());
+
+            bucket.setMaxNormalizedProbability(scores.isEmpty() == false ?
+                    scores.get(0).score : 0.0d);
+            if (query.isExpand() && bucket.getRecordCount() > 0) {
+                this.expandBucketForPartitionValue(jobId, query.isIncludeInterim(),
+                        bucket, query.getPartitionValue());
+            }
+
+            bucket.setAnomalyScore(
+                    bucket.partitionAnomalyScore(query.getPartitionValue()));
+        }
+        return new QueryPage<>(Collections.singletonList(bucket), 1);
     }
 
     final class ScoreTimestamp

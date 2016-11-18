@@ -144,12 +144,12 @@ public class ResultsFilterBuilderTests extends ESTestCase {
                 "isInterim", Boolean.TRUE.toString()));
         QueryBuilder termFilter = QueryBuilders.termQuery("airline", "AAL");
         QueryBuilder expected = QueryBuilders.boolQuery()
-                .must(originalFilter)
-                .must(timeFilter)
-                .must(score1Filter)
-                .must(score2Filter)
-                .must(interimFilter)
-                .must(termFilter);
+                .filter(originalFilter)
+                .filter(timeFilter)
+                .filter(score1Filter)
+                .filter(score2Filter)
+                .filter(interimFilter)
+                .filter(termFilter);
 
         QueryBuilder fb = new ResultsFilterBuilder(originalFilter)
                 .timeRange(ElasticsearchMappings.ES_TIMESTAMP, 1000, 2000)

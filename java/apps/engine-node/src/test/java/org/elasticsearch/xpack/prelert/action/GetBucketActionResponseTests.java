@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.xpack.prelert.action.GetBucketAction.Response;
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
@@ -34,9 +35,10 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
 
     @Override
     protected Response createTestInstance() {
-        if (randomBoolean()) {
-            return new Response();
-        } else {
+
+        int listSize = randomInt(10);
+        List<Bucket> hits = new ArrayList<>(listSize);
+        for (int j = 0; j < listSize; j++) {
             String jobId = "foo";
             Bucket bucket = new Bucket(jobId);
             if (randomBoolean()) {
@@ -132,9 +134,10 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
             if (randomBoolean()) {
                 bucket.setTimestamp(new Date(randomLong()));
             }
-            SingleDocument<Bucket> result = new SingleDocument<>(Bucket.TYPE.getPreferredName(), bucket);
-            return new GetBucketAction.Response(result);
+            hits.add(bucket);
         }
+        QueryPage<Bucket> buckets = new QueryPage<>(hits, listSize);
+        return new Response(buckets);
     }
 
     @Override
