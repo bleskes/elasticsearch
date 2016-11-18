@@ -19,7 +19,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.WriteRequest;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.network.NetworkAddress;
@@ -91,8 +90,8 @@ public class ScheduledJobsIT extends ESIntegTestCase {
 
     public void testLookbackOnly() throws Exception {
         client().admin().indices().prepareCreate("data")
-                .addMapping("type", "time", "type=date")
-                .get();
+        .addMapping("type", "time", "type=date")
+        .get();
         long numDocs = randomIntBetween(32, 2048);
         long now = System.currentTimeMillis();
         long lastWeek = now - 604800000;
@@ -121,8 +120,8 @@ public class ScheduledJobsIT extends ESIntegTestCase {
 
     public void testRealtime() throws Exception {
         client().admin().indices().prepareCreate("data")
-                .addMapping("type", "time", "type=date")
-                .get();
+        .addMapping("type", "time", "type=date")
+        .get();
         long numDocs1 = randomIntBetween(32, 2048);
         long now = System.currentTimeMillis();
         long lastWeek = System.currentTimeMillis() - 604800000;
@@ -152,7 +151,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         }, 30, TimeUnit.SECONDS);
 
         StopJobSchedulerAction.Request stopSchedulerRequest = new StopJobSchedulerAction.Request("_job_id");
-        StopJobSchedulerAction.Response stopJobResponse = client().execute(StopJobSchedulerAction.INSTANCE, stopSchedulerRequest).get();
+        client().execute(StopJobSchedulerAction.INSTANCE, stopSchedulerRequest).get();
         assertTrue(startJobResponse.isAcknowledged());
         assertBusy(() -> {
             PrelertMetadata prelertMetadata = client().admin().cluster().prepareState().all().get()
