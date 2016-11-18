@@ -126,6 +126,14 @@ public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerSta
             UpdateJobSchedulerStatusAction.Request other = (UpdateJobSchedulerStatusAction.Request) obj;
             return Objects.equals(jobId, other.jobId) && Objects.equals(schedulerStatus, other.schedulerStatus);
         }
+
+        @Override
+        public String toString() {
+            return "Request{" +
+                    "jobId='" + jobId + '\'' +
+                    ", schedulerStatus=" + schedulerStatus +
+                    '}';
+        }
     }
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {

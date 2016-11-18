@@ -103,7 +103,7 @@ public class ScheduledJobServiceTests extends ESTestCase {
         Job.Builder builder = createScheduledJob();
         Allocation allocation =
                 new Allocation("_nodeId", "foo", JobStatus.RUNNING, new SchedulerState(JobSchedulerStatus.STARTING, 0L, 60000L));
-        DataCounts dataCounts = new DataCounts("foo", 0, 0, 0, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
+        DataCounts dataCounts = new DataCounts("foo", 1, 0, 0, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
         builder.setCounts(dataCounts);
         when(jobManager.getJobAllocation("foo")).thenReturn(allocation);
 
@@ -118,6 +118,7 @@ public class ScheduledJobServiceTests extends ESTestCase {
         verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());
         verify(threadPool, times(1)).executor(PrelertPlugin.THREAD_POOL_NAME);
         verify(threadPool, never()).schedule(any(), any(), any());
+        verify(client).execute(same(INSTANCE), eq(new Request("foo", JobSchedulerStatus.STARTED)), any());
         verify(client).execute(same(INSTANCE), eq(new Request("foo", JobSchedulerStatus.STOPPING)), any());
     }
 
