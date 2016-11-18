@@ -158,8 +158,8 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
 
         private Job job;
 
-        public Response(Job job) {
-            super(true);
+        public Response(boolean acked, Job job) {
+            super(acked);
             this.job = job;
         }
 
@@ -173,12 +173,14 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
+            readAcknowledged(in);
             job = new Job(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
+            writeAcknowledged(out);
             job.writeTo(out);
         }
 

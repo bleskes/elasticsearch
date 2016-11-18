@@ -188,10 +188,10 @@ public class JobManager {
         Job job = request.getJob();
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
-            public void onResponse(Boolean acked) {
+            public void onResponse(Boolean jobSaved) {
                 jobProvider.createJobRelatedIndices(job, new ActionListener<Boolean>() {
                     @Override
-                    public void onResponse(Boolean aBoolean) {
+                    public void onResponse(Boolean indicesCreated) {
                         // NORELEASE: make auditing async too (we can't do
                         // blocking stuff here):
                         // audit(jobDetails.getId()).info(Messages.getMessage(Messages.JOB_AUDIT_CREATED));
@@ -200,7 +200,7 @@ public class JobManager {
                         // structure in prelert as when we merge into xpack
                         // we can use its audit trailing. See:
                         // https://github.com/elastic/prelert-legacy/issues/48
-                        actionListener.onResponse(new PutJobAction.Response(job));
+                        actionListener.onResponse(new PutJobAction.Response(jobSaved && indicesCreated, job));
                     }
 
                     @Override
@@ -262,10 +262,10 @@ public class JobManager {
         // NORELEASE: Should also delete the running process
         ActionListener<Boolean> delegateListener = new ActionListener<Boolean>() {
             @Override
-            public void onResponse(Boolean aBoolean) {
+            public void onResponse(Boolean jobDeleted) {
                 jobProvider.deleteJobRelatedIndices(request.getJobId(), new ActionListener<Boolean>() {
                     @Override
-                    public void onResponse(Boolean aBoolean) {
+                    public void onResponse(Boolean indicesDeleted) {
 
                         new JobLogs(settings).deleteLogs(env, jobId);
                         // NORELEASE: This is not the place the audit
@@ -282,7 +282,7 @@ public class JobManager {
                         // xpack
                         // we can use its audit trailing. See:
                         // https://github.com/elastic/prelert-legacy/issues/48
-                        actionListener.onResponse(new DeleteJobAction.Response(aBoolean));
+                        actionListener.onResponse(new DeleteJobAction.Response(jobDeleted && indicesDeleted));
                     }
 
                     @Override

@@ -143,6 +143,18 @@ public class PutListAction extends Action<PutListAction.Request, PutListAction.R
             super(true);
         }
 
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
+            readAcknowledged(in);
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
+            writeAcknowledged(out);
+        }
+
     }
 
     // extends TransportMasterNodeAction, because we will store in cluster state.

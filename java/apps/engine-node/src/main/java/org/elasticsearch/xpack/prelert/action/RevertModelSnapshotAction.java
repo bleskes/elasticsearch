@@ -256,12 +256,14 @@ extends Action<RevertModelSnapshotAction.Request, RevertModelSnapshotAction.Resp
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
+            readAcknowledged(in);
             response = new SingleDocument<>(in, ModelSnapshot::new);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
+            writeAcknowledged(out);
             response.writeTo(out);
         }
 

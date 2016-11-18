@@ -28,7 +28,7 @@ public class PutJobActionResponseTests extends AbstractStreamableTestCase<Respon
     protected Response createTestInstance() {
         Job.Builder builder = buildJobBuilder(randomValidJobId());
         builder.setIgnoreDowntime(IgnoreDowntime.NEVER);
-        return new Response(builder.build());
+        return new Response(randomBoolean(), builder.build());
     }
 
     @Override

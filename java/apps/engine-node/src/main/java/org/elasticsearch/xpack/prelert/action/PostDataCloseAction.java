@@ -120,6 +120,18 @@ PostDataCloseAction.RequestBuilder> {
         private Response(boolean acknowledged) {
             super(acknowledged);
         }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
+            readAcknowledged(in);
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
+            writeAcknowledged(out);
+        }
     }
 
     // NORELEASE This should be a master node operation that updates the job's state
