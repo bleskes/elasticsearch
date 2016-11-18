@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
@@ -368,11 +367,10 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
 
         SuperCsvException e = ESTestCase.expectThrows(SuperCsvException.class, () -> writer.write(inputStream));
-        assertEquals(
-                String.format(Locale.ROOT,
-                        "max number of lines to read exceeded while reading quoted column beginning on line %d and ending on line %d",
-                        2, 10001),
-                e.getMessage());
+        // Expected line numbers are 2 and 10001, but SuperCSV may print the
+        // numbers using a different locale's digit characters
+        assertTrue(e.getMessage(), e.getMessage().matches(
+                "max number of lines to read exceeded while reading quoted column beginning on line . and ending on line ....."));
     }
 
     private static InputStream createInputStream(String input) {
