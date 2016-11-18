@@ -87,6 +87,8 @@ extends Action<StartJobSchedulerAction.Request, StartJobSchedulerAction.Response
         }
 
         private String jobId;
+        // TODO (norelease): instead of providing a scheduler state, the user should just provide: startTimeMillis and endTimeMillis
+        // the state is useless here as it should always be STARTING
         private SchedulerState schedulerState;
 
         public Request(String jobId, SchedulerState schedulerState) {
