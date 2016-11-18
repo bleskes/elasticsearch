@@ -342,7 +342,9 @@ public class JobManager {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                return innerUpdateSchedulerState(currentState, request.getJobId(), oldState -> request.getSchedulerState());
+                long startTime = request.getSchedulerState().getStartTimeMillis();
+                Long endTime = request.getSchedulerState().getEndTimeMillis();
+                return innerUpdateSchedulerState(currentState, request.getJobId(), JobSchedulerStatus.STARTING, startTime, endTime);
             }
         });
     }
@@ -358,9 +360,7 @@ public class JobManager {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                return innerUpdateSchedulerState(currentState, request.getJobId(),
-                        oldState -> new SchedulerState(JobSchedulerStatus.STOPPING, oldState.getStartTimeMillis(),
-                                oldState.getEndTimeMillis()));
+                return innerUpdateSchedulerState(currentState, request.getJobId(), JobSchedulerStatus.STOPPING, null, null);
             }
         });
     }
@@ -371,32 +371,45 @@ public class JobManager {
         }
     }
 
-    public void updateSchedulerStatus(String jobId, JobSchedulerStatus newSchedulerStatus) {
-        clusterService.submitStateUpdateTask("udpate-scheduler-status-job-" + jobId, new ClusterStateUpdateTask() {
+    public void updateSchedulerStatus(String jobId, JobSchedulerStatus newStatus) {
+        clusterService.submitStateUpdateTask("update-scheduler-status-job-" + jobId, new ClusterStateUpdateTask() {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                return innerUpdateSchedulerState(currentState, jobId, oldSchedulerState -> new SchedulerState(newSchedulerStatus,
-                        oldSchedulerState.getStartTimeMillis(), oldSchedulerState.getEndTimeMillis()));
+                return innerUpdateSchedulerState(currentState, jobId, newStatus, null, null);
             }
 
             @Override
             public void onFailure(String source, Exception e) {
-                LOGGER.error("Error updating scheduler status: source=[" + source + "], status=[" + newSchedulerStatus + "]", e);
+                LOGGER.error("Error updating scheduler status: source=[" + source + "], status=[" + newStatus + "]", e);
             }
         });
     }
 
-    private ClusterState innerUpdateSchedulerState(ClusterState currentState, String jobId,
-            Function<SchedulerState, SchedulerState> stateUpdater) {
+    private ClusterState innerUpdateSchedulerState(ClusterState currentState, String jobId, JobSchedulerStatus status,
+                                                   Long startTime, Long endTime) {
         Job job = getJobOrThrowIfUnknown(currentState, jobId);
         checkJobIsScheduled(job);
 
         Allocation allocation = getAllocation(currentState, jobId);
-        SchedulerState oldState = allocation.getSchedulerState();
-        SchedulerState newState = stateUpdater.apply(oldState);
+        if (allocation.getSchedulerState() == null && status != JobSchedulerStatus.STARTING) {
+            throw new IllegalArgumentException("Can't change status to [" + status + "], because job's [" + jobId +
+                    "] scheduler never started");
+        }
+
+        SchedulerState existingState = allocation.getSchedulerState();
+        if (existingState != null) {
+            if (startTime == null) {
+                startTime = existingState.getStartTimeMillis();
+            }
+            if (endTime == null) {
+                endTime = existingState.getEndTimeMillis();
+            }
+        }
+
+        existingState = new SchedulerState(status, startTime, endTime);
         Allocation.Builder builder = new Allocation.Builder(allocation);
-        builder.setSchedulerState(newState);
+        builder.setSchedulerState(existingState);
         return innerUpdateAllocation(builder.build(), currentState);
     }
 
