@@ -28,7 +28,13 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.junit.Before;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.util.concurrent.ExecutorService;
+
+import static org.elasticsearch.mock.orig.Mockito.doAnswer;
+import static org.elasticsearch.mock.orig.Mockito.mock;
 import static org.elasticsearch.mock.orig.Mockito.never;
 import static org.elasticsearch.mock.orig.Mockito.times;
 import static org.elasticsearch.mock.orig.Mockito.verify;
@@ -118,7 +124,13 @@ public class JobAllocatorTests extends ESTestCase {
     }
 
     public void testClusterChanged_onlyAllocateIfMasterAndHaveUnAllocatedJobs() {
-        when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(Runnable::run);
+        ExecutorService executorService = mock(ExecutorService.class);
+        doAnswer(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        }).when(executorService).submit(any(Runnable.class));
+        when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
+
 
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, new PrelertMetadata.Builder().build()))

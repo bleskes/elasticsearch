@@ -33,7 +33,9 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
 
+import static org.elasticsearch.mock.orig.Mockito.doAnswer;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -130,7 +132,12 @@ public class AutodetectCommunicatorTests extends ESTestCase {
     private AutodetectCommunicator createAutodetectCommunicator(AutodetectProcess autodetectProcess,
                                                                 AutoDetectResultProcessor autoDetectResultProcessor) throws IOException {
         ThreadPool threadPool = mock(ThreadPool.class);
-        when(threadPool.executor(anyString())).thenReturn(Runnable::run);
+        ExecutorService executorService = Mockito.mock(ExecutorService.class);
+        doAnswer(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        }).when(executorService).submit(any(Runnable.class));
+        Mockito.when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
         Logger jobLogger = Mockito.mock(Logger.class);
         JobResultsPersister resultsPersister = mock(JobResultsPersister.class);
         StatusReporter statusReporter = mock(StatusReporter.class);
