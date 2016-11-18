@@ -122,7 +122,6 @@ public final class ReservedFieldNames {
             CategoryDefinition.MAX_MATCHING_LENGTH.getPreferredName(),
             CategoryDefinition.EXAMPLES.getPreferredName(),
 
-            DataCounts.BUCKET_COUNT.getPreferredName(),
             DataCounts.PROCESSED_RECORD_COUNT.getPreferredName(),
             DataCounts.PROCESSED_FIELD_COUNT.getPreferredName(),
             DataCounts.INPUT_BYTES.getPreferredName(),

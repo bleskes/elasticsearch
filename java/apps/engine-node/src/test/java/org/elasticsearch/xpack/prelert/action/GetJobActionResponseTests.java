@@ -87,7 +87,8 @@ public class GetJobActionResponseTests extends AbstractStreamableTestCase<GetJob
             dataCounts = new DataCounts(randomAsciiOfLength(10), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                         randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                         randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
-                        randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
+                        randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate(),
+                        new DateTime(randomDateTimeZone()).toDate());
             }
             if (randomBoolean()) {
                 sizeStats = new ModelSizeStats.Builder("foo").build();

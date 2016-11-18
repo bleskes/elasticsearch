@@ -71,7 +71,7 @@ public class StatusReporterTests extends ESTestCase {
     public void testComplexConstructor() throws Exception {
         Environment env = new Environment(
                 Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build());
-        DataCounts counts = new DataCounts("foo", 0L, 1L, 1L, 2L, 0L, 3L, 4L, 5L, 6L, 7L, new Date());
+        DataCounts counts = new DataCounts("foo", 1L, 1L, 2L, 0L, 3L, 4L, 5L, 6L, 7L, new Date(), new Date());
 
         statusReporter = new StatusReporter(env, settings, JOB_ID, counts, usageReporter, jobDataCountsPersister, mockLogger, 1);
         DataCounts stats = statusReporter.incrementalStats();
@@ -85,6 +85,7 @@ public class StatusReporterTests extends ESTestCase {
         assertEquals(5, statusReporter.getOutOfOrderRecordCount());
         assertEquals(6, statusReporter.getFailedTransformCount());
         assertEquals(7, statusReporter.getExcludedRecordCount());
+        assertNull(stats.getEarliestRecordTimeStamp());
     }
 
     public void testResetIncrementalCounts() throws Exception {
@@ -225,7 +226,7 @@ public class StatusReporterTests extends ESTestCase {
     public void testFinishReporting() {
         statusReporter.setAnalysedFieldsPerRecord(3);
 
-        DataCounts dc = new DataCounts(JOB_ID, 0L, 2L, 5L, 0L, 12L, 0L, 1L, 0L, 0L, 1L, new Date(3000));
+        DataCounts dc = new DataCounts(JOB_ID, 2L, 5L, 0L, 12L, 0L, 1L, 0L, 0L, 1L, new Date(2000), new Date(3000));
         statusReporter.reportRecordWritten(5, 2000);
         statusReporter.reportRecordWritten(5, 3000);
         statusReporter.reportMissingField();
@@ -239,7 +240,6 @@ public class StatusReporterTests extends ESTestCase {
     }
 
     private void assertAllCountFieldsEqualZero(DataCounts stats) throws Exception {
-        assertEquals(0L, stats.getBucketCount());
         assertEquals(0L, stats.getProcessedRecordCount());
         assertEquals(0L, stats.getProcessedFieldCount());
         assertEquals(0L, stats.getInputBytes());

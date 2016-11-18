@@ -68,8 +68,6 @@ public class StatusReporter {
     private final int acceptablePercentDateParseErrors;
     private final int acceptablePercentOutOfOrderErrors;
 
-    private final AtomicLong lastRecordTimeEpochMs;
-
     public StatusReporter(Environment env, Settings settings, String jobId, UsageReporter usageReporter,
             JobDataCountsPersister dataCountsPersister, Logger logger, long bucketSpan) {
         this(env, settings, jobId, usageReporter, dataCountsPersister, logger, new DataCounts(jobId), bucketSpan);
@@ -90,8 +88,6 @@ public class StatusReporter {
         totalRecordStats = totalCounts;
         incrementalRecordStats = new DataCounts(jobId);
 
-        lastRecordTimeEpochMs = new AtomicLong();
-
         acceptablePercentDateParseErrors = ACCEPTABLE_PERCENTAGE_DATE_PARSE_ERRORS_SETTING.get(settings);
         acceptablePercentOutOfOrderErrors = ACCEPTABLE_PERCENTAGE_OUT_OF_ORDER_ERRORS_SETTING.get(settings);
     }
@@ -103,25 +99,26 @@ public class StatusReporter {
      * @param inputFieldCount    Number of fields in the record.
      *                           Note this is not the number of processed fields (by field etc)
      *                           but the actual number of fields in the record
-     * @param latestRecordTimeMs The time of the latest record written
+     * @param recordTimeMs The time of the latest record written
      *                           in milliseconds from the epoch.
      */
-    public void reportRecordWritten(long inputFieldCount, long latestRecordTimeMs) {
+    public void reportRecordWritten(long inputFieldCount, long recordTimeMs) {
         usageReporter.addFieldsRecordsRead(inputFieldCount);
 
-        // Only a single thread updates this value so there isn't a
-        // race condidtion using lazySet. Changes are visible to get()
-        lastRecordTimeEpochMs.lazySet(latestRecordTimeMs);
-
-        Date latestDate = new Date(latestRecordTimeMs);
+        Date recordDate = new Date(recordTimeMs);
 
         totalRecordStats.incrementInputFieldCount(inputFieldCount);
         totalRecordStats.incrementProcessedRecordCount(1);
-        totalRecordStats.setLatestRecordTimeStamp(latestDate);
+        totalRecordStats.setLatestRecordTimeStamp(recordDate);
 
         incrementalRecordStats.incrementInputFieldCount(inputFieldCount);
         incrementalRecordStats.incrementProcessedRecordCount(1);
-        incrementalRecordStats.setLatestRecordTimeStamp(latestDate);
+        incrementalRecordStats.setLatestRecordTimeStamp(recordDate);
+
+        if (totalRecordStats.getEarliestRecordTimeStamp() == null) {
+            totalRecordStats.setEarliestRecordTimeStamp(recordDate);
+            incrementalRecordStats.setEarliestRecordTimeStamp(recordDate);
+        }
 
         // report at various boundaries
         long totalRecords = getInputRecordCount();

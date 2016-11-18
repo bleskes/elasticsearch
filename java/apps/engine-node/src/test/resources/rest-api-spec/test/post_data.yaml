@@ -23,7 +23,7 @@ setup:
         jobId: farequote
         body: >
           {"airline":"AAL","responsetime":"132.2046","sourcetype":"farequote","time":"1403481600"}
-          {"airline":"JZA","responsetime":"990.4628","sourcetype":"farequote","time":"1403481600"}
+          {"airline":"JZA","responsetime":"990.4628","sourcetype":"farequote","time":"1403481700"}
 
   - match: { processed_record_count: 2 }
   - match: { processed_field_count: 4}
@@ -34,8 +34,8 @@ setup:
   - match: { out_of_order_timestamp_count: 0}
   - match: { failed_transform_count: 0}
   - match: { excluded_record_count: 0}
-  - match: { latest_record_timestamp: 1403481600000}
-  - match: { bucket_count: 0}
+  - match: { earliest_record_timestamp: 1403481600000}
+  - match: { latest_record_timestamp: 1403481700000}
 
   - do:
       xpack.prelert.flush_data:
@@ -62,8 +62,8 @@ setup:
   - match: { _source.out_of_order_timestamp_count: 0}
   - match: { _source.failed_transform_count: 0}
   - match: { _source.excluded_record_count: 0}
-  - match: { _source.latest_record_timestamp: 1403481600000}
-  - match: { _source.bucket_count: 0}
+  - match: { _source.earliest_record_timestamp: 1403481600000}
+  - match: { _source.latest_record_timestamp: 1403481700000}
 
 ---
 "Test POST data with invalid parameters":

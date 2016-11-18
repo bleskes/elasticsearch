@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.prelert.job;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 import org.joda.time.DateTime;
 
@@ -31,7 +32,7 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
         return new DataCounts(randomAsciiOfLength(10), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
                 randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000),
-                randomIntBetween(1, 1_000_000), randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate());
+                randomIntBetween(1, 1_000_000), new DateTime(randomDateTimeZone()).toDate(), new DateTime(randomDateTimeZone()).toDate());
     }
 
     @Override
@@ -72,7 +73,7 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCountCopyCreatedFieldsNotZero() throws Exception {
-        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 9, 10);
+        DataCounts counts1 = createCounts(1, 200, 400, 3, 4, 5, 6, 7, 8, 1479211200000L, 1479384000000L);
         assertAllFieldsGreaterThanZero(counts1);
 
         DataCounts counts2 = new DataCounts(counts1);
@@ -114,19 +115,19 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     public void testCalcProcessedFieldCount() {
-        DataCounts counts = new DataCounts(randomAsciiOfLength(16), 0L, 10L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date());
+        DataCounts counts = new DataCounts(randomAsciiOfLength(16), 10L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, new Date(), new Date());
         counts.calcProcessedFieldCount(3);
 
         assertEquals(30, counts.getProcessedFieldCount());
 
-        counts = new DataCounts(randomAsciiOfLength(16), 0L, 10L, 0L, 0L, 0L, 0L, 5L, 0L, 0L, 0L, new Date());
+        counts = new DataCounts(randomAsciiOfLength(16), 10L, 0L, 0L, 0L, 0L, 5L, 0L, 0L, 0L, new Date(), new Date());
         counts.calcProcessedFieldCount(3);
         assertEquals(25, counts.getProcessedFieldCount());
     }
 
     public void testEquals() {
-        DataCounts counts1 =
-                new DataCounts(randomAsciiOfLength(16), 3L, 10L, 5000L, 2000L, 300L, 6L, 65L, 40L, 15L, 0L, new Date(1435000000L));
+        DataCounts counts1 = new DataCounts(
+                randomAsciiOfLength(16), 10L, 5000L, 2000L, 300L, 6L, 65L, 40L, 15L, 0L, new Date(), new Date(1435000000L));
         DataCounts counts2 = new DataCounts(counts1);
 
         assertEquals(counts1, counts2);
@@ -134,8 +135,16 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
         assertFalse(counts1.equals(counts2));
     }
 
+    public void testSetEarliestRecordTimestamp_doesnotOverwrite() {
+        DataCounts counts = new DataCounts(randomAsciiOfLength(12));
+        counts.setEarliestRecordTimeStamp(new Date(100L));
+
+        ESTestCase.expectThrows(IllegalStateException.class, () -> counts.setEarliestRecordTimeStamp(new Date(200L)));
+
+        assertEquals(new Date(100L), counts.getEarliestRecordTimeStamp());
+    }
+
     private void assertAllFieldsEqualZero(DataCounts stats) throws Exception {
-        assertEquals(0L, stats.getBucketCount());
         assertEquals(0L, stats.getProcessedRecordCount());
         assertEquals(0L, stats.getProcessedFieldCount());
         assertEquals(0L, stats.getInputBytes());
@@ -149,7 +158,6 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
     }
 
     private void assertAllFieldsGreaterThanZero(DataCounts stats) throws Exception {
-        assertThat(stats.getBucketCount(), greaterThan(0L));
         assertThat(stats.getProcessedRecordCount(), greaterThan(0L));
         assertThat(stats.getProcessedFieldCount(), greaterThan(0L));
         assertThat(stats.getInputBytes(), greaterThan(0L));
@@ -164,15 +172,15 @@ public class DataCountsTests extends AbstractSerializingTestCase<DataCounts> {
         assertThat(stats.getLatestRecordTimeStamp().getTime(), greaterThan(0L));
     }
 
-    private static DataCounts createCounts(long bucketCount,
+    private static DataCounts createCounts(
             long processedRecordCount, long processedFieldCount,
             long inputBytes, long inputFieldCount,
             long invalidDateCount, long missingFieldCount,
             long outOfOrderTimeStampCount, long failedTransformCount,
-            long excludedRecordCount, long latestRecordTime) {
-        DataCounts counts = new DataCounts("foo", bucketCount, processedRecordCount, processedFieldCount, inputBytes,
+            long excludedRecordCount, long earliestRecordTime, long latestRecordTime) {
+        DataCounts counts = new DataCounts("foo", processedRecordCount, processedFieldCount, inputBytes,
                 inputFieldCount, invalidDateCount, missingFieldCount, outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
-                new Date(latestRecordTime));
+                new Date(earliestRecordTime), new Date(latestRecordTime));
 
         return counts;
     }

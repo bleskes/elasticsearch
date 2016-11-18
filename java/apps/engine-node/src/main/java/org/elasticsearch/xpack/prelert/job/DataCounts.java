@@ -46,7 +46,6 @@ import java.util.Objects;
 public class DataCounts extends ToXContentToBytes implements Writeable {
 
     public static final String DOCUMENT_SUFFIX = "-data-counts";
-    public static final String BUCKET_COUNT_STR = "bucket_count";
     public static final String PROCESSED_RECORD_COUNT_STR = "processed_record_count";
     public static final String PROCESSED_FIELD_COUNT_STR = "processed_field_count";
     public static final String INPUT_BYTES_STR = "input_bytes";
@@ -57,9 +56,9 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     public static final String OUT_OF_ORDER_TIME_COUNT_STR = "out_of_order_timestamp_count";
     public static final String FAILED_TRANSFORM_COUNT_STR = "failed_transform_count";
     public static final String EXCLUDED_RECORD_COUNT_STR = "excluded_record_count";
+    public static final String EARLIEST_RECORD_TIME_STR = "earliest_record_timestamp";
     public static final String LATEST_RECORD_TIME_STR = "latest_record_timestamp";
 
-    public static final ParseField BUCKET_COUNT = new ParseField(BUCKET_COUNT_STR);
     public static final ParseField PROCESSED_RECORD_COUNT = new ParseField(PROCESSED_RECORD_COUNT_STR);
     public static final ParseField PROCESSED_FIELD_COUNT = new ParseField(PROCESSED_FIELD_COUNT_STR);
     public static final ParseField INPUT_BYTES = new ParseField(INPUT_BYTES_STR);
@@ -70,17 +69,17 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     public static final ParseField OUT_OF_ORDER_TIME_COUNT = new ParseField(OUT_OF_ORDER_TIME_COUNT_STR);
     public static final ParseField FAILED_TRANSFORM_COUNT = new ParseField(FAILED_TRANSFORM_COUNT_STR);
     public static final ParseField EXCLUDED_RECORD_COUNT = new ParseField(EXCLUDED_RECORD_COUNT_STR);
+    public static final ParseField EARLIEST_RECORD_TIME = new ParseField(EARLIEST_RECORD_TIME_STR);
     public static final ParseField LATEST_RECORD_TIME = new ParseField(LATEST_RECORD_TIME_STR);
 
     public static final ParseField TYPE = new ParseField("dataCounts");
 
     public static final ConstructingObjectParser<DataCounts, ParseFieldMatcherSupplier> PARSER =
             new ConstructingObjectParser<>("data_counts", a -> new DataCounts((String) a[0], (long) a[1], (long) a[2], (long) a[3],
-                    (long) a[4], (long) a[5], (long) a[6], (long) a[7], (long) a[8], (long) a[9], (long) a[10], (Date) a[11]));
+                    (long) a[4], (long) a[5], (long) a[6], (long) a[7], (long) a[8], (long) a[9], (Date) a[10], (Date) a[11]));
 
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), Job.ID);
-        PARSER.declareLong(ConstructingObjectParser.constructorArg(), BUCKET_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), PROCESSED_RECORD_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), PROCESSED_FIELD_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), INPUT_BYTES);
@@ -90,7 +89,16 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), OUT_OF_ORDER_TIME_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), FAILED_TRANSFORM_COUNT);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), EXCLUDED_RECORD_COUNT);
-        PARSER.declareField(ConstructingObjectParser.constructorArg(), p -> {
+        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(), p -> {
+            if (p.currentToken() == Token.VALUE_NUMBER) {
+                return new Date(p.longValue());
+            } else if (p.currentToken() == Token.VALUE_STRING) {
+                return new Date(TimeUtils.dateStringToEpoch(p.text()));
+            }
+            throw new IllegalArgumentException(
+                    "unexpected token [" + p.currentToken() + "] for [" + EARLIEST_RECORD_TIME.getPreferredName() + "]");
+        }, EARLIEST_RECORD_TIME, ValueType.VALUE);
+        PARSER.declareField(ConstructingObjectParser.optionalConstructorArg(), p -> {
             if (p.currentToken() == Token.VALUE_NUMBER) {
                 return new Date(p.longValue());
             } else if (p.currentToken() == Token.VALUE_STRING) {
@@ -103,7 +111,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     }
 
     private final String jobId;
-    private long bucketCount;
     private long processedRecordCount;
     private long processedFieldCount;
     private long inputBytes;
@@ -114,13 +121,13 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     private long failedTransformCount;
     private long excludedRecordCount;
     // NORELEASE: Use Jodatime instead
+    private Date earliestRecordTimeStamp;
     private Date latestRecordTimeStamp;
 
-    public DataCounts(String jobId, long bucketCount, long processedRecordCount, long processedFieldCount, long inputBytes,
+    public DataCounts(String jobId, long processedRecordCount, long processedFieldCount, long inputBytes,
                       long inputFieldCount, long invalidDateCount, long missingFieldCount, long outOfOrderTimeStampCount,
-                      long failedTransformCount,long excludedRecordCount, Date latestRecordTimeStamp) {
+                      long failedTransformCount,long excludedRecordCount, Date earliestRecordTimeStamp, Date latestRecordTimeStamp) {
         this.jobId = jobId;
-        this.bucketCount = bucketCount;
         this.processedRecordCount = processedRecordCount;
         this.processedFieldCount = processedFieldCount;
         this.inputBytes = inputBytes;
@@ -131,16 +138,15 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         this.failedTransformCount = failedTransformCount;
         this.excludedRecordCount = excludedRecordCount;
         this.latestRecordTimeStamp = latestRecordTimeStamp;
+        this.earliestRecordTimeStamp = earliestRecordTimeStamp;
     }
 
     public DataCounts(String jobId) {
         this.jobId = jobId;
-        latestRecordTimeStamp = new Date(0L);
     }
 
     public DataCounts(DataCounts lhs) {
         jobId = lhs.jobId;
-        bucketCount = lhs.bucketCount;
         processedRecordCount = lhs.processedRecordCount;
         processedFieldCount = lhs.processedFieldCount;
         inputBytes = lhs.inputBytes;
@@ -151,11 +157,11 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         failedTransformCount = lhs.failedTransformCount;
         excludedRecordCount = lhs.excludedRecordCount;
         latestRecordTimeStamp = lhs.latestRecordTimeStamp;
+        earliestRecordTimeStamp = lhs.earliestRecordTimeStamp;
     }
 
     public DataCounts(StreamInput in) throws IOException {
         jobId = in.readString();
-        bucketCount = in.readVLong();
         processedRecordCount = in.readVLong();
         processedFieldCount = in.readVLong();
         inputBytes = in.readVLong();
@@ -168,20 +174,14 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         if (in.readBoolean()) {
             latestRecordTimeStamp = new Date(in.readVLong());
         }
+        if (in.readBoolean()) {
+            earliestRecordTimeStamp = new Date(in.readVLong());
+        }
         in.readVLong(); // throw away inputRecordCount
     }
 
     public String getJobid() {
         return jobId;
-    }
-
-    /**
-     * The number of bucket results
-     *
-     * @return The bucket Couunt
-     */
-    public long getBucketCount() {
-        return bucketCount;
     }
 
     /**
@@ -339,6 +339,30 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
     }
 
     /**
+     * The time of the first record seen.
+     *
+     * @return The first record time
+     */
+    public Date getEarliestRecordTimeStamp() {
+        return earliestRecordTimeStamp;
+    }
+
+    /**
+     * If {@code earliestRecordTimeStamp} has not been set (i.e. is {@code null})
+     * then set it to {@code timeStamp}
+     *
+     * @param timeStamp Candidate time
+     * @throws IllegalStateException if {@code earliestRecordTimeStamp} is already set
+     */
+    public void setEarliestRecordTimeStamp(Date timeStamp) {
+        if (earliestRecordTimeStamp != null) {
+            throw new IllegalStateException("earliestRecordTimeStamp can only be set once");
+        }
+        earliestRecordTimeStamp = timeStamp;
+    }
+
+
+    /**
      * The time of the latest record seen.
      *
      * @return Latest record time
@@ -351,11 +375,9 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         this.latestRecordTimeStamp = latestRecordTimeStamp;
     }
 
-
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(jobId);
-        out.writeVLong(bucketCount);
         out.writeVLong(processedRecordCount);
         out.writeVLong(processedFieldCount);
         out.writeVLong(inputBytes);
@@ -368,6 +390,12 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         if (latestRecordTimeStamp != null) {
             out.writeBoolean(true);
             out.writeVLong(latestRecordTimeStamp.getTime());
+        } else {
+            out.writeBoolean(false);
+        }
+        if (earliestRecordTimeStamp != null) {
+            out.writeBoolean(true);
+            out.writeVLong(earliestRecordTimeStamp.getTime());
         } else {
             out.writeBoolean(false);
         }
@@ -384,7 +412,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
 
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         builder.field(Job.ID.getPreferredName(), jobId);
-        builder.field(BUCKET_COUNT.getPreferredName(), bucketCount);
         builder.field(PROCESSED_RECORD_COUNT.getPreferredName(), processedRecordCount);
         builder.field(PROCESSED_FIELD_COUNT.getPreferredName(), processedFieldCount);
         builder.field(INPUT_BYTES.getPreferredName(), inputBytes);
@@ -394,6 +421,9 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         builder.field(OUT_OF_ORDER_TIME_COUNT.getPreferredName(), outOfOrderTimeStampCount);
         builder.field(FAILED_TRANSFORM_COUNT.getPreferredName(), failedTransformCount);
         builder.field(EXCLUDED_RECORD_COUNT.getPreferredName(), excludedRecordCount);
+        if (earliestRecordTimeStamp != null) {
+            builder.field(EARLIEST_RECORD_TIME.getPreferredName(), earliestRecordTimeStamp.getTime());
+        }
         if (latestRecordTimeStamp != null) {
             builder.field(LATEST_RECORD_TIME.getPreferredName(), latestRecordTimeStamp.getTime());
         }
@@ -418,7 +448,6 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
         DataCounts that = (DataCounts) other;
 
         return Objects.equals(this.jobId, that.jobId) &&
-                this.bucketCount == that.bucketCount &&
                 this.processedRecordCount == that.processedRecordCount &&
                 this.processedFieldCount == that.processedFieldCount &&
                 this.inputBytes == that.inputBytes &&
@@ -428,14 +457,16 @@ public class DataCounts extends ToXContentToBytes implements Writeable {
                 this.outOfOrderTimeStampCount == that.outOfOrderTimeStampCount &&
                 this.failedTransformCount == that.failedTransformCount &&
                 this.excludedRecordCount == that.excludedRecordCount &&
-                Objects.equals(this.latestRecordTimeStamp, that.latestRecordTimeStamp);
+                Objects.equals(this.latestRecordTimeStamp, that.latestRecordTimeStamp) &&
+                Objects.equals(this.earliestRecordTimeStamp, that.earliestRecordTimeStamp);
+
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(jobId, bucketCount, processedRecordCount, processedFieldCount,
+        return Objects.hash(jobId, processedRecordCount, processedFieldCount,
                 inputBytes, inputFieldCount, invalidDateCount, missingFieldCount,
                 outOfOrderTimeStampCount, failedTransformCount, excludedRecordCount,
-                latestRecordTimeStamp);
+                latestRecordTimeStamp, earliestRecordTimeStamp);
     }
 }
