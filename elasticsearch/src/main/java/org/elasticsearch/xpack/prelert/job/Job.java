@@ -56,7 +56,7 @@ import java.util.regex.Pattern;
 public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent {
 
     public static final Job PROTO = new Job(null, null, null, null, null, 0L, null, null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null);
 
     public static final long DEFAULT_BUCKETSPAN = 300;
 
@@ -68,7 +68,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
     public static final ParseField ID = new ParseField("jobId");
     public static final ParseField ANALYSIS_CONFIG = new ParseField("analysisConfig");
     public static final ParseField ANALYSIS_LIMITS = new ParseField("analysisLimits");
-    public static final ParseField COUNTS = new ParseField("counts");
     public static final ParseField CREATE_TIME = new ParseField("createTime");
     public static final ParseField CUSTOM_SETTINGS = new ParseField("customSettings");
     public static final ParseField DATA_DESCRIPTION = new ParseField("dataDescription");
@@ -84,7 +83,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
     public static final ParseField RESULTS_RETENTION_DAYS = new ParseField("resultsRetentionDays");
     public static final ParseField TIMEOUT = new ParseField("timeout");
     public static final ParseField TRANSFORMS = new ParseField("transforms");
-    public static final ParseField MODEL_SIZE_STATS = new ParseField("modelSizeStats");
     public static final ParseField AVERAGE_BUCKET_PROCESSING_TIME = new ParseField("averageBucketProcessingTimeMs");
     public static final ParseField MODEL_SNAPSHOT_ID = new ParseField("modelSnapshotId");
 
@@ -123,10 +121,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         PARSER.declareObject(Builder::setAnalysisLimits, AnalysisLimits.PARSER, ANALYSIS_LIMITS);
         PARSER.declareObject(Builder::setSchedulerConfig, SchedulerConfig.PARSER, SCHEDULER_CONFIG);
         PARSER.declareObject(Builder::setDataDescription, DataDescription.PARSER, DATA_DESCRIPTION);
-        PARSER.declareObject(Builder::setModelSizeStats, ModelSizeStats.PARSER, MODEL_SIZE_STATS);
         PARSER.declareObjectArray(Builder::setTransforms, TransformConfig.PARSER, TRANSFORMS);
         PARSER.declareObject(Builder::setModelDebugConfig, ModelDebugConfig.PARSER, MODEL_DEBUG_CONFIG);
-        PARSER.declareObject(Builder::setCounts, DataCounts.PARSER, COUNTS);
         PARSER.declareField(Builder::setIgnoreDowntime, (p, c) -> IgnoreDowntime.fromString(p.text()), IGNORE_DOWNTIME, ValueType.STRING);
         PARSER.declareLong(Builder::setTimeout, TIMEOUT);
         PARSER.declareLong(Builder::setRenormalizationWindowDays, RENORMALIZATION_WINDOW_DAYS);
@@ -149,10 +145,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
     private final AnalysisLimits analysisLimits;
     private final SchedulerConfig schedulerConfig;
     private final DataDescription dataDescription;
-    private final ModelSizeStats modelSizeStats;
     private final List<TransformConfig> transforms;
     private final ModelDebugConfig modelDebugConfig;
-    private final DataCounts counts;
     private final IgnoreDowntime ignoreDowntime;
     private final Long renormalizationWindowDays;
     private final Long backgroundPersistInterval;
@@ -164,8 +158,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
 
     public Job(String jobId, String description, Date createTime, Date finishedTime, Date lastDataTime, long timeout,
                AnalysisConfig analysisConfig, AnalysisLimits analysisLimits, SchedulerConfig schedulerConfig,
-               DataDescription dataDescription, ModelSizeStats modelSizeStats, List<TransformConfig> transforms,
-               ModelDebugConfig modelDebugConfig, DataCounts counts, IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays,
+               DataDescription dataDescription, List<TransformConfig> transforms,
+               ModelDebugConfig modelDebugConfig, IgnoreDowntime ignoreDowntime, Long renormalizationWindowDays,
                Long backgroundPersistInterval, Long modelSnapshotRetentionDays, Long resultsRetentionDays,
                Map<String, Object> customSettings, Double averageBucketProcessingTimeMs, String modelSnapshotId) {
         this.jobId = jobId;
@@ -178,10 +172,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         this.analysisLimits = analysisLimits;
         this.schedulerConfig = schedulerConfig;
         this.dataDescription = dataDescription;
-        this.modelSizeStats = modelSizeStats;
         this.transforms = transforms;
         this.modelDebugConfig = modelDebugConfig;
-        this.counts = counts;
         this.ignoreDowntime = ignoreDowntime;
         this.renormalizationWindowDays = renormalizationWindowDays;
         this.backgroundPersistInterval = backgroundPersistInterval;
@@ -203,10 +195,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         analysisLimits = in.readOptionalWriteable(AnalysisLimits::new);
         schedulerConfig = in.readOptionalWriteable(SchedulerConfig::new);
         dataDescription = in.readOptionalWriteable(DataDescription::new);
-        modelSizeStats = in.readOptionalWriteable(ModelSizeStats::new);
         transforms = in.readList(TransformConfig::new);
         modelDebugConfig = in.readOptionalWriteable(ModelDebugConfig::new);
-        counts = in.readOptionalWriteable(DataCounts::new);
         ignoreDowntime = in.readOptionalWriteable(IgnoreDowntime::fromStream);
         renormalizationWindowDays = in.readOptionalLong();
         backgroundPersistInterval = in.readOptionalLong();
@@ -331,15 +321,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
     }
 
     /**
-     * The memory usage object
-     *
-     * @return The ModelSizeStats
-     */
-    public ModelSizeStats getModelSizeStats() {
-        return modelSizeStats;
-    }
-
-    /**
      * If not set the input data is assumed to be csv with a '_time' field in
      * epoch format.
      *
@@ -352,15 +333,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
 
     public List<TransformConfig> getTransforms() {
         return transforms;
-    }
-
-    /**
-     * Processed records count
-     *
-     * @return the processed records counts
-     */
-    public DataCounts getCounts() {
-        return counts;
     }
 
     /**
@@ -461,10 +433,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         out.writeOptionalWriteable(analysisLimits);
         out.writeOptionalWriteable(schedulerConfig);
         out.writeOptionalWriteable(dataDescription);
-        out.writeOptionalWriteable(modelSizeStats);
         out.writeList(transforms);
         out.writeOptionalWriteable(modelDebugConfig);
-        out.writeOptionalWriteable(counts);
         out.writeOptionalWriteable(ignoreDowntime);
         out.writeOptionalLong(renormalizationWindowDays);
         out.writeOptionalLong(backgroundPersistInterval);
@@ -504,17 +474,11 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         if (dataDescription != null) {
             builder.field(DATA_DESCRIPTION.getPreferredName(), dataDescription, params);
         }
-        if (modelSizeStats != null) {
-            builder.field(MODEL_SIZE_STATS.getPreferredName(), modelSizeStats, params);
-        }
         if (transforms != null) {
             builder.field(TRANSFORMS.getPreferredName(), transforms);
         }
         if (modelDebugConfig != null) {
             builder.field(MODEL_DEBUG_CONFIG.getPreferredName(), modelDebugConfig, params);
-        }
-        if (counts != null) {
-            builder.field(COUNTS.getPreferredName(), counts, params);
         }
         if (ignoreDowntime != null) {
             builder.field(IGNORE_DOWNTIME.getPreferredName(), ignoreDowntime);
@@ -559,8 +523,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 && Objects.equals(this.finishedTime, that.finishedTime) && Objects.equals(this.lastDataTime, that.lastDataTime)
                 && (this.timeout == that.timeout) && Objects.equals(this.analysisConfig, that.analysisConfig)
                 && Objects.equals(this.analysisLimits, that.analysisLimits) && Objects.equals(this.dataDescription, that.dataDescription)
-                && Objects.equals(this.modelDebugConfig, that.modelDebugConfig) && Objects.equals(this.modelSizeStats, that.modelSizeStats)
-                && Objects.equals(this.transforms, that.transforms) && Objects.equals(this.counts, that.counts)
+                && Objects.equals(this.modelDebugConfig, that.modelDebugConfig) && Objects.equals(this.transforms, that.transforms)
                 && Objects.equals(this.ignoreDowntime, that.ignoreDowntime)
                 && Objects.equals(this.renormalizationWindowDays, that.renormalizationWindowDays)
                 && Objects.equals(this.backgroundPersistInterval, that.backgroundPersistInterval)
@@ -573,7 +536,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
     @Override
     public int hashCode() {
         return Objects.hash(jobId, description, createTime, finishedTime, lastDataTime, timeout, analysisConfig,
-                analysisLimits, dataDescription, modelDebugConfig, modelSizeStats, transforms, counts, renormalizationWindowDays,
+                analysisLimits, dataDescription, modelDebugConfig, transforms, renormalizationWindowDays,
                 backgroundPersistInterval, modelSnapshotRetentionDays, resultsRetentionDays, ignoreDowntime, customSettings,
                 modelSnapshotId);
     }
@@ -610,7 +573,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         private AnalysisLimits analysisLimits;
         private SchedulerConfig schedulerConfig;
         private List<TransformConfig> transforms = new ArrayList<>();
-        private ModelSizeStats modelSizeStats;
         private DataDescription dataDescription;
         private Date createTime;
         private Date finishedTime;
@@ -621,7 +583,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
         private Long backgroundPersistInterval;
         private Long modelSnapshotRetentionDays;
         private Long resultsRetentionDays;
-        private DataCounts counts;
         private IgnoreDowntime ignoreDowntime;
         private Map<String, Object> customSettings;
         private Double averageBucketProcessingTimeMs;
@@ -640,7 +601,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             this.analysisConfig = job.getAnalysisConfig();
             this.schedulerConfig = job.getSchedulerConfig();
             this.transforms = job.getTransforms();
-            this.modelSizeStats = job.getModelSizeStats();
             this.dataDescription = job.getDataDescription();
             this.createTime = job.getCreateTime();
             this.finishedTime = job.getFinishedTime();
@@ -650,7 +610,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             this.renormalizationWindowDays = job.getRenormalizationWindowDays();
             this.backgroundPersistInterval = job.getBackgroundPersistInterval();
             this.resultsRetentionDays = job.getResultsRetentionDays();
-            this.counts = job.getCounts();
             this.ignoreDowntime = job.getIgnoreDowntime();
             this.customSettings = job.getCustomSettings();
             this.averageBucketProcessingTimeMs = job.getAverageBucketProcessingTimeMs();
@@ -706,16 +665,16 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             this.finishedTime = finishedTime;
         }
 
+        /**
+         * Set the wall clock time of the last data upload
+         * @param lastDataTime Wall clock time
+         */
         public void setLastDataTime(Date lastDataTime) {
             this.lastDataTime = lastDataTime;
         }
 
         public void setTransforms(List<TransformConfig> transforms) {
             this.transforms = transforms;
-        }
-
-        public void setModelSizeStats(ModelSizeStats.Builder modelSizeStats) {
-            this.modelSizeStats = modelSizeStats.build();
         }
 
         public void setDataDescription(DataDescription.Builder description) {
@@ -744,10 +703,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
 
         public void setIgnoreDowntime(IgnoreDowntime ignoreDowntime) {
             this.ignoreDowntime = ignoreDowntime;
-        }
-
-        public void setCounts(DataCounts counts) {
-            this.counts = counts;
         }
 
         public void setAverageBucketProcessingTimeMs(Double averageBucketProcessingTimeMs) {
@@ -811,8 +766,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             Date createTime;
             Date finishedTime;
             Date lastDataTime;
-            DataCounts counts;
-            ModelSizeStats modelSizeStats;
             Double averageBucketProcessingTimeMs;
             String modelSnapshotId;
             if (fromApi) {
@@ -820,8 +773,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 createTime = this.createTime == null ? new Date() : this.createTime;
                 finishedTime = null;
                 lastDataTime = null;
-                counts = new DataCounts(id);
-                modelSizeStats = null;
                 averageBucketProcessingTimeMs = null;
                 modelSnapshotId = null;
             } else {
@@ -829,8 +780,6 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
                 createTime = this.createTime;
                 finishedTime = this.finishedTime;
                 lastDataTime = this.lastDataTime;
-                counts = this.counts;
-                modelSizeStats = this.modelSizeStats;
                 averageBucketProcessingTimeMs = this.averageBucketProcessingTimeMs;
                 modelSnapshotId = this.modelSnapshotId;
             }
@@ -842,9 +791,9 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
             }
             return new Job(
                     id, description, createTime, finishedTime, lastDataTime, timeout, analysisConfig, analysisLimits,
-                    schedulerConfig, dataDescription, modelSizeStats, transforms, modelDebugConfig, counts,
-                    ignoreDowntime, renormalizationWindowDays, backgroundPersistInterval, modelSnapshotRetentionDays,
-                    resultsRetentionDays, customSettings, averageBucketProcessingTimeMs, modelSnapshotId
+                    schedulerConfig, dataDescription, transforms, modelDebugConfig, ignoreDowntime, renormalizationWindowDays,
+                    backgroundPersistInterval, modelSnapshotRetentionDays, resultsRetentionDays, customSettings,
+                    averageBucketProcessingTimeMs, modelSnapshotId
             );
         }
 

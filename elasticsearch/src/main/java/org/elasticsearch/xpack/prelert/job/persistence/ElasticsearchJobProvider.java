@@ -317,6 +317,7 @@ public class ElasticsearchJobProvider implements JobProvider
         }
     }
 
+    @Override
     public DataCounts dataCounts(String jobId) {
         String indexName = ElasticsearchPersister.getJobIndexName(jobId);
 
