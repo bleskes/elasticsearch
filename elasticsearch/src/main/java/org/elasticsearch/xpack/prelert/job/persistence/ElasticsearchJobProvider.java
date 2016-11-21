@@ -55,6 +55,7 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.Job;
@@ -291,7 +292,7 @@ public class ElasticsearchJobProvider implements JobProvider
     }
 
     @Override
-    public void deleteJobRelatedIndices(String jobId, ActionListener<Boolean> listener) {
+    public void deleteJobRelatedIndices(String jobId, ActionListener<DeleteJobAction.Response> listener) {
         if (indexExists(jobId) == false) {
             listener.onFailure(ExceptionsHelper.missingJobException(jobId));
             return;
@@ -304,7 +305,7 @@ public class ElasticsearchJobProvider implements JobProvider
             client.admin().indices().delete(deleteIndexRequest, new ActionListener<DeleteIndexResponse>() {
                 @Override
                 public void onResponse(DeleteIndexResponse deleteIndexResponse) {
-                    listener.onResponse(deleteIndexResponse.isAcknowledged());
+                    listener.onResponse(new DeleteJobAction.Response(deleteIndexResponse.isAcknowledged()));
                 }
 
                 @Override
