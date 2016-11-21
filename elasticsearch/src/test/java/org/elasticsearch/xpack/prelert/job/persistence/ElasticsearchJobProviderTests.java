@@ -26,6 +26,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
 import org.elasticsearch.xpack.prelert.job.CategorizerState;
 import org.elasticsearch.xpack.prelert.job.Job;
@@ -172,7 +173,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
     public void testDeleteJob() throws InterruptedException, ExecutionException, IOException {
         @SuppressWarnings("unchecked")
-        ActionListener<Boolean> actionListener = mock(ActionListener.class);
+        ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
@@ -185,12 +186,14 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         provider.deleteJobRelatedIndices(jobId, actionListener);
 
-        verify(actionListener).onResponse(true);
+        ArgumentCaptor<DeleteJobAction.Response> responseCaptor = ArgumentCaptor.forClass(DeleteJobAction.Response.class);
+        verify(actionListener).onResponse(responseCaptor.capture());
+        assertTrue(responseCaptor.getValue().isAcknowledged());
     }
 
     public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, IOException {
         @SuppressWarnings("unchecked")
-        ActionListener<Boolean> actionListener = mock(ActionListener.class);
+        ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true);
