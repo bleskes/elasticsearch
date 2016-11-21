@@ -15,32 +15,32 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.watcher.actions.pagerduty;
+package org.elasticsearch.xpack.watcher.actions.jira;
 
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.common.text.TextTemplateEngine;
-import org.elasticsearch.xpack.notification.pagerduty.PagerDutyService;
+import org.elasticsearch.xpack.notification.jira.JiraService;
 import org.elasticsearch.xpack.watcher.actions.ActionFactory;
 
 import java.io.IOException;
 
-public class PagerDutyActionFactory extends ActionFactory {
+public class JiraActionFactory extends ActionFactory {
 
     private final TextTemplateEngine templateEngine;
-    private final PagerDutyService pagerDutyService;
+    private final JiraService jiraService;
 
-    public PagerDutyActionFactory(Settings settings, TextTemplateEngine templateEngine, PagerDutyService pagerDutyService) {
-        super(Loggers.getLogger(ExecutablePagerDutyAction.class, settings));
+    public JiraActionFactory(Settings settings, TextTemplateEngine templateEngine, JiraService jiraService) {
+        super(Loggers.getLogger(ExecutableJiraAction.class, settings));
         this.templateEngine = templateEngine;
-        this.pagerDutyService = pagerDutyService;
+        this.jiraService = jiraService;
     }
 
     @Override
-    public ExecutablePagerDutyAction parseExecutable(String watchId, String actionId, XContentParser parser) throws IOException {
-        PagerDutyAction action = PagerDutyAction.parse(watchId, actionId, parser);
-        pagerDutyService.getAccount(action.event.account);
-        return new ExecutablePagerDutyAction(action, actionLogger, pagerDutyService, templateEngine);
+    public ExecutableJiraAction parseExecutable(String watchId, String actionId, XContentParser parser) throws IOException {
+        JiraAction action = JiraAction.parse(watchId, actionId, parser);
+        jiraService.getAccount(action.getAccount()); // for validation -- throws exception if account not present
+        return new ExecutableJiraAction(action, actionLogger, jiraService, templateEngine);
     }
 }

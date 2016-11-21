@@ -83,6 +83,7 @@ import org.elasticsearch.xpack.notification.email.attachment.HttpEmailAttachemen
 import org.elasticsearch.xpack.notification.email.attachment.ReportingAttachmentParser;
 import org.elasticsearch.xpack.notification.email.support.BodyPartSource;
 import org.elasticsearch.xpack.notification.hipchat.HipChatService;
+import org.elasticsearch.xpack.notification.jira.JiraService;
 import org.elasticsearch.xpack.notification.pagerduty.PagerDutyAccount;
 import org.elasticsearch.xpack.notification.pagerduty.PagerDutyService;
 import org.elasticsearch.xpack.notification.slack.SlackService;
@@ -274,6 +275,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         List<Object> components = new ArrayList<>();
         components.add(new EmailService(settings, security.getCryptoService(), clusterSettings));
         components.add(new HipChatService(settings, httpClient, clusterSettings));
+        components.add(new JiraService(settings, httpClient, clusterSettings));
         components.add(new SlackService(settings, httpClient, clusterSettings));
         components.add(new PagerDutyService(settings, httpClient, clusterSettings));
 
@@ -333,6 +335,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         settings.add(SlackService.SLACK_ACCOUNT_SETTING);
         settings.add(EmailService.EMAIL_ACCOUNT_SETTING);
         settings.add(HipChatService.HIPCHAT_ACCOUNT_SETTING);
+        settings.add(JiraService.JIRA_ACCOUNT_SETTING);
         settings.add(PagerDutyService.PAGERDUTY_ACCOUNT_SETTING);
         settings.add(ReportingAttachmentParser.RETRIES_SETTING);
         settings.add(ReportingAttachmentParser.INTERVAL_SETTING);
@@ -349,6 +352,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
     public List<String> getSettingsFilter() {
         List<String> filters = new ArrayList<>();
         filters.add("xpack.notification.email.account.*.smtp.password");
+        filters.add("xpack.notification.jira.account.*.password");
         filters.add("xpack.notification.slack.account.*.url");
         filters.add("xpack.notification.pagerduty.account.*.url");
         filters.add("xpack.notification.pagerduty." + PagerDutyAccount.SERVICE_KEY_SETTING);

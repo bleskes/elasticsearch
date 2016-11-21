@@ -21,9 +21,8 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.common.text.TextTemplateEngine;
-import org.elasticsearch.xpack.watcher.actions.ActionFactory;
-import org.elasticsearch.xpack.watcher.actions.hipchat.ExecutableHipChatAction;
 import org.elasticsearch.xpack.notification.slack.SlackService;
+import org.elasticsearch.xpack.watcher.actions.ActionFactory;
 
 import java.io.IOException;
 
@@ -32,7 +31,7 @@ public class SlackActionFactory extends ActionFactory {
     private final SlackService slackService;
 
     public SlackActionFactory(Settings settings, TextTemplateEngine templateEngine, SlackService slackService) {
-        super(Loggers.getLogger(ExecutableHipChatAction.class, settings));
+        super(Loggers.getLogger(ExecutableSlackAction.class, settings));
         this.templateEngine = templateEngine;
         this.slackService = slackService;
     }
