@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
+package org.elasticsearch.xpack.prelert.job.process.autodetect.output;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;

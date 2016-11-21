@@ -12,14 +12,13 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.process.autodetect.output.parsing;
+package org.elasticsearch.xpack.prelert.job.process.autodetect.output;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
-import org.elasticsearch.xpack.prelert.job.process.autodetect.output.FlushAcknowledgement;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
