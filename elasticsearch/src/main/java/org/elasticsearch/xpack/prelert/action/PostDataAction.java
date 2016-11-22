@@ -62,7 +62,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
 
     @Override
     public Response newResponse() {
-        return null;
+        return new Response();
     }
 
     static class RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder> {
@@ -80,8 +80,15 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
             dataCounts = new DataCounts(jobId);
         }
 
+        private Response() {
+        }
+
         public Response(DataCounts counts) {
             this.dataCounts = counts;
+        }
+
+        public DataCounts getDataCounts() {
+            return dataCounts;
         }
 
         @Override
@@ -134,8 +141,8 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
 
         private String jobId;
         private boolean ignoreDowntime = false;
-        private String resetStart;
-        private String resetEnd;
+        private String resetStart = "";
+        private String resetEnd = "";
         private BytesReference content;
 
         Request() {
