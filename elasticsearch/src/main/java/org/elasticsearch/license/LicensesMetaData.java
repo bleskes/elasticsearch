@@ -22,6 +22,8 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.license.License.OperationMode;
+import org.elasticsearch.tribe.TribeService;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -29,7 +31,8 @@ import java.util.EnumSet;
 /**
  * Contains metadata about registered licenses
  */
-class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements MetaData.Custom {
+class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements MetaData.Custom,
+        TribeService.MergableCustomMetaData<LicensesMetaData> {
 
     public static final String TYPE = "licenses";
 
@@ -147,6 +150,17 @@ class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements Meta
             license = License.readLicense(streamInput);
         }
         return new LicensesMetaData(license);
+    }
+
+    @Override
+    public LicensesMetaData merge(LicensesMetaData other) {
+        if (other.license == null) {
+            return this;
+        } else if (license == null
+                || OperationMode.compare(other.license.operationMode(), license.operationMode()) > 0) {
+            return other;
+        }
+        return this;
     }
 
     private static final class Fields {
