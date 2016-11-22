@@ -47,7 +47,12 @@ public class PreBuiltXPackTransportClient extends PreBuiltTransportClient {
     }
 
     public PreBuiltXPackTransportClient(Settings settings, Collection<Class<? extends Plugin>> plugins) {
-        super(settings, addPlugins(plugins, Collections.singletonList(XPackPlugin.class)));
+        this(settings, addPlugins(plugins, Collections.singletonList(XPackPlugin.class)), null);
+    }
+
+    public PreBuiltXPackTransportClient(Settings settings, Collection<Class<? extends Plugin>> plugins,
+                                        HostFailureListener hostFailureListener) {
+        super(settings, addPlugins(plugins, Collections.singletonList(XPackPlugin.class)), hostFailureListener);
     }
 
     @Override
