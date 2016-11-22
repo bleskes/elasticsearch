@@ -23,6 +23,7 @@ import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.http.netty3.Netty3HttpServerTransport;
+import org.elasticsearch.transport.netty3.Netty3Utils;
 import org.elasticsearch.xpack.ssl.SSLService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
@@ -55,6 +56,7 @@ public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport
 
     @Override
     protected void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
+        Netty3Utils.maybeDie(e.getCause());
         if (!lifecycle.started()) {
             return;
         }
