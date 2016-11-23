@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -237,7 +238,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
                 .normalizedProbabilityThreshold(1.0);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
-        assertEquals(1L, buckets.hitCount());
+        assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
         assertTrue(
@@ -270,7 +271,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
                 .normalizedProbabilityThreshold(10.9).includeInterim(true);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
-        assertEquals(1L, buckets.hitCount());
+        assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
         assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
@@ -308,7 +309,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         bq.includeInterim(true);
 
         QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
-        assertEquals(1L, buckets.hitCount());
+        assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
         assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
@@ -338,9 +339,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(timestamp));
 
-        QueryPage<Bucket> bucket = provider.bucket(jobId, bq.build());
-        assertThat(bucket.hitCount(), equalTo(0L));
-        assertThat(bucket.hits(), empty());
+        ResourceNotFoundException e = expectThrows(ResourceNotFoundException.class,
+                () ->provider.bucket(jobId, bq.build()));
     }
 
     public void testBucket_OneBucketNoExpandNoInterim()
@@ -366,8 +366,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
 
         QueryPage<Bucket> bucketHolder = provider.bucket(jobId, bq.build());
-        assertThat(bucketHolder.hitCount(), equalTo(1L));
-        Bucket b = bucketHolder.hits().get(0);
+        assertThat(bucketHolder.count(), equalTo(1L));
+        Bucket b = bucketHolder.results().get(0);
         assertEquals(now, b.getTimestamp());
     }
 
@@ -394,9 +394,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
 
-        QueryPage<Bucket> bucketHolder = provider.bucket(jobId, bq.build());
-        assertThat(bucketHolder.hitCount(), equalTo(0L));
-        assertThat(bucketHolder.hits(), empty());
+        ResourceNotFoundException e = expectThrows(ResourceNotFoundException.class,
+                () ->provider.bucket(jobId, bq.build()));
     }
 
     public void testRecords() throws InterruptedException, ExecutionException, IOException {
@@ -438,8 +437,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
                 .normalizedProbability(2.2);
 
         QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
-        assertEquals(2L, recordPage.hitCount());
-        List<AnomalyRecord> records = recordPage.hits();
+        assertEquals(2L, recordPage.count());
+        List<AnomalyRecord> records = recordPage.results();
         assertEquals(22.4, records.get(0).getTypical().get(0), 0.000001);
         assertEquals(33.3, records.get(0).getActual().get(0), 0.000001);
         assertEquals("irritable", records.get(0).getFunction());
@@ -494,8 +493,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         rqb.normalizedProbability(2.2);
 
         QueryPage<AnomalyRecord> recordPage = provider.records(jobId, rqb.build());
-        assertEquals(2L, recordPage.hitCount());
-        List<AnomalyRecord> records = recordPage.hits();
+        assertEquals(2L, recordPage.count());
+        List<AnomalyRecord> records = recordPage.results();
         assertEquals(22.4, records.get(0).getTypical().get(0), 0.000001);
         assertEquals(33.3, records.get(0).getActual().get(0), 0.000001);
         assertEquals("irritable", records.get(0).getFunction());
@@ -542,8 +541,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         QueryPage<AnomalyRecord> recordPage = provider.bucketRecords(jobId, bucket, from, size, true, sortfield, true, "");
 
-        assertEquals(2L, recordPage.hitCount());
-        List<AnomalyRecord> records = recordPage.hits();
+        assertEquals(2L, recordPage.count());
+        List<AnomalyRecord> records = recordPage.results();
         assertEquals(22.4, records.get(0).getTypical().get(0), 0.000001);
         assertEquals(33.3, records.get(0).getActual().get(0), 0.000001);
         assertEquals("irritable", records.get(0).getFunction());
@@ -642,8 +641,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         QueryPage<CategoryDefinition> categoryDefinitions = provider.categoryDefinitions(jobId, from, size);
-        assertEquals(1L, categoryDefinitions.hitCount());
-        assertEquals(terms, categoryDefinitions.hits().get(0).getTerms());
+        assertEquals(1L, categoryDefinitions.count());
+        assertEquals(terms, categoryDefinitions.results().get(0).getTerms());
     }
 
     public void testCategoryDefinition()
@@ -666,8 +665,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         ElasticsearchJobProvider provider = createProvider(client);
         QueryPage<CategoryDefinition> categoryDefinitions = provider.categoryDefinition(jobId, categoryId);
-        assertEquals(1L, categoryDefinitions.hitCount());
-        assertEquals(terms, categoryDefinitions.hits().get(0).getTerms());
+        assertEquals(1L, categoryDefinitions.count());
+        assertEquals(terms, categoryDefinitions.results().get(0).getTerms());
     }
 
     public void testInfluencers_NoInterim()
@@ -708,12 +707,12 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         InfluencersQuery query = new InfluencersQueryBuilder().from(from).size(size).includeInterim(false).build();
         QueryPage<Influencer> page = provider.influencers(jobId, query);
-        assertEquals(2L, page.hitCount());
+        assertEquals(2L, page.count());
 
         String queryString = queryBuilder.getValue().toString();
         assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
 
-        List<Influencer> records = page.hits();
+        List<Influencer> records = page.results();
         assertEquals("foo", records.get(0).getJobId());
         assertEquals("Bob", records.get(0).getInfluencerFieldValue());
         assertEquals("Builder", records.get(0).getInfluencerFieldName());
@@ -769,12 +768,12 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         InfluencersQuery query = new InfluencersQueryBuilder().from(from).size(size).epochStart("0").epochEnd("0").sortField("sort")
                 .sortDescending(true).anomalyScoreThreshold(0.0).includeInterim(true).build();
         QueryPage<Influencer> page = provider.influencers(jobId, query);
-        assertEquals(2L, page.hitCount());
+        assertEquals(2L, page.count());
 
         String queryString = queryBuilder.getValue().toString();
         assertFalse(queryString.matches("(?s).*isInterim.*"));
 
-        List<Influencer> records = page.hits();
+        List<Influencer> records = page.results();
         assertEquals("Bob", records.get(0).getInfluencerFieldValue());
         assertEquals("Builder", records.get(0).getInfluencerFieldName());
         assertEquals(now, records.get(0).getTimestamp());
@@ -843,8 +842,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         ElasticsearchJobProvider provider = createProvider(client);
 
         QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, from, size);
-        assertEquals(2L, page.hitCount());
-        List<ModelSnapshot> snapshots = page.hits();
+        assertEquals(2L, page.count());
+        List<ModelSnapshot> snapshots = page.results();
 
         assertEquals("foo", snapshots.get(0).getJobId());
         assertEquals(now, snapshots.get(0).getTimestamp());
@@ -900,8 +899,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, from, size, null, null, "sortfield", true, "snappyId",
                 "description1");
-        assertEquals(2L, page.hitCount());
-        List<ModelSnapshot> snapshots = page.hits();
+        assertEquals(2L, page.count());
+        List<ModelSnapshot> snapshots = page.results();
 
         assertEquals(now, snapshots.get(0).getTimestamp());
         assertEquals(now, snapshots.get(0).getLatestRecordTimeStamp());

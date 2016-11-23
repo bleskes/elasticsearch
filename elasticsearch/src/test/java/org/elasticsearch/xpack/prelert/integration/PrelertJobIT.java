@@ -53,7 +53,7 @@ public class PrelertJobIT extends ESRestTestCase {
                 () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/non-existing-job"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
-        assertThat(e.getMessage(), containsString("\"hitCount\":0"));
+        assertThat(e.getMessage(), containsString("Could not find requested jobs"));
     }
 
     public void testGetJob_GivenJobExists() throws Exception {
@@ -63,7 +63,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":1"));
+        assertThat(responseAsString, containsString("\"count\":1"));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
     }
 
@@ -98,7 +98,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":1"));
+        assertThat(responseAsString, containsString("\"count\":1"));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
     }
 
@@ -111,7 +111,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":3"));
+        assertThat(responseAsString, containsString("\"count\":3"));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_1\""));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_2\""));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_3\""));
@@ -126,7 +126,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":3"));
+        assertThat(responseAsString, containsString("\"count\":3"));
         assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_1\"")));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_2\""));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_3\""));
@@ -141,7 +141,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":3"));
+        assertThat(responseAsString, containsString("\"count\":3"));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_1\""));
         assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_2\"")));
         assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_3\"")));
@@ -156,7 +156,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":3"));
+        assertThat(responseAsString, containsString("\"count\":3"));
         assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_1\"")));
         assertThat(responseAsString, containsString("\"jobId\":\"farequote_2\""));
         assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_3\"")));
@@ -192,13 +192,13 @@ public class PrelertJobIT extends ESRestTestCase {
         Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":3"));
+        assertThat(responseAsString, containsString("\"count\":3"));
 
         params.put("end", "1235");
         response = client().performRequest("get", PrelertPlugin.BASE_PATH + "results/1/buckets", params);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"hitCount\":1"));
+        assertThat(responseAsString, containsString("\"count\":1"));
 
         e = expectThrows(ResponseException.class, () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "results/2/buckets/1234"));
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));

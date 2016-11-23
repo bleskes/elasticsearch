@@ -59,6 +59,9 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     public static final ParseField PROCESSING_TIME_MS = new ParseField("processingTimeMs");
     public static final ParseField PARTITION_SCORES = new ParseField("partitionScores");
 
+    // Used for QueryPage
+    public static final ParseField RESULTS_FIELD = new ParseField("buckets");
+
     /**
      * Elasticsearch type
      */
