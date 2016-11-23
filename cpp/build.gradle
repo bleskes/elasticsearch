@@ -1,4 +1,4 @@
-description = 'Builds the Prelert Engine native binaries and Java classes'
+description = 'Builds the Prelert Engine native binaries'
 
 import org.gradle.internal.os.OperatingSystem
 
