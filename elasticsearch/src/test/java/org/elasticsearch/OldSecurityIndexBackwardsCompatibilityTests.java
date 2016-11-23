@@ -26,6 +26,7 @@ import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.test.VersionUtils;
 import org.elasticsearch.xpack.XPackFeatureSet;
 import org.elasticsearch.xpack.action.XPackUsageRequestBuilder;
 import org.elasticsearch.xpack.action.XPackUsageResponse;
@@ -83,6 +84,9 @@ import static org.hamcrest.Matchers.hasSize;
  * </ul>
  **/
 public class OldSecurityIndexBackwardsCompatibilityTests extends AbstractOldXPackIndicesBackwardsCompatibilityTestCase {
+
+    public static final Version V_5_1_0_UNRELEASED = Version.fromId(5010099);
+
     @Override
     protected boolean shouldTestVersion(Version version) {
         return version.onOrAfter(Version.V_2_3_0); // native realm only supported from 2.3.0 on
@@ -150,7 +154,7 @@ public class OldSecurityIndexBackwardsCompatibilityTests extends AbstractOldXPac
 
         /* check that a search that misses all documents doesn't hit any alias starting with `-`. We have one in the backwards compatibility
          * indices for versions before 5.1.0 because we can't create them any more. */
-        if (version.before(Version.V_5_1_0)) {
+        if (version.before(V_5_1_0_UNRELEASED)) {
             GetAliasesResponse aliasesResponse = client().admin().indices().prepareGetAliases().get();
             List<AliasMetaData> aliases = aliasesResponse.getAliases().get("index3");
             assertThat("alias doesn't exist", aliases, hasSize(1));
@@ -203,4 +207,10 @@ public class OldSecurityIndexBackwardsCompatibilityTests extends AbstractOldXPac
         assertArrayEquals(new String[] { "test_role" }, user.roles());
         assertEquals("meta_bwc_test_user", user.principal());
     }
+
+    public static void testUnkonwnVerions() {
+        assertFalse("Version " + V_5_1_0_UNRELEASED + " has been released don't use a new instance of this version",
+                VersionUtils.allVersions().contains(V_5_1_0_UNRELEASED));
+    }
+
 }
