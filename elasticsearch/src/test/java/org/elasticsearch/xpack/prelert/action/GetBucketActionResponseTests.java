@@ -14,7 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import org.elasticsearch.xpack.prelert.action.GetBucketAction.Response;
+import org.elasticsearch.xpack.prelert.action.GetBucketsAction.Response;
 import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GetBucketActionResponseTests extends AbstractStreamableTestCase<GetBucketAction.Response> {
+public class GetBucketActionResponseTests extends AbstractStreamableTestCase<GetBucketsAction.Response> {
 
     @Override
     protected Response createTestInstance() {
@@ -141,7 +141,7 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
 
     @Override
     protected Response createBlankInstance() {
-        return new GetBucketAction.Response();
+        return new GetBucketsAction.Response();
     }
 
 }
