@@ -102,7 +102,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
         assertTrue(putJobResponse.isAcknowledged());
 
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTING, 0, now);
+        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTING, 0L, now);
         StartJobSchedulerAction.Request startSchedulerRequest = new StartJobSchedulerAction.Request("_job_id", schedulerState);
         StartJobSchedulerAction.Response startJobResponse = client().execute(StartJobSchedulerAction.INSTANCE, startSchedulerRequest)
                 .get();
@@ -132,7 +132,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
         assertTrue(putJobResponse.isAcknowledged());
 
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTING, 0, null);
+        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTING, 0L, null);
         StartJobSchedulerAction.Request startSchedulerRequest = new StartJobSchedulerAction.Request("_job_id", schedulerState);
         StartJobSchedulerAction.Response startJobResponse = client().execute(StartJobSchedulerAction.INSTANCE, startSchedulerRequest)
                 .get();
