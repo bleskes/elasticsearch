@@ -1,0 +1,73 @@
+description = 'Builds the Prelert Engine native binaries and Java classes'
+
+import org.gradle.internal.os.OperatingSystem
+
+String enabledStr = properties.get('xpack.cpp.build', 'true')
+if (['true', 'false'].contains(enabledStr) == false) {
+  throw new GradleException("xpack.cpp.build must be true or false, got ${enabledStr}")
+}
+boolean cppEnabled = enabledStr == 'true'
+
+boolean isLinux = OperatingSystem.current().isLinux()
+boolean isMacOsX = OperatingSystem.current().isMacOsX()
+boolean isWindows = OperatingSystem.current().isWindows()
+
+// Always do the C++ build using bash (Git bash on Windows)
+project.ext.bash = isWindows ? "C:\\Program Files\\Git\\bin\\bash" : "/bin/bash"
+project.ext.make = (isMacOsX || isWindows) ? "gnumake" : (isLinux ? "make" : "gmake")
+project.ext.numCpus = Runtime.runtime.availableProcessors()
+
+task clean(type: Exec) {
+    commandLine bash
+    args '-c', 'source cpp/set_env.sh && rm -rf cppdistribution && ' + make + ' clean'
+    workingDir "${rootDir}"
+}
+
+task compile(type: Exec) {
+    enabled = cppEnabled
+    commandLine bash
+    args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus + ' objcompile'
+    workingDir "${rootDir}"
+}
+
+task make(type: Exec) {
+    enabled = cppEnabled
+    commandLine bash
+    args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus
+    workingDir "${rootDir}"
+    dependsOn 'compile'
+}
+
+task strip(type: Exec) {
+    enabled = cppEnabled
+    commandLine bash
+    args '-c', 'source cpp/set_env.sh && cpp/strip_binaries.sh'
+    workingDir "${rootDir}"
+    dependsOn 'make'
+}
+
+task test(type: Exec) {
+    enabled = cppEnabled
+    commandLine bash
+    args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus + ' test'
+    workingDir "${rootDir}"
+    dependsOn 'strip'
+    description = 'Run cpp tests'
+}
+
+task check {
+    enabled = cppEnabled
+    dependsOn 'test'
+    description = 'Run all verification tasks'
+}
+
+task assemble {
+    enabled = cppEnabled
+    dependsOn 'strip'
+    description = 'Assemble the cpp part of prelert'
+}
+
+task build(dependsOn: [check, assemble]) {
+  group = 'Build'
+  description = 'Assembles and tests the cpp part of prelert'
+}
