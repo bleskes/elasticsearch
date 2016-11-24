@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The autodetect process builder.
@@ -112,9 +113,9 @@ public class AutodetectBuilder {
     /**
      * Requests that the controller daemon start an autodetect process.
      */
-    public void build() throws IOException {
+    public void build() throws IOException, TimeoutException {
 
-        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job, logger, ignoreDowntime);
+        List<String> command = ProcessCtrl.buildAutodetectCommand(env, settings, job, logger, ignoreDowntime, controller.getPid());
 
         buildLimits(command);
         buildModelDebugConfig(command);

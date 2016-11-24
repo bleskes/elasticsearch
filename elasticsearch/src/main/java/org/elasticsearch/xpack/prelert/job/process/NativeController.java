@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -62,6 +63,10 @@ public class NativeController {
             LOGGER.info("Native controller process has stopped - no new native processes can be started");
         });
         logTailThread.start();
+    }
+
+    public long getPid() throws TimeoutException {
+        return cppLogHandler.getPid(CONTROLLER_CONNECT_TIMEOUT);
     }
 
     public void startProcess(List<String> command) throws IOException {
