@@ -102,6 +102,7 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
             case RUNNING:
                 break;
             case CLOSING:
+                executor.execute(() -> closeJob(job));
                 break;
             case CLOSED:
                 break;
@@ -150,6 +151,18 @@ public class JobLifeCycleService extends AbstractComponent implements ClusterSta
         Set<String> newSet = new HashSet<>(localAllocatedJobs);
         newSet.remove(jobId);
         localAllocatedJobs = newSet;
+    }
+
+    private void closeJob(Job job) {
+        try {
+            // NORELEASE Ensure this also removes the job auto-close timeout task
+            dataProcessor.closeJob(job.getId());
+        } catch (ElasticsearchException e) {
+            logger.error("Failed to close job [" + job.getId() + "]", e);
+            updateJobStatus(job.getId(), JobStatus.FAILED);
+            return;
+        }
+        updateJobStatus(job.getId(), JobStatus.CLOSED);
     }
 
     private void pauseJob(Job job) {
