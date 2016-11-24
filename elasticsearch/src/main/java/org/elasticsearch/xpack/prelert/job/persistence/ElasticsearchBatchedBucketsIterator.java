@@ -26,11 +26,10 @@ import java.io.IOException;
 
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
 
-class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedDocumentsIterator<Bucket>
-{
-    public ElasticsearchBatchedBucketsIterator(Client client, String jobId, ParseFieldMatcher parserFieldMatcher)
-    {
-        super(client, ElasticsearchPersister.getJobIndexName(jobId), parserFieldMatcher);
+class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedDocumentsIterator<Bucket> {
+
+    public ElasticsearchBatchedBucketsIterator(Client client, String jobId, ParseFieldMatcher parserFieldMatcher) {
+        super(client, JobResultsPersister.getJobIndexName(jobId), parserFieldMatcher);
     }
 
     @Override
@@ -40,8 +39,7 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedDocumentsI
     }
 
     @Override
-    protected Bucket map(SearchHit hit)
-    {
+    protected Bucket map(SearchHit hit) {
         BytesReference source = hit.getSourceRef();
         XContentParser parser;
         try {

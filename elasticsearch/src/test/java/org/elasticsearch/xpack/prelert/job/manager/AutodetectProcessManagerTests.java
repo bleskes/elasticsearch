@@ -18,7 +18,6 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
-import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
@@ -28,7 +27,9 @@ import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
+import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectCommunicator;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcessFactory;
@@ -67,11 +68,15 @@ public class AutodetectProcessManagerTests extends ESTestCase {
 
     private JobManager jobManager;
     private JobProvider jobProvider;
+    private JobResultsPersister jobResultsPersister;
+    private JobDataCountsPersister jobDataCountsPersister;
 
     @Before
     public void initMocks() {
-        jobManager = Mockito.mock(JobManager.class);
-        jobProvider = Mockito.mock(JobProvider.class);
+        jobManager = mock(JobManager.class);
+        jobProvider = mock(JobProvider.class);
+        jobResultsPersister = mock(JobResultsPersister.class);
+        jobDataCountsPersister = mock(JobDataCountsPersister.class);
         givenAllocationWithStatus(JobStatus.CLOSED);
     }
 
@@ -193,7 +198,6 @@ public class AutodetectProcessManagerTests extends ESTestCase {
 
     public void testCreate_notEnoughThreads() throws IOException {
         Client client = mock(Client.class);
-        Environment environment = mock(Environment.class);
         ThreadPool threadPool = mock(ThreadPool.class);
         ExecutorService executorService = mock(ExecutorService.class);
         doThrow(new EsRejectedExecutionException("")).when(executorService).execute(any());
@@ -204,8 +208,8 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AutodetectResultsParser parser = mock(AutodetectResultsParser.class);
         AutodetectProcess autodetectProcess = mock(AutodetectProcess.class);
         AutodetectProcessFactory autodetectProcessFactory = (j, i, e) -> autodetectProcess;
-        AutodetectProcessManager manager = new AutodetectProcessManager(Settings.EMPTY, client, environment, threadPool,
-                jobManager, jobProvider, parser, autodetectProcessFactory);
+        AutodetectProcessManager manager = new AutodetectProcessManager(Settings.EMPTY, client, threadPool,
+                jobManager, jobProvider, jobResultsPersister, jobDataCountsPersister, parser, autodetectProcessFactory);
 
         expectThrows(EsRejectedExecutionException.class, () -> manager.create("_id", false));
         verify(autodetectProcess, times(1)).close();
@@ -219,12 +223,11 @@ public class AutodetectProcessManagerTests extends ESTestCase {
 
     private AutodetectProcessManager createManager(AutodetectCommunicator communicator) {
         Client client = mock(Client.class);
-        Environment environment = mock(Environment.class);
         ThreadPool threadPool = mock(ThreadPool.class);
         AutodetectResultsParser parser = mock(AutodetectResultsParser.class);
         AutodetectProcessFactory autodetectProcessFactory = mock(AutodetectProcessFactory.class);
-        AutodetectProcessManager manager = new AutodetectProcessManager(Settings.EMPTY, client, environment, threadPool,
-                                                    jobManager, jobProvider, parser, autodetectProcessFactory);
+        AutodetectProcessManager manager = new AutodetectProcessManager(Settings.EMPTY, client, threadPool, jobManager,
+                jobProvider, jobResultsPersister, jobDataCountsPersister, parser, autodetectProcessFactory);
         manager = spy(manager);
         doReturn(communicator).when(manager).create(any(), anyBoolean());
         return manager;

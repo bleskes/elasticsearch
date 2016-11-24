@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.normalizer.noop;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 
@@ -25,12 +24,12 @@ import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 public class NoOpRenormaliser implements Renormaliser {
     // NORELEASE Remove once the normaliser code is ported
     @Override
-    public void renormalise(Quantiles quantiles, Logger logger) {
+    public void renormalise(Quantiles quantiles) {
 
     }
 
     @Override
-    public void renormaliseWithPartition(Quantiles quantiles, Logger logger) {
+    public void renormaliseWithPartition(Quantiles quantiles) {
 
     }
 
@@ -40,7 +39,7 @@ public class NoOpRenormaliser implements Renormaliser {
     }
 
     @Override
-    public boolean shutdown(Logger logger) {
+    public boolean shutdown() {
         return true;
     }
 }

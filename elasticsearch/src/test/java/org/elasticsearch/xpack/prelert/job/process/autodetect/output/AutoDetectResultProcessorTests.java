@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.output;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
@@ -53,10 +52,9 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         Renormaliser renormaliser = mock(Renormaliser.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, parser);
-        Logger jobLogger = mock(Logger.class);
-        processor.process(jobLogger, mock(InputStream.class), randomBoolean());
-        verify(jobLogger, times(1)).info("1 buckets parsed from autodetect output - about to refresh indexes");
-        verify(renormaliser, times(1)).shutdown(jobLogger);
+        processor.process("_id", mock(InputStream.class), randomBoolean());
+        verify(renormaliser, times(1)).shutdown();
+        assertEquals(0, processor.completionLatch.getCount());
     }
 
     public void testProcessResult_bucket() {
@@ -64,8 +62,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         Bucket bucket = mock(Bucket.class);
@@ -73,7 +70,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         verify(persister, times(1)).persistBucket(bucket);
-        verify(persister, never()).deleteInterimResults();
+        verify(persister, never()).deleteInterimResults("_id");
         verify(bucket, never()).calcMaxNormalizedProbabilityPerPartition();
         verifyNoMoreInteractions(persister);
     }
@@ -83,8 +80,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, true);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", true);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         Bucket bucket = mock(Bucket.class);
@@ -92,7 +88,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         verify(persister, times(1)).persistBucket(bucket);
-        verify(persister, never()).deleteInterimResults();
+        verify(persister, never()).deleteInterimResults("_id");
         verify(bucket, times(1)).calcMaxNormalizedProbabilityPerPartition();
         verifyNoMoreInteractions(persister);
     }
@@ -102,15 +98,14 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         AutodetectResult result = mock(AutodetectResult.class);
         Bucket bucket = mock(Bucket.class);
         when(result.getBucket()).thenReturn(bucket);
         processor.processResult(context, result);
 
         verify(persister, times(1)).persistBucket(bucket);
-        verify(persister, times(1)).deleteInterimResults();
+        verify(persister, times(1)).deleteInterimResults("_id");
         verify(bucket, never()).calcMaxNormalizedProbabilityPerPartition();
         verifyNoMoreInteractions(persister);
         assertFalse(context.deleteInterimRequired);
@@ -121,8 +116,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         CategoryDefinition categoryDefinition = mock(CategoryDefinition.class);
@@ -139,8 +133,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         FlushListener flushListener = mock(FlushListener.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null, flushListener);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         FlushAcknowledgement flushAcknowledgement = mock(FlushAcknowledgement.class);
@@ -149,7 +142,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         verify(flushListener, times(1)).acknowledgeFlush("_id");
-        verify(persister, times(1)).commitWrites();
+        verify(persister, times(1)).commitWrites("_id");
         verifyNoMoreInteractions(persister);
         assertTrue(context.deleteInterimRequired);
     }
@@ -160,8 +153,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         FlushListener flushListener = mock(FlushListener.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null, flushListener);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         FlushAcknowledgement flushAcknowledgement = mock(FlushAcknowledgement.class);
@@ -174,7 +166,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         inOrder.verify(persister, times(1)).persistCategoryDefinition(categoryDefinition);
-        inOrder.verify(persister, times(1)).commitWrites();
+        inOrder.verify(persister, times(1)).commitWrites("_id");
         inOrder.verify(flushListener, times(1)).acknowledgeFlush("_id");
         verifyNoMoreInteractions(persister);
         assertTrue(context.deleteInterimRequired);
@@ -185,8 +177,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         ModelDebugOutput modelDebugOutput = mock(ModelDebugOutput.class);
@@ -202,8 +193,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         ModelSizeStats modelSizeStats = mock(ModelSizeStats.class);
@@ -220,8 +210,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         ModelSnapshot modelSnapshot = mock(ModelSnapshot.class);
@@ -237,8 +226,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, false);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", false);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         Quantiles quantiles = mock(Quantiles.class);
@@ -246,7 +234,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         verify(persister, times(1)).persistQuantiles(quantiles);
-        verify(renormaliser, times(1)).renormalise(quantiles, jobLogger);
+        verify(renormaliser, times(1)).renormalise(quantiles);
         verifyNoMoreInteractions(persister);
         verifyNoMoreInteractions(renormaliser);
     }
@@ -256,8 +244,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormaliser, persister, null);
 
-        Logger jobLogger = mock(Logger.class);
-        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(jobLogger, true);
+        AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("_id", true);
         context.deleteInterimRequired = false;
         AutodetectResult result = mock(AutodetectResult.class);
         Quantiles quantiles = mock(Quantiles.class);
@@ -265,7 +252,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         verify(persister, times(1)).persistQuantiles(quantiles);
-        verify(renormaliser, times(1)).renormaliseWithPartition(quantiles, jobLogger);
+        verify(renormaliser, times(1)).renormaliseWithPartition(quantiles);
         verifyNoMoreInteractions(persister);
         verifyNoMoreInteractions(renormaliser);
     }
