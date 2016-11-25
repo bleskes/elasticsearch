@@ -133,7 +133,8 @@ public class ClusterStateObserver {
             }
             final ClusterServiceState newState = clusterService.clusterServiceState();
             final ClusterServiceState lastState = observingContext.getObservedState();
-            final long timeoutTimeLeftNanons = timeOutValue == null ? Long.MAX_VALUE : timeOutValue.nanos() - startTimeInNanos;
+            final long timeoutTimeLeftNanons =
+                timeOutValue == null ? Long.MAX_VALUE : timeOutValue.nanos() - (System.nanoTime() - startTimeInNanos);
             if (timeoutTimeLeftNanons <= 0L) {
                 // things have timeout while we were busy -> notify
                 logger.trace("observer timed out. notifying listener. timeout setting [{}], time since start [{}]",
