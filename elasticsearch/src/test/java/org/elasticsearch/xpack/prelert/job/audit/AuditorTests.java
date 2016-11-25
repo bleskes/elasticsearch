@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.persistence;
+package org.elasticsearch.xpack.prelert.job.audit;
 
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
@@ -27,16 +27,12 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.elasticsearch.xpack.prelert.job.audit.AuditActivity;
-import org.elasticsearch.xpack.prelert.job.audit.AuditMessage;
-import org.elasticsearch.xpack.prelert.job.audit.Level;
 
-public class ElasticsearchAuditorTests extends ESTestCase {
+public class AuditorTests extends ESTestCase {
     private Client client;
     private ListenableActionFuture<IndexResponse> indexResponse;
     private ArgumentCaptor<String> indexCaptor;
@@ -51,13 +47,10 @@ public class ElasticsearchAuditorTests extends ESTestCase {
         jsonCaptor = ArgumentCaptor.forClass(XContentBuilder.class);
     }
 
-
     public void testInfo() {
         givenClientPersistsSuccessfully();
-        ElasticsearchAuditor auditor = new ElasticsearchAuditor(client, "prelert-int", "foo");
-
+        Auditor auditor = new Auditor(client, "prelert-int", "foo");
         auditor.info("Here is my info");
-
         assertEquals("prelert-int", indexCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("foo", auditMessage.getJobId());
@@ -65,13 +58,10 @@ public class ElasticsearchAuditorTests extends ESTestCase {
         assertEquals(Level.INFO, auditMessage.getLevel());
     }
 
-
     public void testWarning() {
         givenClientPersistsSuccessfully();
-        ElasticsearchAuditor auditor = new ElasticsearchAuditor(client, "someIndex", "bar");
-
+        Auditor auditor = new Auditor(client, "someIndex", "bar");
         auditor.warning("Here is my warning");
-
         assertEquals("someIndex", indexCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("bar", auditMessage.getJobId());
@@ -79,13 +69,10 @@ public class ElasticsearchAuditorTests extends ESTestCase {
         assertEquals(Level.WARNING, auditMessage.getLevel());
     }
 
-
     public void testError() {
         givenClientPersistsSuccessfully();
-        ElasticsearchAuditor auditor = new ElasticsearchAuditor(client, "someIndex", "foobar");
-
+        Auditor auditor = new Auditor(client, "someIndex", "foobar");
         auditor.error("Here is my error");
-
         assertEquals("someIndex", indexCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("foobar", auditMessage.getJobId());
@@ -93,13 +80,10 @@ public class ElasticsearchAuditorTests extends ESTestCase {
         assertEquals(Level.ERROR, auditMessage.getLevel());
     }
 
-
     public void testActivity_GivenString() {
         givenClientPersistsSuccessfully();
-        ElasticsearchAuditor auditor = new ElasticsearchAuditor(client, "someIndex", "");
-
+        Auditor auditor = new Auditor(client, "someIndex", "");
         auditor.activity("Here is my activity");
-
         assertEquals("someIndex", indexCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("", auditMessage.getJobId());
@@ -107,29 +91,16 @@ public class ElasticsearchAuditorTests extends ESTestCase {
         assertEquals(Level.ACTIVITY, auditMessage.getLevel());
     }
 
-
     public void testActivity_GivenNumbers() {
         givenClientPersistsSuccessfully();
-        ElasticsearchAuditor auditor = new ElasticsearchAuditor(client, "someIndex", "");
-
+        Auditor auditor = new Auditor(client, "someIndex", "");
         auditor.activity(10, 100, 5, 50);
-
         assertEquals("someIndex", indexCaptor.getValue());
         AuditActivity auditActivity = parseAuditActivity();
         assertEquals(10, auditActivity.getTotalJobs());
         assertEquals(100, auditActivity.getTotalDetectors());
         assertEquals(5, auditActivity.getRunningJobs());
         assertEquals(50, auditActivity.getRunningDetectors());
-    }
-
-
-    public void testError_GivenNoSuchIndex() {
-        when(client.prepareIndex("someIndex", "auditMessage"))
-        .thenThrow(new IndexNotFoundException("someIndex"));
-
-        ElasticsearchAuditor auditor = new ElasticsearchAuditor(client, "someIndex", "foobar");
-
-        auditor.error("Here is my error");
     }
 
     private void givenClientPersistsSuccessfully() {
