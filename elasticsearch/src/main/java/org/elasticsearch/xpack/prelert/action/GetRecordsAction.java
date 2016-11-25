@@ -84,8 +84,8 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
 
         static {
             PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
-            PARSER.declareString((request, start) -> request.start = start, START);
-            PARSER.declareString((request, end) -> request.end = end, END);
+            PARSER.declareStringOrNull(Request::setStart, START);
+            PARSER.declareStringOrNull(Request::setEnd, END);
             PARSER.declareString(Request::setPartitionValue, PARTITION_VALUE);
             PARSER.declareString(Request::setSort, SORT);
             PARSER.declareBoolean(Request::setDecending, DESCENDING);
@@ -117,10 +117,8 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         Request() {
         }
 
-        public Request(String jobId, String start, String end) {
+        public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
-            this.start = ExceptionsHelper.requireNonNull(start, START.getPreferredName());
-            this.end = ExceptionsHelper.requireNonNull(end, END.getPreferredName());
         }
 
         public String getJobId() {
@@ -131,8 +129,16 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
             return start;
         }
 
+        public void setStart(String start) {
+            this.start = start;
+        }
+
         public String getEnd() {
             return end;
+        }
+
+        public void setEnd(String end) {
+            this.end = end;
         }
 
         public boolean isDecending() {
@@ -201,8 +207,8 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
             jobId = in.readString();
             includeInterim = in.readBoolean();
             pageParams = new PageParams(in);
-            start = in.readString();
-            end = in.readString();
+            start = in.readOptionalString();
+            end = in.readOptionalString();
             sort = in.readOptionalString();
             decending = in.readBoolean();
             anomalyScoreFilter = in.readDouble();
@@ -216,8 +222,8 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
             out.writeString(jobId);
             out.writeBoolean(includeInterim);
             pageParams.writeTo(out);
-            out.writeString(start);
-            out.writeString(end);
+            out.writeOptionalString(start);
+            out.writeOptionalString(end);
             out.writeOptionalString(sort);
             out.writeBoolean(decending);
             out.writeDouble(anomalyScoreFilter);
@@ -229,12 +235,8 @@ public class GetRecordsAction extends Action<GetRecordsAction.Request, GetRecord
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
             builder.field(Job.ID.getPreferredName(), jobId);
-            if (start != null) {
-                builder.field(START.getPreferredName(), start);
-            }
-            if (end != null) {
-                builder.field(END.getPreferredName(), end);
-            }
+            builder.field(START.getPreferredName(), start);
+            builder.field(END.getPreferredName(), end);
             builder.field(SORT.getPreferredName(), sort);
             builder.field(DESCENDING.getPreferredName(), decending);
             builder.field(ANOMALY_SCORE_FILTER.getPreferredName(), anomalyScoreFilter);

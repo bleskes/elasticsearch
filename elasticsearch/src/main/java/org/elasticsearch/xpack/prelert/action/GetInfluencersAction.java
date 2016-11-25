@@ -45,6 +45,7 @@ import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.PageParams;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+
 import java.io.IOException;
 import java.util.Objects;
 
@@ -81,8 +82,8 @@ extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetI
 
         static {
             PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
-            PARSER.declareString((request, start) -> request.start = start, START);
-            PARSER.declareString((request, end) -> request.end = end, END);
+            PARSER.declareStringOrNull(Request::setStart, START);
+            PARSER.declareStringOrNull(Request::setEnd, END);
             PARSER.declareBoolean(Request::setIncludeInterim, INCLUDE_INTERIM);
             PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
             PARSER.declareDouble(Request::setAnomalyScore, ANOMALY_SCORE);
@@ -90,17 +91,11 @@ extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetI
             PARSER.declareBoolean(Request::setDecending, DESCENDING_SORT);
         }
 
-        public static Request parseRequest(String jobId, String start, String end, XContentParser parser,
+        public static Request parseRequest(String jobId, XContentParser parser,
                 ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
             Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
             if (jobId != null) {
                 request.jobId = jobId;
-            }
-            if (start != null) {
-                request.start = start;
-            }
-            if (end != null) {
-                request.end = end;
             }
             return request;
         }
@@ -117,10 +112,8 @@ extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetI
         Request() {
         }
 
-        public Request(String jobId, String start, String end) {
+        public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
-            this.start = ExceptionsHelper.requireNonNull(start, START.getPreferredName());
-            this.end = ExceptionsHelper.requireNonNull(end, END.getPreferredName());
         }
 
         public String getJobId() {
@@ -131,8 +124,16 @@ extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetI
             return start;
         }
 
+        public void setStart(String start) {
+            this.start = start;
+        }
+
         public String getEnd() {
             return end;
+        }
+
+        public void setEnd(String end) {
+            this.end = end;
         }
 
         public boolean isDecending() {
@@ -186,8 +187,8 @@ extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetI
             jobId = in.readString();
             includeInterim = in.readBoolean();
             pageParams = new PageParams(in);
-            start = in.readString();
-            end = in.readString();
+            start = in.readOptionalString();
+            end = in.readOptionalString();
             sort = in.readOptionalString();
             decending = in.readBoolean();
             anomalyScoreFilter = in.readDouble();
@@ -199,8 +200,8 @@ extends Action<GetInfluencersAction.Request, GetInfluencersAction.Response, GetI
             out.writeString(jobId);
             out.writeBoolean(includeInterim);
             pageParams.writeTo(out);
-            out.writeString(start);
-            out.writeString(end);
+            out.writeOptionalString(start);
+            out.writeOptionalString(end);
             out.writeOptionalString(sort);
             out.writeBoolean(decending);
             out.writeDouble(anomalyScoreFilter);
