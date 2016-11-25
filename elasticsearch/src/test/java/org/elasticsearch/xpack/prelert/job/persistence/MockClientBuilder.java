@@ -305,7 +305,6 @@ public class MockClientBuilder {
 
         when(client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
         when(builder.setSource(eq(source))).thenReturn(builder);
-        when(builder.setParent(any(String.class))).thenReturn(builder);
         when(builder.setRefreshPolicy(eq(RefreshPolicy.IMMEDIATE))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
@@ -320,7 +319,6 @@ public class MockClientBuilder {
         when(client.prepareIndex(eq(index), any(), any())).thenReturn(builder);
         when(builder.setSource(getSource.capture())).thenReturn(builder);
         when(builder.setRefreshPolicy(eq(RefreshPolicy.IMMEDIATE))).thenReturn(builder);
-        when(builder.setParent(any(String.class))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(mock(IndexResponse.class));
         return this;
@@ -336,7 +334,6 @@ public class MockClientBuilder {
         when(client.prepareIndex(eq(index), eq(type))).thenReturn(builder);
         when(client.prepareIndex(eq(index), eq(type), any(String.class))).thenReturn(builder);
         when(builder.setSource(getSource.capture())).thenReturn(builder);
-        when(builder.setParent(any(String.class))).thenReturn(builder);
         when(builder.setRefreshPolicy(eq(RefreshPolicy.IMMEDIATE))).thenReturn(builder);
         when(builder.execute()).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(response);
