@@ -45,7 +45,7 @@ public class ClusterStateObserver {
         }
 
         @Override
-        final public boolean apply(ClusterServiceState previousState, ClusterServiceState newState) {
+        public final boolean apply(ClusterServiceState previousState, ClusterServiceState newState) {
             return previousState != newState && newState.getClusterStateStatus() == ClusterStateStatus.APPLIED;
         }
 
