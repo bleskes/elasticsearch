@@ -18,6 +18,7 @@ project.ext.make = (isMacOsX || isWindows) ? "gnumake" : (isLinux ? "make" : "gm
 project.ext.numCpus = Runtime.runtime.availableProcessors()
 
 task clean(type: Exec) {
+    enabled = cppEnabled
     commandLine bash
     args '-c', 'source cpp/set_env.sh && rm -rf cppdistribution && ' + make + ' clean'
     workingDir "${rootDir}"
