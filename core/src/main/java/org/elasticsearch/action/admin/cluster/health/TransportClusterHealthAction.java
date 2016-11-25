@@ -19,6 +19,7 @@
 
 package org.elasticsearch.action.admin.cluster.health;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
@@ -36,10 +37,12 @@ import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.cluster.service.ClusterServiceState;
 import org.elasticsearch.cluster.service.ClusterStateStatus;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.gateway.GatewayAllocator;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.tasks.Task;
@@ -141,8 +144,9 @@ public class TransportClusterHealthAction extends TransportMasterNodeReadAction<
         }
 
         assert waitFor >= 0;
-        final ClusterStateObserver observer = new ClusterStateObserver(clusterService, logger, threadPool.getThreadContext());
-        final ClusterServiceState observedState = observer.observedState();
+        final StateObserverWithStatus observer =
+            new StateObserverWithStatus(clusterService, request.timeout(), logger, threadPool.getThreadContext());
+        final ClusterServiceState observedState = observer.getClusterServiceState();
         final ClusterState state = observedState.getClusterState();
         if (request.timeout().millis() == 0) {
             listener.onResponse(getResponse(request, state, waitFor, request.timeout().millis() == 0));
@@ -151,8 +155,8 @@ public class TransportClusterHealthAction extends TransportMasterNodeReadAction<
         final int concreteWaitFor = waitFor;
         final ClusterStateObserver.ChangePredicate validationPredicate = new ClusterStateObserver.ValidationPredicate() {
             @Override
-            protected boolean validate(ClusterServiceState newState) {
-                return newState.getClusterStateStatus() == ClusterStateStatus.APPLIED && validateRequest(request, newState.getClusterState(), concreteWaitFor);
+            protected boolean validate(ClusterState newState) {
+                return validateRequest(request, newState, concreteWaitFor);
             }
         };
 
@@ -177,7 +181,7 @@ public class TransportClusterHealthAction extends TransportMasterNodeReadAction<
         if (observedState.getClusterStateStatus() == ClusterStateStatus.APPLIED && validateRequest(request, state, concreteWaitFor)) {
             stateListener.onNewClusterState(state);
         } else {
-            observer.waitForNextChange(stateListener, validationPredicate, request.timeout());
+            observer.waitForNextChange(stateListener, validationPredicate);
         }
     }
 
@@ -304,5 +308,16 @@ public class TransportClusterHealthAction extends TransportMasterNodeReadAction<
 
         return new ClusterHealthResponse(clusterState.getClusterName().value(), concreteIndices, clusterState, numberOfPendingTasks,
                 numberOfInFlightFetch, UnassignedInfo.getNumberOfDelayedUnassigned(clusterState), pendingTaskTimeInQueue);
+    }
+
+    private final class StateObserverWithStatus extends ClusterStateObserver {
+
+        public StateObserverWithStatus(ClusterService clusterService, @Nullable TimeValue timeout, Logger logger, ThreadContext contextHolder) {
+            super(clusterService, timeout, logger, contextHolder);
+        }
+
+        public ClusterServiceState getClusterServiceState() {
+            return observingContext.getObservedState();
+        }
     }
 }

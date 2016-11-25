@@ -35,7 +35,6 @@ import org.elasticsearch.cluster.routing.RoutingNode;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.cluster.service.ClusterServiceState;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -360,7 +359,7 @@ public class IndicesStore extends AbstractComponent implements ClusterStateListe
                         }
                     }, new ClusterStateObserver.ValidationPredicate() {
                         @Override
-                        protected boolean validate(ClusterServiceState newState) {
+                        protected boolean validate(ClusterState newState) {
                             // the shard is not there in which case we want to send back a false (shard is not active), so the cluster state listener must be notified
                             // or the shard is active in which case we want to send back that the shard is active
                             // here we could also evaluate the cluster state and get the information from there. we

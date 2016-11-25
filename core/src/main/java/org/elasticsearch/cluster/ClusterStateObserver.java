@@ -37,12 +37,18 @@ public class ClusterStateObserver {
 
     protected final Logger logger;
 
-    public final ChangePredicate MATCH_ALL_CHANGES_PREDICATE = new EventPredicate() {
+    public final ChangePredicate MATCH_ALL_CHANGES_PREDICATE = new ChangePredicate() {
 
         @Override
         public boolean apply(ClusterChangedEvent changedEvent) {
             return changedEvent.previousState().version() != changedEvent.state().version();
         }
+
+        @Override
+        final public boolean apply(ClusterServiceState previousState, ClusterServiceState newState) {
+            return previousState != newState && newState.getClusterStateStatus() == ClusterStateStatus.APPLIED;
+        }
+
     };
 
     private final ClusterService clusterService;
@@ -51,7 +57,7 @@ public class ClusterStateObserver {
     final TimeoutClusterStateListener clusterStateListener = new ObserverClusterStateListener();
 
     // volatile for sampling without locking
-    private volatile ObservingContext observingContext;
+    protected volatile ObservingContext observingContext;
 
 
     public ClusterStateObserver(ClusterService clusterService, Logger logger, ThreadContext contextHolder) {
@@ -70,11 +76,11 @@ public class ClusterStateObserver {
         this.contextHolder = contextHolder;
     }
 
-    /** last cluster state and status observed by this observer. Note that this may not be the current one */
-    public ClusterServiceState observedState() {
+    /** last cluster state observed by this observer. Note that this may not be the current one */
+    public ClusterState observedState() {
         ObservingContext context = observingContext;
         if (context instanceof ObservedContext) {
-            return context.getObservedState();
+            return context.getObservedState().getClusterState();
         } else {
             assert context instanceof WaitingContext;
             throw new IllegalStateException("observed state is not available while waiting for a new state");
@@ -305,28 +311,18 @@ public class ClusterStateObserver {
     public abstract static class ValidationPredicate implements ChangePredicate {
 
         @Override
-        public boolean apply(ClusterServiceState previousState, ClusterServiceState newState) {
-            return (previousState.getClusterState() != newState.getClusterState() ||
-                        previousState.getClusterStateStatus() != newState.getClusterStateStatus()) &&
-                validate(newState);
+        public final boolean apply(ClusterServiceState previousState, ClusterServiceState newState) {
+            return previousState != newState && newState.getClusterStateStatus() == ClusterStateStatus.APPLIED
+                && validate(newState.getClusterState());
         }
 
-        protected abstract boolean validate(ClusterServiceState newState);
+        protected abstract boolean validate(ClusterState newState);
 
         @Override
-        public boolean apply(ClusterChangedEvent changedEvent) {
+        public final boolean apply(ClusterChangedEvent changedEvent) {
             return changedEvent.previousState().version() != changedEvent.state().version() &&
-                validate(new ClusterServiceState(changedEvent.state(), ClusterStateStatus.APPLIED));
+                validate(changedEvent.state());
         }
-    }
-
-    public abstract static class EventPredicate implements ChangePredicate {
-        @Override
-        final public boolean apply(ClusterServiceState previousState, ClusterServiceState newState) {
-            return previousState.getClusterState() != newState.getClusterState()
-                || previousState.getClusterStateStatus() != newState.getClusterStateStatus();
-        }
-
     }
 
     protected abstract static class ObservingContext {
