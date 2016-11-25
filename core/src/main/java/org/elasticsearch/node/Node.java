@@ -589,8 +589,9 @@ public class Node implements Closeable {
         // tribe nodes don't have a master so we shouldn't register an observer
         if (DiscoverySettings.INITIAL_STATE_TIMEOUT_SETTING.get(settings).millis() > 0) {
             final ThreadPool thread = injector.getInstance(ThreadPool.class);
-            ClusterStateObserver observer = new ClusterStateObserver(clusterService, null, logger, thread.getThreadContext());
-            if (observer.observedState().getClusterState().nodes().getMasterNodeId() == null) {
+            ClusterStateObserver observer = new ClusterStateObserver(clusterService,
+                DiscoverySettings.INITIAL_STATE_TIMEOUT_SETTING.get(settings), logger, thread.getThreadContext());
+            if (observer.observedState().nodes().getMasterNodeId() == null) {
                 final CountDownLatch latch = new CountDownLatch(1);
                 observer.waitForNextChange(new ClusterStateObserver.Listener() {
                     @Override
@@ -607,7 +608,7 @@ public class Node implements Closeable {
                             DiscoverySettings.INITIAL_STATE_TIMEOUT_SETTING.get(settings));
                         latch.countDown();
                     }
-                }, MasterNodeChangePredicate.INSTANCE, DiscoverySettings.INITIAL_STATE_TIMEOUT_SETTING.get(settings));
+                }, MasterNodeChangePredicate.INSTANCE);
 
                 try {
                     latch.await();
