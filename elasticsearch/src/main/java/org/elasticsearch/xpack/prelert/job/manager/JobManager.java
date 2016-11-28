@@ -19,13 +19,11 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.prelert.action.DeleteJobAction;
 import org.elasticsearch.xpack.prelert.action.PauseJobAction;
 import org.elasticsearch.xpack.prelert.action.PutJobAction;
@@ -33,6 +31,7 @@ import org.elasticsearch.xpack.prelert.action.ResumeJobAction;
 import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.prelert.action.StartJobSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.action.UpdateJobSchedulerStatusAction;
 import org.elasticsearch.xpack.prelert.action.UpdateJobStatusAction;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
@@ -365,8 +364,12 @@ public class JobManager extends AbstractComponent {
         return Optional.ofNullable(allocation.getSchedulerState());
     }
 
-    public void updateSchedulerStatus(String jobId, JobSchedulerStatus newStatus) {
-        clusterService.submitStateUpdateTask("update-scheduler-status-job-" + jobId, new ClusterStateUpdateTask() {
+    public void updateSchedulerStatus(UpdateJobSchedulerStatusAction.Request request,
+                                      ActionListener<UpdateJobSchedulerStatusAction.Response> actionListener) {
+        String jobId = request.getJobId();
+        JobSchedulerStatus newStatus = request.getSchedulerStatus();
+        clusterService.submitStateUpdateTask("update-scheduler-status-job-" + jobId,
+                new AckedClusterStateUpdateTask<UpdateJobSchedulerStatusAction.Response>(request, actionListener) {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
@@ -374,8 +377,8 @@ public class JobManager extends AbstractComponent {
             }
 
             @Override
-            public void onFailure(String source, Exception e) {
-                LOGGER.error("Error updating scheduler status: source=[" + source + "], status=[" + newStatus + "]", e);
+            protected UpdateJobSchedulerStatusAction.Response newResponse(boolean acknowledged) {
+                return new UpdateJobSchedulerStatusAction.Response(acknowledged);
             }
         });
     }
@@ -536,7 +539,7 @@ public class JobManager extends AbstractComponent {
     }
 
     public void setJobStatus(UpdateJobStatusAction.Request request, ActionListener<UpdateJobStatusAction.Response> actionListener) {
-        clusterService.submitStateUpdateTask("set-paused-status-job-" + request.getJobId(),
+        clusterService.submitStateUpdateTask("set-job-status-" + request.getStatus() + "-" + request.getJobId(),
                 new AckedClusterStateUpdateTask<UpdateJobStatusAction.Response>(request, actionListener) {
 
                     @Override

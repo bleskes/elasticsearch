@@ -91,6 +91,15 @@ public class ScheduledJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
         waitForSchedulerStartedState(jobId);
+        assertBusy(() -> {
+            try {
+                Response getJobResponse = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/" + jobId,
+                        Collections.singletonMap("metric", "status"));
+                assertThat(responseEntityToString(getJobResponse), containsString("\"status\":\"RUNNING\""));
+            } catch (Exception e1) {
+                throw new RuntimeException(e1);
+            }
+        });
 
         ResponseException e = expectThrows(ResponseException.class,
                 () -> client().performRequest("delete", PrelertPlugin.BASE_PATH + "jobs/" + jobId));
@@ -101,8 +110,18 @@ public class ScheduledJobIT extends ESRestTestCase {
         response = client().performRequest("post", PrelertPlugin.BASE_PATH + "schedulers/" + jobId + "/_stop");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
-
         waitForSchedulerStoppedState(client(), jobId);
+
+        client().performRequest("POST", "/_xpack/prelert/data/" + jobId + "/_close");
+        assertBusy(() -> {
+            try {
+                Response getJobResponse = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/" + jobId,
+                        Collections.singletonMap("metric", "status"));
+                assertThat(responseEntityToString(getJobResponse), containsString("\"status\":\"CLOSED\""));
+            } catch (Exception e1) {
+                throw new RuntimeException(e1);
+            }
+        });
 
         response = client().performRequest("delete", PrelertPlugin.BASE_PATH + "jobs/" + jobId);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));

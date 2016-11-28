@@ -99,6 +99,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
         Allocation.Builder allocation = new Allocation.Builder();
         allocation.setJobId("foo");
         allocation.setNodeId("_node_id");
+        allocation.setStatus(JobStatus.RUNNING); // from running we can go to other statuses
         allocation.setStatus(JobStatus.PAUSING);
         pmBuilder.updateAllocation("foo", allocation.build());
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
@@ -110,9 +111,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
 
         jobLifeCycleService.clusterChanged(new ClusterChangedEvent("_source", cs1, cs1));
 
-        verify(dataProcessor).closeJob("foo");
-        UpdateJobStatusAction.Request expectedRequest = new UpdateJobStatusAction.Request("foo", JobStatus.PAUSED);
-        verify(client).execute(eq(UpdateJobStatusAction.INSTANCE), eq(expectedRequest), any());
+        verify(dataProcessor).closeJob("foo", JobStatus.PAUSED);
     }
 
     public void testClusterChanged_GivenJobIsPausingAndCloseJobThrows() {
@@ -123,6 +122,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
         Allocation.Builder allocation = new Allocation.Builder();
         allocation.setJobId("foo");
         allocation.setNodeId("_node_id");
+        allocation.setStatus(JobStatus.RUNNING); // from running we can go to other statuses
         allocation.setStatus(JobStatus.PAUSING);
         pmBuilder.updateAllocation("foo", allocation.build());
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
@@ -131,11 +131,11 @@ public class JobLifeCycleServiceTests extends ESTestCase {
                         .add(new DiscoveryNode("_node_id", new LocalTransportAddress("_id"), Version.CURRENT))
                         .localNodeId("_node_id"))
                 .build();
-        doThrow(new ElasticsearchException("")).when(dataProcessor).closeJob("foo");
+        doThrow(new ElasticsearchException("")).when(dataProcessor).closeJob("foo", JobStatus.PAUSED);
 
         jobLifeCycleService.clusterChanged(new ClusterChangedEvent("_source", cs1, cs1));
 
-        verify(dataProcessor).closeJob("foo");
+        verify(dataProcessor).closeJob("foo", JobStatus.PAUSED);
         UpdateJobStatusAction.Request expectedRequest = new UpdateJobStatusAction.Request("foo", JobStatus.FAILED);
         verify(client).execute(eq(UpdateJobStatusAction.INSTANCE), eq(expectedRequest), any());
     }
