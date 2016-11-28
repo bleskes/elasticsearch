@@ -81,6 +81,7 @@ public class ScheduledJobIT extends ESRestTestCase {
         waitForSchedulerStoppedState(client(), jobId);
     }
 
+    @AwaitsFix(bugUrl = "mvg fix this")
     public void testStartJobScheduler_GivenRealtime() throws Exception {
         String jobId = "_id3";
         createAirlineDataIndex();
