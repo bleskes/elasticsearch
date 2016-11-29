@@ -26,8 +26,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
         assertEquals(InfluencersQueryBuilder.DEFAULT_SIZE, query.getSize());
         assertEquals(false, query.isIncludeInterim());
         assertEquals(0.0, query.getAnomalyScoreFilter(), 0.0001);
-        assertNull(query.getEpochStart());
-        assertNull(query.getEpochEnd());
+        assertNull(query.getStart());
+        assertNull(query.getEnd());
         assertEquals(Influencer.ANOMALY_SCORE.getPreferredName(), query.getSortField());
         assertFalse(query.isSortDescending());
     }
@@ -38,8 +38,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
                 .size(40)
                 .includeInterim(true)
                 .anomalyScoreThreshold(50.0d)
-                .epochStart("1000")
-                .epochEnd("2000")
+                .start("1000")
+                .end("2000")
                 .sortField("anomalyScore")
                 .sortDescending(true)
                 .build();
@@ -48,8 +48,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
         assertEquals(40, query.getSize());
         assertEquals(true, query.isIncludeInterim());
         assertEquals(50.0d, query.getAnomalyScoreFilter(), 0.00001);
-        assertEquals("1000", query.getEpochStart());
-        assertEquals("2000", query.getEpochEnd());
+        assertEquals("1000", query.getStart());
+        assertEquals("2000", query.getEnd());
         assertEquals("anomalyScore", query.getSortField());
         assertTrue(query.isSortDescending());
     }
@@ -60,16 +60,16 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
                 .size(40)
                 .includeInterim(true)
                 .anomalyScoreThreshold(50.0d)
-                .epochStart("1000")
-                .epochEnd("2000");
+                .start("1000")
+                .end("2000");
 
         InfluencersQueryBuilder query2 = new InfluencersQueryBuilder()
                 .from(20)
                 .size(40)
                 .includeInterim(true)
                 .anomalyScoreThreshold(50.0d)
-                .epochStart("1000")
-                .epochEnd("2000");
+                .start("1000")
+                .end("2000");
 
         assertEquals(query.build(), query2.build());
         assertEquals(query.build().hashCode(), query2.build().hashCode());
@@ -80,8 +80,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
         .size(40)
         .includeInterim(true)
         .anomalyScoreThreshold(50.0d)
-        .epochStart("1000")
-        .epochEnd("2000");
+        .start("1000")
+        .end("2000");
         assertEquals(query.build(), query2.build());
 
         query2.clear();
@@ -89,8 +89,8 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
         .size(40)
         .includeInterim(true)
         .anomalyScoreThreshold(50.1d)
-        .epochStart("1000")
-        .epochEnd("2000");
+        .start("1000")
+        .end("2000");
         assertFalse(query.build().equals(query2.build()));
     }
 }
