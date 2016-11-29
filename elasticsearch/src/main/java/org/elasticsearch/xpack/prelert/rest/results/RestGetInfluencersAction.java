@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.rest.influencers;
+package org.elasticsearch.xpack.prelert.rest.results;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.bytes.BytesReference;
