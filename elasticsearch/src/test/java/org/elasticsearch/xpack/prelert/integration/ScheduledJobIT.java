@@ -81,7 +81,6 @@ public class ScheduledJobIT extends ESRestTestCase {
         waitForSchedulerStoppedState(client(), jobId);
     }
 
-    @AwaitsFix(bugUrl = "mvg fix this")
     public void testStartJobScheduler_GivenRealtime() throws Exception {
         String jobId = "_id3";
         createAirlineDataIndex();
@@ -95,8 +94,10 @@ public class ScheduledJobIT extends ESRestTestCase {
         assertBusy(() -> {
             try {
                 Response getJobResponse = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/" + jobId,
-                        Collections.singletonMap("metric", "status"));
-                assertThat(responseEntityToString(getJobResponse), containsString("\"status\":\"RUNNING\""));
+                        Collections.singletonMap("metric", "status,data_counts"));
+                String responseAsString = responseEntityToString(getJobResponse);
+                assertThat(responseAsString, containsString("\"status\":\"RUNNING\""));
+                assertThat(responseAsString, containsString("\"input_record_count\":2"));
             } catch (Exception e1) {
                 throw new RuntimeException(e1);
             }
@@ -114,16 +115,6 @@ public class ScheduledJobIT extends ESRestTestCase {
         waitForSchedulerStoppedState(client(), jobId);
 
         client().performRequest("POST", "/_xpack/prelert/data/" + jobId + "/_close");
-        assertBusy(() -> {
-            try {
-                Response getJobResponse = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/" + jobId,
-                        Collections.singletonMap("metric", "status"));
-                assertThat(responseEntityToString(getJobResponse), containsString("\"status\":\"CLOSED\""));
-            } catch (Exception e1) {
-                throw new RuntimeException(e1);
-            }
-        });
-
         response = client().performRequest("delete", PrelertPlugin.BASE_PATH + "jobs/" + jobId);
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         assertThat(responseEntityToString(response), equalTo("{\"acknowledged\":true}"));
