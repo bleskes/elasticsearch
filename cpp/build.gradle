@@ -6,6 +6,10 @@ boolean isLinux = OperatingSystem.current().isLinux()
 boolean isMacOsX = OperatingSystem.current().isMacOsX()
 boolean isWindows = OperatingSystem.current().isWindows()
 
+String artifact_name = 'prelert_cpp' +
+    (isWindows ? "_windows-x86_64" : (isMacOsX ? "_darwin-x86_64" :
+    (isLinux ? "_linux-x86_64" : "_sunos-x86_64")))
+
 // Always do the C++ build using bash (Git bash on Windows)
 project.ext.bash = isWindows ? "C:\\Program Files\\Git\\bin\\bash" : "/bin/bash"
 project.ext.make = (isMacOsX || isWindows) ? "gnumake" : (isLinux ? "make" : "gmake")
@@ -36,7 +40,7 @@ if (enabledStr == 'auto') {
 task clean(type: Exec) {
     enabled = cppEnabled
     commandLine bash
-    args '-c', 'source cpp/set_env.sh && rm -rf cppdistribution && ' + make + ' clean'
+    args '-c', 'source cpp/set_env.sh && rm -rf cppdistribution && rm -rf cpp/build && ' + make + ' clean'
     workingDir "${rootDir}"
 }
 
@@ -63,12 +67,27 @@ task strip(type: Exec) {
     dependsOn 'make'
 }
 
+def zipSpec = copySpec {
+  from "${rootDir}/cppdistribution"
+}
+
+task buildZip(type: Zip) {
+  dependsOn strip
+  baseName = artifact_name
+  with zipSpec
+  destinationDir = file("${buildDir}/distributions")
+}
+
+artifacts {
+  buildZip
+}
+
 task test(type: Exec) {
     enabled = cppEnabled
     commandLine bash
     args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus + ' test'
     workingDir "${rootDir}"
-    dependsOn 'strip'
+    dependsOn 'buildZip'
     description = 'Run cpp tests'
 }
 
@@ -80,7 +99,7 @@ task check {
 
 task assemble {
     enabled = cppEnabled
-    dependsOn 'strip'
+    dependsOn 'buildZip'
     description = 'Assemble the cpp part of prelert'
 }
 
