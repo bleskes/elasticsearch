@@ -105,9 +105,11 @@ public class GetJobsAction extends Action<GetJobsAction.Request, GetJobsAction.R
         private boolean modelSizeStats;
         private boolean schedulerStatus;
         private boolean status;
-        private PageParams pageParams = null;
+        private PageParams pageParams;
 
         public Request() {
+            pageParams = new PageParams();
+            config = true;
         }
 
         public void setJobId(String jobId) {
