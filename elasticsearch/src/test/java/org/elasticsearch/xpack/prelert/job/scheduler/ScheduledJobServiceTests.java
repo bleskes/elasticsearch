@@ -44,7 +44,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -113,7 +112,7 @@ public class ScheduledJobServiceTests extends ESTestCase {
         when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
         InputStream in = new ByteArrayInputStream("".getBytes(Charset.forName("utf-8")));
         when(dataExtractor.next()).thenReturn(Optional.of(in));
-        when(dataProcessor.processData(anyString(), eq(in), any())).thenReturn(dataCounts);
+        when(dataProcessor.processData(anyString(), eq(in), any(), any())).thenReturn(dataCounts);
         scheduledJobService.start(builder.build(), allocation);
 
         verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());
@@ -135,7 +134,7 @@ public class ScheduledJobServiceTests extends ESTestCase {
         when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
         InputStream in = new ByteArrayInputStream("".getBytes(Charset.forName("utf-8")));
         when(dataExtractor.next()).thenReturn(Optional.of(in));
-        when(dataProcessor.processData(anyString(), eq(in), any())).thenReturn(dataCounts);
+        when(dataProcessor.processData(anyString(), eq(in), any(), any())).thenReturn(dataCounts);
         scheduledJobService.start(builder.build(), allocation);
 
         verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());

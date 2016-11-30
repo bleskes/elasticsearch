@@ -14,8 +14,10 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
+import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.JsonDataToProcessWriterTests.endLessStream;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -30,8 +32,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.tasks.TaskCancelledException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
@@ -89,6 +95,32 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         analysisConfig = new AnalysisConfig.Builder(Arrays.asList(detector)).build();
     }
 
+    public void testWrite_cancel() throws Exception {
+        InputStream inputStream = endLessStream("time,metric,value\n", "1,,foo\n");
+        CsvDataToProcessWriter writer = createWriter();
+
+        AtomicBoolean cancel = new AtomicBoolean(false);
+        AtomicReference<Exception> exception = new AtomicReference<>();
+        Thread t = new Thread(() -> {
+            try {
+                writer.write(inputStream, cancel::get);
+            } catch (Exception e) {
+                exception.set(e);
+            }
+        });
+        t.start();
+        try {
+            assertBusy(() -> verify(statusReporter, atLeastOnce()).reportRecordWritten(anyLong(), anyLong()));
+        } finally {
+            cancel.set(true);
+            t.join();
+        }
+
+        assertNotNull(exception.get());
+        assertEquals(TaskCancelledException.class, exception.get().getClass());
+        assertEquals("cancelled", exception.get().getMessage());
+    }
+
     public void testWrite_GivenTimeFormatIsEpochAndDataIsValid()
             throws IOException {
         StringBuilder input = new StringBuilder();
@@ -98,7 +130,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -130,7 +162,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -153,7 +185,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -178,7 +210,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         when(statusReporter.getLatestRecordTime()).thenReturn(new Date(5000L));
         CsvDataToProcessWriter writer = createWriter();
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -209,7 +241,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -243,7 +275,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -274,7 +306,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream("");
         CsvDataToProcessWriter writer = createWriter();
 
-        DataCounts counts = writer.write(inputStream);
+        DataCounts counts = writer.write(inputStream, () -> false);
         assertEquals(0L, counts.getInputBytes());
         assertEquals(0L, counts.getInputRecordCount());
     }
@@ -301,7 +333,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("1970-01-01,00:00:02Z,foo,6.0\n");
         InputStream inputStream = createInputStream(input.toString());
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -340,7 +372,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
-        writer.write(inputStream);
+        writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -366,7 +398,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
 
-        SuperCsvException e = ESTestCase.expectThrows(SuperCsvException.class, () -> writer.write(inputStream));
+        SuperCsvException e = ESTestCase.expectThrows(SuperCsvException.class, () -> writer.write(inputStream, () -> false));
         // Expected line numbers are 2 and 10001, but SuperCSV may print the
         // numbers using a different locale's digit characters
         assertTrue(e.getMessage(), e.getMessage().matches(
