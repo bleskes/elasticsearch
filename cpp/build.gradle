@@ -10,49 +10,25 @@ String artifact_name = 'prelert_cpp' +
     (isWindows ? "_windows-x86_64" : (isMacOsX ? "_darwin-x86_64" :
     (isLinux ? "_linux-x86_64" : "_sunos-x86_64")))
 
-// Always do the C++ build using bash (Git bash on Windows)
-project.ext.bash = isWindows ? "C:\\Program Files\\Git\\bin\\bash" : "/bin/bash"
 project.ext.make = (isMacOsX || isWindows) ? "gnumake" : (isLinux ? "make" : "gmake")
 project.ext.numCpus = Runtime.runtime.availableProcessors()
 
-// C++ build can be explicitly enabled or disabled, or if neither is chosen
-// it will be enabled if the necessary 3rd party dependencies are present
-String enabledStr = properties.get('xpack.cpp.build', 'auto')
-if (['true', 'false', 'auto'].contains(enabledStr) == false) {
-  throw new GradleException("xpack.cpp.build must be true or false, got ${enabledStr}")
-}
-boolean cppEnabled = enabledStr == 'true'
-if (enabledStr == 'auto') {
-    // Disable the C++ build if the 3rd party tools/libraries aren't available
-    String[] cmdArray = [ project.ext.bash, '-c', 'source cpp/set_env.sh && 3rd_party/3rd_party.sh --check' ]
-    Process checkProcess = Runtime.getRuntime().exec(cmdArray, null, rootDir)
-    StringBuffer checkOutput = new StringBuffer()
-    checkProcess.consumeProcessOutputStream(checkOutput)
-    if (checkProcess.waitFor() == 0) {
-        cppEnabled = true
-    } else {
-        println 'C++ dependencies not available - disabling C++ build'
-        println checkOutput
-        cppEnabled = false
-    }
-}
-
 task clean(type: Exec) {
-    enabled = cppEnabled
+    enabled = project.cppEnabled
     commandLine bash
     args '-c', 'source cpp/set_env.sh && rm -rf cppdistribution && rm -rf cpp/build && ' + make + ' clean'
     workingDir "${rootDir}"
 }
 
 task compile(type: Exec) {
-    enabled = cppEnabled
+    enabled = project.cppEnabled
     commandLine bash
     args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus + ' objcompile'
     workingDir "${rootDir}"
 }
 
 task make(type: Exec) {
-    enabled = cppEnabled
+    enabled = project.cppEnabled
     commandLine bash
     args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus
     workingDir "${rootDir}"
@@ -60,7 +36,7 @@ task make(type: Exec) {
 }
 
 task strip(type: Exec) {
-    enabled = cppEnabled
+    enabled = project.cppEnabled
     commandLine bash
     args '-c', 'source cpp/set_env.sh && cpp/strip_binaries.sh'
     workingDir "${rootDir}"
@@ -94,7 +70,7 @@ artifacts {
 }
 
 task test(type: Exec) {
-    enabled = cppEnabled
+    enabled = project.cppEnabled
     commandLine bash
     args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus + ' test'
     workingDir "${rootDir}"
@@ -103,13 +79,13 @@ task test(type: Exec) {
 }
 
 task check {
-    enabled = cppEnabled
+    enabled = project.cppEnabled
     dependsOn 'test'
     description = 'Run all verification tasks'
 }
 
 task assemble {
-    enabled = cppEnabled
+    enabled = project.cppEnabled
     dependsOn 'buildZip'
     description = 'Assemble the cpp part of prelert'
 }
