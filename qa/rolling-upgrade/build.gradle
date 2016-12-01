@@ -123,7 +123,15 @@ dependencies {
 
 // copy x-pack plugin info so it is on the classpath and security manager has the right permissions
 String outputDir = "generated-resources/${project.name}"
+task copyXPackRestSpec(type: Copy) {
+    dependsOn(project.configurations.restSpec, 'processTestResources')
+    from project(':x-plugins:elasticsearch').sourceSets.test.resources
+    include 'rest-api-spec/api/**'
+    into project.sourceSets.test.output.resourcesDir
+}
+
 task copyXPackPluginProps(type: Copy) {
+    dependsOn(copyXPackRestSpec)
     from project(':x-plugins:elasticsearch').file('src/main/plugin-metadata')
     from project(':x-plugins:elasticsearch').tasks.pluginProperties
     into outputDir
