@@ -78,8 +78,15 @@ def zipSpec = copySpec {
   }
 }
 
+
+task fakeDististribution(type: Exec) {
+    commandLine bash
+    args '-c', "mkdir -p ${rootDir}/cppdistribution/ && touch fake.distribution"
+    dependsOn 'strip'
+}
+
 task buildZip(type: Zip) {
-  dependsOn strip
+  dependsOn fakeDististribution
   baseName = artifact_name
   with zipSpec
   destinationDir = file("${buildDir}/distributions")
