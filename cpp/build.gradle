@@ -7,9 +7,9 @@ boolean isLinux = OperatingSystem.current().isLinux()
 boolean isMacOsX = OperatingSystem.current().isMacOsX()
 boolean isWindows = OperatingSystem.current().isWindows()
 
-String artifact_name = 'prelert_cpp' +
-    (isWindows ? "_windows-x86_64" : (isMacOsX ? "_darwin-x86_64" :
-    (isLinux ? "_linux-x86_64" : "_sunos-x86_64")))
+String artifact_name = 'prelert-cpp' +
+    (isWindows ? "-windows-x86_64" : (isMacOsX ? "-darwin-x86_64" :
+    (isLinux ? "-linux-x86_64" : "-sunos-x86_64")))
 
 project.ext.make = (isMacOsX || isWindows) ? "gnumake" : (isLinux ? "make" : "gmake")
 project.ext.numCpus = Runtime.runtime.availableProcessors()
@@ -60,6 +60,7 @@ task buildZip(type: Zip) {
   baseName = artifact_name
   with zipSpec
   destinationDir = file("${buildDir}/distributions")
+  version = "${elasticsearchVersion}"
 }
 
 configurations {
@@ -97,7 +98,8 @@ task build(dependsOn: [check, assemble]) {
 }
 
 task upload(type: UploadS3Task, dependsOn: [build]) {
+  enabled project.uploadEnabled
   description = 'upload cpp zip to S3 Bucket'
   bucket 'prelert-artifacts'
-  upload buildZip.outputs.files.singleFile, "maven/${project.group}/${artifact_name}/${elasticsearchVersion}/${buildZip.outputs.files.singleFile.name}"
+  upload buildZip.outputs.files.singleFile, "maven/${project.group}/prelert-cpp/${elasticsearchVersion}/${buildZip.outputs.files.singleFile.name}"
 }
