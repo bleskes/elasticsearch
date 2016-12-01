@@ -1,6 +1,7 @@
 description = 'Builds the Prelert Engine native binaries'
 
 import org.gradle.internal.os.OperatingSystem
+import org.elastic.gradle.UploadS3Task
 
 boolean isLinux = OperatingSystem.current().isLinux()
 boolean isMacOsX = OperatingSystem.current().isMacOsX()
@@ -93,4 +94,10 @@ task assemble {
 task build(dependsOn: [check, assemble]) {
   group = 'Build'
   description = 'Assembles and tests the cpp part of prelert'
+}
+
+task upload(type: UploadS3Task, dependsOn: [build]) {
+  description = 'upload cpp zip to S3 Bucket'
+  bucket 'prelert-artifacts'
+  upload buildZip.outputs.files.singleFile, "maven/${project.group}/${artifact_name}/${elasticsearchVersion}/${buildZip.outputs.files.singleFile.name}"
 }
