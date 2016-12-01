@@ -47,7 +47,7 @@ public class ESNativeMigrateToolTests extends NativeRealmIntegTestCase {
     private static boolean useSSL;
 
     @BeforeClass
-    private static void setSSL() {
+    public static void setSSL() {
         useSSL = randomBoolean();
     }
 
@@ -67,13 +67,14 @@ public class ESNativeMigrateToolTests extends NativeRealmIntegTestCase {
         return useSSL;
     }
 
-    private String homePath() throws Exception {
-        Environment e = internalCluster().getInstances(Environment.class).iterator().next();
-        return e.configFile().toAbsolutePath().toString();
+    private Environment nodeEnvironment() throws Exception {
+        return internalCluster().getInstances(Environment.class).iterator().next();
     }
 
     public void testRetrieveUsers() throws Exception {
-        String home = homePath();
+        final Environment nodeEnvironment = nodeEnvironment();
+        String home = Environment.PATH_HOME_SETTING.get(nodeEnvironment.settings());
+        String conf = Environment.PATH_CONF_SETTING.get(nodeEnvironment.settings());
         SecurityClient c = new SecurityClient(client());
         logger.error("--> creating users");
         int numToAdd = randomIntBetween(1,10);
@@ -94,11 +95,14 @@ public class ESNativeMigrateToolTests extends NativeRealmIntegTestCase {
         Settings sslSettings =
                 SecuritySettingsSource.getSSLSettingsForStore("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks",
                         "testnode");
-        Settings settings = Settings.builder().put(sslSettings).put("path.home", home).build();
+        Settings settings = Settings.builder().put(sslSettings)
+                .put("path.home", home)
+                .put("path.conf", conf)
+                .build();
         logger.error("--> retrieving users using URL: {}, home: {}", url, home);
 
         OptionParser parser = muor.getParser();
-        OptionSet options = parser.parse("-u", username, "-p", password, "-U", url, "-c", home);
+        OptionSet options = parser.parse("-u", username, "-p", password, "-U", url, "-Epath.conf=" + conf);
         logger.info("--> options: {}", options.asMap());
         Set<String> users = muor.getUsersThatExist(t, settings, new Environment(settings), options);
         logger.info("--> output: \n{}", t.getOutput());;
@@ -108,11 +112,13 @@ public class ESNativeMigrateToolTests extends NativeRealmIntegTestCase {
     }
 
     public void testRetrieveRoles() throws Exception {
-        String home = homePath();
+        final Environment nodeEnvironment = nodeEnvironment();
+        String home = Environment.PATH_HOME_SETTING.get(nodeEnvironment.settings());
+        String conf = Environment.PATH_CONF_SETTING.get(nodeEnvironment.settings());
         SecurityClient c = new SecurityClient(client());
         logger.error("--> creating roles");
         int numToAdd = randomIntBetween(1,10);
-        Set<String> addedRoles = new HashSet(numToAdd);
+        Set<String> addedRoles = new HashSet<>(numToAdd);
         for (int i = 0; i < numToAdd; i++) {
             String rname = randomAsciiOfLength(5);
             c.preparePutRole(rname)
@@ -134,11 +140,14 @@ public class ESNativeMigrateToolTests extends NativeRealmIntegTestCase {
         Settings sslSettings =
                 SecuritySettingsSource.getSSLSettingsForStore("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testclient.jks",
                         "testclient");
-        Settings settings = Settings.builder().put(sslSettings).put("path.home", home).build();
+        Settings settings = Settings.builder().put(sslSettings)
+                .put("path.home", home)
+                .put("path.conf", conf)
+                .build();
         logger.error("--> retrieving roles using URL: {}, home: {}", url, home);
 
         OptionParser parser = muor.getParser();
-        OptionSet options = parser.parse("-u", username, "-p", password, "-U", url, "-c", home);
+        OptionSet options = parser.parse("-u", username, "-p", password, "-U", url, "-Epath.conf", conf);
         Set<String> roles = muor.getRolesThatExist(t, settings, new Environment(settings), options);
         logger.info("--> output: \n{}", t.getOutput());;
         for (String r : addedRoles) {
