@@ -82,7 +82,8 @@ public abstract class AbstractLicenseServiceTestCase extends ESTestCase {
     }
 
     @After
-    public void after() {
+    public void tearDown() throws Exception {
+        super.tearDown();
         licenseService.stop();
     }
 }
