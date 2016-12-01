@@ -109,7 +109,6 @@ task check {
 }
 
 task assemble {
-    enabled = cppEnabled
     dependsOn 'buildZip'
     description = 'Assemble the cpp part of prelert'
 }
