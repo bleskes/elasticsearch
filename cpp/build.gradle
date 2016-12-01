@@ -68,7 +68,14 @@ task strip(type: Exec) {
 }
 
 def zipSpec = copySpec {
-  from "${rootDir}/cppdistribution"
+  from("${rootDir}/cppdistribution") {
+    into '.'
+    // Don't copy Windows import libraries
+    exclude "**/*.lib"
+    // Don't copy the test support library
+    exclude "**/libPreTest.*"
+    includeEmptyDirs = false
+  }
 }
 
 task buildZip(type: Zip) {
@@ -78,8 +85,12 @@ task buildZip(type: Zip) {
   destinationDir = file("${buildDir}/distributions")
 }
 
+configurations {
+  archives
+}
+
 artifacts {
-  buildZip
+  archives buildZip
 }
 
 task test(type: Exec) {
