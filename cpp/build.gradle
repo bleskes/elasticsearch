@@ -78,15 +78,8 @@ def zipSpec = copySpec {
   }
 }
 
-
-task fakeDististribution(type: Exec) {
-    commandLine bash
-    args '-c', "mkdir -p ${rootDir}/cppdistribution/ && touch fake.distribution"
-    dependsOn 'strip'
-}
-
 task buildZip(type: Zip) {
-  dependsOn fakeDististribution
+  dependsOn strip
   baseName = artifact_name
   with zipSpec
   destinationDir = file("${buildDir}/distributions")
@@ -116,6 +109,7 @@ task check {
 }
 
 task assemble {
+    enabled = cppEnabled
     dependsOn 'buildZip'
     description = 'Assemble the cpp part of prelert'
 }
