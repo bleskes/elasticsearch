@@ -28,8 +28,8 @@ import java.io.IOException;
 
 public class ScriptTransformFactory extends TransformFactory<ScriptTransform, ScriptTransform.Result, ExecutableScriptTransform> {
 
-    private final Settings settings;
     private final ScriptService scriptService;
+    private final Settings settings;
 
     public ScriptTransformFactory(Settings settings, ScriptService scriptService) {
         super(Loggers.getLogger(ExecutableScriptTransform.class, settings));
