@@ -1,17 +1,12 @@
 description = 'Builds the Prelert Engine native binaries'
 
-import org.gradle.internal.os.OperatingSystem
 import org.elastic.gradle.UploadS3Task
 
-boolean isLinux = OperatingSystem.current().isLinux()
-boolean isMacOsX = OperatingSystem.current().isMacOsX()
-boolean isWindows = OperatingSystem.current().isWindows()
-
 String artifact_name = 'prelert-cpp' +
-    (isWindows ? "-windows-x86_64" : (isMacOsX ? "-darwin-x86_64" :
-    (isLinux ? "-linux-x86_64" : "-sunos-x86_64")))
+    (project.isWindows ? "-windows-x86_64" : (project.isMacOsX ? "-darwin-x86_64" :
+    (project.isLinux ? "-linux-x86_64" : "-sunos-x86_64")))
 
-project.ext.make = (isMacOsX || isWindows) ? "gnumake" : (isLinux ? "make" : "gmake")
+project.ext.make = (project.isMacOsX || project.isWindows) ? "gnumake" : (project.isLinux ? "make" : "gmake")
 project.ext.numCpus = Runtime.runtime.availableProcessors()
 
 task clean(type: Exec) {
