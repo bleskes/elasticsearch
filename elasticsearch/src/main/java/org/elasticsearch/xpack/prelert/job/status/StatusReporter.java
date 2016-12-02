@@ -14,13 +14,14 @@
  */
 package org.elasticsearch.xpack.prelert.job.status;
 
+import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
@@ -87,7 +88,6 @@ public class StatusReporter extends AbstractComponent implements Closeable {
 
     private volatile boolean persistDataCountsOnNextRecord;
     private final ThreadPool.Cancellable persistDataCountsScheduledAction;
-    private final ThreadPool threadPool;
 
     public StatusReporter(ThreadPool threadPool, Settings settings, String jobId, DataCounts counts, UsageReporter usageReporter,
                           JobDataCountsPersister dataCountsPersister) {
@@ -106,7 +106,6 @@ public class StatusReporter extends AbstractComponent implements Closeable {
 
         reportingBoundaryFunction = this::reportEvery100Records;
 
-        this.threadPool = threadPool;
         persistDataCountsScheduledAction = threadPool.scheduleWithFixedDelay(() -> persistDataCountsOnNextRecord = true,
                 PERSIST_INTERVAL, ThreadPool.Names.GENERIC);
     }
@@ -148,7 +147,7 @@ public class StatusReporter extends AbstractComponent implements Closeable {
 
         if (persistDataCountsOnNextRecord) {
             DataCounts copy = new DataCounts(runningTotalStats());
-            threadPool.generic().submit(() ->  dataCountsPersister.persistDataCounts(jobId, copy));
+            dataCountsPersister.persistDataCounts(jobId, copy, new LoggingActionListener());
             persistDataCountsOnNextRecord = false;
         }
     }
@@ -277,7 +276,7 @@ public class StatusReporter extends AbstractComponent implements Closeable {
      */
     public void finishReporting() {
         usageReporter.reportUsage();
-        dataCountsPersister.persistDataCounts(jobId, runningTotalStats());
+        dataCountsPersister.persistDataCounts(jobId, runningTotalStats(), new LoggingActionListener());
     }
 
     /**
@@ -364,5 +363,20 @@ public class StatusReporter extends AbstractComponent implements Closeable {
     @Override
     public void close() {
         persistDataCountsScheduledAction.cancel();
+    }
+
+    /**
+     * Log success/error
+     */
+    private class LoggingActionListener implements ActionListener<Boolean> {
+        @Override
+        public void onResponse(Boolean aBoolean) {
+            logger.trace("[{}] Persisted DataCounts", jobId);
+        }
+
+        @Override
+        public void onFailure(Exception e) {
+            logger.debug(new ParameterizedMessage("[{}] Error persisting DataCounts stats", jobId), e);
+        }
     }
 }
