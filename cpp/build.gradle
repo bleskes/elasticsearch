@@ -54,7 +54,7 @@ task buildZip(type: Zip) {
   baseName = artifact_name
   with zipSpec
   destinationDir = file("${buildDir}/distributions")
-  version = "${elasticsearchVersion}"
+  version = project.version
 }
 
 configurations {
@@ -95,5 +95,5 @@ task upload(type: UploadS3Task, dependsOn: [build]) {
   enabled project.uploadEnabled
   description = 'upload cpp zip to S3 Bucket'
   bucket 'prelert-artifacts'
-  upload buildZip.outputs.files.singleFile, "maven/${project.group}/prelert-cpp/${elasticsearchVersion}/${buildZip.outputs.files.singleFile.name}"
+  upload buildZip.outputs.files.singleFile, "maven/${project.group}/prelert-cpp/${project.version}/${buildZip.outputs.files.singleFile.name}"
 }
