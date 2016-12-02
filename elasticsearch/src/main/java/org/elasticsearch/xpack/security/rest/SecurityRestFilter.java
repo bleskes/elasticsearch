@@ -22,20 +22,17 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.http.netty3.Netty3HttpRequest;
 import org.elasticsearch.http.netty4.Netty4HttpRequest;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestController;
-import org.elasticsearch.rest.RestFilter;
-import org.elasticsearch.rest.RestFilterChain;
+import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestRequest.Method;
-import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authc.pki.PkiRealm;
 import org.elasticsearch.xpack.ssl.SSLService;
@@ -48,55 +45,52 @@ import java.security.cert.X509Certificate;
 
 import static org.elasticsearch.xpack.XPackSettings.HTTP_SSL_ENABLED;
 
-/**
- *
- */
-public class SecurityRestFilter extends RestFilter {
+public class SecurityRestFilter implements RestHandler {
 
+    private static final Logger logger = ESLoggerFactory.getLogger(SecurityRestFilter.class);
+
+    private final RestHandler restHandler;
     private final AuthenticationService service;
-    private final Logger logger;
     private final XPackLicenseState licenseState;
     private final ThreadContext threadContext;
-    private final RestController restController;
     private final boolean extractClientCertificate;
 
-    @Inject
-    public SecurityRestFilter(AuthenticationService service, RestController controller, Settings settings,
-            ThreadPool threadPool, XPackLicenseState licenseState, SSLService sslService) {
+    public SecurityRestFilter(Settings settings, XPackLicenseState licenseState, SSLService sslService,
+                              ThreadContext threadContext, AuthenticationService service, RestHandler restHandler) {
+        this.restHandler = restHandler;
         this.service = service;
         this.licenseState = licenseState;
-        this.threadContext = threadPool.getThreadContext();
-        this.logger = Loggers.getLogger(getClass(), settings);
+        this.threadContext = threadContext;
         final boolean ssl = HTTP_SSL_ENABLED.get(settings);
         Settings httpSSLSettings = SSLService.getHttpTransportSSLSettings(settings);
         this.extractClientCertificate = ssl && sslService.isSSLClientAuthEnabled(httpSSLSettings);
-        controller.registerFilter(this);
-        this.restController = controller;
     }
 
     @Override
-    public int order() {
-        return Integer.MIN_VALUE;
-    }
-
-    @Override
-    public void process(RestRequest request, RestChannel channel, NodeClient client, RestFilterChain filterChain) throws Exception {
-
+    public void handleRequest(RestRequest request, RestChannel channel, NodeClient client) throws Exception {
         if (licenseState.isAuthAllowed() && request.method() != Method.OPTIONS) {
             // CORS - allow for preflight unauthenticated OPTIONS request
             if (extractClientCertificate) {
                 putClientCertificateInContext(request, threadContext, logger);
             }
-            service.authenticate(request, ActionListener.wrap((authentication) -> {
+            service.authenticate(request, ActionListener.wrap(
+                authentication -> {
                     RemoteHostHeader.process(request, threadContext);
-                    filterChain.continueProcessing(request, channel, client);
-                }, (e) -> restController.sendErrorResponse(request, channel, e)));
+                    restHandler.handleRequest(request, channel, client);
+                }, e -> {
+                    try {
+                        channel.sendResponse(new BytesRestResponse(channel, e));
+                    } catch (Exception inner) {
+                        inner.addSuppressed(e);
+                        logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to send failure response for uri [{}]", request.uri()), inner);
+                    }
+            }));
         } else {
-            filterChain.continueProcessing(request, channel, client);
+            restHandler.handleRequest(request, channel, client);
         }
     }
 
-    static void putClientCertificateInContext(RestRequest request, ThreadContext threadContext, Logger logger) throws Exception {
+    private static void putClientCertificateInContext(RestRequest request, ThreadContext threadContext, Logger logger) throws Exception {
         assert request instanceof Netty3HttpRequest || request instanceof Netty4HttpRequest;
         if (request instanceof Netty3HttpRequest) {
             Netty3HttpRequest nettyHttpRequest = (Netty3HttpRequest) request;
