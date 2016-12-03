@@ -71,9 +71,9 @@ public class ScriptTransform implements Transform {
         try {
             Script script;
             if (upgradeSource) {
-                script = Script.parse(parser, ParseFieldMatcher.STRICT, defaultLegacyScriptLanguage);
+                script = Script.parse(parser, ParseFieldMatcher.EMPTY, defaultLegacyScriptLanguage);
             } else {
-                script = Script.parse(parser, ParseFieldMatcher.STRICT);
+                script = Script.parse(parser, ParseFieldMatcher.EMPTY);
             }
             return new ScriptTransform(script);
         } catch (ElasticsearchParseException pe) {

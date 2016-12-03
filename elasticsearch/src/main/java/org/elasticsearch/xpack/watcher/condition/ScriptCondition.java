@@ -69,9 +69,9 @@ public final class ScriptCondition extends Condition {
         try {
             Script script;
             if (upgradeConditionSource) {
-                script = Script.parse(parser, ParseFieldMatcher.STRICT, defaultLegacyScriptLanguage);
+                script = Script.parse(parser, ParseFieldMatcher.EMPTY, defaultLegacyScriptLanguage);
             } else {
-                script = Script.parse(parser, ParseFieldMatcher.STRICT);
+                script = Script.parse(parser, ParseFieldMatcher.EMPTY);
             }
             return new ScriptCondition(script, scriptService);
         } catch (ElasticsearchParseException pe) {

@@ -44,6 +44,38 @@
 
   - match: { _id: "my_watch" }
 
+# this is only to ensure that indexing id and stored works in 5.x
+  - do:
+      warnings:
+        - 'Deprecated field [id] used, expected [stored] instead'
+      xpack.watcher.put_watch:
+        id: "my_watch"
+        body:  >
+          {
+            "trigger": {
+              "schedule": {
+                "interval": "1h"
+              }
+            },
+            "input": {
+              "simple": {}
+            },
+            "transform": {
+              "script": {
+                "id": "transform-script"
+              }
+            },
+            "actions": {
+              "my_log": {
+                "logging": {
+                  "text": "{{ctx}}"
+                }
+              }
+            }
+          }
+
+  - match: { _id: "my_watch" }
+
   - do:
       xpack.watcher.execute_watch:
         id: "my_watch"
@@ -98,6 +130,38 @@
             "condition": {
               "script": {
                 "stored": "condition-script"
+              }
+            },
+            "actions": {
+              "my_log": {
+                "logging": {
+                  "text": "{{ctx}}"
+                }
+              }
+            }
+          }
+
+  - match: { _id: "my_watch" }
+
+# this is only to ensure that id and store works in 5.x
+  - do:
+      warnings:
+        - 'Deprecated field [id] used, expected [stored] instead'
+      xpack.watcher.put_watch:
+        id: "my_watch"
+        body:  >
+          {
+            "trigger": {
+              "schedule": {
+                "interval": "1h"
+              }
+            },
+            "input": {
+              "simple": {}
+            },
+            "condition": {
+              "script": {
+                "id": "condition-script"
               }
             },
             "actions": {
