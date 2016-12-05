@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.integration;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.bytes.BytesArray;
-import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.test.ESIntegTestCase;
@@ -35,7 +34,6 @@ import org.junit.After;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 
 @ESIntegTestCase.ClusterScope(numDataNodes = 1)
 public class TooManyJobsIT extends ESIntegTestCase {

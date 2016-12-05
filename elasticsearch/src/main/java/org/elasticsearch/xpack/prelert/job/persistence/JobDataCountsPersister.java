@@ -14,9 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.persistence;
 
-import java.io.IOException;
-import java.util.Locale;
-
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
@@ -26,8 +23,9 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
+
+import java.io.IOException;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister.getJobIndexName;
@@ -61,7 +59,7 @@ public class JobDataCountsPersister extends AbstractComponent {
         try {
             XContentBuilder content = serialiseCounts(counts);
             client.prepareIndex(getJobIndexName(jobId), DataCounts.TYPE.getPreferredName(), jobId + DataCounts.DOCUMENT_SUFFIX)
-                    .setSource(content).execute(new ActionListener<IndexResponse>() {
+            .setSource(content).execute(new ActionListener<IndexResponse>() {
                 @Override
                 public void onResponse(IndexResponse indexResponse) {
                     listener.onResponse(true);

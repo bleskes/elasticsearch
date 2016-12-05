@@ -39,7 +39,7 @@ class DummyStatusReporter extends StatusReporter {
      * and Mockito.spy() doesn't work due to the lambdas used in {@link StatusReporter}.
      * Override the method here an count the calls
      */
-     @Override
+    @Override
     protected void logStatus(long totalRecords) {
         super.logStatus(totalRecords);
         ++logStatusCallCount;
@@ -51,5 +51,10 @@ class DummyStatusReporter extends StatusReporter {
      */
     public int getLogStatusCallCount() {
         return logStatusCallCount;
+    }
+
+    @Override
+    public void close() {
+        // Do nothing
     }
 }

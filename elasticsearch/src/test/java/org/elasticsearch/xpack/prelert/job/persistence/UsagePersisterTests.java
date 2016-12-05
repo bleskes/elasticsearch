@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
@@ -43,7 +42,6 @@ public class UsagePersisterTests extends ESTestCase {
     @SuppressWarnings("rawtypes")
     public void testPersistUsageCounts() throws ParseException {
         Client client = mock(Client.class);
-        Logger logger = mock(Logger.class);
         final UpdateRequestBuilder updateRequestBuilder = createSelfReturningUpdateRequester();
 
         when(client.prepareUpdate(anyString(), anyString(), anyString())).thenReturn(
