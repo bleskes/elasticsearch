@@ -41,7 +41,7 @@ public class JobAllocator extends AbstractComponent implements ClusterStateListe
         clusterService.add(this);
     }
 
-    ClusterState allocateJobs(ClusterState current) {
+    ClusterState assignJobsToNodes(ClusterState current) {
         if (shouldAllocate(current) == false) {
             // returning same instance, so no cluster state update is performed
             return current;
@@ -57,16 +57,8 @@ public class JobAllocator extends AbstractComponent implements ClusterStateListe
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder(prelertMetadata);
         DiscoveryNode prelertNode = nodes.getMasterNode(); // prelert is now always master node
 
-        for (String jobId : prelertMetadata.getJobs().keySet()) {
-            if (prelertMetadata.getAllocations().containsKey(jobId) == false) {
-                boolean addSchedulderState = prelertMetadata.getJobs().get(jobId).getSchedulerConfig() != null;
-                if (addSchedulderState) {
-                    builder.putAllocationWithScheduler(prelertNode.getId(), jobId);
-                }
-                else {
-                    builder.putAllocation(prelertNode.getId(), jobId);
-                }
-            }
+        for (String jobId : prelertMetadata.getAllocations().keySet()) {
+            builder.assignToNode(jobId, prelertNode.getId());
         }
 
         return ClusterState.builder(current)
@@ -80,8 +72,8 @@ public class JobAllocator extends AbstractComponent implements ClusterStateListe
             return false;
         }
 
-        for (String jobId : prelertMetadata.getJobs().keySet()) {
-            if (prelertMetadata.getAllocations().containsKey(jobId) == false) {
+        for (Allocation allocation : prelertMetadata.getAllocations().values()) {
+            if (allocation.getNodeId() == null) {
                 return true;
             }
         }
@@ -96,7 +88,7 @@ public class JobAllocator extends AbstractComponent implements ClusterStateListe
                     clusterService.submitStateUpdateTask("allocate_jobs", new ClusterStateUpdateTask() {
                         @Override
                         public ClusterState execute(ClusterState currentState) throws Exception {
-                            return allocateJobs(currentState);
+                            return assignJobsToNodes(currentState);
                         }
 
                         @Override

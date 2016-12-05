@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -35,6 +36,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.Job;
@@ -47,13 +49,12 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.IOException;
 import java.util.Objects;
 
-public class PostDataCloseAction extends Action<PostDataCloseAction.Request, PostDataCloseAction.Response,
-        PostDataCloseAction.RequestBuilder> {
+public class OpenJobAction extends Action<OpenJobAction.Request, OpenJobAction.Response, OpenJobAction.RequestBuilder> {
 
-    public static final PostDataCloseAction INSTANCE = new PostDataCloseAction();
-    public static final String NAME = "cluster:admin/prelert/data/post/close";
+    public static final OpenJobAction INSTANCE = new OpenJobAction();
+    public static final String NAME = "cluster:admin/prelert/job/open";
 
-    private PostDataCloseAction() {
+    private OpenJobAction() {
         super(NAME);
     }
 
@@ -70,15 +71,37 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
     public static class Request extends AcknowledgedRequest<Request> {
 
         private String jobId;
-
-        Request() {}
+        private boolean ignoreDowntime;
+        private TimeValue openTimeout = TimeValue.timeValueMinutes(30);
 
         public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
+       Request() {}
+
         public String getJobId() {
             return jobId;
+        }
+
+        public void setJobId(String jobId) {
+            this.jobId = jobId;
+        }
+
+        public boolean isIgnoreDowntime() {
+            return ignoreDowntime;
+        }
+
+        public void setIgnoreDowntime(boolean ignoreDowntime) {
+            this.ignoreDowntime = ignoreDowntime;
+        }
+
+        public TimeValue getOpenTimeout() {
+            return openTimeout;
+        }
+
+        public void setOpenTimeout(TimeValue openTimeout) {
+            this.openTimeout = openTimeout;
         }
 
         @Override
@@ -90,17 +113,21 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
             jobId = in.readString();
+            ignoreDowntime = in.readBoolean();
+            openTimeout = new TimeValue(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
+            out.writeBoolean(ignoreDowntime);
+            openTimeout.writeTo(out);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId);
+            return Objects.hash(jobId, ignoreDowntime, openTimeout);
         }
 
         @Override
@@ -111,26 +138,27 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
             if (obj == null || obj.getClass() != getClass()) {
                 return false;
             }
-            Request other = (Request) obj;
-            return Objects.equals(jobId, other.jobId);
+            OpenJobAction.Request other = (OpenJobAction.Request) obj;
+            return Objects.equals(jobId, other.jobId) &&
+                    Objects.equals(ignoreDowntime, other.ignoreDowntime) &&
+                    Objects.equals(openTimeout, other.openTimeout);
         }
     }
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, PostDataCloseAction action) {
+        public RequestBuilder(ElasticsearchClient client, OpenJobAction action) {
             super(client, action, new Request());
         }
     }
 
     public static class Response extends AcknowledgedResponse {
 
-        private Response() {
-        }
-
-        private Response(boolean acknowledged) {
+        public Response(boolean acknowledged) {
             super(acknowledged);
         }
+
+        private Response() {}
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
@@ -151,9 +179,9 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                               ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               JobManager jobManager) {
-            super(settings, PostDataCloseAction.NAME, transportService, clusterService, threadPool, actionFilters,
+                ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                JobManager jobManager) {
+            super(settings, OpenJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;
         }
@@ -170,12 +198,11 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            UpdateJobStatusAction.Request updateStatusRequest = new UpdateJobStatusAction.Request(request.getJobId(), JobStatus.CLOSING);
-            ActionListener<UpdateJobStatusAction.Response> delegateListener = new ActionListener<UpdateJobStatusAction.Response>() {
+            ActionListener<Response> delegateListener = new ActionListener<Response>() {
 
                 @Override
-                public void onResponse(UpdateJobStatusAction.Response response) {
-                    respondWhenJobIsClosed(request.getJobId(), listener);
+                public void onResponse(Response response) {
+                    respondWhenJobIsOpened(request, listener);
                 }
 
                 @Override
@@ -183,37 +210,55 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
                     listener.onFailure(e);
                 }
             };
-
-            jobManager.setJobStatus(updateStatusRequest, delegateListener);
+            jobManager.openJob(request, delegateListener);
         }
 
-        private void respondWhenJobIsClosed(String jobId, ActionListener<Response> listener) {
+        @Override
+        protected ClusterBlockException checkBlock(Request request, ClusterState state) {
+            return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA_WRITE);
+        }
+
+        private void respondWhenJobIsOpened(Request request, ActionListener<Response> listener) {
             ClusterStateObserver observer = new ClusterStateObserver(clusterService, logger, threadPool.getThreadContext());
             observer.waitForNextChange(new ClusterStateObserver.Listener() {
                 @Override
                 public void onNewClusterState(ClusterState state) {
-                    listener.onResponse(new Response(true));
+                    String jobId = request.getJobId();
+                    PrelertMetadata metadata = state.getMetaData().custom(PrelertMetadata.TYPE);
+                    if (metadata != null) {
+                        Allocation allocation = metadata.getAllocations().get(jobId);
+                        if (allocation != null) {
+                            if (allocation.getStatus() == JobStatus.OPENED) {
+                                listener.onResponse(new Response(true));
+                            } else {
+                                String message = "[" +  jobId + "] expected job status [" + JobStatus.OPENED + "], but got [" +
+                                        allocation.getStatus() + "], reason [" + allocation.getStatusReason() + "]";
+                                listener.onFailure(new ElasticsearchStatusException(message, RestStatus.CONFLICT));
+                            }
+                        }
+                    }
+                    listener.onFailure(new IllegalStateException("no allocation for job [" + jobId + "]"));
                 }
 
                 @Override
                 public void onClusterServiceClose() {
-                    listener.onFailure(new IllegalStateException("Cluster service closed while waiting for job [" + jobId
-                            + "] status to change to [" + JobStatus.CLOSED + "]"));
+                    listener.onFailure(new IllegalStateException("Cluster service closed while waiting for job [" + request
+                            + "] status to change to [" + JobStatus.OPENED + "]"));
                 }
 
                 @Override
                 public void onTimeout(TimeValue timeout) {
                     listener.onFailure(new IllegalStateException(
-                            "Timeout expired while waiting for job [" + jobId + "] status to change to [" + JobStatus.CLOSED + "]"));
+                            "Timeout expired while waiting for job [" + request + "] status to change to [" + JobStatus.OPENED + "]"));
                 }
-            }, new JobClosedChangePredicate(jobId), TimeValue.timeValueMinutes(30));
+            }, new JobOpenedChangePredicate(request.getJobId()), request.openTimeout);
         }
 
-        private class JobClosedChangePredicate implements ClusterStateObserver.ChangePredicate {
+        private class JobOpenedChangePredicate implements ClusterStateObserver.ChangePredicate {
 
             private final String jobId;
 
-            JobClosedChangePredicate(String jobId) {
+            JobOpenedChangePredicate(String jobId) {
                 this.jobId = jobId;
             }
 
@@ -232,16 +277,12 @@ public class PostDataCloseAction extends Action<PostDataCloseAction.Request, Pos
                 PrelertMetadata metadata = newState.getMetaData().custom(PrelertMetadata.TYPE);
                 if (metadata != null) {
                     Allocation allocation = metadata.getAllocations().get(jobId);
-                    return allocation != null && allocation.getStatus() == JobStatus.CLOSED;
+                    if (allocation != null) {
+                        return allocation.getStatus().isAnyOf(JobStatus.OPENED, JobStatus.FAILED);
+                    }
                 }
                 return false;
             }
         }
-        @Override
-        protected ClusterBlockException checkBlock(Request request, ClusterState state) {
-            return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA_WRITE);
-        }
-
     }
 }
-

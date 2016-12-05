@@ -67,6 +67,7 @@ public class UpdateJobStatusAction
 
         private String jobId;
         private JobStatus status;
+        private String reason;
 
         public Request(String jobId, JobStatus status) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
@@ -91,6 +92,14 @@ public class UpdateJobStatusAction
             this.status = status;
         }
 
+        public String getReason() {
+            return reason;
+        }
+
+        public void setReason(String reason) {
+            this.reason = reason;
+        }
+
         @Override
         public ActionRequestValidationException validate() {
             return null;
@@ -101,6 +110,7 @@ public class UpdateJobStatusAction
             super.readFrom(in);
             jobId = in.readString();
             status = JobStatus.fromStream(in);
+            reason = in.readOptionalString();
         }
 
         @Override
@@ -108,6 +118,7 @@ public class UpdateJobStatusAction
             super.writeTo(out);
             out.writeString(jobId);
             status.writeTo(out);
+            out.writeOptionalString(reason);
         }
 
         @Override

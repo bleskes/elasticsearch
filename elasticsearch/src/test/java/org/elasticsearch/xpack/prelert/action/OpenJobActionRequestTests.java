@@ -14,10 +14,10 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import org.elasticsearch.xpack.prelert.action.ResumeJobAction.Request;
+import org.elasticsearch.xpack.prelert.action.OpenJobAction.Request;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 
-public class ResumeJobRequestTests extends AbstractStreamableTestCase<Request> {
+public class OpenJobActionRequestTests extends AbstractStreamableTestCase<Request> {
 
     @Override
     protected Request createTestInstance() {

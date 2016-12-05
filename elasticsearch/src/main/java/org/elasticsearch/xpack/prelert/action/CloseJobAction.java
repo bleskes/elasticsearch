@@ -23,7 +23,9 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
 import org.elasticsearch.client.ElasticsearchClient;
+import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
@@ -32,21 +34,25 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
+import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
+import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.Objects;
 
-public class ResumeJobAction extends Action<ResumeJobAction.Request, ResumeJobAction.Response, ResumeJobAction.RequestBuilder> {
+public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobAction.Response, CloseJobAction.RequestBuilder> {
 
-    public static final ResumeJobAction INSTANCE = new ResumeJobAction();
-    public static final String NAME = "cluster:admin/prelert/job/resume";
+    public static final CloseJobAction INSTANCE = new CloseJobAction();
+    public static final String NAME = "cluster:admin/prelert/job/close";
 
-    private ResumeJobAction() {
+    private CloseJobAction() {
         super(NAME);
     }
 
@@ -63,19 +69,24 @@ public class ResumeJobAction extends Action<ResumeJobAction.Request, ResumeJobAc
     public static class Request extends AcknowledgedRequest<Request> {
 
         private String jobId;
+        private TimeValue closeTimeout = TimeValue.timeValueMinutes(30);
+
+        Request() {}
 
         public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
-       Request() {}
-
         public String getJobId() {
             return jobId;
         }
 
-        public void setJobId(String jobId) {
-            this.jobId = jobId;
+        public TimeValue getCloseTimeout() {
+            return closeTimeout;
+        }
+
+        public void setCloseTimeout(TimeValue closeTimeout) {
+            this.closeTimeout = closeTimeout;
         }
 
         @Override
@@ -87,17 +98,19 @@ public class ResumeJobAction extends Action<ResumeJobAction.Request, ResumeJobAc
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
             jobId = in.readString();
+            closeTimeout = new TimeValue(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
+            closeTimeout.writeTo(out);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId);
+            return Objects.hash(jobId, closeTimeout);
         }
 
         @Override
@@ -108,25 +121,27 @@ public class ResumeJobAction extends Action<ResumeJobAction.Request, ResumeJobAc
             if (obj == null || obj.getClass() != getClass()) {
                 return false;
             }
-            ResumeJobAction.Request other = (ResumeJobAction.Request) obj;
-            return Objects.equals(jobId, other.jobId);
+            Request other = (Request) obj;
+            return Objects.equals(jobId, other.jobId) &&
+                    Objects.equals(closeTimeout, other.closeTimeout);
         }
     }
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, ResumeJobAction action) {
+        public RequestBuilder(ElasticsearchClient client, CloseJobAction action) {
             super(client, action, new Request());
         }
     }
 
     public static class Response extends AcknowledgedResponse {
 
-        public Response(boolean acknowledged) {
-            super(acknowledged);
+        private Response() {
         }
 
-        private Response() {}
+        private Response(boolean acknowledged) {
+            super(acknowledged);
+        }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
@@ -147,9 +162,9 @@ public class ResumeJobAction extends Action<ResumeJobAction.Request, ResumeJobAc
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                JobManager jobManager) {
-            super(settings, ResumeJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
+                               ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                               JobManager jobManager) {
+            super(settings, CloseJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;
         }
@@ -166,13 +181,78 @@ public class ResumeJobAction extends Action<ResumeJobAction.Request, ResumeJobAc
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            logger.info("Resuming job " + request.getJobId());
-            jobManager.resumeJob(request, listener);
+            UpdateJobStatusAction.Request updateStatusRequest = new UpdateJobStatusAction.Request(request.getJobId(), JobStatus.CLOSING);
+            ActionListener<UpdateJobStatusAction.Response> delegateListener = new ActionListener<UpdateJobStatusAction.Response>() {
+
+                @Override
+                public void onResponse(UpdateJobStatusAction.Response response) {
+                    respondWhenJobIsClosed(request.getJobId(), listener);
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    listener.onFailure(e);
+                }
+            };
+
+            jobManager.setJobStatus(updateStatusRequest, delegateListener);
         }
 
+        private void respondWhenJobIsClosed(String jobId, ActionListener<Response> listener) {
+            ClusterStateObserver observer = new ClusterStateObserver(clusterService, logger, threadPool.getThreadContext());
+            observer.waitForNextChange(new ClusterStateObserver.Listener() {
+                @Override
+                public void onNewClusterState(ClusterState state) {
+                    listener.onResponse(new Response(true));
+                }
+
+                @Override
+                public void onClusterServiceClose() {
+                    listener.onFailure(new IllegalStateException("Cluster service closed while waiting for job [" + jobId
+                            + "] status to change to [" + JobStatus.CLOSED + "]"));
+                }
+
+                @Override
+                public void onTimeout(TimeValue timeout) {
+                    listener.onFailure(new IllegalStateException(
+                            "Timeout expired while waiting for job [" + jobId + "] status to change to [" + JobStatus.CLOSED + "]"));
+                }
+            }, new JobClosedChangePredicate(jobId), TimeValue.timeValueMinutes(30));
+        }
+
+        private class JobClosedChangePredicate implements ClusterStateObserver.ChangePredicate {
+
+            private final String jobId;
+
+            JobClosedChangePredicate(String jobId) {
+                this.jobId = jobId;
+            }
+
+            @Override
+            public boolean apply(ClusterState previousState, ClusterState.ClusterStateStatus previousStatus, ClusterState newState,
+                                 ClusterState.ClusterStateStatus newStatus) {
+                return apply(newState);
+            }
+
+            @Override
+            public boolean apply(ClusterChangedEvent changedEvent) {
+                return apply(changedEvent.state());
+            }
+
+            boolean apply(ClusterState newState) {
+                PrelertMetadata metadata = newState.getMetaData().custom(PrelertMetadata.TYPE);
+                if (metadata != null) {
+                    Allocation allocation = metadata.getAllocations().get(jobId);
+                    return allocation != null && allocation.getStatus() == JobStatus.CLOSED;
+                }
+                return false;
+            }
+        }
         @Override
         protected ClusterBlockException checkBlock(Request request, ClusterState state) {
             return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA_WRITE);
         }
+
     }
 }
+
