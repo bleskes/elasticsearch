@@ -67,7 +67,7 @@ public class ExecutableJiraAction extends ExecutableAction<JiraAction> {
         }
 
         JiraIssue result = account.createIssue(fields, action.proxy);
-        return JiraAction.executedResult(result);
+        return new JiraAction.Executed(result);
     }
 
     /**
