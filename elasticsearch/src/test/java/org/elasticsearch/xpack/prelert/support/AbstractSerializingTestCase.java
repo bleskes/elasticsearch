@@ -93,8 +93,4 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
         return Collections.emptyMap();
     }
 
-    protected boolean skipJacksonTest() {
-        return false;
-    }
-
 }
