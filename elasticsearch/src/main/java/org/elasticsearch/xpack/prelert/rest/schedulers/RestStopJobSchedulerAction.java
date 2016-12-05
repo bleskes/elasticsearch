@@ -24,12 +24,11 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
+import org.elasticsearch.xpack.prelert.job.Job;
 
 import java.io.IOException;
 
 public class RestStopJobSchedulerAction extends BaseRestHandler {
-
-    private static final ParseField JOB_ID = new ParseField("jobId");
 
     private final StopJobSchedulerAction.TransportAction transportJobSchedulerAction;
 
@@ -38,13 +37,14 @@ public class RestStopJobSchedulerAction extends BaseRestHandler {
             StopJobSchedulerAction.TransportAction transportJobSchedulerAction) {
         super(settings);
         this.transportJobSchedulerAction = transportJobSchedulerAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "schedulers/{jobId}/_stop", this);
+        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "schedulers/{"
+                + Job.ID.getPreferredName() + "}/_stop", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         StopJobSchedulerAction.Request jobSchedulerRequest = new StopJobSchedulerAction.Request(
-                restRequest.param(JOB_ID.getPreferredName()));
+                restRequest.param(Job.ID.getPreferredName()));
         return channel -> transportJobSchedulerAction.execute(jobSchedulerRequest, new AcknowledgedRestListener<>(channel));
     }
 }

@@ -65,7 +65,7 @@ public class CppLogMessage extends ToXContentToBytes implements Writeable {
     /**
      * Elasticsearch type
      */
-    public static final ParseField TYPE = new ParseField("cppLogMessage");
+    public static final ParseField TYPE = new ParseField("cpp_log_message");
 
     private String logger = "";
     private Date timestamp;

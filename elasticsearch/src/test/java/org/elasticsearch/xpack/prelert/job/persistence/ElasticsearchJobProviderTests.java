@@ -100,7 +100,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
     public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
-        source.put(Quantiles.JOB_ID.getPreferredName(), "foo");
+        source.put(Job.ID.getPreferredName(), "foo");
         source.put(Quantiles.TIMESTAMP.getPreferredName(), 0L);
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "state");
         GetResponse getResponse = createGetResponse(true, source);
@@ -119,7 +119,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
     public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
-        source.put(Quantiles.JOB_ID.getPreferredName(), "foo");
+        source.put(Job.ID.getPreferredName(), "foo");
         source.put(Quantiles.TIMESTAMP.getPreferredName(), new Date(0L).getTime());
         source.put(Quantiles.QUANTILE_STATE.getPreferredName(), "");
         GetResponse getResponse = createGetResponse(true, source);
@@ -220,9 +220,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("jobId", "foo");
+        map.put("job_id", "foo");
         map.put("timestamp", now.getTime());
-        map.put("bucketSpan", 22);
+        map.put("bucket_span", 22);
         source.add(map);
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
@@ -244,7 +244,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
         assertTrue(
-                queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
+                queryString.matches("(?s).*max_normalized_probability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*is_interim.*value. : .true" +
+                        ".*"));
     }
 
     public void testBuckets_OneBucketInterim()
@@ -254,9 +255,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("jobId", "foo");
+        map.put("job_id", "foo");
         map.put("timestamp", now.getTime());
-        map.put("bucketSpan", 22);
+        map.put("bucket_span", 22);
         source.add(map);
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
@@ -277,9 +278,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
-        assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
-        assertTrue(queryString.matches("(?s).*anomalyScore[^}]*from. : 5\\.1.*"));
-        assertFalse(queryString.matches("(?s).*isInterim.*"));
+        assertTrue(queryString.matches("(?s).*max_normalized_probability[^}]*from. : 10\\.9.*"));
+        assertTrue(queryString.matches("(?s).*anomaly_score[^}]*from. : 5\\.1.*"));
+        assertFalse(queryString.matches("(?s).*is_interim.*"));
     }
 
     public void testBuckets_UsingBuilder()
@@ -289,9 +290,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("jobId", "foo");
+        map.put("job_id", "foo");
         map.put("timestamp", now.getTime());
-        map.put("bucketSpan", 22);
+        map.put("bucket_span", 22);
         source.add(map);
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
@@ -316,9 +317,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilder.getValue();
         String queryString = query.toString();
-        assertTrue(queryString.matches("(?s).*maxNormalizedProbability[^}]*from. : 10\\.9.*"));
-        assertTrue(queryString.matches("(?s).*anomalyScore[^}]*from. : 5\\.1.*"));
-        assertFalse(queryString.matches("(?s).*isInterim.*"));
+        assertTrue(queryString.matches("(?s).*max_normalized_probability[^}]*from. : 10\\.9.*"));
+        assertTrue(queryString.matches("(?s).*anomaly_score[^}]*from. : 5\\.1.*"));
+        assertFalse(queryString.matches("(?s).*is_interim.*"));
     }
 
     public void testBucket_NoBucketNoExpandNoInterim()
@@ -344,7 +345,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(timestamp));
 
         ResourceNotFoundException e = expectThrows(ResourceNotFoundException.class,
-                () ->provider.bucket(jobId, bq.build()));
+                () -> provider.bucket(jobId, bq.build()));
     }
 
     public void testBucket_OneBucketNoExpandNoInterim()
@@ -354,9 +355,9 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("jobId", "foo");
+        map.put("job_id", "foo");
         map.put("timestamp", now.getTime());
-        map.put("bucketSpan", 22);
+        map.put("bucket_span", 22);
         source.add(map);
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
@@ -383,10 +384,10 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("jobId", "foo");
+        map.put("job_id", "foo");
         map.put("timestamp", now.getTime());
-        map.put("bucketSpan", 22);
-        map.put("isInterim", true);
+        map.put("bucket_span", 22);
+        map.put("is_interim", true);
         source.add(map);
 
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
@@ -401,7 +402,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
 
         ResourceNotFoundException e = expectThrows(ResourceNotFoundException.class,
-                () ->provider.bucket(jobId, bq.build()));
+                () -> provider.bucket(jobId, bq.build()));
     }
 
     public void testRecords() throws InterruptedException, ExecutionException, IOException {
@@ -410,19 +411,19 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
-        recordMap1.put("jobId", "foo");
+        recordMap1.put("job_id", "foo");
         recordMap1.put("typical", 22.4);
         recordMap1.put("actual", 33.3);
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
-        recordMap1.put("bucketSpan", 22);
+        recordMap1.put("bucket_span", 22);
         Map<String, Object> recordMap2 = new HashMap<>();
-        recordMap2.put("jobId", "foo");
+        recordMap2.put("job_id", "foo");
         recordMap2.put("typical", 1122.4);
         recordMap2.put("actual", 933.3);
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
-        recordMap2.put("bucketSpan", 22);
+        recordMap2.put("bucket_span", 22);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -460,19 +461,19 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
-        recordMap1.put("jobId", "foo");
+        recordMap1.put("job_id", "foo");
         recordMap1.put("typical", 22.4);
         recordMap1.put("actual", 33.3);
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
-        recordMap1.put("bucketSpan", 22);
+        recordMap1.put("bucket_span", 22);
         Map<String, Object> recordMap2 = new HashMap<>();
-        recordMap2.put("jobId", "foo");
+        recordMap2.put("job_id", "foo");
         recordMap2.put("typical", 1122.4);
         recordMap2.put("actual", 933.3);
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
-        recordMap2.put("bucketSpan", 22);
+        recordMap2.put("bucket_span", 22);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -517,19 +518,19 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         List<Map<String, Object>> source = new ArrayList<>();
         Map<String, Object> recordMap1 = new HashMap<>();
-        recordMap1.put("jobId", "foo");
+        recordMap1.put("job_id", "foo");
         recordMap1.put("typical", 22.4);
         recordMap1.put("actual", 33.3);
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
-        recordMap1.put("bucketSpan", 22);
+        recordMap1.put("bucket_span", 22);
         Map<String, Object> recordMap2 = new HashMap<>();
-        recordMap2.put("jobId", "foo");
+        recordMap2.put("job_id", "foo");
         recordMap2.put("typical", 1122.4);
         recordMap2.put("actual", 933.3);
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
-        recordMap2.put("bucketSpan", 22);
+        recordMap2.put("bucket_span", 22);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -565,12 +566,12 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
         for (int i = 0; i < 400; i++) {
             Map<String, Object> recordMap = new HashMap<>();
-            recordMap.put("jobId", "foo");
+            recordMap.put("job_id", "foo");
             recordMap.put("typical", 22.4 + i);
             recordMap.put("actual", 33.3 + i);
             recordMap.put("timestamp", now.getTime());
             recordMap.put("function", "irritable");
-            recordMap.put("bucketSpan", 22);
+            recordMap.put("bucket_span", 22);
             source.add(recordMap);
         }
 
@@ -596,12 +597,12 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
         for (int i = 0; i < 600; i++) {
             Map<String, Object> recordMap = new HashMap<>();
-            recordMap.put("jobId", "foo");
+            recordMap.put("job_id", "foo");
             recordMap.put("typical", 22.4 + i);
             recordMap.put("actual", 33.3 + i);
             recordMap.put("timestamp", now.getTime());
             recordMap.put("function", "irritable");
-            recordMap.put("bucketSpan", 22);
+            recordMap.put("bucket_span", 22);
             source.add(recordMap);
         }
 
@@ -628,8 +629,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> map = new HashMap<>();
-        map.put("jobId", "foo");
-        map.put("categoryId", String.valueOf(map.hashCode()));
+        map.put("job_id", "foo");
+        map.put("category_id", String.valueOf(map.hashCode()));
         map.put("terms", terms);
 
         source.add(map);
@@ -656,8 +657,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
 
         Map<String, Object> source = new HashMap<>();
         String categoryId = String.valueOf(source.hashCode());
-        source.put("jobId", "foo");
-        source.put("categoryId", categoryId);
+        source.put("job_id", "foo");
+        source.put("category_id", categoryId);
         source.put("terms", terms);
 
         GetResponse getResponse = createGetResponse(true, source);
@@ -680,21 +681,21 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
-        recordMap1.put("jobId", "foo");
+        recordMap1.put("job_id", "foo");
         recordMap1.put("probability", 0.555);
-        recordMap1.put("influencerFieldName", "Builder");
+        recordMap1.put("influencer_field_name", "Builder");
         recordMap1.put("timestamp", now.getTime());
-        recordMap1.put("influencerFieldValue", "Bob");
-        recordMap1.put("initialAnomalyScore", 22.2);
-        recordMap1.put("anomalyScore", 22.6);
+        recordMap1.put("influencer_field_value", "Bob");
+        recordMap1.put("initial_anomaly_score", 22.2);
+        recordMap1.put("anomaly_score", 22.6);
         Map<String, Object> recordMap2 = new HashMap<>();
-        recordMap2.put("jobId", "foo");
+        recordMap2.put("job_id", "foo");
         recordMap2.put("probability", 0.99);
-        recordMap2.put("influencerFieldName", "Builder");
+        recordMap2.put("influencer_field_name", "Builder");
         recordMap2.put("timestamp", now.getTime());
-        recordMap2.put("influencerFieldValue", "James");
-        recordMap2.put("initialAnomalyScore", 5.0);
-        recordMap2.put("anomalyScore", 5.0);
+        recordMap2.put("influencer_field_value", "James");
+        recordMap2.put("initial_anomaly_score", 5.0);
+        recordMap2.put("anomaly_score", 5.0);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -715,7 +716,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(2L, page.count());
 
         String queryString = queryBuilder.getValue().toString();
-        assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*isInterim.*value. : .true.*"));
+        assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*is_interim.*value. : .true.*"));
 
         List<Influencer> records = page.results();
         assertEquals("foo", records.get(0).getJobId());
@@ -741,21 +742,21 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
-        recordMap1.put("jobId", "foo");
+        recordMap1.put("job_id", "foo");
         recordMap1.put("probability", 0.555);
-        recordMap1.put("influencerFieldName", "Builder");
+        recordMap1.put("influencer_field_name", "Builder");
         recordMap1.put("timestamp", now.getTime());
-        recordMap1.put("influencerFieldValue", "Bob");
-        recordMap1.put("initialAnomalyScore", 22.2);
-        recordMap1.put("anomalyScore", 22.6);
+        recordMap1.put("influencer_field_value", "Bob");
+        recordMap1.put("initial_anomaly_score", 22.2);
+        recordMap1.put("anomaly_score", 22.6);
         Map<String, Object> recordMap2 = new HashMap<>();
-        recordMap2.put("jobId", "foo");
+        recordMap2.put("job_id", "foo");
         recordMap2.put("probability", 0.99);
-        recordMap2.put("influencerFieldName", "Builder");
+        recordMap2.put("influencer_field_name", "Builder");
         recordMap2.put("timestamp", now.getTime());
-        recordMap2.put("influencerFieldValue", "James");
-        recordMap2.put("initialAnomalyScore", 5.0);
-        recordMap2.put("anomalyScore", 5.0);
+        recordMap2.put("influencer_field_value", "James");
+        recordMap2.put("initial_anomaly_score", 5.0);
+        recordMap2.put("anomaly_score", 5.0);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -818,21 +819,21 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
-        recordMap1.put("jobId", "foo");
+        recordMap1.put("job_id", "foo");
         recordMap1.put("description", "snapshot1");
-        recordMap1.put("restorePriority", 1);
+        recordMap1.put("restore_priority", 1);
         recordMap1.put("timestamp", now.getTime());
-        recordMap1.put("snapshotDocCount", 5);
-        recordMap1.put("latestRecordTimeStamp", now.getTime());
-        recordMap1.put("latestResultTimeStamp", now.getTime());
+        recordMap1.put("snapshot_doc_count", 5);
+        recordMap1.put("latest_record_time_stamp", now.getTime());
+        recordMap1.put("latest_result_time_stamp", now.getTime());
         Map<String, Object> recordMap2 = new HashMap<>();
-        recordMap2.put("jobId", "foo");
+        recordMap2.put("job_id", "foo");
         recordMap2.put("description", "snapshot2");
-        recordMap2.put("restorePriority", 999);
+        recordMap2.put("restore_priority", 999);
         recordMap2.put("timestamp", now.getTime());
-        recordMap2.put("snapshotDocCount", 6);
-        recordMap2.put("latestRecordTimeStamp", now.getTime());
-        recordMap2.put("latestResultTimeStamp", now.getTime());
+        recordMap2.put("snapshot_doc_count", 6);
+        recordMap2.put("latest_record_time_stamp", now.getTime());
+        recordMap2.put("latest_result_time_stamp", now.getTime());
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -874,21 +875,21 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         List<Map<String, Object>> source = new ArrayList<>();
 
         Map<String, Object> recordMap1 = new HashMap<>();
-        recordMap1.put("jobId", "foo");
+        recordMap1.put("job_id", "foo");
         recordMap1.put("description", "snapshot1");
-        recordMap1.put("restorePriority", 1);
+        recordMap1.put("restore_priority", 1);
         recordMap1.put("timestamp", now.getTime());
-        recordMap1.put("snapshotDocCount", 5);
-        recordMap1.put("latestRecordTimeStamp", now.getTime());
-        recordMap1.put("latestResultTimeStamp", now.getTime());
+        recordMap1.put("snapshot_doc_count", 5);
+        recordMap1.put("latest_record_time_stamp", now.getTime());
+        recordMap1.put("latest_result_time_stamp", now.getTime());
         Map<String, Object> recordMap2 = new HashMap<>();
-        recordMap2.put("jobId", "foo");
+        recordMap2.put("job_id", "foo");
         recordMap2.put("description", "snapshot2");
-        recordMap2.put("restorePriority", 999);
+        recordMap2.put("restore_priority", 999);
         recordMap2.put("timestamp", now.getTime());
-        recordMap2.put("snapshotDocCount", 6);
-        recordMap2.put("latestRecordTimeStamp", now.getTime());
-        recordMap2.put("latestResultTimeStamp", now.getTime());
+        recordMap2.put("snapshot_doc_count", 6);
+        recordMap2.put("latest_record_time_stamp", now.getTime());
+        recordMap2.put("latest_result_time_stamp", now.getTime());
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -923,7 +924,7 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
         assertEquals(6, snapshots.get(1).getSnapshotDocCount());
 
         String queryString = queryBuilder.getValue().toString();
-        assertTrue(queryString.matches("(?s).*snapshotId.*value. : .snappyId.*description.*value. : .description1.*"));
+        assertTrue(queryString.matches("(?s).*snapshot_id.*value. : .snappyId.*description.*value. : .description1.*"));
     }
 
     public void testMergePartitionScoresIntoBucket() throws InterruptedException, ExecutionException {
@@ -1018,8 +1019,8 @@ public class ElasticsearchJobProviderTests extends ESTestCase {
                 .addIndicesExistsResponse(ElasticsearchJobProvider.PRELERT_USAGE_INDEX, true)
                 .prepareGet(INDEX_NAME, CategorizerState.TYPE, "1", categorizerStateGetResponse1)
                 .prepareGet(INDEX_NAME, CategorizerState.TYPE, "2", categorizerStateGetResponse2)
-                .prepareGet(INDEX_NAME, ModelState.TYPE, "123_1", modelStateGetResponse1)
-                .prepareGet(INDEX_NAME, ModelState.TYPE, "123_2", modelStateGetResponse2);
+                .prepareGet(INDEX_NAME, ModelState.TYPE.getPreferredName(), "123_1", modelStateGetResponse1)
+                .prepareGet(INDEX_NAME, ModelState.TYPE.getPreferredName(), "123_2", modelStateGetResponse2);
 
         ElasticsearchJobProvider provider = createProvider(clientBuilder.build());
 

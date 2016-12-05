@@ -130,8 +130,8 @@ public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerSta
         @Override
         public String toString() {
             return "Request{" +
-                    "jobId='" + jobId + '\'' +
-                    ", schedulerStatus=" + schedulerStatus +
+                    Job.ID.getPreferredName() + "='" + jobId + "', " +
+                    SchedulerState.TYPE_FIELD.getPreferredName() + '=' + schedulerStatus +
                     '}';
         }
     }

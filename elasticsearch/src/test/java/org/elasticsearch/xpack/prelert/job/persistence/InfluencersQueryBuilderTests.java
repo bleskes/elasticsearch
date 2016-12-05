@@ -40,7 +40,7 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
                 .anomalyScoreThreshold(50.0d)
                 .start("1000")
                 .end("2000")
-                .sortField("anomalyScore")
+                .sortField("anomaly_score")
                 .sortDescending(true)
                 .build();
 
@@ -50,7 +50,7 @@ public class InfluencersQueryBuilderTests extends ESTestCase {
         assertEquals(50.0d, query.getAnomalyScoreFilter(), 0.00001);
         assertEquals("1000", query.getStart());
         assertEquals("2000", query.getEnd());
-        assertEquals("anomalyScore", query.getSortField());
+        assertEquals("anomaly_score", query.getSortField());
         assertTrue(query.isSortDescending());
     }
 

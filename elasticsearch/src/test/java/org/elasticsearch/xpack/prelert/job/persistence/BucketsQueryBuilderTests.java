@@ -44,7 +44,7 @@ public class BucketsQueryBuilderTests extends ESTestCase {
                 .start("1000")
                 .end("2000")
                 .partitionValue("foo")
-                .sortField("anomalyScore")
+                .sortField("anomaly_score")
                 .sortDescending(true)
                 .build();
 
@@ -57,7 +57,7 @@ public class BucketsQueryBuilderTests extends ESTestCase {
         assertEquals("1000", query.getStart());
         assertEquals("2000", query.getEnd());
         assertEquals("foo", query.getPartitionValue());
-        assertEquals("anomalyScore", query.getSortField());
+        assertEquals("anomaly_score", query.getSortField());
         assertTrue(query.isSortDescending());
     }
 

@@ -43,12 +43,12 @@ public class PrelertJobIT extends ESRestTestCase {
     private static final String RESULT_MAPPING = "{ \"mappings\": {\"result\": { \"properties\": { " +
             "\"result_type\": { \"type\" : \"keyword\" }," +
             "\"timestamp\": { \"type\" : \"date\" }, " +
-            "\"anomalyScore\": { \"type\" : \"double\" }, " +
-            "\"normalizedProbability\": { \"type\" : \"double\" }, " +
-            "\"overFieldValue\": { \"type\" : \"keyword\" }, " +
-            "\"partitionFieldValue\": { \"type\" : \"keyword\" }, " +
-            "\"byFieldValue\": { \"type\" : \"keyword\" }, " +
-            "\"fieldName\": { \"type\" : \"keyword\" }, " +
+            "\"anomaly_score\": { \"type\" : \"double\" }, " +
+            "\"normalized_probability\": { \"type\" : \"double\" }, " +
+            "\"over_field_value\": { \"type\" : \"keyword\" }, " +
+            "\"partition_field_value\": { \"type\" : \"keyword\" }, " +
+            "\"by_field_value\": { \"type\" : \"keyword\" }, " +
+            "\"field_name\": { \"type\" : \"keyword\" }, " +
             "\"function\": { \"type\" : \"keyword\" } " +
             "} } } }";
 
@@ -57,7 +57,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote\""));
     }
 
     public void testGetJob_GivenNoSuchJob() throws Exception {
@@ -76,7 +76,7 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"count\":1"));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote\""));
     }
 
     public void testGetJobs_GivenNegativeFrom() throws Exception {
@@ -111,7 +111,7 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"count\":1"));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote\""));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote\""));
     }
 
     public void testGetJobs_GivenMultipleJobs() throws Exception {
@@ -124,9 +124,9 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"count\":3"));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote_1\""));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote_2\""));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote_3\""));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote_1\""));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote_2\""));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote_3\""));
     }
 
     public void testGetJobs_GivenMultipleJobsAndFromIsOne() throws Exception {
@@ -139,9 +139,9 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"count\":3"));
-        assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_1\"")));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote_2\""));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote_3\""));
+        assertThat(responseAsString, not(containsString("\"job_id\":\"farequote_1\"")));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote_2\""));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote_3\""));
     }
 
     public void testGetJobs_GivenMultipleJobsAndSizeIsOne() throws Exception {
@@ -154,9 +154,9 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"count\":3"));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote_1\""));
-        assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_2\"")));
-        assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_3\"")));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote_1\""));
+        assertThat(responseAsString, not(containsString("\"job_id\":\"farequote_2\"")));
+        assertThat(responseAsString, not(containsString("\"job_id\":\"farequote_3\"")));
     }
 
     public void testGetJobs_GivenMultipleJobsAndFromIsOneAndSizeIsOne() throws Exception {
@@ -169,9 +169,9 @@ public class PrelertJobIT extends ESRestTestCase {
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"count\":3"));
-        assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_1\"")));
-        assertThat(responseAsString, containsString("\"jobId\":\"farequote_2\""));
-        assertThat(responseAsString, not(containsString("\"jobId\":\"farequote_3\"")));
+        assertThat(responseAsString, not(containsString("\"job_id\":\"farequote_1\"")));
+        assertThat(responseAsString, containsString("\"job_id\":\"farequote_2\""));
+        assertThat(responseAsString, not(containsString("\"job_id\":\"farequote_3\"")));
     }
 
     private Response createFarequoteJob() throws Exception {
@@ -179,11 +179,12 @@ public class PrelertJobIT extends ESRestTestCase {
     }
 
     private Response createFarequoteJob(String jobId) throws Exception {
-        String job = "{\n" + "    \"jobId\":\"" + jobId + "\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
-                + "    \"analysisConfig\" : {\n" + "        \"bucketSpan\":3600,\n"
-                + "        \"detectors\" :[{\"function\":\"metric\",\"fieldName\":\"responsetime\",\"byFieldName\":\"airline\"}]\n"
-                + "    },\n" + "    \"dataDescription\" : {\n" + "        \"fieldDelimiter\":\",\",\n" + "        \"timeField\":\"time\",\n"
-                + "        \"timeFormat\":\"yyyy-MM-dd HH:mm:ssX\"\n" + "    }\n" + "}";
+        String job = "{\n" + "    \"job_id\":\"" + jobId + "\",\n" + "    \"description\":\"Analysis of response time by airline\",\n"
+                + "    \"analysis_config\" : {\n" + "        \"bucket_span\":3600,\n"
+                + "        \"detectors\" :[{\"function\":\"metric\",\"field_name\":\"responsetime\",\"by_field_name\":\"airline\"}]\n"
+                + "    },\n" + "    \"data_description\" : {\n" + "        \"field_delimiter\":\",\",\n" + "        " +
+                "\"time_field\":\"time\",\n"
+                + "        \"time_format\":\"yyyy-MM-dd HH:mm:ssX\"\n" + "    }\n" + "}";
 
         return client().performRequest("put", PrelertPlugin.BASE_PATH + "jobs", Collections.emptyMap(), new StringEntity(job));
     }
@@ -276,7 +277,7 @@ public class PrelertJobIT extends ESRestTestCase {
                 Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/farequote",
                         Collections.singletonMap("metric", "config,status"));
                 String responseEntityToString = responseEntityToString(response);
-                assertThat(responseEntityToString, containsString("\"ignoreDowntime\":\"ONCE\""));
+                assertThat(responseEntityToString, containsString("\"ignore_downtime\":\"ONCE\""));
                 assertThat(responseEntityToString, containsString("\"status\":\"PAUSED\""));
             } catch (Exception e1) {
                 fail();
@@ -328,7 +329,7 @@ public class PrelertJobIT extends ESRestTestCase {
         }
 
         String bucketResult = String.format(Locale.ROOT,
-                "{\"jobId\":\"%s\", \"timestamp\": \"%s\", \"result_type\":\"bucket\", \"bucketSpan\": \"%s\"}",
+                "{\"job_id\":\"%s\", \"timestamp\": \"%s\", \"result_type\":\"bucket\", \"bucket_span\": \"%s\"}",
                 jobId, timestamp, bucketSpan);
         String id = String.format(Locale.ROOT,
                 "%s_%s_%s", jobId, timestamp, bucketSpan);
@@ -346,7 +347,7 @@ public class PrelertJobIT extends ESRestTestCase {
         }
 
         String bucketResult =
-                String.format(Locale.ROOT, "{\"jobId\":\"%s\", \"timestamp\": \"%s\", \"result_type\":\"record\"}", jobId, timestamp);
+                String.format(Locale.ROOT, "{\"job_id\":\"%s\", \"timestamp\": \"%s\", \"result_type\":\"record\"}", jobId, timestamp);
         return client().performRequest("put", "prelertresults-" + jobId + "/result/" + timestamp,
                 Collections.singletonMap("refresh", "true"), new StringEntity(bucketResult));
     }
