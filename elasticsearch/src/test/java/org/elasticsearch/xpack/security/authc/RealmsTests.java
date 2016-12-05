@@ -86,7 +86,6 @@ public class RealmsTests extends ESTestCase {
         Settings settings = builder.build();
         Environment env = new Environment(settings);
         Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
-        realms.start();
 
         Iterator<Realm> iterator = realms.iterator();
         assertThat(iterator.hasNext(), is(true));
@@ -114,7 +113,7 @@ public class RealmsTests extends ESTestCase {
                 .build();
         Environment env = new Environment(settings);
         try {
-            new Realms(settings, env, factories, licenseState, reservedRealm).start();
+            new Realms(settings, env, factories, licenseState, reservedRealm);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), containsString("multiple [file] realms are configured"));
@@ -124,7 +123,6 @@ public class RealmsTests extends ESTestCase {
     public void testWithEmptySettings() throws Exception {
         Realms realms = new Realms(Settings.EMPTY, new Environment(Settings.builder().put("path.home", createTempDir()).build()),
                 factories, licenseState, reservedRealm);
-        realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
         Realm realm = iter.next();
@@ -157,7 +155,6 @@ public class RealmsTests extends ESTestCase {
         Settings settings = builder.build();
         Environment env = new Environment(settings);
         Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
-        realms.start();
 
         // this is the iterator when licensed
         Iterator<Realm> iter = realms.iterator();
@@ -208,7 +205,7 @@ public class RealmsTests extends ESTestCase {
     }
 
     public void testUnlicensedWithInternalRealms() throws Exception {
-        factories.put(LdapRealm.TYPE, config -> new DummyRealm(LdapRealm.TYPE, config));
+        factories.put(LdapRealm.LDAP_TYPE, config -> new DummyRealm(LdapRealm.LDAP_TYPE, config));
         assertThat(factories.get("type_0"), notNullValue());
         Settings.Builder builder = Settings.builder()
                 .put("path.home", createTempDir())
@@ -219,7 +216,6 @@ public class RealmsTests extends ESTestCase {
         Settings settings = builder.build();
         Environment env = new Environment(settings);
         Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
-        realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
         Realm realm = iter.next();
@@ -265,7 +261,7 @@ public class RealmsTests extends ESTestCase {
     }
 
     public void testUnlicensedWithNativeRealms() throws Exception {
-        factories.put(LdapRealm.TYPE, config -> new DummyRealm(LdapRealm.TYPE, config));
+        factories.put(LdapRealm.LDAP_TYPE, config -> new DummyRealm(LdapRealm.LDAP_TYPE, config));
         final String type = randomFrom(FileRealm.TYPE, NativeRealm.TYPE);
         Settings.Builder builder = Settings.builder()
                 .put("path.home", createTempDir())
@@ -276,7 +272,6 @@ public class RealmsTests extends ESTestCase {
         Settings settings = builder.build();
         Environment env = new Environment(settings);
         Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
-        realms.start();
         Iterator<Realm> iter = realms.iterator();
         assertThat(iter.hasNext(), is(true));
         Realm realm = iter.next();
@@ -322,7 +317,6 @@ public class RealmsTests extends ESTestCase {
         Settings settings = builder.build();
         Environment env = new Environment(settings);
         Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
-        realms.start();
         Iterator<Realm> iterator = realms.iterator();
         Realm realm = iterator.next();
         assertThat(realm, is(reservedRealm));
@@ -352,7 +346,7 @@ public class RealmsTests extends ESTestCase {
         assertThat(count, equalTo(orderToIndex.size()));
     }
 
-    public void testAuthcAuthzDisabled() {
+    public void testAuthcAuthzDisabled() throws Exception {
         Settings settings = Settings.builder()
                 .put("path.home", createTempDir())
                 .put("xpack.security.authc.realms.realm_1.type", FileRealm.TYPE)
@@ -360,7 +354,6 @@ public class RealmsTests extends ESTestCase {
                 .build();
         Environment env = new Environment(settings);
         Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
-        realms.start();
 
         assertThat(realms.iterator().hasNext(), is(true));
 
@@ -368,7 +361,7 @@ public class RealmsTests extends ESTestCase {
         assertThat(realms.iterator().hasNext(), is(false));
     }
 
-    public void testUsageStats() {
+    public void testUsageStats() throws Exception {
         // test realms with duplicate values
         Settings.Builder builder = Settings.builder()
                 .put("path.home", createTempDir())
@@ -379,7 +372,6 @@ public class RealmsTests extends ESTestCase {
         Settings settings = builder.build();
         Environment env = new Environment(settings);
         Realms realms = new Realms(settings, env, factories, licenseState, reservedRealm);
-        realms.start();
 
         Map<String, Object> usageStats = realms.usageStats();
         assertThat(usageStats.size(), is(factories.size()));

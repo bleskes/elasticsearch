@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.security.authc.file;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LogEvent;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
@@ -31,7 +30,6 @@ import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.audit.logfile.CapturingLogger;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
-import org.elasticsearch.xpack.security.authc.support.RefreshListener;
 import org.junit.After;
 import org.junit.Before;
 
@@ -109,12 +107,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        FileUserRolesStore store = new FileUserRolesStore(config, watcherService, new RefreshListener() {
-            @Override
-            public void onRefresh() {
-                latch.countDown();
-            }
-        });
+        FileUserRolesStore store = new FileUserRolesStore(config, watcherService, latch::countDown);
 
         String[] roles = store.roles("user1");
         assertThat(roles, notNullValue());
@@ -152,12 +145,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        FileUserRolesStore store = new FileUserRolesStore(config, watcherService, new RefreshListener() {
-            @Override
-            public void onRefresh() {
-                latch.countDown();
-            }
-        });
+        FileUserRolesStore store = new FileUserRolesStore(config, watcherService, latch::countDown);
 
         String[] roles = store.roles("user1");
         assertThat(roles, notNullValue());

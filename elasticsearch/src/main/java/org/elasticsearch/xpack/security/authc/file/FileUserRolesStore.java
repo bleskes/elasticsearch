@@ -29,7 +29,6 @@ import org.elasticsearch.watcher.FileWatcher;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
-import org.elasticsearch.xpack.security.authc.support.RefreshListener;
 import org.elasticsearch.xpack.security.support.NoOpLogger;
 import org.elasticsearch.xpack.security.support.Validation;
 
@@ -39,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -57,17 +57,18 @@ public class FileUserRolesStore {
     private final Logger logger;
 
     private final Path file;
-    private CopyOnWriteArrayList<RefreshListener> listeners;
+    private final CopyOnWriteArrayList<Runnable> listeners;
     private volatile Map<String, String[]> userRoles;
 
-    public FileUserRolesStore(RealmConfig config, ResourceWatcherService watcherService) {
-        this(config, watcherService, null);
+    FileUserRolesStore(RealmConfig config, ResourceWatcherService watcherService) {
+        this(config, watcherService, () -> {});
     }
 
-    FileUserRolesStore(RealmConfig config, ResourceWatcherService watcherService, RefreshListener listener) {
+    FileUserRolesStore(RealmConfig config, ResourceWatcherService watcherService, Runnable listener) {
         logger = config.logger(FileUserRolesStore.class);
         file = resolveFile(config.env());
         userRoles = parseFileLenient(file, logger);
+        listeners = new CopyOnWriteArrayList<>(Collections.singletonList(listener));
         FileWatcher watcher = new FileWatcher(file.getParent());
         watcher.addListener(new FileListener());
         try {
@@ -75,14 +76,9 @@ public class FileUserRolesStore {
         } catch (IOException e) {
             throw new ElasticsearchException("failed to start watching the user roles file [" + file.toAbsolutePath() + "]", e);
         }
-
-        listeners = new CopyOnWriteArrayList<>();
-        if (listener != null) {
-            listeners.add(listener);
-        }
     }
 
-    public synchronized void addListener(RefreshListener listener) {
+    public void addListener(Runnable listener) {
         listeners.add(listener);
     }
 
@@ -219,10 +215,8 @@ public class FileUserRolesStore {
         }
     }
 
-    public void notifyRefresh() {
-        for (RefreshListener listener : listeners) {
-            listener.onRefresh();
-        }
+    void notifyRefresh() {
+        listeners.forEach(Runnable::run);
     }
 
     private class FileListener implements FileChangesListener {

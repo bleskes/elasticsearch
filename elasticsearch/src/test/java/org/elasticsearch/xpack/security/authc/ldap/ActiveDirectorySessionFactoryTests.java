@@ -15,25 +15,29 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.authc.activedirectory;
+package org.elasticsearch.xpack.security.authc.ldap;
 
 import com.unboundid.ldap.sdk.LDAPException;
+import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.UncategorizedExecutionException;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
-import org.elasticsearch.xpack.security.authc.ldap.LdapSessionFactory;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapTestCase;
 import org.elasticsearch.xpack.security.authc.ldap.support.SessionFactory;
+import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.authc.support.SecuredStringTests;
 import org.elasticsearch.test.junit.annotations.Network;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 
 @Network
@@ -45,8 +49,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
         String userName = "ironman";
-        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, userName, SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
             assertThat(groups, containsInAnyOrder(
                     containsString("Geniuses"),
                     containsString("Billionaire"),
@@ -66,8 +70,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
         String userName = "ades\\ironman";
-        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, userName, SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
             assertThat(groups, containsInAnyOrder(
                     containsString("Geniuses"),
                     containsString("Billionaire"),
@@ -92,8 +96,9 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         RealmConfig config = new RealmConfig("ad-test", settings, globalSettings);
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
-        LDAPException expected = expectThrows(LDAPException.class,
-                () -> sessionFactory.session("ironman", SecuredStringTests.build(PASSWORD)).groups());
+        PlainActionFuture<List<String>> groups = new PlainActionFuture<>();
+        session(sessionFactory, "ironman", SecuredStringTests.build(PASSWORD)).groups(groups);
+        LDAPException expected = expectThrows(LDAPException.class, groups::actionGet);
         assertThat(expected.getMessage(), containsString("A client-side timeout was encountered while waiting"));
     }
 
@@ -103,8 +108,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
 
         String[] users = new String[]{"cap", "hawkeye", "hulk", "ironman", "thor", "blackwidow", };
         for(String user: users) {
-            try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
-                assertThat("group avenger test for user "+user, ldap.groups(), hasItem(containsString("Avengers")));
+            try (LdapSession ldap = session(sessionFactory, user, SecuredStringTests.build(PASSWORD))) {
+                assertThat("group avenger test for user "+user, groups(ldap), hasItem(containsString("Avengers")));
             }
         }
     }
@@ -117,8 +122,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
         String userName = "hulk";
-        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, userName, SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
 
             assertThat(groups, containsInAnyOrder(
                     containsString("Avengers"),
@@ -139,8 +144,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
         String userName = "hulk";
-        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, userName, SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
 
             assertThat(groups, containsInAnyOrder(
                     containsString("Avengers"),
@@ -165,8 +170,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
         String userName = "hulk";
-        try (LdapSession ldap = sessionFactory.session(userName, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, userName, SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
 
             assertThat(groups, hasItem(containsString("Avengers")));
         }
@@ -181,8 +186,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
 
         //Login with the UserPrincipalName
         String userDN = "CN=Erik Selvig,CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
-        try (LdapSession ldap = sessionFactory.session("erik.selvig", SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, "erik.selvig", SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
             assertThat(ldap.userDn(), is(userDN));
             assertThat(groups, containsInAnyOrder(
                     containsString("Geniuses"),
@@ -199,10 +204,10 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
 
         //login with sAMAccountName
         String userDN = "CN=Erik Selvig,CN=Users,DC=ad,DC=test,DC=elasticsearch,DC=com";
-        try (LdapSession ldap = sessionFactory.session("selvig", SecuredStringTests.build(PASSWORD))) {
+        try (LdapSession ldap = session(sessionFactory, "selvig", SecuredStringTests.build(PASSWORD))) {
             assertThat(ldap.userDn(), is(userDN));
 
-            List<String> groups = ldap.groups();
+            List<String> groups = groups(ldap);
             assertThat(groups, containsInAnyOrder(
                     containsString("Geniuses"),
                     containsString("CN=Users,CN=Builtin"),
@@ -222,8 +227,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
         //Login with the UserPrincipalName
-        try (LdapSession ldap = sessionFactory.session("erik.selvig", SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, "erik.selvig", SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
             assertThat(groups, containsInAnyOrder(
                     containsString("CN=Geniuses"),
                     containsString("CN=Domain Users"),
@@ -248,8 +253,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
 
         String user = "Bruce Banner";
-        try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, user, SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
 
             assertThat(groups, containsInAnyOrder(
                     containsString("Avengers"),
@@ -274,8 +279,8 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
 
         String user = "Bruce Banner";
-        try (LdapSession ldap = sessionFactory.session(user, SecuredStringTests.build(PASSWORD))) {
-            List<String> groups = ldap.groups();
+        try (LdapSession ldap = session(sessionFactory, user, SecuredStringTests.build(PASSWORD))) {
+            List<String> groups = groups(ldap);
 
             assertThat(groups, containsInAnyOrder(
                     containsString("Avengers"),
@@ -290,8 +295,11 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         ActiveDirectorySessionFactory sessionFactory = new ActiveDirectorySessionFactory(config, sslService);
 
         String userName = "ironman";
-        LDAPException expected =
-                expectThrows(LDAPException.class, () -> sessionFactory.session(userName, SecuredStringTests.build(PASSWORD)));
+        UncategorizedExecutionException e = expectThrows(UncategorizedExecutionException.class,
+                () -> session(sessionFactory, userName, SecuredStringTests.build(PASSWORD)));
+        assertThat(e.getCause(), instanceOf(ExecutionException.class));
+        assertThat(e.getCause().getCause(), instanceOf(LDAPException.class));
+        final LDAPException expected = (LDAPException) e.getCause().getCause();
         assertThat(expected.getMessage(), anyOf(containsString("Hostname verification failed"), containsString("peer not authenticated")));
     }
 
@@ -306,7 +314,11 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
 
         String user = "Bruce Banner";
-        LDAPException expected = expectThrows(LDAPException.class, () -> sessionFactory.session(user, SecuredStringTests.build(PASSWORD)));
+        UncategorizedExecutionException e = expectThrows(UncategorizedExecutionException.class,
+                () -> session(sessionFactory, user, SecuredStringTests.build(PASSWORD)));
+        assertThat(e.getCause(), instanceOf(ExecutionException.class));
+        assertThat(e.getCause().getCause(), instanceOf(LDAPException.class));
+        final LDAPException expected = (LDAPException) e.getCause().getCause();
         assertThat(expected.getMessage(), anyOf(containsString("Hostname verification failed"), containsString("peer not authenticated")));
     }
 
@@ -320,5 +332,17 @@ public class ActiveDirectorySessionFactoryTests extends AbstractActiveDirectoryI
                     .put("ssl.truststore.password", "changeit");
         }
         return builder.build();
+    }
+
+    private LdapSession session(SessionFactory factory, String username, SecuredString password) {
+        PlainActionFuture<LdapSession> future = new PlainActionFuture<>();
+        factory.session(username, password, future);
+        return future.actionGet();
+    }
+
+    private List<String> groups(LdapSession ldapSession) {
+        PlainActionFuture<List<String>> future = new PlainActionFuture<>();
+        ldapSession.groups(future);
+        return future.actionGet();
     }
 }

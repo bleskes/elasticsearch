@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
@@ -244,8 +245,12 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         components.add(licenseService);
         components.add(licenseState);
 
-        components.addAll(security.createComponents(internalClient, threadPool, clusterService, resourceWatcherService,
-                                                    extensionsService.getExtensions()));
+        try {
+            components.addAll(security.createComponents(internalClient, threadPool, clusterService, resourceWatcherService,
+                    extensionsService.getExtensions()));
+        } catch (Exception e) {
+            throw new Error("security initialization failed", e);
+        }
         components.addAll(monitoring.createComponents(internalClient, threadPool, clusterService, licenseService, sslService));
 
 

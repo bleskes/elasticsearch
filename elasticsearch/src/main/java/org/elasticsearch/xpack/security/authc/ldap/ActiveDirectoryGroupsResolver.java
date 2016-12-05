@@ -15,73 +15,62 @@
  * from Elasticsearch Incorporated.
  */
 
-package org.elasticsearch.xpack.security.authc.activedirectory;
+package org.elasticsearch.xpack.security.authc.ldap;
 
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPInterface;
 import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.message.ParameterizedMessage;
-import org.apache.logging.log4j.util.Supplier;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession.GroupsResolver;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.elasticsearch.xpack.security.authc.ldap.support.LdapUtils.OBJECT_CLASS_PRESENCE_FILTER;
 import static org.elasticsearch.xpack.security.authc.ldap.support.LdapUtils.search;
 import static org.elasticsearch.xpack.security.authc.ldap.support.LdapUtils.searchForEntry;
 
-/**
- *
- */
-public class ActiveDirectoryGroupsResolver implements GroupsResolver {
+class ActiveDirectoryGroupsResolver implements GroupsResolver {
 
+    private static final String TOKEN_GROUPS = "tokenGroups";
     private final String baseDn;
     private final LdapSearchScope scope;
 
-    public ActiveDirectoryGroupsResolver(Settings settings, String baseDnDefault) {
+    ActiveDirectoryGroupsResolver(Settings settings, String baseDnDefault) {
         this.baseDn = settings.get("base_dn", baseDnDefault);
         this.scope = LdapSearchScope.resolve(settings.get("scope"), LdapSearchScope.SUB_TREE);
     }
 
     @Override
-    public List<String> resolve(LDAPInterface connection, String userDn, TimeValue timeout, Logger logger,
-                                Collection<Attribute> attributes) {
-        Filter groupSearchFilter = buildGroupQuery(connection, userDn, timeout, logger);
-        logger.debug("group SID to DN search filter: [{}]", groupSearchFilter);
-        if (groupSearchFilter == null) {
-            return Collections.emptyList();
-        }
-
-        SearchRequest searchRequest = new SearchRequest(baseDn, scope.scope(), groupSearchFilter, SearchRequest.NO_ATTRIBUTES);
-        searchRequest.setTimeLimitSeconds(Math.toIntExact(timeout.seconds()));
-        SearchResult results;
-        try {
-            results = search(connection, searchRequest, logger);
-        } catch (LDAPException e) {
-            logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to fetch AD groups for DN [{}]", userDn), e);
-            return Collections.emptyList();
-        }
-
-        List<String> groupList = new ArrayList<>();
-        for (SearchResultEntry entry : results.getSearchEntries()) {
-            groupList.add(entry.getDN());
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug("found these groups [{}] for userDN [{}]", groupList, userDn);
-        }
-        return groupList;
+    public void resolve(LDAPInterface connection, String userDn, TimeValue timeout, Logger logger, Collection<Attribute> attributes,
+                        ActionListener<List<String>> listener) {
+        buildGroupQuery(connection, userDn, timeout,
+                ActionListener.wrap((filter) -> {
+                    if (filter == null) {
+                        listener.onResponse(Collections.emptyList());
+                    } else {
+                        logger.debug("group SID to DN [{}] search filter: [{}]", userDn, filter);
+                        search(connection, baseDn, scope.scope(), filter, Math.toIntExact(timeout.seconds()),
+                                ActionListener.wrap((results) -> {
+                                            List<String> groups = results.stream()
+                                                    .map(SearchResultEntry::getDN)
+                                                    .collect(Collectors.toList());
+                                            listener.onResponse(Collections.unmodifiableList(groups));
+                                        },
+                                        listener::onFailure),
+                                SearchRequest.NO_ATTRIBUTES);
+                    }
+                }, listener::onFailure));
     }
 
     @Override
@@ -90,25 +79,20 @@ public class ActiveDirectoryGroupsResolver implements GroupsResolver {
         return null;
     }
 
-    static Filter buildGroupQuery(LDAPInterface connection, String userDn, TimeValue timeout, Logger logger) {
-        try {
-            SearchRequest request = new SearchRequest(userDn, SearchScope.BASE, OBJECT_CLASS_PRESENCE_FILTER, "tokenGroups");
-            request.setTimeLimitSeconds(Math.toIntExact(timeout.seconds()));
-            SearchResultEntry entry = searchForEntry(connection, request, logger);
-            if (entry == null) {
-                return null;
-            }
-            Attribute attribute = entry.getAttribute("tokenGroups");
-            byte[][] tokenGroupSIDBytes = attribute.getValueByteArrays();
-            List<Filter> orFilters = new ArrayList<>(tokenGroupSIDBytes.length);
-            for (byte[] SID : tokenGroupSIDBytes) {
-                orFilters.add(Filter.createEqualityFilter("objectSid", binarySidToStringSid(SID)));
-            }
-            return Filter.createORFilter(orFilters);
-        } catch (LDAPException e) {
-            logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to fetch AD groups for DN [{}]", userDn), e);
-            return null;
-        }
+    static void buildGroupQuery(LDAPInterface connection, String userDn, TimeValue timeout, ActionListener<Filter> listener) {
+        searchForEntry(connection, userDn, SearchScope.BASE, OBJECT_CLASS_PRESENCE_FILTER, Math.toIntExact(timeout.seconds()),
+                ActionListener.wrap((entry) -> {
+                    if (entry == null || entry.hasAttribute(TOKEN_GROUPS) == false) {
+                        listener.onResponse(null);
+                    } else {
+                        final byte[][] tokenGroupSIDBytes = entry.getAttributeValueByteArrays(TOKEN_GROUPS);
+                        List<Filter> orFilters = Arrays.stream(tokenGroupSIDBytes)
+                                .map((sidBytes) -> Filter.createEqualityFilter("objectSid", binarySidToStringSid(sidBytes)))
+                                .collect(Collectors.toList());
+                        listener.onResponse(Filter.createORFilter(orFilters));
+                    }
+                }, listener::onFailure),
+                TOKEN_GROUPS);
     }
 
     /**
@@ -118,7 +102,7 @@ public class ActiveDirectoryGroupsResolver implements GroupsResolver {
      *
      * @param SID byte encoded security ID
      */
-    public static String binarySidToStringSid(byte[] SID) {
+    private static String binarySidToStringSid(byte[] SID) {
         String strSID;
 
         //convert the SID into string format

@@ -228,6 +228,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
                     }
                     assert filter != null;
                     final Thread executingThread = Thread.currentThread();
+
                     ActionListener.CheckedConsumer<Void> consumer = (x) -> {
                         final Executor executor;
                         if (executingThread == Thread.currentThread()) {
