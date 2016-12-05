@@ -92,7 +92,7 @@ task build(dependsOn: [check, assemble]) {
 }
 
 task upload(type: UploadS3Task, dependsOn: [build]) {
-  enabled project.uploadEnabled
+  enabled = project.cppEnabled && project.uploadEnabled
   description = 'upload cpp zip to S3 Bucket'
   bucket 'prelert-artifacts'
   upload buildZip.outputs.files.singleFile, "maven/${project.group}/prelert-cpp/${project.version}/${buildZip.outputs.files.singleFile.name}"
