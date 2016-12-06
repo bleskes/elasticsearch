@@ -20,14 +20,25 @@ package org.elasticsearch.xpack.support.clock;
 import org.elasticsearch.test.ESTestCase;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.joda.time.DateTimeZone.UTC;
 
 /**
  */
 public class ClockTests extends ESTestCase {
     public void testNowUTC() {
-        Clock clockMock = new ClockMock();
+        Clock clockMock = ClockMock.frozen();
         assertThat(clockMock.now(UTC).getZone(), equalTo(UTC));
         assertThat(SystemClock.INSTANCE.now(UTC).getZone(), equalTo(UTC));
+    }
+
+    public void testFreezeUnfreeze() throws Exception {
+        ClockMock clockMock = ClockMock.frozen();
+        final long millis = clockMock.millis();
+        for (int i = 0; i < 10; i++) {
+            assertThat(clockMock.millis(), equalTo(millis));
+        }
+        clockMock.unfreeze();
+        assertBusy(() -> assertThat(clockMock.millis(), greaterThan(millis)));
     }
 }

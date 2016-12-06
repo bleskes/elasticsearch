@@ -28,40 +28,66 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClockMock implements Clock {
 
-    private DateTime now = DateTime.now(DateTimeZone.UTC);
+    private volatile DateTime frozenNow;
+
+    public ClockMock() {
+        frozenNow = null;
+    }
+
+    /**
+     * a utility method to create a new {@link ClockMock} and immediately call its {@link #freeze()} method
+     */
+    public static ClockMock frozen() {
+        return new ClockMock().freeze();
+    }
+
 
     @Override
     public long millis() {
-        return now.getMillis();
+        return nowUTC().getMillis();
     }
 
     @Override
     public long nanos() {
-        return TimeUnit.MILLISECONDS.toNanos(now.getMillis());
+        return TimeUnit.MILLISECONDS.toNanos(millis());
     }
 
     @Override
     public DateTime nowUTC() {
-        return now(DateTimeZone.UTC);
+        DateTime now = this.frozenNow;
+        return now == null ?  DateTime.now(DateTimeZone.UTC) : now;
     }
 
     @Override
     public DateTime now(DateTimeZone timeZone) {
-        return now.toDateTime(timeZone);
+        return nowUTC().toDateTime(timeZone);
     }
 
     @Override
     public TimeValue timeElapsedSince(DateTime time) {
-        return TimeValue.timeValueMillis(now.getMillis() - time.getMillis());
+        return TimeValue.timeValueMillis(millis() - time.getMillis());
     }
 
-    public ClockMock setTime(DateTime now) {
-        this.now = now;
+
+    public synchronized ClockMock setTime(DateTime now) {
+        this.frozenNow = now.toDateTime(DateTimeZone.UTC);
+        return this;
+    }
+
+    /** freeze the time for this clock, preventing it from advancing */
+    public synchronized ClockMock freeze() {
+        setTime(nowUTC());
+        return this;
+    }
+
+    /** the clock will be reset to current time and will advance from now */
+    public synchronized ClockMock unfreeze() {
+        this.frozenNow = null;
         return this;
     }
 
     public ClockMock fastForward(TimeValue timeValue) {
-        return setTime(now.plusMillis((int) timeValue.millis()));
+        return setTime(nowUTC().plusMillis((int) timeValue.millis()));
     }
 
     public ClockMock fastForwardSeconds(int seconds) {
@@ -69,7 +95,7 @@ public class ClockMock implements Clock {
     }
 
     public ClockMock rewind(TimeValue timeValue) {
-        return setTime(now.minusMillis((int) timeValue.millis()));
+        return setTime(nowUTC().minusMillis((int) timeValue.millis()));
     }
 
     public ClockMock rewindSeconds(int seconds) {

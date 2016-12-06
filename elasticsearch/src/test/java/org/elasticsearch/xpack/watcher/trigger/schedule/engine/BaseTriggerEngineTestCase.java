@@ -45,7 +45,7 @@ import static org.hamcrest.Matchers.is;
 public abstract class BaseTriggerEngineTestCase extends ESTestCase {
 
     private TriggerEngine engine;
-    protected ClockMock clock = new ClockMock();
+    protected ClockMock clock = ClockMock.frozen();
 
     @Before
     public void init() throws Exception {

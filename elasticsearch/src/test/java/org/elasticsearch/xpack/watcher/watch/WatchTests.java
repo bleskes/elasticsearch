@@ -67,13 +67,13 @@ import org.elasticsearch.xpack.watcher.actions.throttler.ActionThrottler;
 import org.elasticsearch.xpack.watcher.actions.webhook.ExecutableWebhookAction;
 import org.elasticsearch.xpack.watcher.actions.webhook.WebhookAction;
 import org.elasticsearch.xpack.watcher.actions.webhook.WebhookActionFactory;
-import org.elasticsearch.xpack.watcher.condition.ConditionFactory;
-import org.elasticsearch.xpack.watcher.condition.ConditionRegistry;
-import org.elasticsearch.xpack.watcher.condition.Condition;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
 import org.elasticsearch.xpack.watcher.condition.AlwaysConditionTests;
-import org.elasticsearch.xpack.watcher.condition.CompareCondition;
 import org.elasticsearch.xpack.watcher.condition.ArrayCompareCondition;
+import org.elasticsearch.xpack.watcher.condition.CompareCondition;
+import org.elasticsearch.xpack.watcher.condition.Condition;
+import org.elasticsearch.xpack.watcher.condition.ConditionFactory;
+import org.elasticsearch.xpack.watcher.condition.ConditionRegistry;
 import org.elasticsearch.xpack.watcher.condition.NeverCondition;
 import org.elasticsearch.xpack.watcher.condition.ScriptCondition;
 import org.elasticsearch.xpack.watcher.input.ExecutableInput;
@@ -178,7 +178,7 @@ public class WatchTests extends ESTestCase {
 
     public void testParserSelfGenerated() throws Exception {
         DateTime now = new DateTime(UTC);
-        ClockMock clock = new ClockMock();
+        ClockMock clock = ClockMock.frozen();
         clock.setTime(now);
         TransformRegistry transformRegistry = transformRegistry();
         boolean includeStatus = randomBoolean();
@@ -231,7 +231,7 @@ public class WatchTests extends ESTestCase {
     }
 
     public void testParserBadActions() throws Exception {
-        ClockMock clock = new ClockMock();
+        ClockMock clock = ClockMock.frozen();
         ScheduleRegistry scheduleRegistry = registry(randomSchedule());
         TriggerEngine triggerEngine = new ParseOnlyScheduleTriggerEngine(Settings.EMPTY, scheduleRegistry, clock);
         TriggerService triggerService = new TriggerService(Settings.EMPTY, singleton(triggerEngine));
@@ -455,7 +455,7 @@ public class WatchTests extends ESTestCase {
         String defaultLegacyScriptLanguage = ScriptSettings.getLegacyDefaultLang(settings);
         parsers.put(ScriptCondition.TYPE, (c, id, p, upgrade) -> ScriptCondition.parse(scriptService, id, p, upgrade,
                 defaultLegacyScriptLanguage));
-        return new ConditionRegistry(parsers, new ClockMock());
+        return new ConditionRegistry(parsers, ClockMock.frozen());
     }
 
     private ExecutableTransform randomTransform() {
