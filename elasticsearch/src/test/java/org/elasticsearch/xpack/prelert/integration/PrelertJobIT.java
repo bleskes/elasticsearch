@@ -61,7 +61,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
     public void testGetJob_GivenNoSuchJob() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/non-existing-job"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/non-existing-job/_stats"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(404));
         assertThat(e.getMessage(), containsString("Could not find requested jobs"));
@@ -70,7 +70,7 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testGetJob_GivenJobExists() throws Exception {
         createFarequoteJob();
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/farequote");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/farequote/_stats");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -80,7 +80,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
     public void testGetJobs_GivenNegativeFrom() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=-1"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats?from=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [from] cannot be < 0\""));
@@ -88,7 +88,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
     public void testGetJobs_GivenNegativeSize() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?size=-1"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats?size=-1"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"Parameter [size] cannot be < 0\""));
@@ -96,7 +96,7 @@ public class PrelertJobIT extends ESRestTestCase {
 
     public void testGetJobs_GivenFromAndSizeSumTo10001() throws Exception {
         ResponseException e = expectThrows(ResponseException.class,
-                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=1000&size=11001"));
+                () -> client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats?from=1000&size=11001"));
 
         assertThat(e.getResponse().getStatusLine().getStatusCode(), equalTo(400));
         assertThat(e.getMessage(), containsString("\"reason\":\"The sum of parameters [from] and [size] cannot be higher than 10000."));
@@ -105,7 +105,7 @@ public class PrelertJobIT extends ESRestTestCase {
     public void testGetJobs_GivenSingleJob() throws Exception {
         createFarequoteJob();
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -118,7 +118,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -133,7 +133,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats?from=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -148,7 +148,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?size=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats?size=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);
@@ -163,7 +163,7 @@ public class PrelertJobIT extends ESRestTestCase {
         createFarequoteJob("farequote_2");
         createFarequoteJob("farequote_3");
 
-        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs?from=1&size=1");
+        Response response = client().performRequest("get", PrelertPlugin.BASE_PATH + "jobs/_stats?from=1&size=1");
 
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         String responseAsString = responseEntityToString(response);

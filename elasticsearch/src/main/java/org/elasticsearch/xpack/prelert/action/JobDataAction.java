@@ -49,12 +49,12 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.IOException;
 import java.util.Objects;
 
-public class PostDataAction extends Action<PostDataAction.Request, PostDataAction.Response, PostDataAction.RequestBuilder> {
+public class JobDataAction extends Action<JobDataAction.Request, JobDataAction.Response, JobDataAction.RequestBuilder> {
 
-    public static final PostDataAction INSTANCE = new PostDataAction();
-    public static final String NAME = "cluster:admin/prelert/data/post";
+    public static final JobDataAction INSTANCE = new JobDataAction();
+    public static final String NAME = "cluster:admin/prelert/job/data";
 
-    private PostDataAction() {
+    private JobDataAction() {
         super(NAME);
     }
 
@@ -70,7 +70,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
 
     static class RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder> {
 
-        RequestBuilder(ElasticsearchClient client, PostDataAction action) {
+        RequestBuilder(ElasticsearchClient client, JobDataAction action) {
             super(client, action, new Request());
         }
     }
@@ -260,7 +260,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,
                 IndexNameExpressionResolver indexNameExpressionResolver, AutodetectProcessManager processManager) {
-            super(settings, PostDataAction.NAME, false, threadPool, transportService, actionFilters,
+            super(settings, JobDataAction.NAME, false, threadPool, transportService, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.processManager = processManager;
         }
