@@ -46,21 +46,18 @@ public final class ElasticsearchScripts {
 
     public static final int UPDATE_JOB_RETRY_COUNT = 3;
 
-    private ElasticsearchScripts()
-    {
+    private ElasticsearchScripts() {
         // Do nothing
     }
 
-    public static Script newUpdateBucketCount(long count)
-    {
+    public static Script newUpdateBucketCount(long count) {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(COUNT_PARAM, count);
         return new Script(ScriptType.INLINE, PAINLESS, UPDATE_BUCKET_COUNT, scriptParams);
     }
 
     public static Script newUpdateUsage(long additionalBytes, long additionalFields,
-            long additionalRecords)
-    {
+            long additionalRecords) {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(BYTES_PARAM, additionalBytes);
         scriptParams.put(FIELD_COUNT_PARAM, additionalFields);
@@ -68,8 +65,7 @@ public final class ElasticsearchScripts {
         return new Script(ScriptType.INLINE, PAINLESS, UPDATE_USAGE, scriptParams);
     }
 
-    public static Script updateProcessingTime(Long processingTimeMs)
-    {
+    public static Script updateProcessingTime(Long processingTimeMs) {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put(PROCESSING_TIME_PARAM, processingTimeMs);
         return new Script(ScriptType.INLINE, PAINLESS, UPDATE_AVERAGE_PROCESSING_TIME, scriptParams);
@@ -120,7 +116,7 @@ public final class ElasticsearchScripts {
      * @return {@code} true if successful, {@code} false otherwise
      */
     public static boolean upsertViaScript(Client client, String index, String type, String docId, Script script,
-            Map<String, Object> upsertMap) {
+                                          Map<String, Object> upsertMap) {
         try {
             client.prepareUpdate(index, type, docId)
             .setScript(script)

@@ -16,8 +16,7 @@ package org.elasticsearch.xpack.prelert.job.detectionrules;
 
 import java.util.Locale;
 
-public enum RuleAction
-{
+public enum RuleAction {
     FILTER_RESULTS;
 
     /**
@@ -26,8 +25,7 @@ public enum RuleAction
      * @param value String representation
      * @return The rule action
      */
-    public static RuleAction forString(String value)
-    {
+    public static RuleAction forString(String value) {
         return RuleAction.valueOf(value.toUpperCase(Locale.ROOT));
     }
 }

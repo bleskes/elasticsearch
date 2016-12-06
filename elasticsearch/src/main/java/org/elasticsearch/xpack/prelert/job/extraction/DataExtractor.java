@@ -20,8 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public interface DataExtractor
-{
+public interface DataExtractor {
     /**
      * Set-up the extractor for a new search
      *

@@ -21,8 +21,7 @@ import java.util.ResourceBundle;
 /**
  * Defines the keys for all the message strings
  */
-public final class Messages
-{
+public final class Messages {
     /**
      * The base name of the bundle without the .properties extension
      * or locale
@@ -275,12 +274,10 @@ public final class Messages
 
     public static final String SUPPORT_BUNDLE_SCRIPT_ERROR = "support.bundle.script.error";
 
-    private Messages()
-    {
+    private Messages() {
     }
 
-    public static ResourceBundle load()
-    {
+    public static ResourceBundle load() {
         return ResourceBundle.getBundle(Messages.BUNDLE_NAME, Locale.getDefault());
     }
 
@@ -289,8 +286,7 @@ public final class Messages
      *
      * @param key Must be one of the statics defined in this file]
      */
-    public static String getMessage(String key)
-    {
+    public static String getMessage(String key) {
         return load().getString(key);
     }
 
@@ -300,8 +296,7 @@ public final class Messages
      * @param key the key for the message
      * @param args MessageFormat arguments. See {@linkplain MessageFormat#format(Object)}]
      */
-    public static String getMessage(String key, Object...args)
-    {
+    public static String getMessage(String key, Object...args) {
         return new MessageFormat(load().getString(key), Locale.ROOT).format(args);
     }
 }

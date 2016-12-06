@@ -23,10 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class TransformConfigsVerifier
-{
-    private TransformConfigsVerifier()
-    {
+public class TransformConfigsVerifier {
+    private TransformConfigsVerifier() {
     }
 
     /**
@@ -37,24 +35,20 @@ public class TransformConfigsVerifier
      * <li>Check there are no circular dependencies in the transforms</li>
      * </ol>
      */
-    public static boolean verify(List<TransformConfig> transforms) throws ElasticsearchParseException
-    {
-        for (TransformConfig tr : transforms)
-        {
+    public static boolean verify(List<TransformConfig> transforms) throws ElasticsearchParseException {
+        for (TransformConfig tr : transforms) {
             TransformConfigVerifier.verify(tr);
         }
 
         String duplicatedName = outputNamesAreUnique(transforms);
-        if (duplicatedName != null)
-        {
+        if (duplicatedName != null) {
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_OUTPUT_NAME_USED_MORE_THAN_ONCE, duplicatedName);
             throw new IllegalArgumentException(msg);
         }
 
         // Check for circular dependencies
         int index = checkForCircularDependencies(transforms);
-        if (index >= 0)
-        {
+        if (index >= 0) {
             TransformConfig tc = transforms.get(index);
             String msg = Messages.getMessage(Messages.JOB_CONFIG_TRANSFORM_CIRCULAR_DEPENDENCY, tc.type(), tc.getInputs());
             throw new IllegalArgumentException(msg);
@@ -69,15 +63,11 @@ public class TransformConfigsVerifier
      * unique or the first duplicate name if there are
      * duplications
      */
-    private static  String outputNamesAreUnique(List<TransformConfig> transforms)
-    {
+    private static  String outputNamesAreUnique(List<TransformConfig> transforms) {
         Set<String> fields = new HashSet<>();
-        for (TransformConfig t : transforms)
-        {
-            for (String output : t.getOutputs())
-            {
-                if (fields.contains(output))
-                {
+        for (TransformConfig t : transforms) {
+            for (String output : t.getOutputs()) {
+                if (fields.contains(output)) {
                     return output;
                 }
                 fields.add(output);
@@ -86,8 +76,6 @@ public class TransformConfigsVerifier
 
         return null;
     }
-
-
 
     /**
      * Find circular dependencies in the list of transforms.
@@ -101,16 +89,13 @@ public class TransformConfigsVerifier
      * @return -1 if no circular dependencies else the index of the
      * transform at the start of the circular chain
      */
-    public static int checkForCircularDependencies(List<TransformConfig> transforms)
-    {
-        for (int i=0; i<transforms.size(); i++)
-        {
+    public static int checkForCircularDependencies(List<TransformConfig> transforms) {
+        for (int i=0; i<transforms.size(); i++) {
             Set<Integer> chain = new HashSet<Integer>();
             chain.add(new Integer(i));
 
             TransformConfig tc = transforms.get(i);
-            if (checkCircularDependenciesRecursive(tc, transforms, chain) == false)
-            {
+            if (checkCircularDependenciesRecursive(tc, transforms, chain) == false) {
                 return i;
             }
         }
@@ -119,23 +104,17 @@ public class TransformConfigsVerifier
     }
 
 
-    private static boolean checkCircularDependenciesRecursive(TransformConfig transform,
-            List<TransformConfig> transforms,
-            Set<Integer> chain)
-    {
+    private static boolean checkCircularDependenciesRecursive(TransformConfig transform, List<TransformConfig> transforms,
+                                                              Set<Integer> chain) {
         boolean result = true;
 
-        for (int i=0; i<transforms.size(); i++)
-        {
+        for (int i=0; i<transforms.size(); i++) {
             TransformConfig tc = transforms.get(i);
 
-            for (String input : transform.getInputs())
-            {
-                if (tc.getOutputs().contains(input))
-                {
+            for (String input : transform.getInputs()) {
+                if (tc.getOutputs().contains(input)) {
                     Integer index = new Integer(i);
-                    if (chain.contains(index))
-                    {
+                    if (chain.contains(index)) {
                         return false;
                     }
 
