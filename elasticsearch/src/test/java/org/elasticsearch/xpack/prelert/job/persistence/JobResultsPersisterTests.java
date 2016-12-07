@@ -73,7 +73,7 @@ public class JobResultsPersisterTests extends ESTestCase {
         bucket.setRecords(Arrays.asList(record));
 
         JobResultsPersister persister = new JobResultsPersister(Settings.EMPTY, client);
-        persister.persistBucket(bucket);
+        persister.bulkPersisterBuilder(JOB_ID).persistBucket(bucket).executeRequest();
         List<XContentBuilder> list = captor.getAllValues();
         assertEquals(2, list.size());
 
@@ -131,7 +131,7 @@ public class JobResultsPersisterTests extends ESTestCase {
         r1.setTypical(typicals);
 
         JobResultsPersister persister = new JobResultsPersister(Settings.EMPTY, client);
-        persister.persistRecords(records);
+        persister.bulkPersisterBuilder(JOB_ID).persistRecords(records, true).executeRequest();
         List<XContentBuilder> captured = captor.getAllValues();
         assertEquals(1, captured.size());
 
@@ -173,7 +173,7 @@ public class JobResultsPersisterTests extends ESTestCase {
         influencers.add(inf);
 
         JobResultsPersister persister = new JobResultsPersister(Settings.EMPTY, client);
-        persister.persistInfluencers(influencers);
+        persister.bulkPersisterBuilder(JOB_ID).persistInfluencers(influencers, true).executeRequest();
         List<XContentBuilder> captured = captor.getAllValues();
         assertEquals(1, captured.size());
 
