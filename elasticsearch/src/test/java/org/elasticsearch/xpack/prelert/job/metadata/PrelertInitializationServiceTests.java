@@ -27,7 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.xpack.prelert.job.persistence.ElasticsearchJobProvider;
+import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
 
 import java.util.concurrent.ExecutorService;
 
@@ -51,7 +51,7 @@ public class PrelertInitializationServiceTests extends ESTestCase {
         when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
 
         ClusterService clusterService = mock(ClusterService.class);
-        ElasticsearchJobProvider jobProvider = mock(ElasticsearchJobProvider.class);
+        JobProvider jobProvider = mock(JobProvider.class);
         PrelertInitializationService initializationService =
                 new PrelertInitializationService(Settings.EMPTY, threadPool, clusterService, jobProvider);
 
@@ -78,7 +78,7 @@ public class PrelertInitializationServiceTests extends ESTestCase {
         when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
 
         ClusterService clusterService = mock(ClusterService.class);
-        ElasticsearchJobProvider jobProvider = mock(ElasticsearchJobProvider.class);
+        JobProvider jobProvider = mock(JobProvider.class);
         PrelertInitializationService initializationService =
                 new PrelertInitializationService(Settings.EMPTY, threadPool, clusterService, jobProvider);
 
@@ -103,7 +103,7 @@ public class PrelertInitializationServiceTests extends ESTestCase {
         when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
 
         ClusterService clusterService = mock(ClusterService.class);
-        ElasticsearchJobProvider jobProvider = mock(ElasticsearchJobProvider.class);
+        JobProvider jobProvider = mock(JobProvider.class);
         PrelertInitializationService initializationService =
                 new PrelertInitializationService(Settings.EMPTY, threadPool, clusterService, jobProvider);
 
@@ -113,7 +113,7 @@ public class PrelertInitializationServiceTests extends ESTestCase {
                         .localNodeId("_node_id")
                         .masterNodeId("_node_id"))
                 .metaData(MetaData.builder()
-                        .put(IndexMetaData.builder(ElasticsearchJobProvider.PRELERT_USAGE_INDEX).settings(Settings.builder()
+                        .put(IndexMetaData.builder(JobProvider.PRELERT_USAGE_INDEX).settings(Settings.builder()
                                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
                                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
