@@ -22,10 +22,14 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
-import org.elasticsearch.xpack.prelert.utils.CloseableIterator;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -43,7 +47,7 @@ public class AutodetectResultsParser extends AbstractComponent {
         this.parseFieldMatcherSupplier = parseFieldMatcherSupplier;
     }
 
-    public CloseableIterator<AutodetectResult> parseResults(InputStream in) throws ElasticsearchParseException {
+    public Stream<AutodetectResult> parseResults(InputStream in) throws ElasticsearchParseException {
         try {
             XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(in);
             XContentParser.Token token = parser.nextToken();
@@ -51,7 +55,9 @@ public class AutodetectResultsParser extends AbstractComponent {
             if (token != XContentParser.Token.START_ARRAY) {
                 throw new ElasticsearchParseException("unexpected token [" + token + "]");
             }
-            return new AutodetectResultIterator(in, parser);
+            Spliterator<AutodetectResult> spliterator = Spliterators.spliterator(new AutodetectResultIterator(parser), Long.MAX_VALUE, 0);
+            return StreamSupport.stream(spliterator, false)
+                    .onClose(() -> consumeAndCloseStream(in));
         } catch (IOException e) {
             consumeAndCloseStream(in);
             throw new ElasticsearchParseException(e.getMessage(), e);
@@ -74,15 +80,12 @@ public class AutodetectResultsParser extends AbstractComponent {
         }
     }
 
-    private class AutodetectResultIterator implements CloseableIterator<AutodetectResult> {
+    private class AutodetectResultIterator implements Iterator<AutodetectResult> {
 
-        private final InputStream in;
         private final XContentParser parser;
-
         private XContentParser.Token token;
 
-        private AutodetectResultIterator(InputStream in, XContentParser parser) {
-            this.in = in;
+        private AutodetectResultIterator(XContentParser parser) {
             this.parser = parser;
             token = parser.currentToken();
         }
@@ -106,11 +109,6 @@ public class AutodetectResultsParser extends AbstractComponent {
         @Override
         public AutodetectResult next() {
             return AutodetectResult.PARSER.apply(parser, parseFieldMatcherSupplier);
-        }
-
-        @Override
-        public void close() throws IOException {
-            consumeAndCloseStream(in);
         }
 
     }
