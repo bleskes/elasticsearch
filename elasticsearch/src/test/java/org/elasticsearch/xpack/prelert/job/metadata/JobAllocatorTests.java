@@ -65,7 +65,6 @@ public class JobAllocatorTests extends ESTestCase {
 
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder(cs.metaData().custom(PrelertMetadata.TYPE));
         pmBuilder.putJob((buildJobBuilder("_job_id").build()), false);
-        pmBuilder.createAllocation("_job_id", false);
         cs = ClusterState.builder(cs).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .build();
@@ -82,7 +81,6 @@ public class JobAllocatorTests extends ESTestCase {
     public void testAssignJobsToNodes() {
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
-        pmBuilder.createAllocation("_job_id", false);
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()
@@ -163,7 +161,6 @@ public class JobAllocatorTests extends ESTestCase {
         // add an allocated job
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_id").build(), false);
-        pmBuilder.createAllocation("_id", false);
         pmBuilder.assignToNode("_id", "_node_id");
         cs = ClusterState.builder(new ClusterName("_name"))
                 .nodes(DiscoveryNodes.builder()
@@ -180,7 +177,6 @@ public class JobAllocatorTests extends ESTestCase {
         // make job not allocated
         pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
-        pmBuilder.createAllocation("_job_id", false);
         cs = ClusterState.builder(new ClusterName("_name"))
                 .nodes(DiscoveryNodes.builder()
                         .add(new DiscoveryNode("_id", new LocalTransportAddress("_id"), Version.CURRENT))
@@ -207,8 +203,6 @@ public class JobAllocatorTests extends ESTestCase {
         jobBuilder.setDataDescription(dataDescriptionBuilder);
 
         pmBuilder.putJob(jobBuilder.build(), false);
-        pmBuilder.createAllocation("_job_id", false);
-
         ClusterState cs = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()

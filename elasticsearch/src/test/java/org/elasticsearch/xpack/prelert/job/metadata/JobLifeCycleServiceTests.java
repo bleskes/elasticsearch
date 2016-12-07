@@ -71,7 +71,6 @@ public class JobLifeCycleServiceTests extends ESTestCase {
     public void testClusterChanged_startJob() {
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
-        pmBuilder.createAllocation("_job_id", false);
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()
@@ -84,8 +83,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
 
         pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
-        pmBuilder.createAllocation("_job_id", false);
-        pmBuilder.updateStatus("_job_id", JobStatus.OPENED, null);
+        pmBuilder.updateStatus("_job_id", JobStatus.OPENING, null);
         cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()
@@ -98,7 +96,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
 
         pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
-        pmBuilder.createAllocation("_job_id", false);
+        pmBuilder.updateStatus("_job_id", JobStatus.OPENING, null);
         pmBuilder.assignToNode("_job_id", "_node_id");
         cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
@@ -120,7 +118,6 @@ public class JobLifeCycleServiceTests extends ESTestCase {
 
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
-        pmBuilder.createAllocation("_job_id", false);
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()
@@ -132,7 +129,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
 
         pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
-        pmBuilder.createAllocation("_job_id", false);
+        pmBuilder.updateStatus("_job_id", JobStatus.OPENING, null);
         pmBuilder.updateStatus("_job_id", JobStatus.OPENED, null);
         pmBuilder.updateStatus("_job_id", JobStatus.CLOSING, null);
         pmBuilder.assignToNode("_job_id", "_node_id");
@@ -152,6 +149,7 @@ public class JobLifeCycleServiceTests extends ESTestCase {
 
         PrelertMetadata.Builder pmBuilder = new PrelertMetadata.Builder();
         pmBuilder.putJob(buildJobBuilder("_job_id").build(), false);
+        pmBuilder.removeJob("_job_id");
         ClusterState cs1 = ClusterState.builder(new ClusterName("_cluster_name")).metaData(MetaData.builder()
                 .putCustom(PrelertMetadata.TYPE, pmBuilder.build()))
                 .nodes(DiscoveryNodes.builder()

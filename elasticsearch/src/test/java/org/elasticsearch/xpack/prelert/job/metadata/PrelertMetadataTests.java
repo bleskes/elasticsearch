@@ -50,12 +50,11 @@ public class PrelertMetadataTests extends ESTestCase {
         builder.putJob(job2, false);
         builder.putJob(job3, false);
 
-        builder.createAllocation(job1.getId(), false);
-        builder.assignToNode(job1.getId(), "node1");
-        builder.createAllocation(job2.getId(), false);
+        builder.updateStatus(job1.getId(), JobStatus.OPENING, null);
         builder.assignToNode(job2.getId(), "node1");
-        builder.createAllocation(job3.getId(), false);
+        builder.updateStatus(job2.getId(), JobStatus.OPENING, null);
         builder.assignToNode(job3.getId(), "node1");
+        builder.updateStatus(job3.getId(), JobStatus.OPENING, null);
 
         PrelertMetadata expected = builder.build();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -77,11 +76,11 @@ public class PrelertMetadataTests extends ESTestCase {
         builder.putJob(job2, false);
         builder.putJob(job3, false);
 
-        builder.createAllocation(job1.getId(), false);
+        builder.updateStatus(job1.getId(), JobStatus.OPENING, null);
         builder.assignToNode(job1.getId(), "node1");
-        builder.createAllocation(job2.getId(), false);
+        builder.updateStatus(job2.getId(), JobStatus.OPENING, null);
         builder.assignToNode(job2.getId(), "node1");
-        builder.createAllocation(job3.getId(), false);
+        builder.updateStatus(job3.getId(), JobStatus.OPENING, null);
         builder.assignToNode(job3.getId(), "node1");
 
         PrelertMetadata expected = builder.build();
@@ -119,7 +118,7 @@ public class PrelertMetadataTests extends ESTestCase {
     public void testUpdateAllocation_setFinishedTime() {
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(buildJobBuilder("_job_id").build(), false);
-        builder.createAllocation("_job_id", false);
+        builder.updateStatus("_job_id", JobStatus.OPENING, null);
 
         builder.updateStatus("_job_id", JobStatus.OPENED, null);
         PrelertMetadata prelertMetadata = builder.build();

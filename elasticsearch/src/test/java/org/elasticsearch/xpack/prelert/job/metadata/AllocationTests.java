@@ -26,7 +26,7 @@ public class AllocationTests extends AbstractSerializingTestCase<Allocation> {
 
     @Override
     protected Allocation createTestInstance() {
-        String nodeId = randomAsciiOfLength(10);
+        String nodeId = randomBoolean() ? randomAsciiOfLength(10) : null;
         String jobId = randomAsciiOfLength(10);
         boolean ignoreDowntime = randomBoolean();
         JobStatus jobStatus = randomFrom(JobStatus.values());
