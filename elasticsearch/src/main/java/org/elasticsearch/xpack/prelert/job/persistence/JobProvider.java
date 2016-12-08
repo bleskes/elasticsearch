@@ -501,10 +501,8 @@ public class JobProvider {
             } catch (IOException e) {
                 throw new ElasticsearchParseException("failed to parse PerPartitionMaxProbabilities", e);
             }
-            PerPartitionMaxProbabilities perPartitionMaxProbabilities =
-                    PerPartitionMaxProbabilities.PARSER.apply(parser, () -> parseFieldMatcher);
-            perPartitionMaxProbabilities.setId(hit.getId());
-            results.add(perPartitionMaxProbabilities);
+
+            results.add(PerPartitionMaxProbabilities.PARSER.apply(parser, () -> parseFieldMatcher));
         }
 
         return results;
@@ -749,11 +747,8 @@ public class JobProvider {
             } catch (IOException e) {
                 throw new ElasticsearchParseException("failed to parse records", e);
             }
-            AnomalyRecord record = AnomalyRecord.PARSER.apply(parser, () -> parseFieldMatcher);
 
-            // set the ID
-            record.setId(hit.getId());
-            results.add(record);
+            results.add(AnomalyRecord.PARSER.apply(parser, () -> parseFieldMatcher));
         }
 
         return new QueryPage<>(results, searchResponse.getHits().getTotalHits(), AnomalyRecord.RESULTS_FIELD);
@@ -818,10 +813,8 @@ public class JobProvider {
             } catch (IOException e) {
                 throw new ElasticsearchParseException("failed to parse influencer", e);
             }
-            Influencer influencer = Influencer.PARSER.apply(parser, () -> parseFieldMatcher);
-            influencer.setId(hit.getId());
 
-            influencers.add(influencer);
+            influencers.add(Influencer.PARSER.apply(parser, () -> parseFieldMatcher));
         }
 
         return new QueryPage<>(influencers, response.getHits().getTotalHits(), Influencer.RESULTS_FIELD);

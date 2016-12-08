@@ -100,8 +100,7 @@ public class JobResultsPersister extends AbstractComponent {
 
                 bulkRequest.add(client.prepareIndex(indexName, Result.TYPE.getPreferredName(), bucket.getId()).setSource(content));
 
-                persistBucketInfluencersStandalone(jobId, bucket.getId(), bucket.getBucketInfluencers(), bucket.getTimestamp(),
-                        bucket.isInterim());
+                persistBucketInfluencersStandalone(jobId, bucket.getId(), bucket.getBucketInfluencers());
             } catch (IOException e) {
                 logger.error(new ParameterizedMessage("[{}] Error serialising bucket", new Object[] {jobId}, e));
             }
@@ -109,13 +108,13 @@ public class JobResultsPersister extends AbstractComponent {
             return this;
         }
 
-        private void persistBucketInfluencersStandalone(String jobId, String bucketId, List<BucketInfluencer> bucketInfluencers,
-                                                Date bucketTime, boolean isInterim) throws IOException {
+        private void persistBucketInfluencersStandalone(String jobId, String bucketId, List<BucketInfluencer> bucketInfluencers)
+                throws IOException {
             if (bucketInfluencers != null && bucketInfluencers.isEmpty() == false) {
                 for (BucketInfluencer bucketInfluencer : bucketInfluencers) {
-                    XContentBuilder content = serialiseBucketInfluencerStandalone(bucketInfluencer, bucketTime, isInterim);
+                    XContentBuilder content = serialiseBucketInfluencerStandalone(bucketInfluencer);
                     // Need consistent IDs to ensure overwriting on renormalisation
-                    String id = bucketId + bucketInfluencer.getInfluencerFieldName();
+                    String id = bucketInfluencer.getId();
                     logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
                             jobId, BucketInfluencer.RESULT_TYPE_VALUE, indexName, id);
                     bulkRequest.add(client.prepareIndex(indexName, Result.TYPE.getPreferredName(), id).setSource(content));
@@ -127,27 +126,17 @@ public class JobResultsPersister extends AbstractComponent {
          * Persist a list of anomaly records
          *
          * @param records the records to persist
-         * @param autoGenerateId If true then persist the influencer with an auto generated ID
-         *                       else use {@link AnomalyRecord#getId()}
          * @return this
          */
-        public Builder persistRecords(List<AnomalyRecord> records, boolean autoGenerateId) {
+        public Builder persistRecords(List<AnomalyRecord> records) {
 
             try {
                 for (AnomalyRecord record : records) {
                     XContentBuilder content = toXContentBuilder(record);
-
-                    if (autoGenerateId) {
-                        logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with auto-generated ID",
-                                jobId, AnomalyRecord.RESULT_TYPE_VALUE, indexName);
-                        bulkRequest.add(client.prepareIndex(indexName, Result.TYPE.getPreferredName()).setSource(content));
-                    }
-                    else {
-                        logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
-                                jobId, AnomalyRecord.RESULT_TYPE_VALUE, indexName, record.getId());
-                        bulkRequest.add(
-                                client.prepareIndex(indexName, Result.TYPE.getPreferredName(), record.getId()).setSource(content));
-                    }
+                    logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
+                            jobId, AnomalyRecord.RESULT_TYPE_VALUE, indexName, record.getId());
+                    bulkRequest.add(
+                            client.prepareIndex(indexName, Result.TYPE.getPreferredName(), record.getId()).setSource(content));
                 }
             } catch (IOException e) {
                 logger.error(new ParameterizedMessage("[{}] Error serialising records", new Object [] {jobId}, e));
@@ -161,25 +150,16 @@ public class JobResultsPersister extends AbstractComponent {
          * an auto generated ID
          *
          * @param influencers the influencers to persist
-         * @param autoGenerateId If true then persist the influencer with an auto generated ID
-         *                       else use {@link Influencer#getId()}
          * @return this
          */
-        public Builder persistInfluencers(List<Influencer> influencers, boolean autoGenerateId) {
+        public Builder persistInfluencers(List<Influencer> influencers) {
             try {
                 for (Influencer influencer : influencers) {
                     XContentBuilder content = toXContentBuilder(influencer);
-                    if (autoGenerateId) {
-                        logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with auto-generated ID",
-                                jobId, Influencer.RESULT_TYPE_VALUE, indexName);
-                        bulkRequest.add(client.prepareIndex(indexName, Result.TYPE.getPreferredName()).setSource(content));
-                    }
-                    else {
-                        logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
-                                jobId, Influencer.RESULT_TYPE_VALUE, indexName, influencer.getId());
-                        bulkRequest.add(
-                                client.prepareIndex(indexName, Result.TYPE.getPreferredName(), influencer.getId()).setSource(content));
-                    }
+                    logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
+                            jobId, Influencer.RESULT_TYPE_VALUE, indexName, influencer.getId());
+                    bulkRequest.add(
+                            client.prepareIndex(indexName, Result.TYPE.getPreferredName(), influencer.getId()).setSource(content));
                 }
             } catch (IOException e) {
                 logger.error(new ParameterizedMessage("[{}] Error serialising influencers", new Object[] {jobId}, e));
@@ -192,26 +172,16 @@ public class JobResultsPersister extends AbstractComponent {
          * Persist {@link PerPartitionMaxProbabilities}
          *
          * @param partitionProbabilities The probabilities to persist
-         * @param autoGenerateId If true then persist the PerPartitionMaxProbabilities with an auto generated ID
-         *                       else use {@link PerPartitionMaxProbabilities#getId()}
          * @return this
          */
-        public Builder persistPerPartitionMaxProbabilities(PerPartitionMaxProbabilities partitionProbabilities, boolean autoGenerateId) {
+        public Builder persistPerPartitionMaxProbabilities(PerPartitionMaxProbabilities partitionProbabilities) {
             try {
                 XContentBuilder builder = toXContentBuilder(partitionProbabilities);
-
-                if (autoGenerateId) {
-                    logger.trace("[{}] ES API CALL: index result type {} to index {} at timestamp {}",
-                            jobId, PerPartitionMaxProbabilities.RESULT_TYPE_VALUE, indexName, partitionProbabilities.getTimestamp());
-                    bulkRequest.add(client.prepareIndex(indexName, Result.TYPE.getPreferredName()).setSource(builder));
-                }
-                else {
-                    logger.trace("[{}] ES API CALL: index result type {} to index {} at timestamp {} with ID {}",
-                            jobId, PerPartitionMaxProbabilities.RESULT_TYPE_VALUE, indexName, partitionProbabilities.getTimestamp(),
-                            partitionProbabilities.getId());
-                    bulkRequest.add(client.prepareIndex(indexName, Result.TYPE.getPreferredName(), partitionProbabilities.getId())
-                            .setSource(builder));
-                }
+                logger.trace("[{}] ES API CALL: index result type {} to index {} at timestamp {} with ID {}",
+                        jobId, PerPartitionMaxProbabilities.RESULT_TYPE_VALUE, indexName, partitionProbabilities.getTimestamp(),
+                        partitionProbabilities.getId());
+                bulkRequest.add(client.prepareIndex(indexName, Result.TYPE.getPreferredName(), partitionProbabilities.getId())
+                        .setSource(builder));
             } catch (IOException e) {
                 logger.error(new ParameterizedMessage("[{}] error serialising bucket per partition max normalized scores",
                         new Object[]{jobId}, e));
@@ -231,7 +201,6 @@ public class JobResultsPersister extends AbstractComponent {
             }
         }
     }
-
 
     /**
      * Persist the category definition
@@ -344,13 +313,9 @@ public class JobResultsPersister extends AbstractComponent {
         return builder;
     }
 
-    private XContentBuilder serialiseBucketInfluencerStandalone(BucketInfluencer bucketInfluencer,
-            Date bucketTime, boolean isInterim) throws IOException {
-        BucketInfluencer influencer = new BucketInfluencer(bucketInfluencer);
-        influencer.setIsInterim(isInterim);
-        influencer.setTimestamp(bucketTime);
+    private XContentBuilder serialiseBucketInfluencerStandalone(BucketInfluencer bucketInfluencer) throws IOException {
         XContentBuilder builder = jsonBuilder();
-        influencer.toXContent(builder, ToXContent.EMPTY_PARAMS);
+        bucketInfluencer.toXContent(builder, ToXContent.EMPTY_PARAMS);
         return builder;
     }
 

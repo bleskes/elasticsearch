@@ -22,6 +22,7 @@ import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class PerPartitionMaxProbabilitiesTests extends AbstractSerializingTestCase<PerPartitionMaxProbabilities> {
@@ -34,7 +35,8 @@ public class PerPartitionMaxProbabilitiesTests extends AbstractSerializingTestCa
             pps.add(new PerPartitionMaxProbabilities.PartitionProbability(randomAsciiOfLength(12), randomDouble()));
         }
 
-        return new PerPartitionMaxProbabilities(randomAsciiOfLength(20), new DateTime(randomDateTimeZone()).toDate(), pps);
+        return new PerPartitionMaxProbabilities(randomAsciiOfLength(20), new DateTime(randomDateTimeZone()).toDate(),
+                randomPositiveLong(), pps);
     }
 
     @Override
@@ -84,7 +86,7 @@ public class PerPartitionMaxProbabilitiesTests extends AbstractSerializingTestCa
     }
 
     private AnomalyRecord createAnomalyRecord(String partitionFieldValue, double normalizedProbability) {
-        AnomalyRecord record = new AnomalyRecord("foo");
+        AnomalyRecord record = new AnomalyRecord("foo", new Date(), 600, 1);
         record.setPartitionFieldValue(partitionFieldValue);
         record.setNormalizedProbability(normalizedProbability);
         return record;
