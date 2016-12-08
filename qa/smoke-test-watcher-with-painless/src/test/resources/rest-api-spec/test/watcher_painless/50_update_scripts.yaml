@@ -2,6 +2,8 @@
 # See https://github.com/elastic/x-plugins/issues/4237
 ---
 "Test transform scripts are updated on execution":
+  - skip:
+      features: warnings
   - do:
     cluster.health:
       wait_for_status: yellow
@@ -101,6 +103,8 @@
 
 ---
 "Test condition scripts are updated on execution":
+  - skip:
+      features: warnings
   - do:
     cluster.health:
       wait_for_status: yellow
@@ -197,4 +201,3 @@
 
   - match: { "watch_record.watch_id": "my_watch" }
   - match: { "watch_record.result.condition.met": true }
-

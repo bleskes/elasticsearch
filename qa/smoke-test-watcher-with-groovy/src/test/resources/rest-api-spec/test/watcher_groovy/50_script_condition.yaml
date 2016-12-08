@@ -1,6 +1,7 @@
 ---
 "Test the execution of a Groovy closure in script condition":
-
+  - skip:
+      features: warnings
   - do:
       bulk:
         refresh: true
