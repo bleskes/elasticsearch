@@ -17,11 +17,12 @@
 
 package org.elasticsearch.xpack.watcher.transport.action.delete;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.test.http.MockResponse;
+import org.elasticsearch.test.http.MockWebServer;
 import org.elasticsearch.xpack.common.http.HttpRequestTemplate;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
 import org.elasticsearch.xpack.watcher.history.HistoryStore;
@@ -34,7 +35,6 @@ import org.elasticsearch.xpack.watcher.transport.actions.get.GetWatchResponse;
 import org.elasticsearch.xpack.watcher.transport.actions.put.PutWatchResponse;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.sleep;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -102,12 +102,10 @@ public class DeleteWatchTests extends AbstractWatcherIntegrationTestCase {
         MockResponse response = new MockResponse();
         response.setBody("foo");
         response.setResponseCode(200);
-        response.setBodyDelay(5, TimeUnit.SECONDS);
+        response.setBodyDelay(TimeValue.timeValueSeconds(5));
 
-        MockWebServer server = new MockWebServer();
-        server.enqueue(response);
-
-        try {
+        try (MockWebServer server = new MockWebServer()) {
+            server.enqueue(response);
             server.start();
             HttpRequestTemplate template = HttpRequestTemplate.builder(server.getHostName(), server.getPort()).path("/").build();
 
@@ -145,8 +143,6 @@ public class DeleteWatchTests extends AbstractWatcherIntegrationTestCase {
             assertThat(state, is("executed"));
             // no exception occured
             assertThat(source, not(hasKey("exception")));
-        } finally {
-            server.shutdown();
         }
     }
 }

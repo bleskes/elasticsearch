@@ -17,14 +17,13 @@
 
 package org.elasticsearch.xpack.watcher.actions.email;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.QueueDispatcher;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.test.http.MockResponse;
+import org.elasticsearch.test.http.MockWebServer;
 import org.elasticsearch.xpack.common.http.HttpRequestTemplate;
 import org.elasticsearch.xpack.common.http.Scheme;
 import org.elasticsearch.xpack.notification.email.DataAttachment;
@@ -73,7 +72,6 @@ import static org.hamcrest.Matchers.startsWith;
 public class EmailAttachmentTests extends AbstractWatcherIntegrationTestCase {
 
     private MockWebServer webServer = new MockWebServer();
-    private QueueDispatcher dispatcher = new QueueDispatcher();
     private MockResponse mockResponse = new MockResponse().setResponseCode(200)
             .addHeader("Content-Type", "application/foo").setBody("This is the content");
     private EmailServer server;
@@ -81,9 +79,6 @@ public class EmailAttachmentTests extends AbstractWatcherIntegrationTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        dispatcher.setFailFast(true);
-        webServer.setDispatcher(dispatcher);
         webServer.enqueue(mockResponse);
         webServer.start();
 
@@ -93,7 +88,7 @@ public class EmailAttachmentTests extends AbstractWatcherIntegrationTestCase {
     @After
     public void cleanup() throws Exception {
         server.stop();
-        webServer.shutdown();
+        webServer.close();
     }
 
     @Override
