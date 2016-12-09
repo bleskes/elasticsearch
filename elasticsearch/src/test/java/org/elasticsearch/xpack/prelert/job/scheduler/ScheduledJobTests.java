@@ -20,8 +20,6 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.action.FlushJobAction;
 import org.elasticsearch.xpack.prelert.action.JobDataAction;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
-import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
 import org.junit.Before;
@@ -73,8 +71,7 @@ public class ScheduledJobTests extends ESTestCase {
 
     public void testLookBackRunWithEndTime() throws Exception {
         ScheduledJob scheduledJob = createScheduledJob(1000, 500, -1, -1);
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, 1000L);
-        assertNull(scheduledJob.runLookBack(schedulerState));
+        assertNull(scheduledJob.runLookBack(0L, 1000L));
 
         verify(dataExtractor).newSearch(eq(0L), eq(1000L), any());
         FlushJobAction.Request flushRequest = new FlushJobAction.Request("_job_id");
@@ -87,8 +84,7 @@ public class ScheduledJobTests extends ESTestCase {
         long frequencyMs = 1000;
         long queryDelayMs = 500;
         ScheduledJob scheduledJob = createScheduledJob(frequencyMs, queryDelayMs, -1, -1);
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, null);
-        long next = scheduledJob.runLookBack(schedulerState);
+        long next = scheduledJob.runLookBack(0L, null);
         assertEquals(2000 + frequencyMs + 100, next);
 
         verify(dataExtractor).newSearch(eq(0L), eq(1500L), any());
@@ -110,8 +106,7 @@ public class ScheduledJobTests extends ESTestCase {
         long frequencyMs = 1000;
         long queryDelayMs = 500;
         ScheduledJob scheduledJob = createScheduledJob(frequencyMs, queryDelayMs, latestFinalBucketEndTimeMs, latestRecordTimeMs);
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, null);
-        long next = scheduledJob.runLookBack(schedulerState);
+        long next = scheduledJob.runLookBack(0L, null);
         assertEquals(10000 + frequencyMs + 100, next);
 
         verify(dataExtractor).newSearch(eq(5000 + 1L), eq(currentTime - queryDelayMs), any());
@@ -140,8 +135,7 @@ public class ScheduledJobTests extends ESTestCase {
         when(dataExtractor.hasNext()).thenReturn(false);
 
         ScheduledJob scheduledJob = createScheduledJob(1000, 500, -1, -1);
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, 1000L);
-        expectThrows(ScheduledJob.EmptyDataCountException.class, () -> scheduledJob.runLookBack(schedulerState));
+        expectThrows(ScheduledJob.EmptyDataCountException.class, () -> scheduledJob.runLookBack(0L, 1000L));
     }
 
     public void testExtractionProblem() throws Exception {
@@ -150,8 +144,7 @@ public class ScheduledJobTests extends ESTestCase {
         when(dataExtractor.next()).thenThrow(new IOException());
 
         ScheduledJob scheduledJob = createScheduledJob(1000, 500, -1, -1);
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, 1000L);
-        expectThrows(ScheduledJob.ExtractionProblemException.class, () -> scheduledJob.runLookBack(schedulerState));
+        expectThrows(ScheduledJob.ExtractionProblemException.class, () -> scheduledJob.runLookBack(0L, 1000L));
 
         currentTime = 3001;
         expectThrows(ScheduledJob.ExtractionProblemException.class, scheduledJob::runRealtime);
@@ -171,8 +164,7 @@ public class ScheduledJobTests extends ESTestCase {
         when(client.execute(same(JobDataAction.INSTANCE), eq(new JobDataAction.Request("_job_id")))).thenThrow(new RuntimeException());
 
         ScheduledJob scheduledJob = createScheduledJob(1000, 500, -1, -1);
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, 1000L);
-        expectThrows(ScheduledJob.AnalysisProblemException.class, () -> scheduledJob.runLookBack(schedulerState));
+        expectThrows(ScheduledJob.AnalysisProblemException.class, () -> scheduledJob.runLookBack(0L, 1000L));
 
         currentTime = 3001;
         expectThrows(ScheduledJob.EmptyDataCountException.class, scheduledJob::runRealtime);

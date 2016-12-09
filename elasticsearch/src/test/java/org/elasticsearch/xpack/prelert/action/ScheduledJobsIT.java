@@ -22,7 +22,6 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.ParseFieldMatcher;
-import org.elasticsearch.common.network.NetworkAddress;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.plugins.Plugin;
@@ -33,9 +32,8 @@ import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.Job;
-import org.elasticsearch.xpack.prelert.job.JobSchedulerStatus;
+import org.elasticsearch.xpack.prelert.job.SchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
-import org.elasticsearch.xpack.prelert.job.SchedulerState;
 import org.elasticsearch.xpack.prelert.job.metadata.PrelertMetadata;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
 import org.junit.After;
@@ -86,8 +84,8 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         OpenJobAction.Response openJobResponse = client().execute(OpenJobAction.INSTANCE, new OpenJobAction.Request(job.getId())).get();
         assertTrue(openJobResponse.isAcknowledged());
 
-        SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, now);
-        StartJobSchedulerAction.Request startSchedulerRequest = new StartJobSchedulerAction.Request("_job_id", schedulerState);
+        StartJobSchedulerAction.Request startSchedulerRequest = new StartJobSchedulerAction.Request("_job_id", 0L);
+        startSchedulerRequest.setEndTime(now);
         client().execute(StartJobSchedulerAction.INSTANCE, startSchedulerRequest).get();
         assertBusy(() -> {
             DataCounts dataCounts = getDataCounts("_job_id");
@@ -95,8 +93,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
 
             PrelertMetadata prelertMetadata = client().admin().cluster().prepareState().all().get()
                     .getState().metaData().custom(PrelertMetadata.TYPE);
-            assertThat(prelertMetadata.getAllocations().get("_job_id").getSchedulerState().getStatus(),
-                    equalTo(JobSchedulerStatus.STOPPED));
+            assertThat(prelertMetadata.getSchedulerStatuses().get("_job_id"), equalTo(SchedulerStatus.STOPPED));
         });
     }
 
@@ -119,9 +116,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         AtomicReference<Throwable> errorHolder = new AtomicReference<>();
         Thread t = new Thread(() -> {
             try {
-                SchedulerState schedulerState = new SchedulerState(JobSchedulerStatus.STARTED, 0L, null);
-                StartJobSchedulerAction.Request startSchedulerRequest =
-                        new StartJobSchedulerAction.Request("_job_id", schedulerState);
+                StartJobSchedulerAction.Request startSchedulerRequest = new StartJobSchedulerAction.Request("_job_id", 0L);
                 client().execute(StartJobSchedulerAction.INSTANCE, startSchedulerRequest).get();
             } catch (Exception | AssertionError e) {
                 errorHolder.set(e);
@@ -147,8 +142,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
         assertBusy(() -> {
             PrelertMetadata prelertMetadata = client().admin().cluster().prepareState().all().get()
                     .getState().metaData().custom(PrelertMetadata.TYPE);
-            assertThat(prelertMetadata.getAllocations().get("_job_id").getSchedulerState().getStatus(),
-                    equalTo(JobSchedulerStatus.STOPPED));
+            assertThat(prelertMetadata.getSchedulerStatuses().get("_job_id"), equalTo(SchedulerStatus.STOPPED));
         });
         assertThat(errorHolder.get(), nullValue());
     }
@@ -226,7 +220,7 @@ public class ScheduledJobsIT extends ESIntegTestCase {
                     } catch (Exception e) {
                         fail();
                     }
-                    assertThat(r.getResponse().results().get(0).getSchedulerState().getStatus(), equalTo(JobSchedulerStatus.STOPPED));
+                    assertThat(r.getResponse().results().get(0).getSchedulerStatus(), equalTo(SchedulerStatus.STOPPED));
                 });
             } catch (Exception e) {
                 // ignore
