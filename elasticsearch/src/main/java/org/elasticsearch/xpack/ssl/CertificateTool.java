@@ -650,7 +650,7 @@ public class CertificateTool extends SettingCommand {
         private final ParseFieldMatcher parseFieldMatcher;
 
         CertInfoParseContext() {
-            this.parseFieldMatcher = new ParseFieldMatcher(true);
+            this.parseFieldMatcher = ParseFieldMatcher.EMPTY;
         }
 
         @Override
