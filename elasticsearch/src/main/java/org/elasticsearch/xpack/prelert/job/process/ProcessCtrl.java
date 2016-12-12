@@ -50,7 +50,7 @@ public class ProcessCtrl {
     static final String AUTODETECT_PATH = "./" + AUTODETECT;
 
     /**
-     * The normalisation native program name - always loaded from the same directory as the controller process
+     * The normalization native program name - always loaded from the same directory as the controller process
      */
     public static final String NORMALIZE = "normalize";
     static final String NORMALIZE_PATH = "./" + NORMALIZE;
@@ -233,7 +233,7 @@ public class ProcessCtrl {
             command.add(IGNORE_DOWNTIME_ARG);
         }
 
-        if (ProcessCtrl.modelConfigFilePresent(env)) {
+        if (modelConfigFilePresent(env)) {
             String modelConfigFile = PrelertPlugin.resolveConfigFile(env, PRELERT_MODEL_CONF).toString();
             command.add(MODEL_CONFIG_ARG + modelConfigFile);
         }
@@ -267,7 +267,7 @@ public class ProcessCtrl {
     /**
      * Build the command to start the normalizer process.
      */
-    public static List<String> buildNormaliserCommand(Environment env, String jobId, String quantilesState, Integer bucketSpan,
+    public static List<String> buildNormalizerCommand(Environment env, String jobId, String quantilesState, Integer bucketSpan,
             boolean perPartitionNormalization, long controllerPid) throws IOException {
 
         List<String> command = new ArrayList<>();
@@ -280,7 +280,7 @@ public class ProcessCtrl {
         }
 
         if (quantilesState != null) {
-            Path quantilesStateFilePath = writeNormaliserInitState(jobId, quantilesState, env);
+            Path quantilesStateFilePath = writeNormalizerInitState(jobId, quantilesState, env);
 
             String stateFileArg = QUANTILES_STATE_PATH_ARG + quantilesStateFilePath;
             command.add(stateFileArg);
@@ -296,9 +296,9 @@ public class ProcessCtrl {
     }
 
     /**
-     * Write the normaliser init state to file.
+     * Write the normalizer init state to file.
      */
-    public static Path writeNormaliserInitState(String jobId, String state, Environment env)
+    public static Path writeNormalizerInitState(String jobId, String state, Environment env)
             throws IOException {
         // createTempFile has a race condition where it may return the same
         // temporary file name to different threads if called simultaneously

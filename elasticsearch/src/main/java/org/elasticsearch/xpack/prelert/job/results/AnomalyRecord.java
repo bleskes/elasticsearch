@@ -81,7 +81,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
     public static final ParseField CAUSES = new ParseField("causes");
 
     /**
-     * Normalisation
+     * Normalization
      */
     public static final ParseField ANOMALY_SCORE = new ParseField("anomaly_score");
     public static final ParseField NORMALIZED_PROBABILITY = new ParseField("normalized_probability");
@@ -156,7 +156,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
 
     private List<Influence> influencers;
 
-    private boolean hadBigNormalisedUpdate;
+    private boolean hadBigNormalizedUpdate;
 
     public AnomalyRecord(String jobId, Date timestamp, long bucketSpan, int sequenceNum) {
         this.jobId = jobId;
@@ -199,7 +199,6 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
         if (in.readBoolean()) {
             influencers = in.readList(Influence::new);
         }
-        hadBigNormalisedUpdate = in.readBoolean();
     }
 
     @Override
@@ -244,7 +243,6 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
         if (hasInfluencers) {
             out.writeList(influencers);
         }
-        out.writeBoolean(hadBigNormalisedUpdate);
     }
 
     @Override
@@ -500,7 +498,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
     @Override
     public int hashCode() {
 
-        // hadBigNormalisedUpdate is deliberately excluded from the hash
+        // hadBigNormalizedUpdate is deliberately excluded from the hash
 
         return Objects.hash(jobId, detectorIndex, sequenceNum, bucketSpan, probability, anomalyScore,
                 normalizedProbability, initialNormalizedProbability, typical, actual,
@@ -522,7 +520,7 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
 
         AnomalyRecord that = (AnomalyRecord) other;
 
-        // hadBigNormalisedUpdate is deliberately excluded from the test
+        // hadBigNormalizedUpdate is deliberately excluded from the test
         return Objects.equals(this.jobId, that.jobId)
                 && this.detectorIndex == that.detectorIndex
                 && this.sequenceNum == that.sequenceNum
@@ -549,15 +547,15 @@ public class AnomalyRecord extends ToXContentToBytes implements Writeable {
                 && Objects.equals(this.influencers, that.influencers);
     }
 
-    public boolean hadBigNormalisedUpdate() {
-        return this.hadBigNormalisedUpdate;
+    public boolean hadBigNormalizedUpdate() {
+        return this.hadBigNormalizedUpdate;
     }
 
-    public void resetBigNormalisedUpdateFlag() {
-        hadBigNormalisedUpdate = false;
+    public void resetBigNormalizedUpdateFlag() {
+        hadBigNormalizedUpdate = false;
     }
 
-    public void raiseBigNormalisedUpdateFlag() {
-        hadBigNormalisedUpdate = true;
+    public void raiseBigNormalizedUpdateFlag() {
+        hadBigNormalizedUpdate = true;
     }
 }

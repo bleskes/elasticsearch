@@ -21,7 +21,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
 import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
-import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormaliser;
+import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormalizer;
 import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
@@ -60,7 +60,7 @@ public class AutoDetectResultProcessor {
 
     private static final Logger LOGGER = Loggers.getLogger(AutoDetectResultProcessor.class);
 
-    private final Renormaliser renormaliser;
+    private final Renormalizer renormalizer;
     private final JobResultsPersister persister;
     private final AutodetectResultsParser parser;
 
@@ -69,23 +69,23 @@ public class AutoDetectResultProcessor {
 
     private volatile ModelSizeStats latestModelSizeStats;
 
-    public AutoDetectResultProcessor(Renormaliser renormaliser, JobResultsPersister persister, AutodetectResultsParser parser) {
-        this(renormaliser, persister, parser, new FlushListener());
+    public AutoDetectResultProcessor(Renormalizer renormalizer, JobResultsPersister persister, AutodetectResultsParser parser) {
+        this(renormalizer, persister, parser, new FlushListener());
     }
 
-    AutoDetectResultProcessor(Renormaliser renormaliser, JobResultsPersister persister, AutodetectResultsParser parser,
+    AutoDetectResultProcessor(Renormalizer renormalizer, JobResultsPersister persister, AutodetectResultsParser parser,
                               FlushListener flushListener) {
-        this.renormaliser = renormaliser;
+        this.renormalizer = renormalizer;
         this.persister = persister;
         this.parser = parser;
         this.flushListener = flushListener;
     }
 
-    public void process(String jobId, InputStream in, boolean isPerPartitionNormalisation) {
+    public void process(String jobId, InputStream in, boolean isPerPartitionNormalization) {
         try (Stream<AutodetectResult> stream = parser.parseResults(in)) {
             int bucketCount = 0;
             Iterator<AutodetectResult> iterator = stream.iterator();
-            Context context = new Context(jobId, isPerPartitionNormalisation, persister.bulkPersisterBuilder(jobId));
+            Context context = new Context(jobId, isPerPartitionNormalization, persister.bulkPersisterBuilder(jobId));
             while (iterator.hasNext()) {
                 AutodetectResult result = iterator.next();
                 processResult(context, result);
@@ -101,7 +101,7 @@ public class AutoDetectResultProcessor {
         } finally {
             completionLatch.countDown();
             flushListener.clear();
-            renormaliser.shutdown();
+            renormalizer.shutdown();
         }
     }
 
@@ -160,11 +160,11 @@ public class AutoDetectResultProcessor {
         if (quantiles != null) {
             persister.persistQuantiles(quantiles);
 
-            LOGGER.debug("[{}] Quantiles parsed from output - will " + "trigger renormalisation of scores", context.jobId);
+            LOGGER.debug("[{}] Quantiles parsed from output - will " + "trigger renormalization of scores", context.jobId);
             if (context.isPerPartitionNormalization) {
-                renormaliser.renormaliseWithPartition(quantiles);
+                renormalizer.renormalizeWithPartition(quantiles);
             } else {
-                renormaliser.renormalise(quantiles);
+                renormalizer.renormalize(quantiles);
             }
         }
         FlushAcknowledgement flushAcknowledgement = result.getFlushAcknowledgement();
@@ -202,8 +202,8 @@ public class AutoDetectResultProcessor {
         return flushListener.waitForFlush(flushId, timeout.toMillis());
     }
 
-    public void waitUntilRenormaliserIsIdle() {
-        renormaliser.waitUntilIdle();
+    public void waitUntilRenormalizerIsIdle() {
+        renormalizer.waitUntilIdle();
     }
 
     static class Context {
