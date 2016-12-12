@@ -24,7 +24,6 @@ import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
-import org.elasticsearch.rest.action.RestActions;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.ValidateDetectorAction;
 
@@ -44,7 +43,7 @@ public class RestValidateDetectorAction extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        BytesReference bodyBytes = RestActions.getRestContent(restRequest);
+        BytesReference bodyBytes = restRequest.contentOrSourceParam();
         XContentParser parser = XContentFactory.xContent(bodyBytes).createParser(bodyBytes);
         ValidateDetectorAction.Request validateDetectorRequest = ValidateDetectorAction.Request.parseRequest(parser,
                 () -> parseFieldMatcher);
