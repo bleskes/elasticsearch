@@ -801,7 +801,7 @@ public class JobProvider {
         try {
             response = searchRequestBuilder.get();
         } catch (IndexNotFoundException e) {
-            throw new ResourceNotFoundException("job " + jobId + " not found");
+            throw ExceptionsHelper.missingJobException(jobId);
         }
 
         List<Influencer> influencers = new ArrayList<>();
@@ -1047,6 +1047,40 @@ public class JobProvider {
                     + " field in quantiles for job " + jobId);
         }
         return quantiles;
+    }
+
+    public QueryPage<ModelDebugOutput> modelDebugOutput(String jobId, int from, int size) {
+
+        SearchResponse searchResponse;
+        try {
+            String indexName = JobResultsPersister.getJobIndexName(jobId);
+            LOGGER.trace("ES API CALL: search result type {} from index {} from {}, size {]",
+                    ModelDebugOutput.RESULT_TYPE_VALUE, indexName, from, size);
+
+            searchResponse = client.prepareSearch(indexName)
+                    .setTypes(Result.TYPE.getPreferredName())
+                    .setQuery(new TermsQueryBuilder(Result.RESULT_TYPE.getPreferredName(), ModelDebugOutput.RESULT_TYPE_VALUE))
+                    .setFrom(from).setSize(size)
+                    .get();
+        } catch (IndexNotFoundException e) {
+            throw ExceptionsHelper.missingJobException(jobId);
+        }
+
+        List<ModelDebugOutput> results = new ArrayList<>();
+
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
+            BytesReference source = hit.getSourceRef();
+            XContentParser parser;
+            try {
+                parser = XContentFactory.xContent(source).createParser(source);
+            } catch (IOException e) {
+                throw new ElasticsearchParseException("failed to parse modelDebugOutput", e);
+            }
+            ModelDebugOutput modelDebugOutput = ModelDebugOutput.PARSER.apply(parser, () -> parseFieldMatcher);
+            results.add(modelDebugOutput);
+        }
+
+        return new QueryPage<>(results, searchResponse.getHits().getTotalHits(), ModelDebugOutput.RESULTS_FIELD);
     }
 
     /**

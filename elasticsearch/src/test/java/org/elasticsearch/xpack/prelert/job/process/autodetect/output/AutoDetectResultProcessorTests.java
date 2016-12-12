@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -100,6 +100,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
+        context.deleteInterimRequired = true;
         AutodetectResult result = mock(AutodetectResult.class);
         Bucket bucket = mock(Bucket.class);
         when(result.getBucket()).thenReturn(bucket);
@@ -130,6 +131,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         verify(bulkBuilder, times(1)).persistRecords(records);
+        verify(bulkBuilder, never()).executeRequest();
         verifyNoMoreInteractions(persister);
     }
 
@@ -153,6 +155,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
 
         verify(bulkBuilder, times(1)).persistPerPartitionMaxProbabilities(any(PerPartitionMaxProbabilities.class));
         verify(bulkBuilder, times(1)).persistRecords(records);
+        verify(bulkBuilder, never()).executeRequest();
         verifyNoMoreInteractions(persister);
     }
 
@@ -173,6 +176,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         processor.processResult(context, result);
 
         verify(bulkBuilder, times(1)).persistInfluencers(influencers);
+        verify(bulkBuilder, never()).executeRequest();
         verifyNoMoreInteractions(persister);
     }
 
@@ -210,6 +214,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
 
         verify(flushListener, times(1)).acknowledgeFlush(JOB_ID);
         verify(persister, times(1)).commitWrites(JOB_ID);
+        verify(bulkBuilder, never()).executeRequest();
         verifyNoMoreInteractions(persister);
         assertTrue(context.deleteInterimRequired);
     }
@@ -236,6 +241,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         inOrder.verify(persister, times(1)).persistCategoryDefinition(categoryDefinition);
         inOrder.verify(persister, times(1)).commitWrites(JOB_ID);
         inOrder.verify(flushListener, times(1)).acknowledgeFlush(JOB_ID);
+        verify(bulkBuilder, never()).executeRequest();
         verifyNoMoreInteractions(persister);
         assertTrue(context.deleteInterimRequired);
     }
