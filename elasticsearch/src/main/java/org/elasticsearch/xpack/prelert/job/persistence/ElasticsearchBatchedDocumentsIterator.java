@@ -22,6 +22,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -69,7 +70,7 @@ abstract class ElasticsearchBatchedDocumentsIterator<T> implements BatchedDocume
 
     @Override
     public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs) {
-        filterBuilder.timeRange(ElasticsearchMappings.ES_TIMESTAMP, startEpochMs, endEpochMs);
+        filterBuilder.timeRange(Bucket.TIMESTAMP.getPreferredName(), startEpochMs, endEpochMs);
         return this;
     }
 

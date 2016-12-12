@@ -76,14 +76,6 @@ public class ElasticsearchMappings {
     static final String DYNAMIC = "dynamic";
 
     /**
-     * Name of the field used to store the timestamp in Elasticsearch.
-     * Note the field name is different to {@link org.elasticsearch.xpack.prelert.job.results.Bucket#TIMESTAMP} used by the
-     * API Bucket Resource, and is chosen for consistency with the default field name used by
-     * Logstash and Kibana.
-     */
-    static final String ES_TIMESTAMP = "timestamp";
-
-    /**
      * Name of the Elasticsearch field by which documents are sorted by default
      */
     static final String ES_DOC = "_doc";
@@ -134,7 +126,7 @@ public class ElasticsearchMappings {
                             .startObject(Job.ID.getPreferredName())
                                 .field(TYPE, KEYWORD).field(INCLUDE_IN_ALL, false)
                             .endObject()
-                            .startObject(ES_TIMESTAMP)
+                            .startObject(Bucket.TIMESTAMP.getPreferredName())
                                 .field(TYPE, DATE)
                             .endObject()
                             .startObject(Bucket.ANOMALY_SCORE.getPreferredName())
@@ -457,7 +449,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ES_TIMESTAMP)
+                .startObject(Quantiles.TIMESTAMP.getPreferredName())
                 .field(TYPE, DATE)
                 .endObject()
                 .startObject(Quantiles.QUANTILE_STATE.getPreferredName())
@@ -548,7 +540,7 @@ public class ElasticsearchMappings {
                 .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
-                .startObject(ES_TIMESTAMP)
+                .startObject(ModelSnapshot.TIMESTAMP.getPreferredName())
                 .field(TYPE, DATE)
                 .endObject()
                 // "description" is analyzed so that it has the same
@@ -574,17 +566,14 @@ public class ElasticsearchMappings {
 
         addModelSizeStatsFieldsToMapping(builder);
 
-        builder.startObject(ES_TIMESTAMP)
-                .field(TYPE, DATE)
-                .endObject()
-                .endObject()
+        builder.endObject()
                 .endObject()
                 .startObject(Quantiles.TYPE.getPreferredName())
                 .startObject(PROPERTIES)
                 .startObject(Job.ID.getPreferredName())
                 .field(TYPE, KEYWORD)
                 .endObject()
-                .startObject(ES_TIMESTAMP)
+                .startObject(Quantiles.TIMESTAMP.getPreferredName())
                 .field(TYPE, DATE)
                 .endObject()
                 .startObject(Quantiles.QUANTILE_STATE.getPreferredName())
@@ -652,7 +641,7 @@ public class ElasticsearchMappings {
                 .field(ANALYZER, WHITESPACE)
                 .endObject()
                 .startObject(PROPERTIES)
-                .startObject(ES_TIMESTAMP)
+                .startObject(Usage.TIMESTAMP)
                 .field(TYPE, DATE)
                 .endObject()
                 .startObject(Usage.INPUT_BYTES)
@@ -674,7 +663,7 @@ public class ElasticsearchMappings {
                 .startObject()
                 .startObject(AuditMessage.TYPE.getPreferredName())
                 .startObject(PROPERTIES)
-                .startObject(ES_TIMESTAMP)
+                .startObject(AuditMessage.TIMESTAMP.getPreferredName())
                 .field(TYPE, DATE)
                 .endObject()
                 .endObject()
@@ -687,7 +676,7 @@ public class ElasticsearchMappings {
                 .startObject()
                 .startObject(AuditActivity.TYPE.getPreferredName())
                 .startObject(PROPERTIES)
-                .startObject(ES_TIMESTAMP)
+                .startObject(AuditActivity.TIMESTAMP.getPreferredName())
                 .field(TYPE, DATE)
                 .endObject()
                 .endObject()
