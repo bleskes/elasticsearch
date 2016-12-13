@@ -46,6 +46,8 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.IOException;
 import java.util.Objects;
 
+import static org.elasticsearch.action.ValidateActions.addValidationError;
+
 public class GetCategoriesDefinitionAction extends
 Action<GetCategoriesDefinitionAction.Request, GetCategoriesDefinitionAction.Response, GetCategoriesDefinitionAction.RequestBuilder> {
 
@@ -90,7 +92,7 @@ Action<GetCategoriesDefinitionAction.Request, GetCategoriesDefinitionAction.Resp
 
         private String jobId;
         private String categoryId;
-        private PageParams pageParams = new PageParams();
+        private PageParams pageParams;
 
         public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
@@ -104,6 +106,10 @@ Action<GetCategoriesDefinitionAction.Request, GetCategoriesDefinitionAction.Resp
         }
 
         public void setCategoryId(String categoryId) {
+            if (pageParams != null) {
+                throw new IllegalArgumentException("Param [" + CATEGORY_ID.getPreferredName() + "] is incompatible with ["
+                        + PageParams.FROM.getPreferredName() + ", " + PageParams.SIZE.getPreferredName() + "].");
+            }
             this.categoryId = ExceptionsHelper.requireNonNull(categoryId, CATEGORY_ID.getPreferredName());
         }
 
@@ -112,12 +118,22 @@ Action<GetCategoriesDefinitionAction.Request, GetCategoriesDefinitionAction.Resp
         }
 
         public void setPageParams(PageParams pageParams) {
+            if (categoryId != null) {
+                throw new IllegalArgumentException("Param [" + PageParams.FROM.getPreferredName() + ", "
+                        + PageParams.SIZE.getPreferredName() + "] is incompatible with [" + CATEGORY_ID.getPreferredName() + "].");
+            }
             this.pageParams = pageParams;
         }
 
         @Override
         public ActionRequestValidationException validate() {
-            return null;
+            ActionRequestValidationException validationException = null;
+            if (pageParams == null && categoryId == null) {
+                validationException = addValidationError("Both [" + CATEGORY_ID.getPreferredName() + "] and ["
+                        + PageParams.FROM.getPreferredName() + ", " + PageParams.SIZE.getPreferredName() + "] "
+                        + "cannot be null" , validationException);
+            }
+            return validationException;
         }
 
         @Override
@@ -143,7 +159,9 @@ Action<GetCategoriesDefinitionAction.Request, GetCategoriesDefinitionAction.Resp
             if (categoryId != null) {
                 builder.field(CATEGORY_ID.getPreferredName(), categoryId);
             }
-            builder.field(PageParams.PAGE.getPreferredName(), pageParams);
+            if (pageParams != null) {
+                builder.field(PageParams.PAGE.getPreferredName(), pageParams);
+            }
             builder.endObject();
             return builder;
         }
@@ -238,9 +256,10 @@ Action<GetCategoriesDefinitionAction.Request, GetCategoriesDefinitionAction.Resp
             QueryPage<CategoryDefinition> result;
             if (request.categoryId != null ) {
                 result = jobProvider.categoryDefinition(request.jobId, request.categoryId);
+            } else if (request.pageParams != null) {
+                result = jobProvider.categoryDefinitions(request.jobId, request.pageParams.getFrom(), request.pageParams.getSize());
             } else {
-                result = jobProvider.categoryDefinitions(request.jobId, request.pageParams.getFrom(),
-                        request.pageParams.getSize());
+                throw new IllegalStateException("Both categoryId and pageParams are null");
             }
             listener.onResponse(new Response(result));
         }
