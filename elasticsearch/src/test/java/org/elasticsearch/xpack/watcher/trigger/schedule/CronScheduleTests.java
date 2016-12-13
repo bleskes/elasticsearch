@@ -45,7 +45,7 @@ public class CronScheduleTests extends ScheduleTestCase {
     public void testParseSingle() throws Exception {
         XContentBuilder builder = jsonBuilder().value("0 0/5 * * * ?");
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken();
         CronSchedule schedule = new CronSchedule.Parser().parse(parser);
         assertThat(schedule.crons(), arrayWithSize(1));
@@ -59,7 +59,7 @@ public class CronScheduleTests extends ScheduleTestCase {
                 "0 0/3 * * * ?"
         });
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken();
         CronSchedule schedule = new CronSchedule.Parser().parse(parser);
         String[] crons = expressions(schedule);
@@ -72,7 +72,7 @@ public class CronScheduleTests extends ScheduleTestCase {
     public void testParseInvalidBadExpression() throws Exception {
         XContentBuilder builder = jsonBuilder().value("0 0/5 * * ?");
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken();
         try {
             new CronSchedule.Parser().parse(parser);
@@ -86,7 +86,7 @@ public class CronScheduleTests extends ScheduleTestCase {
     public void testParseInvalidEmpty() throws Exception {
         XContentBuilder builder = jsonBuilder();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken();
         try {
             new CronSchedule.Parser().parse(parser);
@@ -100,7 +100,7 @@ public class CronScheduleTests extends ScheduleTestCase {
     public void testParseInvalidObject() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken();
         try {
             new CronSchedule.Parser().parse(parser);
@@ -114,7 +114,7 @@ public class CronScheduleTests extends ScheduleTestCase {
     public void testParseInvalidEmptyArray() throws Exception {
         XContentBuilder builder = jsonBuilder().value(new String[0]);
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken();
         try {
             new CronSchedule.Parser().parse(parser);

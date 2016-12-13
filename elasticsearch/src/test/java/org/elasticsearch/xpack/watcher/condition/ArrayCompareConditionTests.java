@@ -191,7 +191,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
                     .endObject()
                 .endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         ArrayCompareCondition condition = (ArrayCompareCondition) ArrayCompareCondition.parse(ClockMock.frozen(), "_id", parser);
@@ -223,7 +223,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
                     .endObject()
                 .endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         expectedException.expect(ElasticsearchParseException.class);
@@ -246,7 +246,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
                     .endObject()
                 .endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         expectedException.expect(ElasticsearchParseException.class);
@@ -271,7 +271,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
                     .endObject()
                 .endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         expectedException.expect(ElasticsearchParseException.class);
@@ -296,7 +296,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
                     .endObject()
                 .endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         expectedException.expect(ElasticsearchParseException.class);
@@ -319,7 +319,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
                     .endObject()
                 .endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         expectedException.expect(ElasticsearchParseException.class);
@@ -344,7 +344,7 @@ public class ArrayCompareConditionTests extends ESTestCase {
                     .endObject()
                 .endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         expectedException.expect(ElasticsearchParseException.class);

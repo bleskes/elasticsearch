@@ -180,7 +180,7 @@ public class CompareConditionTests extends ESTestCase {
         builder.endObject();
         builder.endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
 
         CompareCondition condition = (CompareCondition) CompareCondition.parse(ClockMock.frozen(), "_id", parser);
@@ -198,7 +198,7 @@ public class CompareConditionTests extends ESTestCase {
         builder.endObject();
         builder.endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         try {
             CompareCondition.parse(ClockMock.frozen(), "_id", parser);
             fail("Expected ElasticsearchParseException");
@@ -216,7 +216,7 @@ public class CompareConditionTests extends ESTestCase {
         builder.endObject();
         builder.endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
         try {
             CompareCondition.parse(ClockMock.frozen(), "_id", parser);
@@ -236,7 +236,7 @@ public class CompareConditionTests extends ESTestCase {
         builder.endObject();
         builder.endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(JsonXContent.jsonXContent, builder.bytes());
         parser.nextToken();
         try {
             CompareCondition.parse(ClockMock.frozen(), "_id", parser);

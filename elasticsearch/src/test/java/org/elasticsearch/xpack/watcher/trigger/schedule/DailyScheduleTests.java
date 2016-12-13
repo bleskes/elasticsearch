@@ -77,7 +77,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
     public void testParserEmpty() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         DailySchedule schedule = new DailySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -95,7 +95,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .endObject()
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         DailySchedule schedule = new DailySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -113,7 +113,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .endObject()
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new DailySchedule.Parser().parse(parser);
@@ -130,7 +130,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .field("at", timeStr)
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         DailySchedule schedule = new DailySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -144,7 +144,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .field("at", invalidDayTimeStr())
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new DailySchedule.Parser().parse(parser);
@@ -161,7 +161,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .array("at", (Object[]) times)
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         DailySchedule schedule = new DailySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -178,7 +178,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .array("at", (Object[]) times)
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new DailySchedule.Parser().parse(parser);
@@ -195,7 +195,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .array("at", (Object[]) times)
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         DailySchedule schedule = new DailySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -212,7 +212,7 @@ public class DailyScheduleTests extends ScheduleTestCase {
                 .array("at", times)
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new DailySchedule.Parser().parse(parser);

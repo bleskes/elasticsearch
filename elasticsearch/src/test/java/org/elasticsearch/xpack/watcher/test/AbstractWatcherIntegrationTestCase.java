@@ -17,6 +17,8 @@
 
 package org.elasticsearch.xpack.watcher.test;
 
+import io.netty.util.internal.SystemPropertyUtil;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -89,7 +91,6 @@ import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleModule;
 import org.elasticsearch.xpack.watcher.watch.Watch;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.hamcrest.Matcher;
-import org.jboss.netty.util.internal.SystemPropertyUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -352,7 +353,7 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
             if (rarely()) {
                 String newIndex = ".watches-alias-index";
                 BytesReference bytesReference = TemplateUtils.load("/watches.json");
-                try (XContentParser parser = JsonXContent.jsonXContent.createParser(bytesReference.toBytesRef().bytes)) {
+                try (XContentParser parser = createParser(JsonXContent.jsonXContent, bytesReference.toBytesRef().bytes)) {
                     Map<String, Object> parserMap = parser.map();
                     Map<String, Object> allMappings = (Map<String, Object>) parserMap.get("mappings");
 
@@ -370,7 +371,7 @@ public abstract class AbstractWatcherIntegrationTestCase extends ESIntegTestCase
             if (rarely()) {
                 String newIndex = ".triggered-watches-alias-index";
                 BytesReference bytesReference = TemplateUtils.load("/triggered_watches.json");
-                try (XContentParser parser = JsonXContent.jsonXContent.createParser(bytesReference.toBytesRef().bytes)) {
+                try (XContentParser parser = createParser(JsonXContent.jsonXContent, bytesReference.toBytesRef().bytes)) {
                     Map<String, Object> parserMap = parser.map();
                     Map<String, Object> allMappings = (Map<String, Object>) parserMap.get("mappings");
 

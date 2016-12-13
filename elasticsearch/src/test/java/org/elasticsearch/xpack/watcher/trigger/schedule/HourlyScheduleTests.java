@@ -88,7 +88,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
     public void testParserEmpty() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject().endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         HourlySchedule schedule = new HourlySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -103,7 +103,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", minute)
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         HourlySchedule schedule = new HourlySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -117,7 +117,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", invalidMinute())
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new HourlySchedule.Parser().parse(parser);
@@ -134,7 +134,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", String.valueOf(minute))
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         HourlySchedule schedule = new HourlySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -148,7 +148,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", String.valueOf(invalidMinute()))
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new HourlySchedule.Parser().parse(parser);
@@ -165,7 +165,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", asIterable(minutes))
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         HourlySchedule schedule = new HourlySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -182,7 +182,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", asIterable(minutes))
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new HourlySchedule.Parser().parse(parser);
@@ -199,7 +199,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", Arrays.stream(minutes).mapToObj(p -> Integer.toString(p)).collect(Collectors.toList()))
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         HourlySchedule schedule = new HourlySchedule.Parser().parse(parser);
         assertThat(schedule, notNullValue());
@@ -216,7 +216,7 @@ public class HourlyScheduleTests extends ScheduleTestCase {
                 .field("minute", Arrays.stream(minutes).mapToObj(p -> Integer.toString(p)).collect(Collectors.toList()))
                 .endObject();
         BytesReference bytes = builder.bytes();
-        XContentParser parser = JsonXContent.jsonXContent.createParser(bytes);
+        XContentParser parser = createParser(JsonXContent.jsonXContent, bytes);
         parser.nextToken(); // advancing to the start object
         try {
             new HourlySchedule.Parser().parse(parser);

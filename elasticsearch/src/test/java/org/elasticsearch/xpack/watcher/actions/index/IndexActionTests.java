@@ -25,7 +25,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.SortOrder;
@@ -207,7 +206,7 @@ public class IndexActionTests extends ESIntegTestCase {
         InternalClient internalClient = new InternalClient(client.settings(), client.threadPool(), client, null);
 
         IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, internalClient);
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
 
         ExecutableIndexAction executable = actionParser.parseExecutable(randomAsciiOfLength(5), randomAsciiOfLength(3), parser);
@@ -238,7 +237,7 @@ public class IndexActionTests extends ESIntegTestCase {
         InternalClient internalClient = new InternalClient(client.settings(), client.threadPool(), client, null);
 
         IndexActionFactory actionParser = new IndexActionFactory(Settings.EMPTY, internalClient);
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
         try {
             actionParser.parseExecutable(randomAsciiOfLength(4), randomAsciiOfLength(5), parser);

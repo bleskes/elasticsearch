@@ -22,7 +22,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.http.MockResponse;
@@ -58,9 +57,10 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 
-import javax.mail.internet.AddressException;
 import java.io.IOException;
 import java.util.Map;
+
+import javax.mail.internet.AddressException;
 
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
@@ -149,7 +149,7 @@ public class WebhookActionTests extends ESTestCase {
 
         WebhookActionFactory actionParser = webhookFactory(ExecuteScenario.Success.client());
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
 
         ExecutableWebhookAction executable = actionParser.parseExecutable(randomAsciiOfLength(5), randomAsciiOfLength(5), parser);
@@ -175,7 +175,7 @@ public class WebhookActionTests extends ESTestCase {
 
         WebhookActionFactory actionParser = webhookFactory(ExecuteScenario.Success.client());
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
 
         ExecutableWebhookAction parsedExecutable = actionParser.parseExecutable(watchId, actionId, parser);
@@ -201,7 +201,7 @@ public class WebhookActionTests extends ESTestCase {
 
         WebhookActionFactory actionParser = webhookFactory(ExecuteScenario.Success.client());
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         assertThat(parser.nextToken(), is(XContentParser.Token.START_OBJECT));
         ExecutableWebhookAction parsedAction = actionParser.parseExecutable(watchId, actionId, parser);
         assertThat(parsedAction.action(), is(action));
@@ -216,7 +216,7 @@ public class WebhookActionTests extends ESTestCase {
         }
         builder.endObject();
 
-        XContentParser parser = JsonXContent.jsonXContent.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
 
         WebhookActionFactory actionParser = webhookFactory(ExecuteScenario.Success.client());
