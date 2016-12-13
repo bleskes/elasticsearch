@@ -39,7 +39,7 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testResolveSubTree() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
                 .build();
 
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
@@ -54,8 +54,8 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testResolveOneLevel() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("scope", LdapSearchScope.ONE_LEVEL)
+                .put("group_search.base_dn", "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.scope", LdapSearchScope.ONE_LEVEL)
                 .build();
 
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
@@ -70,8 +70,8 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testResolveBase() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "cn=Avengers,ou=People,dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("scope", LdapSearchScope.BASE)
+                .put("group_search.base_dn", "cn=Avengers,ou=People,dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.scope", LdapSearchScope.BASE)
                 .build();
 
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
@@ -82,9 +82,9 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testResolveCustomFilter() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("filter", "(&(objectclass=posixGroup)(memberUID={0}))")
-                .put("user_attribute", "uid")
+                .put("group_search.base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.filter", "(&(objectclass=posixGroup)(memberUID={0}))")
+                .put("group_search.user_attribute", "uid")
                 .build();
 
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
@@ -96,8 +96,8 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testFilterIncludesPosixGroups() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("user_attribute", "uid")
+                .put("group_search.base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.user_attribute", "uid")
                 .build();
 
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
@@ -109,7 +109,7 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testCreateWithoutSpecifyingBaseDN() throws Exception {
         Settings settings = Settings.builder()
-                .put("scope", LdapSearchScope.SUB_TREE)
+                .put("group_search.scope", LdapSearchScope.SUB_TREE)
                 .build();
 
         try {
@@ -122,8 +122,8 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testReadUserAttributeUid() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("user_attribute", "uid").build();
+                .put("group_search.base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.user_attribute", "uid").build();
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
         PlainActionFuture<String> future = new PlainActionFuture<>();
         resolver.readUserAttribute(ldapConnection, BRUCE_BANNER_DN, TimeValue.timeValueSeconds(5), future);
@@ -132,8 +132,8 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testReadUserAttributeCn() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("user_attribute", "cn")
+                .put("group_search.base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.user_attribute", "cn")
                 .build();
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
 
@@ -144,8 +144,8 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testReadNonExistentUserAttribute() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("user_attribute", "doesntExists")
+                .put("group_search.base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.user_attribute", "doesntExists")
                 .build();
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
 
@@ -156,8 +156,8 @@ public class SearchGroupsResolverTests extends GroupsResolverTestCase {
 
     public void testReadBinaryUserAttribute() throws Exception {
         Settings settings = Settings.builder()
-                .put("base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("user_attribute", "userPassword")
+                .put("group_search.base_dn", "dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                .put("group_search.user_attribute", "userPassword")
                 .build();
         SearchGroupsResolver resolver = new SearchGroupsResolver(settings);
 

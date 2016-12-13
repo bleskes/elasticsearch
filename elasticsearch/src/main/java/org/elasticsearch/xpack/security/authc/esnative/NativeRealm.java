@@ -18,10 +18,14 @@
 package org.elasticsearch.xpack.security.authc.esnative;
 
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.support.CachingUsernamePasswordRealm;
 import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 import org.elasticsearch.xpack.security.user.User;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User/password realm that is backed by an Elasticsearch index
@@ -50,5 +54,12 @@ public class NativeRealm extends CachingUsernamePasswordRealm {
     @Override
     protected void doAuthenticate(UsernamePasswordToken token, ActionListener<User> listener) {
         userStore.verifyPassword(token.principal(), token.credentials(), listener);
+    }
+
+    /**
+     * @return The {@link Setting setting configuration} for this realm type
+     */
+    public static Set<Setting<?>> getSettings() {
+        return CachingUsernamePasswordRealm.getCachingSettings();
     }
 }

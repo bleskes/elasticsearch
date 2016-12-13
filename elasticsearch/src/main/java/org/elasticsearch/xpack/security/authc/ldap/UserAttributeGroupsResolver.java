@@ -22,6 +22,7 @@ import com.unboundid.ldap.sdk.LDAPInterface;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession.GroupsResolver;
@@ -32,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.function.Function;
 
 import static org.elasticsearch.xpack.security.authc.ldap.support.LdapUtils.OBJECT_CLASS_PRESENCE_FILTER;
 import static org.elasticsearch.xpack.security.authc.ldap.support.LdapUtils.searchForEntry;
@@ -41,10 +44,12 @@ import static org.elasticsearch.xpack.security.authc.ldap.support.LdapUtils.sear
 */
 class UserAttributeGroupsResolver implements GroupsResolver {
 
+    private static final Setting<String> ATTRIBUTE = new Setting<>("user_group_attribute", "memberOf",
+            Function.identity(), Setting.Property.NodeScope);
     private final String attribute;
 
     UserAttributeGroupsResolver(Settings settings) {
-        this(settings.get("user_group_attribute", "memberOf"));
+        this(ATTRIBUTE.get(settings));
     }
 
     private UserAttributeGroupsResolver(String attribute) {
@@ -73,5 +78,9 @@ class UserAttributeGroupsResolver implements GroupsResolver {
     @Override
     public String[] attributes() {
         return new String[] { attribute };
+    }
+
+    public static Set<Setting<?>> getSettings() {
+        return Collections.singleton(ATTRIBUTE);
     }
 }
