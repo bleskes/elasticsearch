@@ -164,6 +164,7 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
                 destructiveOperations.failDestructive(indicesRequest.indices());
             } catch(IllegalArgumentException e) {
                 listener.onFailure(e);
+                return;
             }
         }
 

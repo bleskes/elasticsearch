@@ -96,6 +96,7 @@ public interface ServerTransportFilter {
                     destructiveOperations.failDestructive(indicesRequest.indices());
                 } catch(IllegalArgumentException e) {
                     listener.onFailure(e);
+                    return;
                 }
             }
             /*
