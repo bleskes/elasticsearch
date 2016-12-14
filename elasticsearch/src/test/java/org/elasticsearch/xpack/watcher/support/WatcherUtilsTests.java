@@ -134,7 +134,7 @@ public class WatcherUtilsTests extends ESTestCase {
 
         XContentBuilder builder = jsonBuilder();
         request.toXContent(builder, ToXContent.EMPTY_PARAMS);
-        XContentParser parser = XContentHelper.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         assertThat(parser.nextToken(), equalTo(XContentParser.Token.START_OBJECT));
         WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(logger, parser, DEFAULT_SEARCH_TYPE,
                 false, null, null, null);
@@ -224,7 +224,7 @@ public class WatcherUtilsTests extends ESTestCase {
         }
         builder.endObject();
 
-        XContentParser parser = XContentHelper.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         assertThat(parser.nextToken(), equalTo(XContentParser.Token.START_OBJECT));
         WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(logger, parser, DEFAULT_SEARCH_TYPE,
                 false, null, null, null);

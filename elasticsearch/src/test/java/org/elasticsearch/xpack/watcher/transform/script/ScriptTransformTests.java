@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.watcher.transform.script;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ExecutableScript;
@@ -193,7 +192,7 @@ public class ScriptTransformTests extends ESTestCase {
                 .startObject("params").field("key", "value").endObject()
                 .endObject();
 
-        XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
         ScriptTransform scriptTransform = transformFactory.parseTransform("_watch", parser, false);
         try {
@@ -216,7 +215,7 @@ public class ScriptTransformTests extends ESTestCase {
                 .endObject();
 
 
-        XContentParser parser = XContentFactory.xContent(builder.bytes()).createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
         ScriptTransform scriptCondition = transformFactory.parseTransform("_watch", parser, false);
         try {

@@ -21,7 +21,6 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.test.ESTestCase;
 
@@ -33,7 +32,6 @@ import java.util.Map;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.xContentParser;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.hasEntry;
@@ -88,7 +86,7 @@ public class HttpResponseTests extends ESTestCase {
         }
 
         XContentBuilder builder = jsonBuilder().value(response);
-        XContentParser parser = xContentParser(builder);
+        XContentParser parser = createParser(builder);
         parser.nextToken();
         HttpResponse parsedResponse = HttpResponse.parse(parser);
         assertThat(parsedResponse, notNullValue());
@@ -124,7 +122,7 @@ public class HttpResponseTests extends ESTestCase {
         XContentBuilder builder = jsonBuilder();
         response.toXContent(builder, ToXContent.EMPTY_PARAMS);
 
-        XContentParser parser = XContentFactory.xContent(builder.string()).createParser(builder.string());
+        XContentParser parser = createParser(builder);
         Map<String, Object> responseMap = parser.map();
         parser.close();
 

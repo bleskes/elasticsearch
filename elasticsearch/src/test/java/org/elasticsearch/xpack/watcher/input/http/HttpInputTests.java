@@ -22,7 +22,6 @@ import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.ESTestCase;
@@ -196,8 +195,8 @@ public class HttpInputTests extends ESTestCase {
         }
 
         inputBuilder.expectedResponseXContentType(expectedResponseXContentType);
-        BytesReference source = jsonBuilder().value(inputBuilder.build()).bytes();
-        XContentParser parser = XContentHelper.createParser(source);
+        XContentBuilder source = jsonBuilder().value(inputBuilder.build());
+        XContentParser parser = createParser(source);
         parser.nextToken();
         HttpInput result = httpParser.parseInput("_id", parser, false);
 
@@ -234,7 +233,7 @@ public class HttpInputTests extends ESTestCase {
                     .field("body", "_body")
                 .endObject()
                 .endObject();
-        XContentParser parser = XContentHelper.createParser(builder.bytes());
+        XContentParser parser = createParser(builder);
         parser.nextToken();
         try {
             httpParser.parseInput("_id", parser, false);

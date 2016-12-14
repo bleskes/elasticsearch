@@ -19,11 +19,11 @@ package org.elasticsearch.xpack.watcher.support.search;
 
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.common.ParseFieldMatcher;
-import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.search.SearchModule;
 import org.elasticsearch.search.SearchRequestParsers;
@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import static java.util.Collections.singletonMap;
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.hamcrest.Matchers.equalTo;
 
 public class WatcherSearchTemplateRequestTests extends ESTestCase {
@@ -50,7 +49,7 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
     }
 
     private void assertTemplate(String source, String expectedScript, String expectedLang, Map<String, Object> expectedParams) {
-        try (XContentParser parser = XContentHelper.createParser(new BytesArray(source))) {
+        try (XContentParser parser = createParser(JsonXContent.jsonXContent, source)) {
             parser.nextToken();
 
             WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(
@@ -65,7 +64,7 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
     }
 
     public void testUpgradeSearchSource() throws IOException {
-        XContentBuilder contentBuilder = jsonBuilder();
+        XContentBuilder contentBuilder = JsonXContent.contentBuilder();
         contentBuilder.startObject();
         contentBuilder.startObject("body");
 

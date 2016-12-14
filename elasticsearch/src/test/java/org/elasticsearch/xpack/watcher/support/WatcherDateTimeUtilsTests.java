@@ -36,7 +36,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils.parseTimeValueSupportingFractional;
-import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.xContentParser;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.is;
@@ -55,7 +54,7 @@ public class WatcherDateTimeUtilsTests extends ESTestCase {
         } else {
             xContentBuilder.field("value", Long.toString(millis));
         }
-        XContentParser parser = xContentParser(xContentBuilder.endObject());
+        XContentParser parser = createParser(xContentBuilder.endObject());
         parser.nextToken(); // start object
         parser.nextToken(); // field name
         parser.nextToken(); // value
@@ -72,7 +71,7 @@ public class WatcherDateTimeUtilsTests extends ESTestCase {
     public void testParseTimeValueNumericNegative() throws Exception {
         TimeValue value = new TimeValue(randomIntBetween(1, 100), randomFrom(MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS));
 
-        XContentParser parser = xContentParser(jsonBuilder().startObject().field("value", -1 * value.getMillis()).endObject());
+        XContentParser parser = createParser(jsonBuilder().startObject().field("value", -1 * value.getMillis()).endObject());
         parser.nextToken(); // start object
         parser.nextToken(); // field name
         parser.nextToken(); // value
@@ -95,7 +94,7 @@ public class WatcherDateTimeUtilsTests extends ESTestCase {
 
         String key = randomFrom(values.keySet().toArray(new String[values.size()]));
 
-        XContentParser parser = xContentParser(jsonBuilder().startObject().field("value", key).endObject());
+        XContentParser parser = createParser(jsonBuilder().startObject().field("value", key).endObject());
         parser.nextToken(); // start object
         parser.nextToken(); // field name
         parser.nextToken(); // value
@@ -114,7 +113,7 @@ public class WatcherDateTimeUtilsTests extends ESTestCase {
 
         String key = randomFrom(values.keySet().toArray(new String[values.size()]));
 
-        XContentParser parser = xContentParser(jsonBuilder().startObject().field("value", key).endObject());
+        XContentParser parser = createParser(jsonBuilder().startObject().field("value", key).endObject());
         parser.nextToken(); // start object
         parser.nextToken(); // field name
         parser.nextToken(); // value
@@ -128,7 +127,7 @@ public class WatcherDateTimeUtilsTests extends ESTestCase {
     }
 
     public void testParseTimeValueNull() throws Exception {
-        XContentParser parser = xContentParser(jsonBuilder().startObject().nullField("value").endObject());
+        XContentParser parser = createParser(jsonBuilder().startObject().nullField("value").endObject());
         parser.nextToken(); // start object
         parser.nextToken(); // field name
         parser.nextToken(); // value
