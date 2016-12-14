@@ -66,14 +66,14 @@ import java.util.Set;
 public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
     private static final String JOB_ID = "foo";
 
-    private Renormalizer renormaliser;
+    private Renormalizer renormalizer;
     private JobResultsPersister jobResultsPersister;
     private AutodetectResultsParser autodetectResultsParser;
     private JobProvider jobProvider;
 
     @Before
     private void createComponents() {
-        renormaliser = new NoOpRenormalizer();
+        renormalizer = new NoOpRenormalizer();
         jobResultsPersister = new JobResultsPersister(nodeSettings(), client());
         ParseFieldMatcher matcher = new ParseFieldMatcher(nodeSettings());
         autodetectResultsParser = new AutodetectResultsParser(nodeSettings(), () -> matcher);
@@ -84,7 +84,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         createJob();
 
         AutoDetectResultProcessor resultProcessor =
-                new AutoDetectResultProcessor(renormaliser, jobResultsPersister, autodetectResultsParser);
+                new AutoDetectResultProcessor(renormalizer, jobResultsPersister, autodetectResultsParser);
 
         PipedOutputStream outputStream = new PipedOutputStream();
         PipedInputStream inputStream = new PipedInputStream(outputStream);
@@ -159,7 +159,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         createJob();
 
         AutoDetectResultProcessor resultProcessor =
-                new AutoDetectResultProcessor(renormaliser, jobResultsPersister, autodetectResultsParser);
+                new AutoDetectResultProcessor(renormalizer, jobResultsPersister, autodetectResultsParser);
 
         PipedOutputStream outputStream = new PipedOutputStream();
         PipedInputStream inputStream = new PipedInputStream(outputStream);
@@ -201,7 +201,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         createJob();
 
         AutoDetectResultProcessor resultProcessor =
-                new AutoDetectResultProcessor(renormaliser, jobResultsPersister, autodetectResultsParser);
+                new AutoDetectResultProcessor(renormalizer, jobResultsPersister, autodetectResultsParser);
 
         PipedOutputStream outputStream = new PipedOutputStream();
         PipedInputStream inputStream = new PipedInputStream(outputStream);

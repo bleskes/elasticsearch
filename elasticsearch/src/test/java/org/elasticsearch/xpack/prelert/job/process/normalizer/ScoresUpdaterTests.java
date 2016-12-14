@@ -37,7 +37,7 @@ import org.elasticsearch.xpack.prelert.job.Detector;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.persistence.BatchedDocumentsIterator;
 import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
-import org.elasticsearch.xpack.prelert.job.persistence.JobRenormalizer;
+import org.elasticsearch.xpack.prelert.job.persistence.JobRenormalizedResultsPersister;
 import org.elasticsearch.xpack.prelert.job.persistence.MockBatchedDocumentsIterator;
 import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.prelert.job.results.Bucket;
@@ -54,7 +54,7 @@ public class ScoresUpdaterTests extends ESTestCase {
     private static final long DEFAULT_END_TIME = 3600;
 
     private JobProvider jobProvider = mock(JobProvider.class);
-    private JobRenormalizer jobRenormalizer = mock(JobRenormalizer.class);
+    private JobRenormalizedResultsPersister jobRenormalizedResultsPersister = mock(JobRenormalizedResultsPersister.class);
     private Normalizer normalizer = mock(Normalizer.class);
     private NormalizerFactory normalizerFactory = mock(NormalizerFactory.class);
 
@@ -79,7 +79,7 @@ public class ScoresUpdaterTests extends ESTestCase {
 
         job = jobBuilder.build();
 
-        scoresUpdater = new ScoresUpdater(job, jobProvider, jobRenormalizer, normalizerFactory);
+        scoresUpdater = new ScoresUpdater(job, jobProvider, jobRenormalizedResultsPersister, normalizerFactory);
 
         givenProviderReturnsNoBuckets(DEFAULT_START_TIME, DEFAULT_END_TIME);
         givenProviderReturnsNoInfluencers(DEFAULT_START_TIME, DEFAULT_END_TIME);
@@ -195,7 +195,7 @@ public class ScoresUpdaterTests extends ESTestCase {
 
         verifyNormalizerWasInvoked(1);
         verifyBucketWasNotUpdated(bucket);
-        verifyRecordsWereUpdated(bucket.getId(), Arrays.asList(record1, record3));
+        verifyRecordsWereUpdated(bucket.getJobId(), Arrays.asList(record1, record3));
     }
 
     public void testUpdate_GivenSingleBucketWithBigChangeAndSomeRecordsWithBigChange() throws IOException {
@@ -221,7 +221,7 @@ public class ScoresUpdaterTests extends ESTestCase {
 
         verifyNormalizerWasInvoked(1);
         verifyBucketWasUpdated(bucket);
-        verifyRecordsWereUpdated(bucket.getId(), Arrays.asList(record1, record3));
+        verifyRecordsWereUpdated(bucket.getJobId(), Arrays.asList(record1, record3));
     }
 
     public void testUpdate_GivenEnoughBucketsForTwoBatchesButOneNormalization() throws IOException {
@@ -418,19 +418,19 @@ public class ScoresUpdaterTests extends ESTestCase {
     }
 
     private void verifyBucketWasUpdated(Bucket bucket) {
-        verify(jobRenormalizer).updateBucket(bucket);
+        verify(jobRenormalizedResultsPersister).updateBucket(bucket);
     }
 
     private void verifyRecordsWereUpdated(String bucketId, List<AnomalyRecord> records) {
-        verify(jobRenormalizer).updateRecords(bucketId, records);
+        verify(jobRenormalizedResultsPersister).updateRecords(bucketId, records);
     }
 
     private void verifyBucketWasNotUpdated(Bucket bucket) {
-        verify(jobRenormalizer, never()).updateBucket(bucket);
+        verify(jobRenormalizedResultsPersister, never()).updateBucket(bucket);
     }
 
     private void verifyBucketRecordsWereNotUpdated(String bucketId) {
-        verify(jobRenormalizer, never()).updateRecords(eq(bucketId),
+        verify(jobRenormalizedResultsPersister, never()).updateRecords(eq(bucketId),
                 anyListOf(AnomalyRecord.class));
     }
 
@@ -452,6 +452,6 @@ public class ScoresUpdaterTests extends ESTestCase {
     private void verifyInfluencerWasUpdated(Influencer influencer) {
         List<Influencer> list = new ArrayList<>();
         list.add(influencer);
-        verify(jobRenormalizer).updateInfluencer(eq(JOB_ID), eq(list));
+        verify(jobRenormalizedResultsPersister).updateInfluencer(eq(JOB_ID), eq(list));
     }
 }
