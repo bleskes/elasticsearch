@@ -125,7 +125,7 @@ dependencies {
 String outputDir = "generated-resources/${project.name}"
 task copyXPackRestSpec(type: Copy) {
     dependsOn(project.configurations.restSpec, 'processTestResources')
-    from project(':x-plugins:elasticsearch').sourceSets.test.resources
+    from project(':x-pack:elasticsearch').sourceSets.test.resources
     include 'rest-api-spec/api/**'
     into project.sourceSets.test.output.resourcesDir
 }
