@@ -22,28 +22,29 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
-import org.elasticsearch.xpack.prelert.action.StopJobSchedulerAction;
-import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.action.DeleteSchedulerAction;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 
 import java.io.IOException;
 
-public class RestStopJobSchedulerAction extends BaseRestHandler {
+public class RestDeleteSchedulerAction extends BaseRestHandler {
 
-    private final StopJobSchedulerAction.TransportAction transportJobSchedulerAction;
+    private final DeleteSchedulerAction.TransportAction transportDeleteSchedulerAction;
 
     @Inject
-    public RestStopJobSchedulerAction(Settings settings, RestController controller,
-            StopJobSchedulerAction.TransportAction transportJobSchedulerAction) {
+    public RestDeleteSchedulerAction(Settings settings, RestController controller,
+                                     DeleteSchedulerAction.TransportAction transportDeleteSchedulerAction) {
         super(settings);
-        this.transportJobSchedulerAction = transportJobSchedulerAction;
-        controller.registerHandler(RestRequest.Method.POST, PrelertPlugin.BASE_PATH + "schedulers/{"
-                + Job.ID.getPreferredName() + "}/_stop", this);
+        this.transportDeleteSchedulerAction = transportDeleteSchedulerAction;
+        controller.registerHandler(RestRequest.Method.DELETE, PrelertPlugin.BASE_PATH + "schedulers/{"
+                + SchedulerConfig.ID.getPreferredName() + "}", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        StopJobSchedulerAction.Request jobSchedulerRequest = new StopJobSchedulerAction.Request(
-                restRequest.param(Job.ID.getPreferredName()));
-        return channel -> transportJobSchedulerAction.execute(jobSchedulerRequest, new AcknowledgedRestListener<>(channel));
+        String schedulerId = restRequest.param(SchedulerConfig.ID.getPreferredName());
+        DeleteSchedulerAction.Request deleteSchedulerRequest = new DeleteSchedulerAction.Request(schedulerId);
+        return channel -> transportDeleteSchedulerAction.execute(deleteSchedulerRequest, new AcknowledgedRestListener<>(channel));
     }
+
 }

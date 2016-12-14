@@ -21,7 +21,13 @@ import java.util.regex.Pattern;
  * with one of the myriad String utility classes out there.
  */
 public final class PrelertStrings {
+
     private static final Pattern NEEDS_QUOTING = Pattern.compile("\\W");
+
+    /**
+     * Valid user entered id characters. Note that '.' is allowed but not documented.
+     */
+    private static final Pattern VALID_ID_CHAR_PATTERN = Pattern.compile("[a-z0-9_\\-\\.]+");
 
     private PrelertStrings() {
     }
@@ -53,5 +59,9 @@ public final class PrelertStrings {
 
         quoted.append('\"');
         return quoted.toString();
+    }
+
+    public static boolean isValidId(String id) {
+        return VALID_ID_CHAR_PATTERN.matcher(id).matches();
     }
 }

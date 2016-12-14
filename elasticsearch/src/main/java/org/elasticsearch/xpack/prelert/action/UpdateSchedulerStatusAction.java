@@ -34,7 +34,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
 import org.elasticsearch.xpack.prelert.job.SchedulerStatus;
 import org.elasticsearch.xpack.prelert.job.manager.JobManager;
 import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
@@ -42,13 +42,13 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 import java.io.IOException;
 import java.util.Objects;
 
-public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerStatusAction.Request,
-        UpdateJobSchedulerStatusAction.Response, UpdateJobSchedulerStatusAction.RequestBuilder> {
+public class UpdateSchedulerStatusAction extends Action<UpdateSchedulerStatusAction.Request,
+        UpdateSchedulerStatusAction.Response, UpdateSchedulerStatusAction.RequestBuilder> {
 
-    public static final UpdateJobSchedulerStatusAction INSTANCE = new UpdateJobSchedulerStatusAction();
-    public static final String NAME = "cluster:admin/prelert/job/scheduler/status/update";
+    public static final UpdateSchedulerStatusAction INSTANCE = new UpdateSchedulerStatusAction();
+    public static final String NAME = "cluster:admin/prelert/scheduler/status/update";
 
-    private UpdateJobSchedulerStatusAction() {
+    private UpdateSchedulerStatusAction() {
         super(NAME);
     }
 
@@ -64,22 +64,22 @@ public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerSta
 
     public static class Request extends AcknowledgedRequest<Request> {
 
-        private String jobId;
+        private String schedulerId;
         private SchedulerStatus schedulerStatus;
 
-        public Request(String jobId, SchedulerStatus schedulerStatus) {
-            this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
+        public Request(String schedulerId, SchedulerStatus schedulerStatus) {
+            this.schedulerId = ExceptionsHelper.requireNonNull(schedulerId, SchedulerConfig.ID.getPreferredName());
             this.schedulerStatus = ExceptionsHelper.requireNonNull(schedulerStatus, "status");
         }
 
         Request() {}
 
-        public String getJobId() {
-            return jobId;
+        public String getSchedulerId() {
+            return schedulerId;
         }
 
-        public void setJobId(String jobId) {
-            this.jobId = jobId;
+        public void setSchedulerId(String schedulerId) {
+            this.schedulerId = schedulerId;
         }
 
         public SchedulerStatus getSchedulerStatus() {
@@ -98,20 +98,20 @@ public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerSta
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            jobId = in.readString();
+            schedulerId = in.readString();
             schedulerStatus = SchedulerStatus.fromStream(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeString(jobId);
+            out.writeString(schedulerId);
             schedulerStatus.writeTo(out);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId, schedulerStatus);
+            return Objects.hash(schedulerId, schedulerStatus);
         }
 
         @Override
@@ -122,14 +122,14 @@ public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerSta
             if (obj == null || obj.getClass() != getClass()) {
                 return false;
             }
-            UpdateJobSchedulerStatusAction.Request other = (UpdateJobSchedulerStatusAction.Request) obj;
-            return Objects.equals(jobId, other.jobId) && Objects.equals(schedulerStatus, other.schedulerStatus);
+            UpdateSchedulerStatusAction.Request other = (UpdateSchedulerStatusAction.Request) obj;
+            return Objects.equals(schedulerId, other.schedulerId) && Objects.equals(schedulerStatus, other.schedulerStatus);
         }
 
         @Override
         public String toString() {
             return "Request{" +
-                    Job.ID.getPreferredName() + "='" + jobId + "', " +
+                    SchedulerConfig.ID.getPreferredName() + "='" + schedulerId + "', " +
                     "status=" + schedulerStatus +
                     '}';
         }
@@ -137,7 +137,7 @@ public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerSta
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, UpdateJobSchedulerStatusAction action) {
+        public RequestBuilder(ElasticsearchClient client, UpdateSchedulerStatusAction action) {
             super(client, action, new Request());
         }
     }
@@ -171,7 +171,7 @@ public class UpdateJobSchedulerStatusAction extends Action<UpdateJobSchedulerSta
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
                 ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
                 JobManager jobManager) {
-            super(settings, UpdateJobSchedulerStatusAction.NAME, transportService, clusterService, threadPool, actionFilters,
+            super(settings, UpdateSchedulerStatusAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.jobManager = jobManager;
         }

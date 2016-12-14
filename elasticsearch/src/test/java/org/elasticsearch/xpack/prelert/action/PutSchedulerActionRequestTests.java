@@ -16,18 +16,29 @@ package org.elasticsearch.xpack.prelert.action;
 
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.xpack.prelert.action.StartSchedulerAction.Request;
+import org.elasticsearch.xpack.prelert.action.PutSchedulerAction.Request;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.job.SchedulerConfigTests;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
+import org.junit.Before;
 
-public class StartJobSchedulerActionRequestTests extends AbstractStreamableXContentTestCase<StartSchedulerAction.Request> {
+import java.util.Arrays;
+
+public class PutSchedulerActionRequestTests extends AbstractStreamableXContentTestCase<Request> {
+
+    private String schedulerId;
+
+    @Before
+    public void setUpSchedulerId() {
+        schedulerId = SchedulerConfigTests.randomValidSchedulerId();
+    }
 
     @Override
     protected Request createTestInstance() {
-        Request request = new Request(randomAsciiOfLength(10), randomPositiveLong());
-        if (randomBoolean()) {
-            request.setEndTime(randomPositiveLong());
-        }
-        return request;
+        SchedulerConfig.Builder schedulerConfig = new SchedulerConfig.Builder(schedulerId, randomAsciiOfLength(10));
+        schedulerConfig.setIndexes(Arrays.asList(randomAsciiOfLength(10)));
+        schedulerConfig.setTypes(Arrays.asList(randomAsciiOfLength(10)));
+        return new Request(schedulerConfig.build());
     }
 
     @Override
@@ -37,7 +48,7 @@ public class StartJobSchedulerActionRequestTests extends AbstractStreamableXCont
 
     @Override
     protected Request parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return Request.parseRequest(null, parser, () -> matcher);
+        return Request.parseRequest(schedulerId, parser, () -> matcher);
     }
 
 }
