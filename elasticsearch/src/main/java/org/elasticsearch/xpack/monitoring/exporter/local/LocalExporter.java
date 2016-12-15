@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.monitoring.exporter.local;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
@@ -108,7 +107,7 @@ public class LocalExporter extends Exporter implements ClusterStateListener, Cle
             }
         }
 
-        clusterService.add(this);
+        clusterService.addListener(this);
         cleanerService.add(this);
     }
 
@@ -135,7 +134,7 @@ public class LocalExporter extends Exporter implements ClusterStateListener, Cle
     public void doClose() {
         if (state.getAndSet(State.TERMINATED) != State.TERMINATED) {
             logger.trace("stopped");
-            clusterService.remove(this);
+            clusterService.removeListener(this);
             cleanerService.remove(this);
         }
     }

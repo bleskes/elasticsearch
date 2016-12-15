@@ -203,12 +203,7 @@ public class SecurityTribeIT extends NativeRealmIntegTestCase {
                     fail("timed out waiting for nodes to be added to tribe's cluster state");
                     latch.countDown();
                 }
-            }, new ClusterStateObserver.ValidationPredicate() {
-                @Override
-                protected boolean validate(ClusterState newState) {
-                    return nodeCountPredicate.test(newState);
-                }
-            });
+            }, nodeCountPredicate);
             latch.await();
         }
     }
