@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.prelert.job.audit;
 
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -36,6 +35,7 @@ public class AuditorTests extends ESTestCase {
     private Client client;
     private ListenableActionFuture<IndexResponse> indexResponse;
     private ArgumentCaptor<String> indexCaptor;
+    private ArgumentCaptor<String> typeCaptor;
     private ArgumentCaptor<XContentBuilder> jsonCaptor;
 
     @SuppressWarnings("unchecked")
@@ -44,6 +44,7 @@ public class AuditorTests extends ESTestCase {
         client = Mockito.mock(Client.class);
         indexResponse = Mockito.mock(ListenableActionFuture.class);
         indexCaptor = ArgumentCaptor.forClass(String.class);
+        typeCaptor = ArgumentCaptor.forClass(String.class);
         jsonCaptor = ArgumentCaptor.forClass(XContentBuilder.class);
     }
 
@@ -52,6 +53,7 @@ public class AuditorTests extends ESTestCase {
         Auditor auditor = new Auditor(client, "prelert-int", "foo");
         auditor.info("Here is my info");
         assertEquals("prelert-int", indexCaptor.getValue());
+        assertEquals("audit_message", typeCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("foo", auditMessage.getJobId());
         assertEquals("Here is my info", auditMessage.getMessage());
@@ -63,6 +65,7 @@ public class AuditorTests extends ESTestCase {
         Auditor auditor = new Auditor(client, "someIndex", "bar");
         auditor.warning("Here is my warning");
         assertEquals("someIndex", indexCaptor.getValue());
+        assertEquals("audit_message", typeCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("bar", auditMessage.getJobId());
         assertEquals("Here is my warning", auditMessage.getMessage());
@@ -74,6 +77,7 @@ public class AuditorTests extends ESTestCase {
         Auditor auditor = new Auditor(client, "someIndex", "foobar");
         auditor.error("Here is my error");
         assertEquals("someIndex", indexCaptor.getValue());
+        assertEquals("audit_message", typeCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("foobar", auditMessage.getJobId());
         assertEquals("Here is my error", auditMessage.getMessage());
@@ -85,6 +89,7 @@ public class AuditorTests extends ESTestCase {
         Auditor auditor = new Auditor(client, "someIndex", "");
         auditor.activity("Here is my activity");
         assertEquals("someIndex", indexCaptor.getValue());
+        assertEquals("audit_message", typeCaptor.getValue());
         AuditMessage auditMessage = parseAuditMessage();
         assertEquals("", auditMessage.getJobId());
         assertEquals("Here is my activity", auditMessage.getMessage());
@@ -96,6 +101,7 @@ public class AuditorTests extends ESTestCase {
         Auditor auditor = new Auditor(client, "someIndex", "");
         auditor.activity(10, 100, 5, 50);
         assertEquals("someIndex", indexCaptor.getValue());
+        assertEquals("audit_activity", typeCaptor.getValue());
         AuditActivity auditActivity = parseAuditActivity();
         assertEquals(10, auditActivity.getTotalJobs());
         assertEquals(100, auditActivity.getTotalDetectors());
@@ -107,9 +113,9 @@ public class AuditorTests extends ESTestCase {
         IndexRequestBuilder indexRequestBuilder = Mockito.mock(IndexRequestBuilder.class);
         when(indexRequestBuilder.setSource(jsonCaptor.capture())).thenReturn(indexRequestBuilder);
         when(indexRequestBuilder.execute()).thenReturn(indexResponse);
-        when(client.prepareIndex(indexCaptor.capture(), eq("audit_message")))
+        when(client.prepareIndex(indexCaptor.capture(), typeCaptor.capture()))
         .thenReturn(indexRequestBuilder);
-        when(client.prepareIndex(indexCaptor.capture(), eq("audit_activity")))
+        when(client.prepareIndex(indexCaptor.capture(), typeCaptor.capture()))
         .thenReturn(indexRequestBuilder);
     }
 
