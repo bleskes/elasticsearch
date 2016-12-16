@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.scheduler.http;
+package org.elasticsearch.xpack.prelert.scheduler.http;
 
 import java.io.BufferedReader;
 import java.io.IOException;

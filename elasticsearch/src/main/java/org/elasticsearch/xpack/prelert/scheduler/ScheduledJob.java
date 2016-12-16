@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.scheduler;
+package org.elasticsearch.xpack.prelert.scheduler;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
