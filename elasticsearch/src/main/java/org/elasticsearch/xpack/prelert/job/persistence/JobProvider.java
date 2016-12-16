@@ -203,7 +203,7 @@ public class JobProvider {
 
             String jobId = job.getId();
             LOGGER.trace("ES API CALL: create index {}", job.getId());
-            CreateIndexRequest createIndexRequest = new CreateIndexRequest(JobResultsPersister.getJobIndexName(jobId));
+            CreateIndexRequest createIndexRequest = new CreateIndexRequest(AnomalyDetectorsIndex.getJobIndexName(jobId));
             Settings.Builder settingsBuilder = prelertIndexSettings();
             createIndexRequest.settings(settingsBuilder);
             createIndexRequest.mapping(Result.TYPE.getPreferredName(), resultsMapping);
@@ -240,7 +240,7 @@ public class JobProvider {
      */
     // TODO: should live together with createJobRelatedIndices (in case it moves)?
     public void deleteJobRelatedIndices(String jobId, ActionListener<DeleteJobAction.Response> listener) {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         LOGGER.trace("ES API CALL: delete index {}", indexName);
 
         try {
@@ -267,7 +267,7 @@ public class JobProvider {
      * @return The dataCounts or default constructed object if not found
      */
     public DataCounts dataCounts(String jobId) {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
 
         try {
             GetResponse response = client.prepareGet(indexName, DataCounts.TYPE.getPreferredName(),
@@ -359,7 +359,7 @@ public class JobProvider {
 
         SearchResponse searchResponse;
         try {
-            String indexName = JobResultsPersister.getJobIndexName(jobId);
+            String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: search all of result type {}  from index {} with filter from {} size {}",
                     Bucket.RESULT_TYPE_VALUE, indexName, from, size);
 
@@ -402,7 +402,7 @@ public class JobProvider {
      * @throws ResourceNotFoundException If the job id is not recognised
      */
     public QueryPage<Bucket> bucket(String jobId, BucketQueryBuilder.BucketQuery query) throws ResourceNotFoundException {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         SearchHits hits;
         try {
             LOGGER.trace("ES API CALL: get Bucket with timestamp {} from index {}", query.getTimestamp(), indexName);
@@ -485,7 +485,7 @@ public class JobProvider {
                 .filter(new TermsQueryBuilder(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue));
 
         FieldSortBuilder sb = new FieldSortBuilder(Bucket.TIMESTAMP.getPreferredName()).order(SortOrder.ASC);
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         SearchRequestBuilder searchBuilder = client
                 .prepareSearch(indexName)
                 .setQuery(boolQuery)
@@ -611,7 +611,7 @@ public class JobProvider {
      * @return QueryPage of CategoryDefinition
      */
     public QueryPage<CategoryDefinition> categoryDefinitions(String jobId, int from, int size) {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         LOGGER.trace("ES API CALL: search all of type {} from index {} sort ascending {} from {} size {}",
                 CategoryDefinition.TYPE.getPreferredName(), indexName, CategoryDefinition.CATEGORY_ID.getPreferredName(), from, size);
 
@@ -651,7 +651,7 @@ public class JobProvider {
      * @return QueryPage CategoryDefinition
      */
     public QueryPage<CategoryDefinition> categoryDefinition(String jobId, String categoryId) {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         GetResponse response;
 
         try {
@@ -718,7 +718,7 @@ public class JobProvider {
     private QueryPage<AnomalyRecord> records(String jobId, int from, int size,
                                              QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
                                              boolean descending) throws ResourceNotFoundException {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
 
         recordFilter = new BoolQueryBuilder()
                 .filter(recordFilter)
@@ -785,7 +785,7 @@ public class JobProvider {
 
     private QueryPage<Influencer> influencers(String jobId, int from, int size, QueryBuilder filterBuilder, String sortField,
                                               boolean sortDescending) throws ResourceNotFoundException {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         LOGGER.trace("ES API CALL: search all of result type {} from index {}{}  with filter from {} size {}",
                 () -> Influencer.RESULT_TYPE_VALUE, () -> indexName,
                 () -> (sortField != null) ?
@@ -865,7 +865,7 @@ public class JobProvider {
      * Get the persisted quantiles state for the job
      */
     public Optional<Quantiles> getQuantiles(String jobId) {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         try {
             LOGGER.trace("ES API CALL: get ID " + Quantiles.QUANTILES_ID +
                     " type " + Quantiles.TYPE + " from index " + indexName);
@@ -945,7 +945,7 @@ public class JobProvider {
 
         SearchResponse searchResponse;
         try {
-            String indexName = JobResultsPersister.getJobIndexName(jobId);
+            String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: search all of type {} from index {} sort ascending {} with filter after sort from {} size {}",
                 ModelSnapshot.TYPE, indexName, sortField, from, size);
 
@@ -986,7 +986,7 @@ public class JobProvider {
      * @param restoreStream the stream to write the state to
      */
     public void restoreStateToStream(String jobId, ModelSnapshot modelSnapshot, OutputStream restoreStream) throws IOException {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
 
         // First try to restore categorizer state.  There are no snapshots for this, so the IDs simply
         // count up until a document is not found.  It's NOT an error to have no categorizer state.
@@ -1061,7 +1061,7 @@ public class JobProvider {
 
         SearchResponse searchResponse;
         try {
-            String indexName = JobResultsPersister.getJobIndexName(jobId);
+            String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
             LOGGER.trace("ES API CALL: search result type {} from index {} from {}, size {}",
                     ModelDebugOutput.RESULT_TYPE_VALUE, indexName, from, size);
 
@@ -1095,7 +1095,7 @@ public class JobProvider {
      * Get the job's model size stats.
      */
     public Optional<ModelSizeStats> modelSizeStats(String jobId) {
-        String indexName = JobResultsPersister.getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         try {
             LOGGER.trace("ES API CALL: get result type {} ID {} from index {}",
                     ModelSizeStats.RESULT_TYPE_VALUE, ModelSizeStats.RESULT_TYPE_FIELD, indexName);
@@ -1153,6 +1153,6 @@ public class JobProvider {
      * @return the {@code Auditor}
      */
     public Auditor audit(String jobId) {
-         return new Auditor(client, JobResultsPersister.getJobIndexName(jobId), jobId);
+         return new Auditor(client, AnomalyDetectorsIndex.getJobIndexName(jobId), jobId);
     }
 }

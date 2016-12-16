@@ -79,7 +79,7 @@ public class JobResultsPersister extends AbstractComponent {
 
         private Builder (String jobId) {
             this.jobId = Objects.requireNonNull(jobId);
-            indexName = getJobIndexName(jobId);
+            indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
             bulkRequest = client.prepareBulk();
         }
 
@@ -297,7 +297,7 @@ public class JobResultsPersister extends AbstractComponent {
      * @return True if successful
      */
     public boolean commitWrites(String jobId) {
-        String indexName = getJobIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
         // Refresh should wait for Lucene to make the data searchable
         logger.trace("[{}] ES API CALL: refresh index {}", jobId, indexName);
         client.admin().indices().refresh(new RefreshRequest(indexName)).actionGet();
@@ -315,12 +315,6 @@ public class JobResultsPersister extends AbstractComponent {
         XContentBuilder builder = jsonBuilder();
         bucketInfluencer.toXContent(builder, ToXContent.EMPTY_PARAMS);
         return builder;
-    }
-
-    private static final String INDEX_PREFIX = "prelertresults-";
-
-    public static String getJobIndexName(String jobId) {
-        return INDEX_PREFIX + jobId;
     }
 
     private class Persistable {
@@ -346,7 +340,7 @@ public class JobResultsPersister extends AbstractComponent {
             logCall();
 
             try {
-                String indexName = getJobIndexName(jobId);
+                String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
                 client.prepareIndex(indexName, type, id)
                 .setSource(toXContentBuilder(object))
                 .execute().actionGet();
@@ -358,7 +352,7 @@ public class JobResultsPersister extends AbstractComponent {
         }
 
         private void logCall() {
-            String indexName = getJobIndexName(jobId);
+            String indexName = AnomalyDetectorsIndex.getJobIndexName(jobId);
             if (id != null) {
                 logger.trace("[{}] ES API CALL: index type {} to index {} with ID {}", jobId, type, indexName, id);
             } else {
