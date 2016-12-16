@@ -18,7 +18,6 @@ import org.elasticsearch.xpack.prelert.job.process.normalizer.output.NormalizerR
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Interface representing the native C++ normalizer process

@@ -74,7 +74,7 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
         return Strings.EMPTY_ARRAY;
     }
 
-    protected <T extends ToXContent & Writeable> XContentBuilder toXContent(T instance, XContentType contentType)
+    protected XContentBuilder toXContent(T instance, XContentType contentType)
             throws IOException {
         XContentBuilder builder = XContentFactory.contentBuilder(contentType);
         if (randomBoolean()) {
