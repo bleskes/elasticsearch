@@ -87,6 +87,8 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
     // Used for QueryPage
     public static final ParseField RESULTS_FIELD = new ParseField("jobs");
 
+    public static final String ALL = "_all";
+
     public static final ObjectParser<Builder, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>("job_details", Builder::new);
 
     static {

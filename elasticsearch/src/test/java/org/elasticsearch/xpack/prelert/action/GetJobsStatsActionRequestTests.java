@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
+ * Copyright (c) 2016
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -14,11 +14,11 @@
  */
 package org.elasticsearch.xpack.prelert.action;
 
-import org.elasticsearch.xpack.prelert.action.GetJobsAction.Request;
+import org.elasticsearch.xpack.prelert.action.GetJobsStatsAction.Request;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
 
-public class GetJobActionRequestTests extends AbstractStreamableTestCase<GetJobsAction.Request> {
+public class GetJobsStatsActionRequestTests extends AbstractStreamableTestCase<Request> {
 
     @Override
     protected Request createTestInstance() {
