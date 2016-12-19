@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.utils;
-
-
-import org.elasticsearch.test.ESTestCase;
-
-import static org.hamcrest.Matchers.is;
-
-public class PrelertStringsTests extends ESTestCase {
-    public void testDoubleQuoteIfNotAlphaNumeric() {
-        assertEquals("foo2", PrelertStrings.doubleQuoteIfNotAlphaNumeric("foo2"));
-        assertEquals("\"fo o\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("fo o"));
-        assertEquals("\" \"", PrelertStrings.doubleQuoteIfNotAlphaNumeric(" "));
         assertEquals("\"ba\\\"r\\\"\"", PrelertStrings.doubleQuoteIfNotAlphaNumeric("ba\"r\""));
     }
 

@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
-
-import java.io.IOException;
-import java.util.List;
-
-/**
- * Interface for classes that write arrays of strings to the
- * Prelert analytics processes.
- */
-public interface RecordWriter {
-    /**
-     * Value must match api::CAnomalyDetector::CONTROL_FIELD_NAME in the C++
      * code.
      */
     String CONTROL_FIELD_NAME = ".";

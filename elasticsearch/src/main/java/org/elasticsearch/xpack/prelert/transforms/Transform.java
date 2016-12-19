@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.transforms;
-
-import java.util.List;
-import java.util.Objects;
-
-import org.apache.logging.log4j.Logger;
-
-/**
- * Abstract transform class.
- * Instances are created with maps telling it which field(s)
- * to read from in the input array and where to write to.
- * The read/write area is passed in the {@linkplain #transform(String[][])}
  * function.
  * <p>
  * Some transforms may fail and we will continue processing for

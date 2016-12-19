@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.transforms.date;
-
-import java.util.List;
-import java.util.Locale;
-
-import org.apache.logging.log4j.Logger;
-
-import org.elasticsearch.xpack.prelert.transforms.TransformException;
-
-/**
- * A transformer that attempts to parse a String timestamp
- * as a double and convert that to a long that represents
  * an epoch time in seconds.
  * If isMillisecond is true, it assumes the number represents
  * time in milli-seconds and will convert to seconds

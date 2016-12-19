@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.persistence;
-
-import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.io.stream.Writeable.Reader;
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
-import org.elasticsearch.xpack.prelert.support.AbstractWireSerializingTestCase;
-import java.util.ArrayList;
-import java.util.Date;
-
-public class QueryPageTests extends AbstractWireSerializingTestCase<QueryPage<Influencer>> {
-
-    @Override
     protected QueryPage<Influencer> createTestInstance() {
         int hitCount = randomIntBetween(0, 10);
         ArrayList<Influencer> hits = new ArrayList<>();

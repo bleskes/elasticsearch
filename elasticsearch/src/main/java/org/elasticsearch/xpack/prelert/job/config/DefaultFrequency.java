@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.config;
-
-import java.time.Duration;
-
-/**
- * Factory methods for a sensible default for the scheduler frequency
- */
-public final class DefaultFrequency {
-    private static final int SECONDS_IN_MINUTE = 60;
-    private static final int TWO_MINS_SECONDS = 2 * SECONDS_IN_MINUTE;
-    private static final int TWENTY_MINS_SECONDS = 20 * SECONDS_IN_MINUTE;
-    private static final int HALF_DAY_SECONDS = 12 * 60 * SECONDS_IN_MINUTE;
     private static final Duration TEN_MINUTES = Duration.ofMinutes(10);
     private static final Duration ONE_HOUR = Duration.ofHours(1);
 

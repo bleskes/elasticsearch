@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.scheduler;
-
-import org.elasticsearch.action.ActionFuture;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.action.FlushJobAction;
-import org.elasticsearch.xpack.prelert.action.JobDataAction;
-import org.elasticsearch.xpack.prelert.job.DataCounts;
-import org.elasticsearch.xpack.prelert.job.audit.Auditor;
-import org.elasticsearch.xpack.prelert.job.extraction.DataExtractor;
-import org.junit.Before;
-import org.mockito.ArgumentCaptor;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

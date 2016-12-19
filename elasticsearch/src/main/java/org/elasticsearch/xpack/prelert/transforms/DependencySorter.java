@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.transforms;
-
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-
-import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
-
-/**
- * Transform inputs and outputs can be chained together this class provides
- * methods for finding the chains of dependencies is a list of transforms. The
  * results are ordered list of transforms that should be executed in order
  * starting at index 0
  */

@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
-
-import java.io.IOException;
-
-/**
- * Interface for classes that read the various styles of JSON inputIndex.
- */
-interface JsonRecordReader {
-    /**
-     * Read some JSON and write to the record array.
-     *
-     * @param record    Read fields are written to this array. This array is first filled with empty
      *                  strings and will never contain a <code>null</code>
      * @param gotFields boolean array each element is true if that field
      *                  was read

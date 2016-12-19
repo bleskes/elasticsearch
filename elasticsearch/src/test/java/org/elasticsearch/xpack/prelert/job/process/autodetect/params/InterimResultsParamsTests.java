@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.process.autodetect.params;
-
-import org.elasticsearch.test.ESTestCase;
-
-public class InterimResultsParamsTests extends ESTestCase {
-    public void testBuilder_GivenDefault() {
-        InterimResultsParams params = InterimResultsParams.builder().build();
-        assertFalse(params.shouldCalculateInterim());
-        assertFalse(params.shouldAdvanceTime());
-        assertEquals("", params.getStart());
-        assertEquals("", params.getEnd());
-    }
 
 
     public void testBuilder_GivenCalcInterim() {

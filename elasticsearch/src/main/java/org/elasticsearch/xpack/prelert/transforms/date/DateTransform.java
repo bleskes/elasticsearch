@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.transforms.date;
-
-import java.util.List;
-
-import org.apache.logging.log4j.Logger;
-
-import org.elasticsearch.xpack.prelert.transforms.Transform;
-import org.elasticsearch.xpack.prelert.transforms.TransformException;
-
-/**
- * Abstract class introduces the {@link #epochMs()} method for
- * date transforms
  */
 public abstract class DateTransform extends Transform {
     protected static final int SECONDS_TO_MS = 1000;

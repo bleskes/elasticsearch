@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.scheduler.http;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-public class ElasticsearchUrlBuilder {
-
-    private static final String SLASH = "/";
-    private static final String COMMA = ",";
-    private static final int SCROLL_CONTEXT_MINUTES = 60;
     private static final String INDEX_SETTINGS_END_POINT = "%s/_settings";
     private static final String SEARCH_SIZE_ONE_END_POINT = "_search?size=1";
     private static final String SEARCH_SCROLL_END_POINT = "_search?scroll=" + SCROLL_CONTEXT_MINUTES + "m&size=%d";

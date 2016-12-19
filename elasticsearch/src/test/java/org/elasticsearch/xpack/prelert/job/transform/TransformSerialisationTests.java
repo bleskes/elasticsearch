@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.transform;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.elasticsearch.common.ParseFieldMatcher;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.test.ESTestCase;
-
-import java.io.IOException;
-
-public class TransformSerialisationTests extends ESTestCase {
-
     public void testDeserialise_singleFieldAsArray() throws JsonProcessingException, IOException {
 
         String json = "{\"inputs\":\"dns\", \"transform\":\"domain_split\"}";

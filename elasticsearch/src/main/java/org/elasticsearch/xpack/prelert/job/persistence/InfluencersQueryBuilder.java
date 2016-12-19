@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.persistence;
-
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
-
-import java.util.Objects;
-
-/**
- * One time query builder for influencers.
- * <ul>
- * <li>From- Skip the first N Influencers. This parameter is for paging if not
- * required set to 0. Default = 0</li>
- * <li>Size- Take only this number of Influencers. Default =
  * {@value DEFAULT_SIZE}</li>
  * <li>IncludeInterim- Include interim results. Default = false</li>
  * <li>anomalyScoreThreshold- Return only influencers with an anomalyScore &gt;=

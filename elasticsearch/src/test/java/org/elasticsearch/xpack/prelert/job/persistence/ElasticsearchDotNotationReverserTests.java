@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.persistence;
-
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.test.ESTestCase;
-
-
-public class ElasticsearchDotNotationReverserTests extends ESTestCase {
-    public void testResultsMap() throws Exception {
-        ElasticsearchDotNotationReverser reverser = createReverser();
-
-        String expected = "{\"complex\":{\"nested\":{\"structure\":{\"first\":\"x\"," +
-                "\"second\":\"y\"},\"value\":\"z\"}},\"cpu\":{\"system\":\"5\"," +
                 "\"user\":\"10\",\"wait\":\"1\"},\"simple\":\"simon\"}";
 
         String actual = XContentFactory.jsonBuilder().map(reverser.getResultsMap()).string();

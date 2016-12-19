@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.scheduler.http;
-
-import org.elasticsearch.test.ESTestCase;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-public class ElasticsearchUrlBuilderTests extends ESTestCase {
-
-    private static final List<String> SINGLE_INDEX = Arrays.asList("foo-*");
-    private static final List<String> TWO_INDEXES = Arrays.asList("index_1", "index_2");
     private static final List<String> EMPTY_TYPES = Collections.emptyList();
     private static final List<String> TWO_TYPES = Arrays.asList("type_1", "type_2");
 

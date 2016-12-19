@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.transforms;
-
-import org.elasticsearch.test.ESTestCase;
-
-// TODO Reimplement
-public class HighestRegisteredDomainTests extends ESTestCase {
-    // private void checkHighestRegisteredDomain(String fullName, String
-    // registeredNameExpected)
-    // {
-    // InternetDomainName effectiveTLD = InternetDomainName.from(fullName);
-    //
-    // effectiveTLD = effectiveTLD.topPrivateDomain();
     // assertTrue(effectiveTLD.isTopPrivateDomain());
     // String registeredName = effectiveTLD.toString();
     //

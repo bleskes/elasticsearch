@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.persistence;
-
-import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.prelert.job.results.Influencer;
-
-public class InfluencersQueryBuilderTests extends ESTestCase {
-
-    public void testDefaultBuild() throws Exception {
-        InfluencersQueryBuilder.InfluencersQuery query = new InfluencersQueryBuilder().build();
-
-        assertEquals(0, query.getFrom());
-        assertEquals(InfluencersQueryBuilder.DEFAULT_SIZE, query.getSize());
         assertEquals(false, query.isIncludeInterim());
         assertEquals(0.0, query.getAnomalyScoreFilter(), 0.0001);
         assertNull(query.getStart());

@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,18 +12,6 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.utils.time;
-
-import org.elasticsearch.index.mapper.DateFieldMapper;
-
-public final class TimeUtils {
-    private TimeUtils() {
-        // Do nothing
-    }
-
-    /**
-     * First tries to parse the date first as a Long and convert that to an
-     * epoch time. If the long number has more than 10 digits it is considered a
      * time in milliseconds else if 10 or less digits it is in seconds. If that
      * fails it tries to parse the string using
      * {@link DateFieldMapper#DEFAULT_DATE_TIME_FORMATTER}
