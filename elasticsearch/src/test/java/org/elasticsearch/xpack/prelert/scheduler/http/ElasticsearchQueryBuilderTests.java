@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 public class ElasticsearchQueryBuilderTests extends ESTestCase {
 
     public void testCreateSearchBody_GivenQueryOnly() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, null, "time");
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, "time");
 
         assertFalse(queryBuilder.isAggregated());
 
@@ -37,25 +37,9 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 
-    public void testCreateSearchBody_GivenQueryAndFields() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, "[\"foo\",\"bar\"]",
-                "@timestamp");
-
-        assertFalse(queryBuilder.isAggregated());
-
-        String searchBody = queryBuilder.createSearchBody(1451606400000L, 1451610000000L);
-
-        String expected = "{" + "  \"sort\": [" + "    {\"@timestamp\": {\"order\": \"asc\"}}" + "  ]," + "  \"query\": {"
-                + "    \"bool\": {" + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
-                + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
-                + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
-                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"_source\": [\"foo\",\"bar\"]" + "}";
-        assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
-    }
-
-    public void testCreateSearchBody_GivenQueryAndFieldsAndScriptFields() {
+    public void testCreateSearchBody_GivenQueryAndScriptFields() {
         ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null,
-                "{\"test1\":{\"script\": \"...\"}}", "[\"foo\",\"bar\"]", "@timestamp");
+                "{\"test1\":{\"script\": \"...\"}}", "@timestamp");
 
         assertFalse(queryBuilder.isAggregated());
 
@@ -65,13 +49,13 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
                 + "    \"bool\": {" + "      \"filter\": [" + "        {\"match_all\":{}}," + "        {" + "          \"range\": {"
                 + "            \"@timestamp\": {" + "              \"gte\": \"2016-01-01T00:00:00.000Z\","
                 + "              \"lt\": \"2016-01-01T01:00:00.000Z\"," + "              \"format\": \"date_time\"" + "            }"
-                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"script_fields\": {\"test1\":{\"script\":\"...\"}},"
-                + "  \"_source\": [\"foo\",\"bar\"]" + "}";
+                + "          }" + "        }" + "      ]" + "    }" + "  }," + "  \"script_fields\": {\"test1\":{\"script\":\"...\"}}"
+                + "}";
         assertEquals(expected.replaceAll(" ", ""), searchBody.replaceAll(" ", ""));
     }
 
     public void testCreateSearchBody_GivenQueryAndAggs() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", "{\"my_aggs\":{}}", null, null, "time");
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", "{\"my_aggs\":{}}", null, "time");
 
         assertTrue(queryBuilder.isAggregated());
 
@@ -86,7 +70,7 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
     }
 
     public void testCreateDataSummaryQuery_GivenQueryOnly() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, null, "@timestamp");
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, "@timestamp");
 
         assertFalse(queryBuilder.isAggregated());
 
@@ -102,9 +86,9 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
         assertEquals(expected.replaceAll(" ", ""), dataSummaryQuery.replaceAll(" ", ""));
     }
 
-    public void testCreateDataSummaryQuery_GivenQueryAndFieldsAndScriptFields() {
+    public void testCreateDataSummaryQuery_GivenQueryAndScriptFields() {
         ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null,
-                "{\"test1\":{\"script\": \"...\"}}", "[\"foo\",\"bar\"]", "@timestamp");
+                "{\"test1\":{\"script\": \"...\"}}", "@timestamp");
 
         assertFalse(queryBuilder.isAggregated());
 
@@ -121,8 +105,7 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
     }
 
     public void testCreateDataSummaryQuery_GivenQueryAndAggs() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", "{\"my_aggs\":{}}", null, null,
-                "@timestamp");
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", "{\"my_aggs\":{}}", null, "@timestamp");
 
         assertTrue(queryBuilder.isAggregated());
 
@@ -139,7 +122,7 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
     }
 
     public void testLogQueryInfo_GivenNoAggsNoFields() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, null, "@timestamp");
+        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, "@timestamp");
 
         Logger logger = mock(Logger.class);
         queryBuilder.logQueryInfo(logger);
@@ -147,18 +130,9 @@ public class ElasticsearchQueryBuilderTests extends ESTestCase {
         verify(logger).debug("Will retrieve whole _source document from Elasticsearch");
     }
 
-    public void testLogQueryInfo_GivenFields() {
-        ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", null, null, "[\"foo\"]", "@timestamp");
-
-        Logger logger = mock(Logger.class);
-        queryBuilder.logQueryInfo(logger);
-
-        verify(logger).debug("Will request only the following field(s) from Elasticsearch: [\"foo\"]");
-    }
-
-    public void testLogQueryInfo_GivenAggs() {
+    public void testLogQueryInfo() {
         ElasticsearchQueryBuilder queryBuilder = new ElasticsearchQueryBuilder("\"match_all\":{}", "{\"my_aggs\":{ \"foo\": \"bar\" }}",
-                null, null, "@timestamp");
+                null, "@timestamp");
 
         Logger logger = mock(Logger.class);
         queryBuilder.logQueryInfo(logger);
