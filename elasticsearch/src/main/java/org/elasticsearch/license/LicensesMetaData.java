@@ -17,6 +17,8 @@
 package org.elasticsearch.license;
 
 import org.elasticsearch.cluster.AbstractDiffable;
+import org.elasticsearch.cluster.AbstractNamedDiffable;
+import org.elasticsearch.cluster.NamedDiff;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -31,7 +33,7 @@ import java.util.EnumSet;
 /**
  * Contains metadata about registered licenses
  */
-class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements MetaData.Custom,
+class LicensesMetaData extends AbstractNamedDiffable<MetaData.Custom> implements MetaData.Custom,
         TribeService.MergableCustomMetaData<LicensesMetaData> {
 
     public static final String TYPE = "licenses";
@@ -55,8 +57,6 @@ class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements Meta
             .issueDate(0)
             .expiryDate(0)
             .build();
-
-    public static final LicensesMetaData PROTO = new LicensesMetaData(null);
 
     private License license;
 
@@ -90,7 +90,7 @@ class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements Meta
     }
 
     @Override
-    public String type() {
+    public String getWriteableName() {
         return TYPE;
     }
 
@@ -99,8 +99,7 @@ class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements Meta
         return EnumSet.of(MetaData.XContentContext.GATEWAY);
     }
 
-    @Override
-    public LicensesMetaData fromXContent(XContentParser parser) throws IOException {
+    public static LicensesMetaData fromXContent(XContentParser parser) throws IOException {
         License license = LICENSE_TOMBSTONE;
         XContentParser.Token token;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
@@ -143,13 +142,16 @@ class LicensesMetaData extends AbstractDiffable<MetaData.Custom> implements Meta
         }
     }
 
-    @Override
-    public LicensesMetaData readFrom(StreamInput streamInput) throws IOException {
-        License license = LICENSE_TOMBSTONE;
+    public LicensesMetaData(StreamInput streamInput) throws IOException {
         if (streamInput.readBoolean()) {
             license = License.readLicense(streamInput);
+        } else {
+            license = LICENSE_TOMBSTONE;
         }
-        return new LicensesMetaData(license);
+    }
+
+    public static NamedDiff<MetaData.Custom> readDiffFrom(StreamInput streamInput) throws IOException {
+        return readDiffFrom(MetaData.Custom.class, TYPE, streamInput);
     }
 
     @Override

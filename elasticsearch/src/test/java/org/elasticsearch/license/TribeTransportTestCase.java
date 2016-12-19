@@ -48,6 +48,7 @@ import org.elasticsearch.test.discovery.TestZenDiscovery;
 import org.elasticsearch.transport.MockTcpTransportPlugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -148,11 +149,14 @@ public abstract class TribeTransportTestCase extends ESIntegTestCase {
                 .put(tribe2Defaults.build())
                 .put(NetworkModule.HTTP_ENABLED.getKey(), false)
                 .put(internalCluster().getDefaultSettings())
+                .put(XPackSettings.SECURITY_ENABLED.getKey(), false) // otherwise it conflicts with mock transport
+                .put("tribe.t1." + XPackSettings.SECURITY_ENABLED.getKey(), false)
+                .put("tribe.t2." + XPackSettings.SECURITY_ENABLED.getKey(), false)
                 .put("node.name", "tribe_node") // make sure we can identify threads from this node
                 .put("transport.type", "local")
                 .build();
 
-        final List<Class<? extends Plugin>> mockPlugins = Collections.singletonList(TestZenDiscovery.TestPlugin.class);
+        final List<Class<? extends Plugin>> mockPlugins = Arrays.asList(TestZenDiscovery.TestPlugin.class, XPackPlugin.class);
         final Node tribeNode = new MockNode(merged, mockPlugins).start();
         Client tribeClient = tribeNode.client();
 
@@ -201,7 +205,7 @@ public abstract class TribeTransportTestCase extends ESIntegTestCase {
     /**
      * Verify transport action behaviour on tribe node
      */
-    protected abstract void verifyActionOnTribeNode(Client tribeClient);
+    protected abstract void verifyActionOnTribeNode(Client tribeClient) throws Exception;
 
     protected void failAction(Client client, Action action) {
         try {
