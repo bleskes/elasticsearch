@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.usage;
+
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.component.AbstractComponent;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.common.settings.Setting.Property;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
+import java.util.Locale;
+
+/**
  * Reports the number of bytes, fields and records read.
  * Persistence is done via {@linkplain UsagePersister}
  * The main difference betweeen this and the {@linkplain org.elasticsearch.xpack.prelert.job.status.StatusReporter}

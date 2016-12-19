@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import java.io.IOException;
+import java.util.Objects;
+
+import org.elasticsearch.action.Action;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.ActionRequestBuilder;
+import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.support.ActionFilters;
+import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;

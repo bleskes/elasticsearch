@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.logging;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
+public class CppLogMessageTests extends AbstractSerializingTestCase<CppLogMessage> {
+
+    public void testDefaultConstructor() {
+        CppLogMessage msg = new CppLogMessage();
+        assertEquals("", msg.getLogger());
         assertTrue(msg.getTimestamp().toString(), msg.getTimestamp().getTime() > 0);
         assertEquals("", msg.getLevel());
         assertEquals(0, msg.getPid());

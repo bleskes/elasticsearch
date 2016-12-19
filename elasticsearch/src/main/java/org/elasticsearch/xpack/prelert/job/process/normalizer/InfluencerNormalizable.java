@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.xpack.prelert.job.results.Influencer;
+
+import java.util.Objects;
+
+class InfluencerNormalizable extends AbstractLeafNormalizable {
+    private final Influencer influencer;
+
+    public InfluencerNormalizable(Influencer influencer) {
+        this.influencer = Objects.requireNonNull(influencer);
+    }
 
     @Override
     public Level getLevel() {

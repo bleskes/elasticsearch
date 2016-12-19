@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import org.elasticsearch.test.ESTestCase;
+import org.junit.Assert;
+
+public class CsvRecordWriterTests extends ESTestCase {
+
     public void testWriteArray() throws IOException {
         String[] header = {"one", "two", "three", "four", "five"};
         String[] record1 = {"r1", "r2", "", "rrr4", "r5"};

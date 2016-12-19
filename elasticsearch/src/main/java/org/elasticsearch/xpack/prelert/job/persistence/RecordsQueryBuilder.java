@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.persistence;
+
+/**
+ * One time query builder for records. Sets default values for the following
+ * parameters:
+ * <ul>
+ * <li>From- Skip the first N records. This parameter is for paging if not
+ * required set to 0. Default = 0</li>
+ * <li>Size- Take only this number of records. Default =
+ * {@value DEFAULT_SIZE}</li>
+ * <li>IncludeInterim- Include interim results. Default = false</li>
+ * <li>SortField- The field to sort results by if <code>null</code> no sort is
  * applied. Default = null</li>
  * <li>SortDescending- Sort in descending order. Default = true</li>
  * <li>anomalyScoreThreshold- Return only buckets with an anomalyScore &gt;=

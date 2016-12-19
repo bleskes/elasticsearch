@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.transforms;
+
+import java.util.List;
+
+import org.apache.logging.log4j.Logger;
+
+
+/**
+ * Split a hostname into Highest Registered Domain and sub domain.
+ * TODO Reimplement porting the code from C++
+ */
+public class HighestRegisteredDomain extends Transform {
     /**
      * Immutable class for the domain split results
      */

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect;
+
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.ZonedDateTime;
+
+/**
+ * Interface representing the native C++ autodetect process
  */
 public interface AutodetectProcess extends Closeable {
 

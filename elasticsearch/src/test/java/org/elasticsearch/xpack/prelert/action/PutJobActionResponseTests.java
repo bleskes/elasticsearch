@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.xpack.prelert.action.PutJobAction.Response;
+import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
+import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
+
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.randomValidJobId;
+
+public class PutJobActionResponseTests extends AbstractStreamableTestCase<Response> {
+
     @Override
     protected Response createTestInstance() {
         Job.Builder builder = buildJobBuilder(randomValidJobId());

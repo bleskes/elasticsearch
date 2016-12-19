@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.transforms;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiFunction;
+
+import org.elasticsearch.xpack.prelert.job.condition.Condition;
+import org.elasticsearch.xpack.prelert.job.condition.Operator;
+import org.elasticsearch.xpack.prelert.job.transform.IntRange;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+import org.elasticsearch.xpack.prelert.job.transform.TransformType;
+import org.elasticsearch.xpack.prelert.transforms.Transform.TransformIndex;
 
 public final class TransformTestUtils {
     private TransformTestUtils() {

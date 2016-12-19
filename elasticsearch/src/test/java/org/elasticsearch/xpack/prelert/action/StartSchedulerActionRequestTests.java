@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.action.StartSchedulerAction.Request;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
+
+public class StartSchedulerActionRequestTests extends AbstractStreamableXContentTestCase<StartSchedulerAction.Request> {
+
+    @Override
+    protected Request createTestInstance() {
+        Request request = new Request(randomAsciiOfLength(10), randomPositiveLong());
         if (randomBoolean()) {
             request.setEndTime(randomPositiveLong());
         }

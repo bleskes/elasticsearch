@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.transforms;
+
+import java.util.List;
+
+import org.apache.logging.log4j.Logger;
+
+import org.elasticsearch.xpack.prelert.job.condition.Condition;
+
+
+/**
+ * Abstract base class for exclude filters
+ */
 public abstract class ExcludeFilter extends Transform {
     private final Condition condition;
 

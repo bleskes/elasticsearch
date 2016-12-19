@@ -12,3 +12,11 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.transforms;
+
+public abstract class TransformException extends Exception {
+
+    public TransformException(String message) {
+        super(message);
+    }
+}

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.transforms;
+
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.logging.log4j.Logger;
+
+import org.elasticsearch.xpack.prelert.job.condition.Condition;
+
+/**
+ * Matches a field against a regex
  */
 public class ExcludeFilterRegex extends ExcludeFilter {
     private final Pattern pattern;

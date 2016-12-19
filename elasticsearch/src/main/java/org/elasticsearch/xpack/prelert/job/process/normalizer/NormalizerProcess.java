@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.xpack.prelert.job.process.normalizer.output.NormalizerResultHandler;
+
+import java.io.Closeable;
+import java.io.IOException;
+
+/**
+ * Interface representing the native C++ normalizer process
+ */
+public interface NormalizerProcess extends Closeable {
+
     /**
      * Write the record to normalizer. The record parameter should not be encoded
      * (i.e. length encoded) the implementation will appy the corrrect encoding.

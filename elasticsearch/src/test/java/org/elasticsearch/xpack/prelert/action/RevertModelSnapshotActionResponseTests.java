@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.xpack.prelert.action.RevertModelSnapshotAction.Response;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
+
+public class RevertModelSnapshotActionResponseTests extends AbstractStreamableTestCase<RevertModelSnapshotAction.Response> {
+
+    @Override
+    protected Response createTestInstance() {
+        ModelSnapshot modelSnapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
+        modelSnapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         return new RevertModelSnapshotAction.Response(modelSnapshot);
     }
 

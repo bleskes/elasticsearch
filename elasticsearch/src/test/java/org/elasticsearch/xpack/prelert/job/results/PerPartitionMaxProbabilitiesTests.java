@@ -13,6 +13,18 @@
  * strictly prohibited.
  */
 
+package org.elasticsearch.xpack.prelert.job.results;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+import org.joda.time.DateTime;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 public class PerPartitionMaxProbabilitiesTests extends AbstractSerializingTestCase<PerPartitionMaxProbabilities> {
 
     @Override

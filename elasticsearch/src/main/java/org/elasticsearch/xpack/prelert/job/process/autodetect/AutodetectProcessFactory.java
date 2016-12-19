@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect;
+
+import org.elasticsearch.xpack.prelert.job.Job;
+
+import java.util.concurrent.ExecutorService;
+
+/**
+ * Factory interface for creating implementations of {@link AutodetectProcess}
+ */
+public interface AutodetectProcessFactory {
+    /**
+     *  Create an implementation of {@link AutodetectProcess}
      *
      * @param job Job configuration for the analysis process
      * @param ignoreDowntime Should gaps in data be treated as anomalous or as a maintenance window after a job re-start

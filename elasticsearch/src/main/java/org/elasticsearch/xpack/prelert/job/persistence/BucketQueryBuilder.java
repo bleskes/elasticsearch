@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.persistence;
+
+import org.elasticsearch.common.Strings;
+
+import java.util.Objects;
+
+/**
+ * One time query builder for a single buckets.
+ * <ul>
+ * <li>Timestamp (Required) - Timestamp of the bucket</li>
+ * <li>Expand- Include anomaly records. Default= false</li>
+ * <li>IncludeInterim- Include interim results. Default = false</li>
  * <li>partitionValue Set the bucket's max normalized probabiltiy to this
  * partiton field value's max normalized probability. Default = null</li>
  * </ul>

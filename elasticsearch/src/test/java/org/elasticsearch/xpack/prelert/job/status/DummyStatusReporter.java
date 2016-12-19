@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.status;
+
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.persistence.JobDataCountsPersister;
+import org.elasticsearch.xpack.prelert.job.usage.UsageReporter;
+
+import static org.mockito.Mockito.mock;
+
+/**
+ * Dummy StatusReporter for testing
  */
 class DummyStatusReporter extends StatusReporter {
 

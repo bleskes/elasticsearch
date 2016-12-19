@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.scheduler;
+
+import org.elasticsearch.xpack.prelert.job.audit.Auditor;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+
+import java.util.Objects;
+import java.util.function.Supplier;
+
+/**
+ * <p>
+ * Keeps track of problems the scheduler encounters and audits
+ * messages appropriately.
  * </p>
  * <p>
  * The {@code ProblemTracker} is expected to interact with multiple

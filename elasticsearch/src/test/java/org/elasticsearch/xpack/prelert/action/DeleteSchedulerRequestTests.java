@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.xpack.prelert.action.DeleteSchedulerAction.Request;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
+
+public class DeleteSchedulerRequestTests extends AbstractStreamableTestCase<Request> {
+
+    @Override
+    protected Request createTestInstance() {
+        return new Request(randomAsciiOfLengthBetween(1, 20));
+    }
+
     @Override
     protected Request createBlankInstance() {
         return new Request();

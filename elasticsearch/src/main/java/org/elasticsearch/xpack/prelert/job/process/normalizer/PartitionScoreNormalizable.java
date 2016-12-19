@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.xpack.prelert.job.results.PartitionScore;
+
+import java.util.Objects;
+
+
+public class PartitionScoreNormalizable extends AbstractLeafNormalizable {
+    private final PartitionScore score;
+
+    public PartitionScoreNormalizable(PartitionScore score) {
+        this.score = Objects.requireNonNull(score);
     }
 
     @Override

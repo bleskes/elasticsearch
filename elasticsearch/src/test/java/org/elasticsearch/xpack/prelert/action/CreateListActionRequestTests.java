@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.action.PutListAction.Request;
+import org.elasticsearch.xpack.prelert.lists.ListDocument;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CreateListActionRequestTests extends AbstractStreamableXContentTestCase<PutListAction.Request> {
 
     @Override
     protected Request createTestInstance() {

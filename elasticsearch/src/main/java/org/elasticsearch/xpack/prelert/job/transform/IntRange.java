@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.transform;
+
+import java.util.Objects;
+
+public class IntRange {
+    public enum BoundType {
+        OPEN, CLOSED
+    }
+
+    public static class Bound {
+        private final int value;
+        private final BoundType boundType;
 
         public Bound(int value, BoundType boundType) {
             this.value = value;

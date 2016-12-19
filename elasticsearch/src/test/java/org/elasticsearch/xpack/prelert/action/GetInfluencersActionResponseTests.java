@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.xpack.prelert.action.GetInfluencersAction.Response;
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
+import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+public class GetInfluencersActionResponseTests extends AbstractStreamableTestCase<GetInfluencersAction.Response> {
 
     @Override
     protected Response createTestInstance() {

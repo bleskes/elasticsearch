@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+
+public interface Renormalizer {
+    /**
+     * Update the anomaly score field on all previously persisted buckets
+     * and all contained records
+     */
+    void renormalize(Quantiles quantiles);
+
+    /**
      * Blocks until the renormalizer is idle and no further quantiles updates are pending.
      */
     void waitUntilIdle();

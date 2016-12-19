@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats.MemoryStatus;
+import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
+
+import java.util.Date;
+
 public class ModelSnapshotTests extends AbstractSerializingTestCase<ModelSnapshot> {
     private static final Date DEFAULT_TIMESTAMP = new Date();
     private static final String DEFAULT_DESCRIPTION = "a snapshot";

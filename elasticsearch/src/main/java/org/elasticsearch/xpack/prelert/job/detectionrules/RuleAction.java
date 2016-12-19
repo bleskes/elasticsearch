@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.detectionrules;
+
+import java.util.Locale;
+
+public enum RuleAction {
+    FILTER_RESULTS;
+
+    /**
+     * Case-insensitive from string method.
+     *
+     * @param value String representation
+     * @return The rule action
      */
     public static RuleAction forString(String value) {
         return RuleAction.valueOf(value.toUpperCase(Locale.ROOT));

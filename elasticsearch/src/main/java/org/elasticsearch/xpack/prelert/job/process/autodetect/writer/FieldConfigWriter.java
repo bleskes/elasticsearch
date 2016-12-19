@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.EQUALS;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
+import org.apache.logging.log4j.Logger;
+
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentFactory;

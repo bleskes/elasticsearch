@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import java.util.Collections;
+import java.util.List;
+
+abstract class AbstractLeafNormalizable implements Normalizable {
+    @Override
+    public final boolean isContainerOnly() {
+        return false;
+    }
+
+    @Override
     public final List<Integer> getChildrenTypes() {
         return Collections.emptyList();
     }

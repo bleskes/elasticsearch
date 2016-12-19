@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.function.Supplier;
+
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+
+/**
+ * A writer for transforming and piping data from an
+ * inputstream to outputstream as the process expects.
+ */
 public interface DataToProcessWriter {
     /**
      * Reads the inputIndex, transform to length encoded values and pipe

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.logging;
+
+import org.elasticsearch.test.ESTestCase;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
+
+public class CppLogMessageHandlerTests extends ESTestCase {
 
     public void testParse() throws IOException, TimeoutException {
 

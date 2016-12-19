@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.output;
+
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.condition.Condition;
+import org.elasticsearch.xpack.prelert.job.condition.Operator;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+import org.elasticsearch.xpack.prelert.job.transform.TransformType;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
 
 import com.carrotsearch.randomizedtesting.generators.CodepointSetGenerator;
 

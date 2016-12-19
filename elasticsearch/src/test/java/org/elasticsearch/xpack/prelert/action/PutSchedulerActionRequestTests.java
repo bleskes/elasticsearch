@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.action.PutSchedulerAction.Request;
+import org.elasticsearch.xpack.prelert.scheduler.SchedulerConfig;
+import org.elasticsearch.xpack.prelert.scheduler.SchedulerConfigTests;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
+import org.junit.Before;
+
+import java.util.Arrays;
+
 public class PutSchedulerActionRequestTests extends AbstractStreamableXContentTestCase<Request> {
 
     private String schedulerId;

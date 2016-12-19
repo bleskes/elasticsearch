@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.persistence;
+
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.index.query.TermsQueryBuilder;
+import org.elasticsearch.xpack.prelert.job.results.Result;
+
+abstract class ElasticsearchBatchedResultsIterator<T> extends ElasticsearchBatchedDocumentsIterator<T> {
+
+    public ElasticsearchBatchedResultsIterator(Client client, String jobId, String resultType, ParseFieldMatcher parseFieldMatcher) {
+        super(client, AnomalyDetectorsIndex.getJobIndexName(jobId), parseFieldMatcher,
+                new TermsQueryBuilder(Result.RESULT_TYPE.getPreferredName(), resultType));
     }
 
     @Override

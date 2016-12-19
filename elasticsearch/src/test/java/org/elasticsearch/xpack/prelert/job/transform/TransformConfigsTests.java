@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.transform;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.condition.Condition;
+import org.elasticsearch.xpack.prelert.job.condition.Operator;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TransformConfigsTests extends AbstractSerializingTestCase<TransformConfigs> {

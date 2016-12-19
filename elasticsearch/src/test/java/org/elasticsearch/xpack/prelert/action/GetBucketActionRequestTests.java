@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.action.GetBucketsAction.Request;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
+
+public class GetBucketActionRequestTests extends AbstractStreamableXContentTestCase<GetBucketsAction.Request> {
+
+    @Override
+    protected Request createTestInstance() {
         GetBucketsAction.Request request = new GetBucketsAction.Request(randomAsciiOfLengthBetween(1, 20));
 
         if (randomBoolean()) {

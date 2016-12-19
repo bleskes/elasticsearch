@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
+
+public class PostDataActionRequestTests extends AbstractStreamableTestCase<JobDataAction.Request> {
+    @Override
+    protected JobDataAction.Request createTestInstance() {
+        JobDataAction.Request request = new JobDataAction.Request(randomAsciiOfLengthBetween(1, 20));
+        request.setIgnoreDowntime(randomBoolean());
+        if (randomBoolean()) {
+            request.setResetStart(randomAsciiOfLengthBetween(1, 20));
+        }
         if (randomBoolean()) {
             request.setResetEnd(randomAsciiOfLengthBetween(1, 20));
         }

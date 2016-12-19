@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.status;
+
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * Simple wrapper around an inputstream instance that counts
+ * all the bytes passing through it reporting that number to
+ * the {@link StatusReporter}
+ * <p>
+ * Overrides the read methods counting the number of bytes read.
  */
 public class CountingInputStream extends FilterInputStream {
     private StatusReporter statusReporter;

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.params;
+
+import java.util.Objects;
+
+public class DataLoadParams {
+    private final TimeRange resetTimeRange;
+    private final boolean ignoreDowntime;
+
+    public DataLoadParams(TimeRange resetTimeRange) {
+        this(resetTimeRange, false);
+    }
+
     public DataLoadParams(TimeRange resetTimeRange, boolean ignoreDowntime) {
         this.resetTimeRange = Objects.requireNonNull(resetTimeRange);
         this.ignoreDowntime = ignoreDowntime;

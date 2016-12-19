@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.results.Influencer;
+import org.junit.Before;
+
+import java.util.Date;
+
+public class InfluencerNormalizableTests extends ESTestCase {
+    private static final double EPSILON = 0.0001;
+    private Influencer influencer;
+
     @Before
     public void setUpInfluencer() {
         influencer = new Influencer("foo", "airline", "AAL", new Date(), 600, 1);

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+
+/**
+ * An enumeration of the different normalization levels.
+ * The string value of each level has to match the equivalent
+ * level names in the normalizer C++ process.
+ */
+enum Level {
+    ROOT("root"),
+    LEAF("leaf"),
+    BUCKET_INFLUENCER("inflb"),
     INFLUENCER("infl"),
     PARTITION("part");
 

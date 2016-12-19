@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
+public class NormalizerResultTests extends AbstractSerializingTestCase<NormalizerResult> {
+
+    private static final double EPSILON = 0.0000000001;
+
+    public void testDefaultConstructor() {
         NormalizerResult msg = new NormalizerResult();
         assertNull(msg.getLevel());
         assertNull(msg.getPartitionFieldName());

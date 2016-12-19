@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.params;
+
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
+import org.elasticsearch.xpack.prelert.utils.time.TimeUtils;
+
+import java.util.Objects;
+
+public class TimeRange {
+
     public static final String START_PARAM = "start";
     public static final String END_PARAM = "end";
     public static final String NOW = "now";

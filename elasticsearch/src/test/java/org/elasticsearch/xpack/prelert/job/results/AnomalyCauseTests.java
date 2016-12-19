@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.results;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AnomalyCauseTests extends AbstractSerializingTestCase<AnomalyCause> {
+
     @Override
     protected AnomalyCause createTestInstance() {
         AnomalyCause anomalyCause = new AnomalyCause();

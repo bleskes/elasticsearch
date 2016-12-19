@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.persistence;
+
+/**
+ * Methods for handling index naming related functions
+ */
+public final class AnomalyDetectorsIndex {
+    private static final String INDEX_PREFIX = "prelertresults-";
+
+    private AnomalyDetectorsIndex() {
+    }
+
+    public static String getJobIndexName(String jobId) {
         return INDEX_PREFIX + jobId;
     }
 

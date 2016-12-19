@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.modelsnapshots;
+
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.action.GetModelSnapshotsAction;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.persistence.JobProvider;
+import org.elasticsearch.xpack.prelert.job.persistence.QueryPage;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
+
+import java.util.Collections;
+
+import static org.elasticsearch.mock.orig.Mockito.when;
 import static org.mockito.Mockito.mock;
 
 public class GetModelSnapshotsTests extends ESTestCase {

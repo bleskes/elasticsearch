@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.results;
+
+import org.elasticsearch.common.ParseField;
+
+/**
+ * Common attributes of the result types
+ */
+public class Result {
+
+    /**
+     * Serialisation fields
+     */
     public static final ParseField TYPE = new ParseField("result");
     public static final ParseField RESULT_TYPE = new ParseField("result_type");
 }

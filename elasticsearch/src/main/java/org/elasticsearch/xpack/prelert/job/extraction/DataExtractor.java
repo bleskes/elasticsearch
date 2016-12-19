@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.extraction;
+
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
+
+public interface DataExtractor {
+    /**
+     * Set-up the extractor for a new search
+     *
      * @param start start time
      * @param end end time
      * @param logger logger

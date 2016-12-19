@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.BucketInfluencer;
+import org.elasticsearch.xpack.prelert.job.results.PartitionScore;
 import org.junit.Before;
 
 

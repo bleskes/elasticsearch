@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job;
+
+import org.elasticsearch.test.ESTestCase;
+
+public class IgnoreDowntimeTests extends ESTestCase {
+
+    public void testForString() {
+        assertEquals(IgnoreDowntime.fromString("always"), IgnoreDowntime.ALWAYS);
+        assertEquals(IgnoreDowntime.fromString("never"), IgnoreDowntime.NEVER);
+        assertEquals(IgnoreDowntime.fromString("once"), IgnoreDowntime.ONCE);
+    }
+
     public void testValidOrdinals() {
         assertEquals(0, IgnoreDowntime.NEVER.ordinal());
         assertEquals(1, IgnoreDowntime.ONCE.ordinal());

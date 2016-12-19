@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.metadata;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.JobStatus;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
+public class AllocationTests extends AbstractSerializingTestCase<Allocation> {
+
+    @Override
+    protected Allocation createTestInstance() {
         String nodeId = randomBoolean() ? randomAsciiOfLength(10) : null;
         String jobId = randomAsciiOfLength(10);
         boolean ignoreDowntime = randomBoolean();

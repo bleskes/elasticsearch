@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.messages;
+
+import org.elasticsearch.common.SuppressForbidden;
+import org.elasticsearch.test.ESTestCase;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
+
 @SuppressForbidden(reason = "Need to use reflection to make sure all constants are resolvable")
 public class MessagesTests extends ESTestCase {
 

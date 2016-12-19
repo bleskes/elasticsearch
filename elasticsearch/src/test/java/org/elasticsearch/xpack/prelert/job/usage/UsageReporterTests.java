@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.usage;
+
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.persistence.UsagePersister;
+import org.mockito.Mockito;
+
+public class UsageReporterTests extends ESTestCase {
+    public void testUpdatePeriod() {
+        Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
+                .put(UsageReporter.UPDATE_INTERVAL_SETTING.getKey(), 1).build();
 
         UsagePersister persister = Mockito.mock(UsagePersister.class);
         UsageReporter usage = new UsageReporter(settings, "job1", persister);

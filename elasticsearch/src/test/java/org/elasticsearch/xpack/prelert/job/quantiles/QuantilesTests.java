@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.quantiles;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.support.AbstractSerializingTestCase;
+
+import java.util.Date;
+
+public class QuantilesTests extends AbstractSerializingTestCase<Quantiles> {
+
+    public void testEquals_GivenSameObject() {
         Quantiles quantiles = new Quantiles("foo", new Date(0L), "foo");
         assertTrue(quantiles.equals(quantiles));
     }

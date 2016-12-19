@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.transforms;
+
+import java.util.List;
+import java.util.StringJoiner;
+
+import org.apache.logging.log4j.Logger;
+
+
+/**
+ * Concatenate input fields
+ */
+public class Concat extends Transform {
     private static final String EMPTY_STRING = "";
 
     private final String delimiter;

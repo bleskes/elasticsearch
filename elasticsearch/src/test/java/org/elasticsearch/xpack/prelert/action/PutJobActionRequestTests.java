@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.action.PutJobAction.Request;
+import org.elasticsearch.xpack.prelert.job.Job;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
+
+import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
+import static org.elasticsearch.xpack.prelert.job.JobTests.randomValidJobId;
+
+public class PutJobActionRequestTests extends AbstractStreamableXContentTestCase<Request> {
 
     @Override
     protected Request createTestInstance() {

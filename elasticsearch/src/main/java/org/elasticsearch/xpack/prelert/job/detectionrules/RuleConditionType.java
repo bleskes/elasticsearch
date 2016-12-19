@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.detectionrules;
+
+
+import java.io.IOException;
+import java.util.Locale;
+
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
+
+public enum RuleConditionType implements Writeable {
+    CATEGORICAL("categorical"),
     NUMERICAL_ACTUAL("numerical_actual"),
     NUMERICAL_TYPICAL("numerical_typical"),
     NUMERICAL_DIFF_ABS("numerical_diff_abs");

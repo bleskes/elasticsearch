@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+
+class BucketNormalizable implements Normalizable {
+    private static final int BUCKET_INFLUENCER = 0;
     private static final int RECORD = 1;
     private static final int PARTITION_SCORE = 2;
     private static final List<Integer> CHILDREN_TYPES =

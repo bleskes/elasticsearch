@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+
+import java.util.Objects;
+
+
+class RecordNormalizable extends AbstractLeafNormalizable {
+    private final AnomalyRecord record;
+
+    public RecordNormalizable(AnomalyRecord record) {
+        this.record = Objects.requireNonNull(record);
     }
 
     @Override

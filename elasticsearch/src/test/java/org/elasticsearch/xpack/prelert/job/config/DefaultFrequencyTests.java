@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.config;
+
+import org.elasticsearch.test.ESTestCase;
+
+import java.time.Duration;
+
+public class DefaultFrequencyTests extends ESTestCase {
+
+    public void testCalc_GivenNegative() {
+        ESTestCase.expectThrows(IllegalArgumentException.class, () -> DefaultFrequency.ofBucketSpan(-1));
+    }
+
 
     public void testCalc() {
         assertEquals(Duration.ofMinutes(1), DefaultFrequency.ofBucketSpan(1));

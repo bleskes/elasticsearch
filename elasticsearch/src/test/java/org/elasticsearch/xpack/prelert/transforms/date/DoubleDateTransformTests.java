@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.transforms.date;
+
+import static org.elasticsearch.xpack.prelert.transforms.TransformTestUtils.createIndexArray;
+
+import static org.mockito.Mockito.mock;
+
+import java.util.List;
+
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.test.ESTestCase;
+
+import org.elasticsearch.xpack.prelert.transforms.Transform.TransformIndex;
 import org.elasticsearch.xpack.prelert.transforms.TransformException;
 
 public class DoubleDateTransformTests extends ESTestCase {

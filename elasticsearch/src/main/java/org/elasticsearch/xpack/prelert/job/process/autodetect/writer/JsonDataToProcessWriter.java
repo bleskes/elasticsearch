@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
+import org.elasticsearch.xpack.prelert.job.DataCounts;
+import org.elasticsearch.xpack.prelert.job.DataDescription;
+import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
+import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
 
 import java.io.IOException;
 import java.io.InputStream;

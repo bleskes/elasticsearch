@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.support;
+
+import org.elasticsearch.common.io.stream.BytesStreamOutput;
+import org.elasticsearch.common.io.stream.NamedWriteableAwareStreamInput;
+import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.Streamable;
+import org.elasticsearch.test.ESTestCase;
+
+import java.io.IOException;
+import java.util.Collections;
+
 import static org.hamcrest.Matchers.equalTo;
 
 public abstract class AbstractStreamableTestCase<T extends Streamable> extends ESTestCase {

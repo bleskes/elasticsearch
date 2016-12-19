@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.persistence;
+
+import org.elasticsearch.test.ESTestCase;
+
+public class BucketsQueryBuilderTests extends ESTestCase {
+
+    public void testDefaultBuild() throws Exception {
+        BucketsQueryBuilder.BucketsQuery query = new BucketsQueryBuilder().build();
+
+        assertEquals(0, query.getFrom());
+        assertEquals(BucketsQueryBuilder.DEFAULT_SIZE, query.getSize());
+        assertEquals(false, query.isIncludeInterim());
         assertEquals(false, query.isExpand());
         assertEquals(0.0, query.getAnomalyScoreFilter(), 0.0001);
         assertEquals(0.0, query.getNormalizedProbability(), 0.0001);

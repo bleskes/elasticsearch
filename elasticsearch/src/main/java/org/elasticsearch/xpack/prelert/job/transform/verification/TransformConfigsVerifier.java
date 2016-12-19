@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.transform.verification;
+
+
+import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class TransformConfigsVerifier {
     private TransformConfigsVerifier() {
     }
 

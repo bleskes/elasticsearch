@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
+import java.io.IOException;
+import java.util.stream.IntStream;
+
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.TimeRange;
+import org.junit.Before;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;

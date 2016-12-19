@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.detectionrules;
+
+import java.io.IOException;
+
+import org.elasticsearch.common.io.stream.BytesStreamOutput;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.test.ESTestCase;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+
+public class RuleConditionTypeTests extends ESTestCase {
 
     public void testForString() {
         assertEquals(RuleConditionType.CATEGORICAL, RuleConditionType.forString("categorical"));

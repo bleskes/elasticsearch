@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.modelsnapshots;
+
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction;
+
+
+public class PutModelSnapshotDescriptionTests extends ESTestCase {
+
+    public void testUpdateDescription_GivenMissingArg() {
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
+                () -> new PutModelSnapshotDescriptionAction.Request(null, "foo", "bar"));
+        assertEquals("[job_id] must not be null.", e.getMessage());
 
         e = expectThrows(IllegalArgumentException.class,
                 () -> new PutModelSnapshotDescriptionAction.Request("foo", null, "bar"));

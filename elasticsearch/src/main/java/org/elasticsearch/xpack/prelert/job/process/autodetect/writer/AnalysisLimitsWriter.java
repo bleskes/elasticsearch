@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.Objects;
+
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+
+import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.EQUALS;
+import static org.elasticsearch.xpack.prelert.job.process.autodetect.writer.WriterConstants.NEW_LINE;
+
+public class AnalysisLimitsWriter {
     /*
      * The configuration fields used in limits.conf
      */

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.output;
+
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.ModelSizeStats;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.persistence.JobResultsPersister;
+import org.elasticsearch.xpack.prelert.job.process.normalizer.Renormalizer;
+import org.elasticsearch.xpack.prelert.job.quantiles.Quantiles;
+import org.elasticsearch.xpack.prelert.job.results.AnomalyRecord;
+import org.elasticsearch.xpack.prelert.job.results.AutodetectResult;
+import org.elasticsearch.xpack.prelert.job.results.Bucket;
+import org.elasticsearch.xpack.prelert.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.prelert.job.results.Influencer;
 import org.elasticsearch.xpack.prelert.job.results.ModelDebugOutput;
 import org.elasticsearch.xpack.prelert.job.results.PerPartitionMaxProbabilities;

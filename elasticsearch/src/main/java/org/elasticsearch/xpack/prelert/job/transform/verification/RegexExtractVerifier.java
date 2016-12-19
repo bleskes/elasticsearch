@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.transform.verification;
+
+
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+import org.elasticsearch.xpack.prelert.job.transform.TransformConfig;
+
+import java.util.List;
+import java.util.regex.Pattern;
+
+public class RegexExtractVerifier implements ArgumentVerifier {
+    @Override
+    public void verify(String arg, TransformConfig tc) {
         new RegexPatternVerifier().verify(arg, tc);
 
         Pattern pattern = Pattern.compile(arg);

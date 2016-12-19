@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.normalizer;
+
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+
+public class NormalizerFactory {
+
+    private final NormalizerProcessFactory processFactory;
+    private final ExecutorService executorService;
+
+    public NormalizerFactory(NormalizerProcessFactory processFactory, ExecutorService executorService) {
+        this.processFactory = Objects.requireNonNull(processFactory);
         this.executorService = Objects.requireNonNull(executorService);
     }
 

@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+/**
+ * Writes the data records to the outputIndex stream as length encoded pairs.
+ * Each record consists of number of fields followed by length/value pairs. The
+ * first call to one the of the <code>writeRecord() </code> methods should be
  * with the header fields, once the headers are written records can be written
  * sequentially.
  * <p>

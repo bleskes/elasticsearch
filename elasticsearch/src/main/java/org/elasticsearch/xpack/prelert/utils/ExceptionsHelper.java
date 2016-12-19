@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.utils;
+
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ResourceAlreadyExistsException;
+import org.elasticsearch.ResourceNotFoundException;
+import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.xpack.prelert.job.messages.Messages;
+
+// NORELEASE: add cause exceptions!
+public class ExceptionsHelper {
+
     public static ResourceNotFoundException missingJobException(String jobId) {
         return new ResourceNotFoundException(Messages.getMessage(Messages.JOB_UNKNOWN_ID, jobId));
     }

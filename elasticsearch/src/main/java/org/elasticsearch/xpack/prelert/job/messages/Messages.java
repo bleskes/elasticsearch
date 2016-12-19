@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.messages;
+
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+/**
+ * Defines the keys for all the message strings
+ */
+public final class Messages {
+    /**
+     * The base name of the bundle without the .properties extension
      * or locale
      */
     private static final String BUNDLE_NAME = "org.elasticsearch.xpack.prelert.job.messages.prelert_messages";

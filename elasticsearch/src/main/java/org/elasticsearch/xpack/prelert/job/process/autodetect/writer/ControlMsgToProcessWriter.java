@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.DataLoadParams;
+import org.elasticsearch.xpack.prelert.job.process.autodetect.params.InterimResultsParams;
+
+/**
  * A writer for sending control messages to the C++ autodetect process.
  * The data written to outputIndex is length encoded.
  */

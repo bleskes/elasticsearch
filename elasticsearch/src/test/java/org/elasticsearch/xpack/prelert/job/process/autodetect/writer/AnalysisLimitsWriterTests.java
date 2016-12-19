@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
+
+import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.prelert.job.AnalysisLimits;
+import org.junit.After;
+import org.junit.Before;
+import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class AnalysisLimitsWriterTests extends ESTestCase {

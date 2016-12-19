@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.scheduler.http;
+
+import org.apache.logging.log4j.Logger;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.Objects;
+
+public class ElasticsearchQueryBuilder {
 
     /**
      * The search body for Elasticsearch version 2.x contains sorting

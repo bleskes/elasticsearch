@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.xpack.prelert.action.PutModelSnapshotDescriptionAction.Response;
+import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableTestCase;
+
+public class PutModelSnapshotDescriptionActionResponseTests extends AbstractStreamableTestCase<PutModelSnapshotDescriptionAction.Response> {
+
+    @Override
+    protected Response createTestInstance() {
+        ModelSnapshot snapshot = new ModelSnapshot(randomAsciiOfLengthBetween(1, 20));
+        snapshot.setDescription(randomAsciiOfLengthBetween(1, 20));
         return new Response(snapshot);
     }
 

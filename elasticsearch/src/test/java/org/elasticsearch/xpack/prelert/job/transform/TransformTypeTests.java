@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.job.transform;
+
+import org.elasticsearch.test.ESTestCase;
+
+import java.util.EnumSet;
+import java.util.Set;
+
+public class TransformTypeTests extends ESTestCase {
+
+    public void testFromString() {
+        Set<TransformType> all = EnumSet.allOf(TransformType.class);
+
         for (TransformType type : all) {
             assertEquals(type.prettyName(), type.toString());
 

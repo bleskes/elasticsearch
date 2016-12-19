@@ -12,6 +12,18 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
+package org.elasticsearch.xpack.prelert.action;
+
+import org.elasticsearch.common.ParseFieldMatcher;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.xpack.prelert.job.results.PageParams;
+import org.elasticsearch.xpack.prelert.support.AbstractStreamableXContentTestCase;
+
+public class GetCategoryDefinitionRequestTests extends AbstractStreamableXContentTestCase<GetCategoriesDefinitionAction.Request> {
+
+    @Override
+    protected GetCategoriesDefinitionAction.Request createTestInstance() {
+        String jobId = randomAsciiOfLength(10);
         GetCategoriesDefinitionAction.Request request = new GetCategoriesDefinitionAction.Request(jobId);
         if (randomBoolean()) {
             request.setCategoryId(randomAsciiOfLength(10));
