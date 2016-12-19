@@ -21,7 +21,6 @@ package org.elasticsearch.xpack.watcher.execution;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.collect.Tuple;
-import org.elasticsearch.common.lease.Releasable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
@@ -48,7 +47,6 @@ import org.elasticsearch.xpack.watcher.transform.Transform;
 import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.elasticsearch.xpack.watcher.watch.Payload;
 import org.elasticsearch.xpack.watcher.watch.Watch;
-import org.elasticsearch.xpack.watcher.watch.WatchLockService;
 import org.elasticsearch.xpack.watcher.watch.WatchStatus;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
@@ -91,7 +89,6 @@ public class ExecutionServiceTests extends ESTestCase {
     private TriggeredWatchStore triggeredWatchStore;
     private WatchExecutor executor;
     private HistoryStore historyStore;
-    private WatchLockService watchLockService;
     private ExecutionService executionService;
     private Clock clock;
     private ThreadPool threadPool;
@@ -112,11 +109,10 @@ public class ExecutionServiceTests extends ESTestCase {
         executor = mock(WatchExecutor.class);
         when(executor.queue()).thenReturn(new ArrayBlockingQueue<>(1));
 
-        watchLockService = mock(WatchLockService.class);
         clock = ClockMock.frozen();
         threadPool = mock(ThreadPool.class);
         executionService = new ExecutionService(Settings.EMPTY, historyStore, triggeredWatchStore, executor, watchStore,
-                watchLockService, clock, threadPool);
+                clock, threadPool);
 
         ClusterState clusterState = mock(ClusterState.class);
         when(triggeredWatchStore.loadTriggeredWatches(clusterState)).thenReturn(new ArrayList<>());
@@ -124,9 +120,6 @@ public class ExecutionServiceTests extends ESTestCase {
     }
 
     public void testExecute() throws Exception {
-        Releasable releasable = mock(Releasable.class);
-        when(watchLockService.acquire("_id")).thenReturn(releasable);
-
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("_id");
         when(watchStore.get("_id")).thenReturn(watch);
@@ -202,7 +195,6 @@ public class ExecutionServiceTests extends ESTestCase {
         assertThat(result.action(), sameInstance(actionResult));
 
         verify(historyStore, times(1)).put(watchRecord);
-        verify(releasable, times(1)).close();
         verify(condition, times(1)).execute(context);
         verify(watchTransform, times(1)).execute(context, payload);
         verify(action, times(1)).execute("_action", context, payload);
@@ -216,9 +208,6 @@ public class ExecutionServiceTests extends ESTestCase {
     }
 
     public void testExecuteFailedInput() throws Exception {
-        Releasable releasable = mock(Releasable.class);
-        when(watchLockService.acquire("_id")).thenReturn(releasable);
-
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("_id");
         when(watchStore.get("_id")).thenReturn(watch);
@@ -277,7 +266,6 @@ public class ExecutionServiceTests extends ESTestCase {
         assertThat(watchRecord.result().actionsResults().size(), is(0));
 
         verify(historyStore, times(1)).put(watchRecord);
-        verify(releasable, times(1)).close();
         verify(input, times(1)).execute(context, null);
         verify(condition, never()).execute(context);
         verify(watchTransform, never()).execute(context, payload);
@@ -285,9 +273,6 @@ public class ExecutionServiceTests extends ESTestCase {
     }
 
     public void testExecuteFailedCondition() throws Exception {
-        Releasable releasable = mock(Releasable.class);
-        when(watchLockService.acquire("_id")).thenReturn(releasable);
-
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("_id");
         when(watchStore.get("_id")).thenReturn(watch);
@@ -342,7 +327,6 @@ public class ExecutionServiceTests extends ESTestCase {
         assertThat(watchRecord.result().actionsResults().size(), is(0));
 
         verify(historyStore, times(1)).put(watchRecord);
-        verify(releasable, times(1)).close();
         verify(input, times(1)).execute(context, null);
         verify(condition, times(1)).execute(context);
         verify(watchTransform, never()).execute(context, payload);
@@ -350,9 +334,6 @@ public class ExecutionServiceTests extends ESTestCase {
     }
 
     public void testExecuteFailedWatchTransform() throws Exception {
-        Releasable releasable = mock(Releasable.class);
-        when(watchLockService.acquire("_id")).thenReturn(releasable);
-
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("_id");
         when(watchStore.get("_id")).thenReturn(watch);
@@ -406,7 +387,6 @@ public class ExecutionServiceTests extends ESTestCase {
         assertThat(watchRecord.result().actionsResults().size(), is(0));
 
         verify(historyStore, times(1)).put(watchRecord);
-        verify(releasable, times(1)).close();
         verify(input, times(1)).execute(context, null);
         verify(condition, times(1)).execute(context);
         verify(watchTransform, times(1)).execute(context, payload);
@@ -414,9 +394,6 @@ public class ExecutionServiceTests extends ESTestCase {
     }
 
     public void testExecuteFailedActionTransform() throws Exception {
-        Releasable releasable = mock(Releasable.class);
-        when(watchLockService.acquire("_id")).thenReturn(releasable);
-
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("_id");
         when(watchStore.get("_id")).thenReturn(watch);
@@ -488,7 +465,6 @@ public class ExecutionServiceTests extends ESTestCase {
         assertThat(watchRecord.result().actionsResults().get("_action").action().status(), is(Action.Result.Status.FAILURE));
 
         verify(historyStore, times(1)).put(watchRecord);
-        verify(releasable, times(1)).close();
         verify(input, times(1)).execute(context, null);
         verify(condition, times(1)).execute(context);
         verify(watchTransform, times(1)).execute(context, payload);
@@ -782,14 +758,13 @@ public class ExecutionServiceTests extends ESTestCase {
     public void testThatTriggeredWatchDeletionWorksOnExecutionRejection() throws Exception {
         Watch watch = mock(Watch.class);
         when(watch.id()).thenReturn("foo");
-        when(watch.nonce()).thenReturn(1L);
         when(watchStore.get(any())).thenReturn(watch);
 
         // execute needs to fail as well as storing the history
         doThrow(new EsRejectedExecutionException()).when(executor).execute(any());
         doThrow(new ElasticsearchException("whatever")).when(historyStore).forcePut(any());
 
-        Wid wid = new Wid(watch.id(), watch.nonce(), now());
+        Wid wid = new Wid(watch.id(), now());
 
         final ExecutorService currentThreadExecutor = EsExecutors.newDirectExecutorService();
         when(threadPool.generic()).thenReturn(currentThreadExecutor);
@@ -799,6 +774,19 @@ public class ExecutionServiceTests extends ESTestCase {
 
         verify(triggeredWatchStore, times(1)).delete(wid);
         verify(historyStore, times(1)).forcePut(any(WatchRecord.class));
+    }
+
+    public void testThatSingleWatchCannotBeExecutedConcurrently() throws Exception {
+        WatchExecutionContext ctx = mock(WatchExecutionContext.class);
+        Watch watch = mock(Watch.class);
+        when(watch.id()).thenReturn("_id");
+        when(ctx.watch()).thenReturn(watch);
+
+        executionService.getCurrentExecutions().put("_id", new ExecutionService.WatchExecution(ctx, Thread.currentThread()));
+
+        executionService.execute(ctx);
+
+        verify(ctx).abortBeforeExecution(eq(ExecutionState.NOT_EXECUTED_ALREADY_QUEUED), eq("Watch is already queued in thread pool"));
     }
 
     private Tuple<Condition, Condition.Result> whenCondition(final WatchExecutionContext context) {

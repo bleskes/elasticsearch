@@ -28,7 +28,6 @@ public class WatchModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Watch.Parser.class).asEagerSingleton();
-        bind(WatchLockService.class).asEagerSingleton();
         bind(WatcherService.class).asEagerSingleton();
         bind(WatchStore.class).asEagerSingleton();
     }

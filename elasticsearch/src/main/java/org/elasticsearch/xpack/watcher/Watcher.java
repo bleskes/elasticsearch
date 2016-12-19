@@ -207,6 +207,7 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
         actionFactoryMap.put(PagerDutyAction.TYPE, new PagerDutyActionFactory(settings, templateEngine,
                 getService(PagerDutyService.class, components)));
         final ActionRegistry registry = new ActionRegistry(actionFactoryMap, conditionRegistry, transformRegistry, clock, licenseState);
+
         return Collections.singleton(registry);
     }
 

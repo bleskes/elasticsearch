@@ -24,7 +24,6 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.lease.Releasable;
 import org.elasticsearch.common.metrics.MeanMetric;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
@@ -42,7 +41,6 @@ import org.elasticsearch.xpack.watcher.input.Input;
 import org.elasticsearch.xpack.watcher.transform.Transform;
 import org.elasticsearch.xpack.watcher.trigger.TriggerEvent;
 import org.elasticsearch.xpack.watcher.watch.Watch;
-import org.elasticsearch.xpack.watcher.watch.WatchLockService;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -58,7 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ExecutionService extends AbstractComponent {
+public final class ExecutionService extends AbstractComponent {
 
     public static final Setting<TimeValue> DEFAULT_THROTTLE_PERIOD_SETTING =
         Setting.positiveTimeSetting("xpack.watcher.execution.default_throttle_period",
@@ -71,7 +69,6 @@ public class ExecutionService extends AbstractComponent {
     private final TriggeredWatchStore triggeredWatchStore;
     private final WatchExecutor executor;
     private final WatchStore watchStore;
-    private final WatchLockService watchLockService;
     private final Clock clock;
     private final TimeValue defaultThrottlePeriod;
     private final TimeValue maxStopTimeout;
@@ -82,13 +79,12 @@ public class ExecutionService extends AbstractComponent {
 
     @Inject
     public ExecutionService(Settings settings, HistoryStore historyStore, TriggeredWatchStore triggeredWatchStore, WatchExecutor executor,
-                            WatchStore watchStore, WatchLockService watchLockService, Clock clock, ThreadPool threadPool) {
+                            WatchStore watchStore, Clock clock, ThreadPool threadPool) {
         super(settings);
         this.historyStore = historyStore;
         this.triggeredWatchStore = triggeredWatchStore;
         this.executor = executor;
         this.watchStore = watchStore;
-        this.watchLockService = watchLockService;
         this.clock = clock;
         this.defaultThrottlePeriod = DEFAULT_THROTTLE_PERIOD_SETTING.get(settings);
         this.maxStopTimeout = Watcher.MAX_STOP_TIMEOUT_SETTING.get(settings);
@@ -152,6 +148,11 @@ public class ExecutionService extends AbstractComponent {
         return executor.largestPoolSize();
     }
 
+    // for testing only
+    CurrentExecutions getCurrentExecutions() {
+        return currentExecutions;
+    }
+
     public List<WatchExecutionSnapshot> currentExecutions() {
         List<WatchExecutionSnapshot> currentExecutions = new ArrayList<>();
         for (WatchExecution watchExecution : this.currentExecutions) {
@@ -174,8 +175,8 @@ public class ExecutionService extends AbstractComponent {
             WatchExecutionTask executionTask = (WatchExecutionTask) task;
             queuedWatches.add(new QueuedWatch(executionTask.ctx));
         }
-        // Lets show the execution that pending the longest first:
 
+        // Lets show the execution that pending the longest first:
         Collections.sort(queuedWatches, Comparator.comparing(QueuedWatch::executionTime));
         return queuedWatches;
     }
@@ -257,24 +258,23 @@ public class ExecutionService extends AbstractComponent {
 
     public WatchRecord execute(WatchExecutionContext ctx) {
         WatchRecord record = null;
-        Releasable releasable = watchLockService.acquire(ctx.watch().id());
-        if (logger.isTraceEnabled()) {
-            logger.trace("acquired lock for [{}] -- [{}]", ctx.id(), System.identityHashCode(releasable));
-        }
         try {
-            currentExecutions.put(ctx.watch().id(), new WatchExecution(ctx, Thread.currentThread()));
-            if (ctx.knownWatch() && watchStore.get(ctx.watch().id()) == null) {
-                // fail fast if we are trying to execute a deleted watch
-                String message = "unable to find watch for record [" + ctx.id() + "], perhaps it has been deleted, ignoring...";
-                logger.warn("{}", message);
-                record = ctx.abortBeforeExecution(ExecutionState.NOT_EXECUTED_WATCH_MISSING, message);
-
+            boolean executionAlreadyExists = currentExecutions.put(ctx.watch().id(), new WatchExecution(ctx, Thread.currentThread()));
+            if (executionAlreadyExists) {
+                logger.trace("not executing watch [{}] because it is already queued", ctx.watch().id());
+                record = ctx.abortBeforeExecution(ExecutionState.NOT_EXECUTED_ALREADY_QUEUED, "Watch is already queued in thread pool");
             } else {
-                logger.debug("executing watch [{}]", ctx.id().watchId());
-
-                record = executeInner(ctx);
-                if (ctx.recordExecution()) {
-                    watchStore.updateStatus(ctx.watch());
+                if (ctx.knownWatch() && watchStore.get(ctx.watch().id()) == null) {
+                    // fail fast if we are trying to execute a deleted watch
+                    String message = "unable to find watch for record [" + ctx.id() + "], perhaps it has been deleted, ignoring...";
+                    logger.warn("{}", message);
+                    record = ctx.abortBeforeExecution(ExecutionState.NOT_EXECUTED_WATCH_MISSING, message);
+                } else {
+                    logger.debug("executing watch [{}]", ctx.id().watchId());
+                    record = executeInner(ctx);
+                    if (ctx.recordExecution()) {
+                        watchStore.updateStatus(ctx.watch());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -299,10 +299,6 @@ public class ExecutionService extends AbstractComponent {
                 logger.error((Supplier<?>) () -> new ParameterizedMessage("failed to delete triggered watch [{}]", ctx.id()), e);
             }
             currentExecutions.remove(ctx.watch().id());
-            if (logger.isTraceEnabled()) {
-                logger.trace("releasing lock for [{}] -- [{}]", ctx.id(), System.identityHashCode(releasable));
-            }
-            releasable.close();
             logger.trace("finished [{}]/[{}]", ctx.watch().id(), ctx.id());
         }
         return record;
@@ -445,7 +441,7 @@ public class ExecutionService extends AbstractComponent {
                 counter++;
             }
         }
-        logger.debug("executed [{}] watches from the watch history", counter);
+        logger.debug("triggered execution of [{}] watches", counter);
     }
 
     public Map<String, Object> usageStats() {
@@ -492,12 +488,7 @@ public class ExecutionService extends AbstractComponent {
 
         @Override
         public void run() {
-            try {
-                execute(ctx);
-            } catch (Exception e) {
-                logger.error(
-                        (Supplier<?>) () -> new ParameterizedMessage("could not execute watch [{}]/[{}]", ctx.watch().id(), ctx.id()), e);
-            }
+            execute(ctx);
         }
     }
 

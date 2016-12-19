@@ -25,15 +25,18 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.support.clock.ClockMock;
 import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.execution.ExecutionService;
+import org.elasticsearch.xpack.watcher.execution.TriggeredWatchStore;
+import org.elasticsearch.xpack.watcher.execution.WatchExecutor;
+import org.elasticsearch.xpack.watcher.history.HistoryStore;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.watcher.trigger.Trigger;
 import org.elasticsearch.xpack.watcher.trigger.TriggerEngine;
 import org.elasticsearch.xpack.watcher.trigger.TriggerService;
 import org.elasticsearch.xpack.watcher.watch.Watch;
-import org.elasticsearch.xpack.watcher.watch.WatchLockService;
 import org.elasticsearch.xpack.watcher.watch.WatchStatus;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
@@ -71,12 +74,18 @@ public class WatcherServiceTests extends ESTestCase {
         triggerService = mock(TriggerService.class);
         watchStore = mock(WatchStore.class);
         watchParser = mock(Watch.Parser.class);
-        ExecutionService executionService = mock(ExecutionService.class);
-        WatchLockService watchLockService = mock(WatchLockService.class);
         clock = ClockMock.frozen();
+
+        HistoryStore historyStore = mock(HistoryStore.class);
+        TriggeredWatchStore triggeredWatchStore = mock(TriggeredWatchStore.class);
+        WatchExecutor watchExecutor = mock(WatchExecutor.class);
+        ThreadPool threadPool = mock(ThreadPool.class);
+        ExecutionService executionService = new ExecutionService(Settings.EMPTY, historyStore, triggeredWatchStore, watchExecutor,
+                watchStore, clock, threadPool);
+
         WatcherIndexTemplateRegistry watcherIndexTemplateRegistry = mock(WatcherIndexTemplateRegistry.class);
         watcherService = new WatcherService(Settings.EMPTY, clock, triggerService, watchStore, watchParser, executionService,
-                watchLockService, watcherIndexTemplateRegistry);
+                watcherIndexTemplateRegistry);
         AtomicReference<WatcherState> state = watcherService.state;
         state.set(WatcherState.STARTED);
     }

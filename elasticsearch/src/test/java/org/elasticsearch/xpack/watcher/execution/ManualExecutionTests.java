@@ -71,6 +71,7 @@ import static org.elasticsearch.xpack.watcher.client.WatchSourceBuilders.watchBu
 import static org.elasticsearch.xpack.watcher.input.InputBuilders.simpleInput;
 import static org.elasticsearch.xpack.watcher.trigger.TriggerBuilders.schedule;
 import static org.elasticsearch.xpack.watcher.trigger.schedule.Schedules.cron;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -446,7 +447,8 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
                 startLatch.await();
                 WatchRecord record = executionService.execute(ctxBuilder.build());
                 assertThat(record, notNullValue());
-                assertThat(record.state(), is(ExecutionState.NOT_EXECUTED_WATCH_MISSING));
+                assertThat(record.state(), anyOf(is(ExecutionState.NOT_EXECUTED_WATCH_MISSING),
+                        is(ExecutionState.NOT_EXECUTED_ALREADY_QUEUED)));
             } catch (Exception e) {
                 throw new ElasticsearchException("Failure mode execution of [{}] failed in an unexpected way", e, watchId);
             }

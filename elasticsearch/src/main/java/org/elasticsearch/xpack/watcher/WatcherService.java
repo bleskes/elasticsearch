@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.watcher;
 
 
-import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.cluster.ClusterState;
@@ -26,14 +25,12 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.watcher.execution.ExecutionService;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.watcher.trigger.TriggerService;
 import org.elasticsearch.xpack.watcher.watch.Watch;
-import org.elasticsearch.xpack.watcher.watch.WatchLockService;
 import org.elasticsearch.xpack.watcher.watch.WatchStatus;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
@@ -54,7 +51,6 @@ public class WatcherService extends AbstractComponent {
     private final TriggerService triggerService;
     private final Watch.Parser watchParser;
     private final WatchStore watchStore;
-    private final WatchLockService watchLockService;
     private final ExecutionService executionService;
     private final WatcherIndexTemplateRegistry watcherIndexTemplateRegistry;
     // package-private for testing
@@ -62,14 +58,13 @@ public class WatcherService extends AbstractComponent {
 
     @Inject
     public WatcherService(Settings settings, Clock clock, TriggerService triggerService, WatchStore watchStore,
-                          Watch.Parser watchParser, ExecutionService executionService, WatchLockService watchLockService,
+                          Watch.Parser watchParser, ExecutionService executionService,
                           WatcherIndexTemplateRegistry watcherIndexTemplateRegistry) {
         super(settings);
         this.clock = clock;
         this.triggerService = triggerService;
         this.watchStore = watchStore;
         this.watchParser = watchParser;
-        this.watchLockService = watchLockService;
         this.executionService = executionService;
         this.watcherIndexTemplateRegistry = watcherIndexTemplateRegistry;
     }
@@ -79,7 +74,6 @@ public class WatcherService extends AbstractComponent {
             try {
                 logger.debug("starting watch service...");
                 watcherIndexTemplateRegistry.addTemplatesIfMissing();
-                watchLockService.start();
 
                 // Try to load watch store before the execution service, b/c action depends on watch store
                 watchStore.start(clusterState);
@@ -106,11 +100,6 @@ public class WatcherService extends AbstractComponent {
             logger.debug("stopping watch service...");
             triggerService.stop();
             executionService.stop();
-            try {
-                watchLockService.stop();
-            } catch (ElasticsearchTimeoutException te) {
-                logger.warn("error stopping WatchLockService", te);
-            }
             watchStore.stop();
             state.set(WatcherState.STOPPED);
             logger.debug("watch service has stopped");
