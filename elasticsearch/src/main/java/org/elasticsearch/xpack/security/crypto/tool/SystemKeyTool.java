@@ -20,7 +20,7 @@ package org.elasticsearch.xpack.security.crypto.tool;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import org.elasticsearch.cli.ExitCodes;
-import org.elasticsearch.cli.SettingCommand;
+import org.elasticsearch.cli.EnvironmentAwareCommand;
 import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.cli.UserException;
 import org.elasticsearch.common.SuppressForbidden;
@@ -41,7 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class SystemKeyTool extends SettingCommand {
+public class SystemKeyTool extends EnvironmentAwareCommand {
 
     private final OptionSpec<String> arguments;
 
@@ -66,10 +66,8 @@ public class SystemKeyTool extends SettingCommand {
     }
 
     @Override
-    protected void execute(Terminal terminal, OptionSet options, Map<String, String> settings) throws Exception {
+    protected void execute(Terminal terminal, OptionSet options, Environment env) throws Exception {
         final Path keyPath;
-
-        final Environment env = InternalSettingsPreparer.prepareEnvironment(Settings.EMPTY, terminal, settings);
 
         if (options.hasArgument(arguments)) {
             List<String> args = arguments.values(options);
