@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.prelert.job.manager;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
@@ -34,6 +35,7 @@ import org.elasticsearch.xpack.prelert.job.IgnoreDowntime;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.ModelSnapshot;
+import org.elasticsearch.xpack.prelert.job.persistence.AnomalyDetectorsIndex;
 import org.elasticsearch.xpack.prelert.job.audit.Auditor;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
 import org.elasticsearch.xpack.prelert.job.metadata.Allocation;
@@ -171,6 +173,7 @@ public class JobManager extends AbstractComponent {
      */
     public void putJob(PutJobAction.Request request, ActionListener<PutJobAction.Response> actionListener) {
         Job job = request.getJob();
+
         ActionListener<Boolean> delegateListener = ActionListener.wrap(jobSaved ->
                 jobProvider.createJobRelatedIndices(job, new ActionListener<Boolean>() {
             @Override
@@ -200,13 +203,16 @@ public class JobManager extends AbstractComponent {
 
             @Override
             public ClusterState execute(ClusterState currentState) throws Exception {
-                return innerPutJob(job, request.isOverwrite(), currentState);
+                if (currentState.metaData().index(AnomalyDetectorsIndex.getJobIndexName(job.getIndexName())) != null) {
+                    throw new ResourceAlreadyExistsException(Messages.getMessage(Messages.JOB_INDEX_ALREADY_EXISTS, job.getIndexName()));
+                }
+                return updateClusterState(job, request.isOverwrite(), currentState);
             }
 
         });
     }
 
-    ClusterState innerPutJob(Job job, boolean overwrite, ClusterState currentState) {
+    ClusterState updateClusterState(Job job, boolean overwrite, ClusterState currentState) {
         PrelertMetadata.Builder builder = createPrelertMetadataBuilder(currentState);
         builder.putJob(job, overwrite);
         return buildNewClusterState(currentState, builder);
@@ -322,7 +328,7 @@ public class JobManager extends AbstractComponent {
                     builder.setIgnoreDowntime(IgnoreDowntime.ONCE);
                 }
 
-                return innerPutJob(builder.build(), true, currentState);
+                return updateClusterState(builder.build(), true, currentState);
             }
         });
     }
