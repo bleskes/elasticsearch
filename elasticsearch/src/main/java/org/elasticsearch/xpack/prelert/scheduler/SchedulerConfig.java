@@ -428,7 +428,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
         private Map<String, Object> query = null;
         private Map<String, Object> aggregations = null;
         private Map<String, Object> scriptFields = null;
-        private Boolean retrieveWholeSource;
         private Integer scrollSize;
 
         public Builder() {
@@ -436,7 +435,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             query.put(MATCH_ALL_ES_QUERY, new HashMap<String, Object>());
             setQuery(query);
             setQueryDelay(DEFAULT_ELASTICSEARCH_QUERY_DELAY);
-            setRetrieveWholeSource(false);
             setScrollSize(DEFAULT_SCROLL_SIZE);
         }
 
@@ -508,10 +506,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             this.scriptFields = Objects.requireNonNull(scriptFields);
         }
 
-        public void setRetrieveWholeSource(boolean retrieveWholeSource) {
-            this.retrieveWholeSource = retrieveWholeSource;
-        }
-
         public void setScrollSize(int scrollSize) {
             if (scrollSize < 0) {
                 String msg = Messages.getMessage(Messages.SCHEDULER_CONFIG_INVALID_OPTION_VALUE,
@@ -532,11 +526,6 @@ public class SchedulerConfig extends ToXContentToBytes implements Writeable {
             }
             if (types == null || types.isEmpty() || types.contains(null) || types.contains("")) {
                 throw invalidOptionValue(TYPES.getPreferredName(), types);
-            }
-            if (Boolean.TRUE.equals(retrieveWholeSource)) {
-                if (scriptFields != null) {
-                    throw notSupportedValue(SCRIPT_FIELDS, Messages.SCHEDULER_CONFIG_FIELD_NOT_SUPPORTED);
-                }
             }
             return new SchedulerConfig(id, jobId, queryDelay, frequency, indexes, types, query, aggregations, scriptFields, scrollSize);
         }
