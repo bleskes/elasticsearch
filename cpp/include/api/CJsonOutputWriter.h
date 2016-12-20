@@ -201,6 +201,7 @@ class API_EXPORT CJsonOutputWriter : public COutputHandler
         static const std::string RAW_ANOMALY_SCORE;
         static const std::string ANOMALY_SCORE;
         static const std::string NORMALIZED_PROBABILITY;
+        static const std::string INITIAL_NORMALIZED_PROBABILITY;
         static const std::string MAX_NORMALIZED_PROBABILITY;
         static const std::string FIELD_NAME;
         static const std::string BY_FIELD_NAME;

@@ -134,6 +134,7 @@ const std::string   CJsonOutputWriter::PROBABILITY("probability");
 const std::string   CJsonOutputWriter::RAW_ANOMALY_SCORE("raw_anomaly_score");
 const std::string   CJsonOutputWriter::ANOMALY_SCORE("anomaly_score");
 const std::string   CJsonOutputWriter::NORMALIZED_PROBABILITY("normalized_probability");
+const std::string   CJsonOutputWriter::INITIAL_NORMALIZED_PROBABILITY("initial_normalized_probability");
 const std::string   CJsonOutputWriter::MAX_NORMALIZED_PROBABILITY("max_normalized_probability");
 const std::string   CJsonOutputWriter::FIELD_NAME("field_name");
 const std::string   CJsonOutputWriter::BY_FIELD_NAME("by_field_name");
@@ -748,6 +749,8 @@ void CJsonOutputWriter::addMetricFields(const CHierarchicalResultsWriter::TResul
 {
     // normalizedProbability, probability, fieldName, byFieldName, byFieldValue, partitionFieldName,
     // partitionFieldValue, function, typical, actual. influences?
+    core::CJsonDocUtils::addDoubleFieldToObj(INITIAL_NORMALIZED_PROBABILITY, results.s_NormalizedAnomalyScore, doc,
+                                                m_JsonPoolAllocator);
     core::CJsonDocUtils::addDoubleFieldToObj(NORMALIZED_PROBABILITY, results.s_NormalizedAnomalyScore, doc,
                                                 m_JsonPoolAllocator);
     core::CJsonDocUtils::addDoubleFieldToObj(PROBABILITY, results.s_Probability, doc,
@@ -789,6 +792,8 @@ void CJsonOutputWriter::addPopulationFields(const CHierarchicalResultsWriter::TR
     // normalizedProbability, probability, fieldName, byFieldName,
     // overFieldName, overFieldValue, partitionFieldName, partitionFieldValue,
     // function, causes, influences?
+    core::CJsonDocUtils::addDoubleFieldToObj(INITIAL_NORMALIZED_PROBABILITY, results.s_NormalizedAnomalyScore, doc,
+                                             m_JsonPoolAllocator);
     core::CJsonDocUtils::addDoubleFieldToObj(NORMALIZED_PROBABILITY, results.s_NormalizedAnomalyScore, doc,
                                              m_JsonPoolAllocator);
     core::CJsonDocUtils::addDoubleFieldToObj(PROBABILITY, results.s_Probability, doc,
@@ -965,6 +970,8 @@ void CJsonOutputWriter::addEventRateFields(const CHierarchicalResultsWriter::TRe
     // normalizedProbability, probability, fieldName, byFieldName, byFieldValue, partitionFieldName,
     // partitionFieldValue, functionName, typical, actual, influences?
 
+    core::CJsonDocUtils::addDoubleFieldToObj(INITIAL_NORMALIZED_PROBABILITY, results.s_NormalizedAnomalyScore, doc,
+                                            m_JsonPoolAllocator);
     core::CJsonDocUtils::addDoubleFieldToObj(NORMALIZED_PROBABILITY, results.s_NormalizedAnomalyScore, doc,
                                             m_JsonPoolAllocator);
     core::CJsonDocUtils::addDoubleFieldToObj(PROBABILITY, results.s_Probability, doc,

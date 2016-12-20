@@ -872,6 +872,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
             // It's hard to predict what these will be, so just assert their
             // presence
             CPPUNIT_ASSERT(record.HasMember("anomaly_score"));
+            CPPUNIT_ASSERT(record.HasMember("initial_normalized_probability"));
             CPPUNIT_ASSERT(record.HasMember("normalized_probability"));
             CPPUNIT_ASSERT(record.HasMember("sequence_num"));
             if (isInterim)
@@ -963,6 +964,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                 // It's hard to predict what these will be, so just assert their
                 // presence
                 CPPUNIT_ASSERT(record.HasMember("anomaly_score"));
+                CPPUNIT_ASSERT(record.HasMember("initial_normalized_probability"));
                 CPPUNIT_ASSERT(record.HasMember("normalized_probability"));
                 CPPUNIT_ASSERT(record.HasMember("sequence_num"));
                 if (isInterim)
@@ -1018,6 +1020,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                 // It's hard to predict what these will be, so just assert their
                 // presence
                 CPPUNIT_ASSERT(record.HasMember("anomaly_score"));
+                CPPUNIT_ASSERT(record.HasMember("initial_normalized_probability"));
                 CPPUNIT_ASSERT(record.HasMember("normalized_probability"));
                 CPPUNIT_ASSERT(record.HasMember("sequence_num"));
                 if (isInterim)
@@ -1654,6 +1657,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
         {
             CPPUNIT_ASSERT(records[i].HasMember("detector_index"));
             CPPUNIT_ASSERT(records[i].HasMember("anomaly_score"));
+            CPPUNIT_ASSERT(records[i].HasMember("initial_normalized_probability"));
             CPPUNIT_ASSERT(records[i].HasMember("normalized_probability"));
             CPPUNIT_ASSERT(records[i].HasMember("probability"));
             CPPUNIT_ASSERT_EQUAL(EXPECTED_PROBABILITIES[probIndex],
@@ -1707,6 +1711,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             //CPPUNIT_ASSERT_EQUAL(0.1, records1[rapidjson::SizeType(0)]["probability"].GetDouble());
             CPPUNIT_ASSERT(records[i].HasMember("detector_index"));
             CPPUNIT_ASSERT(records[i].HasMember("anomaly_score"));
+            CPPUNIT_ASSERT(records[i].HasMember("initial_normalized_probability"));
             CPPUNIT_ASSERT(records[i].HasMember("normalized_probability"));
             if (isInterim)
             {
@@ -1755,6 +1760,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             CPPUNIT_ASSERT(records[i].HasMember("detector_index"));
             //CPPUNIT_ASSERT_EQUAL(0.1, records1[rapidjson::SizeType(0)]["probability"].GetDouble());
             CPPUNIT_ASSERT(records[i].HasMember("anomaly_score"));
+            CPPUNIT_ASSERT(records[i].HasMember("initial_normalized_probability"));
             CPPUNIT_ASSERT(records[i].HasMember("normalized_probability"));
             if (isInterim)
             {
