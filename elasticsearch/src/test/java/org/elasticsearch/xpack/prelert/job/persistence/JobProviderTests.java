@@ -83,7 +83,7 @@ public class JobProviderTests extends ESTestCase {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .throwMissingIndexOnPrepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID);
+                .throwMissingIndexOnPrepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID));
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -95,7 +95,7 @@ public class JobProviderTests extends ESTestCase {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID), getResponse);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -113,7 +113,7 @@ public class JobProviderTests extends ESTestCase {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID), getResponse);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -132,7 +132,7 @@ public class JobProviderTests extends ESTestCase {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.QUANTILES_ID, getResponse);
+                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId("foo"), getResponse);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -1086,8 +1086,8 @@ public class JobProviderTests extends ESTestCase {
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
                 .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, CategorizerState.TYPE, "1", categorizerStateGetResponse1)
-                .prepareGet(INDEX_NAME, CategorizerState.TYPE, "2", categorizerStateGetResponse2)
+                .prepareGet(INDEX_NAME, CategorizerState.TYPE, JOB_ID + "_1", categorizerStateGetResponse1)
+                .prepareGet(INDEX_NAME, CategorizerState.TYPE, JOB_ID + "_2", categorizerStateGetResponse2)
                 .prepareGet(INDEX_NAME, ModelState.TYPE.getPreferredName(), "123_1", modelStateGetResponse1)
                 .prepareGet(INDEX_NAME, ModelState.TYPE.getPreferredName(), "123_2", modelStateGetResponse2);
 
