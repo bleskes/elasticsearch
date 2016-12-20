@@ -17,13 +17,11 @@
 
 package org.elasticsearch.xpack.watcher.transform.search;
 
-import java.io.IOException;
-
 import org.elasticsearch.common.ParseFieldMatcher;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptSettings;
@@ -33,8 +31,9 @@ import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
 import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateService;
 import org.elasticsearch.xpack.watcher.transform.TransformFactory;
 
-public class SearchTransformFactory extends TransformFactory<SearchTransform, SearchTransform.Result, ExecutableSearchTransform> {
+import java.io.IOException;
 
+public class SearchTransformFactory extends TransformFactory<SearchTransform, SearchTransform.Result, ExecutableSearchTransform> {
     private final Settings settings;
     protected final WatcherClientProxy client;
     private final TimeValue defaultTimeout;
@@ -42,20 +41,20 @@ public class SearchTransformFactory extends TransformFactory<SearchTransform, Se
     private final ParseFieldMatcher parseFieldMatcher;
     private final WatcherSearchTemplateService searchTemplateService;
 
-    public SearchTransformFactory(Settings settings, InternalClient client,
-                                  SearchRequestParsers searchRequestParsers, ScriptService scriptService) {
-        this(settings, new WatcherClientProxy(settings, client), searchRequestParsers, scriptService);
+    public SearchTransformFactory(Settings settings, InternalClient client, SearchRequestParsers searchRequestParsers,
+            NamedXContentRegistry xContentRegistry, ScriptService scriptService) {
+        this(settings, new WatcherClientProxy(settings, client), searchRequestParsers, xContentRegistry, scriptService);
     }
 
-    public SearchTransformFactory(Settings settings, WatcherClientProxy client,
-                                  SearchRequestParsers searchRequestParsers, ScriptService scriptService) {
+    public SearchTransformFactory(Settings settings, WatcherClientProxy client, SearchRequestParsers searchRequestParsers,
+            NamedXContentRegistry xContentRegistry, ScriptService scriptService) {
         super(Loggers.getLogger(ExecutableSearchTransform.class, settings));
         this.settings = settings;
         this.client = client;
         this.parseFieldMatcher = new ParseFieldMatcher(settings);
         this.searchRequestParsers = searchRequestParsers;
         this.defaultTimeout = settings.getAsTime("xpack.watcher.transform.search.default_timeout", null);
-        this.searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchRequestParsers);
+        this.searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchRequestParsers, xContentRegistry);
     }
 
     @Override

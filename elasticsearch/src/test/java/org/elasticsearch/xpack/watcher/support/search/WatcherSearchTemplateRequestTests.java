@@ -96,7 +96,7 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
 
         contentBuilder.endObject();
         contentBuilder.endObject();
-        XContentParser parser = XContentHelper.createParser(contentBuilder.bytes());
+        XContentParser parser = createParser(contentBuilder);
         parser.nextToken();
 
         SearchRequestParsers searchRequestParsers = new SearchModule(Settings.EMPTY, false, Collections.emptyList())

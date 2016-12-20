@@ -304,7 +304,8 @@ public class WatchTests extends ESTestCase {
         QueryParser<ScriptQueryBuilder> queryParser2 = ScriptQueryBuilder::fromXContent;
         queryRegistry.register(queryParser2, ScriptQueryBuilder.NAME);
         SearchRequestParsers searchParsers = new SearchRequestParsers(queryRegistry, null,  null, null);
-        WatcherSearchTemplateService searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchParsers);
+        WatcherSearchTemplateService searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchParsers,
+                xContentRegistry());
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject();
@@ -436,7 +437,7 @@ public class WatchTests extends ESTestCase {
                 QueryParser<ScriptQueryBuilder> queryParser2 = ScriptQueryBuilder::fromXContent;
                 queryRegistry.register(queryParser2, ScriptQueryBuilder.NAME);
                 SearchRequestParsers searchParsers = new SearchRequestParsers(queryRegistry, null,  null, null);
-                parsers.put(SearchInput.TYPE, new SearchInputFactory(settings, client, searchParsers, scriptService));
+                parsers.put(SearchInput.TYPE, new SearchInputFactory(settings, client, searchParsers, xContentRegistry(), scriptService));
                 return new InputRegistry(Settings.EMPTY, parsers);
             default:
                 parsers.put(SimpleInput.TYPE, new SimpleInputFactory(settings));
@@ -491,7 +492,7 @@ public class WatchTests extends ESTestCase {
         SearchRequestParsers searchParsers = new SearchRequestParsers(queryRegistry, null, null, null);
         Map<String, TransformFactory> factories = new HashMap<>();
         factories.put(ScriptTransform.TYPE, new ScriptTransformFactory(settings, scriptService));
-        factories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, client, searchParsers, scriptService));
+        factories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, client, searchParsers, xContentRegistry(), scriptService));
         return new TransformRegistry(Settings.EMPTY, unmodifiableMap(factories));
     }
 

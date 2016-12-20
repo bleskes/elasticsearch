@@ -226,7 +226,7 @@ public class SearchTransformTests extends ESIntegTestCase {
 
         SearchRequestParsers searchRequestParsers = internalCluster().getInstance(SearchRequestParsers.class);
         SearchTransformFactory transformFactory = new SearchTransformFactory(Settings.EMPTY, WatcherClientProxy.of(client()),
-                                                                             searchRequestParsers, scriptService());
+                                                                             searchRequestParsers, xContentRegistry(), scriptService());
         ExecutableSearchTransform executable = transformFactory.parseExecutable("_id", parser, false);
 
         assertThat(executable, notNullValue());
@@ -296,7 +296,8 @@ public class SearchTransformTests extends ESIntegTestCase {
         String master = internalCluster().getMasterName();
         return new WatcherSearchTemplateService(internalCluster().clusterService(master).getSettings(),
                 internalCluster().getInstance(ScriptService.class, master),
-                internalCluster().getInstance(SearchRequestParsers.class, master)
+                internalCluster().getInstance(SearchRequestParsers.class, master),
+                xContentRegistry()
         );
     }
 

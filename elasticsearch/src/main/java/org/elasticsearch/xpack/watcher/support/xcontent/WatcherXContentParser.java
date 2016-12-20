@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentLocation;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -275,6 +276,16 @@ public class WatcherXContentParser implements XContentParser {
     @Override
     public boolean isClosed() {
         return parser.isClosed();
+    }
+
+    @Override
+    public <T> T namedObject(Class<T> categoryClass, String name, Object context) throws IOException {
+        return parser.namedObject(categoryClass, name, context);
+    }
+
+    @Override
+    public NamedXContentRegistry getXContentRegistry() {
+        return parser.getXContentRegistry();
     }
 
     @Override

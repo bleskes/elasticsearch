@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.watcher.test.integration;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
@@ -159,7 +160,7 @@ public class SearchInputTests extends ESIntegTestCase {
         IndicesQueriesRegistry indicesQueryRegistry = internalCluster().getInstance(IndicesQueriesRegistry.class);
         SearchRequestParsers searchParsers = new SearchRequestParsers(indicesQueryRegistry, null, null, null);
         SearchInputFactory factory = new SearchInputFactory(Settings.EMPTY, WatcherClientProxy.of(client()),
-                                                            searchParsers, scriptService());
+                                                            searchParsers, xContentRegistry(), scriptService());
 
         SearchInput searchInput = factory.parseInput("_id", parser, false);
         assertEquals(SearchInput.TYPE, searchInput.type());
@@ -170,7 +171,8 @@ public class SearchInputTests extends ESIntegTestCase {
         String master = internalCluster().getMasterName();
         return new WatcherSearchTemplateService(internalCluster().clusterService(master).getSettings(),
                 internalCluster().getInstance(ScriptService.class, master),
-                internalCluster().getInstance(SearchRequestParsers.class, master)
+                internalCluster().getInstance(SearchRequestParsers.class, master),
+                internalCluster().getInstance(NamedXContentRegistry.class, master)
         );
     }
 

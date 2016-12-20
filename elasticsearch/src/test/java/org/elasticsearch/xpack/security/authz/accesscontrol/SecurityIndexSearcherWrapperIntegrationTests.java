@@ -88,7 +88,7 @@ public class SecurityIndexSearcherWrapperIntegrationTests extends ESTestCase {
         when(client.settings()).thenReturn(Settings.EMPTY);
         final long nowInMillis = randomPositiveLong();
         QueryShardContext realQueryShardContext = new QueryShardContext(shardId.id(), indexSettings, null, null, mapperService, null,
-                null, indicesQueriesRegistry, client, null, () -> nowInMillis);
+                null, xContentRegistry(), indicesQueriesRegistry, client, null, () -> nowInMillis);
         QueryShardContext queryShardContext = spy(realQueryShardContext);
         QueryParseContext queryParseContext = mock(QueryParseContext.class);
         IndexSettings settings = IndexSettingsModule.newIndexSettings("_index", Settings.EMPTY);
@@ -186,7 +186,7 @@ public class SecurityIndexSearcherWrapperIntegrationTests extends ESTestCase {
      */
     private static XContentParser anyParser() {
         any(XContentParser.class);
-        return new JsonXContentParser(null);
+        return new JsonXContentParser(null, null);
     }
 
 }

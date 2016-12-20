@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.ssl;
 
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
@@ -37,6 +38,7 @@ import org.elasticsearch.common.network.InetAddresses;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -44,20 +46,19 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
 import org.elasticsearch.xpack.XPackPlugin;
 
-import javax.security.auth.x500.X500Principal;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.security.cert.Certificate;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +73,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import javax.security.auth.x500.X500Principal;
 
 /**
  * CLI tool to make generation of certificates or certificate requests easier for users
@@ -256,7 +259,8 @@ public class CertificateTool extends SettingCommand {
      */
     static Collection<CertificateInformation> parseFile(Path file) throws Exception {
         try (Reader reader = Files.newBufferedReader(file)) {
-            XContentParser xContentParser = XContentType.YAML.xContent().createParser(reader);
+            // EMPTY is safe here because we never use namedObject
+            XContentParser xContentParser = XContentType.YAML.xContent().createParser(NamedXContentRegistry.EMPTY, reader);
             return PARSER.parse(xContentParser, new ArrayList<>(), new CertInfoParseContext());
         }
     }

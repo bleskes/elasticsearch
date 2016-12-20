@@ -22,6 +22,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptSettings;
@@ -35,7 +36,6 @@ import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateServi
 import java.io.IOException;
 
 public class SearchInputFactory extends InputFactory<SearchInput, SearchInput.Result, ExecutableSearchInput> {
-
     private final Settings settings;
     private final WatcherClientProxy client;
     private final TimeValue defaultTimeout;
@@ -44,20 +44,20 @@ public class SearchInputFactory extends InputFactory<SearchInput, SearchInput.Re
     private final WatcherSearchTemplateService searchTemplateService;
 
     @Inject
-    public SearchInputFactory(Settings settings, InternalClient client,
-                              SearchRequestParsers searchRequestParsers, ScriptService scriptService) {
-        this(settings, new WatcherClientProxy(settings, client), searchRequestParsers, scriptService);
+    public SearchInputFactory(Settings settings, InternalClient client, SearchRequestParsers searchRequestParsers,
+            NamedXContentRegistry xContentRegistry, ScriptService scriptService) {
+        this(settings, new WatcherClientProxy(settings, client), searchRequestParsers, xContentRegistry, scriptService);
     }
 
-    public SearchInputFactory(Settings settings, WatcherClientProxy client,
-                              SearchRequestParsers searchRequestParsers, ScriptService scriptService) {
+    public SearchInputFactory(Settings settings, WatcherClientProxy client, SearchRequestParsers searchRequestParsers,
+            NamedXContentRegistry xContentRegistry, ScriptService scriptService) {
         super(Loggers.getLogger(ExecutableSimpleInput.class, settings));
         this.settings = settings;
         this.parseFieldMatcher = new ParseFieldMatcher(settings);
         this.client = client;
         this.searchRequestParsers = searchRequestParsers;
         this.defaultTimeout = settings.getAsTime("xpack.watcher.input.search.default_timeout", null);
-        this.searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchRequestParsers);
+        this.searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchRequestParsers, xContentRegistry);
     }
 
     @Override
