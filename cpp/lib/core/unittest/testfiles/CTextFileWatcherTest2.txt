@@ -1,0 +1,21 @@
+0 syslog message <END>
+1 syslog message <END>
+2 syslog message <END>
+3 syslog message <END>
+4 syslog message <END>
+5 syslog message <END>
+6 syslog message <END>
+7 syslog message <END>
+8 syslog message <END>
+9 syslog message <END>
+10 New syslog message <END>
+11 New syslog message <END>
+12 New syslog message <END>
+13 New syslog message <END>
+14 New syslog message <END>
+15 New syslog message <END>
+16 New syslog message <END>
+17 New syslog message <END>
+18 New syslog message <END>
+19 New syslog message <END>
+New partial line, now completed<END>

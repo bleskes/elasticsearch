@@ -1,0 +1,21 @@
+Parameters: Invalid chunk ignored.
+Pausing Coyote
+Stopping service Catalina
+Stopping Coyote
+Failed shutdown of Apache Portable Runtime
+The Apache Tomcat Native library which allows optimal performance in production environments was not found
+Initializing Coyote
+Initialization processed in.*ms
+Starting service Catalina
+Starting Servlet Engine
+XML validation disabled
+validateJarFile.*jar not loaded
+Deploying web application archive
+JK:.*listening on
+Jk running
+Find registry server-registry.xml at classpath resource
+Server startup in.*ms
+Exception initializing page context
+Reloading context
+Waiting for.*instance.s. to be deallocated
+All threads.*are currently busy, waiting. Increase maxThreads.*or check the servlet status

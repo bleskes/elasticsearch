@@ -1,0 +1,6 @@
+DisConnected Error on ping send: WSAECONNRESET -- Connection reset by peer.
+DisConnected Recv indicated with No Data
+DisConnected Send Failure Unknown code passed to print_socket_error.*code =
+DisConnected Send Failure WSAECONNRESET -- Connection reset by peer.
+Connected to remote
+Node Recovered.  Received Transaction.

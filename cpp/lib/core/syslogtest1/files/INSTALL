@@ -1,0 +1,26 @@
+To add message to a syslog file:
+
+http://aspiringsysadmin.com/blog/2007/07/13/better-scripts-3-use-logger/
+
+1. create the target file
+
+touch /export/home/steve/src/working/lib/core/syslogtest/files/prelerttest.log
+
+2. modify /etc/syslog.conf
+
+local0.notice                                   /export/home/steve/src/working/lib/core/syslogtest/files/prelerttest.log
+
+3. Restart service
+
+svcadm restart svc:/system/system-log:default
+
+4. test by sending a message
+
+logger -p local0.notice my first local0 message
+
+5. Log file should contain
+
+Mar 10 13:29:40 prelert-solaris steve: [ID 702911 local0.notice] my first local0 message
+
+
+

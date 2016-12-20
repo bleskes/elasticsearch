@@ -12,30 +12,30 @@ project.ext.numCpus = Runtime.runtime.availableProcessors()
 task clean(type: Exec) {
     enabled = project.cppEnabled
     commandLine bash
-    args '-c', 'source cpp/set_env.sh && rm -rf cppdistribution && rm -rf cpp/build && ' + make + ' clean'
-    workingDir "${rootDir}"
+    args '-c', 'source ./set_env.sh && rm -rf ../cppdistribution && rm -rf build && ' + make + ' clean'
+    workingDir "${projectDir}"
 }
 
 task compile(type: Exec) {
     enabled = project.cppEnabled
     commandLine bash
-    args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus + ' objcompile'
-    workingDir "${rootDir}"
+    args '-c', 'source ./set_env.sh && ' + make + ' -j' + numCpus + ' objcompile'
+    workingDir "${projectDir}"
 }
 
 task make(type: Exec) {
     enabled = project.cppEnabled
     commandLine bash
-    args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus
-    workingDir "${rootDir}"
+    args '-c', 'source ./set_env.sh && ' + make + ' -j' + numCpus
+    workingDir "${projectDir}"
     dependsOn 'compile'
 }
 
 task strip(type: Exec) {
     enabled = project.cppEnabled
     commandLine bash
-    args '-c', 'source cpp/set_env.sh && cpp/strip_binaries.sh'
-    workingDir "${rootDir}"
+    args '-c', 'source ./set_env.sh && ./strip_binaries.sh'
+    workingDir "${projectDir}"
     dependsOn 'make'
 }
 
@@ -68,8 +68,8 @@ artifacts {
 task test(type: Exec) {
     enabled = project.cppEnabled
     commandLine bash
-    args '-c', 'source cpp/set_env.sh && ' + make + ' -j' + numCpus + ' test'
-    workingDir "${rootDir}"
+    args '-c', 'source ./set_env.sh && ' + make + ' -j' + numCpus + ' test'
+    workingDir "${projectDir}"
     dependsOn 'buildZip'
     description = 'Run cpp tests'
 }

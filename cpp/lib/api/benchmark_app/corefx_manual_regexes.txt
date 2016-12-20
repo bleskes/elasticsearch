@@ -1,0 +1,291 @@
+Opening a New Hibernate Session for the thread
+com.wf.fx.fxcore.base.EventSupport.*NUll listener marked for removal
+TradeSourceConfig not found for the follow values
+com.wf.fx.fxtrading.capture.TradingManagerBS.*Time Taken ==
+com.wf.fx.fxcore.settlement.dao.CommonDAO.*getDetailCharges.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXDrawdownProcessor.*processTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSpotFwdProcessor.*cancelTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSpotFwdProcessor.*processTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSpotFwdProcessor.*updateTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSwapProcessor.*processTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOMCAProcessor.*processTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOMCAProcessor.*updateTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOTradeProcessor.*cancelTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOTradeProcessor.*processTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOTradeProcessor.*saveCommonHeaders.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOTradeProcessor.*updateTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.IfxdFactory.*createIfxdRecord.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.IfxdFactory.*overWriteBOFields.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.InthFactory.*createInthRecord.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.InthFactory.*overWriteBOFields.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.IzfxdFactory.*createIzfxdRecord.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.IzfxdFactory.*overWriteBOFields.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.TradeEventProcessorSessionEJB.*cancelTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.TradeEventProcessorSessionEJB.*updateTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.FXDrawDownProcessor.*createDrawDownTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.FXSWAPProcessor.*createSwapTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.FXSWAPProcessor.*processTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*cancelTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*updateTradeSpecific.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.RequestPreProcessor.*preProcessRequest.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.ReturnHandler.*handleReturn.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradeProcessor.*cancel.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradeProcessor.*processTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradeProcessor.*setupTradeHeader.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradeProcessor.*update.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradeValidator.*validateTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradingManagerBS.*bookTransaction.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradingManagerBS.*cancelTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradingManagerSessionEJB.*bookTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.capture.TradingManagerSessionEJB.*updateTrade.*Entering\.\.\.
+com.wf.fx.fxtrading.common.BookAssignmentBS.*getTraderBook.*Entering\.\.\.
+com.wf.fx.fxtrading.common.CustomerCreditBS.*getPurchaseSettlementDate.*Entering\.\.\.
+com.wf.fx.fxtrading.common.TradeSourceConfigService.*.*Entering\.\.\.
+com.wf.fx.fxtrading.common.TradeSourceConfigService.*getIFXDConfigTradeSourceConfig.*Entering\.\.\.
+com.wf.fx.fxtrading.common.TradeSourceConfigService.*isSourceConfigPropertyValueSetToYES.*Entering\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXDrawdownProcessor.*processTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSpotFwdProcessor.*cancelTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSpotFwdProcessor.*processTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSpotFwdProcessor.*updateTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOFXSwapProcessor.*processTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOMCAProcessor.*updateTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOTradeProcessor.*cancelTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOTradeProcessor.*saveCommonHeaders.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.BOTradeProcessor.*updateTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.IfxdFactory.*createIfxdRecord.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.IfxdFactory.*overWriteBOFields.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.InthFactory.*createInthRecord.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.InthFactory.*overWriteBOFields.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.IzfxdFactory.*createIzfxdRecord.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.IzfxdFactory.*overWriteBOFields.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.TradeEventProcessorSessionEJB.*cancelTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.backoffice.TradeEventProcessorSessionEJB.*updateTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.FXDrawDownProcessor.*processTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.FXMCAProcessor.*processTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.FXMCAProcessor.*updateTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.FXSWAPProcessor.*processTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*cancelTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*processTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*updateTradeSpecific.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.RequestPreProcessor.*preProcessRequest.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.ReturnHandler.*handleReturn.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.TradeProcessor.*cancel.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.TradeProcessor.*processTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.TradeProcessor.*update.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.TradeValidator.*validateTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.TradingManagerBS.*bookTransaction.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.TradingManagerBS.*cancelTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.capture.TradingManagerBS.*updateTrade.*Exiting\.\.\.
+com.wf.fx.fxtrading.common.CustomerCreditBS.*getPurchaseSettlementDate.*Exiting\.\.\.
+com.wf.fx.fxtrading.common.TradeSourceConfigService.*key.*not found
+com.wf.fx.fxtrading.common.TradeSourceConfigService.*after findByPrimaryKey.*key.*value
+rootContractSpotDate
+com.wf.fx.fxcore.rate.mktrate.DirectRateNode.*denCcy:
+com.wf.fx.fxcore.rate.mktrate.DirectRateNode.*numCcy:
+com.wf.fx.fxcore.rate.mktrate.DirectRateNode.*Unusual days from spot.*for
+System on switch is turned.*true
+com.wf.fx.services.credit.CreditServiceImpl.*after getCustomer CMR call, status is
+com.wf.fx.services.credit.CreditServiceImpl.*after getCustomerService for entityId
+com.wf.fx.services.credit.CreditServiceImpl.*before  getCustomerService
+com.wf.fx.fxtrading.search.util.TradeSearchHelper
+Clearing FXTrading SimpleCache
+com.wf.fx.fxtrading.common.SimpleCache.*headless = false
+com.wf.fx.fxtrading.capture.tradefeed.wsimpl.TradeFeedImpl.*<TradeResponse><TradeId>
+com.wf.fx.fxtrading.capture.tradefeed.wsimpl.TradeFeedImpl. select
+com.wf.fx.fxtrading.capture.tradefeed.wsimpl.TradeFeedImpl.*Error processing webservice request
+com.wf.fx.fxtrading.capture.tradefeed.wsimpl.TradeFeedImpl.*Creating DraftEvent
+com.wf.fx.fxtrading.capture.tradefeed.util.SettlementUtil.*Cannot get nostroId
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*processINTHEvents.*Start
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*processINTHEvents.*End
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*Not properly synchrnoized
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*The following invalid INTH_Events will be removed
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*Query executed is
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*No Interface Trades to Process
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker..BR =
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*invalid INTH_Events were deleted
+com.wf.fx.fxtrading.capture.poll.ifxd.OpicsInterfaceTradeChecker.*INTH_Events records were updated to STATE
+com.wf.fx.fxtrading.capture.poll.ifxd.IFXDEventProcessor.*State of INTH_Events is mark to
+com.wf.fx.fxtrading.capture.poll.ifxd.IFXDEventProcessor.*Got a INTH Trade from Buffet
+com.wf.fx.fxtrading.capture.poll.ifxd.IFXDEventProcessor.*New INTH Trade From Buffet
+com.wf.fx.fxtrading.capture.poll.ifxd.IFXDEventProcessor.*java.lang.NumberFormatException
+com.wf.fx.fxtrading.capture.poll.OpicsTradeChecker2.*processFXDHEvents.*Running
+com.wf.fx.fxtrading.capture.poll.OpicsTradeChecker2.*Processing payment flows
+com.wf.fx.fxtrading.capture.poll.OpicsTradeChecker2.*Inserting record in Instruction_Events table
+com.wf.fx.fxtrading.capture.poll.OpicsTradeChecker2.*Credit event being inserted for tradeId
+com.wf.fx.fxtrading.capture.poll.OpicsTradeChecker2.*were inserted into Instruction_Events
+com.wf.fx.fxtrading.capture.poll.OpicsTradeChecker2.*Update was required, now creating/updating payment flows for tradeId
+com.wf.fx.fxtrading.capture.poll.OpicsTradeChecker2.*Got an FXDH Event DEALNO
+com.wf.fx.fxtrading.capture.poll.FxtrEventsProcessor.*processFXTREvents.*Running
+com.wf.fx.fxtrading.capture.poll.FxtrEventsProcessor.*Trying to find the INTH Records for
+com.wf.fx.fxtrading.capture.poll.FxtrEventsProcessor.*No Update Required for TradeFxPosTran with tradeId
+com.wf.fx.fxtrading.capture.poll.FxtrEventsProcessor.*Found.*trades in INTH
+com.wf.fx.fxtrading.capture.poll.BOSpotFwdHandler.*NO UPDATE for Trade
+com.wf.fx.fxtrading.capture.poll.BOSpotFwdHandler.*Update Required for Trade
+com.wf.fx.fxtrading.capture.poll.BOSpotFwdHandler.*Creating New Trade in BUFFET for Opics Deal No
+com.wf.fx.fxtrading.capture.poll.BOSpotFwdHandler.*Amend threshold
+com.wf.fx.fxtrading.capture.poll.BODrawDownHandler.*Update Required for Trade
+com.wf.fx.fxtrading.capture.TradeProcessor.*After helper.processSettlementInstruction for
+com.wf.fx.fxtrading.capture.TradeProcessor.*After saving settlement instructions in database
+com.wf.fx.fxtrading.capture.TradeProcessor.*Credit event being inserted for tradeId
+com.wf.fx.fxtrading.capture.TradeProcessor.*Inside processSettlementInstruction for
+com.wf.fx.fxtrading.capture.TradeProcessor.*setupTradeHeader.tradeRequest
+com.wf.fx.fxtrading.capture.TradeProcessor.*processTrade.tradeRequest
+com.wf.fx.fxtrading.capture.TradeProcessor..tai =
+com.wf.fx.fxtrading.capture.ReturnHandler.*Trade will not be booked to OPICS since the status is
+com.wf.fx.fxtrading.capture.RequestPreProcessor.*Unable to find the Customer Cross Reference with systemID
+com.wf.fx.fxtrading.capture.RequestPreProcessor.*Trade Additional Info
+com.wf.fx.fxtrading.capture.RequestPreProcessor.*Original Trade Counter Party
+com.wf.fx.fxtrading.capture.RequestPreProcessor.*New Trade Counter Party
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*Saved to the DB Successfully
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*About to save to the DB
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*fxSpotFwd.get = null
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*Overriding spot market rate
+com.wf.fx.fxtrading.capture.FXSpotFwdProcessor.*Overriding all in market rate
+com.wf.fx.fxtrading.capture.FXMCAProcessor.*Saved to the DB Successfully
+com.wf.fx.fxtrading.capture.FXMCAProcessor.*About to save to the DB
+com.wf.fx.fxtrading.capture.FXMCAProcessor.*MCA FK DeliveryRequest is null
+com.wf.fx.fxtrading.capture.FXMCAProcessor.*After updating MCA trade in database
+com.wf.fx.fxtrading.capture.FXMCAProcessor.*After saving MCA trade in database
+com.wf.fx.fxrisk.tradeflow.TradeFlowSpotFwdGenerator.*Trade Flows have been generated sucessfully saved
+com.wf.fx.fxrisk.tradeflow.TradeFlowSpotFwdGenerator.*Trade Flows have been generated sucessfully.*ready to save flows
+com.wf.fx.commons.configuration.spring.ConfigurationServicePropertyPlaceholderConfigurer.*Loading Decrypted version of the Properties from configuration service
+com.wf.fx.commons.notification.destination.SMTPDestination.*Sending notification to
+com.wf.fx.fxcore.base.CreditType.*Unknown CreditType created
+com.wf.fx.fxcore.base.EventSupport.*Null listener removed
+com.wf.fx.fxcore.base.LegalEntity.*Reloading cross references for entity
+com.wf.fx.fxcore.base.contract.ContractService.*_tenorsByCCYs cleared
+com.wf.fx.fxcore.base.customer.CustomerBranchService.*customer.*status in opics for branch
+com.wf.fx.fxcore.base.customer.LegalEntitySearchSupplier.*Legal Entity Search Query.*SELECT
+com.wf.fx.fxcore.base.customer.LegalEntitySearchSupplier.*Max Rows for Legal Entity Search Query
+com.wf.fx.fxcore.persistence.HibernateIdGenerator.*columnName : SEQUENCE
+com.wf.fx.fxcore.persistence.HibernateIdGenerator.*conn :
+com.wf.fx.fxcore.persistence.HibernateIdGenerator.*tableName :
+com.wf.fx.fxcore.persistence.HibernateUtil.*Hibernate Session exists for the thread
+com.wf.fx.fxcore.rate.RateListenersManagerFactory.*Creating RateListenersManagerFactory found for source StaticMarketRateSource
+com.wf.fx.fxcore.rate.mktrate.AllInRateListenersManager.*Subrate manager with.*listeners is active
+com.wf.fx.fxcore.rate.mktrate.AllInRateListenersManager.*contract event occurred
+com.wf.fx.fxcore.rate.mktrate.AllInRateListenersManagerFactory.*creating AllinRateListenersManagerFactory for rate source StaticMarketRateSource
+com.wf.fx.fxcore.security.LoginServiceBean.*User.*trying login
+com.wf.fx.fxcore.settlement.SettlementHelper.*Payment flow is not in valid
+com.wf.fx.fxcore.settlement.dao.CommonDAO.*CMR does not have swift charges for legalEntityId
+com.wf.fx.fxcore.settlement.dao.CommonDAO.*Could not get swift charges from CMR for legalEntityId
+com.wf.fx.fxcore.settlement.dao.PrirDAOImpl.*findPrirRecord.*failed
+com.wf.fx.fxcore.settlement.dao.PrirDAOImpl.*In  PrirDAOImpl
+com.wf.fx.fxcore.settlement.dao.PsixDAOImpl.*In  PsixDAOImpl
+com.wf.fx.fxcore.settlement.service.SettlementServiceImpl
+com.wf.fx.fxcore.settlement.service.SettlementServiceImplIn  PrirDAOImpl
+com.wf.fx.fxcore.settlement.dao.PsixDAOImpl.*In  PsixDAOImpl
+com.wf.fx.fxcore.settlement.service.SettlementServiceImpl.*Nostro not found in Buffet NostroBank Table
+com.wf.fx.fxcore.settlement.service.SettlementServiceImpl.*PaymentFlow state transition is not valid
+com.wf.fx.fxcore.settlement.service.SettlementServiceImpl.*Paymentflow is already in authorized status
+com.wf.fx.fxcore.settlement.synchronization.ConversionHelper.*Could not find.*in Application property
+com.wf.fx.fxcore.settlement.synchronization.ConversionHelper.*entityId passed
+com.wf.fx.fxcore.settlement.synchronization.ConversionHelper.*entityId.s. from property file is
+com.wf.fx.fxcore.settlement.synchronization.PaymentFlowProcessorImpl.*calling FXCreditRiskDSTradeExpService to update isNetted
+com.wf.fx.fxcore.settlement.synchronization.PaymentFlowProcessorImpl.*Payment flows processed for tradeId
+com.wf.fx.fxcore.settlement.synchronization.PaymentFlowProcessorImpl.*Process payment flow for tradeId
+com.wf.fx.fxcore.settlement.synchronization.PaymentFlowProcessorImpl..Saving
+com.wf.fx.fxcore.settlement.synchronization.PaymentFlowProcessorImpl.*Synchronization of payment flow is complete for tradeId
+com.wf.fx.fxcore.settlement.synchronization.PaymentFlowProcessorImpl.*Synchronize payment flow for tradeId
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*records with the state.*were removed from
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Could not find the matching PSIX record with the Instruction record found
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Difference found between
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Difference found in instruction details
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Instruction not found for Incoming paymentFlowId
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync..InstructionEvent
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Instruction_Event does not need to be processed
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*No PRIR record exists for Instruction_Event
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*No PSIX record exists for Instruction_Event
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*PRIR record not found for
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Processing InstructionEvent
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Set.*records to NEW
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Set.*records to SYNC_IN_PROGRESS
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Setting InstructionEvent
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*Total Time to process.*event
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*TradeHeader record not found for
+com.wf.fx.fxcore.settlement.synchronization.fromopics.InstructionFromOpicsSync.*isValidateAddUpdate called for event
+com.wf.fx.fxcore.settlement.synchronization.fromopics.payment.PaymentInstructionFromOpicsSync.*Merging: Instruction
+com.wf.fx.fxcore.settlement.synchronization.fromopics.payment.PaymentInstructionFromOpicsSync.*Saving:
+com.wf.fx.fxcore.settlement.synchronization.fromopics.payment.PaymentInstructionFromOpicsSync.*Recevied from DB: Instruction
+com.wf.fx.fxcore.settlement.synchronization.fromopics.payment.PaymentInstructionFromOpicsSync.*Got a Pay Event
+com.wf.fx.fxcore.settlement.synchronization.fromopics.payment.PaymentInstructionFromOpicsSync.*Start processing event
+com.wf.fx.fxcore.settlement.synchronization.fromopics.payment.PaymentInstructionFromOpicsSync.*Pay Instruction successfully synchronized for tradeId
+com.wf.fx.fxcore.settlement.synchronization.toopics.DDAUsualInstructionToOpicsSync.*Finished synchronizeDDAToOpics
+com.wf.fx.fxrisk.tradeflow.TradeFlowGenerator.*is a reversal trade, therefore creating reversal flows
+com.wf.fx.fxeca.cmr.services.contacts.ContactService.*updateCustomerContact
+com.wf.fx.fxeca.bswift.ui.UICustomerInfoHelper.*Cache Cleared
+com.wf.fx.fxeca.bswift.ui.UICustomerInfoHelper.*customerNameMap size
+com.wf.fx.fxeca.bswift.ui.UICustomerInfoHelper.*customerShortNameMap size
+com.wf.fx.fxeca.bswift.ui.UICustomerInfoHelper.*specialistByEntityIdMap size
+com.wf.fx.fxrap.service.AllInFXRateProvider.*nAllInRateProvider: contract event occurred
+com.wf.fx.fxrap.service.AllInFXRateProvider.*reinitializeRateNodes ended for all in rate provider
+com.wf.fx.fxrap.service.AllInFXRateProvider.*reinitializeRateNodes started for all in rate provider
+com.wf.fx.fxrap.generator.staticrates.RateServiceHelper.*Sorted
+com.wf.fx.fxcreditrisk.batch.FXForwardTradeExposure.*MTM for tranId
+com.wf.fx.fxcore.tradefeedtracker.MessageLoggerService.*next TradeFeedRepository message ID
+com.wf.fx.fxrap.generator.staticrates.RateGroupRateServiceHelper.*Finished rate service getRates call
+com.wf.fx.fxrap.generator.staticrates.RateGroupRateServiceHelper.*Starting rate service getRates call
+com.wf.fx.fxcore.tradefeedtracker.TradeFeedTrackerService.*row FOUND for
+com.wf.fx.fxcore.tradefeedtracker.TradeFeedTrackerService.*generateUniqueID
+com.wf.fx.fxcore.tradefeedtracker.TradeFeedTrackerService.*Next Seed for
+com.wf.fx.fxcore.tradefeedtracker.TradeFeedTrackerService.*Incremented the Seed in ExternalSystemSetup for
+com.wf.fx.fxcore.settlement.synchronization.toopics.payment.PayInstructionToOpicsSyncImpl.*Total Time to process.*event
+com.wf.fx.fxcore.settlement.synchronization.toopics.payment.PayInstructionToOpicsSyncImpl.*Synchronization Completed
+com.wf.fx.fxcore.settlement.synchronization.toopics.payment.PayInstructionToOpicsSyncImpl.*Start Synchronization
+com.wf.fx.fxcore.settlement.synchronization.toopics.payment.PayInstructionToOpicsSyncImpl.*Saving: Instruction
+com.wf.fx.fxcore.settlement.synchronization.toopics.payment.PayInstructionToOpicsSyncImpl.*Saving: <PaymentFlow>
+com.wf.fx.fxcore.settlement.synchronization.toopics.payment.PayInstructionToOpicsSyncImpl.*Saving InthRecord
+com.wf.fx.fxcore.settlement.synchronization.toopics.payment.PayInstructionToOpicsSyncImpl.*Saving IinsRecord
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*smeans :
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*backoffice id :
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*WellsReceive instructions synched to opics
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*Total Time to process.*event
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*Synchronization Completed
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*Start Synchronization
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*Saving InthRecord
+com.wf.fx.fxcore.settlement.synchronization.toopics.receive.ReceiveInstructionToOpicsSyncImpl.*Saving IinsRecord
+com.wf.fx.fxcreditrisk.service.FxcreditriskDomainSupplier..Running Selector
+com.wf.fx.fxcreditrisk.service.FxcreditriskDomainSupplier..TM.*SELECTOR
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.CASMidasPlusPost.*CAS returned an success response
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.CASMidasPlusPost.*Could not create acctWithBank information with
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.CASMidasPlusPost.*Could not create details Of PaymentList information
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.CASMidasPlusPost.*Could not create rcvrCorrespBank Bank information
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.CASMidasPlusPost.*Could not create third Reimb Bank information
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.CASMidasPlusPost.*Could not create intermediary Bank information
+com.wf.fx.fxcreditrisk.service.FXCreditRiskNetEventsService.*Inserted FXCreditRiskNetEvent for tradeId
+com.wf.fx.fxcreditrisk.service.FXCreditRiskNetEventsService.*updateNetIndicator is called
+com.wf.fx.fxcore.trading.dao.IdGenerator.*Incremented the TradeSequence
+com.wf.fx.fxcore.trading.dao.IdGenerator.*Incremented the BackOfficeIdRange
+com.wf.fx.fxcreditrisk.service.FXCreditRiskEventService.*FXCreditRiskTradeEvent is inserted for
+com.wf.fx.fxrap.pricing.service.xratesemulator.AlternateEmulatorResponseTermsOperator..Pair
+com.wf.fx.fxcore.sql.DBUtils.*Incremented the PaymentFlowSequence
+com.wf.fx.fxeca.cmr.services.customers.CustomerService.*getCustomers
+com.wf.fx.fxeca.cmr.services.customers.CustomerService.*nCustomerServiceRequestntcmr
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*And :: OutGoingPaymentFlow.id
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*End pickAndUpdateStatusOfPaymentFlow
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*Found corrsponding outgoingPaymentFlow
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*Find outgoingPaymentFlow for
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*Matched Payment Flows to synchronize To MidasPlus for Tradeid
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*Start Synchronization
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*Start pickAndUpdateStatusOfPaymentFlow
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*Start processing READY FOR SYNCHRONIZATION TO MIDAS PLUS paymentflows
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*Synchronization Completed
+com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl.*WachNonFX instructions synched to MidasPlus
+com.wf.fx.fxcore.trading.dao.FOTradeDAO.*There are no trades in TradeHeader
+com.wf.fx.fxcore.trading.dao.FOTradeDAO.*Cannot get flow generator for tradeHeader
+com.wf.fx.fxcore.trading.dao.FOTradeDAO.*Trade Flow cannot be created for tradeID
+com.wf.fx.fxcore.trading.dao.FOTradeDAO.*Error Finding Domain Objects
+com.wf.fx.fxcore.trading.dao.FOTradeDAO.*TradeHeader records found for branch
+com.wf.fx.fxcore.trading.dao.FOTradeDAO
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync.*Got a Pay Event
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync.*TradeId for a given Instruction
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync.*Saving:
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync.*Recevied from DB: Instruction
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync.*Receive Instruction successfully synchronized for tradeId
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync.*PaymentFlowIdfor a given Instruction
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync.*Merging: Instruction
+com.wf.fx.fxcore.settlement.synchronization.fromopics.receive.ReceiveInstructionFromOpicsSync
+com.wf.fx.fxtrading.capture.TradingManagerBS.*TradeId.*from updateUser
+com.wf.fx.fxtrading.capture.TradingManagerBS.*updateTrade.tradeHeader
+com.wf.fx.fxtrading.capture.TradingManagerBS..<TradeResponse><TradeId>
+com.wf.fx.fxtrading.capture.TradingManagerBS
