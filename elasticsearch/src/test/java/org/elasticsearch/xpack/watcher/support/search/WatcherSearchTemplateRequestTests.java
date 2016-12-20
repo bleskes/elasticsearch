@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.watcher.support.search;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -111,4 +112,8 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
         assertThat(XContentMapValues.extractValue("aggregations.another_avg.avg.script.lang", parsedResult), equalTo("javascript"));
     }
 
+    @Override
+    protected NamedXContentRegistry xContentRegistry() {
+        return new NamedXContentRegistry(new SearchModule(Settings.EMPTY, false, Collections.emptyList()).getNamedXContents());
+    }
 }

@@ -217,6 +217,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
         private final TriggerService triggerService;
         private final ActionRegistry actionRegistry;
         private final InputRegistry inputRegistry;
+        private final NamedXContentRegistry xContentRegistry;
         private final CryptoService cryptoService;
         private final ExecutableInput defaultInput;
         private final Condition defaultCondition;
@@ -225,12 +226,12 @@ public class Watch implements TriggerEngine.Job, ToXContent {
 
         @Inject
         public Parser(Settings settings, TriggerService triggerService, ActionRegistry actionRegistry, InputRegistry inputRegistry,
-                      @Nullable CryptoService cryptoService, Clock clock) {
-
+                      NamedXContentRegistry xContentRegistry, @Nullable CryptoService cryptoService, Clock clock) {
             super(settings);
             this.triggerService = triggerService;
             this.actionRegistry = actionRegistry;
             this.inputRegistry = inputRegistry;
+            this.xContentRegistry = xContentRegistry;
             this.cryptoService = Watcher.ENCRYPT_SENSITIVE_DATA_SETTING.get(settings) ? cryptoService : null;
             this.defaultInput = new ExecutableNoneInput(logger);
             this.defaultCondition = AlwaysCondition.INSTANCE;
@@ -274,7 +275,7 @@ public class Watch implements TriggerEngine.Job, ToXContent {
             XContentParser parser = null;
             try {
                 // EMPTY is safe here because we never use namedObject
-                parser = new WatcherXContentParser(createParser(NamedXContentRegistry.EMPTY, source), new HaltedClock(now),
+                parser = new WatcherXContentParser(createParser(xContentRegistry, source), new HaltedClock(now),
                         withSecrets ? cryptoService : null);
                 parser.nextToken();
                 return parse(id, includeStatus, parser, upgradeSource);

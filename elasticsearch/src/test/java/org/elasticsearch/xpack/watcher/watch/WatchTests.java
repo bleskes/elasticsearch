@@ -20,16 +20,17 @@ package org.elasticsearch.xpack.watcher.watch;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
-import org.elasticsearch.index.query.QueryParser;
+import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.ScriptQueryBuilder;
-import org.elasticsearch.indices.query.IndicesQueriesRegistry;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
@@ -132,6 +133,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
@@ -213,7 +215,8 @@ public class WatchTests extends ESTestCase {
 
         BytesReference bytes = XContentFactory.jsonBuilder().value(watch).bytes();
         logger.info("{}", bytes.utf8ToString());
-        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, clock);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, xContentRegistry(), null,
+                clock);
 
         Watch parsedWatch = watchParser.parse("_name", includeStatus, bytes);
 
@@ -249,7 +252,8 @@ public class WatchTests extends ESTestCase {
                 .startObject()
                     .startArray("actions").endArray()
                 .endObject();
-        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, clock);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, xContentRegistry(), null,
+                clock);
         try {
             watchParser.parse("failure", false, jsonBuilder.bytes());
             fail("This watch should fail to parse as actions is an array");
@@ -275,7 +279,8 @@ public class WatchTests extends ESTestCase {
                 .field(ScheduleTrigger.TYPE, schedule(schedule).build())
                 .endObject();
         builder.endObject();
-        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, SystemClock.INSTANCE);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, xContentRegistry(), null,
+                SystemClock.INSTANCE);
         Watch watch = watchParser.parse("failure", false, builder.bytes());
         assertThat(watch, notNullValue());
         assertThat(watch.trigger(), instanceOf(ScheduleTrigger.class));
@@ -296,14 +301,10 @@ public class WatchTests extends ESTestCase {
         InputRegistry inputRegistry = registry(SearchInput.TYPE);
         TransformRegistry transformRegistry = transformRegistry();
         ActionRegistry actionRegistry = registry(Collections.emptyList(), conditionRegistry, transformRegistry);
-        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, null, SystemClock.INSTANCE);
+        Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, xContentRegistry(), null,
+                SystemClock.INSTANCE);
 
-        IndicesQueriesRegistry queryRegistry = new IndicesQueriesRegistry();
-        QueryParser<MatchAllQueryBuilder> queryParser1 = MatchAllQueryBuilder::fromXContent;
-        queryRegistry.register(queryParser1, MatchAllQueryBuilder.NAME);
-        QueryParser<ScriptQueryBuilder> queryParser2 = ScriptQueryBuilder::fromXContent;
-        queryRegistry.register(queryParser2, ScriptQueryBuilder.NAME);
-        SearchRequestParsers searchParsers = new SearchRequestParsers(queryRegistry, null,  null, null);
+        SearchRequestParsers searchParsers = new SearchRequestParsers(null,  null, null);
         WatcherSearchTemplateService searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchParsers,
                 xContentRegistry());
 
@@ -431,12 +432,7 @@ public class WatchTests extends ESTestCase {
         Map<String, InputFactory> parsers = new HashMap<>();
         switch (inputType) {
             case SearchInput.TYPE:
-                IndicesQueriesRegistry queryRegistry = new IndicesQueriesRegistry();
-                QueryParser<MatchAllQueryBuilder> queryParser1 = MatchAllQueryBuilder::fromXContent;
-                queryRegistry.register(queryParser1, MatchAllQueryBuilder.NAME);
-                QueryParser<ScriptQueryBuilder> queryParser2 = ScriptQueryBuilder::fromXContent;
-                queryRegistry.register(queryParser2, ScriptQueryBuilder.NAME);
-                SearchRequestParsers searchParsers = new SearchRequestParsers(queryRegistry, null,  null, null);
+                SearchRequestParsers searchParsers = new SearchRequestParsers(null,  null, null);
                 parsers.put(SearchInput.TYPE, new SearchInputFactory(settings, client, searchParsers, xContentRegistry(), scriptService));
                 return new InputRegistry(Settings.EMPTY, parsers);
             default:
@@ -486,10 +482,7 @@ public class WatchTests extends ESTestCase {
     }
 
     private TransformRegistry transformRegistry() {
-        IndicesQueriesRegistry queryRegistry = new IndicesQueriesRegistry();
-        QueryParser<MatchAllQueryBuilder> queryParser = MatchAllQueryBuilder::fromXContent;
-        queryRegistry.register(queryParser, MatchAllQueryBuilder.NAME);
-        SearchRequestParsers searchParsers = new SearchRequestParsers(queryRegistry, null, null, null);
+        SearchRequestParsers searchParsers = new SearchRequestParsers(null, null, null);
         Map<String, TransformFactory> factories = new HashMap<>();
         factories.put(ScriptTransform.TYPE, new ScriptTransformFactory(settings, scriptService));
         factories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, client, searchParsers, xContentRegistry(), scriptService));
@@ -549,6 +542,16 @@ public class WatchTests extends ESTestCase {
     private ActionThrottler randomThrottler() {
         return new ActionThrottler(SystemClock.INSTANCE, randomBoolean() ? null : timeValueSeconds(randomIntBetween(1, 10000)),
                 licenseState);
+    }
+
+    @Override
+    protected NamedXContentRegistry xContentRegistry() {
+        return new NamedXContentRegistry(Arrays.asList(
+                new NamedXContentRegistry.Entry(Optional.class, new ParseField(MatchAllQueryBuilder.NAME), (p, c) ->
+                        MatchAllQueryBuilder.fromXContent((QueryParseContext) c)),
+                new NamedXContentRegistry.Entry(Optional.class, new ParseField(ScriptQueryBuilder.NAME), (p, c) ->
+                        ScriptQueryBuilder.fromXContent((QueryParseContext) c))
+                ));
     }
 
     static class ParseOnlyScheduleTriggerEngine extends ScheduleTriggerEngine {
