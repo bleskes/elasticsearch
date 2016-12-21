@@ -92,6 +92,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_cancel() throws Exception {
         InputStream inputStream = endLessStream("", "{\"time\":1}");
         JsonDataToProcessWriter writer = createWriter();
+        writer.writeHeader();
 
         AtomicBoolean cancel = new AtomicBoolean(false);
         AtomicReference<Exception> exception = new AtomicReference<>();
@@ -121,7 +122,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time\":\"2\", \"metric\":\"bar\", \"value\":\"2.0\"}");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -143,7 +144,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time\":\"2\", \"metric\":\"bar\", \"value\":\"2.0\"}");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -172,7 +173,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time\":\"2\", \"metric\":\"bar\", \"value\":\"2.0\"}");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -201,7 +202,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time\":\"3\", \"value\":\"3.0\"}");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -230,7 +231,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time\":\"3\", \"nested\":{\"value\":\"3.0\"}}");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -256,6 +257,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
+        writer.writeHeader();
 
         ESTestCase.expectThrows(ElasticsearchParseException.class, () -> writer.write(inputStream, () -> false));
     }
@@ -271,7 +273,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time\":\"2\", \"array\":[], \"value\":\"2.0\"}");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -300,7 +302,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -336,6 +338,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         dataDescription.setTimeFormat("yyyy-MM-ddHH:mm:ssX");
 
         JsonDataToProcessWriter writer = createWriter();
+        writer.writeHeader();
 
         StringBuilder input = new StringBuilder();
         input.append("{\"date\":\"1970-01-01\", \"time-of-day\":\"00:00:01Z\", \"value\":\"5.0\"}");
@@ -378,7 +381,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"time\":\"2\", \"dns1\":\"www\", \"dns2\":\"bar.com\", \"value\":\"2.0\"}");
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 

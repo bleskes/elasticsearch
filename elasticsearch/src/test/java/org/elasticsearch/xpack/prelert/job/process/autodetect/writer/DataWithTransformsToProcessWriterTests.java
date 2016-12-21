@@ -76,7 +76,7 @@ public class DataWithTransformsToProcessWriterTests extends ESTestCase {
 
         InputStream inputStream = createInputStream(input.toString());
         AbstractDataToProcessWriter writer = createWriter(true);
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -99,7 +99,7 @@ public class DataWithTransformsToProcessWriterTests extends ESTestCase {
 
         InputStream inputStream = createInputStream(input.toString());
         AbstractDataToProcessWriter writer = createWriter(false);
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
 
         List<String[]> expectedRecords = new ArrayList<>();

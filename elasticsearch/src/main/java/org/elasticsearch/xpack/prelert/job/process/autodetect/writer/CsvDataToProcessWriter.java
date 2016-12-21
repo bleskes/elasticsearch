@@ -90,7 +90,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
 
             long inputFieldCount = Math.max(header.length - 1, 0); // time field doesn't count
 
-            buildTransformsAndWriteHeader(header);
+            buildTransforms(header);
 
             //backing array for the inputIndex
             String[] inputRecord = new String[header.length];
@@ -155,8 +155,7 @@ class CsvDataToProcessWriter extends AbstractDataToProcessWriter {
             }
             Integer index = inputFieldIndexes.get(field);
             if (index == null) {
-                String msg = String.format(Locale.ROOT, "Field configured for analysis "
-                        + "'%s' is not in the CSV header '%s'",
+                String msg = String.format(Locale.ROOT, "Field configured for analysis '%s' is not in the CSV header '%s'",
                         field, Arrays.toString(header));
 
                 logger.error(msg);

@@ -97,6 +97,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     public void testWrite_cancel() throws Exception {
         InputStream inputStream = endLessStream("time,metric,value\n", "1,,foo\n");
         CsvDataToProcessWriter writer = createWriter();
+        writer.writeHeader();
 
         AtomicBoolean cancel = new AtomicBoolean(false);
         AtomicReference<Exception> exception = new AtomicReference<>();
@@ -128,7 +129,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("2,bar,2.0\n");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -160,7 +161,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("2,,\n");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -183,7 +184,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("2,bar,2.0\n");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -208,7 +209,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
 
         when(statusReporter.getLatestRecordTime()).thenReturn(new Date(5000L));
         CsvDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -239,7 +240,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("\0");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -273,7 +274,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("\0");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -295,7 +296,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         verify(statusReporter).finishReporting();
     }
 
-    public void testWrite_EmpytInput() throws IOException {
+    public void testWrite_EmptyInput() throws IOException {
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
         builder.setLatency(0L);
         analysisConfig = builder.build();
@@ -304,6 +305,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
 
         InputStream inputStream = createInputStream("");
         CsvDataToProcessWriter writer = createWriter();
+        writer.writeHeader();
 
         DataCounts counts = writer.write(inputStream, () -> false);
         assertEquals(0L, counts.getInputBytes());
@@ -325,6 +327,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         dataDescription.setTimeFormat("yyyy-MM-ddHH:mm:ssX");
 
         CsvDataToProcessWriter writer = createWriter();
+        writer.writeHeader();
 
         StringBuilder input = new StringBuilder();
         input.append("date,time-of-day,metric,value\n");
@@ -370,7 +373,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("2,www,bar.com,2.0\n");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
-
+        writer.writeHeader();
         writer.write(inputStream, () -> false);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
@@ -396,6 +399,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("2,bar\",2.0\n");
         InputStream inputStream = createInputStream(input.toString());
         CsvDataToProcessWriter writer = createWriter();
+        writer.writeHeader();
 
         SuperCsvException e = ESTestCase.expectThrows(SuperCsvException.class, () -> writer.write(inputStream, () -> false));
         // Expected line numbers are 2 and 10001, but SuperCSV may print the
