@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.prelert.job.results;
 
 import org.elasticsearch.action.support.ToXContentToBytes;
-import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -45,7 +44,7 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     /*
      * Field Names
      */
-    public static final ParseField JOB_ID = Job.ID;
+    private static final ParseField JOB_ID = Job.ID;
 
     public static final ParseField TIMESTAMP = new ParseField("timestamp");
     public static final ParseField ANOMALY_SCORE = new ParseField("anomaly_score");
@@ -107,7 +106,7 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     private long eventCount;
     private boolean isInterim;
     private boolean hadBigNormalizedUpdate;
-    private List<BucketInfluencer> bucketInfluencers = new ArrayList<>();
+    private List<BucketInfluencer> bucketInfluencers = new ArrayList<>(); // Can't use emptyList as might be appended to
     private long processingTimeMs;
     private Map<String, Double> perPartitionMaxProbability = Collections.emptyMap();
     private List<PartitionScore> partitionScores = Collections.emptyList();
@@ -116,6 +115,24 @@ public class Bucket extends ToXContentToBytes implements Writeable {
         this.jobId = jobId;
         this.timestamp = ExceptionsHelper.requireNonNull(timestamp, TIMESTAMP.getPreferredName());
         this.bucketSpan = bucketSpan;
+    }
+
+    public Bucket(Bucket other) {
+        this.jobId = other.jobId;
+        this.timestamp = other.timestamp;
+        this.bucketSpan = other.bucketSpan;
+        this.anomalyScore = other.anomalyScore;
+        this.initialAnomalyScore = other.initialAnomalyScore;
+        this.maxNormalizedProbability = other.maxNormalizedProbability;
+        this.recordCount = other.recordCount;
+        this.records = new ArrayList<>(other.records);
+        this.eventCount = other.eventCount;
+        this.isInterim = other.isInterim;
+        this.hadBigNormalizedUpdate = other.hadBigNormalizedUpdate;
+        this.bucketInfluencers = new ArrayList<>(other.bucketInfluencers);
+        this.processingTimeMs = other.processingTimeMs;
+        this.perPartitionMaxProbability = other.perPartitionMaxProbability;
+        this.partitionScores = new ArrayList<>(other.partitionScores);
     }
 
     @SuppressWarnings("unchecked")
@@ -164,7 +181,7 @@ public class Bucket extends ToXContentToBytes implements Writeable {
         builder.field(INITIAL_ANOMALY_SCORE.getPreferredName(), initialAnomalyScore);
         builder.field(MAX_NORMALIZED_PROBABILITY.getPreferredName(), maxNormalizedProbability);
         builder.field(RECORD_COUNT.getPreferredName(), recordCount);
-        if (records != null && !records.isEmpty()) {
+        if (!records.isEmpty()) {
             builder.field(RECORDS.getPreferredName(), records);
         }
         builder.field(EVENT_COUNT.getPreferredName(), eventCount);
@@ -176,7 +193,6 @@ public class Bucket extends ToXContentToBytes implements Writeable {
         builder.endObject();
         return builder;
     }
-
 
     public String getJobId() {
         return jobId;
@@ -217,8 +233,8 @@ public class Bucket extends ToXContentToBytes implements Writeable {
         return initialAnomalyScore;
     }
 
-    public void setInitialAnomalyScore(double influenceScore) {
-        this.initialAnomalyScore = influenceScore;
+    public void setInitialAnomalyScore(double initialAnomalyScore) {
+        this.initialAnomalyScore = initialAnomalyScore;
     }
 
     public double getMaxNormalizedProbability() {
@@ -243,16 +259,14 @@ public class Bucket extends ToXContentToBytes implements Writeable {
      * only be present when the bucket was retrieved and expanded
      * to contain the associated records.
      *
-     * @return <code>null</code> or the anomaly records for the bucket
-     * if the bucket was expanded.
+     * @return the anomaly records for the bucket IF the bucket was expanded.
      */
-    @Nullable
     public List<AnomalyRecord> getRecords() {
         return records;
     }
 
     public void setRecords(List<AnomalyRecord> records) {
-        this.records = records;
+        this.records = Objects.requireNonNull(records);
     }
 
     /**
@@ -287,13 +301,10 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     }
 
     public void setBucketInfluencers(List<BucketInfluencer> bucketInfluencers) {
-        this.bucketInfluencers = bucketInfluencers;
+        this.bucketInfluencers = Objects.requireNonNull(bucketInfluencers);
     }
 
     public void addBucketInfluencer(BucketInfluencer bucketInfluencer) {
-        if (bucketInfluencers == null) {
-            bucketInfluencers = new ArrayList<>();
-        }
         bucketInfluencers.add(bucketInfluencer);
     }
 
@@ -302,7 +313,7 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     }
 
     public void setPartitionScores(List<PartitionScore> scores) {
-        partitionScores = scores;
+        partitionScores = Objects.requireNonNull(scores);
     }
 
     public Map<String, Double> getPerPartitionMaxProbability() {
@@ -310,7 +321,7 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     }
 
     public void setPerPartitionMaxProbability(Map<String, Double> perPartitionMaxProbability) {
-        this.perPartitionMaxProbability = perPartitionMaxProbability;
+        this.perPartitionMaxProbability = Objects.requireNonNull(perPartitionMaxProbability);
     }
 
     public double partitionInitialAnomalyScore(String partitionValue) {
@@ -330,7 +341,6 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     @Override
     public int hashCode() {
         // hadBigNormalizedUpdate is deliberately excluded from the hash
-        // as is id, which is generated by the datastore
         return Objects.hash(jobId, timestamp, eventCount, initialAnomalyScore, anomalyScore, maxNormalizedProbability, recordCount, records,
                 isInterim, bucketSpan, bucketInfluencers);
     }
@@ -351,7 +361,6 @@ public class Bucket extends ToXContentToBytes implements Writeable {
         Bucket that = (Bucket) other;
 
         // hadBigNormalizedUpdate is deliberately excluded from the test
-        // as is id, which is generated by the datastore
         return Objects.equals(this.jobId, that.jobId) && Objects.equals(this.timestamp, that.timestamp)
                 && (this.eventCount == that.eventCount) && (this.bucketSpan == that.bucketSpan)
                 && (this.anomalyScore == that.anomalyScore) && (this.initialAnomalyScore == that.initialAnomalyScore)
@@ -389,7 +398,7 @@ public class Bucket extends ToXContentToBytes implements Writeable {
      * @return true if the bucket should be normalized or false otherwise
      */
     public boolean isNormalizable() {
-        if (bucketInfluencers == null || bucketInfluencers.isEmpty()) {
+        if (bucketInfluencers.isEmpty()) {
             return false;
         }
         return anomalyScore > 0.0 || recordCount > 0;
