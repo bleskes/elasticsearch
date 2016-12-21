@@ -28,6 +28,7 @@
 #include <maths/CSeasonalComponentAdaptiveBucketing.h>
 #include <maths/CTools.h>
 
+#include <boost/config.hpp>
 #include <boost/bind.hpp>
 #include <boost/container/flat_map.hpp>
 #include <boost/numeric/conversion/bounds.hpp>
@@ -1213,6 +1214,7 @@ void CTimeSeriesDecompositionDetail::CLevelShiftTest::test(const SMessage &messa
                 this->apply(LS_TIMED_OUT, message);
                 break;
             }
+            BOOST_FALLTHROUGH;
         case LS_NO_SHIFT:
             if (CBasicStatistics::count(m_LongTermMeanPredictionError) > 0.0)
             {
