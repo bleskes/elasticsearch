@@ -19,6 +19,7 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
+import org.elasticsearch.xpack.prelert.job.persistence.AnomalyDetectorsIndex;
 import org.junit.After;
 
 import java.io.BufferedReader;
@@ -200,7 +201,8 @@ public class PrelertJobIT extends ESRestTestCase {
         response = client().performRequest("get", "_aliases");
         assertEquals(200, response.getStatusLine().getStatusCode());
         String responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, containsString("\"prelertresults-" + indexName + "\":{\"aliases\":{\"prelertresults-" + jobId + "\""));
+        assertThat(responseAsString, containsString("\"" + AnomalyDetectorsIndex.jobResultsIndexName(indexName)
+                + "\":{\"aliases\":{\"" + AnomalyDetectorsIndex.jobResultsIndexName(jobId) + "\""));
 
         response = client().performRequest("get", "_cat/indices");
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -214,7 +216,7 @@ public class PrelertJobIT extends ESRestTestCase {
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"count\":2"));
 
-        response = client().performRequest("get", "prelertresults-" + indexName + "/result/_search");
+        response = client().performRequest("get", AnomalyDetectorsIndex.jobResultsIndexName(indexName) + "/result/_search");
         assertThat(response.getStatusLine().getStatusCode(), equalTo(200));
         responseAsString = responseEntityToString(response);
         assertThat(responseAsString, containsString("\"total\":2"));
@@ -231,7 +233,7 @@ public class PrelertJobIT extends ESRestTestCase {
         response = client().performRequest("get", "_aliases");
         assertEquals(200, response.getStatusLine().getStatusCode());
         responseAsString = responseEntityToString(response);
-        assertThat(responseAsString, not(containsString("prelertresults-" + jobId )));
+        assertThat(responseAsString, not(containsString(AnomalyDetectorsIndex.jobResultsIndexName(jobId))));
 
         response = client().performRequest("get", "_cat/indices");
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -241,7 +243,8 @@ public class PrelertJobIT extends ESRestTestCase {
 
     private Response addBucketResult(String jobId, String timestamp, long bucketSpan) throws Exception {
         try {
-            client().performRequest("put", "prelertresults-" + jobId, Collections.emptyMap(), new StringEntity(RESULT_MAPPING));
+            client().performRequest("put", AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                    Collections.emptyMap(), new StringEntity(RESULT_MAPPING));
         } catch (ResponseException e) {
             // it is ok: the index already exists
             assertThat(e.getMessage(), containsString("index_already_exists_exception"));
@@ -253,13 +256,14 @@ public class PrelertJobIT extends ESRestTestCase {
                 jobId, timestamp, bucketSpan);
         String id = String.format(Locale.ROOT,
                 "%s_%s_%s", jobId, timestamp, bucketSpan);
-        return client().performRequest("put", "prelertresults-" + jobId + "/result/" + id,
+        return client().performRequest("put", AnomalyDetectorsIndex.jobResultsIndexName(jobId) + "/result/" + id,
                 Collections.singletonMap("refresh", "true"), new StringEntity(bucketResult));
     }
 
     private Response addRecordResult(String jobId, String timestamp, long bucketSpan, int sequenceNum) throws Exception {
         try {
-            client().performRequest("put", "prelertresults-" + jobId, Collections.emptyMap(), new StringEntity(RESULT_MAPPING));
+            client().performRequest("put", AnomalyDetectorsIndex.jobResultsIndexName(jobId), Collections.emptyMap(),
+                    new StringEntity(RESULT_MAPPING));
         } catch (ResponseException e) {
             // it is ok: the index already exists
             assertThat(e.getMessage(), containsString("index_already_exists_exception"));
@@ -270,7 +274,7 @@ public class PrelertJobIT extends ESRestTestCase {
                 String.format(Locale.ROOT,
                         "{\"job_id\":\"%s\", \"timestamp\": \"%s\", \"bucket_span\":%d, \"sequence_num\": %d, \"result_type\":\"record\"}",
                         jobId, timestamp, bucketSpan, sequenceNum);
-        return client().performRequest("put", "prelertresults-" + jobId + "/result/" + timestamp,
+        return client().performRequest("put", AnomalyDetectorsIndex.jobResultsIndexName(jobId) + "/result/" + timestamp,
                 Collections.singletonMap("refresh", "true"), new StringEntity(recordResult));
     }
 
