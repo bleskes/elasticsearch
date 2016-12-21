@@ -41,14 +41,14 @@ class MATHS_EXPORT CCategoricalTools : core::CNonInstantiatable, core::CNonCopya
         //! category probabilities \p probabilities.
         //!
         //! This calculates the probability of seeing a less likely sample
-        //! than \(\{n_i\}\) from the multinomial distribution
+        //! than \f$\(\{n_i\}\)\f$ from the multinomial distribution
         //! <pre class="fragment">
-        //!   \(\displaystyle f(\{n_j\}) = \frac{n!}{\prod_i{n_j}}\prod_i{p_j^n_j}\)
+        //!   \f$\(\displaystyle f(\{n_j\}) = \frac{n!}{\prod_i{n_j}}\prod_i{p_j^{n_j}}\)\f$
         //! </pre>
         //!
-        //! where \(n = \sum_i{n_i}\), i.e. the sum
+        //! where \f$\(n = \sum_i{n_i}\)\f$, i.e. the sum
         //! <pre class="fragment">
-        //!   \(\displaystyle \sum_{\{n_j : f(\{n_j\}) \leq f(\{n_i\})\} }{ f(\{n_j\}) }\)
+        //!   \f$\(\displaystyle \sum_{\{n_j : f(\{n_j\}) \leq f(\{n_i\})\} }{ f(\{n_j\}) }\)\f$
         //! </pre>
         //!
         //! This summation is estimated using the Gaussian approximation
@@ -124,10 +124,10 @@ class MATHS_EXPORT CCategoricalTools : core::CNonInstantiatable, core::CNonCopya
         //!
         //! This is
         //! <pre class="fragment">
-        //!   \(\displaystyle \log\left(\frac{n!}{m!(n-m)!}p^m(1-p)^{n-m}\right)\)
+        //!   \f$\(\displaystyle \log\left(\frac{n!}{m!(n-m)!}p^m(1-p)^{n-m}\right)\)\f$
         //! </pre>
         //!
-        //! for \(m \leq n\) and minus maximum double otherwise.
+        //! for \f$\(m \leq n\)\f$ and minus maximum double otherwise.
         //!
         //! \param[in] n The number of trials.
         //! \param[in] p The probability of success.
@@ -144,10 +144,10 @@ class MATHS_EXPORT CCategoricalTools : core::CNonInstantiatable, core::CNonCopya
         //!
         //! This is
         //! <pre class="fragment">
-        //!   \(\displaystyle \log\left(\frac{n!}{ \prod_i{n_i!} }p^n_i\right)\)
+        //!   \f$\(\displaystyle \log\left(\frac{n!}{ \prod_i{n_i!} }p^n_i\right)\)\f$
         //! </pre>
         //!
-        //! for \(n = sum_i{n_i}\).
+        //! for \f$\(n = sum_i{n_i}\)\f$.
         //!
         //! \param[in] probabilities The category probabilities.
         //! \param[in] ni The category counts.

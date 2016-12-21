@@ -307,7 +307,7 @@ class CEvaluateOnSamples : core::CNonCopyable
 //! prior on the likelihood precision. Note that the integral over the prior
 //! on the mean can be performed analytically so the kernel is:
 //! <pre class="fragment">
-//!   \(\displaystyle e^{m+\frac{1}{p}\left(\frac{1}{t} + 1\right)} f(p)\)
+//!   \f$\(\displaystyle e^{m+\frac{1}{p}\left(\frac{1}{t} + 1\right)} f(p)\)\f$
 //! </pre>
 //! Here, \(m\) is the expected mean, and the prior on the precision\(p\) is
 //! gamma distributed.

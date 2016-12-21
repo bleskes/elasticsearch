@@ -252,7 +252,7 @@ class MATHS_EXPORT CSampling : private core::CNonInstantiatable
         //!
         //! This generates a sample from the distribution function
         //! <pre class="fragment">
-        //!   \(\displaystyle f(\{n_i\}) = \frac{n!}{\prod_i{n_i}}\prod_i{p_i^n_i}\)
+        //!   \f$\(\displaystyle f(\{n_i\}) = \frac{n!}{\prod_i{n_i}}\prod_i{p_i^{n_i}}\)\f$
         //! </pre>
         //!
         //! The probabilities are sorted in decreasing order and
@@ -280,7 +280,7 @@ class MATHS_EXPORT CSampling : private core::CNonInstantiatable
         //!
         //! This generates a sample from the distribution function
         //! <pre class="fragment">
-        //!   \(\displaystyle f(\{n_i\}) = \frac{n!}{\prod_i{n_i}}\prod_i{p_i^n_i}\)
+        //!   \f$\(\displaystyle f(\{n_i\}) = \frac{n!}{\prod_i{n_i}}\prod_i{p_i^{n_i}}\)\f$
         //! </pre>
         //!
         //! \param[in] probabilities The category probabilities, which

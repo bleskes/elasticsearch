@@ -54,7 +54,7 @@ namespace maths
 //! <pre class="fragment">
 //!   \f$2 (1 - cov(X,Y))\f$
 //! </pre>
-//! where \f$cov(X,Y) is the covariance between \f$X\f$ and \f$Y\f$.
+//! where \f$cov(X,Y)\f$ is the covariance between \f$X\f$ and \f$Y\f$.
 //! We can average this over different copies of the random sequences
 //! to "boost" the result. Since the average is proportional to the
 //! Euclidean norm of the difference between the two points, whose

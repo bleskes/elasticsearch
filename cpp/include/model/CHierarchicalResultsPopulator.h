@@ -27,8 +27,8 @@ class CLimits;
 
 //! \brief FIXME
 //!
-//! DESCRIPTION:\nFIXME
-
+//! DESCRIPTION:\n
+//! FIXME
 class MODEL_EXPORT CHierarchicalResultsPopulator : public CHierarchicalResultsVisitor
 {
     public:

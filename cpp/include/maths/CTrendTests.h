@@ -628,7 +628,7 @@ class MATHS_EXPORT CTrendTests
         //!
         //! This is just
         //! <pre class="fragment">
-        //!   \(\frac{1}{(n-k)\sigma^2}\sum_{k=1}{n-k}{(f(k) - \mu)(f(k+p) - \mu)}\)
+        //!   \f$\(\frac{1}{(n-k)\sigma^2}\sum_{k=1}^{n-k}{(f(k) - \mu)(f(k+p) - \mu)}\)\f$
         //! </pre>
         //!
         //! \param[in] offset The offset as a distance in \p values.
