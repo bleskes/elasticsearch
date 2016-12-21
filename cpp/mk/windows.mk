@@ -116,4 +116,3 @@ LN=ln
 AR=lib -NOLOGO
 ID=id -u
 
-OS_LIBRARY_PATH=PATH

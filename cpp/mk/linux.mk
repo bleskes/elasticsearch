@@ -94,4 +94,3 @@ LN=ln
 AR=ar -rus
 ID=/usr/bin/id -u
 
-OS_LIBRARY_PATH=LD_LIBRARY_PATH
