@@ -80,6 +80,9 @@ std::string CMultiFileDataAdder::makeFilename(const std::string &index,
     if (!index.empty())
     {
         filename += '/';
+        if (index.front() == '.') {
+            filename += "_";
+        }
         filename += index;
     }
     if (!type.empty())

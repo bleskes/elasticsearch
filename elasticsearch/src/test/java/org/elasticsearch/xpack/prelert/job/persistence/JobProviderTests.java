@@ -23,7 +23,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
@@ -76,28 +75,16 @@ import static org.mockito.Mockito.when;
 public class JobProviderTests extends ESTestCase {
     private static final String CLUSTER_NAME = "myCluster";
     private static final String JOB_ID = "foo";
-    private static final String INDEX_NAME = "prelertresults-foo";
+    private static final String STATE_INDEX_NAME = ".ml-state";
 
     @Captor
     private ArgumentCaptor<Map<String, Object>> mapCaptor;
-
-    public void testGetQuantiles_GivenNoIndexForJob() throws InterruptedException, ExecutionException {
-
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .throwMissingIndexOnPrepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID));
-
-        JobProvider provider = createProvider(clientBuilder.build());
-
-        ESTestCase.expectThrows(IndexNotFoundException.class, () -> provider.getQuantiles(JOB_ID));
-    }
 
     public void testGetQuantiles_GivenNoQuantilesForJob() throws Exception {
         GetResponse getResponse = createGetResponse(false, null);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID), getResponse);
+                .prepareGet(STATE_INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID), getResponse);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -114,8 +101,7 @@ public class JobProviderTests extends ESTestCase {
         GetResponse getResponse = createGetResponse(true, source);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID), getResponse);
+                .prepareGet(STATE_INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId(JOB_ID), getResponse);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -133,8 +119,7 @@ public class JobProviderTests extends ESTestCase {
         GetResponse getResponse = createGetResponse(true, source);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId("foo"), getResponse);
+                .prepareGet(STATE_INDEX_NAME, Quantiles.TYPE.getPreferredName(), Quantiles.quantilesId("foo"), getResponse);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -155,10 +140,10 @@ public class JobProviderTests extends ESTestCase {
         clientBuilder.verifyIndexCreated(JobProvider.PRELERT_USAGE_INDEX);
     }
 
-    public void testIndexSettings() {
+    public void testMlResultsIndexSettings() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         JobProvider provider = createProvider(clientBuilder.build());
-        Settings settings = provider.prelertIndexSettings().build();
+        Settings settings = provider.mlResultsIndexSettings().build();
 
         assertEquals("1", settings.get("index.number_of_shards"));
         assertEquals("0", settings.get("index.number_of_replicas"));
@@ -167,31 +152,28 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("all_field_values", settings.get("index.query.default_field"));
     }
 
-    public void testCreateJobRelatedIndicies() {
+    public void testCreateJobResultsIndex() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.getJobIndexName("foo"), captor);
+        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
 
         Job.Builder job = buildJobBuilder("foo");
         JobProvider provider = createProvider(clientBuilder.build());
 
-        provider.createJobRelatedIndices(job.build(), new ActionListener<Boolean>() {
+        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 CreateIndexRequest request = captor.getValue();
                 assertNotNull(request);
-                assertEquals(provider.prelertIndexSettings().build(), request.settings());
+                assertEquals(provider.mlResultsIndexSettings().build(), request.settings());
                 assertTrue(request.mappings().containsKey(Result.TYPE.getPreferredName()));
-                assertTrue(request.mappings().containsKey(CategorizerState.TYPE));
                 assertTrue(request.mappings().containsKey(CategoryDefinition.TYPE.getPreferredName()));
-                assertTrue(request.mappings().containsKey(Quantiles.TYPE.getPreferredName()));
-                assertTrue(request.mappings().containsKey(ModelState.TYPE.getPreferredName()));
-                assertTrue(request.mappings().containsKey(ModelSnapshot.TYPE.getPreferredName()));
                 assertTrue(request.mappings().containsKey(DataCounts.TYPE.getPreferredName()));
                 assertTrue(request.mappings().containsKey(Usage.TYPE));
                 assertTrue(request.mappings().containsKey(AuditMessage.TYPE.getPreferredName()));
                 assertTrue(request.mappings().containsKey(AuditActivity.TYPE.getPreferredName()));
-                assertEquals(10, request.mappings().size());
+                assertTrue(request.mappings().containsKey(ModelSnapshot.TYPE.getPreferredName()));
+                assertEquals(7, request.mappings().size());
             }
 
             @Override
@@ -204,15 +186,15 @@ public class JobProviderTests extends ESTestCase {
     public void testCreateJobRelatedIndicies_createsAliasIfIndexNameIsSet() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.getJobIndexName("foo"), captor);
-        clientBuilder.prepareAlias(AnomalyDetectorsIndex.getJobIndexName("bar"), AnomalyDetectorsIndex.getJobIndexName("foo"));
+        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
+        clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsIndexName("bar"), AnomalyDetectorsIndex.jobResultsIndexName("foo"));
 
         Job.Builder job = buildJobBuilder("foo");
         job.setIndexName("bar");
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
 
-        provider.createJobRelatedIndices(job.build(), new ActionListener<Boolean>() {
+        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 verify(client.admin().indices(), times(1)).prepareAliases();
@@ -229,14 +211,14 @@ public class JobProviderTests extends ESTestCase {
     public void testCreateJobRelatedIndicies_doesntCreateAliasIfIndexNameIsSameAsJobId() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.getJobIndexName("foo"), captor);
+        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
 
         Job.Builder job = buildJobBuilder("foo");
         job.setIndexName("foo");
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
 
-        provider.createJobRelatedIndices(job.build(), new ActionListener<Boolean>() {
+        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 verify(client.admin().indices(), never()).prepareAliases();
@@ -249,6 +231,36 @@ public class JobProviderTests extends ESTestCase {
         });
     }
 
+    public void testMlStateIndexSettings() {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
+        JobProvider provider = createProvider(clientBuilder.build());
+        Settings settings = provider.mlResultsIndexSettings().build();
+
+        assertEquals("1", settings.get("index.number_of_shards"));
+        assertEquals("0", settings.get("index.number_of_replicas"));
+        assertEquals("async", settings.get("index.translog.durability"));
+    }
+
+    public void testCreateJobStateIndex() {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
+        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
+        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobStateIndexName(), captor);
+
+        Job.Builder job = buildJobBuilder("foo");
+        JobProvider provider = createProvider(clientBuilder.build());
+
+        provider.createJobStateIndex((result, error) -> {
+                assertTrue(result);
+                CreateIndexRequest request = captor.getValue();
+                assertNotNull(request);
+                assertEquals(provider.mlStateIndexSettings().build(), request.settings());
+                assertTrue(request.mappings().containsKey(CategorizerState.TYPE));
+                assertTrue(request.mappings().containsKey(Quantiles.TYPE.getPreferredName()));
+                assertTrue(request.mappings().containsKey(ModelState.TYPE.getPreferredName()));
+                assertEquals(3, request.mappings().size());
+            });
+    }
+
     public void testCreateJob() throws InterruptedException, ExecutionException {
         Job.Builder job = buildJobBuilder("marscapone");
         job.setDescription("This is a very cheesy job");
@@ -256,12 +268,13 @@ public class JobProviderTests extends ESTestCase {
         job.setAnalysisLimits(limits);
 
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).createIndexRequest("prelertresults-" + job.getId(), captor);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
+                .createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName(job.getId()), captor);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
         AtomicReference<Boolean> resultHolder = new AtomicReference<>();
-        provider.createJobRelatedIndices(job.build(), new ActionListener<Boolean>() {
+        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 resultHolder.set(aBoolean);
@@ -280,12 +293,12 @@ public class JobProviderTests extends ESTestCase {
         @SuppressWarnings("unchecked")
         ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse();
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
-        clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true).addIndicesDeleteResponse("prelertresults-" + jobId, true,
+        clientBuilder.addIndicesExistsResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true)
+                .addIndicesDeleteResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true,
                 false, actionListener);
         clientBuilder.build();
 
@@ -300,12 +313,12 @@ public class JobProviderTests extends ESTestCase {
         @SuppressWarnings("unchecked")
         ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse();
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
-        clientBuilder.addIndicesExistsResponse("prelertresults-" + jobId, true).addIndicesDeleteResponse("prelertresults-" + jobId, true,
+        clientBuilder.addIndicesExistsResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true)
+                .addIndicesDeleteResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true,
                 true, actionListener);
         clientBuilder.build();
 
@@ -333,8 +346,8 @@ public class JobProviderTests extends ESTestCase {
         int from = 0;
         int size = 10;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -368,8 +381,8 @@ public class JobProviderTests extends ESTestCase {
         int from = 99;
         int size = 17;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -403,8 +416,8 @@ public class JobProviderTests extends ESTestCase {
         int from = 99;
         int size = 17;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -432,15 +445,11 @@ public class JobProviderTests extends ESTestCase {
         Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
-        Map<String, Object> map = new HashMap<>();
-        map.put("timestamp", now.getTime());
-        // source.add(map);
-
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(false, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -466,8 +475,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -496,8 +505,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -538,8 +547,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -590,8 +599,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -649,8 +658,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -688,8 +697,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearchAnySize("prelertresults-" + jobId, Result.TYPE.getPreferredName(), response, queryBuilder);
+                .prepareSearchAnySize(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -720,8 +729,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearchAnySize("prelertresults-" + jobId, Result.TYPE.getPreferredName(), response, queryBuilder);
+                .prepareSearchAnySize(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        Result.TYPE.getPreferredName(), response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -751,8 +760,8 @@ public class JobProviderTests extends ESTestCase {
         int from = 0;
         int size = 10;
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        CategoryDefinition.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -775,8 +784,8 @@ public class JobProviderTests extends ESTestCase {
         GetResponse getResponse = createGetResponse(true, source);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet("prelertresults-" + jobId, CategoryDefinition.TYPE.getPreferredName(), categoryId, getResponse);
+                .prepareGet(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        CategoryDefinition.TYPE.getPreferredName(), categoryId, getResponse);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -819,8 +828,7 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(),
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId), Result.TYPE.getPreferredName(),
                         from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
@@ -884,8 +892,7 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, Result.TYPE.getPreferredName(), from, size, response,
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId), Result.TYPE.getPreferredName(), from, size, response,
                         queryBuilder);
 
         Client client = clientBuilder.build();
@@ -919,8 +926,7 @@ public class JobProviderTests extends ESTestCase {
         String jobId = "TestJobIdentificationForInfluencers";
         String influencerId = "ThisIsAnInfluencerId";
 
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true);
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse();
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -961,8 +967,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -1017,8 +1023,8 @@ public class JobProviderTests extends ESTestCase {
         ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareSearch("prelertresults-" + jobId, ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
+                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
+                        ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
@@ -1047,8 +1053,7 @@ public class JobProviderTests extends ESTestCase {
     }
 
     public void testMergePartitionScoresIntoBucket() throws InterruptedException, ExecutionException {
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true).addClusterStatusYellowResponse();
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -1102,8 +1107,7 @@ public class JobProviderTests extends ESTestCase {
     }
 
     public void testMergePartitionScoresIntoBucket_WithEmptyScoresList() throws InterruptedException, ExecutionException {
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true).addClusterStatusYellowResponse();
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
@@ -1134,11 +1138,10 @@ public class JobProviderTests extends ESTestCase {
         GetResponse modelStateGetResponse2 = createGetResponse(true, modelState);
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .addIndicesExistsResponse(JobProvider.PRELERT_USAGE_INDEX, true)
-                .prepareGet(INDEX_NAME, CategorizerState.TYPE, JOB_ID + "_1", categorizerStateGetResponse1)
-                .prepareGet(INDEX_NAME, CategorizerState.TYPE, JOB_ID + "_2", categorizerStateGetResponse2)
-                .prepareGet(INDEX_NAME, ModelState.TYPE.getPreferredName(), "123_1", modelStateGetResponse1)
-                .prepareGet(INDEX_NAME, ModelState.TYPE.getPreferredName(), "123_2", modelStateGetResponse2);
+                .prepareGet(AnomalyDetectorsIndex.jobStateIndexName(), CategorizerState.TYPE, JOB_ID + "_1", categorizerStateGetResponse1)
+                .prepareGet(AnomalyDetectorsIndex.jobStateIndexName(), CategorizerState.TYPE, JOB_ID + "_2", categorizerStateGetResponse2)
+                .prepareGet(AnomalyDetectorsIndex.jobStateIndexName(), ModelState.TYPE.getPreferredName(), "123_1", modelStateGetResponse1)
+                .prepareGet(AnomalyDetectorsIndex.jobStateIndexName(), ModelState.TYPE.getPreferredName(), "123_2", modelStateGetResponse2);
 
         JobProvider provider = createProvider(clientBuilder.build());
 

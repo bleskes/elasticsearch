@@ -885,7 +885,7 @@ bool CAnomalyDetector::restoreState(core::CDataSearcher &restoreSearcher,
         // Restore from Elasticsearch compressed data
         core::CStateDecompressor decompressor(restoreSearcher);
         // TODO: Fix this breach of encapsulation about the results index name once we've decided where we're storing state
-        decompressor.setStateRestoreSearch("prelertresults-" + m_JobId, STATE_TYPE);
+        decompressor.setStateRestoreSearch(".mlstate-anomalydetectors", STATE_TYPE);
 
         core::CDataSearcher::TIStreamP strm(decompressor.search(1, 1));
         if (strm == 0)
@@ -1366,7 +1366,7 @@ bool CAnomalyDetector::persistState(const std::string &descriptionPrefix,
         core_t::TTime snapshotTimestamp(core::CTimeUtils::now());
         const std::string snapShotId(m_JobId + core::CStringUtils::typeToString(snapshotTimestamp));
         // TODO: Fix this breach of encapsulation about the results index name once we've decided where we're storing state
-        core::CDataAdder::TOStreamP strm = compressor.addStreamed("prelertresults-" + m_JobId,
+        core::CDataAdder::TOStreamP strm = compressor.addStreamed(".mlstate-anomalydetectors",
                                                                   STATE_TYPE,
                                                                   snapShotId);
         if (strm != 0)

@@ -51,6 +51,9 @@ CMultiFileSearcher::TIStreamP CMultiFileSearcher::search(size_t currentDocNum, s
     if (!m_SearchTerms[0].empty())
     {
         filename += '/';
+        if (m_SearchTerms[0].front() == '.') {
+            filename += "_";
+        }
         filename += m_SearchTerms[0];
     }
     if (!m_SearchTerms[1].empty())

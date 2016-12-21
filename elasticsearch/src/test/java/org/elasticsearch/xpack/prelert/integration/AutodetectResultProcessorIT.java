@@ -120,7 +120,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         }).start();
 
         resultProcessor.process(JOB_ID, inputStream, false);
-        jobResultsPersister.commitWrites(JOB_ID);
+        jobResultsPersister.commitResultWrites(JOB_ID);
 
         QueryPage<Bucket> persistedBucket = jobProvider.buckets(JOB_ID, new BucketsQueryBuilder().includeInterim(true).build());
         assertEquals(1, persistedBucket.count());
@@ -187,7 +187,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         }).start();
 
         resultProcessor.process(JOB_ID, inputStream, false);
-        jobResultsPersister.commitWrites(JOB_ID);
+        jobResultsPersister.commitResultWrites(JOB_ID);
 
         QueryPage<Bucket> persistedBucket = jobProvider.buckets(JOB_ID, new BucketsQueryBuilder().includeInterim(true).build());
         assertEquals(1, persistedBucket.count());
@@ -236,7 +236,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         }).start();
 
         resultProcessor.process(JOB_ID, inputStream, false);
-        jobResultsPersister.commitWrites(JOB_ID);
+        jobResultsPersister.commitResultWrites(JOB_ID);
 
         QueryPage<Bucket> persistedBucket = jobProvider.buckets(JOB_ID, new BucketsQueryBuilder().includeInterim(true).build());
         assertEquals(1, persistedBucket.count());
@@ -258,7 +258,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         Job.Builder jobBuilder = new Job.Builder(JOB_ID);
         jobBuilder.setAnalysisConfig(new AnalysisConfig.Builder(Collections.singletonList(detector)));
 
-        jobProvider.createJobRelatedIndices(jobBuilder.build(), new ActionListener<Boolean>() {
+        jobProvider.createJobResultIndex(jobBuilder.build(), new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
             }
