@@ -38,7 +38,7 @@ public class JobAllocator extends AbstractComponent implements ClusterStateListe
         super(settings);
         this.threadPool = threadPool;
         this.clusterService = clusterService;
-        clusterService.add(this);
+        clusterService.addListener(this);
     }
 
     ClusterState assignJobsToNodes(ClusterState current) {

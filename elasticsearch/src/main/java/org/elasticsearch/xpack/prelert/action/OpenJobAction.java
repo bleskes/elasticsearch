@@ -24,7 +24,6 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
 import org.elasticsearch.client.ElasticsearchClient;
-import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.block.ClusterBlockException;
@@ -49,6 +48,7 @@ import org.elasticsearch.xpack.prelert.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class OpenJobAction extends Action<OpenJobAction.Request, OpenJobAction.Response, OpenJobAction.RequestBuilder> {
 
@@ -246,7 +246,7 @@ public class OpenJobAction extends Action<OpenJobAction.Request, OpenJobAction.R
             }, new JobOpenedChangePredicate(request.getJobId()), request.openTimeout);
         }
 
-        private class JobOpenedChangePredicate implements ClusterStateObserver.ChangePredicate {
+        private class JobOpenedChangePredicate implements Predicate<ClusterState> {
 
             private final String jobId;
 
@@ -255,17 +255,7 @@ public class OpenJobAction extends Action<OpenJobAction.Request, OpenJobAction.R
             }
 
             @Override
-            public boolean apply(ClusterState previousState, ClusterState.ClusterStateStatus previousStatus, ClusterState newState,
-                                 ClusterState.ClusterStateStatus newStatus) {
-                return apply(newState);
-            }
-
-            @Override
-            public boolean apply(ClusterChangedEvent changedEvent) {
-                return apply(changedEvent.state());
-            }
-
-            boolean apply(ClusterState newState) {
+            public boolean test(ClusterState newState) {
                 PrelertMetadata metadata = newState.getMetaData().custom(PrelertMetadata.TYPE);
                 if (metadata != null) {
                     Allocation allocation = metadata.getAllocations().get(jobId);

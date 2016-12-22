@@ -18,6 +18,7 @@ import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
@@ -182,7 +183,7 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
 
     public void testInvalidDataFormat() throws Exception {
         BytesArray json = new BytesArray("{ \"format\":\"INEXISTENT_FORMAT\" }");
-        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        XContentParser parser = XContentFactory.xContent(json).createParser(NamedXContentRegistry.EMPTY, json);
         ParsingException ex = expectThrows(ParsingException.class,
                 () -> DataDescription.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
         assertThat(ex.getMessage(), containsString("[data_description] failed to parse field [format]"));
@@ -195,7 +196,7 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
 
     public void testInvalidFieldDelimiter() throws Exception {
         BytesArray json = new BytesArray("{ \"field_delimiter\":\",,\" }");
-        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        XContentParser parser = XContentFactory.xContent(json).createParser(NamedXContentRegistry.EMPTY, json);
         ParsingException ex = expectThrows(ParsingException.class,
                 () -> DataDescription.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
         assertThat(ex.getMessage(), containsString("[data_description] failed to parse field [field_delimiter]"));
@@ -208,7 +209,7 @@ public class DataDescriptionTests extends AbstractSerializingTestCase<DataDescri
 
     public void testInvalidQuoteCharacter() throws Exception {
         BytesArray json = new BytesArray("{ \"quote_character\":\"''\" }");
-        XContentParser parser = XContentFactory.xContent(json).createParser(json);
+        XContentParser parser = XContentFactory.xContent(json).createParser(NamedXContentRegistry.EMPTY, json);
         ParsingException ex = expectThrows(ParsingException.class,
                 () -> DataDescription.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT));
         assertThat(ex.getMessage(), containsString("[data_description] failed to parse field [quote_character]"));
