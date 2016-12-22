@@ -49,6 +49,7 @@ const std::string EXAMPLES_COLLECTOR_TAG("c");
 } // unnamed
 
 // Initialise statics
+const std::string   CFieldDataTyper::ML_STATE_INDEX(".ml-state");
 const std::string   CFieldDataTyper::PRELERTCATEGORY_NAME("prelertcategory");
 const double        CFieldDataTyper::SIMILARITY_THRESHOLD(0.7);
 const std::string   CFieldDataTyper::STATE_TYPE("categorizer_state");
@@ -236,8 +237,7 @@ bool CFieldDataTyper::restoreState(core::CDataSearcher &restoreSearcher,
     {
         // Restore from Elasticsearch compressed data
         core::CStateDecompressor decompressor(restoreSearcher);
-        // TODO: Fix this breach of encapsulation about the results index name once we've decided where we're storing state
-        decompressor.setStateRestoreSearch(".mlstate-anomalydetectors" + m_JobId, STATE_TYPE);
+        decompressor.setStateRestoreSearch(ML_STATE_INDEX, STATE_TYPE);
 
         core::CDataSearcher::TIStreamP strm(decompressor.search(1, 1));
         if (strm == 0)
@@ -378,8 +378,7 @@ bool CFieldDataTyper::doPersistState(core::CDataAdder &persister)
         core::CStateCompressor compressor(persister);
 
         core::CDataAdder::TOStreamP
-            // TODO: Fix this breach of encapsulation about the results index name once we've decided where we're storing state
-            strm = compressor.addStreamed(".mlstate-anomalydetectors", STATE_TYPE, m_JobId);
+            strm = compressor.addStreamed(ML_STATE_INDEX, STATE_TYPE, m_JobId);
 
         if (strm == 0)
         {

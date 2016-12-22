@@ -267,7 +267,7 @@ void CMultiFileDataAdderTest::detectorPersistHelper(const std::string &configFil
     for (size_t index = 0; index < numOrigDocs; ++index)
     {
         std::string expectedOrigFilename(baseOrigOutputFilename);
-        expectedOrigFilename += "/_.mlstate-anomalydetectors/";
+        expectedOrigFilename += "/_.ml-state/";
         expectedOrigFilename += prelert::api::CAnomalyDetector::STATE_TYPE;
         expectedOrigFilename += '/';
         expectedOrigFilename += prelert::core::CStringUtils::typeToString(1 + index);
@@ -325,7 +325,7 @@ void CMultiFileDataAdderTest::detectorPersistHelper(const std::string &configFil
     for (size_t index = 0; index < numRestoredDocs; ++index)
     {
         std::string expectedRestoredFilename(baseRestoredOutputFilename);
-        expectedRestoredFilename += "/_.mlstate-anomalydetectors/";
+        expectedRestoredFilename += "/_.ml-state/";
         expectedRestoredFilename += prelert::api::CAnomalyDetector::STATE_TYPE;
         expectedRestoredFilename += '/';
         expectedRestoredFilename += prelert::core::CStringUtils::typeToString(1 + index);

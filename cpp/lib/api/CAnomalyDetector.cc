@@ -74,6 +74,7 @@ inline std::string pairDebug(const T &t)
     return boost::unwrap_ref(t.second).debug() + '/' + boost::unwrap_ref(t.first);
 }
 
+const std::string ML_STATE_INDEX(".ml-state");
 const std::string TOP_LEVEL_DETECTOR_TAG("detector"); // do not obfuscate this
 const std::string RESULTS_AGGREGATOR_TAG("aggregator");
 const std::string TIME_TAG("a");
@@ -884,8 +885,7 @@ bool CAnomalyDetector::restoreState(core::CDataSearcher &restoreSearcher,
     {
         // Restore from Elasticsearch compressed data
         core::CStateDecompressor decompressor(restoreSearcher);
-        // TODO: Fix this breach of encapsulation about the results index name once we've decided where we're storing state
-        decompressor.setStateRestoreSearch(".mlstate-anomalydetectors", STATE_TYPE);
+        decompressor.setStateRestoreSearch(ML_STATE_INDEX, STATE_TYPE);
 
         core::CDataSearcher::TIStreamP strm(decompressor.search(1, 1));
         if (strm == 0)
@@ -1365,8 +1365,7 @@ bool CAnomalyDetector::persistState(const std::string &descriptionPrefix,
 
         core_t::TTime snapshotTimestamp(core::CTimeUtils::now());
         const std::string snapShotId(m_JobId + core::CStringUtils::typeToString(snapshotTimestamp));
-        // TODO: Fix this breach of encapsulation about the results index name once we've decided where we're storing state
-        core::CDataAdder::TOStreamP strm = compressor.addStreamed(".mlstate-anomalydetectors",
+        core::CDataAdder::TOStreamP strm = compressor.addStreamed(ML_STATE_INDEX,
                                                                   STATE_TYPE,
                                                                   snapShotId);
         if (strm != 0)
