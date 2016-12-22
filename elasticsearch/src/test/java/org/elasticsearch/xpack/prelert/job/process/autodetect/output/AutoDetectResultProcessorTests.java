@@ -184,6 +184,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         Renormalizer renormalizer = mock(Renormalizer.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
+        when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
@@ -193,6 +194,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         when(result.getCategoryDefinition()).thenReturn(categoryDefinition);
         processor.processResult(context, result);
 
+        verify(bulkBuilder, never()).executeRequest();
         verify(persister, times(1)).persistCategoryDefinition(categoryDefinition);
         verifyNoMoreInteractions(persister);
     }
@@ -201,6 +203,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         Renormalizer renormalizer = mock(Renormalizer.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
+        when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
         FlushListener flushListener = mock(FlushListener.class);
         AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null, flushListener);
 
@@ -214,7 +217,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
 
         verify(flushListener, times(1)).acknowledgeFlush(JOB_ID);
         verify(persister, times(1)).commitResultWrites(JOB_ID);
-        verify(bulkBuilder, never()).executeRequest();
+        verify(bulkBuilder, times(1)).executeRequest();
         verifyNoMoreInteractions(persister);
         assertTrue(context.deleteInterimRequired);
     }
@@ -235,13 +238,13 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         CategoryDefinition categoryDefinition = mock(CategoryDefinition.class);
         when(result.getCategoryDefinition()).thenReturn(categoryDefinition);
 
-        InOrder inOrder = inOrder(persister, flushListener);
+        InOrder inOrder = inOrder(persister, bulkBuilder, flushListener);
         processor.processResult(context, result);
 
         inOrder.verify(persister, times(1)).persistCategoryDefinition(categoryDefinition);
+        inOrder.verify(bulkBuilder, times(1)).executeRequest();
         inOrder.verify(persister, times(1)).commitResultWrites(JOB_ID);
         inOrder.verify(flushListener, times(1)).acknowledgeFlush(JOB_ID);
-        verify(bulkBuilder, never()).executeRequest();
         verifyNoMoreInteractions(persister);
         assertTrue(context.deleteInterimRequired);
     }
