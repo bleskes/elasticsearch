@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.prelert.integration;
 import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
-import org.elasticsearch.test.rest.yaml.parser.ClientYamlTestParseException;
 import org.junit.After;
 
 import java.io.IOException;
@@ -30,7 +29,7 @@ public class PrelertYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
     }
 
     @ParametersFactory
-    public static Iterable<Object[]> parameters() throws IOException, ClientYamlTestParseException {
+    public static Iterable<Object[]> parameters() throws IOException {
         return createParameters();
     }
 
