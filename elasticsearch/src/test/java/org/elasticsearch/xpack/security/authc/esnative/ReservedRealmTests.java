@@ -352,14 +352,12 @@ public class ReservedRealmTests extends ESTestCase {
             case LogstashSystemUser.NAME:
                 assertThat(versionPredicate.test(Version.V_5_0_0), is(false));
                 assertThat(versionPredicate.test(Version.V_5_1_1_UNRELEASED), is(false));
-                assertThat(versionPredicate.test(Version.V_5_2_0_UNRELEASED), is(true));
                 break;
             default:
                 assertThat(versionPredicate.test(Version.V_5_0_0), is(true));
                 assertThat(versionPredicate.test(Version.V_5_1_1_UNRELEASED), is(true));
-                assertThat(versionPredicate.test(Version.V_5_2_0_UNRELEASED), is(true));
                 break;
         }
-        assertThat(versionPredicate.test(Version.V_6_0_0_alpha1_UNRELEASED), is(true));
+        assertThat(versionPredicate.test(Version.V_5_2_0_UNRELEASED), is(true));
     }
 }

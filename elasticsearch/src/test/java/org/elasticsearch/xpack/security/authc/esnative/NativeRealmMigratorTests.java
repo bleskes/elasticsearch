@@ -59,7 +59,7 @@ public class NativeRealmMigratorTests extends ESTestCase {
     }
 
     public void testNoChangeOnUpgradeOnOrAfterV5_2() throws Exception {
-        verifyNoOpUpgrade(randomFrom(Version.V_5_2_0_UNRELEASED, Version.V_6_0_0_alpha1_UNRELEASED));
+        verifyNoOpUpgrade(randomFrom(Version.V_5_2_0_UNRELEASED));
     }
 
     public void testDisableLogstashOnUpgradeFromVersionPriorToV5_2() throws Exception {
