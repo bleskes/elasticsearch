@@ -17,6 +17,8 @@
 
 package org.elasticsearch.xpack.security.action.user;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
@@ -152,6 +154,8 @@ public class TransportGetUsersActionTests extends ESTestCase {
     public void testReservedUsersOnly() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         when(usersStore.started()).thenReturn(true);
+        when(usersStore.checkMappingVersion(any())).thenReturn(true);
+
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         ReservedRealm reservedRealm = new ReservedRealm(mock(Environment.class), settings, usersStore, new AnonymousUser(settings));
         PlainActionFuture<Collection<User>> userFuture = new PlainActionFuture<>();
@@ -179,6 +183,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
 
             @Override
             public void onFailure(Exception e) {
+                logger.warn("Request failed",  e);
                 throwableRef.set(e);
             }
         });
