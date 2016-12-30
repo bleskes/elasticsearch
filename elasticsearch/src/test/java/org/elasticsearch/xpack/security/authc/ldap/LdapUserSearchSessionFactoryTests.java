@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -84,7 +85,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
         try {
             assertThat(sessionFactory.supportsUnauthenticatedSession(), is(true));
         } finally {
@@ -105,7 +106,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -141,7 +142,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -168,7 +169,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -204,7 +205,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -231,7 +232,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -266,7 +267,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -291,7 +292,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
 
-        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, null);
+        LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "wbush";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -326,6 +327,13 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.attribute", "cn")
                 .put("user_search.pool.enabled", randomBoolean())
                 .build();
+        Settings.Builder builder = Settings.builder()
+                .put(globalSettings);
+        for (Map.Entry<String, String> entry : settings.getAsMap().entrySet()) {
+            builder.put("xpack.security.authc.realms.ldap." + entry.getKey(), entry.getValue());
+        }
+        Settings fullSettings = builder.build();
+        sslService = new SSLService(fullSettings, new Environment(fullSettings));
         RealmConfig config = new RealmConfig("ad-as-ldap-test", settings, globalSettings);
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -369,6 +377,13 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("bind_password", OpenLdapTests.PASSWORD)
                 .put("user_search.pool.enabled", randomBoolean())
                 .build(), globalSettings);
+        Settings.Builder builder = Settings.builder()
+                .put(globalSettings);
+        for (Map.Entry<String, String> entry : config.settings().getAsMap().entrySet()) {
+            builder.put("xpack.security.authc.realms.ldap." + entry.getKey(), entry.getValue());
+        }
+        Settings settings = builder.build();
+        sslService = new SSLService(settings, new Environment(settings));
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String[] users = new String[] { "cap", "hawkeye", "hulk", "ironman", "thor" };
@@ -455,7 +470,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
 
         LdapUserSearchSessionFactory searchSessionFactory = null;
         try {
-            searchSessionFactory = new LdapUserSearchSessionFactory(config, null);
+            searchSessionFactory = new LdapUserSearchSessionFactory(config, sslService);
         } finally {
             if (searchSessionFactory != null) {
                 searchSessionFactory.shutdown();
@@ -503,7 +518,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", ldapSettings, globalSettings);
         LdapUserSearchSessionFactory searchSessionFactory = null;
         try {
-            searchSessionFactory = new LdapUserSearchSessionFactory(config, null);
+            searchSessionFactory = new LdapUserSearchSessionFactory(config, sslService);
         } finally {
             if (searchSessionFactory != null) {
                 searchSessionFactory.shutdown();

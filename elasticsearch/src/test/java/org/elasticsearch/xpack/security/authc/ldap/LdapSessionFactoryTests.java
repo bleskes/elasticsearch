@@ -22,6 +22,7 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPURL;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.UncategorizedExecutionException;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession;
@@ -30,6 +31,7 @@ import org.elasticsearch.xpack.security.authc.ldap.support.SessionFactory;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.authc.support.SecuredStringTests;
 import org.elasticsearch.test.junit.annotations.Network;
+import org.elasticsearch.xpack.ssl.SSLService;
 import org.junit.Before;
 
 import java.util.List;
@@ -44,10 +46,12 @@ import static org.hamcrest.Matchers.lessThan;
 
 public class LdapSessionFactoryTests extends LdapTestCase {
     private Settings globalSettings;
+    private SSLService sslService;
 
     @Before
     public void setup() {
         globalSettings = Settings.builder().put("path.home", createTempDir()).build();
+        sslService = new SSLService(globalSettings, new Environment(globalSettings));
     }
 
     public void testBindWithReadTimeout() throws Exception {
@@ -63,7 +67,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
                 .build();
 
         RealmConfig config = new RealmConfig("ldap_realm", settings, globalSettings);
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null);
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
 
@@ -93,7 +97,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
                 .build();
 
         RealmConfig config = new RealmConfig("ldap_realm", settings, globalSettings);
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null);
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
 
@@ -116,7 +120,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase,
                 LdapSearchScope.SUB_TREE), globalSettings);
 
-        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, null);
+        LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -137,7 +141,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplates, groupSearchBase,
                 LdapSearchScope.SUB_TREE), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -155,7 +159,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
                 LdapSearchScope.SUB_TREE), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
@@ -172,7 +176,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
                 LdapSearchScope.ONE_LEVEL), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
         try (LdapSession ldap = session(ldapFac, user, SecuredStringTests.build("pass"))) {
@@ -187,7 +191,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", buildLdapSettings(ldapUrls(), userTemplate, groupSearchBase,
                 LdapSearchScope.BASE), globalSettings);
 
-        LdapSessionFactory ldapFac = new LdapSessionFactory(config, null);
+        LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
         SecuredString userPass = SecuredStringTests.build("pass");
