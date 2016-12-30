@@ -35,7 +35,6 @@ import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.xpack.common.xcontent.XContentUtils;
-import org.elasticsearch.xpack.security.authz.permission.FieldPermissions;
 import org.elasticsearch.xpack.security.support.MetadataUtils;
 import org.elasticsearch.xpack.security.support.Validation;
 
@@ -253,7 +252,7 @@ public class RoleDescriptor implements ToXContent {
         }
         String currentFieldName = null;
         String[] names = null;
-        String query = null;
+        BytesReference query = null;
         String[] privileges = null;
         String[] grantedFields = null;
         String[] deniedFields = null;
@@ -277,15 +276,16 @@ public class RoleDescriptor implements ToXContent {
                 if (token == XContentParser.Token.START_OBJECT) {
                     XContentBuilder builder = JsonXContent.contentBuilder();
                     XContentHelper.copyCurrentStructure(builder.generator(), parser);
-                    query = builder.string();
-                } else if (token == XContentParser.Token.VALUE_STRING){
+                    query = builder.bytes();
+                } else if (token == XContentParser.Token.VALUE_STRING) {
                     final String text = parser.text();
                     if (text.isEmpty() == false) {
-                        query = text;
+                        query = new BytesArray(text);
                     }
                 } else if (token != XContentParser.Token.VALUE_NULL) {
                     throw new ElasticsearchParseException("failed to parse indices privileges for role [{}]. expected field [{}] " +
-                            "value to be null, a string, or an object, but found [{}] instead", roleName, currentFieldName, token);
+                            "value to be null, a string, an array, or an object, but found [{}] instead", roleName, currentFieldName,
+                            token);
                 }
             } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Fields.FIELD_PERMISSIONS)) {
                 if (token == XContentParser.Token.START_OBJECT) {
@@ -359,7 +359,8 @@ public class RoleDescriptor implements ToXContent {
         return RoleDescriptor.IndicesPrivileges.builder()
                 .indices(names)
                 .privileges(privileges)
-                .fieldPermissions(new FieldPermissions(grantedFields, deniedFields))
+                .grantedFields(grantedFields)
+                .deniedFields(deniedFields)
                 .query(query)
                 .build();
     }
@@ -374,7 +375,8 @@ public class RoleDescriptor implements ToXContent {
 
         private String[] indices;
         private String[] privileges;
-        private FieldPermissions fieldPermissions = new FieldPermissions();
+        private String[] grantedFields = null;
+        private String[] deniedFields = null;
         private BytesReference query;
 
         private IndicesPrivileges() {
@@ -392,8 +394,14 @@ public class RoleDescriptor implements ToXContent {
             return this.privileges;
         }
 
-        public FieldPermissions getFieldPermissions() {
-            return fieldPermissions;
+        @Nullable
+        public String[] getGrantedFields() {
+            return this.grantedFields;
+        }
+
+        @Nullable
+        public String[] getDeniedFields() {
+            return this.deniedFields;
         }
 
         @Nullable
@@ -407,9 +415,27 @@ public class RoleDescriptor implements ToXContent {
             sb.append("indices=[").append(Strings.arrayToCommaDelimitedString(indices));
             sb.append("], privileges=[").append(Strings.arrayToCommaDelimitedString(privileges));
             sb.append("], ");
-            sb.append(fieldPermissions.toString());
+            if (grantedFields != null || deniedFields != null) {
+                sb.append(RoleDescriptor.Fields.FIELD_PERMISSIONS).append("=[");
+                if (grantedFields == null) {
+                    sb.append(RoleDescriptor.Fields.GRANT_FIELDS).append("=null");
+                } else {
+                    sb.append(RoleDescriptor.Fields.GRANT_FIELDS).append("=[")
+                            .append(Strings.arrayToCommaDelimitedString(grantedFields));
+                    sb.append("]");
+                }
+                if (deniedFields == null) {
+                    sb.append(", ").append(RoleDescriptor.Fields.EXCEPT_FIELDS).append("=null");
+                } else {
+                    sb.append(", ").append(RoleDescriptor.Fields.EXCEPT_FIELDS).append("=[")
+                            .append(Strings.arrayToCommaDelimitedString(deniedFields));
+                    sb.append("]");
+                }
+                sb.append("]");
+            }
             if (query != null) {
-                sb.append(", query=").append(query.utf8ToString());
+                sb.append(", query=");
+                sb.append(query.utf8ToString());
             }
             sb.append("]");
             return sb.toString();
@@ -424,7 +450,8 @@ public class RoleDescriptor implements ToXContent {
 
             if (!Arrays.equals(indices, that.indices)) return false;
             if (!Arrays.equals(privileges, that.privileges)) return false;
-            if (fieldPermissions.equals(that.fieldPermissions) == false) return false;
+            if (!Arrays.equals(grantedFields, that.grantedFields)) return false;
+            if (!Arrays.equals(deniedFields, that.deniedFields)) return false;
             return !(query != null ? !query.equals(that.query) : that.query != null);
         }
 
@@ -432,7 +459,8 @@ public class RoleDescriptor implements ToXContent {
         public int hashCode() {
             int result = Arrays.hashCode(indices);
             result = 31 * result + Arrays.hashCode(privileges);
-            result = 31 * result + fieldPermissions.hashCode();
+            result = 31 * result + Arrays.hashCode(grantedFields);
+            result = 31 * result + Arrays.hashCode(deniedFields);
             result = 31 * result + (query != null ? query.hashCode() : 0);
             return result;
         }
@@ -442,7 +470,16 @@ public class RoleDescriptor implements ToXContent {
             builder.startObject();
             builder.array("names", indices);
             builder.array("privileges", privileges);
-            builder = fieldPermissions.toXContent(builder, params);
+            if (grantedFields != null || deniedFields != null) {
+                builder.startObject(RoleDescriptor.Fields.FIELD_PERMISSIONS.getPreferredName());
+                if (grantedFields != null) {
+                    builder.array(RoleDescriptor.Fields.GRANT_FIELDS.getPreferredName(), grantedFields);
+                }
+                if (deniedFields != null) {
+                    builder.array(RoleDescriptor.Fields.EXCEPT_FIELDS.getPreferredName(), deniedFields);
+                }
+                builder.endObject();
+            }
             if (query != null) {
                 builder.field("query", query.utf8ToString());
             }
@@ -458,7 +495,8 @@ public class RoleDescriptor implements ToXContent {
         @Override
         public void readFrom(StreamInput in) throws IOException {
             this.indices = in.readStringArray();
-            this.fieldPermissions = new FieldPermissions(in);
+            this.grantedFields = in.readOptionalStringArray();
+            this.deniedFields = in.readOptionalStringArray();
             this.privileges = in.readStringArray();
             this.query = in.readOptionalBytesReference();
         }
@@ -466,7 +504,8 @@ public class RoleDescriptor implements ToXContent {
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             out.writeStringArray(indices);
-            fieldPermissions.writeTo(out);
+            out.writeOptionalStringArray(grantedFields);
+            out.writeOptionalStringArray(deniedFields);
             out.writeStringArray(privileges);
             out.writeOptionalBytesReference(query);
         }
@@ -488,8 +527,13 @@ public class RoleDescriptor implements ToXContent {
                 return this;
             }
 
-            public Builder fieldPermissions(FieldPermissions fieldPermissions) {
-                indicesPrivileges.fieldPermissions = fieldPermissions;
+            public Builder grantedFields(String... grantedFields) {
+                indicesPrivileges.grantedFields = grantedFields;
+                return this;
+            }
+
+            public Builder deniedFields(String... deniedFields) {
+                indicesPrivileges.deniedFields = deniedFields;
                 return this;
             }
 
@@ -498,7 +542,11 @@ public class RoleDescriptor implements ToXContent {
             }
 
             public Builder query(@Nullable BytesReference query) {
-                indicesPrivileges.query = query;
+                if (query == null) {
+                    indicesPrivileges.query = null;
+                } else {
+                    indicesPrivileges.query = query;
+                }
                 return this;
             }
 
