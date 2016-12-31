@@ -20,7 +20,6 @@ package org.elasticsearch.xpack.watcher.actions;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -186,13 +185,13 @@ public class ActionStatus implements ToXContent {
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
-            } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.ACK_STATUS)) {
+            } else if (Field.ACK_STATUS.match(currentFieldName)) {
                 ackStatus = AckStatus.parse(watchId, actionId, parser);
-            } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.LAST_EXECUTION)) {
+            } else if (Field.LAST_EXECUTION.match(currentFieldName)) {
                 lastExecution = Execution.parse(watchId, actionId, parser);
-            } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.LAST_SUCCESSFUL_EXECUTION)) {
+            } else if (Field.LAST_SUCCESSFUL_EXECUTION.match(currentFieldName)) {
                 lastSuccessfulExecution = Execution.parse(watchId, actionId, parser);
-            } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.LAST_THROTTLE)) {
+            } else if (Field.LAST_THROTTLE.match(currentFieldName)) {
                 lastThrottle = Throttle.parse(watchId, actionId, parser);
             } else {
                 throw new ElasticsearchParseException("could not parse action status for [{}/{}]. unexpected field [{}]", watchId,
@@ -281,9 +280,9 @@ public class ActionStatus implements ToXContent {
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.TIMESTAMP)) {
+                } else if (Field.TIMESTAMP.match(currentFieldName)) {
                     timestamp = dateTimeFormatter.parser().parseDateTime(parser.text());
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.ACK_STATUS_STATE)) {
+                } else if (Field.ACK_STATUS_STATE.match(currentFieldName)) {
                     state = State.valueOf(parser.text().toUpperCase(Locale.ROOT));
                 } else {
                     throw new ElasticsearchParseException("could not parse action status for [{}/{}]. unexpected field [{}.{}]", watchId,
@@ -387,11 +386,11 @@ public class ActionStatus implements ToXContent {
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.TIMESTAMP)) {
+                } else if (Field.TIMESTAMP.match(currentFieldName)) {
                     timestamp = dateTimeFormatter.parser().parseDateTime(parser.text());
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.EXECUTION_SUCCESSFUL)) {
+                } else if (Field.EXECUTION_SUCCESSFUL.match(currentFieldName)) {
                     successful = parser.booleanValue();
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.REASON)) {
+                } else if (Field.REASON.match(currentFieldName)) {
                     reason = parser.text();
                 } else {
                     throw new ElasticsearchParseException("could not parse action status for [{}/{}]. unexpected field [{}.{}]", watchId,
@@ -487,9 +486,9 @@ public class ActionStatus implements ToXContent {
             while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
                 if (token == XContentParser.Token.FIELD_NAME) {
                     currentFieldName = parser.currentName();
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.TIMESTAMP)) {
+                } else if (Field.TIMESTAMP.match(currentFieldName)) {
                     timestamp = dateTimeFormatter.parser().parseDateTime(parser.text());
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.REASON)) {
+                } else if (Field.REASON.match(currentFieldName)) {
                     reason = parser.text();
                 } else {
                     throw new ElasticsearchParseException("could not parse action status for [{}/{}]. unexpected field [{}.{}]", watchId,
