@@ -120,7 +120,8 @@ public class ElasticsearchMappings {
      *     <li>AnomalyCause.by_field_value</li>
      *     <li>AnomalyCause.partition_field_value</li>
      *     <li>AnomalyCause.over_field_value</li>
-     *     <li>Influencer.influencer_field_values</li>
+     *     <li>AnomalyRecord.Influencers.influencer_field_values</li>
+     *     <li>Influencer.influencer_field_value</li>
      * </ul>
      *
      * @param termFieldNames All the term fields (by, over, partition) and influencers
@@ -391,6 +392,7 @@ public class ElasticsearchMappings {
         .endObject()
         .startObject(Influencer.INFLUENCER_FIELD_VALUE.getPreferredName())
             .field(TYPE, KEYWORD)
+            .field(COPY_TO, ALL_FIELD_VALUES)
         .endObject();
 
         return builder;
