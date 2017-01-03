@@ -15,6 +15,7 @@
  * from Elasticsearch Incorporated.
  */
 
+apply plugin: 'elasticsearch.standalone-test'
 apply plugin: 'elasticsearch.rest-test'
 
 dependencies {
@@ -49,4 +50,3 @@ integTest {
     }
   }
 }
-

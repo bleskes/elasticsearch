@@ -31,6 +31,7 @@
 //
 
 subprojects {
+  apply plugin: 'elasticsearch.standalone-test'
   apply plugin: 'elasticsearch.rest-test'
 
   dependencies {
@@ -79,4 +80,3 @@ subprojects {
 task integTest {
   dependsOn subprojects.integTest
 }
-

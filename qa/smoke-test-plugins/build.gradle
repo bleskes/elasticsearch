@@ -17,6 +17,7 @@
 
 import org.elasticsearch.gradle.MavenFilteringHack
 
+apply plugin: 'elasticsearch.standalone-test'
 apply plugin: 'elasticsearch.rest-test'
 
 dependencies {
@@ -47,7 +48,7 @@ integTest {
       return tmpFile.exists()
     }
   }
-} 
+}
 
 ext.expansions = [
   'expected.plugins.count': pluginsCount
@@ -57,4 +58,3 @@ processTestResources {
   inputs.properties(expansions)
   MavenFilteringHack.filter(it, expansions)
 }
-
