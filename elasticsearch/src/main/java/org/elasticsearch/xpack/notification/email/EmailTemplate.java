@@ -353,9 +353,9 @@ public class EmailTemplate implements ToXContent {
         private final EmailTemplate.Builder builder = builder();
 
         public boolean handle(String fieldName, XContentParser parser) throws IOException {
-            if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.FROM)) {
+            if (Email.Field.FROM.match(fieldName)) {
                 builder.from(TextTemplate.parse(parser));
-            } else if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.REPLY_TO)) {
+            } else if (Email.Field.REPLY_TO.match(fieldName)) {
                 if (parser.currentToken() == XContentParser.Token.START_ARRAY) {
                     List<TextTemplate> templates = new ArrayList<>();
                     while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
@@ -365,7 +365,7 @@ public class EmailTemplate implements ToXContent {
                 } else {
                     builder.replyTo(TextTemplate.parse(parser));
                 }
-            } else if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.TO)) {
+            } else if (Email.Field.TO.match(fieldName)) {
                 if (parser.currentToken() == XContentParser.Token.START_ARRAY) {
                     List<TextTemplate> templates = new ArrayList<>();
                     while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
@@ -375,7 +375,7 @@ public class EmailTemplate implements ToXContent {
                 } else {
                     builder.to(TextTemplate.parse(parser));
                 }
-            } else if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.CC)) {
+            } else if (Email.Field.CC.match(fieldName)) {
                 if (parser.currentToken() == XContentParser.Token.START_ARRAY) {
                     List<TextTemplate> templates = new ArrayList<>();
                     while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
@@ -385,7 +385,7 @@ public class EmailTemplate implements ToXContent {
                 } else {
                     builder.cc(TextTemplate.parse(parser));
                 }
-            } else if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.BCC)) {
+            } else if (Email.Field.BCC.match(fieldName)) {
                 if (parser.currentToken() == XContentParser.Token.START_ARRAY) {
                     List<TextTemplate> templates = new ArrayList<>();
                     while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
@@ -395,11 +395,11 @@ public class EmailTemplate implements ToXContent {
                 } else {
                     builder.bcc(TextTemplate.parse(parser));
                 }
-            } else if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.PRIORITY)) {
+            } else if (Email.Field.PRIORITY.match(fieldName)) {
                 builder.priority(TextTemplate.parse(parser));
-            } else if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.SUBJECT)) {
+            } else if (Email.Field.SUBJECT.match(fieldName)) {
                 builder.subject(TextTemplate.parse(parser));
-            } else if (ParseFieldMatcher.STRICT.match(fieldName, Email.Field.BODY)) {
+            } else if (Email.Field.BODY.match(fieldName)) {
                 if (parser.currentToken() == XContentParser.Token.VALUE_STRING) {
                     builder.textBody(TextTemplate.parse(parser));
                 } else if (parser.currentToken() == XContentParser.Token.START_OBJECT) {
@@ -410,9 +410,9 @@ public class EmailTemplate implements ToXContent {
                             currentFieldName = parser.currentName();
                         } else if (currentFieldName == null) {
                             throw new ElasticsearchParseException("could not parse email template. empty [{}] field", fieldName);
-                        } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Email.Field.BODY_TEXT)) {
+                        } else if (Email.Field.BODY_TEXT.match(currentFieldName)) {
                             builder.textBody(TextTemplate.parse(parser));
-                        } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Email.Field.BODY_HTML)) {
+                        } else if (Email.Field.BODY_HTML.match(currentFieldName)) {
                             builder.htmlBody(TextTemplate.parse(parser));
                         } else {
                             throw new ElasticsearchParseException("could not parse email template. unknown field [{}.{}] field",

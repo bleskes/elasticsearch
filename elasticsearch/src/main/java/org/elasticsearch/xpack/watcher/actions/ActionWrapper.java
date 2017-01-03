@@ -23,7 +23,6 @@ import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -224,13 +223,13 @@ public class ActionWrapper implements ToXContent {
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else {
-                if (ParseFieldMatcher.STRICT.match(currentFieldName, Watch.Field.CONDITION)) {
+                if (Watch.Field.CONDITION.match(currentFieldName)) {
                     condition = actionRegistry.getConditionRegistry().parseExecutable(watchId, parser, upgradeActionSource);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Transform.Field.TRANSFORM)) {
+                } else if (Transform.Field.TRANSFORM.match(currentFieldName)) {
                     transform = actionRegistry.getTransformRegistry().parse(watchId, parser, upgradeActionSource);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Throttler.Field.THROTTLE_PERIOD)) {
+                } else if (Throttler.Field.THROTTLE_PERIOD.match(currentFieldName)) {
                     throttlePeriod = timeValueMillis(parser.longValue());
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Throttler.Field.THROTTLE_PERIOD_HUMAN)) {
+                } else if (Throttler.Field.THROTTLE_PERIOD_HUMAN.match(currentFieldName)) {
                     try {
                         throttlePeriod = WatcherDateTimeUtils.parseTimeValue(parser, Throttler.Field.THROTTLE_PERIOD_HUMAN.toString());
                     } catch (ElasticsearchParseException pe) {

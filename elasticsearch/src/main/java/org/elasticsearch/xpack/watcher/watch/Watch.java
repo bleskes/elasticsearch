@@ -20,7 +20,6 @@ package org.elasticsearch.xpack.watcher.watch;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -39,8 +38,8 @@ import org.elasticsearch.xpack.watcher.Watcher;
 import org.elasticsearch.xpack.watcher.actions.ActionRegistry;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
 import org.elasticsearch.xpack.watcher.actions.ActionWrapper;
-import org.elasticsearch.xpack.watcher.condition.Condition;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
+import org.elasticsearch.xpack.watcher.condition.Condition;
 import org.elasticsearch.xpack.watcher.input.ExecutableInput;
 import org.elasticsearch.xpack.watcher.input.InputRegistry;
 import org.elasticsearch.xpack.watcher.input.none.ExecutableNoneInput;
@@ -58,7 +57,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.Collections.unmodifiableMap;
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
@@ -307,17 +305,17 @@ public class Watch implements TriggerEngine.Job, ToXContent {
                     currentFieldName = parser.currentName();
                 } else if (token == null || currentFieldName == null) {
                     throw new ElasticsearchParseException("could not parse watch [{}], unexpected token [{}]", id, token);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.TRIGGER)) {
+                } else if (Field.TRIGGER.match(currentFieldName)) {
                     trigger = triggerService.parseTrigger(id, parser);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.INPUT)) {
+                } else if (Field.INPUT.match(currentFieldName)) {
                     input = inputRegistry.parse(id, parser, upgradeWatchSource);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.CONDITION)) {
+                } else if (Field.CONDITION.match(currentFieldName)) {
                     condition = actionRegistry.getConditionRegistry().parseExecutable(id, parser, upgradeWatchSource);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.TRANSFORM)) {
+                } else if (Field.TRANSFORM.match(currentFieldName)) {
                     transform = actionRegistry.getTransformRegistry().parse(id, parser, upgradeWatchSource);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.THROTTLE_PERIOD)) {
+                } else if (Field.THROTTLE_PERIOD.match(currentFieldName)) {
                     throttlePeriod = timeValueMillis(parser.longValue());
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.THROTTLE_PERIOD_HUMAN)) {
+                } else if (Field.THROTTLE_PERIOD_HUMAN.match(currentFieldName)) {
                     // Parser for human specified and 2.x backwards compatible throttle period
                     try {
                         throttlePeriod = WatcherDateTimeUtils.parseTimeValue(parser, Field.THROTTLE_PERIOD_HUMAN.toString());
@@ -325,11 +323,11 @@ public class Watch implements TriggerEngine.Job, ToXContent {
                         throw new ElasticsearchParseException("could not parse watch [{}]. failed to parse time value for field [{}]",
                                 pe, id, currentFieldName);
                     }
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.ACTIONS)) {
+                } else if (Field.ACTIONS.match(currentFieldName)) {
                     actions = actionRegistry.parseActions(id, parser, upgradeWatchSource);
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.METADATA)) {
+                } else if (Field.METADATA.match(currentFieldName)) {
                     metatdata = parser.map();
-                } else if (ParseFieldMatcher.STRICT.match(currentFieldName, Field.STATUS)) {
+                } else if (Field.STATUS.match(currentFieldName)) {
                     if (includeStatus) {
                         status = WatchStatus.parse(id, parser);
                     } else {
