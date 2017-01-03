@@ -55,9 +55,6 @@ import java.util.TreeSet;
  */
 public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent {
 
-    public static final Job PROTO =
-            new Job(null, null, null, null, null, 0L, null, null, null, null, null, null, null, null, null, null, null, null, null);
-
     public static final String TYPE = "job";
 
     /*

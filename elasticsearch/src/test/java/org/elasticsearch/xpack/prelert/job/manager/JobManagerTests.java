@@ -174,7 +174,7 @@ public class JobManagerTests extends ESTestCase {
                 .fPut(AnomalyDetectorsIndex.jobResultsIndexName("my-special-place"), indexMetaData).build();
 
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
-                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, PrelertMetadata.PROTO).indices(indexMap)).build();
+                .metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, PrelertMetadata.EMPTY_METADATA).indices(indexMap)).build();
 
         doAnswer(invocationOnMock -> {
             AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
@@ -205,7 +205,7 @@ public class JobManagerTests extends ESTestCase {
 
     private ClusterState createClusterState() {
         ClusterState.Builder builder = ClusterState.builder(new ClusterName("_name"));
-        builder.metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, PrelertMetadata.PROTO));
+        builder.metaData(MetaData.builder().putCustom(PrelertMetadata.TYPE, PrelertMetadata.EMPTY_METADATA));
         return builder.build();
     }
 }
