@@ -68,9 +68,9 @@ public class PipelineHttpResource extends PublishableHttpResource {
      */
     @Override
     protected CheckResponse doCheck(final RestClient client) {
-        return checkForResource(client, logger,
-                                "/_ingest/pipeline", pipelineName, "monitoring pipeline",
-                                resourceOwnerName, "monitoring cluster");
+        return simpleCheckForResource(client, logger,
+                                      "/_ingest/pipeline", pipelineName, "monitoring pipeline",
+                                      resourceOwnerName, "monitoring cluster");
     }
 
     /**
