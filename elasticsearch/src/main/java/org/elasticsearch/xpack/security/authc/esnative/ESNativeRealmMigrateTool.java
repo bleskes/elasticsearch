@@ -317,7 +317,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
 
         static String createRoleJson(RoleDescriptor rd) throws IOException {
             XContentBuilder builder = jsonBuilder();
-            rd.toXContent(builder, ToXContent.EMPTY_PARAMS);
+            rd.toXContent(builder, ToXContent.EMPTY_PARAMS, false);
             return builder.string();
         }
 
