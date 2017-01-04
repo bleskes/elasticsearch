@@ -19,6 +19,8 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.MultiSearchRequest;
+import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.ParseFieldMatcher;
@@ -60,6 +62,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static org.elasticsearch.xpack.prelert.job.JobTests.buildJobBuilder;
 import static org.hamcrest.Matchers.equalTo;
@@ -72,12 +75,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
 public class JobProviderTests extends ESTestCase {
     private static final String CLUSTER_NAME = "myCluster";
     private static final String JOB_ID = "foo";
     private static final String STATE_INDEX_NAME = ".ml-state";
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testGetQuantiles_GivenNoQuantilesForJob() throws Exception {
         GetResponse getResponse = createGetResponse(false, null);
 
@@ -91,6 +94,7 @@ public class JobProviderTests extends ESTestCase {
         assertFalse(quantiles.isPresent());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
         source.put(Job.ID.getPreferredName(), "foo");
@@ -109,6 +113,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("state", quantiles.get().getQuantileState());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws Exception {
         Map<String, Object> source = new HashMap<>();
         source.put(Job.ID.getPreferredName(), "foo");
@@ -339,23 +344,22 @@ public class JobProviderTests extends ESTestCase {
         map.put("bucket_span", 22);
         source.add(map);
 
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
         SearchResponse response = createSearchResponse(true, source);
         int from = 0;
         int size = 10;
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
-
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(queryBuilder -> {queryBuilderHolder[0] = queryBuilder;}, response);
         JobProvider provider = createProvider(client);
 
         BucketsQueryBuilder bq = new BucketsQueryBuilder().from(from).size(size).anomalyScoreThreshold(0.0)
                 .normalizedProbabilityThreshold(1.0);
 
-        QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        QueryPage<Bucket>[] holder = new QueryPage[1];
+        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);});
+        QueryPage<Bucket> buckets = holder[0];
         assertEquals(1L, buckets.count());
-        QueryBuilder query = queryBuilder.getValue();
+        QueryBuilder query = queryBuilderHolder[0];
         String queryString = query.toString();
         assertTrue(
                 queryString.matches("(?s).*max_normalized_probability[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*is_interim.*value. : .true" +
@@ -374,23 +378,23 @@ public class JobProviderTests extends ESTestCase {
         map.put("bucket_span", 22);
         source.add(map);
 
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
         SearchResponse response = createSearchResponse(true, source);
         int from = 99;
         int size = 17;
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(queryBuilder -> queryBuilderHolder[0] = queryBuilder, response);
         JobProvider provider = createProvider(client);
 
         BucketsQueryBuilder bq = new BucketsQueryBuilder().from(from).size(size).anomalyScoreThreshold(5.1)
                 .normalizedProbabilityThreshold(10.9).includeInterim(true);
 
-        QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        QueryPage<Bucket>[] holder = new QueryPage[1];
+        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);});
+        QueryPage<Bucket> buckets = holder[0];
         assertEquals(1L, buckets.count());
-        QueryBuilder query = queryBuilder.getValue();
+        QueryBuilder query = queryBuilderHolder[0];
         String queryString = query.toString();
         assertTrue(queryString.matches("(?s).*max_normalized_probability[^}]*from. : 10\\.9.*"));
         assertTrue(queryString.matches("(?s).*anomaly_score[^}]*from. : 5\\.1.*"));
@@ -409,15 +413,12 @@ public class JobProviderTests extends ESTestCase {
         map.put("bucket_span", 22);
         source.add(map);
 
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
         SearchResponse response = createSearchResponse(true, source);
         int from = 99;
         int size = 17;
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        Result.TYPE.getPreferredName(), from, size, response, queryBuilder);
 
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(queryBuilder -> queryBuilderHolder[0] = queryBuilder, response);
         JobProvider provider = createProvider(client);
 
         BucketsQueryBuilder bq = new BucketsQueryBuilder();
@@ -427,9 +428,12 @@ public class JobProviderTests extends ESTestCase {
         bq.normalizedProbabilityThreshold(10.9);
         bq.includeInterim(true);
 
-        QueryPage<Bucket> buckets = provider.buckets(jobId, bq.build());
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        QueryPage<Bucket>[] holder = new QueryPage[1];
+        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);});
+        QueryPage<Bucket> buckets = holder[0];
         assertEquals(1L, buckets.count());
-        QueryBuilder query = queryBuilder.getValue();
+        QueryBuilder query = queryBuilderHolder[0];
         String queryString = query.toString();
         assertTrue(queryString.matches("(?s).*max_normalized_probability[^}]*from. : 10\\.9.*"));
         assertTrue(queryString.matches("(?s).*anomaly_score[^}]*from. : 5\\.1.*"));
@@ -440,22 +444,18 @@ public class JobProviderTests extends ESTestCase {
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Long timestamp = 98765432123456789L;
-        Date now = new Date();
         List<Map<String, Object>> source = new ArrayList<>();
 
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(false, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
 
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
 
-        BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(timestamp));
-
-        expectThrows(ResourceNotFoundException.class,
-                () -> provider.bucket(jobId, bq.build()));
+        BucketsQueryBuilder bq = new BucketsQueryBuilder();
+        bq.timestamp(Long.toString(timestamp));
+        Exception[] holder = new Exception[1];
+        provider.buckets(jobId, bq.build(), q -> {}, e -> {holder[0] = e;});
+        assertEquals(ResourceNotFoundException.class, holder[0].getClass());
     }
 
     public void testBucket_OneBucketNoExpandNoInterim()
@@ -470,20 +470,18 @@ public class JobProviderTests extends ESTestCase {
         map.put("bucket_span", 22);
         source.add(map);
 
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
-
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
 
-        BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
+        BucketsQueryBuilder bq = new BucketsQueryBuilder();
+        bq.timestamp(Long.toString(now.getTime()));
 
-        QueryPage<Bucket> bucketHolder = provider.bucket(jobId, bq.build());
-        assertThat(bucketHolder.count(), equalTo(1L));
-        Bucket b = bucketHolder.results().get(0);
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        QueryPage<Bucket>[] bucketHolder = new QueryPage[1];
+        provider.buckets(jobId, bq.build(), q -> {bucketHolder[0] = q;}, e -> {});
+        assertThat(bucketHolder[0].count(), equalTo(1L));
+        Bucket b = bucketHolder[0].results().get(0);
         assertEquals(now, b.getTimestamp());
     }
 
@@ -500,21 +498,19 @@ public class JobProviderTests extends ESTestCase {
         map.put("is_interim", true);
         source.add(map);
 
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        Result.TYPE.getPreferredName(), 0, 0, response, queryBuilder);
-
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
 
-        BucketQueryBuilder bq = new BucketQueryBuilder(Long.toString(now.getTime()));
+        BucketsQueryBuilder bq = new BucketsQueryBuilder();
+        bq.timestamp(Long.toString(now.getTime()));
 
-        expectThrows(ResourceNotFoundException.class,
-                () -> provider.bucket(jobId, bq.build()));
+        Exception[] holder = new Exception[1];
+        provider.buckets(jobId, bq.build(), q -> {}, e -> {holder[0] = e;});
+        assertEquals(ResourceNotFoundException.class, holder[0].getClass());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testRecords() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
@@ -566,6 +562,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testRecords_UsingBuilder()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
@@ -624,6 +621,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testBucketRecords() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
@@ -674,6 +672,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("irrascible", records.get(1).getFunction());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testexpandBucket() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
         Date now = new Date();
@@ -705,6 +704,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(400L, records);
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testexpandBucket_WithManyRecords()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
@@ -740,6 +740,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(1200L, records);
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testCategoryDefinitions()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
@@ -768,6 +769,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(terms, categoryDefinitions.results().get(0).getTerms());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testCategoryDefinition()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentification";
@@ -792,6 +794,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(terms, categoryDefinitions.results().get(0).getTerms());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testInfluencers_NoInterim()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
@@ -856,6 +859,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(5.0, records.get(1).getInitialAnomalyScore(), 0.00001);
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testInfluencers_WithInterim()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
@@ -920,6 +924,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(5.0, records.get(1).getInitialAnomalyScore(), 0.00001);
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testInfluencer() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         String influencerId = "ThisIsAnInfluencerId";
@@ -936,6 +941,7 @@ public class JobProviderTests extends ESTestCase {
         }
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testModelSnapshots() throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
         Date now = new Date();
@@ -991,6 +997,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(6, snapshots.get(1).getSnapshotDocCount());
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testModelSnapshots_WithDescription()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
@@ -1124,6 +1131,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(0.0, buckets.get(3).getMaxNormalizedProbability(), 0.001);
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testRestoreStateToStream() throws Exception {
         Map<String, Object> categorizerState = new HashMap<>();
         categorizerState.put("catName", "catVal");
@@ -1203,5 +1211,20 @@ public class JobProviderTests extends ESTestCase {
         }).when(hits).getAt(any(Integer.class));
 
         return response;
+    }
+
+    private Client getMockedClient(Consumer<QueryBuilder> queryBuilderConsumer, SearchResponse response) {
+        Client client = mock(Client.class);
+        doAnswer(invocationOnMock -> {
+            MultiSearchRequest multiSearchRequest = (MultiSearchRequest) invocationOnMock.getArguments()[0];
+            queryBuilderConsumer.accept(multiSearchRequest.requests().get(0).source().query());
+            @SuppressWarnings("unchecked")
+            ActionListener<MultiSearchResponse> actionListener = (ActionListener<MultiSearchResponse>) invocationOnMock.getArguments()[1];
+            MultiSearchResponse mresponse =
+                    new MultiSearchResponse(new MultiSearchResponse.Item[]{new MultiSearchResponse.Item(response, null)});
+            actionListener.onResponse(mresponse);
+            return null;
+        }).when(client).multiSearch(any(), any());
+        return client;
     }
 }

@@ -117,7 +117,17 @@ public final class BucketsQueryBuilder {
         return this;
     }
 
+    public BucketsQueryBuilder timestamp(String timestamp) {
+        bucketsQuery.timestamp = timestamp;
+        bucketsQuery.size = 1;
+        return this;
+    }
+
     public BucketsQueryBuilder.BucketsQuery build() {
+        if (bucketsQuery.timestamp != null && (bucketsQuery.start != null || bucketsQuery.end != null)) {
+            throw new IllegalStateException("Either specify timestamp or start/end");
+        }
+
         return bucketsQuery;
     }
 
@@ -135,6 +145,7 @@ public final class BucketsQueryBuilder {
         private double normalizedProbability = 0.0d;
         private String start;
         private String end;
+        private String timestamp;
         private String partitionValue = null;
         private String sortField = Bucket.TIMESTAMP.getPreferredName();
         private boolean sortDescending = false;
@@ -171,6 +182,10 @@ public final class BucketsQueryBuilder {
             return end;
         }
 
+        public String getTimestamp() {
+            return timestamp;
+        }
+
         /**
          * @return Null if not set
          */
@@ -189,7 +204,7 @@ public final class BucketsQueryBuilder {
         @Override
         public int hashCode() {
             return Objects.hash(from, size, expand, includeInterim, anomalyScoreFilter, normalizedProbability, start, end,
-                    partitionValue, sortField, sortDescending);
+                    timestamp, partitionValue, sortField, sortDescending);
         }
 
 
@@ -212,6 +227,7 @@ public final class BucketsQueryBuilder {
                     Objects.equals(includeInterim, other.includeInterim) &&
                     Objects.equals(start, other.start) &&
                     Objects.equals(end, other.end) &&
+                    Objects.equals(timestamp, other.timestamp) &&
                     Objects.equals(anomalyScoreFilter, other.anomalyScoreFilter) &&
                     Objects.equals(normalizedProbability, other.normalizedProbability) &&
                     Objects.equals(partitionValue, other.partitionValue) &&
