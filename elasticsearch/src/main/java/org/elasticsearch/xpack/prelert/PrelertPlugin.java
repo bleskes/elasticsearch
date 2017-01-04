@@ -35,6 +35,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchRequestParsers;
+import org.elasticsearch.tasks.TaskManager;
 import org.elasticsearch.threadpool.ExecutorBuilder;
 import org.elasticsearch.threadpool.FixedExecutorBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -220,6 +221,7 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 // norelease: we will no longer need to pass the client here after we switch to a client based data extractor
                 new HttpDataExtractorFactory(client, searchRequestParsers),
                 System::currentTimeMillis);
+        TaskManager taskManager = new TaskManager(settings);
 
         JobLifeCycleService jobLifeCycleService =
                 new JobLifeCycleService(settings, client, clusterService, dataProcessor, threadPool.generic());
@@ -244,7 +246,8 @@ public class PrelertPlugin extends Plugin implements ActionPlugin {
                 dataProcessor,
                 new PrelertInitializationService(settings, threadPool, clusterService, jobProvider),
                 jobDataCountsPersister,
-                scheduledJobRunner
+                scheduledJobRunner,
+                taskManager
                 );
     }
 
