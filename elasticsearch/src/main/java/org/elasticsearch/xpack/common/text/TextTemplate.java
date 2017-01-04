@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.common.text;
 
 import org.elasticsearch.common.Nullable;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -125,7 +124,7 @@ public class TextTemplate implements ToXContent {
         if (parser.currentToken() == XContentParser.Token.VALUE_STRING) {
             return new TextTemplate(parser.text());
         } else {
-            return new TextTemplate(Script.parse(parser, ParseFieldMatcher.STRICT, Script.DEFAULT_TEMPLATE_LANG));
+            return new TextTemplate(Script.parse(parser, Script.DEFAULT_TEMPLATE_LANG));
         }
     }
 }

@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.watcher.transform.script;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.Script;
@@ -71,9 +70,9 @@ public class ScriptTransform implements Transform {
         try {
             Script script;
             if (upgradeSource) {
-                script = Script.parse(parser, ParseFieldMatcher.EMPTY, defaultLegacyScriptLanguage);
+                script = Script.parse(parser, defaultLegacyScriptLanguage);
             } else {
-                script = Script.parse(parser, ParseFieldMatcher.EMPTY);
+                script = Script.parse(parser);
             }
             return new ScriptTransform(script);
         } catch (ElasticsearchParseException pe) {

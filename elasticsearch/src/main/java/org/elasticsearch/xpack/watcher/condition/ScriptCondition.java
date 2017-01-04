@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.watcher.condition;
 
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.script.CompiledScript;
@@ -69,9 +68,9 @@ public final class ScriptCondition extends Condition {
         try {
             Script script;
             if (upgradeConditionSource) {
-                script = Script.parse(parser, ParseFieldMatcher.EMPTY, defaultLegacyScriptLanguage);
+                script = Script.parse(parser, defaultLegacyScriptLanguage);
             } else {
-                script = Script.parse(parser, ParseFieldMatcher.EMPTY);
+                script = Script.parse(parser);
             }
             return new ScriptCondition(script, scriptService);
         } catch (ElasticsearchParseException pe) {
