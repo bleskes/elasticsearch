@@ -1051,7 +1051,7 @@ void CJsonOutputWriter::addPartitionScores(const CHierarchicalResultsWriter::TRe
                                              doc, m_JsonPoolAllocator);
     core::CJsonDocUtils::addStringFieldToObj(PARTITION_FIELD_VALUE,
                                              results.s_PartitionFieldValue,
-                                             doc, m_JsonPoolAllocator);
+                                             doc, m_JsonPoolAllocator, true);
     core::CJsonDocUtils::addDoubleFieldToObj(INITIAL_SCORE,
                                             results.s_NormalizedAnomalyScore,
                                             doc, m_JsonPoolAllocator);

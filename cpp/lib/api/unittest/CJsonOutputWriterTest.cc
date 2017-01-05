@@ -2229,9 +2229,14 @@ void CJsonOutputWriterTest::testPartitionScores(void)
 
         std::string partitionFieldName("part1");
 
-        for (int i=0; i<3; i++)
+        for (int i = 0; i < 4; ++i)
         {
-            std::string partitionFieldValue = "p" + prelert::core::CStringUtils::typeToString(i);
+            // For the first iteration use an empty string for the value
+            std::string partitionFieldValue;
+            if (i > 0)
+            {
+                partitionFieldValue = 'p' + prelert::core::CStringUtils::typeToString(i);
+            }
             prelert::api::CHierarchicalResultsWriter::SResults result(
                                                           prelert::api::CHierarchicalResultsWriter::E_PartitionResult,
                                                           partitionFieldName,
@@ -2274,8 +2279,7 @@ void CJsonOutputWriterTest::testPartitionScores(void)
     const rapidjson::Value &partitionScores = bucket["partition_scores"];
 
     CPPUNIT_ASSERT(partitionScores.IsArray());
-    CPPUNIT_ASSERT_EQUAL(rapidjson::SizeType(3), partitionScores.Size());
-
+    CPPUNIT_ASSERT_EQUAL(rapidjson::SizeType(4), partitionScores.Size());
 
     for (rapidjson::SizeType i = 0; i < partitionScores.Size(); ++i)
     {
@@ -2290,7 +2294,11 @@ void CJsonOutputWriterTest::testPartitionScores(void)
 
         CPPUNIT_ASSERT(pDoc.HasMember("partition_field_name"));
         CPPUNIT_ASSERT_EQUAL(std::string("part1"), std::string(pDoc["partition_field_name"].GetString()));
-        std::string fieldValue = "p" + prelert::core::CStringUtils::typeToString(i);
+        std::string fieldValue;
+        if (i > 0)
+        {
+            fieldValue = 'p' + prelert::core::CStringUtils::typeToString(i);
+        }
         CPPUNIT_ASSERT(pDoc.HasMember("partition_field_value"));
         CPPUNIT_ASSERT_EQUAL(fieldValue, std::string(pDoc["partition_field_value"].GetString()));
     }
