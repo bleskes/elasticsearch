@@ -17,9 +17,9 @@
 
 package org.elasticsearch.xpack.watcher.transport.action.put;
 
-
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.xpack.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
@@ -63,16 +63,13 @@ public class PutWatchTests extends AbstractWatcherIntegrationTestCase {
 
     public void testPutNoTrigger() throws Exception {
         ensureWatcherStarted();
-        try {
-            watcherClient().preparePutWatch("_name").setSource(watchBuilder()
-                    .input(simpleInput())
-                    .condition(AlwaysCondition.INSTANCE)
-                    .addAction("_action1", loggingAction("{{ctx.watch_id}}")))
-                    .get();
-            fail("Expected IllegalStateException");
-        } catch (IllegalStateException e) {
-            assertThat(e.getMessage(), is("failed to build watch source. no trigger defined"));
-        }
+        ElasticsearchException exception = expectThrows(ElasticsearchException.class,
+                () -> watcherClient().preparePutWatch("_name").setSource(watchBuilder()
+                .input(simpleInput())
+                .condition(AlwaysCondition.INSTANCE)
+                .addAction("_action1", loggingAction("{{ctx.watch_id}}")))
+                .get());
+        assertEquals("Failed to build ToXContent", exception.getMessage());
     }
 
     public void testPutInvalidWatchId() throws Exception {
