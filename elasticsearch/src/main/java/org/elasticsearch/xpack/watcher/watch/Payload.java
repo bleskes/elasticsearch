@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.watcher.watch;
 
 import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
@@ -85,10 +86,8 @@ public interface Payload extends ToXContent {
     }
 
     class XContent extends Simple {
-
-        public XContent(ToXContent response) throws IOException {
+        public XContent(ToXContentObject response) throws IOException {
             super(responseToData(response));
         }
-
     }
 }
