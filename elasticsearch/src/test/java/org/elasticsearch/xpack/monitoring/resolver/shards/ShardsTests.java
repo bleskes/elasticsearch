@@ -64,7 +64,7 @@ public class ShardsTests extends MonitoringIntegTestCase {
 
     @After
     public void cleanup() throws Exception {
-        updateMonitoringInterval(-1, TimeUnit.SECONDS);
+        disableMonitoringInterval();
         wipeMonitoringIndices();
     }
 
