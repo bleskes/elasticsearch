@@ -32,7 +32,7 @@ import static org.elasticsearch.xpack.watcher.support.WatcherUtils.responseToDat
 
 public interface Payload extends ToXContent {
 
-    Simple EMPTY = new Simple(Collections.<String, Object>emptyMap());
+    Simple EMPTY = new Simple(Collections.emptyMap());
 
     Map<String, Object> data();
 
@@ -41,7 +41,7 @@ public interface Payload extends ToXContent {
         private final Map<String, Object> data;
 
         public Simple() {
-            this(new HashMap<String, Object>());
+            this(new HashMap<>());
         }
 
         public Simple(String key, Object value) {

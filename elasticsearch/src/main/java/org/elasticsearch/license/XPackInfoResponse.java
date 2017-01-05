@@ -23,6 +23,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.XPackBuild;
 
@@ -154,7 +155,7 @@ public class XPackInfoResponse extends ActionResponse {
         }
     }
 
-    public static class BuildInfo implements ToXContent, Writeable {
+    public static class BuildInfo implements ToXContentObject, Writeable {
 
         private final String hash;
         private final String timestamp;
@@ -194,7 +195,7 @@ public class XPackInfoResponse extends ActionResponse {
         }
     }
 
-    public static class FeatureSetsInfo implements ToXContent, Writeable {
+    public static class FeatureSetsInfo implements ToXContentObject, Writeable {
 
         private final Map<String, FeatureSet> featureSets;
 

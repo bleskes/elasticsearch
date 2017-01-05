@@ -21,6 +21,7 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.watcher.watch.Payload;
 
@@ -34,7 +35,7 @@ public interface Transform extends ToXContent {
 
     String type();
 
-    abstract class Result implements ToXContent {
+    abstract class Result implements ToXContentObject {
 
         public enum Status {
             SUCCESS, FAILURE
@@ -82,7 +83,7 @@ public interface Transform extends ToXContent {
         }
 
         @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
             builder.field(Field.TYPE.getPreferredName(), type);
             builder.field(Field.STATUS.getPreferredName(), status.name().toLowerCase(Locale.ROOT));

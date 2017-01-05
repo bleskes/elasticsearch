@@ -25,6 +25,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.license.XPackLicenseState;
@@ -43,10 +44,7 @@ import java.io.IOException;
 
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 
-/**
- *
- */
-public class ActionWrapper implements ToXContent {
+public class ActionWrapper implements ToXContentObject {
 
     private String id;
     @Nullable

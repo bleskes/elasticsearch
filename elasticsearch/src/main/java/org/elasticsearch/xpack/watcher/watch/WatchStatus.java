@@ -24,6 +24,7 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Streamable;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.support.clock.SystemClock;
@@ -46,10 +47,7 @@ import static org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils.readO
 import static org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils.writeDate;
 import static org.elasticsearch.xpack.watcher.support.WatcherDateTimeUtils.writeOptionalDate;
 
-/**
- *
- */
-public class WatchStatus implements ToXContent, Streamable {
+public class WatchStatus implements ToXContentObject, Streamable {
 
     public static final String INCLUDE_VERSION_KEY = "include_version";
 

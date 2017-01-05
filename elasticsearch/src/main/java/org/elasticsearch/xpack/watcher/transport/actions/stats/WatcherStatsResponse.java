@@ -21,7 +21,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.watcher.WatcherBuild;
 import org.elasticsearch.xpack.watcher.WatcherMetaData;
@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class WatcherStatsResponse extends ActionResponse implements ToXContent {
+public class WatcherStatsResponse extends ActionResponse implements ToXContentObject {
 
     private WatcherBuild build;
     private long watchesCount;

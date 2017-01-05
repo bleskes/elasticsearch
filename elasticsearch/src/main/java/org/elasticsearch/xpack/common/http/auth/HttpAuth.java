@@ -17,12 +17,9 @@
 
 package org.elasticsearch.xpack.common.http.auth;
 
-import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 
-/**
- *
- */
-public interface HttpAuth extends ToXContent {
+public interface HttpAuth extends ToXContentObject {
 
     String type();
 

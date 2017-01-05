@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.watcher.condition;
 
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
 
@@ -26,7 +27,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class Condition implements ToXContent {
+public abstract class Condition implements ToXContentObject {
 
     protected final String type;
 

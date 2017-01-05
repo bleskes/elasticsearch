@@ -19,7 +19,7 @@ package org.elasticsearch.xpack.notification.email;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -31,10 +31,7 @@ import java.util.Map;
 
 import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalArgument;
 
-/**
- *
- */
-public enum DataAttachment implements ToXContent {
+public enum DataAttachment implements ToXContentObject {
 
     YAML() {
         @Override
