@@ -287,7 +287,7 @@ CEventRateModel::TDouble1Vec
         double seasonalOffset = 0.0;
         if (!trend.empty() && trend[0]->initialized())
         {
-            seasonalOffset = maths::CBasicStatistics::mean(trend[0]->baseline(time, 0.0)) - trend[0]->level();
+            seasonalOffset = maths::CBasicStatistics::mean(trend[0]->baseline(time, 0.0));
         }
 
         double median = prior->isNonInformative() ?
@@ -319,7 +319,7 @@ CEventRateModel::TDouble1Vec
             double seasonalOffset = 0.0;
             if (i < trend.size() && trend[i]->initialized())
             {
-                seasonalOffset = maths::CBasicStatistics::mean(trend[i]->baseline(time, 0.0)) - trend[i]->level();
+                seasonalOffset = maths::CBasicStatistics::mean(trend[i]->baseline(time, 0.0));
             }
 
             double median = prior->isNonInformative() ?

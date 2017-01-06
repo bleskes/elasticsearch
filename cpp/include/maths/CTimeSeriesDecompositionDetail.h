@@ -35,12 +35,13 @@ namespace prelert
 namespace maths
 {
 
-//!
+//! \brief Utilities for computing the decomposition.
 class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDecompositionTypedefs
 {
     public:
         typedef std::vector<double> TDoubleVec;
         typedef std::vector<core_t::TTime> TTimeVec;
+        typedef CRegression::CLeastSquaresOnline<3, double> TRegression;
         class CMediator;
 
         //! \brief The base message passed.
@@ -60,7 +61,8 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                              double value,
                              const TWeightStyleVec &weightStyles,
                              const TDouble4Vec &weights,
-                             double mean);
+                             double trend,
+                             double seasonal);
 
             //! The value to add.
             double s_Value;
@@ -72,14 +74,19 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
             //! weight the less influence the value has on the trend and it's
             //! local variance.
             const TDouble4Vec &s_Weights;
-            //! The mean of the time series.
-            double s_Mean;
+            //! The trend component prediction at the value's time.
+            double s_Trend;
+            //! The seasonal component prediction at the value's time.
+            double s_Seasonal;
         };
 
         //! \brief The message passed to indicate a trend has been detected.
         struct MATHS_EXPORT SDetectedTrendMessage : public SMessage
         {
-            SDetectedTrendMessage(core_t::TTime time);
+            SDetectedTrendMessage(core_t::TTime time, const CTrendTests::CTrend &test);
+
+            //! The test.
+            const CTrendTests::CTrend &s_Test;
         };
 
         //! \brief The message passed to indicate periodic components have
@@ -91,7 +98,7 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                                      const CTrendTests::CPeriodicity &test);
 
             //! The result of the test.
-            const CTrendTests::CPeriodicity::CResult s_Result;
+            CTrendTests::CPeriodicity::CResult s_Result;
             //! The test.
             const CTrendTests::CPeriodicity &s_Test;
         };
@@ -104,23 +111,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
 
             //! The test.
             const CTrendTests::CPeriodicity &s_Test;
-        };
-
-        // \brief The messaged passed to indicate a new level shift.
-        struct MATHS_EXPORT SHasLevelShiftMessage : public SMessage
-        {
-            SHasLevelShiftMessage(core_t::TTime time, int intervals, double size);
-
-            //! The number of consecutive test intervals with a shift.
-            int s_Intervals;
-            //! The normalized step size.
-            double s_Size;
-        };
-
-        // \brief The messaged passed to indicate a level shift was transient.
-        struct MATHS_EXPORT SNoLongerHasLevelShiftMessage : public SMessage
-        {
-            SNoLongerHasLevelShiftMessage(core_t::TTime time);
         };
 
         //! \brief The basic interface for one aspect of the modeling of a time
@@ -142,12 +132,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
 
                 //! Update to discard specific periodic components.
                 virtual void handle(const SDiscardPeriodicMessage &message);
-
-                //! Handle when a level shift is detected.
-                virtual void handle(const SHasLevelShiftMessage &message);
-
-                //! Handle when a level shift is no longer detected.
-                virtual void handle(const SNoLongerHasLevelShiftMessage &message);
 
                 //! Set the mediator.
                 void mediator(CMediator *mediator);
@@ -177,6 +161,70 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
             private:
                 //! The handlers which have added by registration.
                 THandlerPtrVec m_Handlers;
+        };
+
+        //! \brief Tests for a long term trend.
+        class MATHS_EXPORT CLongTermTrendTest : public CHandler
+        {
+            public:
+                CLongTermTrendTest(double decayRate);
+                CLongTermTrendTest(const CLongTermTrendTest &other);
+
+                //! Initialize by reading state from \p traverser.
+                bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
+
+                //! Persist state by passing information to the supplied inserter.
+                void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
+
+                //! Efficiently swap the state of this and \p other.
+                void swap(CLongTermTrendTest &other);
+
+                //! Update the test with a new value.
+                virtual void handle(const SAddValueMessage &message);
+
+                //! Reset the test if still testing.
+                virtual void handle(const SDetectedPeriodicMessage &message);
+
+                //! Check if the time series has shifted level.
+                void test(const SMessage &message);
+
+                //! Set the decay rate.
+                void decayRate(double decayRate);
+
+                //! Update the test to account for \p time elapsed.
+                void propagateForwardsByTime(double time);
+
+                //! Roll time forwards by \p skipInterval.
+                void skipTime(core_t::TTime skipInterval);
+
+                //! Get a checksum for this object.
+                uint64_t checksum(uint64_t seed = 0) const;
+
+            private:
+                typedef boost::shared_ptr<CTrendTests::CTrend> TTrendTestPtr;
+
+            private:
+                //! Handle \p symbol.
+                void apply(std::size_t symbol, const SMessage &message);
+
+                //! Check if we should run a test.
+                bool shouldTest(core_t::TTime time);
+
+                //! Get the interval between tests.
+                core_t::TTime testInterval(void) const;
+
+            private:
+                //! The state machine.
+                core::CStateMachine m_Machine;
+
+                //! The maximum rate at which information is lost.
+                double m_MaximumDecayRate;
+
+                //! The next time to test for a long term trend.
+                core_t::TTime m_NextTestTime;
+
+                //! The test for a long term trend.
+                TTrendTestPtr m_Test;
         };
 
         //! \brief Tests for daily and weekly periodic components and weekend
@@ -210,9 +258,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
 
                 //! Get the result of the last periodicity test.
                 const CTrendTests::CPeriodicity::CResult &periods(void) const;
-
-                //! Set the decay rate.
-                void decayRate(double decayRate);
 
                 //! Update the test to account for \p time elapsed.
                 void propagateForwardsByTime(double time);
@@ -256,8 +301,11 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 //! The raw data bucketing interval.
                 core_t::TTime m_BucketLength;
 
-                //! The time of the last test for periodic components.
-                core_t::TTime m_LastTestTime;
+                //! The next time to test for periodic components.
+                core_t::TTime m_NextTestTime;
+
+                //! The time at which we began regular testing.
+                core_t::TTime m_StartedRegularTest;
 
                 //! The time at which we switch to the small test to save memory.
                 core_t::TTime m_TimeOutRegularTest;
@@ -265,100 +313,63 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 //! The test for periodic components.
                 TPeriodicityTestPtr m_RegularTest;
 
-                //! The small periodicity test that is used in memory-constrained
-                //! situations.
+                //! A small but slower test for periodic components that is used
+                //! after a while if the regular test is inconclusive.
                 TRandomizedPeriodicityTestPtr m_SmallTest;
 
                 //! The result of the last test for periodic components.
                 CTrendTests::CPeriodicity::CResult m_Periods;
         };
 
-        //! \brief Tests for a level shift in the trend.
-        //!
-        //! DESCRIPTION:\n
-        //! If there is a level shift - either a large step, relative to the
-        //! prediction errors, up or down - it is inappropriate to interpolate
-        //! between the components before and after the step. We detect this
-        //! case by looking for a large signed mean error in our predictions
-        //! over an interval between interpolation events.
-        class MATHS_EXPORT CLevelShiftTest : public CHandler
+        //! \brief A reference to the long term trend.
+        class MATHS_EXPORT CTrendCRef
         {
             public:
-                CLevelShiftTest(double decayRate);
-                CLevelShiftTest(const CLevelShiftTest &other);
+                typedef CSymmetricMatrixNxN<double, 4> TMatrix;
 
-                //! Initialize by reading state from \p traverser.
-                bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
+            public:
+                CTrendCRef(void);
+                CTrendCRef(const TRegression &regression,
+                           double variance,
+                           core_t::TTime timeOrigin,
+                           core_t::TTime horizon);
 
-                //! Persist state by passing information to the supplied inserter.
-                void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
+                //! Get the count of values added to the trend.
+                double count(void) const;
 
-                //! Efficiently swap the state of this and \p other.
-                void swap(CLevelShiftTest &other);
+                //! Predict the long term trend at \p time with confidence
+                //! interval \p confidence.
+                TDoubleDoublePr prediction(core_t::TTime time, double confidence) const;
 
-                //! Update the test with a new value.
-                virtual void handle(const SAddValueMessage &message);
+                //! Get the mean of the long term trend in [\p a, \p b].
+                double mean(core_t::TTime a, core_t::TTime b) const;
 
-                //! Reset the test.
-                virtual void handle(const SDetectedTrendMessage &message);
+                //! Get the variance about the long term trend.
+                double variance(void) const;
 
-                //! Reset the test.
-                virtual void handle(const SDetectedPeriodicMessage &message);
+                //! Get the covariance matrix of the regression parameters'
+                //! at \p time.
+                //!
+                //! \param[out] result Filled in with the regression parameters'
+                //! covariance matrix.
+                bool covariances(TMatrix &result) const;
 
-                //! Check if the time series has shifted level.
-                void test(const SMessage &message);
-
-                //! Update the test to account for \p time elapsed.
-                void propagateForwardsByTime(double time);
-
-                //! Roll time forwards by \p skipInterval.
-                void skipTime(core_t::TTime skipInterval);
-
-                //! Get a checksum for this object.
-                uint64_t checksum(uint64_t seed = 0) const;
-
-            private:
-                typedef CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;
-                typedef CVectorNx1<double, 2> TVector;
-                typedef maths::CBasicStatistics::SSampleMean<TVector>::TAccumulator TVectorMeanAccumulator;
+                //! Get the time at which to evaluate the regression model
+                //! of the trend.
+                double time(core_t::TTime time) const;
 
             private:
-                //! A small but non-negligible shift as a multiple of the prediction error.
-                static const double SMALL_SHIFT;
+                //! The regression model of the trend.
+                const TRegression *m_Trend;
 
-                //! A large shift as a multiple of the prediction error.
-                static const double LARGE_SHIFT;
+                //! The variance of the prediction residuals.
+                double m_Variance;
 
-            private:
-                //! Handle \p symbol.
-                void apply(std::size_t symbol, const SMessage &message);
+                //! The origin of the time coordinate system.
+                core_t::TTime m_TimeOrigin;
 
-                //! Check if we should run a test.
-                bool shouldTest(core_t::TTime time);
-
-                //! Get the interval between tests.
-                core_t::TTime testInterval(void) const;
-
-            private:
-                //! The state machine.
-                core::CStateMachine m_Machine;
-
-                //! Controls the rate at which information is lost.
-                double m_DecayRate;
-
-                //! The last time the level shift test was run.
-                core_t::TTime m_LastTestTime;
-
-                //! The time after which we time out the current state.
-                int m_TimeOutState;
-
-                //! The mean signed and unsigned differences between the
-                //! predictions and values in this interpolation interval.
-                TVectorMeanAccumulator m_MeanPredictionErrors;
-
-                //! The long term mean unsigned differences between the
-                //! predictions and values excluding shift intervals.
-                TMeanAccumulator m_LongTermMeanPredictionError;
+                //! The maximum time at which which we'll predict the trend.
+                core_t::TTime m_Horizon;
         };
 
         //! \brief Holds and updates the components of the decomposition.
@@ -409,12 +420,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 //! Discard the matching seasonal components.
                 virtual void handle(const SDiscardPeriodicMessage &message);
 
-                //! Start shifting the components.
-                virtual void handle(const SHasLevelShiftMessage &message);
-
-                //! Stop shifting the components.
-                virtual void handle(const SNoLongerHasLevelShiftMessage &message);
-
                 //! Maybe re-interpolate the components.
                 void interpolate(const SMessage &message);
 
@@ -434,7 +439,10 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 //! Check if the decomposition has any initialized components.
                 bool initialized(void) const;
 
-                //! Get a constant reference to the components.
+                //! Get the long term trend.
+                CTrendCRef trend(void) const;
+
+                //! Get the components.
                 const TComponentVec &seasonal(void) const;
 
                 //! Get the mean value of the baseline.
@@ -445,9 +453,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
 
                 //! Get the mean variance of the baseline.
                 double meanVariance(void) const;
-
-                //! Get the level of the time series.
-                double level(void) const;
 
                 //! Roll time forwards by \p skipInterval.
                 void skipTime(core_t::TTime skipInterval);
@@ -471,6 +476,35 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 typedef boost::optional<double> TOptionalDouble;
                 typedef CBasicStatistics::SSampleMeanVar<double>::TAccumulator TMeanVarAccumulator;
 
+                //! \brief The long term trend.
+                struct STrend
+                {
+                    STrend(void);
+
+                    //! Initialize by reading state from \p traverser.
+                    bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
+
+                    //! Persist state by passing information to the supplied inserter.
+                    void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
+
+                    //! Refresh the current trend.
+                    void refresh(core_t::TTime time);
+
+                    //! Get a checksum for this object.
+                    uint64_t checksum(uint64_t seed = 0) const;
+
+                    //! The regression model of the trend.
+                    TRegression s_Regression;
+
+                    //! The variance of the trend.
+                    double s_Variance;
+
+                    //! The origin of the time coordinate system.
+                    core_t::TTime s_TimeOrigin;
+                };
+
+                typedef boost::shared_ptr<STrend> TTrendPtr;
+
                 //! \brief The seasonal components of the decomposition.
                 struct SSeasonal
                 {
@@ -482,8 +516,8 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                     //! Persist state by passing information to the supplied inserter.
                     void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
 
-                    //! Set whether to measure the prediction error variances.
-                    void resetVariance(double variance);
+                    //! Shift the components by \p shift.
+                    void shift(double shift);
 
                     //! Get a checksum for this object.
                     uint64_t checksum(uint64_t seed = 0) const;
@@ -501,9 +535,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                     //! component value and its mean which are used to minimize
                     //! slope in the longer periods.
                     TDoubleVec s_Deltas;
-
-                    //! The length of history in each component.
-                    TDoubleVec s_HistoryLengths;
                 };
 
                 typedef boost::shared_ptr<SSeasonal> TSeasonalPtr;
@@ -534,20 +565,17 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 //! The number of buckets to use to estimate a periodic component.
                 std::size_t m_SeasonalComponentSize;
 
-                //! The time of the last interpolation of value and variance trends.
-                core_t::TTime m_LastInterpolateTime;
+                //! The last time at which the various components *were* interpolated.
+                core_t::TTime m_LastInterpolatedTime;
 
-                //! The weight to use when interpolating.
-                double m_InterpolationWeight;
+                //! The next time at which to interpolate the various components.
+                core_t::TTime m_NextInterpolateTime;
 
-                //! The current trend level.
-                double m_Level;
+                //! The long term trend.
+                TTrendPtr m_Trend;
 
                 //! The seasonal components.
                 TSeasonalPtr m_Seasonal;
-
-                //! The mean and variance of the value moments.
-                TMeanVarAccumulator m_Moments;
 
                 //! Set to true if non-null when the seasonal components change.
                 bool *m_Watcher;

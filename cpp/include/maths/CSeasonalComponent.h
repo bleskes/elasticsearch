@@ -74,21 +74,19 @@ class MATHS_EXPORT CSeasonalComponent
 
     public:
         //! \param[in] time The time provider.
-        //! \param[in] space The space used to model the component if
-        //! non- zero. Otherwise, the component will not be initialized
-        //! and the client code must explicitly call initialize member
-        //! function to start estimating the component.
-        //! \param[in] decayRate Controls the rate at which
-        //! information is lost from its adaptive bucketing.
-        //! \param[in] minimumBucketLength The minimum bucket length
-        //! permitted in the adaptive bucketing.
-        //! \param[in] boundaryCondition The boundary condition to use
-        //! for the splines.
-        //! \param[in] valueInterpolationType The style of interpolation
-        //! to use for computing values.
-        //! \param[in] varianceInterpolationType The style of interpolation
-        //! to use for computing variances.
-        CSeasonalComponent(const CSeasonalComponentAdaptiveBucketing::CTime &time,
+        //! \param[in] space The space used to model the component if non-zero. Otherwise,
+        //! the component will not be initialized and the client code must explicitly call
+        //! initialize member function to start estimating the component.
+        //! \param[in] decayRate Controls the rate at which information is lost from
+        //! its adaptive bucketing.
+        //! \param[in] minimumBucketLength The minimum bucket length permitted in the
+        //! adaptive bucketing.
+        //! \param[in] boundaryCondition The boundary condition to use for the splines.
+        //! \param[in] valueInterpolationType The style of interpolation to use for
+        //! computing values.
+        //! \param[in] varianceInterpolationType The style of interpolation to use for
+        //! computing variances.
+        CSeasonalComponent(const TTime &time,
                            std::size_t space,
                            double decayRate = 0.0,
                            double minimumBucketLength = 0.0,
@@ -120,35 +118,31 @@ class MATHS_EXPORT CSeasonalComponent
         //! Clear all data.
         void clear(void);
 
-        //! Reset the bucket variances to \p variance.
-        void resetVariance(double variance);
+        //! Shift the component by \p shift.
+        void shift(double shift);
 
         //! Adds a function value \f$(t, f(t))\f$ to this component.
         //!
         //! \param[in] time The time of the function point.
         //! \param[in] value The function value at \p time.
-        //! \param[in] weight The weight of \p value. The smaller
-        //! this is the less influence it has on the component.
+        //! \param[in] weight The weight of \p value. The smaller this is the less
+        //! influence it has on the component.
         void add(core_t::TTime time, double value, double weight = 1.0);
 
         //! Update the interpolation of the bucket values.
         //!
         //! \param[in] time The time at which to interpolate.
-        //! \param[in] weight The weight to give to the new values and
-        //! variances. This must be in the range (0, 1].
         //! \param[in] refine If false disable refining the bucketing.
-        void interpolate(core_t::TTime time, double weight = 1.0, bool refine = true);
+        void interpolate(core_t::TTime time, bool refine = true);
 
-        //! Get the rate at which the seasonal component loses
-        //! information.
+        //! Get the rate at which the seasonal component loses information.
         double decayRate(void) const;
 
-        //! Set the rate at which the seasonal component loses
-        //! information.
+        //! Set the rate at which the seasonal component loses information.
         void decayRate(double decayRate);
 
-        //! Update the regression coefficients and basis function
-        //! centres for the specified elapsed time.
+        //! Update the regression coefficients and basis function centres for the
+        //! specified elapsed time.
         void propagateForwardsByTime(double time, bool meanRevert = false);
 
         //! Get the time provider.
@@ -157,12 +151,11 @@ class MATHS_EXPORT CSeasonalComponent
         //! Interpolate the function at \p time.
         //!
         //! \param[in] time The time of interest.
-        //! \param[in] confidence The symmetric confidence interval
-        //! for the variance as a percentage.
+        //! \param[in] confidence The symmetric confidence interval for the variance
+        //! as a percentage.
         TDoubleDoublePr value(core_t::TTime time, double confidence) const;
 
-        //! Get the covariance matrix of the regression parameters'
-        //! at \p time.
+        //! Get the covariance matrix of the regression parameters' at \p time.
         //!
         //! \param[in] time The time of interest.
         //! \param[out] result Filled in with the regression parameters'
@@ -172,12 +165,11 @@ class MATHS_EXPORT CSeasonalComponent
         //! Get the mean value of the function.
         double meanValue(void) const;
 
-        //! Get the variance of the residual about the function at
-        //! \p time.
+        //! Get the variance of the residual about the function at \p time.
         //!
         //! \param[in] time The time of interest.
-        //! \param[in] confidence The symmetric confidence interval
-        //! for the variance as a percentage.
+        //! \param[in] confidence The symmetric confidence interval for the
+        //! variance as a percentage.
         TDoubleDoublePr variance(core_t::TTime time, double confidence) const;
 
         //! Get the mean variance of the function residuals.
@@ -219,8 +211,7 @@ class MATHS_EXPORT CSeasonalComponent
         std::string print(void) const;
 
     private:
-        //! \brief A low memory representation of the value and variance
-        //! splines.
+        //! \brief A low memory representation of the value and variance splines.
         class CPackedSplines
         {
             public:
@@ -254,6 +245,9 @@ class MATHS_EXPORT CSeasonalComponent
 
                 //! Clear the splines.
                 void clear(void);
+
+                //! Shift the spline values by \p shift.
+                void shift(ESpline spline, double shift);
 
                 //! Get a constant spline reference.
                 TSplineCRef spline(ESpline spline) const;
@@ -304,15 +298,14 @@ class MATHS_EXPORT CSeasonalComponent
         //! The number of buckets to use to cover the period.
         std::size_t m_Space;
 
-        //! The mean function values in collection of buckets
-        //! covering the period.
+        //! The mean function values in collection of buckets covering the period.
         CSeasonalComponentAdaptiveBucketing m_Bucketing;
 
         //! The boundary condition to use for the splines.
         CSplineTypes::EBoundaryCondition m_BoundaryCondition;
 
-        //! The spline we fit through the function points and
-        //! the function point residual variances.
+        //! The spline we fit through the function points and the function point
+        //! residual variances.
         CPackedSplines m_Splines;
 
         //! The mean value in the period.

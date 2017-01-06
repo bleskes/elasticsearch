@@ -36,6 +36,9 @@
 
 using namespace prelert;
 
+namespace
+{
+
 typedef std::pair<double, double> TDoubleDoublePr;
 typedef std::vector<double> TDoubleVec;
 typedef std::vector<TDoubleVec> TDoubleVecVec;
@@ -43,9 +46,6 @@ typedef std::vector<core_t::TTime> TTimeVec;
 typedef std::pair<core_t::TTime, double> TTimeDoublePr;
 typedef std::vector<TTimeDoublePr> TTimeDoublePrVec;
 typedef maths::CTimeSeriesDecomposition::TComponentVec TComponentVec;
-
-namespace
-{
 
 double mean(const TDoubleDoublePr &x)
 {
@@ -135,11 +135,11 @@ void CTimeSeriesDecompositionTest::testSuperpositionOfSines(void)
             LOG_DEBUG("'max residual' / 'max value' = " << maxResidual / maxValue);
             LOG_DEBUG("70% error = " << percentileError / sumValue);
 
-            if (time >= 3 * week)
+            if (time >= 2 * week)
             {
-                CPPUNIT_ASSERT(sumResidual < 0.062 * sumValue);
-                CPPUNIT_ASSERT(maxResidual < 0.078 * maxValue);
-                CPPUNIT_ASSERT(percentileError < 0.04 * sumValue);
+                CPPUNIT_ASSERT(sumResidual < 0.065 * sumValue);
+                CPPUNIT_ASSERT(maxResidual < 0.090 * maxValue);
+                CPPUNIT_ASSERT(percentileError < 0.051 * sumValue);
 
                 totalSumResidual += sumResidual;
                 totalMaxResidual += maxResidual;
@@ -158,9 +158,9 @@ void CTimeSeriesDecompositionTest::testSuperpositionOfSines(void)
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.04 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.06 * totalMaxValue);
-    CPPUNIT_ASSERT(totalPercentileError < 0.027 * totalSumValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.041 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.057 * totalMaxValue);
+    CPPUNIT_ASSERT(totalPercentileError < 0.026 * totalSumValue);
 
     //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
     //file << "r = " << core::CContainerPrinter::print(r) << ";\n";
@@ -316,11 +316,11 @@ void CTimeSeriesDecompositionTest::testBlueCoat(void)
             LOG_DEBUG("'max residual' / 'max value' = " << maxResidual / maxValue);
             LOG_DEBUG("70% error = " << percentileError / sumValue);
 
-            if (time >= 3 * week)
+            if (time >= 2 * week)
             {
-                CPPUNIT_ASSERT(sumResidual < 0.28 * sumValue);
-                CPPUNIT_ASSERT(maxResidual < 0.56 * maxValue);
-                CPPUNIT_ASSERT(percentileError < 0.12 * sumValue);
+                CPPUNIT_ASSERT(sumResidual < 0.21 * sumValue);
+                CPPUNIT_ASSERT(maxResidual < 0.54 * maxValue);
+                CPPUNIT_ASSERT(percentileError < 0.08 * sumValue);
 
                 totalSumResidual += sumResidual;
                 totalMaxResidual += maxResidual;
@@ -346,8 +346,8 @@ void CTimeSeriesDecompositionTest::testBlueCoat(void)
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.17 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.27 * totalMaxValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.16 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.28 * totalMaxValue);
     CPPUNIT_ASSERT(totalPercentileError < 0.06 * totalSumValue);
 }
 
@@ -415,9 +415,7 @@ void CTimeSeriesDecompositionTest::testMinimizeSlope(void)
             double maxValue = 0.0;
             double percentileError = 0.0;
 
-            for (core_t::TTime t = lastWeek;
-                 t < lastWeek + week;
-                 t += halfHour)
+            for (core_t::TTime t = lastWeek; t < lastWeek + week; t += halfHour)
             {
                 TDoubleDoublePr baseline = decomposition.baseline(t + week, 70.0);
 
@@ -437,11 +435,11 @@ void CTimeSeriesDecompositionTest::testMinimizeSlope(void)
             LOG_DEBUG("'max residual' / 'max value' = " << maxResidual / maxValue);
             LOG_DEBUG("70% error = " << percentileError / sumValue);
 
-            if (time >= 3 * week)
+            if (time >= 2 * week)
             {
                 CPPUNIT_ASSERT(sumResidual < 0.21 * sumValue);
-                CPPUNIT_ASSERT(maxResidual < 0.27 * maxValue);
-                CPPUNIT_ASSERT(percentileError < 0.15 * sumValue);
+                CPPUNIT_ASSERT(maxResidual < 0.25 * maxValue);
+                CPPUNIT_ASSERT(percentileError < 0.18 * sumValue);
 
                 totalSumResidual += sumResidual;
                 totalMaxResidual += maxResidual;
@@ -470,13 +468,13 @@ void CTimeSeriesDecompositionTest::testMinimizeSlope(void)
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.1 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.19 * totalMaxValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.09 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.18 * totalMaxValue);
     CPPUNIT_ASSERT(totalPercentileError < 0.06 * totalSumValue);
 
     meanSlope /= refinements;
     LOG_DEBUG("mean weekly |slope| = " << meanSlope);
-    CPPUNIT_ASSERT(meanSlope < 0.0016);
+    CPPUNIT_ASSERT(meanSlope < 0.0015);
 
     //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
     //file << "r = " << core::CContainerPrinter::print(r) << ";\n";
@@ -596,8 +594,8 @@ void CTimeSeriesDecompositionTest::testWeekend(void)
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
     CPPUNIT_ASSERT(totalSumResidual < 0.037 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.079 * totalMaxValue);
-    CPPUNIT_ASSERT(totalPercentileError < 0.019 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.076 * totalMaxValue);
+    CPPUNIT_ASSERT(totalPercentileError < 0.01 * totalSumValue);
 }
 
 void CTimeSeriesDecompositionTest::testSinglePeriodicity(void)
@@ -853,9 +851,9 @@ void CTimeSeriesDecompositionTest::testSeasonalOnset(void)
     LOG_DEBUG("total 'sum residual' / 'sum value' = " << totalSumResidual / totalSumValue);
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
-    CPPUNIT_ASSERT(totalSumResidual < 0.14 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.15 * totalMaxValue);
-    CPPUNIT_ASSERT(totalPercentileError < 0.06 * totalSumValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.1 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.13 * totalMaxValue);
+    CPPUNIT_ASSERT(totalPercentileError < 0.05 * totalSumValue);
 
     //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
     //file << "r = " << core::CContainerPrinter::print(r) << ";\n";
@@ -1254,9 +1252,9 @@ void CTimeSeriesDecompositionTest::testBlueCoatProblemCase(void)
               << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.26 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.73 * totalMaxValue);
-    CPPUNIT_ASSERT(totalPercentileError < 0.08 * totalSumValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.22 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.71 * totalMaxValue);
+    CPPUNIT_ASSERT(totalPercentileError < 0.14 * totalSumValue);
 
     //file << "hold on;\n";
     //file << "t = " << core::CContainerPrinter::print(times) << ";\n";
@@ -1397,60 +1395,297 @@ void CTimeSeriesDecompositionTest::testUMichProblemCase(void)
     //file << "scatter(t(1:length(r)), r, 15, 'k', 'x');\n";
 }
 
-void CTimeSeriesDecompositionTest::testShift(void)
+void CTimeSeriesDecompositionTest::testLongTermTrend(void)
 {
-    LOG_DEBUG("+-------------------------------------------+");
-    LOG_DEBUG("|  CTimeSeriesDecompositionTest::testShift  |");
-    LOG_DEBUG("+-------------------------------------------+");
+    LOG_DEBUG("+---------------------------------------------------+");
+    LOG_DEBUG("|  CTimeSeriesDecompositionTest::testLongTermTrend  |");
+    LOG_DEBUG("+---------------------------------------------------+");
 
     const core_t::TTime halfHour = 1800;
     const core_t::TTime day = 86400;
-    const core_t::TTime shift = 40 * day;
-    const double levels[] = { 1.0, 1.0, 1.0, 1.0, 1.0, 0.3, 0.3 };
+    const core_t::TTime length = 120 * day;
 
     TTimeVec times;
     TDoubleVec timeseries;
 
-    for (core_t::TTime time = 0; time < 60 * day; time += halfHour)
-    {
-        double trend = (time > shift ? 25.0 : 0.0)
-                      + levels[(time / 86400) % 7]
-                        * (10.0 * ::sin(  boost::math::double_constants::two_pi
-                                        * static_cast<double>(time)
-                                        / static_cast<double>(day)));
-        times.push_back(time);
-        timeseries.push_back(trend);
-    }
-
-
     test::CRandomNumbers rng;
     TDoubleVec noise;
-    rng.generateNormalSamples(20.0, 16.0, times.size(), noise);
-
-    maths::CTimeSeriesDecomposition decomposition(0.01, halfHour);
+    rng.generateNormalSamples(0.0, 25.0, length / halfHour, noise);
 
     //std::ofstream file;
     //file.open("results.m");
     //TDoubleVec f;
     //TDoubleVec values;
 
-    for (std::size_t i = 0u; i < times.size(); ++i)
+    LOG_DEBUG("Linear Ramp")
     {
-        decomposition.addPoint(times[i], timeseries[i] + noise[i]);
-        decomposition.propagateForwardsTo(times[i]);
+        for (core_t::TTime time = 0; time < length; time += halfHour)
+        {
+            times.push_back(time);
+            timeseries.push_back(static_cast<double>(time) / static_cast<double>(day));
+        }
 
-        //values.push_back(timeseries[i] + noise[i]);
-        //f.push_back(maths::CBasicStatistics::mean(decomposition.baseline(times[i], 0.0)));
+        maths::CTimeSeriesDecomposition decomposition(0.024, halfHour);
+
+        double totalSumResidual = 0.0;
+        double totalMaxResidual = 0.0;
+        double totalSumValue = 0.0;
+        double totalMaxValue = 0.0;
+        core_t::TTime lastDay = times[0];
+
+        for (std::size_t i = 0u; i < times.size(); ++i)
+        {
+            decomposition.addPoint(times[i], timeseries[i] + noise[i]);
+            decomposition.propagateForwardsTo(times[i]);
+
+            if (times[i] > lastDay + day)
+            {
+                LOG_DEBUG("Processing day " << times[i]);
+
+                if (decomposition.initialized())
+                {
+                    double sumResidual = 0.0;
+                    double maxResidual = 0.0;
+                    double sumValue = 0.0;
+                    double maxValue = 0.0;
+
+                    TDoubleVec baselines;
+
+                    for (std::size_t j = i - 48; j < i; ++j)
+                    {
+                        TDoubleDoublePr baseline = decomposition.baseline(times[j], 70.0);
+                        baselines.push_back(mean(baseline));
+                        double residual = ::fabs(timeseries[j] - mean(baseline));
+                        sumResidual += residual;
+                        maxResidual = std::max(maxResidual, residual);
+                        sumValue += ::fabs(timeseries[j]);
+                        maxValue = std::max(maxValue, ::fabs(timeseries[j]));
+                    }
+
+                    LOG_DEBUG("'sum residual' / 'sum value' = "
+                              << (sumResidual == 0.0 ? 0.0 : sumResidual / sumValue));
+                    LOG_DEBUG("'max residual' / 'max value' = "
+                              << (maxResidual == 0.0 ? 0.0 : maxResidual / maxValue));
+
+                    totalSumResidual += sumResidual;
+                    totalMaxResidual += maxResidual;
+                    totalSumValue += sumValue;
+                    totalMaxValue += maxValue;
+
+                    CPPUNIT_ASSERT(sumResidual / sumValue < 0.03);
+                    CPPUNIT_ASSERT(maxResidual / maxValue < 0.04);
+                }
+                lastDay += day;
+            }
+            //values.push_back(timeseries[i] + noise[i]);
+            //f.push_back(maths::CBasicStatistics::mean(decomposition.baseline(times[i], 0.0)));
+        }
+
+        LOG_DEBUG("total 'sum residual' / 'sum value' = " << totalSumResidual / totalSumValue);
+        LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
+
+        CPPUNIT_ASSERT(totalSumResidual / totalSumValue < 0.004);
+        CPPUNIT_ASSERT(totalMaxResidual / totalMaxValue < 0.004);
+
+        //file << "t = " << core::CContainerPrinter::print(times) << ";\n";
+        //file << "f = " << core::CContainerPrinter::print(values) << ";\n";
+        //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
+        //file << "plot(t, f, 'r');\n";
+        //file << "plot(t, fe);\n";
     }
 
-    LOG_DEBUG("level = " << decomposition.level());
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(25.0, decomposition.level(), 2.0);
+    LOG_DEBUG("Saw Tooth Not Periodic");
+    {
+        core_t::TTime drops[] =
+            {
+                0, 30 *day, 50 * day, 60 * day, 85 * day, 100 * day, 115 * day, 120 * day
+            };
 
-    //file << "t = " << core::CContainerPrinter::print(times) << ";\n";
-    //file << "f = " << core::CContainerPrinter::print(values) << ";\n";
-    //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
-    //file << "plot(t, f, 'r');\n";
-    //file << "plot(t, fe);\n";
+        times.clear();
+        timeseries.clear();
+
+        {
+            std::size_t i = 0u;
+            for (core_t::TTime time = 0;
+                 time < length;
+                 time += halfHour, (time > drops[i] ? ++i : i))
+            {
+                times.push_back(time);
+                timeseries.push_back(25.0 * static_cast<double>(time - drops[i-1])
+                                          / static_cast<double>(drops[i] - drops[i-1] + 1));
+            }
+        }
+
+        maths::CTimeSeriesDecomposition decomposition(0.01, halfHour);
+
+        double totalSumResidual = 0.0;
+        double totalMaxResidual = 0.0;
+        double totalSumValue = 0.0;
+        double totalMaxValue = 0.0;
+        core_t::TTime lastDay = times[0];
+
+        for (std::size_t i = 0u; i < times.size(); ++i)
+        {
+            decomposition.addPoint(times[i], timeseries[i] + 0.3*noise[i]);
+            decomposition.propagateForwardsTo(times[i]);
+
+            if (times[i] > lastDay + day)
+            {
+                LOG_DEBUG("Processing day " << times[i]);
+
+                if (decomposition.initialized())
+                {
+                    double sumResidual = 0.0;
+                    double maxResidual = 0.0;
+                    double sumValue = 0.0;
+                    double maxValue = 0.0;
+
+                    TDoubleVec baselines;
+
+                    for (std::size_t j = i - 48; j < i; ++j)
+                    {
+                        TDoubleDoublePr baseline = decomposition.baseline(times[j], 70.0);
+                        baselines.push_back(mean(baseline));
+                        double residual = ::fabs(timeseries[j] - mean(baseline));
+                        sumResidual += residual;
+                        maxResidual = std::max(maxResidual, residual);
+                        sumValue += ::fabs(timeseries[j]);
+                        maxValue = std::max(maxValue, ::fabs(timeseries[j]));
+                    }
+
+                    LOG_DEBUG("'sum residual' / 'sum value' = "
+                              << (sumResidual == 0.0 ? 0.0 : sumResidual / sumValue));
+                    LOG_DEBUG("'max residual' / 'max value' = "
+                              << (maxResidual == 0.0 ? 0.0 : maxResidual / maxValue));
+
+                    totalSumResidual += sumResidual;
+                    totalMaxResidual += maxResidual;
+                    totalSumValue += sumValue;
+                    totalMaxValue += maxValue;
+                }
+                lastDay += day;
+            }
+            //values.push_back(timeseries[i] + 0.3*noise[i]);
+            //f.push_back(maths::CBasicStatistics::mean(decomposition.baseline(times[i], 0.0)));
+        }
+
+        LOG_DEBUG("total 'sum residual' / 'sum value' = " << totalSumResidual / totalSumValue);
+        LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
+
+        CPPUNIT_ASSERT(totalSumResidual / totalSumValue < 0.34);
+        CPPUNIT_ASSERT(totalMaxResidual / totalMaxValue < 0.37);
+
+        //file << "t = " << core::CContainerPrinter::print(times) << ";\n";
+        //file << "f = " << core::CContainerPrinter::print(values) << ";\n";
+        //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
+        //file << "plot(t, f, 'r');\n";
+        //file << "plot(t, fe);\n";
+    }
+}
+
+void CTimeSeriesDecompositionTest::testLongTermTrendAndPeriodicity(void)
+{
+    LOG_DEBUG("+-----------------------------------------------------------------+");
+    LOG_DEBUG("|  CTimeSeriesDecompositionTest::testLongTermTrendAndPeriodicity  |");
+    LOG_DEBUG("+-----------------------------------------------------------------+");
+
+    // Test long term mean reverting component plus daily periodic component.
+
+    const core_t::TTime halfHour = 1800;
+    const core_t::TTime day = 86400;
+    const core_t::TTime length = 120 * day;
+
+    TTimeVec times;
+    TDoubleVec timeseries;
+
+    for (core_t::TTime time = 0; time < length; time += halfHour)
+    {
+        times.push_back(time);
+        double x = static_cast<double>(time);
+        timeseries.push_back(150.0 + 100.0 * ::sin(  boost::math::double_constants::two_pi * x
+                                                   / static_cast<double>(240 * day)
+                                                   / (1.0 - x / static_cast<double>(2 * length)))
+                                   +  10.0 * ::sin(  boost::math::double_constants::two_pi * x
+                                                   / static_cast<double>(day)));
+    }
+
+    test::CRandomNumbers rng;
+
+    TDoubleVec noise;
+    rng.generateNormalSamples(0.0, 4.0, times.size(), noise);
+
+    std::ofstream file;
+    file.open("results.m");
+    TDoubleVec f;
+    TDoubleVec values;
+
+    maths::CTimeSeriesDecomposition decomposition(0.01, halfHour);
+
+    double totalSumResidual = 0.0;
+    double totalMaxResidual = 0.0;
+    double totalSumValue = 0.0;
+    double totalMaxValue = 0.0;
+    core_t::TTime lastDay = times[0];
+
+    for (std::size_t i = 0u; i < times.size(); ++i)
+    {
+        decomposition.addPoint(times[i], timeseries[i] + 0.3*noise[i]);
+        decomposition.propagateForwardsTo(times[i]);
+
+        if (times[i] > lastDay + day)
+        {
+            LOG_DEBUG("Processing day " << times[i]);
+
+            if (decomposition.initialized())
+            {
+                double sumResidual = 0.0;
+                double maxResidual = 0.0;
+                double sumValue = 0.0;
+                double maxValue = 0.0;
+
+                TDoubleVec baselines;
+
+                for (std::size_t j = i - 48; j < i; ++j)
+                {
+                    TDoubleDoublePr baseline = decomposition.baseline(times[j], 70.0);
+                    baselines.push_back(mean(baseline));
+                    double residual = ::fabs(timeseries[j] - mean(baseline));
+                    sumResidual += residual;
+                    maxResidual = std::max(maxResidual, residual);
+                    sumValue += ::fabs(timeseries[j]);
+                    maxValue = std::max(maxValue, ::fabs(timeseries[j]));
+                }
+
+                LOG_DEBUG("'sum residual' / 'sum value' = "
+                          << (sumResidual == 0.0 ? 0.0 : sumResidual / sumValue));
+                LOG_DEBUG("'max residual' / 'max value' = "
+                          << (maxResidual == 0.0 ? 0.0 : maxResidual / maxValue));
+
+                totalSumResidual += sumResidual;
+                totalMaxResidual += maxResidual;
+                totalSumValue += sumValue;
+                totalMaxValue += maxValue;
+
+                CPPUNIT_ASSERT(sumResidual / sumValue < 0.45);
+                CPPUNIT_ASSERT(maxResidual / maxValue < 0.50);
+            }
+            lastDay += day;
+        }
+        values.push_back(timeseries[i] + 0.3*noise[i]);
+        f.push_back(maths::CBasicStatistics::mean(decomposition.baseline(times[i], 0.0)));
+    }
+
+    LOG_DEBUG("total 'sum residual' / 'sum value' = " << totalSumResidual / totalSumValue);
+    LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
+
+    CPPUNIT_ASSERT(totalSumResidual / totalSumValue < 0.1);
+    CPPUNIT_ASSERT(totalMaxResidual / totalMaxValue < 0.1);
+
+    file << "t = " << core::CContainerPrinter::print(times) << ";\n";
+    file << "f = " << core::CContainerPrinter::print(values) << ";\n";
+    file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
+    file << "plot(t, f, 'r');\n";
+    file << "plot(t, fe);\n";
 }
 
 void CTimeSeriesDecompositionTest::testSwap(void)
@@ -1653,8 +1888,11 @@ CppUnit::Test *CTimeSeriesDecompositionTest::suite(void)
                                    "CTimeSeriesDecompositionTest::testUMichProblemCase",
                                    &CTimeSeriesDecompositionTest::testUMichProblemCase) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTimeSeriesDecompositionTest>(
-                                   "CTimeSeriesDecompositionTest::testShift",
-                                   &CTimeSeriesDecompositionTest::testShift) );
+                                   "CTimeSeriesDecompositionTest::testLongTermTrend",
+                                   &CTimeSeriesDecompositionTest::testLongTermTrend) );
+    suiteOfTests->addTest( new CppUnit::TestCaller<CTimeSeriesDecompositionTest>(
+                                   "CTimeSeriesDecompositionTest::testLongTermTrendAndPeriodicity",
+                                   &CTimeSeriesDecompositionTest::testLongTermTrendAndPeriodicity) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTimeSeriesDecompositionTest>(
                                    "CTimeSeriesDecompositionTest::testSwap",
                                    &CTimeSeriesDecompositionTest::testSwap) );

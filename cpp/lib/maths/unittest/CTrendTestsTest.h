@@ -22,6 +22,7 @@ class CTrendTestsTest : public CppUnit::TestFixture
 {
     public:
         void testTrend(void);
+        void testPiecewiseConstant(void);
         void testRandomizedPeriodicity(void);
         void testPeriodicity(void);
         void testAutocorrelations(void);

@@ -128,7 +128,7 @@ void CModelDetailsView::boxPlotForByFieldId(core_t::TTime time,
         {
             weights[0] = this->seasonalVarianceScale(feature, byFieldId, time);
             weights[1] = this->countVarianceScale(feature, byFieldId, time);
-            offset     = maths::CBasicStatistics::mean(trend->baseline(time, 0.0)) - trend->level();
+            offset     = maths::CBasicStatistics::mean(trend->baseline(time, 0.0));
         }
 
         TDouble1VecDouble1VecPr support = model_t::support(feature);

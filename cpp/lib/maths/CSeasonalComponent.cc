@@ -89,10 +89,7 @@ CSeasonalComponent::CSeasonalComponent(double decayRate,
         m_MeanVariance(0.0)
 {
     traverser.traverseSubLevel(boost::bind(&CSeasonalComponent::acceptRestoreTraverser,
-                                           this,
-                                           decayRate,
-                                           minimumBucketLength,
-                                           _1));
+                                           this, decayRate, minimumBucketLength, _1));
 }
 
 bool CSeasonalComponent::acceptRestoreTraverser(double decayRate,
@@ -141,11 +138,9 @@ void CSeasonalComponent::acceptPersistInserter(core::CStatePersistInserter &inse
 {
     inserter.insertValue(SPACE_TAG, m_Space);
     inserter.insertValue(BOUNDARY_CONDITION_TAG, static_cast<int>(m_BoundaryCondition));
-    inserter.insertLevel(BUCKETING_TAG,
-                         boost::bind(&CSeasonalComponentAdaptiveBucketing::acceptPersistInserter,
-                                     &m_Bucketing, _1));
-    inserter.insertLevel(SPLINES_TAG,
-                         boost::bind(&CPackedSplines::acceptPersistInserter, &m_Splines, _1));
+    inserter.insertLevel(BUCKETING_TAG, boost::bind(
+                             &CSeasonalComponentAdaptiveBucketing::acceptPersistInserter, &m_Bucketing, _1));
+    inserter.insertLevel(SPLINES_TAG, boost::bind(&CPackedSplines::acceptPersistInserter, &m_Splines, _1));
 }
 
 bool CSeasonalComponent::initialized(void) const
@@ -190,9 +185,11 @@ void CSeasonalComponent::clear(void)
     }
 }
 
-void CSeasonalComponent::resetVariance(double variance)
+void CSeasonalComponent::shift(double shift)
 {
-    m_Bucketing.resetVariances(variance);
+    m_Bucketing.shiftValue(shift);
+    m_Splines.shift(CPackedSplines::E_Value, shift);
+    m_MeanValue += shift;
 }
 
 void CSeasonalComponent::add(core_t::TTime time, double value, double weight)
@@ -200,15 +197,9 @@ void CSeasonalComponent::add(core_t::TTime time, double value, double weight)
     m_Bucketing.add(time, value, weight);
 }
 
-void CSeasonalComponent::interpolate(core_t::TTime time, double weight, bool refine)
+void CSeasonalComponent::interpolate(core_t::TTime time, bool refine)
 {
-    if (weight <= 0.0 || weight > 1.0)
-    {
-        LOG_ERROR("Bad weight " << weight << " ignoring");
-        weight = 1.0;
-    }
-
-    if (weight == 1.0 && refine)
+    if (refine)
     {
         m_Bucketing.refine(time);
     }
@@ -222,18 +213,6 @@ void CSeasonalComponent::interpolate(core_t::TTime time, double weight, bool ref
     TDoubleVec values;
     TDoubleVec variances;
     m_Bucketing.knots(time, m_BoundaryCondition, knots, values, variances);
-    if (weight != 1.0)
-    {
-        double alpha = 1.0 - weight;
-        double beta  = weight;
-        TSplineCRef value = this->valueSpline();
-        TSplineCRef variance = this->varianceSpline();
-        for (std::size_t i = 0u; i < knots.size(); ++i)
-        {
-            values[i]    = alpha * value.value(knots[i]) + beta * values[i];
-            variances[i] = alpha * variance.value(knots[i]) + beta * variances[i];
-        }
-    }
     m_Splines.interpolate(knots, values, variances, m_BoundaryCondition);
     m_MeanValue = this->valueSpline().mean();
     m_MeanVariance = this->varianceSpline().mean();
@@ -506,6 +485,14 @@ void CSeasonalComponent::CPackedSplines::clear(void)
 {
     this->spline(E_Value).clear();
     this->spline(E_Variance).clear();
+}
+
+void CSeasonalComponent::CPackedSplines::shift(ESpline spline, double shift)
+{
+    for (std::size_t i = 0u; i < m_Values[static_cast<std::size_t>(spline)].size(); ++i)
+    {
+        m_Values[static_cast<std::size_t>(spline)][i] += shift;
+    }
 }
 
 CSeasonalComponent::TSplineCRef CSeasonalComponent::CPackedSplines::spline(ESpline spline) const

@@ -21,14 +21,16 @@
 class CRegressionTest : public CppUnit::TestFixture
 {
     public:
-        void testLeastSquareOnlineInvariants(void);
-        void testLeastSquareOnlineFit(void);
-        void testLeastSquareOnlineShift(void);
-        void testLeastSquareOnlineAge(void);
+        void testInvariants(void);
+        void testFit(void);
+        void testShiftAbscissa(void);
+        void testShiftOrdinate(void);
+        void testAge(void);
         void testPrediction(void);
         void testCombination(void);
         void testSingular(void);
         void testScale(void);
+        void testMean(void);
         void testCovariances(void);
         void testPersist(void);
 

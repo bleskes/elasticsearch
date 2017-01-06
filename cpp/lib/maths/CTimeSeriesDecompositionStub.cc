@@ -21,6 +21,7 @@ namespace prelert
 {
 namespace maths
 {
+typedef std::pair<double, double> TDoubleDoublePr;
 
 CTimeSeriesDecompositionStub *CTimeSeriesDecompositionStub::clone(void) const
 {
@@ -73,15 +74,10 @@ double CTimeSeriesDecompositionStub::mean(void) const
     return 0.0;
 }
 
-double CTimeSeriesDecompositionStub::level(void) const
-{
-    return 0.0;
-}
-
-CTimeSeriesDecompositionStub::TDoubleDoublePr
-    CTimeSeriesDecompositionStub::baseline(core_t::TTime /*time*/,
-                                           double /*confidence*/,
-                                           bool /*smooth*/) const
+TDoubleDoublePr CTimeSeriesDecompositionStub::baseline(core_t::TTime /*time*/,
+                                                       double /*confidence*/,
+                                                       EComponents /*components*/,
+                                                       bool /*smooth*/) const
 {
     return TDoubleDoublePr(0.0, 0.0);
 }
@@ -98,10 +94,9 @@ double CTimeSeriesDecompositionStub::meanVariance(void) const
     return 0.0;
 }
 
-CTimeSeriesDecompositionStub::TDoubleDoublePr
-    CTimeSeriesDecompositionStub::scale(core_t::TTime /*time*/,
-                                        double /*variance*/,
-                                        double /*confidence*/) const
+TDoubleDoublePr CTimeSeriesDecompositionStub::scale(core_t::TTime /*time*/,
+                                                    double /*variance*/,
+                                                    double /*confidence*/) const
 {
     return TDoubleDoublePr(1.0, 1.0);
 }
@@ -140,8 +135,7 @@ std::size_t CTimeSeriesDecompositionStub::staticSize(void) const
     return sizeof(*this);
 }
 
-const CTimeSeriesDecompositionStub::TComponentVec &
-    CTimeSeriesDecompositionStub::seasonalComponents(void) const
+const CTimeSeriesDecompositionStub::TComponentVec &CTimeSeriesDecompositionStub::seasonalComponents(void) const
 {
     static const TComponentVec NO_COMPONENTS;
     return NO_COMPONENTS;

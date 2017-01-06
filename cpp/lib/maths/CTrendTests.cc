@@ -55,30 +55,29 @@ typedef std::vector<core_t::TTime> TTimeVec;
 typedef std::pair<double, double> TDoubleDoublePr;
 typedef std::pair<std::size_t, std::size_t> TSizeSizePr;
 typedef std::vector<TSizeSizePr> TSizeSizePrVec;
-typedef CTrendTests::TMeanAccumulator TMeanAccumulator;
+typedef boost::array<CFloatStorage, 2> TFloatArray;
+typedef CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;
+typedef std::vector<TMeanAccumulator> TMeanAccumulatorVec;
 typedef CTrendTests::TMeanVarAccumulator TMeanVarAccumulator;
 typedef CTrendTests::TFloatMeanAccumulator TFloatMeanAccumulator;
 typedef CTrendTests::TFloatMeanAccumulatorVec TFloatMeanAccumulatorVec;
 typedef CTrendTests::CPeriodicity::TTimeTimePr2Vec TTimeTimePr2Vec;
 typedef CTrendTests::TTimeTimePrMeanVarAccumulatorPrVec TTimeTimePrMeanVarAccumulatorPrVec;
 
-const core_t::TTime HOUR     = 3600;
+const core_t::TTime HOUR     = core::constants::HOUR;
 const core_t::TTime DAY      = core::constants::DAY;
 const core_t::TTime WEEKEND  = core::constants::WEEKEND;
 const core_t::TTime WEEKDAYS = core::constants::WEEKDAYS;
 const core_t::TTime WEEK     = core::constants::WEEK;
 
-//! Compute the \p percentage % confidence interval for a chi-squared
-//! random variable with \p n - 1 degrees of freedom.
-TDoubleDoublePr chiSquaredInterval(double n, double percentage)
+//! Compute the \p percentage % for the mean of \p n normal random
+//! variables with variance \p variance.
+double meanAtPercentile(double mean, double variance, double n, double percentage)
 {
     try
     {
-        double a = (100.0 - percentage) / 200.0;
-        double b = (100.0 + percentage) / 200.0;
-        boost::math::chi_squared_distribution<> chi(n - 1.0);
-        return std::make_pair(boost::math::quantile(chi, a) / (n - 1.0),
-                              boost::math::quantile(chi, b) / (n - 1.0));
+        boost::math::normal_distribution<> normal(mean, ::sqrt(variance / n));
+        return boost::math::quantile(normal, percentage / 100.0);
     }
     catch (const std::exception &e)
     {
@@ -86,7 +85,7 @@ TDoubleDoublePr chiSquaredInterval(double n, double percentage)
                   << ", n = " << n
                   << ", percentage = " << percentage);
     }
-    return std::make_pair(1.0, 1.0);
+    return mean;
 }
 
 //! Compute the \p percentage % variance for a chi-squared random
@@ -357,7 +356,7 @@ double minimumAutocorrelation(double variance,
                               double autocorrelationThreshold)
 {
     return CTools::truncate(1.0 - 0.5 * (variance - varianceThreshold)
-                                       / varianceThreshold, 0.4, 1.0)
+                                       / varianceThreshold, 0.8, 1.0)
          * autocorrelationThreshold;
 }
 
@@ -395,13 +394,23 @@ double remainderAutocorrelation(std::size_t offset,
 }
 
 // CTrend
-const std::string LOCAL_VARIANCE_TAG("a");
-const std::string MEAN_LOCAL_VARIANCE_TAG("b");
-const std::string PERIOD_VARIANCE_TAG("c");
+const std::string DECAY_RATE_TAG("a");
+const std::string TIME_ORIGIN_TAG("b");
+const std::string TREND_TAG("c");
+const std::string VARIANCES_TAG("d");
+
+// CPiecewiseConstant
+const std::string RNG_TAG("a");
+const std::string BUCKET_LENGTH_TAG("b");
+const std::string PROBABILITY_TAG("c");
+const std::string NEXT_SAMPLE_TIME_TAG("d");
+const std::string SAMPLES_TAG("e");
+const std::string LEVEL_TAG("f");
+const std::string VARIANCE_TAG("g");
 
 // CRandomizedPeriodicity
 // statics
-const std::string RNG_TAG("a");
+//const std::string RNG_TAG("a");
 const std::string DAY_RANDOM_PROJECTIONS_TAG("b");
 const std::string DAY_PERIODIC_PROJECTIONS_TAG("c");
 const std::string DAY_RESAMPLED_TAG("d");
@@ -418,8 +427,8 @@ const std::string WEEK_STATISTICS_TAG("e");
 const std::string WEEK_REFRESHED_PROJECTIONS_TAG("f");
 
 // CPeriodicity
-const std::string BUCKET_LENGTH_TAG("a");
-const std::string WINDOW_TAG("b");
+const std::string WINDOW_TAG("a");
+//const std::string BUCKET_LENGTH_TAG("b");
 const std::string PERIODS_TAG("c");
 const std::string PARTITION_TAG("d");
 const std::string BUCKET_VALUE_TAG("e");
@@ -428,91 +437,356 @@ const std::string BUCKET_VALUE_TAG("e");
 const std::string START_OF_PARTITION_TAG("a");
 const std::string HAS_PERIODS_TAG("b");
 
+//! The maximum significance of a test statistic.
+const double MAXIMUM_SIGNIFICANCE = 0.005;
+//! The confidence interval used for test statistic values.
+const double CONFIDENCE_INTERVAL = 80.0;
+
 }
+
+CTrendTests::CTrend::CTrend(double decayRate) :
+        m_DecayRate(decayRate),
+        m_TimeOrigin(boost::numeric::bounds<core_t::TTime>::lowest())
+{}
 
 bool CTrendTests::CTrend::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
 {
     do
     {
         const std::string &name = traverser.name();
-        RESTORE(LOCAL_VARIANCE_TAG, m_LocalVariance.fromDelimited(traverser.value()))
-        RESTORE(MEAN_LOCAL_VARIANCE_TAG, m_MeanLocalVariance.fromDelimited(traverser.value()))
-        RESTORE(PERIOD_VARIANCE_TAG, m_Variance.fromDelimited(traverser.value()))
+        RESTORE_BUILT_IN(DECAY_RATE_TAG, m_DecayRate)
+        RESTORE_BUILT_IN(TIME_ORIGIN_TAG, m_TimeOrigin)
+        RESTORE(TREND_TAG, traverser.traverseSubLevel(
+                               boost::bind(&TRegression::acceptRestoreTraverser, &m_Trend, _1)))
+        RESTORE(VARIANCES_TAG, m_Variances.fromDelimited(traverser.value()))
     }
     while (traverser.next());
-
     return true;
 }
 
 void CTrendTests::CTrend::acceptPersistInserter(core::CStatePersistInserter &inserter) const
 {
-    inserter.insertValue(LOCAL_VARIANCE_TAG, m_LocalVariance.toDelimited());
-    inserter.insertValue(MEAN_LOCAL_VARIANCE_TAG, m_MeanLocalVariance.toDelimited());
-    inserter.insertValue(PERIOD_VARIANCE_TAG, m_Variance.toDelimited());
+    inserter.insertValue(DECAY_RATE_TAG, m_DecayRate);
+    inserter.insertValue(TIME_ORIGIN_TAG, m_TimeOrigin);
+    inserter.insertLevel(TREND_TAG, boost::bind(&TRegression::acceptPersistInserter, &m_Trend, _1));
+    inserter.insertValue(VARIANCES_TAG, m_Variances.toDelimited());
 }
 
-void CTrendTests::CTrend::add(double x, double weight)
+void CTrendTests::CTrend::decayRate(double decayRate)
 {
-    m_LocalVariance.add(x, weight);
-    m_Variance.add(x, weight);
-    if (CBasicStatistics::count(m_LocalVariance) >= LOCAL_SIZE)
-    {
-        m_MeanLocalVariance.add(CBasicStatistics::variance(m_LocalVariance));
-        m_LocalVariance = TMeanVarAccumulator();
-    }
+    m_DecayRate = decayRate;
 }
 
-void CTrendTests::CTrend::age(double factor)
+void CTrendTests::CTrend::propagateForwardsByTime(double time)
 {
-    m_MeanLocalVariance.age(factor);
-    m_Variance.age(factor);
+    if (!CMathsFuncs::isFinite(time) || time < 0.0)
+    {
+        LOG_ERROR("Bad propagation time " << time);
+        return;
+    }
+
+    double factor = ::exp(-m_DecayRate * time);
+
+    m_Trend.age(factor);
+    m_Variances.age(factor);
 }
 
-CTrendTests::ETernaryBool CTrendTests::CTrend::hasTrend(void) const
+void CTrendTests::CTrend::add(core_t::TTime time, double value, double weight)
 {
-    double n = LOCAL_SIZE * CBasicStatistics::count(m_MeanLocalVariance);
-    if (n == 0.0 || CBasicStatistics::count(m_Variance) == 0.0)
+    if (time - 3 * WEEK >= m_TimeOrigin)
     {
-        return E_Undetermined;
+        LOG_TRACE("shifting");
+        m_Trend.shiftAbscissa(-this->time(time));
+        m_TimeOrigin = time;
     }
+    m_Trend.add(this->time(time), value, weight);
+}
 
-    if (CBasicStatistics::variance(m_Variance) == 0.0)
-    {
-        return E_False;
-    }
+void CTrendTests::CTrend::captureVariance(core_t::TTime time, double value, double weight)
+{
+    double prediction = CRegression::predict(m_Trend, this->time(time));
+    TVector values;
+    values(0) = value;
+    values(1) = value - prediction;
+    m_Variances.add(values, weight);
+}
 
-    double localVariance = CBasicStatistics::mean(m_MeanLocalVariance);
-    double totalVariance = CBasicStatistics::variance(m_Variance);
-    TDoubleDoublePr interval = chiSquaredInterval(n, 80.0);
+void CTrendTests::CTrend::shift(double shift)
+{
+    m_Trend.shiftOrdinate(shift);
+}
 
-    LOG_TRACE("localVariance = " << localVariance
-              << ", totalVariance = " << totalVariance
-              << ", interval = (" << interval.first << "," << interval.second << ")");
+bool CTrendTests::CTrend::test(void) const
+{
+    double n  = CBasicStatistics::count(m_Variances);
+    double d0 = n - 1.0;
+    double d1 = n - ORDER - 1.0;
+    double v0 = CBasicStatistics::maximumLikelihoodVariance(m_Variances)(0);
+    double v1 = CBasicStatistics::maximumLikelihoodVariance(m_Variances)(1);
+    return   d1 > 0.0
+          && varianceAtPercentile(v1, n, 80.0) < HAS_TREND_VARIANCE_RATIO * v0
+          && CStatisticalTests::fTest(v1 / v0, d1, d0) <= MAXIMUM_SIGNIFICANCE;
+}
 
-    if (  (interval.second * localVariance)
-        / (interval.first  * totalVariance) < HAS_TREND_VARIANCE_RATIO)
-    {
-        return E_True;
-    }
-    else if (  (interval.first  * localVariance)
-             / (interval.second * totalVariance) > (1.0 + TEST_HYSTERESIS)
-                                                   * HAS_TREND_VARIANCE_RATIO)
-    {
-        return E_False;
-    }
-    return E_Undetermined;
+const CTrendTests::CTrend::TRegression &CTrendTests::CTrend::trend(void) const
+{
+    return m_Trend;
+}
+
+core_t::TTime CTrendTests::CTrend::origin(void) const
+{
+    return m_TimeOrigin;
+}
+
+double CTrendTests::CTrend::variance(void) const
+{
+    return CBasicStatistics::maximumLikelihoodVariance(m_Variances)(1);
 }
 
 uint64_t CTrendTests::CTrend::checksum(uint64_t seed) const
 {
-    seed = CChecksum::calculate(seed, m_LocalVariance);
-    seed = CChecksum::calculate(seed, m_MeanLocalVariance);
+    seed = CChecksum::calculate(seed, m_DecayRate);
+    seed = CChecksum::calculate(seed, m_TimeOrigin);
+    seed = CChecksum::calculate(seed, m_Trend);
+    return CChecksum::calculate(seed, m_Variances);
+}
+
+double CTrendTests::CTrend::time(core_t::TTime time) const
+{
+    return static_cast<double>(time - m_TimeOrigin) / static_cast<double>(WEEK);
+}
+
+const double CTrendTests::CTrend::HAS_TREND_VARIANCE_RATIO = 0.5;
+
+
+CTrendTests::CPiecewiseConstant::CPiecewiseConstant(core_t::TTime bucketLength,
+                                                    std::size_t n,
+                                                    double p,
+                                                    double decayRate) :
+        m_DecayRate(decayRate),
+        m_BucketLength(bucketLength),
+        m_P(CTools::truncate(p, 1e-10, 1.0)),
+        m_NextSampleTime(boost::numeric::bounds<core_t::TTime>::lowest()),
+        m_Samples(std::max(n, std::size_t(8))),
+        m_Level(0.0),
+        m_Variance(0.0)
+{}
+
+void CTrendTests::CPiecewiseConstant::swap(CPiecewiseConstant &other)
+{
+    std::swap(m_Rng, other.m_Rng);
+    std::swap(m_DecayRate, other.m_DecayRate);
+    std::swap(m_BucketLength, other.m_BucketLength);
+    std::swap(m_P, other.m_P);
+    std::swap(m_NextSampleTime, other.m_NextSampleTime);
+    m_Samples.swap(other.m_Samples);
+    std::swap(m_Level, other.m_Level);
+    std::swap(m_Variance, other.m_Variance);
+}
+
+bool CTrendTests::CPiecewiseConstant::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
+{
+    do
+    {
+        const std::string &name = traverser.name();
+        RESTORE(RNG_TAG, m_Rng.fromString(traverser.value()))
+        RESTORE_BUILT_IN(BUCKET_LENGTH_TAG, m_BucketLength)
+        RESTORE(PROBABILITY_TAG, m_P.fromString(traverser.value()))
+        RESTORE_BUILT_IN(NEXT_SAMPLE_TIME_TAG, m_NextSampleTime)
+        RESTORE(SAMPLES_TAG, core::CPersistUtils::fromString(traverser.value(),
+                                                             CFloatStorage::CFromString(),
+                                                             m_Samples))
+        RESTORE_BUILT_IN(LEVEL_TAG, m_Level)
+        RESTORE(VARIANCE_TAG, m_Variance.fromDelimited(traverser.value()))
+    }
+    while (traverser.next());
+    return true;
+}
+
+void CTrendTests::CPiecewiseConstant::acceptPersistInserter(core::CStatePersistInserter &inserter) const
+{
+    inserter.insertValue(RNG_TAG, m_Rng.toString());
+    inserter.insertValue(BUCKET_LENGTH_TAG, m_BucketLength);
+    inserter.insertValue(PROBABILITY_TAG, m_P.toString());
+    inserter.insertValue(NEXT_SAMPLE_TIME_TAG, m_NextSampleTime);
+    inserter.insertValue(SAMPLES_TAG, core::CPersistUtils::toString(m_Samples, CFloatStorage::CToString()));
+    inserter.insertValue(LEVEL_TAG, m_Level);
+    inserter.insertValue(VARIANCE_TAG, m_Variance.toDelimited());
+}
+
+void CTrendTests::CPiecewiseConstant::clear(void)
+{
+    m_Samples.clear();
+}
+
+void CTrendTests::CPiecewiseConstant::decayRate(double decayRate)
+{
+    m_DecayRate = decayRate;
+}
+
+void CTrendTests::CPiecewiseConstant::propagateForwardsByTime(double time)
+{
+    if (time < 0.0)
+    {
+        LOG_ERROR("Can't propagate bucketing backwards in time");
+        return;
+    }
+
+    double factor = ::exp(-m_DecayRate * time);
+    m_Variance.age(factor);
+}
+
+void CTrendTests::CPiecewiseConstant::add(core_t::TTime time, double value)
+{
+    if (time > m_NextSampleTime)
+    {
+        if (m_Samples.size() + 1 == m_Samples.capacity())
+        {
+            TMeanAccumulator level;
+            for (std::size_t i = 0u; i < m_Samples.size(); ++i)
+            {
+                level.add(m_Samples[i]);
+            }
+            level.add(value);
+            m_Level = CBasicStatistics::mean(level);
+        }
+
+        m_Samples.push_back(value);
+        m_NextSampleTime = time + static_cast<core_t::TTime>(
+                CSampling::uniformSample(m_Rng, 0.5 / m_P, 1.5 / m_P) + 0.5) * m_BucketLength;
+    }
+}
+
+CTrendTests::CPiecewiseConstant::CResult CTrendTests::CPiecewiseConstant::captureVarianceAndTest(void)
+{
+    std::size_t n = m_Samples.size();
+
+    if (n < m_Samples.capacity())
+    {
+        return CResult();
+    }
+
+    LOG_TRACE("Testing for level shift");
+
+    std::size_t a = n / 8, b = (7 * n) / 8;
+
+    TMeanAccumulator l0;
+    TMeanAccumulator l1;
+    TMeanVarAccumulator l2;
+
+    for (std::size_t i = 0; i < a; ++i)
+    {
+        double r = m_Samples[i] - m_Level;
+        l0.add(r * r);
+        l1.add(r * r);
+    }
+    for (std::size_t i = a; i < n; ++i)
+    {
+        double r = m_Samples[i] - m_Level;
+        l0.add(r * r);
+        l2.add(m_Samples[i]);
+    }
+
+    double v0 = CBasicStatistics::mean(l0);
+    double v1 = boost::numeric::bounds<double>::highest();
+    double l  = 0.0;
+    double nl = 0.0;
+    double vl = 0.0;
+    double n_ = static_cast<double>(n);
+    std::size_t knot = 0;
+
+    if (v0 < std::max(1e-4 * m_Level, 1e-12))
+    {
+        m_Variance += CBasicStatistics::accumulator(1.0, v0);
+        return CResult();
+    }
+
+    LOG_TRACE("samples = " << core::CContainerPrinter::print(m_Samples));
+
+    for (std::size_t i = a; i < b; ++i)
+    {
+        double vi = CBasicStatistics::mean(
+                        l1 + CBasicStatistics::accumulator(CBasicStatistics::count(l2),
+                                                           CBasicStatistics::maximumLikelihoodVariance(l2)));
+
+        if (vi < v1)
+        {
+            v1 = vi;
+            l  = CBasicStatistics::mean(l2);
+            nl = CBasicStatistics::count(l2);
+            vl = CBasicStatistics::maximumLikelihoodVariance(l2);
+            knot = i;
+        }
+        double r = m_Samples[i] - m_Level;
+        l1.add(r * r);
+        l2 -= CBasicStatistics::accumulator(1.0, static_cast<double>(m_Samples[i]), 0.0);
+    }
+
+    double threshold = 3.0 * ::sqrt(CBasicStatistics::mean(
+                                        m_Variance + CBasicStatistics::accumulator(1.0, v1)));
+
+    double sign = CTools::sign(l - m_Level);
+    double shift = std::max(sign * meanAtPercentile(l - m_Level, vl, nl,
+                                                    50.0 + sign / 2.0 * CONFIDENCE_INTERVAL), 0.0);
+
+    LOG_TRACE("knot = " << knot);
+    LOG_TRACE("threshold = " << threshold);
+    LOG_TRACE("shift = " << shift);
+    LOG_TRACE("v0 = " << v0 << " v1 = " << v1);
+    LOG_TRACE("significance = " << CStatisticalTests::fTest(v1 / v0, n_ - 2.0, n_ - 1.0));
+
+    bool even   = knot >= (3 * n) / 8 && knot <= (5 * n) / 8;
+    bool passed = shift > threshold && CStatisticalTests::fTest(
+                                           v1 / v0, n_ - 2.0, n_ - 1.0) < MAXIMUM_SIGNIFICANCE;
+
+    double oldLevel = m_Level;
+
+    if (even)
+    {
+        m_Variance += CBasicStatistics::accumulator(1.0, passed ? v1 : v0);
+        m_Level     = passed ? l : m_Level;
+    }
+
+    return CResult(passed ? (even ? E_True : E_Undetermined) : E_False, m_Level, m_Level - oldLevel);
+}
+
+uint64_t CTrendTests::CPiecewiseConstant::checksum(uint64_t seed) const
+{
+    seed = CChecksum::calculate(seed, m_DecayRate);
+    seed = CChecksum::calculate(seed, m_BucketLength);
+    seed = CChecksum::calculate(seed, m_P);
+    seed = CChecksum::calculate(seed, m_NextSampleTime);
+    seed = CChecksum::calculate(seed, m_Samples);
+    seed = CChecksum::calculate(seed, m_Level);
     return CChecksum::calculate(seed, m_Variance);
 }
 
-const double CTrendTests::CTrend::LOCAL_SIZE = 2.0;
-const double CTrendTests::CTrend::HAS_TREND_VARIANCE_RATIO = 0.5;
-const double CTrendTests::CTrend::TEST_HYSTERESIS = 0.1;
+CTrendTests::CPiecewiseConstant::CResult::CResult(void) :
+        m_FoundShift(E_False),
+        m_Level(0.0),
+        m_Shift(0.0)
+{}
+
+CTrendTests::CPiecewiseConstant::CResult::CResult(ETernaryBool foundShift, double level, double shift) :
+        m_FoundShift(foundShift),
+        m_Level(level),
+        m_Shift(shift)
+{}
+
+CTrendTests::ETernaryBool CTrendTests::CPiecewiseConstant::CResult::value(void) const
+{
+    return m_FoundShift;
+}
+
+double CTrendTests::CPiecewiseConstant::CResult::level(void) const
+{
+    return m_Level;
+}
+
+double CTrendTests::CPiecewiseConstant::CResult::shift(void) const
+{
+    return m_Shift;
+}
 
 
 CTrendTests::CRandomizedPeriodicity::CRandomizedPeriodicity(void) :
@@ -520,92 +794,6 @@ CTrendTests::CRandomizedPeriodicity::CRandomizedPeriodicity(void) :
         m_WeekRefreshedProjections(-DAY_RESAMPLE_INTERVAL)
 {
     resample(0);
-}
-
-void CTrendTests::CRandomizedPeriodicity::add(core_t::TTime time, double value)
-{
-    resample(time);
-
-    if (time >= m_DayRefreshedProjections + DAY_RESAMPLE_INTERVAL)
-    {
-        LOG_TRACE("Updating day statistics");
-        updateStatistics(m_DayProjections, m_DayStatistics);
-        m_DayRefreshedProjections = CIntegerTools::floor(time, DAY_RESAMPLE_INTERVAL);
-    }
-    if (time >= m_WeekRefreshedProjections + WEEK_RESAMPLE_INTERVAL)
-    {
-        LOG_TRACE("Updating week statistics");
-        updateStatistics(m_WeekProjections, m_WeekStatistics);
-        m_WeekRefreshedProjections = CIntegerTools::floor(time, WEEK_RESAMPLE_INTERVAL);
-    }
-
-    TVector2N daySample;
-    TVector2N weekSample;
-    std::size_t td = static_cast<std::size_t>( (time % DAY_RESAMPLE_INTERVAL)
-                                              / SAMPLE_INTERVAL);
-    std::size_t d  = static_cast<std::size_t>( (time % DAY)
-                                              / SAMPLE_INTERVAL);
-    std::size_t tw = static_cast<std::size_t>( (time % WEEK_RESAMPLE_INTERVAL)
-                                              / SAMPLE_INTERVAL);
-    std::size_t w  = static_cast<std::size_t>( (time % WEEK)
-                                              / SAMPLE_INTERVAL);
-
-    for (std::size_t i = 0u; i < N; ++i)
-    {
-        daySample(2*i+0)  = ms_DayRandomProjections[i][td] * value;
-        daySample(2*i+1)  = ms_DayPeriodicProjections[i][d] * value;
-        weekSample(2*i+0) = ms_WeekRandomProjections[i][tw] * value;
-        weekSample(2*i+1) = ms_WeekPeriodicProjections[i][w] * value;
-    }
-
-    m_DayProjections.add(daySample);
-    m_WeekProjections.add(weekSample);
-}
-
-bool CTrendTests::CRandomizedPeriodicity::test(void) const
-{
-    static const double SIGNIFICANCE = 1e-3;
-
-    try
-    {
-        double nd = CBasicStatistics::count(m_DayStatistics);
-        if (nd >= 1.0)
-        {
-            TVector2 S = CBasicStatistics::mean(m_DayStatistics);
-            LOG_TRACE("Day test statistic, S = " << S << ", n = " << nd);
-            double ratio = S(0) == S(1) ?
-                           1.0 : (S(0) == 0.0 ? boost::numeric::bounds<double>::highest() :
-                                                static_cast<double>(S(1) / S(0)));
-            double significance = 1.0 - CStatisticalTests::fTest(ratio, nd, nd);
-            LOG_TRACE("Daily significance = " << significance);
-            if (significance < SIGNIFICANCE)
-            {
-                return true;
-            }
-        }
-
-        double nw = CBasicStatistics::count(m_WeekStatistics);
-        if (nw >= 1.0)
-        {
-            TVector2 S = CBasicStatistics::mean(m_WeekStatistics);
-            LOG_TRACE("Week test statistic, S = " << S);
-            double ratio = S(0) == S(1) ?
-                           1.0 : (S(0) == 0.0 ? boost::numeric::bounds<double>::highest() :
-                                                static_cast<double>(S(1) / S(0)));
-            double significance = 1.0 - CStatisticalTests::fTest(ratio, nw, nw);
-            LOG_TRACE("Weekly significance = " << significance);
-            if (significance < SIGNIFICANCE)
-            {
-                return true;
-            }
-        }
-    }
-    catch (const std::exception &e)
-    {
-        LOG_ERROR("Failed to test for periodicity: " << e.what());
-    }
-
-    return false;
 }
 
 bool CTrendTests::CRandomizedPeriodicity::staticsAcceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
@@ -729,6 +917,92 @@ void CTrendTests::CRandomizedPeriodicity::acceptPersistInserter(core::CStatePers
     inserter.insertValue(WEEK_PROJECTIONS_TAG, m_WeekProjections.toDelimited());
     inserter.insertValue(WEEK_STATISTICS_TAG, m_WeekStatistics.toDelimited());
     inserter.insertValue(WEEK_REFRESHED_PROJECTIONS_TAG, m_WeekRefreshedProjections);
+}
+
+void CTrendTests::CRandomizedPeriodicity::add(core_t::TTime time, double value)
+{
+    resample(time);
+
+    if (time >= m_DayRefreshedProjections + DAY_RESAMPLE_INTERVAL)
+    {
+        LOG_TRACE("Updating day statistics");
+        updateStatistics(m_DayProjections, m_DayStatistics);
+        m_DayRefreshedProjections = CIntegerTools::floor(time, DAY_RESAMPLE_INTERVAL);
+    }
+    if (time >= m_WeekRefreshedProjections + WEEK_RESAMPLE_INTERVAL)
+    {
+        LOG_TRACE("Updating week statistics");
+        updateStatistics(m_WeekProjections, m_WeekStatistics);
+        m_WeekRefreshedProjections = CIntegerTools::floor(time, WEEK_RESAMPLE_INTERVAL);
+    }
+
+    TVector2N daySample;
+    TVector2N weekSample;
+    std::size_t td = static_cast<std::size_t>( (time % DAY_RESAMPLE_INTERVAL)
+                                              / SAMPLE_INTERVAL);
+    std::size_t d  = static_cast<std::size_t>( (time % DAY)
+                                              / SAMPLE_INTERVAL);
+    std::size_t tw = static_cast<std::size_t>( (time % WEEK_RESAMPLE_INTERVAL)
+                                              / SAMPLE_INTERVAL);
+    std::size_t w  = static_cast<std::size_t>( (time % WEEK)
+                                              / SAMPLE_INTERVAL);
+
+    for (std::size_t i = 0u; i < N; ++i)
+    {
+        daySample(2*i+0)  = ms_DayRandomProjections[i][td] * value;
+        daySample(2*i+1)  = ms_DayPeriodicProjections[i][d] * value;
+        weekSample(2*i+0) = ms_WeekRandomProjections[i][tw] * value;
+        weekSample(2*i+1) = ms_WeekPeriodicProjections[i][w] * value;
+    }
+
+    m_DayProjections.add(daySample);
+    m_WeekProjections.add(weekSample);
+}
+
+bool CTrendTests::CRandomizedPeriodicity::test(void) const
+{
+    static const double SIGNIFICANCE = 1e-3;
+
+    try
+    {
+        double nd = CBasicStatistics::count(m_DayStatistics);
+        if (nd >= 1.0)
+        {
+            TVector2 S = CBasicStatistics::mean(m_DayStatistics);
+            LOG_TRACE("Day test statistic, S = " << S << ", n = " << nd);
+            double ratio = S(0) == S(1) ?
+                           1.0 : (S(0) == 0.0 ? boost::numeric::bounds<double>::highest() :
+                                                static_cast<double>(S(1) / S(0)));
+            double significance = 1.0 - CStatisticalTests::fTest(ratio, nd, nd);
+            LOG_TRACE("Daily significance = " << significance);
+            if (significance < SIGNIFICANCE)
+            {
+                return true;
+            }
+        }
+
+        double nw = CBasicStatistics::count(m_WeekStatistics);
+        if (nw >= 1.0)
+        {
+            TVector2 S = CBasicStatistics::mean(m_WeekStatistics);
+            LOG_TRACE("Week test statistic, S = " << S);
+            double ratio = S(0) == S(1) ?
+                           1.0 : (S(0) == 0.0 ? boost::numeric::bounds<double>::highest() :
+                                                static_cast<double>(S(1) / S(0)));
+            double significance = 1.0 - CStatisticalTests::fTest(ratio, nw, nw);
+            LOG_TRACE("Weekly significance = " << significance);
+            if (significance < SIGNIFICANCE)
+            {
+                return true;
+            }
+        }
+    }
+    catch (const std::exception &e)
+    {
+        LOG_ERROR("Failed to test for periodicity: " << e.what());
+    }
+
+    return false;
 }
 
 void CTrendTests::CRandomizedPeriodicity::reset(void)
@@ -876,10 +1150,8 @@ void CTrendTests::CPeriodicity::swap(CPeriodicity &other)
     m_BucketValues.swap(other.m_BucketValues);
 }
 
-bool CTrendTests::CPeriodicity::acceptRestoreTraverser(double decayRate,
-                                                       core::CStateRestoreTraverser &traverser)
+bool CTrendTests::CPeriodicity::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
 {
-    m_DecayRate = decayRate;
     do
     {
         const std::string &name = traverser.name();
@@ -970,11 +1242,11 @@ void CTrendTests::CPeriodicity::propagateForwardsByTime(double time)
         return;
     }
 
-    double alpha  = ::exp(-m_DecayRate * time);
+    double factor  = ::exp(-m_DecayRate * time);
 
     for (std::size_t i = 0u; i < m_BucketValues.size(); ++i)
     {
-        m_BucketValues[i].age(alpha);
+        m_BucketValues[i].age(factor);
     }
 }
 
@@ -1077,7 +1349,7 @@ CTrendTests::CPeriodicity::CResult CTrendTests::CPeriodicity::test(void) const
     LOG_TRACE("long")
     period = static_cast<std::size_t>(m_Periods[1] / m_BucketLength);
     bool hasLong =    statistics.canTestForLong(m_BucketLength)
-                  && (    this->testComponentUsingUnexplainedVariance(period, statistics)
+                  && (   this->testComponentUsingUnexplainedVariance(period, statistics)
                       || (!hasShort && this->testComponentUsingAmplitude(period, statistics)))
                   && this->testAutocorrelation(period, statistics);
     if (!hasPartition && !hasLong)
@@ -1148,7 +1420,7 @@ void CTrendTests::CPeriodicity::trends(const CResult &periods,
         {
             E_FirstInterval, E_SecondInterval, E_FullInterval
         };
-    for (std::size_t i = 0u; i < 3; ++i)
+    for (std::size_t i = 0u; i < boost::size(INTERVALS); ++i)
     {
         this->periodicBucketing(periods.periods(INTERVALS[i]),
                                 this->windows(INTERVALS[i], periods.startOfPartition()),
@@ -1202,7 +1474,7 @@ bool CTrendTests::CPeriodicity::testComponentUsingUnexplainedVariance(std::size_
     return   statistics.s_CandidateUnexplainedVariance <= statistics.varianceThreshold()
           && CStatisticalTests::fTest(statistics.F(),
                                       degreesOfFreedom,
-                                      statistics.s_DegreesOfFreedom) <= MAXIMUM_VARIANCE_RATIO_SIGNIFICANCE;
+                                      statistics.s_DegreesOfFreedom) <= MAXIMUM_SIGNIFICANCE;
 }
 
 bool CTrendTests::CPeriodicity::testComponentUsingExplainedVariance(const TTimeTimePrMeanVarAccumulatorPrVec &trend,
@@ -1282,7 +1554,7 @@ bool CTrendTests::CPeriodicity::testForPartitionUsingUnexplainedVariance(SStatis
                                                          * statistics.s_UnexplainedVariance
           && CStatisticalTests::fTest(statistics.F(),
                                       degreesOfFreedom,
-                                      statistics.s_DegreesOfFreedom) <= MAXIMUM_VARIANCE_RATIO_SIGNIFICANCE;
+                                      statistics.s_DegreesOfFreedom) <= MAXIMUM_SIGNIFICANCE;
 }
 
 bool CTrendTests::CPeriodicity::testAutocorrelation(std::size_t period,
@@ -1634,12 +1906,10 @@ const core_t::TTime CTrendTests::CPeriodicity::PERMITTED_BUCKET_LENGTHS[] =
         60, 300, 1800, 3600, 7200, 10800, 14400, 21600, 28800, 43200, 86400, 172800
     };
 const double CTrendTests::CPeriodicity::ACCURATE_TEST_POPULATED_FRACTION = 0.9;
-const double CTrendTests::CPeriodicity::CONFIDENCE_INTERVAL = 80.0;
 const double CTrendTests::CPeriodicity::MINIMUM_COEFFICIENT_OF_VARIATION = 1e-4;
 const double CTrendTests::CPeriodicity::HAS_PERIOD_VARIANCE_RATIO = 0.7;
 const double CTrendTests::CPeriodicity::HAS_PARTITION_VARIANCE_RATIO = 0.5;
 const double CTrendTests::CPeriodicity::HAS_PERIOD_AMPLITUDE_IN_SDS = 1.0;
-const double CTrendTests::CPeriodicity::MAXIMUM_VARIANCE_RATIO_SIGNIFICANCE = 0.05;
 const double CTrendTests::CPeriodicity::MINIMUM_AUTOCORRELATION = 0.5;
 
 CTrendTests::CPeriodicity::CResult::CResult(void) :

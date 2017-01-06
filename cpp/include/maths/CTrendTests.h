@@ -23,6 +23,8 @@
 #include <maths/CBasicStatistics.h>
 #include <maths/CFloatStorage.h>
 #include <maths/CLinearAlgebra.h>
+#include <maths/CPRNG.h>
+#include <maths/CRegression.h>
 #include <maths/ImportExport.h>
 
 #include <cstddef>
@@ -46,11 +48,8 @@ class MATHS_EXPORT CTrendTests
     public:
         typedef std::vector<double> TDoubleVec;
         typedef std::pair<int, core_t::TTime> TIntTimePr;
-        typedef CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;
-        typedef std::vector<TMeanAccumulator> TMeanAccumulatorVec;
-        typedef CBasicStatistics::SSampleMeanVar<double>::TAccumulator TMeanVarAccumulator;
-        typedef std::vector<TMeanVarAccumulator> TMeanVarAccumulatorVec;
         typedef std::pair<core_t::TTime, core_t::TTime> TTimeTimePr;
+        typedef CBasicStatistics::SSampleMeanVar<double>::TAccumulator TMeanVarAccumulator;
         typedef std::pair<TTimeTimePr, TMeanVarAccumulator> TTimeTimePrMeanVarAccumulatorPr;
         typedef std::vector<TTimeTimePrMeanVarAccumulatorPr> TTimeTimePrMeanVarAccumulatorPrVec;
         typedef CBasicStatistics::SSampleMean<CFloatStorage>::TAccumulator TFloatMeanAccumulator;
@@ -76,84 +75,218 @@ class MATHS_EXPORT CTrendTests
         //!   \f$Y_i = f(t_i) + X_i\f$
         //! </pre>
         //! Here, \f$f(.)\f$ is some smoothly varying function and
-        //! the \f$X_i = X\f$ are IID. Clearly, \f$Y_i\f$ is not a
-        //! stationary process, so we could use some sort of regression
-        //! based test such as augmented Dickey-Fuller. However, that
-        //! test requires maintaining regression coefficients and the
-        //! idea of this test is to reduce the memory footprint when
-        //! the process doesn't have a trend, so that we don't bother
-        //! to try and estimate the trend. In particular, we are
-        //! interested for anomaly detection in determining when
-        //! \f$f(.)\f$ has little impact on our estimation of the
-        //! distribution of \f$X\f$.
-        //!
-        //! A good assumption for our use case is that for small
-        //! \f$n\f$ then \f$f(.)\f$ is approximately constant on
-        //! the interval \f$[t_i, t_{i+n}]\f$. Therefore, if we
-        //! compute the sample variance \f$V_i\f$ of the samples
-        //! \f$\{Y_j : j \in [i, i+n)\}\f$ for \f$i \in \{0, n, 2n, ...\}\f$
-        //! and \f$V\f$ for all the samples and if:
-        //! <pre class="fragment">
-        //!   \f$\displaystyle T = \frac{V_i}{V}\f$
-        //! </pre>
-        //! is close to one then \f$f(.)\f$ has little impact
-        //! on the estimate of the spread of \f$X\f$.
-        //!
-        //! Since the distributions we will try an fit to \f$X\f$
-        //! have a mean parameter, from the point of view of detecting
-        //! an anomaly, it doesn't matter if we model \f$X\f$ or
-        //! \f$X - E[X]\f$ and test \f$y\f$ or \f$y - E[X]\f$,
-        //! respectively. Therefore, if and only if \f$T\f$ is
-        //! small should we try and estimate the trend. This is
-        //! the basis of the test hasTrend.
+        //! the \f$X_i = X\f$ are IID. The approach we take is to
+        //! perform a variance ratio test on \f${ Y_i - f(t_i) }\f$
+        //! verses \f${ Y_i }\f$. We are interested in the case that
+        //! modeling f(.), using an exponentially decaying cubic
+        //! regression with the current decay rate, will materially
+        //! affect our results. We therefore test to see if the
+        //! reduction in variance, as a proxy for the full model
+        //! confidence bounds, is both large enough and statistically
+        //! significant.
         class MATHS_EXPORT CTrend
         {
             public:
-                //! Create by reading state from \p traverser.
+                //! The order of the trend regression.
+                static const std::size_t ORDER = 3u;
+
+            public:
+                typedef CRegression::CLeastSquaresOnline<ORDER> TRegression;
+
+            public:
+                explicit CTrend(double decayRate = 0.0);
+
+                //! Initialize by reading state from \p traverser.
                 bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
 
                 //! Persist state by passing information to \p inserter.
                 void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
 
-                //! Add the point \p to the test statistics.
-                void add(double x, double weight = 1.0);
+                //! Set the decay rate.
+                void decayRate(double decayRate);
 
-                //! Age the test statistics.
-                //!
-                //! \note \p factor should be in the range (0,1].
-                void age(double factor);
+                //! Age the state to account for \p time elapsed time.
+                void propagateForwardsByTime(double time);
 
-                //! Check if the process is approximately stationary.
-                //!
-                //! \note This can return true, false of undetermined.
-                //! It returns undetermined in the case that there is
-                //! not a high degree of confidence that there is or
-                //! isn't a trend.
-                ETernaryBool hasTrend(void) const;
+                //! Add a new value \p value at \p time.
+                void add(core_t::TTime time, double value, double weight = 1.0);
+
+                //! Capture the variance in the prediction error.
+                void captureVariance(core_t::TTime time, double value, double weight = 1.0);
+
+                //! Translate the trend by \p shift.
+                void shift(double shift);
+
+                //! Test whether there is a trend.
+                bool test(void) const;
+
+                //! Get the regression model of the trend.
+                const TRegression &trend(void) const;
+
+                //! Get the origin of the time coordinate system.
+                core_t::TTime origin(void) const;
+
+                //! Get the variance after removing the trend.
+                double variance(void) const;
 
                 //! Get a checksum for this object.
                 uint64_t checksum(uint64_t seed = 0) const;
 
             private:
-                //! The number of points in the local variance.
-                static const double LOCAL_SIZE;
-                //! The threshold, for the variance ratio, used to
-                //! test for the presence of a trend.
+                //! The smallest decrease in variance after removing the trend
+                //! which is consider significant.
                 static const double HAS_TREND_VARIANCE_RATIO;
-                //! The margin relative to TREND_VARIANCE_RATIO at
-                //! which the test positively identifies no trend.
-                static const double TEST_HYSTERESIS;
 
             private:
-                //! The current local variance estimate.
-                TMeanVarAccumulator m_LocalVariance;
-                //! The mean local variance.
-                TMeanAccumulator m_MeanLocalVariance;
-                //! The current period variance estimate.
-                TMeanVarAccumulator m_Variance;
+                typedef CVectorNx1<double, 2> TVector;
+                typedef CBasicStatistics::SSampleMeanVar<TVector>::TAccumulator TVectorMeanVarAccumulator;
+
+            private:
+                //! Get the time at which to evaluate the regression model
+                //! of the trend.
+                double time(core_t::TTime time) const;
+
+            private:
+                //! Controls the rate at which the regression model is aged.
+                double m_DecayRate;
+
+                //! The origin of the time coordinate system.
+                core_t::TTime m_TimeOrigin;
+
+                //! The current regression model.
+                TRegression m_Trend;
+
+                //! The values' mean and variance.
+                TVectorMeanVarAccumulator m_Variances;
         };
 
-        //! A low memory footprint randomized test for probability.
+        //! \brief Implements a test to detect step changes in the time
+        //! series.
+        //!
+        //! DESCRIPTION:\n
+        //! For time series with significant step changes it is best to
+        //! use a piecewise constant additive model for the time series,
+        //! i.e. we'd like ideally like to find a function \f$theta\f$
+        //! by minimizing something like
+        //! <pre class="fragment">
+        //!   \f$\left \| Y-\theta \right \|_2^2+\lambda\left \| D\theta \right \|_1\f$
+        //! </pre>
+        //! where
+        //! <pre class="fragment">
+        //!   \f$[D]_{i,j} = \delta_{i,j} - \delta_{i+1,j}\f$
+        //! </pre>
+        //! where the value of \f$\lambda\f$ is tuned for the data set
+        //! by say using an information criterion based on a probabilistic
+        //! model \f$Y_i = \theta_i + N(0,\sigma_i)\f$. In practice we
+        //! don't have the luxury of looking at the whole data set in
+        //! order to decide the levels, we need a procedure which will
+        //! decide relatively quickly after the fact if a significant
+        //! shift in the values has taken place.
+        //!
+        //! If we imagine that values are sent to us in time order, then
+        //! our task is to determine if a knot point in the function has
+        //! occurred in the last fixed interval. We choose an interval
+        //! such that the chance of two knot points is essentially zero,
+        //! randomly down sample the function values and test to see if
+        //! adding the optimum knot point both causes both a large and
+        //! statistically significant decrease in the residual variance.
+        class MATHS_EXPORT CPiecewiseConstant
+        {
+            public:
+                class MATHS_EXPORT CResult
+                {
+                    public:
+                        CResult(void);
+                        CResult(ETernaryBool foundShift, double level, double shift);
+
+                        //! Get the test result.
+                        ETernaryBool value(void) const;
+
+                        //! The current level.
+                        double level(void) const;
+
+                        //! The shift in the level if any.
+                        double shift(void) const;
+
+                    private:
+                        //! The result of the level shift test.
+                        ETernaryBool m_FoundShift;
+
+                        //! The current level.
+                        double m_Level;
+
+                        //! The shift in the level.
+                        double m_Shift;
+                };
+
+            public:
+                //! \param[in] bucketLength The bucketing interval.
+                //! \param[in] n The number of values to sample.
+                //! \param[in] p The probability with which to sample a value.
+                //! \param[in] decayRate The rate at which information is lost.
+                CPiecewiseConstant(core_t::TTime bucketLength,
+                                   std::size_t n,
+                                   double p,
+                                   double decayRate = 0.0);
+
+                //! Efficiently swap the contents of this and \p other.
+                void swap(CPiecewiseConstant &other);
+
+                //! Initialize by reading state from \p traverser.
+                bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
+
+                //! Persist state by passing information to \p inserter.
+                void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
+
+                //! Clear the samples.
+                void clear(void);
+
+                //! Set the decay rate.
+                void decayRate(double decayRate);
+
+                //! Age the state to account for \p time elapsed time.
+                void propagateForwardsByTime(double time);
+
+                //! Add a new value \p value at \p time.
+                void add(core_t::TTime time, double value);
+
+                //! Test whether there is a periodic trend.
+                CResult captureVarianceAndTest(void);
+
+                //! Get a checksum for this object.
+                uint64_t checksum(uint64_t seed = 0) const;
+
+            private:
+                typedef boost::circular_buffer<CFloatStorage> TFloatCBuf;
+                typedef CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;
+
+            private:
+                //! The random number generator used for sampling.
+                CPRNG::CXorOShiro128Plus m_Rng;
+
+                //! The rate at which variance is aged.
+                double m_DecayRate;
+
+                //! The bucketing interval.
+                core_t::TTime m_BucketLength;
+
+                //! The sample probability.
+                CFloatStorage m_P;
+
+                //! The count until the next sample.
+                core_t::TTime m_NextSampleTime;
+
+                //! The samples.
+                TFloatCBuf m_Samples;
+
+                //! The current level.
+                double m_Level;
+
+                //! The within level variance.
+                TMeanAccumulator m_Variance;
+        };
+
+        //! \brief A low memory footprint randomized test for probability.
         //!
         //! This is based on the idea of random projection in a Hilbert
         //! space.
@@ -184,17 +317,6 @@ class MATHS_EXPORT CTrendTests
             public:
                 CRandomizedPeriodicity(void);
 
-                //! Add a new value \p value at \p time.
-                void add(core_t::TTime time, double value);
-
-                //! Test whether there is a periodic trend.
-                bool test(void) const;
-
-                //! Reset the test static random vectors.
-                //!
-                //! \note For unit testing only.
-                static void reset(void);
-
                 //! \name Persistence
                 //@{
                 //! Restore the static members by reading state from \p traverser.
@@ -210,8 +332,19 @@ class MATHS_EXPORT CTrendTests
                 void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
                 //@}
 
+                //! Add a new value \p value at \p time.
+                void add(core_t::TTime time, double value);
+
+                //! Test whether there is a periodic trend.
+                bool test(void) const;
+
+                //! Reset the test static random vectors.
+                //!
+                //! \note For unit testing only.
+                static void reset(void);
+
                 //! Get a checksum for this object.
-                uint64_t checksum(uint64_t seed) const;
+                uint64_t checksum(uint64_t seed = 0) const;
 
             private:
                 typedef std::vector<double> TDoubleVec;
@@ -362,7 +495,7 @@ class MATHS_EXPORT CTrendTests
                         std::string print(const std::string (&intervals)[2],
                                           const std::string (&periods)[2]) const;
 
-                        //! Compute this object's checksum.
+                        //! Get a checksum for this object.
                         uint64_t checksum(void) const;
 
                     private:
@@ -382,7 +515,7 @@ class MATHS_EXPORT CTrendTests
                 //! \name Persistence
                 //@{
                 //! Initialize by reading state from \p traverser.
-                bool acceptRestoreTraverser(double decayRate, core::CStateRestoreTraverser &traverser);
+                bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
 
                 //! Persist state by passing information to \p inserter.
                 void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
@@ -422,14 +555,17 @@ class MATHS_EXPORT CTrendTests
                 void trends(const CResult &periods,
                             TTimeTimePrMeanVarAccumulatorPrVec (&result)[6]) const;
 
-                //! Get a checksum for this test.
-                uint64_t checksum(uint64_t seed) const;
+                //! Get a checksum for this object.
+                uint64_t checksum(uint64_t seed = 0) const;
 
-                //! Debug the memory used by this component.
+                //! Debug the memory used by this object.
                 void debugMemoryUsage(core::CMemoryUsage::TMemoryUsagePtr mem) const;
 
-                //! Get the memory used by this component.
+                //! Get the memory used by this object.
                 std::size_t memoryUsage(void) const;
+
+            private:
+                typedef std::vector<TMeanVarAccumulator> TMeanVarAccumulatorVec;
 
             private:
                 //! The permitted bucket lengths in seconds.
@@ -437,8 +573,6 @@ class MATHS_EXPORT CTrendTests
                 //! The minimum proportion of populated buckets for an
                 //! accurate test.
                 static const double ACCURATE_TEST_POPULATED_FRACTION;
-                //! The variance confidence intervals used in the tests.
-                static const double CONFIDENCE_INTERVAL;
                 //! The minimum coefficient of variation for which we'll
                 //! identify a trend.
                 static const double MINIMUM_COEFFICIENT_OF_VARIATION;
@@ -452,9 +586,6 @@ class MATHS_EXPORT CTrendTests
                 //! in standard deviations of the trend residuals, used to
                 //! test for the presence of periodic spikes.
                 static const double HAS_PERIOD_AMPLITUDE_IN_SDS;
-                //! The maximum significance of unexplained to explained
-                //! variance in the variance ratio F-test.
-                static const double MAXIMUM_VARIANCE_RATIO_SIGNIFICANCE;
                 //! The minimum permitted autocorrelation for a signal to
                 //! be periodic.
                 static const double MINIMUM_AUTOCORRELATION;

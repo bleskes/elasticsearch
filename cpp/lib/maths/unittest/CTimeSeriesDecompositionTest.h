@@ -39,7 +39,8 @@ class CTimeSeriesDecompositionTest : public CppUnit::TestFixture
         void testEmcProblemCase(void);
         void testBlueCoatProblemCase(void);
         void testUMichProblemCase(void);
-        void testShift(void);
+        void testLongTermTrend(void);
+        void testLongTermTrendAndPeriodicity(void);
         void testSwap(void);
         void testPersist(void);
 

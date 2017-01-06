@@ -67,11 +67,11 @@ class MATHS_EXPORT CTimeSeriesDecompositionStub : public CTimeSeriesDecompositio
         //! Returns 0.
         virtual double mean(void) const;
 
-        //! Returns 0.
-        virtual double level(void) const;
-
         //! Returns (0.0, 0.0).
-        virtual TDoubleDoublePr baseline(core_t::TTime time, double confidence, bool smooth = true) const;
+        virtual TDoubleDoublePr baseline(core_t::TTime time,
+                                         double confidence,
+                                         EComponents components = E_All,
+                                         bool smooth = true) const;
 
         //! Returns \p value.
         virtual double detrend(core_t::TTime time, double value, double confidence) const;

@@ -273,7 +273,7 @@ CMetricModel::TDouble1Vec CMetricModel::baselineBucketMean(model_t::EFeature fea
         double seasonalOffset = 0.0;
         if (!trend.empty() && trend[0]->initialized())
         {
-            seasonalOffset = maths::CBasicStatistics::mean(trend[0]->baseline(time, 0.0)) - trend[0]->level();
+            seasonalOffset = maths::CBasicStatistics::mean(trend[0]->baseline(time, 0.0));
         }
 
         double median = maths::CBasicStatistics::mean(prior->marginalLikelihoodConfidenceInterval(0.0));
@@ -297,7 +297,7 @@ CMetricModel::TDouble1Vec CMetricModel::baselineBucketMean(model_t::EFeature fea
             double seasonalOffset = 0.0;
             if (i < trend.size() && trend[i]->initialized())
             {
-                seasonalOffset = maths::CBasicStatistics::mean(trend[i]->baseline(time, 0.0)) - trend[i]->level();
+                seasonalOffset = maths::CBasicStatistics::mean(trend[i]->baseline(time, 0.0));
             }
             double median = maths::CBasicStatistics::mean(
                                 prior->univariate(marginalize, CONDITION).first->marginalLikelihoodConfidenceInterval(0.0));

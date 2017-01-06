@@ -30,7 +30,9 @@
 
 #include <boost/config.hpp>
 #include <boost/bind.hpp>
+#include <boost/config.hpp>
 #include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
 #include <boost/numeric/conversion/bounds.hpp>
 #include <boost/range.hpp>
 
@@ -44,17 +46,20 @@ namespace maths
 namespace
 {
 
+typedef std::pair<double, double> TDoubleDoublePr;
 typedef std::vector<double> TDoubleVec;
 typedef std::vector<std::size_t> TSizeVec;
 typedef std::vector<TSizeVec> TSizeVecVec;
 typedef std::vector<std::string> TStrVec;
 typedef std::pair<core_t::TTime, core_t::TTime> TTimeTimePr;
-typedef boost::container::flat_map<TTimeTimePr, double> TTimeTimePrDoubleFMap;
-typedef TTimeTimePrDoubleFMap::const_iterator TTimeTimePrDoubleFMapCItr;
+typedef CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;
 typedef std::vector<CSeasonalComponent> TComponentVec;
 typedef std::vector<CSeasonalComponent*> TComponentPtrVec;
-typedef CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;
-typedef CTimeSeriesDecompositionTypedefs::TComponentVec TComponentVec;
+typedef CTimeSeriesDecompositionDetail::CTrendCRef TTrendCRef;
+
+const core_t::TTime DAY = core::constants::DAY;
+const core_t::TTime WEEK = core::constants::WEEK;
+const core_t::TTime WEEKEND = core::constants::WEEKEND;
 
 //! Scale \p interval to account for \p bucketLength.
 core_t::TTime scale(core_t::TTime interval, core_t::TTime bucketLength)
@@ -68,7 +73,7 @@ double meanValueAt(core_t::TTime time, const TComponentVec &components)
     double result = 0.0;
     for (std::size_t i = 0u; i < components.size(); ++i)
     {
-        if (components[i].time().inWindow(time))
+        if (components[i].initialized() && components[i].time().inWindow(time))
         {
             result += components[i].meanValue();
         }
@@ -80,13 +85,19 @@ double meanValueAt(core_t::TTime time, const TComponentVec &components)
 template<typename MEAN_FUNCTION>
 double meanOf(MEAN_FUNCTION mean, const TComponentVec &components)
 {
+    typedef boost::container::flat_map<TTimeTimePr, double> TTimeTimePrDoubleFMap;
+    typedef TTimeTimePrDoubleFMap::const_iterator TTimeTimePrDoubleFMapCItr;
+
     TTimeTimePrDoubleFMap means;
     means.reserve(components.size());
     for (std::size_t i = 0u; i < components.size(); ++i)
     {
-        core_t::TTime start = components[i].time().windowStart();
-        core_t::TTime end   = components[i].time().windowEnd();
-        means[std::make_pair(start, end)] += (components[i].*mean)();
+        if (components[i].initialized())
+        {
+            core_t::TTime start = components[i].time().windowStart();
+            core_t::TTime end   = components[i].time().windowEnd();
+            means[std::make_pair(start, end)] += (components[i].*mean)();
+        }
     }
 
     TMeanAccumulator result;
@@ -98,24 +109,28 @@ double meanOf(MEAN_FUNCTION mean, const TComponentVec &components)
     return CBasicStatistics::mean(result);
 }
 
-//! Compute the values to add to each component.
+//! Compute the values to add to the trend and each component.
 //!
+//! \param[in] trend The long term trend.
 //! \param[in] components The seasonal components.
 //! \param[in] deltas The delta offset to apply to the difference
 //! between each component value and its mean, used to minimize
 //! slope in the longer periods.
+//! \param[in] time The time of value to decompose.
 //! \param[in,out] decomposition Updated to contain the value to
 //! add to each by component.
-void decompose(const TComponentPtrVec &components,
+void decompose(const TTrendCRef &trend,
+               const TComponentPtrVec &components,
                const TDoubleVec &deltas,
                core_t::TTime time,
                TDoubleVec &decomposition)
 {
     std::size_t n = components.size();
 
+    double x0 = CBasicStatistics::mean(trend.prediction(time, 0.0));
     TDoubleVec x(n);
-    double xhat = 0.0;
-    double z = 0.0;
+    double xhat = x0;
+    double z    = ::fabs(x0);
     for (std::size_t i = 0u; i < n; ++i)
     {
         x[i]  = CBasicStatistics::mean(components[i]->value(time, 0.0));
@@ -124,27 +139,31 @@ void decompose(const TComponentPtrVec &components,
     }
     if (z == 0.0)
     {
+        z = static_cast<double>(n + 1);
+        decomposition[0] = (decomposition[0] - xhat) / z;
         double lastShift = 0.0;
         for (std::size_t i = 0u; i < n; ++i)
         {
             double shift = deltas[i] * (x[i] - components[i]->meanValue());
             double d = shift - lastShift;
             lastShift = shift;
-            decomposition[i] = (decomposition[i] - xhat) / static_cast<double>(n) + d;
+            decomposition[i + 1] = (decomposition[i + 1] - xhat) / z + d;
         }
     }
     else
     {
+        decomposition[0] = x0 + (decomposition[0] - xhat) * ::fabs(x0) / z;
         double lastShift = 0.0;
         for (std::size_t i = 0u; i < n; ++i)
         {
             double shift = deltas[i] * (x[i] - components[i]->meanValue());
             double d = shift - lastShift;
             lastShift = shift;
-            decomposition[i] = x[i] + (decomposition[i] - xhat) * ::fabs(x[i]) / z + d;
+            decomposition[i + 1] = x[i] + (decomposition[i + 1] - xhat) * ::fabs(x[i]) / z + d;
         }
     }
 }
+
 //! \brief Compute the intersection of two seasonal components.
 //!
 //! DESCRIPTION:\n
@@ -473,9 +492,24 @@ void minimizeAbsSlope(const TComponentVec &components, TDoubleVec &deltas)
 double regularTestDecayRate(double decayRate)
 {
     return CSeasonalComponent::TTime::scaleDecayRate(
-               decayRate,
-               CSeasonalComponentAdaptiveBucketing::timescale(),
-               core::constants::WEEK);
+               decayRate, CSeasonalComponentAdaptiveBucketing::timescale(), WEEK);
+}
+
+//! Get the time of \p time suitable for use in a trend regression model.
+double regressionTime(core_t::TTime time, core_t::TTime origin)
+{
+    return static_cast<double>(time - origin) / static_cast<double>(WEEK);
+}
+
+//! Check whether to test at \p time.
+bool shouldTestImpl(core_t::TTime time, core_t::TTime interval, core_t::TTime &nextTestTime)
+{
+    if (time >= nextTestTime)
+    {
+        nextTestTime = CIntegerTools::ceil(time + 1, interval);
+        return true;
+    }
+    return false;
 }
 
 //! Get the transition function in vector form.
@@ -490,20 +524,60 @@ TSizeVecVec function(const std::size_t (&f)[M][N])
     return result;
 }
 
+// Long Term Trend Test State Machine
+
+// States
+const std::size_t LT_INITIAL     = 0;
+const std::size_t LT_LEARN       = 1;
+const std::size_t LT_TEST        = 2;
+const std::size_t LT_NOT_TESTING = 3;
+const std::size_t LT_ERROR       = 4;
+const std::string LT_STATES_[] =
+    {
+        "INITIAL",
+        "LEARN",
+        "TEST",
+        "NOT_TESTING",
+        "ERROR"
+    };
+const TStrVec LT_STATES(boost::begin(LT_STATES_), boost::end(LT_STATES_));
+// Alphabet
+const std::size_t LT_NEW_VALUE   = 0;
+const std::size_t LT_START_TEST  = 1;
+const std::size_t LT_FINISH_TEST = 2;
+const std::size_t LT_RESET       = 3;
+const std::string LT_ALPHABET_[] =
+    {
+        "NEW_VALUE",
+        "START_TEST",
+        "FINISH_TEST",
+        "RESET"
+    };
+const TStrVec LT_ALPHABET(boost::begin(LT_ALPHABET_), boost::end(LT_ALPHABET_));
+// Transition Function
+const std::size_t LT_TRANSITION_FUNCTION_[][5] =
+    {
+        { LT_LEARN,       LT_LEARN,       LT_TEST,        LT_NOT_TESTING, LT_ERROR   },
+        { LT_ERROR,       LT_TEST,        LT_TEST,        LT_NOT_TESTING, LT_ERROR   },
+        { LT_NOT_TESTING, LT_NOT_TESTING, LT_NOT_TESTING, LT_NOT_TESTING, LT_ERROR   },
+        { LT_INITIAL,     LT_INITIAL,     LT_INITIAL,     LT_INITIAL,     LT_INITIAL }
+    };
+const TSizeVecVec LT_TRANSITION_FUNCTION(function(LT_TRANSITION_FUNCTION_));
+
 // Daily + Weekly Test State Machine
 
 // States
 const std::size_t DW_INITIAL      = 0;
 const std::size_t DW_SMALL_TEST   = 1;
 const std::size_t DW_REGULAR_TEST = 2;
-const std::size_t DW_NEVER_TEST   = 3;
+const std::size_t DW_NOT_TESTING  = 3;
 const std::size_t DW_ERROR        = 4;
 const std::string DW_STATES_[] =
     {
         "INITIAL",
         "SMALL_TEST",
         "REGULAR_TEST",
-        "NEVER_TEST",
+        "NOT_TESTING",
         "ERROR"
     };
 const TStrVec DW_STATES(boost::begin(DW_STATES_), boost::end(DW_STATES_));
@@ -511,7 +585,7 @@ const TStrVec DW_STATES(boost::begin(DW_STATES_), boost::end(DW_STATES_));
 const std::size_t DW_NEW_VALUE                    = 0;
 const std::size_t DW_SMALL_TEST_TRUE              = 1;
 const std::size_t DW_REGULAR_TEST_TIMED_OUT       = 2;
-const std::size_t DW_FINISHED_TEST                = 3;
+const std::size_t DW_FINISH_TEST                  = 3;
 const std::size_t DW_DETECTED_INCOMPATIBLE_PERIOD = 4;
 const std::size_t DW_RESET                        = 5;
 const std::string DW_ALPHABET_[] =
@@ -519,7 +593,7 @@ const std::string DW_ALPHABET_[] =
         "NEW_VALUE",
         "SMALL_TEST_TRUE",
         "REGULAR_TEST_TIMED_OUT",
-        "FINISHED_TEST",
+        "FINISH_TEST",
         "DETECTED_INCOMPATIBLE_PERIOD",
         "RESET"
     };
@@ -527,74 +601,27 @@ const TStrVec DW_ALPHABET(boost::begin(DW_ALPHABET_), boost::end(DW_ALPHABET_));
 // Transition Function
 const std::size_t DW_TRANSITION_FUNCTION_[][5] =
     {
-        { DW_REGULAR_TEST, DW_SMALL_TEST,   DW_REGULAR_TEST, DW_NEVER_TEST, DW_ERROR   },
-        { DW_ERROR,        DW_REGULAR_TEST, DW_ERROR,        DW_NEVER_TEST, DW_ERROR   },
-        { DW_ERROR,        DW_ERROR,        DW_SMALL_TEST,   DW_NEVER_TEST, DW_ERROR   },
-        { DW_ERROR,        DW_ERROR,        DW_NEVER_TEST,   DW_NEVER_TEST, DW_ERROR   },
-        { DW_NEVER_TEST,   DW_NEVER_TEST,   DW_NEVER_TEST,   DW_NEVER_TEST, DW_ERROR   },
-        { DW_INITIAL,      DW_INITIAL,      DW_INITIAL,      DW_NEVER_TEST, DW_INITIAL }
+        { DW_REGULAR_TEST, DW_SMALL_TEST,   DW_REGULAR_TEST, DW_NOT_TESTING, DW_ERROR   },
+        { DW_ERROR,        DW_REGULAR_TEST, DW_ERROR,        DW_NOT_TESTING, DW_ERROR   },
+        { DW_ERROR,        DW_ERROR,        DW_SMALL_TEST,   DW_NOT_TESTING, DW_ERROR   },
+        { DW_ERROR,        DW_ERROR,        DW_NOT_TESTING,  DW_NOT_TESTING, DW_ERROR   },
+        { DW_NOT_TESTING,  DW_NOT_TESTING,  DW_NOT_TESTING,  DW_NOT_TESTING, DW_ERROR   },
+        { DW_INITIAL,      DW_INITIAL,      DW_INITIAL,      DW_NOT_TESTING, DW_INITIAL }
     };
 const TSizeVecVec DW_TRANSITION_FUNCTION(function(DW_TRANSITION_FUNCTION_));
-
-// Level Shift Test State Machine
-
-// States
-const std::size_t LS_INITIAL  = 0;
-const std::size_t LS_SHIFT    = 1;
-const std::size_t LS_NO_SHIFT = 2;
-const std::size_t LS_WAIT     = 3;
-const std::size_t LS_ERROR    = 4;
-const std::string LS_STATES_[] =
-    {
-        "INITIAL",
-        "SHIFT",
-        "NO_SHIFT",
-        "WAIT",
-        "ERROR"
-    };
-const TStrVec LS_STATES(boost::begin(LS_STATES_), boost::end(LS_STATES_));
-// Symbols
-const std::size_t LS_NEW_VALUE         = 0;
-const std::size_t LS_DETECTED_SHIFT    = 1;
-const std::size_t LS_NO_DETECTED_SHIFT = 2;
-const std::size_t LS_TIMED_OUT         = 3;
-const std::size_t LS_RESET             = 4;
-const std::string LS_ALPHABET_[] =
-    {
-        "NEW_VALUE",
-        "DETECTED_SHIFT",
-        "NO_DETECTED_SHIFT",
-        "TIMED_OUT",
-        "RESET"
-    };
-const TStrVec LS_ALPHABET(boost::begin(LS_ALPHABET_), boost::end(LS_ALPHABET_));
-// Transition Function
-const std::size_t LS_TRANSITION_FUNCTION_[][5] =
-    {
-        { LS_WAIT,    LS_SHIFT,    LS_NO_SHIFT, LS_WAIT,     LS_ERROR   },
-        { LS_ERROR,   LS_SHIFT,    LS_SHIFT,    LS_ERROR,    LS_ERROR   },
-        { LS_ERROR,   LS_NO_SHIFT, LS_NO_SHIFT, LS_ERROR,    LS_ERROR   },
-        { LS_ERROR,   LS_WAIT,     LS_ERROR,    LS_NO_SHIFT, LS_ERROR   },
-        { LS_INITIAL, LS_INITIAL,  LS_INITIAL,  LS_INITIAL,  LS_INITIAL }
-    };
-const TSizeVecVec LS_TRANSITION_FUNCTION(function(LS_TRANSITION_FUNCTION_));
 
 // Components State Machine
 
 // States
 const std::size_t SC_NEW_COMPONENTS      = 0;
 const std::size_t SC_NORMAL              = 1;
-const std::size_t SC_SHIFTING_LEVEL      = 2;
-const std::size_t SC_CAPTURE_LEVEL_SHIFT = 3;
-const std::size_t SC_FORECASTING         = 4;
-const std::size_t SC_DISABLED            = 5;
-const std::size_t SC_ERROR               = 6;
+const std::size_t SC_FORECASTING         = 2;
+const std::size_t SC_DISABLED            = 3;
+const std::size_t SC_ERROR               = 4;
 const std::string SC_STATES_[] =
     {
         "NEW_COMPONENTS",
         "NORMAL",
-        "SHIFTING_LEVEL",
-        "CAPTURE_LEVEL_SHIFT",
         "FORECASTING",
         "DISABLED",
         "ERROR"
@@ -602,63 +629,65 @@ const std::string SC_STATES_[] =
 const TStrVec SC_STATES(boost::begin(SC_STATES_), boost::end(SC_STATES_));
 // Alphabet
 const std::size_t SC_ADDED_COMPONENTS     = 0;
-const std::size_t SC_START_SHIFTING_LEVEL = 1;
-const std::size_t SC_STOP_SHIFTING_LEVEL  = 2;
-const std::size_t SC_INTERPOLATED         = 3;
-const std::size_t SC_FORECAST             = 4;
-const std::size_t SC_RESET                = 5;
+const std::size_t SC_INTERPOLATED         = 1;
+const std::size_t SC_FORECAST             = 2;
+const std::size_t SC_RESET                = 3;
 const std::string SC_ALPHABET_[] =
     {
         "ADDED_COMPONENTS",
-        "START_SHIFTING_LEVEL",
-        "STOP_SHIFTING_LEVEL",
         "INTERPOLATED",
         "FORECAST",
         "RESET"
     };
 const TStrVec SC_ALPHABET(boost::begin(SC_ALPHABET_), boost::end(SC_ALPHABET_));
 // Transition Function
-const std::size_t SC_TRANSITION_FUNCTION_[][7] =
+const std::size_t SC_TRANSITION_FUNCTION_[][5] =
     {
-        { SC_NEW_COMPONENTS, SC_NEW_COMPONENTS, SC_NEW_COMPONENTS,      SC_NEW_COMPONENTS,      SC_ERROR,       SC_DISABLED, SC_ERROR  },
-        { SC_NEW_COMPONENTS, SC_SHIFTING_LEVEL, SC_SHIFTING_LEVEL,      SC_SHIFTING_LEVEL,      SC_FORECASTING, SC_DISABLED, SC_ERROR  },
-        { SC_NEW_COMPONENTS, SC_NORMAL,         SC_CAPTURE_LEVEL_SHIFT, SC_CAPTURE_LEVEL_SHIFT, SC_FORECASTING, SC_DISABLED, SC_ERROR  },
-        { SC_NORMAL,         SC_NORMAL,         SC_SHIFTING_LEVEL,      SC_NORMAL,              SC_FORECASTING, SC_DISABLED, SC_ERROR  },
-        { SC_ERROR,          SC_FORECASTING,    SC_CAPTURE_LEVEL_SHIFT, SC_FORECASTING,         SC_FORECASTING, SC_DISABLED, SC_ERROR  },
-        { SC_NORMAL,         SC_NORMAL,         SC_NORMAL,              SC_NORMAL,              SC_NORMAL,      SC_DISABLED, SC_NORMAL }
+        { SC_NEW_COMPONENTS, SC_NEW_COMPONENTS, SC_ERROR,       SC_DISABLED, SC_ERROR  },
+        { SC_NORMAL,         SC_NORMAL,         SC_FORECASTING, SC_DISABLED, SC_ERROR  },
+        { SC_ERROR,          SC_FORECASTING,    SC_FORECASTING, SC_DISABLED, SC_ERROR  },
+        { SC_NORMAL,         SC_NORMAL,         SC_NORMAL,      SC_NORMAL,   SC_NORMAL }
     };
 const TSizeVecVec SC_TRANSITION_FUNCTION(function(SC_TRANSITION_FUNCTION_));
 
-// Daily+Weekly Test Tags
+// Long Term Trend Test Tags
 const std::string MACHINE_TAG("a");
-const std::string LAST_TEST_TIME_TAG("b");
-const std::string TIME_OUT_REGULAR_TEST_TAG("c");
-const std::string REGULAR_TEST_TAG("d");
-const std::string SMALL_TEST_TAG("e");
+const std::string NEXT_TEST_TIME_TAG("b");
+const std::string TEST_TAG("c");
+
+// Daily+Weekly Test Tags
+//const std::string MACHINE_TAG("a");
+//const std::string NEXT_TEST_TIME_TAG("b");
+const std::string STARTED_REGULAR_TEST_TAG("c");
+const std::string TIME_OUT_REGULAR_TEST_TAG("d");
+const std::string REGULAR_TEST_TAG("e");
+const std::string SMALL_TEST_TAG("f");
+const std::string PERIODS_TAG("g");
 
 // Level Shift Test Tags
 //const std::string MACHINE_TAG("a");
-//const std::string LAST_TEST_TIME_TAG("b");
-const std::string MEAN_PREDICTION_ERRORS_TAG("c");
-const std::string LONG_TERM_MEAN_PREDICTION_ERROR_TAG("d");
+//const std::string NEXT_TEST_TIME_TAG("b");
+//const std::string TEST_TAG("c");
+const std::string START_TESTING_TIME_TAG("d");
 
 // Seasonal Components Tags
 //const std::string MACHINE_TAG("a");
 const std::string LONGEST_PERIOD_TAG("b");
-const std::string LAST_INTERPOLATE_TIME_TAG("c");
-const std::string INTERPOLATION_WEIGHT_TAG("d");
-const std::string LEVEL_TAG("e");
-const std::string PERIODS_TAG("f");
-const std::string COMPONENTS_TAG("g");
-const std::string COMPONENT_TAG("h");
-const std::string DELTA_TAG("i");
-const std::string HISTORY_LENGTHS_TAG("j");
-const std::string MOMENTS_TAG("k");
+const std::string LAST_INTERPOLATED_TIME_TAG("c");
+const std::string NEXT_INTERPOLATE_TIME_TAG("d");
+const std::string TREND_TAG("e");
+const std::string COMPONENTS_TAG("f");
+const std::string COMPONENT_TAG("g");
+const std::string REGRESSION_TAG("h");
+const std::string VARIANCE_TAG("i");
+const std::string TIME_ORIGIN_TAG("j");
+const std::string HISTORY_LENGTH_TAG("k");
+const std::string DELTA_TAG("l");
 
 const core_t::TTime FORECASTING_INTERPOLATE_INTERVAL(core::constants::HOUR);
 const core_t::TTime FORECASTING_PROPAGATION_FORWARDS_BY_TIME_INTERVAL(core::constants::HOUR);
 const core_t::TTime FOREVER = boost::numeric::bounds<core_t::TTime>::highest();
-const int APPLY_LEVEL_SHIFT_INTERVAL = 14;
+const TTrendCRef NO_TREND;
 const TComponentVec NO_COMPONENTS;
 
 }
@@ -674,18 +703,21 @@ CTimeSeriesDecompositionDetail::SAddValueMessage::SAddValueMessage(core_t::TTime
                                                                    double value,
                                                                    const TWeightStyleVec &weightStyles,
                                                                    const TDouble4Vec &weights,
-                                                                   double mean) :
+                                                                   double trend,
+                                                                   double seasonal) :
         SMessage(time),
         s_Value(value),
         s_WeightStyles(weightStyles),
         s_Weights(weights),
-        s_Mean(mean)
+        s_Trend(trend),
+        s_Seasonal(seasonal)
 {}
 
 //////// SDetectedTrendMessage ////////
 
-CTimeSeriesDecompositionDetail::SDetectedTrendMessage::SDetectedTrendMessage(core_t::TTime time) :
-        SMessage(time)
+CTimeSeriesDecompositionDetail::SDetectedTrendMessage::SDetectedTrendMessage(core_t::TTime time, const CTrendTests::CTrend &test) :
+        SMessage(time),
+        s_Test(test)
 {}
 
 //////// SDetectedPeriodicMessage ////////
@@ -703,20 +735,6 @@ CTimeSeriesDecompositionDetail::SDiscardPeriodicMessage::SDiscardPeriodicMessage
         SMessage(time), s_Test(test)
 {}
 
-//////// SHasLevelShiftMessage ////////
-
-CTimeSeriesDecompositionDetail::SHasLevelShiftMessage::SHasLevelShiftMessage(core_t::TTime time,
-                                                                             int intervals,
-                                                                             double size) :
-        SMessage(time), s_Intervals(intervals), s_Size(size)
-{}
-
-//////// SNoLongerHasLevelShiftMessage ////////
-
-CTimeSeriesDecompositionDetail::SNoLongerHasLevelShiftMessage::SNoLongerHasLevelShiftMessage(core_t::TTime time) :
-        SMessage(time)
-{}
-
 //////// CHandler ////////
 
 CTimeSeriesDecompositionDetail::CHandler::CHandler(void) : m_Mediator(0) {}
@@ -729,10 +747,6 @@ void CTimeSeriesDecompositionDetail::CHandler::handle(const SDetectedTrendMessag
 void CTimeSeriesDecompositionDetail::CHandler::handle(const SDetectedPeriodicMessage &/*message*/) {}
 
 void CTimeSeriesDecompositionDetail::CHandler::handle(const SDiscardPeriodicMessage &/*message*/) {}
-
-void CTimeSeriesDecompositionDetail::CHandler::handle(const SHasLevelShiftMessage &/*message*/) {}
-
-void CTimeSeriesDecompositionDetail::CHandler::handle(const SNoLongerHasLevelShiftMessage &/*message*/) {}
 
 void CTimeSeriesDecompositionDetail::CHandler::mediator(CMediator *mediator)
 {
@@ -761,6 +775,209 @@ void CTimeSeriesDecompositionDetail::CMediator::registerHandler(CHandler &handle
     handler.mediator(this);
 }
 
+//////// CLongTermTrendTest ////////
+
+CTimeSeriesDecompositionDetail::CLongTermTrendTest::CLongTermTrendTest(double decayRate) :
+        m_Machine(core::CStateMachine::create(LT_ALPHABET, LT_STATES,
+                                              LT_TRANSITION_FUNCTION,
+                                              LT_INITIAL)),
+        m_MaximumDecayRate(decayRate),
+        m_NextTestTime(),
+        m_Test(new CTrendTests::CTrend(decayRate))
+{}
+
+CTimeSeriesDecompositionDetail::CLongTermTrendTest::CLongTermTrendTest(const CLongTermTrendTest &other) :
+        m_Machine(core::CStateMachine::create(LT_ALPHABET, LT_STATES,
+                                              LT_TRANSITION_FUNCTION,
+                                              LT_INITIAL)),
+        m_MaximumDecayRate(other.m_MaximumDecayRate),
+        m_NextTestTime(other.m_NextTestTime),
+        m_Test(other.m_Test ? new CTrendTests::CTrend(*other.m_Test) : 0)
+{}
+
+bool CTimeSeriesDecompositionDetail::CLongTermTrendTest::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
+{
+    do
+    {
+        const std::string &name = traverser.name();
+        RESTORE(MACHINE_TAG, traverser.traverseSubLevel(
+                                 boost::bind(&core::CStateMachine::acceptRestoreTraverser, &m_Machine, _1)));
+        RESTORE_BUILT_IN(NEXT_TEST_TIME_TAG, m_NextTestTime)
+        RESTORE_SETUP_TEARDOWN(TEST_TAG,
+                               m_Test.reset(new CTrendTests::CTrend(m_MaximumDecayRate)),
+                               traverser.traverseSubLevel(
+                                   boost::bind(&CTrendTests::CTrend::acceptRestoreTraverser, m_Test.get(), _1)),
+                               /**/)
+    }
+    while (traverser.next());
+    return true;
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::acceptPersistInserter(core::CStatePersistInserter &inserter) const
+{
+    inserter.insertLevel(MACHINE_TAG, boost::bind(&core::CStateMachine::acceptPersistInserter, &m_Machine, _1));
+    inserter.insertValue(NEXT_TEST_TIME_TAG, m_NextTestTime);
+    if (m_Test)
+    {
+        inserter.insertLevel(TEST_TAG, boost::bind(&CTrendTests::CTrend::acceptPersistInserter, m_Test.get(), _1));
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::swap(CLongTermTrendTest &other)
+{
+    std::swap(m_Machine, other.m_Machine);
+    std::swap(m_MaximumDecayRate, other.m_MaximumDecayRate);
+    std::swap(m_NextTestTime, other.m_NextTestTime);
+    m_Test.swap(other.m_Test);
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::handle(const SAddValueMessage &message)
+{
+    core_t::TTime time = message.s_Time;
+    double value = message.s_Value - message.s_Seasonal;
+    double count = maths_t::count(message.s_WeightStyles, message.s_Weights);
+
+    this->test(message);
+
+    switch (m_Machine.state())
+    {
+    case LT_NOT_TESTING:
+        break;
+    case LT_TEST:
+        m_Test->add(time, value, count);
+        m_Test->captureVariance(time, value, count);
+        break;
+    case LT_LEARN:
+        m_Test->add(time, value, count);
+        break;
+    case LT_INITIAL:
+        this->apply(LT_NEW_VALUE, message);
+        this->handle(message);
+        break;
+    default:
+        LOG_ERROR("Test in a bad state: " << m_Machine.state());
+        this->apply(LT_RESET, message);
+        break;
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::handle(const SDetectedPeriodicMessage &message)
+{
+    if (m_Machine.state() != LT_NOT_TESTING)
+    {
+        this->apply(LT_RESET, message);
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::test(const SMessage &message)
+{
+    core_t::TTime time = message.s_Time;
+
+    if (this->shouldTest(time))
+    {
+        switch (m_Machine.state())
+        {
+        case LT_NOT_TESTING:
+        case LT_INITIAL:
+            break;
+        case LT_LEARN:
+            this->apply(LT_START_TEST, message);
+            this->test(message);
+            break;
+        case LT_TEST:
+            if (m_Test->test())
+            {
+                this->mediator()->forward(SDetectedTrendMessage(time, *m_Test));
+                this->apply(LT_FINISH_TEST, message);
+            }
+            break;
+        default:
+            LOG_ERROR("Test in a bad state: " << m_Machine.state());
+            this->apply(LT_RESET, message);
+            break;
+        }
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::decayRate(double decayRate)
+{
+    if (m_Test)
+    {
+        m_Test->decayRate(std::max(decayRate, m_MaximumDecayRate));
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::propagateForwardsByTime(double time)
+{
+    if (m_Test)
+    {
+        m_Test->propagateForwardsByTime(time);
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::skipTime(core_t::TTime skipInterval)
+{
+    core_t::TTime testInterval = this->testInterval();
+    m_NextTestTime = CIntegerTools::floor(m_NextTestTime + skipInterval + testInterval, testInterval);
+}
+
+uint64_t CTimeSeriesDecompositionDetail::CLongTermTrendTest::checksum(uint64_t seed) const
+{
+    seed = CChecksum::calculate(seed, m_Machine);
+    seed = CChecksum::calculate(seed, m_MaximumDecayRate);
+    seed = CChecksum::calculate(seed, m_NextTestTime);
+    return CChecksum::calculate(seed, m_Test);
+}
+
+void CTimeSeriesDecompositionDetail::CLongTermTrendTest::apply(std::size_t symbol, const SMessage &message)
+{
+    core_t::TTime time = message.s_Time;
+
+    std::size_t old = m_Machine.state();
+    m_Machine.apply(symbol);
+    std::size_t state = m_Machine.state();
+
+    if (state != old)
+    {
+        LOG_TRACE(LT_STATES[old] << "," << LT_ALPHABET[symbol] << " -> " << LT_STATES[state]);
+
+        if (old == LT_INITIAL)
+        {
+            m_NextTestTime = time + 2 * WEEK;
+        }
+
+        switch (state)
+        {
+        case LT_LEARN:
+        case LT_TEST:
+            break;
+        case LT_NOT_TESTING:
+            m_NextTestTime = core_t::TTime();
+            m_Test.reset();
+            break;
+        case LT_INITIAL:
+            m_NextTestTime = core_t::TTime();
+            m_Test.reset(new CTrendTests::CTrend(m_MaximumDecayRate));
+            break;
+        default:
+            LOG_ERROR("Test in a bad state: " << state);
+            this->apply(LT_RESET, message);
+            break;
+        }
+    }
+}
+
+bool CTimeSeriesDecompositionDetail::CLongTermTrendTest::shouldTest(core_t::TTime time)
+{
+    return shouldTestImpl(time, this->testInterval(), m_NextTestTime);
+}
+
+core_t::TTime CTimeSeriesDecompositionDetail::CLongTermTrendTest::testInterval(void) const
+{
+    return CSeasonalComponentAdaptiveBucketing::timescale();
+}
+
+
 //////// CDailyWeeklyTest ////////
 
 CTimeSeriesDecompositionDetail::CDailyWeeklyTest::CDailyWeeklyTest(double decayRate,
@@ -770,7 +987,8 @@ CTimeSeriesDecompositionDetail::CDailyWeeklyTest::CDailyWeeklyTest(double decayR
                                               DW_INITIAL)),
         m_DecayRate(decayRate),
         m_BucketLength(bucketLength),
-        m_LastTestTime(),
+        m_NextTestTime(),
+        m_StartedRegularTest(),
         m_TimeOutRegularTest()
 {}
 
@@ -778,7 +996,8 @@ CTimeSeriesDecompositionDetail::CDailyWeeklyTest::CDailyWeeklyTest(const CDailyW
         m_Machine(other.m_Machine),
         m_DecayRate(other.m_DecayRate),
         m_BucketLength(other.m_BucketLength),
-        m_LastTestTime(other.m_LastTestTime),
+        m_NextTestTime(other.m_NextTestTime),
+        m_StartedRegularTest(other.m_StartedRegularTest),
         m_TimeOutRegularTest(other.m_TimeOutRegularTest),
         m_RegularTest(other.m_RegularTest ? new CTrendTests::CPeriodicity(*other.m_RegularTest) : 0),
         m_SmallTest(other.m_SmallTest ? new CTrendTests::CRandomizedPeriodicity(*other.m_SmallTest) : 0),
@@ -790,21 +1009,16 @@ bool CTimeSeriesDecompositionDetail::CDailyWeeklyTest::acceptRestoreTraverser(co
     do
     {
         const std::string &name = traverser.name();
-        RESTORE(MACHINE_TAG,
-                traverser.traverseSubLevel(
-                              boost::bind(&core::CStateMachine::acceptRestoreTraverser, &m_Machine, _1)));
-        RESTORE_BUILT_IN(LAST_TEST_TIME_TAG, m_LastTestTime)
+        RESTORE(MACHINE_TAG, traverser.traverseSubLevel(
+                                 boost::bind(&core::CStateMachine::acceptRestoreTraverser, &m_Machine, _1)));
+        RESTORE_BUILT_IN(NEXT_TEST_TIME_TAG, m_NextTestTime)
+        RESTORE_BUILT_IN(STARTED_REGULAR_TEST_TAG, m_StartedRegularTest)
         RESTORE_BUILT_IN(TIME_OUT_REGULAR_TEST_TAG, m_TimeOutRegularTest)
         if (name == REGULAR_TEST_TAG)
         {
-            m_RegularTest.reset(new CTrendTests::CPeriodicity);
-            double scaledDecayRate = CSeasonalComponent::TTime::scaleDecayRate(
-                                         m_DecayRate,
-                                         CSeasonalComponentAdaptiveBucketing::timescale(),
-                                         core::constants::WEEK);
+            m_RegularTest.reset(new CTrendTests::CPeriodicity(regularTestDecayRate(m_DecayRate)));
             if (traverser.traverseSubLevel(
-                    boost::bind(&CTrendTests::CPeriodicity::acceptRestoreTraverser,
-                                m_RegularTest.get(), scaledDecayRate, _1)) == false)
+                    boost::bind(&CTrendTests::CPeriodicity::acceptRestoreTraverser, m_RegularTest.get(), _1)) == false)
             {
                 return false;
             }
@@ -826,22 +1040,21 @@ bool CTimeSeriesDecompositionDetail::CDailyWeeklyTest::acceptRestoreTraverser(co
 void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::acceptPersistInserter(core::CStatePersistInserter &inserter) const
 {
     inserter.insertLevel(MACHINE_TAG, boost::bind(&core::CStateMachine::acceptPersistInserter, &m_Machine, _1));
-    inserter.insertValue(LAST_TEST_TIME_TAG, m_LastTestTime);
+    inserter.insertValue(NEXT_TEST_TIME_TAG, m_NextTestTime);
+    inserter.insertValue(STARTED_REGULAR_TEST_TAG, m_StartedRegularTest);
     inserter.insertValue(TIME_OUT_REGULAR_TEST_TAG, m_TimeOutRegularTest);
     if (m_RegularTest)
     {
-        inserter.insertLevel(REGULAR_TEST_TAG,
-                             boost::bind(&CTrendTests::CPeriodicity::acceptPersistInserter,
-                                         m_RegularTest.get(), _1));
+        inserter.insertLevel(REGULAR_TEST_TAG, boost::bind(
+                                 &CTrendTests::CPeriodicity::acceptPersistInserter, m_RegularTest.get(), _1));
     }
     if (m_SmallTest)
     {
-        inserter.insertLevel(SMALL_TEST_TAG,
-                             boost::bind(&CTrendTests::CRandomizedPeriodicity::acceptPersistInserter,
-                                         m_SmallTest.get(), _1));
+        inserter.insertLevel(SMALL_TEST_TAG, boost::bind(
+                                 &CTrendTests::CRandomizedPeriodicity::acceptPersistInserter, m_SmallTest.get(), _1));
     }
-    inserter.insertLevel(PERIODS_TAG, boost::bind(&CTrendTests::CPeriodicity::CResult::acceptPersistInserter,
-                                                  &m_Periods, _1));
+    inserter.insertLevel(PERIODS_TAG, boost::bind(
+                             &CTrendTests::CPeriodicity::CResult::acceptPersistInserter, &m_Periods, _1));
 }
 
 void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::swap(CDailyWeeklyTest &other)
@@ -849,7 +1062,8 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::swap(CDailyWeeklyTest &ot
     std::swap(m_Machine, other.m_Machine);
     std::swap(m_DecayRate, other.m_DecayRate);
     std::swap(m_BucketLength, other.m_BucketLength);
-    std::swap(m_LastTestTime, other.m_LastTestTime);
+    std::swap(m_NextTestTime, other.m_NextTestTime);
+    std::swap(m_StartedRegularTest, other.m_StartedRegularTest);
     std::swap(m_TimeOutRegularTest, other.m_TimeOutRegularTest);
     m_RegularTest.swap(other.m_RegularTest);
     m_SmallTest.swap(other.m_SmallTest);
@@ -859,7 +1073,7 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::swap(CDailyWeeklyTest &ot
 void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::handle(const SAddValueMessage &message)
 {
     core_t::TTime time = message.s_Time;
-    double value = message.s_Value;
+    double value = message.s_Value - message.s_Trend;
     const TWeightStyleVec &weightStyles = message.s_WeightStyles;
     const TDouble4Vec &weights = message.s_Weights;
 
@@ -867,7 +1081,7 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::handle(const SAddValueMes
 
     switch (m_Machine.state())
     {
-    case DW_NEVER_TEST:
+    case DW_NOT_TESTING:
         break;
     case DW_SMALL_TEST:
         m_SmallTest->add(time, value);
@@ -898,7 +1112,10 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::handle(const SAddValueMes
 
 void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::handle(const SDetectedTrendMessage &message)
 {
-    this->apply(DW_RESET, message);
+    if (m_Machine.state() != DW_NOT_TESTING)
+    {
+        this->apply(DW_RESET, message);
+    }
 }
 
 void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::handle(const SDetectedPeriodicMessage &message)
@@ -916,7 +1133,7 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::handle(const SDetectedPer
         const TTimeVec &periods = message.s_Test.periods();
         for (std::size_t i = 0u; i < periods.size(); ++i)
         {
-            if (core::constants::DAY % periods[i] != 0 || periods[i] % core::constants::WEEK != 0)
+            if (DAY % periods[i] != 0 || periods[i] % WEEK != 0)
             {
                 this->apply(DW_DETECTED_INCOMPATIBLE_PERIOD, message);
             }
@@ -930,13 +1147,13 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::test(const SMessage &mess
     core_t::TTime time = message.s_Time;
     switch (m_Machine.state())
     {
-    case DW_NEVER_TEST:
+    case DW_NOT_TESTING:
     case DW_INITIAL:
         break;
     case DW_SMALL_TEST:
         if (this->shouldTest(time))
         {
-            LOG_TRACE("Small test at " << time);
+            LOG_TRACE("Small testing at " << time);
             if (m_SmallTest->test())
             {
                 LOG_TRACE("Switching to full test at " << time);
@@ -947,16 +1164,25 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::test(const SMessage &mess
     case DW_REGULAR_TEST:
         if (this->shouldTest(time))
         {
+            LOG_TRACE("Regular testing at " << time);
             CTrendTests::CPeriodicity::CResult result = m_RegularTest->test();
             if (result.periodic() && result != m_Periods)
             {
                 this->mediator()->forward(SDetectedPeriodicMessage(time, result, *m_RegularTest));
                 m_Periods = result;
             }
-            if (result.periodic() && m_RegularTest->seenSufficientData())
+            if (result.periodic())
             {
-                LOG_TRACE("Finished testing");
-                this->apply(DW_FINISHED_TEST, message);
+                if (m_RegularTest->seenSufficientData())
+                {
+                    LOG_TRACE("Finished testing");
+                    this->apply(DW_FINISH_TEST, message);
+                }
+                else
+                {
+                    m_NextTestTime = maths::CIntegerTools::ceil(
+                            m_StartedRegularTest + 2 * WEEK, this->testInterval());
+                }
             }
         }
         break;
@@ -967,19 +1193,9 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::test(const SMessage &mess
     }
 }
 
-const CTrendTests::CPeriodicity::CResult &
-CTimeSeriesDecompositionDetail::CDailyWeeklyTest::periods(void) const
+const CTrendTests::CPeriodicity::CResult &CTimeSeriesDecompositionDetail::CDailyWeeklyTest::periods(void) const
 {
     return m_Periods;
-}
-
-void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::decayRate(double decayRate)
-{
-    m_DecayRate = decayRate;
-    if (m_RegularTest)
-    {
-        m_RegularTest->decayRate(decayRate);
-    }
 }
 
 void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::propagateForwardsByTime(double time)
@@ -993,14 +1209,17 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::propagateForwardsByTime(d
 void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::skipTime(core_t::TTime skipInterval)
 {
     core_t::TTime testInterval = this->testInterval();
-    m_LastTestTime = CIntegerTools::floor(m_LastTestTime + skipInterval + testInterval, testInterval);
+    m_NextTestTime = CIntegerTools::floor(m_NextTestTime + skipInterval + testInterval, testInterval);
     m_TimeOutRegularTest += skipInterval;
 }
 
 uint64_t CTimeSeriesDecompositionDetail::CDailyWeeklyTest::checksum(uint64_t seed) const
 {
     seed = CChecksum::calculate(seed, m_Machine);
-    seed = CChecksum::calculate(seed, m_LastTestTime);
+    seed = CChecksum::calculate(seed, m_DecayRate);
+    seed = CChecksum::calculate(seed, m_BucketLength);
+    seed = CChecksum::calculate(seed, m_NextTestTime);
+    seed = CChecksum::calculate(seed, m_StartedRegularTest);
     seed = CChecksum::calculate(seed, m_TimeOutRegularTest);
     seed = CChecksum::calculate(seed, m_RegularTest);
     seed = CChecksum::calculate(seed, m_SmallTest);
@@ -1033,8 +1252,8 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::apply(std::size_t symbol,
 
         if (old == DW_INITIAL)
         {
-            m_LastTestTime = time;
-            m_TimeOutRegularTest = time + scale(4 * core::constants::WEEK, m_BucketLength);
+            m_NextTestTime = time;
+            m_TimeOutRegularTest = time + scale(5 * WEEK, m_BucketLength);
         }
 
         switch (state)
@@ -1052,17 +1271,18 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::apply(std::size_t symbol,
         case DW_REGULAR_TEST:
             if (m_SmallTest)
             {
-                m_TimeOutRegularTest = time + scale(8 * core::constants::WEEK, m_BucketLength);
+                m_TimeOutRegularTest = time + scale(9 * WEEK, m_BucketLength);
                 m_SmallTest.reset();
             }
             if (!m_RegularTest)
             {
+                m_StartedRegularTest = time;
                 m_RegularTest.reset(CTrendTests::dailyAndWeekly(m_BucketLength, regularTestDecayRate(m_DecayRate)));
             }
             break;
-        case DW_NEVER_TEST:
+        case DW_NOT_TESTING:
         case DW_INITIAL:
-            m_LastTestTime = core_t::TTime();
+            m_NextTestTime = core_t::TTime();
             m_TimeOutRegularTest = core_t::TTime();
             m_SmallTest.reset();
             m_RegularTest.reset();
@@ -1077,13 +1297,7 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::apply(std::size_t symbol,
 
 bool CTimeSeriesDecompositionDetail::CDailyWeeklyTest::shouldTest(core_t::TTime time)
 {
-    core_t::TTime interval = this->testInterval();
-    if (time - m_LastTestTime >= interval)
-    {
-        m_LastTestTime = CIntegerTools::floor(time, interval);
-        return true;
-    }
-    return false;
+    return shouldTestImpl(time, this->testInterval(), m_NextTestTime);
 }
 
 core_t::TTime CTimeSeriesDecompositionDetail::CDailyWeeklyTest::testInterval(void) const
@@ -1091,9 +1305,9 @@ core_t::TTime CTimeSeriesDecompositionDetail::CDailyWeeklyTest::testInterval(voi
     switch (m_Machine.state())
     {
     case DW_SMALL_TEST:
-        return core::constants::DAY;
+        return DAY;
     case DW_REGULAR_TEST:
-        return m_RegularTest->seenSufficientData() ? core::constants::WEEK : core::constants::DAY;
+        return m_RegularTest->seenSufficientData() ? 2 * WEEK : DAY;
     default:
         break;
     }
@@ -1103,239 +1317,89 @@ core_t::TTime CTimeSeriesDecompositionDetail::CDailyWeeklyTest::testInterval(voi
 core_t::TTime CTimeSeriesDecompositionDetail::CDailyWeeklyTest::timeOutRegularTest(void) const
 {
     return m_TimeOutRegularTest + static_cast<core_t::TTime>(
-                                      6.0 * static_cast<double>(core::constants::WEEK)
+                                      6.0 * static_cast<double>(WEEK)
                                           * (1.0 - m_RegularTest->populatedRatio()));
 }
 
-//////// CLevelShiftTest ////////
 
-CTimeSeriesDecompositionDetail::CLevelShiftTest::CLevelShiftTest(double decayRate) :
-        m_Machine(core::CStateMachine::create(LS_ALPHABET, LS_STATES,
-                                              LS_TRANSITION_FUNCTION,
-                                              LS_INITIAL)),
-        m_DecayRate(decayRate),
-        m_LastTestTime(),
-        m_TimeOutState()
+//////// CTrendCRef ////////
+
+CTimeSeriesDecompositionDetail::CTrendCRef::CTrendCRef(void) :
+        m_Trend(0), m_Variance(0.0), m_TimeOrigin(0), m_Horizon(0)
 {}
 
-CTimeSeriesDecompositionDetail::CLevelShiftTest::CLevelShiftTest(const CLevelShiftTest &other) :
-        m_Machine(core::CStateMachine::create(LS_ALPHABET, LS_STATES,
-                                              LS_TRANSITION_FUNCTION,
-                                              LS_INITIAL)),
-        m_DecayRate(other.m_DecayRate),
-        m_LastTestTime(other.m_LastTestTime),
-        m_TimeOutState(other.m_TimeOutState),
-        m_MeanPredictionErrors(other.m_MeanPredictionErrors),
-        m_LongTermMeanPredictionError(other.m_LongTermMeanPredictionError)
+CTimeSeriesDecompositionDetail::CTrendCRef::CTrendCRef(const TRegression &trend,
+                                                       double variance,
+                                                       core_t::TTime timeOrigin,
+                                                       core_t::TTime horizon) :
+        m_Trend(&trend),
+        m_Variance(variance),
+        m_TimeOrigin(timeOrigin),
+        m_Horizon(horizon)
 {}
 
-bool CTimeSeriesDecompositionDetail::CLevelShiftTest::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
+double CTimeSeriesDecompositionDetail::CTrendCRef::count(void) const
 {
-    do
+    return m_Trend ? m_Trend->count() : 0.0;
+}
+
+TDoubleDoublePr CTimeSeriesDecompositionDetail::CTrendCRef::prediction(core_t::TTime time, double confidence) const
+{
+    if (!m_Trend)
     {
-        const std::string &name = traverser.name();
-        RESTORE(MACHINE_TAG, traverser.traverseSubLevel(
-                                 boost::bind(&core::CStateMachine::acceptRestoreTraverser, &m_Machine, _1)));
-        RESTORE_BUILT_IN(LAST_TEST_TIME_TAG, m_LastTestTime)
-        RESTORE(MEAN_PREDICTION_ERRORS_TAG, m_MeanPredictionErrors.fromDelimited(traverser.value()))
-        RESTORE(LONG_TERM_MEAN_PREDICTION_ERROR_TAG, m_LongTermMeanPredictionError.fromDelimited(traverser.value()))
+        return TDoubleDoublePr(0, 0);
     }
-    while (traverser.next());
-    return true;
-}
 
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::acceptPersistInserter(core::CStatePersistInserter &inserter) const
-{
-    inserter.insertLevel(MACHINE_TAG, boost::bind(&core::CStateMachine::acceptPersistInserter, &m_Machine, _1));
-    inserter.insertValue(LAST_TEST_TIME_TAG, m_LastTestTime);
-    inserter.insertValue(MEAN_PREDICTION_ERRORS_TAG, m_MeanPredictionErrors.toDelimited());
-    inserter.insertValue(LONG_TERM_MEAN_PREDICTION_ERROR_TAG, m_LongTermMeanPredictionError.toDelimited());
-}
+    time = std::min(time, m_Horizon);
 
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::swap(CLevelShiftTest &other)
-{
-    std::swap(m_Machine, other.m_Machine);
-    std::swap(m_DecayRate, other.m_DecayRate);
-    std::swap(m_LastTestTime, other.m_LastTestTime);
-    std::swap(m_TimeOutState, other.m_TimeOutState);
-    std::swap(m_MeanPredictionErrors, other.m_MeanPredictionErrors);
-    std::swap(m_LongTermMeanPredictionError, other.m_LongTermMeanPredictionError);
-}
+    double m  = CRegression::predict(*m_Trend, this->time(time));
+    double sd = ::sqrt(m_Variance);
 
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::handle(const SAddValueMessage &message)
-{
-    double value = message.s_Value;
-    double mean = message.s_Mean;
-    const TWeightStyleVec &weightStyles = message.s_WeightStyles;
-    const TDouble4Vec &weights = message.s_Weights;
+    CRegression::CLeastSquaresOnline<3, double>::TArray params;
+    m_Trend->parameters(params);
 
-    double error = value - mean;
-    double weight = maths_t::countForUpdate(weightStyles, weights);
-
-    TVector errors;
-    errors(0) = error;
-    errors(1) = ::fabs(error);
-    m_MeanPredictionErrors.add(errors, weight);
-
-    this->test(message);
-    this->apply(LS_NEW_VALUE, message);
-}
-
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::handle(const SDetectedTrendMessage &message)
-{
-    this->apply(LS_RESET, message);
-}
-
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::handle(const SDetectedPeriodicMessage &message)
-{
-    this->apply(LS_RESET, message);
-}
-
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::test(const SMessage &message)
-{
-    core_t::TTime time = message.s_Time;
-
-    if (this->shouldTest(time))
+    if (confidence > 0.0 && sd > 0.0)
     {
-        double count = CBasicStatistics::count(m_MeanPredictionErrors);
-        TVector errors = CBasicStatistics::mean(m_MeanPredictionErrors);
-        m_MeanPredictionErrors = TVectorMeanAccumulator();
-
-        bool captureError = true;
-        std::size_t state = m_Machine.state();
-
-        switch (state)
+        try
         {
-        case LS_SHIFT:
-            if (--m_TimeOutState == 0)
-            {
-                captureError = false;
-                this->mediator()->forward(SNoLongerHasLevelShiftMessage(time));
-                this->apply(LS_TIMED_OUT, message);
-                break;
-            }
-            BOOST_FALLTHROUGH;
-        case LS_NO_SHIFT:
-            if (CBasicStatistics::count(m_LongTermMeanPredictionError) > 0.0)
-            {
-                int intervals = (APPLY_LEVEL_SHIFT_INTERVAL - m_TimeOutState)
-                               % APPLY_LEVEL_SHIFT_INTERVAL;
-                double m = 1.0 / (LARGE_SHIFT - SMALL_SHIFT);
-                double c = m * SMALL_SHIFT;
-                double shift = ::fabs(errors(0));
-                double error = CBasicStatistics::mean(m_LongTermMeanPredictionError);
-                double size = error == 0.0 ? (shift > 0.0 ? 1.0 : 0.0) : m * shift / error - c;
-                LOG_TRACE("shift = " << errors(0) << ", error = " << error << ", size = " << size);
-
-                if (size > 0.0)
-                {
-                    captureError = false;
-                    this->mediator()->forward(SHasLevelShiftMessage(time, intervals, size));
-                    this->apply(LS_DETECTED_SHIFT, message);
-                }
-                else if (state == LS_SHIFT)
-                {
-                    this->mediator()->forward(SNoLongerHasLevelShiftMessage(time));
-                    this->apply(LS_NO_DETECTED_SHIFT, message);
-                }
-            }
-            break;
-        case LS_WAIT:
-            if (--m_TimeOutState == 0)
-            {
-                this->apply(LS_TIMED_OUT, message);
-            }
-            break;
-        case LS_INITIAL:
-            break;
-        default:
-            LOG_ERROR("Test in a bad state: " << state);
-            this->apply(LS_RESET, message);
-            break;
+            boost::math::normal_distribution<> normal(m, sd);
+            double ql = boost::math::quantile(normal, (100.0 - confidence) / 200.0);
+            double qu = boost::math::quantile(normal, (100.0 + confidence) / 200.0);
+            return TDoubleDoublePr(ql, qu);
         }
-        if (captureError)
+        catch (const std::exception &e)
         {
-            m_LongTermMeanPredictionError.add(errors(1), count);
+            LOG_ERROR("Failed calculating confidence interval: " << e.what()
+                      << ", m = " << m
+                      << ", sd = " << sd
+                      << ", confidence = " << confidence);
         }
     }
+    return TDoubleDoublePr(m, m);
 }
 
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::propagateForwardsByTime(double time)
+double CTimeSeriesDecompositionDetail::CTrendCRef::mean(core_t::TTime a, core_t::TTime b) const
 {
-    time *= m_Machine.state() == LS_SHIFT ? 10.0 : 1.0;
-    m_LongTermMeanPredictionError.age(::exp(-m_DecayRate * time));
+    a = std::min(a, m_Horizon);
+    b = std::min(b, m_Horizon);
+    return m_Trend ? m_Trend->mean(this->time(a), this->time(b)) : 0.0;
 }
 
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::apply(std::size_t symbol, const SMessage &message)
+double CTimeSeriesDecompositionDetail::CTrendCRef::variance(void) const
 {
-    core_t::TTime time = message.s_Time;
-
-    std::size_t old = m_Machine.state();
-    m_Machine.apply(symbol);
-    std::size_t state = m_Machine.state();
-
-    if (state != old)
-    {
-        LOG_TRACE(LS_STATES[old] << "," << LS_ALPHABET[symbol] << " -> " << LS_STATES[state]);
-
-        if (old == LS_INITIAL)
-        {
-            m_LastTestTime = CIntegerTools::floor(time, this->testInterval());
-        }
-
-        switch (state)
-        {
-        case LS_WAIT:
-        case LS_SHIFT:
-            m_TimeOutState = APPLY_LEVEL_SHIFT_INTERVAL;
-            break;
-        case LS_NO_SHIFT:
-            break;
-        case LS_INITIAL:
-            m_LastTestTime = core_t::TTime();
-            m_MeanPredictionErrors = TVectorMeanAccumulator();
-            m_LongTermMeanPredictionError = TMeanAccumulator();
-            break;
-        default:
-            LOG_ERROR("Test in a bad state: " << state);
-            this->apply(LS_RESET, message);
-            break;
-        }
-    }
+    return m_Variance;
 }
 
-void CTimeSeriesDecompositionDetail::CLevelShiftTest::skipTime(core_t::TTime skipInterval)
+bool CTimeSeriesDecompositionDetail::CTrendCRef::covariances(TMatrix &result) const
 {
-    core_t::TTime testInterval = this->testInterval();
-    m_LastTestTime = CIntegerTools::floor(m_LastTestTime + skipInterval + testInterval, testInterval);
+    return m_Trend ? m_Trend->covariances(m_Variance, result) : false;
 }
 
-uint64_t CTimeSeriesDecompositionDetail::CLevelShiftTest::checksum(uint64_t seed) const
+double CTimeSeriesDecompositionDetail::CTrendCRef::time(core_t::TTime time) const
 {
-    seed = CChecksum::calculate(seed, m_Machine);
-    seed = CChecksum::calculate(seed, m_LastTestTime);
-    seed = CChecksum::calculate(seed, m_MeanPredictionErrors);
-    return CChecksum::calculate(seed, m_LongTermMeanPredictionError);
+    return m_Trend ? regressionTime(time, m_TimeOrigin) : 0.0;
 }
 
-bool CTimeSeriesDecompositionDetail::CLevelShiftTest::shouldTest(core_t::TTime time)
-{
-    core_t::TTime interval = this->testInterval();
-    if (time - m_LastTestTime >= interval)
-    {
-        m_LastTestTime = CIntegerTools::floor(time, interval);
-        return true;
-    }
-    return false;
-}
-
-core_t::TTime CTimeSeriesDecompositionDetail::CLevelShiftTest::testInterval(void) const
-{
-    return CSeasonalComponentAdaptiveBucketing::timescale();
-}
-
-const double CTimeSeriesDecompositionDetail::CLevelShiftTest::SMALL_SHIFT = 2.0;
-const double CTimeSeriesDecompositionDetail::CLevelShiftTest::LARGE_SHIFT = 3.0;
 
 //////// CComponents ////////
 
@@ -1349,9 +1413,8 @@ CTimeSeriesDecompositionDetail::CComponents::CComponents(double decayRate,
         m_BucketLength(bucketLength),
         m_LongestPeriod(0),
         m_SeasonalComponentSize(seasonalComponentSize),
-        m_LastInterpolateTime(),
-        m_InterpolationWeight(1.0),
-        m_Level(0.0),
+        m_LastInterpolatedTime(),
+        m_NextInterpolateTime(),
         m_Watcher(0)
 {}
 
@@ -1363,11 +1426,10 @@ CTimeSeriesDecompositionDetail::CComponents::CComponents(const CComponents &othe
         m_BucketLength(other.m_BucketLength),
         m_LongestPeriod(0),
         m_SeasonalComponentSize(other.m_SeasonalComponentSize),
-        m_LastInterpolateTime(other.m_LastInterpolateTime),
-        m_InterpolationWeight(other.m_InterpolationWeight),
-        m_Level(other.m_Level),
+        m_LastInterpolatedTime(other.m_NextInterpolateTime),
+        m_NextInterpolateTime(other.m_LastInterpolatedTime),
+        m_Trend(other.m_Trend ? new STrend(*other.m_Trend) : 0),
         m_Seasonal(other.m_Seasonal ? new SSeasonal(*other.m_Seasonal) : 0),
-        m_Moments(other.m_Moments),
         m_Watcher(0)
 {}
 
@@ -1379,16 +1441,19 @@ bool CTimeSeriesDecompositionDetail::CComponents::acceptRestoreTraverser(core::C
         RESTORE(MACHINE_TAG, traverser.traverseSubLevel(
                                  boost::bind(&core::CStateMachine::acceptRestoreTraverser, &m_Machine, _1)));
         RESTORE_BUILT_IN(LONGEST_PERIOD_TAG, m_LongestPeriod)
-        RESTORE_BUILT_IN(LAST_INTERPOLATE_TIME_TAG, m_LastInterpolateTime)
-        RESTORE_BUILT_IN(INTERPOLATION_WEIGHT_TAG, m_InterpolationWeight)
-        RESTORE_BUILT_IN(LEVEL_TAG, m_Level)
+        RESTORE_BUILT_IN(LAST_INTERPOLATED_TIME_TAG, m_LastInterpolatedTime)
+        RESTORE_BUILT_IN(NEXT_INTERPOLATE_TIME_TAG, m_NextInterpolateTime)
+        RESTORE_SETUP_TEARDOWN(TREND_TAG,
+                               m_Trend.reset(new STrend),
+                               traverser.traverseSubLevel(boost::bind(&STrend::acceptRestoreTraverser,
+                                                                      m_Trend.get(), _1)),
+                               /**/)
         RESTORE_SETUP_TEARDOWN(COMPONENTS_TAG,
                                m_Seasonal.reset(new SSeasonal),
                                traverser.traverseSubLevel(boost::bind(&SSeasonal::acceptRestoreTraverser,
                                                                       m_Seasonal.get(),
                                                                       m_DecayRate, m_BucketLength, _1)),
                                /**/)
-        RESTORE(MOMENTS_TAG, m_Moments.fromDelimited(traverser.value()))
     }
     while (traverser.next());
 
@@ -1399,14 +1464,16 @@ void CTimeSeriesDecompositionDetail::CComponents::acceptPersistInserter(core::CS
 {
     inserter.insertLevel(MACHINE_TAG, boost::bind(&core::CStateMachine::acceptPersistInserter, &m_Machine, _1));
     inserter.insertValue(LONGEST_PERIOD_TAG, m_LongestPeriod);
-    inserter.insertValue(LAST_INTERPOLATE_TIME_TAG, m_LastInterpolateTime);
-    inserter.insertValue(INTERPOLATION_WEIGHT_TAG, m_InterpolationWeight);
-    inserter.insertValue(LEVEL_TAG, m_Level);
+    inserter.insertValue(LAST_INTERPOLATED_TIME_TAG, m_LastInterpolatedTime);
+    inserter.insertValue(NEXT_INTERPOLATE_TIME_TAG, m_NextInterpolateTime);
+    if (m_Trend)
+    {
+        inserter.insertLevel(TREND_TAG, boost::bind(&STrend::acceptPersistInserter, m_Trend.get(), _1));
+    }
     if (m_Seasonal)
     {
         inserter.insertLevel(COMPONENTS_TAG, boost::bind(&SSeasonal::acceptPersistInserter, m_Seasonal.get(), _1));
     }
-    inserter.insertValue(MOMENTS_TAG, m_Moments.toDelimited());
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::swap(CComponents &other)
@@ -1416,24 +1483,19 @@ void CTimeSeriesDecompositionDetail::CComponents::swap(CComponents &other)
     std::swap(m_BucketLength, other.m_BucketLength);
     std::swap(m_LongestPeriod, other.m_LongestPeriod);
     std::swap(m_SeasonalComponentSize, other.m_SeasonalComponentSize);
-    std::swap(m_LastInterpolateTime, other.m_LastInterpolateTime);
-    std::swap(m_InterpolationWeight, other.m_InterpolationWeight);
-    std::swap(m_Level, other.m_Level);
+    std::swap(m_LastInterpolatedTime, other.m_LastInterpolatedTime);
+    std::swap(m_NextInterpolateTime, other.m_NextInterpolateTime);
+    m_Trend.swap(other.m_Trend);
     m_Seasonal.swap(other.m_Seasonal);
-    std::swap(m_Moments, other.m_Moments);
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::handle(const SAddValueMessage &message)
 {
-    m_Moments.add(message.s_Value);
-
     switch (m_Machine.state())
     {
     case SC_NORMAL:
     case SC_NEW_COMPONENTS:
-    case SC_SHIFTING_LEVEL:
-    case SC_CAPTURE_LEVEL_SHIFT:
-        if (m_Seasonal)
+        if (m_Trend || m_Seasonal)
         {
             this->interpolate(message);
 
@@ -1442,12 +1504,12 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SAddValueMessage 
             const TWeightStyleVec &weightStyles = message.s_WeightStyles;
             const TDouble4Vec &weights = message.s_Weights;
 
-            TComponentVec &components = m_Seasonal->s_Components;
             TComponentPtrVec componentsToUpdate;
             TDoubleVec deltas;
 
-            if (!components.empty())
+            if (m_Seasonal)
             {
+                TComponentVec &components = m_Seasonal->s_Components;
                 componentsToUpdate.reserve(components.size());
                 deltas.reserve(components.size());
                 for (std::size_t i = 0u; i < components.size(); ++i)
@@ -1464,19 +1526,30 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SAddValueMessage 
             double weight = maths_t::countForUpdate(weightStyles, weights);
             std::size_t n = componentsToUpdate.size();
 
-            if (n > 0)
+            CTrendCRef trend = this->trend();
+            TDoubleVec values(n + 1, value);
+            decompose(trend, componentsToUpdate, deltas, time, values);
+
+            if (m_Trend)
             {
-                TDoubleVec values(n, value);
-                decompose(componentsToUpdate, deltas, time, values);
-                for (std::size_t i = 0u; i < n; ++i)
-                {
-                    CSeasonalComponent *component = componentsToUpdate[i];
-                    double wi = weight * static_cast<double>(m_LongestPeriod)
-                                       / static_cast<double>(component->time().window());
-                    LOG_TRACE("Adding " << values[i]
-                              << " to component with period " << component->time().period());
-                    component->add(time, values[i], wi);
-                }
+                TMeanVarAccumulator moments =
+                        CBasicStatistics::accumulator(trend.count(),
+                                                      CBasicStatistics::mean(trend.prediction(time, 0.0)),
+                                                      m_Trend->s_Variance);
+                moments.add(values[0], weight);
+                LOG_TRACE("Adding " << values[0]
+                          << " at " << trend.time(time) << " to long term trend");
+                m_Trend->s_Regression.add(trend.time(time), values[0], weight);
+                m_Trend->s_Variance = CBasicStatistics::maximumLikelihoodVariance(moments);
+            }
+            for (std::size_t i = 1u; i <= n; ++i)
+            {
+                CSeasonalComponent *component = componentsToUpdate[i - 1];
+                double wi = weight * static_cast<double>(m_LongestPeriod)
+                                   / static_cast<double>(component->time().window());
+                LOG_TRACE("Adding " << values[i]
+                          << " to component with period " << component->time().period());
+                component->add(time, values[i], wi);
             }
         }
         break;
@@ -1490,9 +1563,40 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SAddValueMessage 
     }
 }
 
-void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedTrendMessage &/*message*/)
+void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedTrendMessage &message)
 {
-    // TODO support when we are modeling a trend.
+    switch (m_Machine.state())
+    {
+    case SC_NORMAL:
+    case SC_NEW_COMPONENTS:
+    {
+        if (m_Watcher && !m_Seasonal)
+        {
+            *m_Watcher = true;
+        }
+
+        LOG_DEBUG("Detected long term trend at '" << message.s_Time << "'");
+
+        const TRegression &trend = message.s_Test.trend();
+        double variance = message.s_Test.variance();
+        core_t::TTime origin = message.s_Test.origin();
+
+        m_Trend.reset(new STrend);
+        m_Trend->s_Regression = m_Seasonal ? TRegression() : trend;
+        m_Trend->s_Variance = variance;
+        m_Trend->s_TimeOrigin = origin;
+
+        this->apply(SC_ADDED_COMPONENTS, message);
+        break;
+    }
+    case SC_FORECASTING:
+    case SC_DISABLED:
+        break;
+    default:
+        LOG_ERROR("Components in a bad state: " << m_Machine.state());
+        this->apply(SC_RESET, message);
+        break;
+    }
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodicMessage &message)
@@ -1505,22 +1609,21 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodic
         };
     static CTrendTests::CPeriodicity::EPeriod SELECT_PERIOD[]  =
         {
-            CTrendTests::SELECT_DAILY, CTrendTests::SELECT_WEEKLY
+            CTrendTests::SELECT_DAILY,
+            CTrendTests::SELECT_WEEKLY
         };
-    static core_t::TTime PERIODS[] = { core::constants::DAY, core::constants::WEEK };
+    static core_t::TTime PERIODS[] = { DAY, WEEK };
     static core_t::TTime WINDOWS[][2] =
         {
-            { core::constants::WEEKEND, core::constants::WEEK    },
-            { 0,                        core::constants::WEEKEND },
-            { 0,                        core::constants::WEEK    }
+            { WEEKEND, WEEK    },
+            { 0,       WEEKEND },
+            { 0,       WEEK    }
         };
 
     switch (m_Machine.state())
     {
     case SC_NORMAL:
     case SC_NEW_COMPONENTS:
-    case SC_SHIFTING_LEVEL:
-    case SC_CAPTURE_LEVEL_SHIFT:
     {
         core_t::TTime time = message.s_Time;
         CTrendTests::CPeriodicity::CResult periods = message.s_Result;
@@ -1535,17 +1638,15 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodic
         m_Seasonal.reset(new SSeasonal);
         TComponentVec &components = m_Seasonal->s_Components;
         TDoubleVec &deltas = m_Seasonal->s_Deltas;
-        TDoubleVec &history = m_Seasonal->s_HistoryLengths;
         components.clear();
         deltas.clear();
-        history.clear();
-
-        CTrendTests::TTimeTimePrMeanVarAccumulatorPrVec trends[6];
-        message.s_Test.trends(periods, trends);
 
         LOG_DEBUG("Detected " << CTrendTests::printDailyAndWeekly(periods));
         LOG_DEBUG("Start of week " << startOfWeek);
         LOG_DEBUG("Estimated new periods at '" << time << "'");
+
+        CTrendTests::TTimeTimePrMeanVarAccumulatorPrVec trends[6];
+        message.s_Test.trends(periods, trends);
 
         double bucketLength = static_cast<double>(m_BucketLength);
         std::size_t sizes[][2] =
@@ -1556,9 +1657,9 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodic
             };
         core_t::TTime times[][2] =
             {
-                { time - core::constants::WEEK, time - core::constants::WEEK },
-                { time - core::constants::WEEK, time - core::constants::WEEK },
-                { time - core::constants::DAY,  time - core::constants::WEEK }
+                { time - WEEK, time - WEEK },
+                { time - WEEK, time - WEEK },
+                { time - DAY,  time - WEEK }
             };
 
         for (std::size_t i = 0u; i < 2; ++i)
@@ -1577,7 +1678,6 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodic
             }
         }
         deltas.resize(components.size(), 0.0);
-        history.resize(components.size(), 0.0);
 
         this->apply(SC_ADDED_COMPONENTS, message);
 
@@ -1600,16 +1700,16 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
         TTimeVec periods = message.s_Test.periods();
         TComponentVec &components = m_Seasonal->s_Components;
         TDoubleVec &deltas = m_Seasonal->s_Deltas;
-        TDoubleVec &history = m_Seasonal->s_HistoryLengths;
 
         std::size_t last = 0u;
+        double shift = 0.0;
+
         for (std::size_t i = 0u; i < components.size(); ++i)
         {
             if (last != i)
             {
                 components[i].swap(components[last]);
                 std::swap(deltas[i], deltas[last]);
-                std::swap(history[i], history[last]);
             }
             if (!std::binary_search(periods.begin(), periods.end(), components[i].time().period()))
             {
@@ -1617,9 +1717,11 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
             }
             else if (m_Watcher)
             {
+                shift += components[i].meanValue();
                 *m_Watcher = true;
             }
         }
+
         if (last == 0)
         {
             m_Seasonal.reset();
@@ -1628,88 +1730,61 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
         {
             components.erase(components.begin() + last, components.end());
             deltas.erase(deltas.begin() + last, deltas.end());
-            history.erase(history.begin() + last, history.end());
         }
-    }
-}
 
-void CTimeSeriesDecompositionDetail::CComponents::handle(const SHasLevelShiftMessage &message)
-{
-    m_InterpolationWeight = 1.0 - std::min(message.s_Size, 1.0);
-    this->apply(SC_START_SHIFTING_LEVEL, message);
-    if (m_Seasonal)
-    {
-        double history = *std::max_element(m_Seasonal->s_HistoryLengths.begin(),
-                                           m_Seasonal->s_HistoryLengths.end());
-        if (history < 1.0)
+        if (m_Trend)
         {
-            this->apply(SC_STOP_SHIFTING_LEVEL, message);
+            m_Trend->s_Regression.shiftOrdinate(shift);
+        }
+        else if (m_Seasonal)
+        {
+            m_Seasonal->shift(shift);
         }
     }
-}
-
-void CTimeSeriesDecompositionDetail::CComponents::handle(const SNoLongerHasLevelShiftMessage &message)
-{
-    this->apply(SC_STOP_SHIFTING_LEVEL, message);
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::interpolate(const SMessage &message)
 {
+    core_t::TTime time = message.s_Time;
+
     std::size_t state = m_Machine.state();
+
     switch (state)
     {
     case SC_NORMAL:
     case SC_NEW_COMPONENTS:
-    case SC_SHIFTING_LEVEL:
-    case SC_CAPTURE_LEVEL_SHIFT:
     case SC_FORECASTING:
-        if (m_Seasonal)
+        if (this->shouldInterpolate(time))
         {
-            core_t::TTime time = message.s_Time;
-            TComponentVec &components = m_Seasonal->s_Components;
-            TDoubleVec &deltas = m_Seasonal->s_Deltas;
-            TDoubleVec &history = m_Seasonal->s_HistoryLengths;
+            LOG_TRACE("Interpolating values at " << time);
 
-            if (this->shouldInterpolate(time))
+            m_LastInterpolatedTime = CIntegerTools::floor(time, this->interpolateInterval());
+
+            if (m_Trend)
             {
-                LOG_TRACE("Interpolating values at " << time);
-                TTimeTimePrDoubleFMap shifts;
+                m_Trend->refresh(m_NextInterpolateTime);
+            }
+            if (m_Seasonal)
+            {
+                TComponentVec &components = m_Seasonal->s_Components;
+                TDoubleVec &deltas = m_Seasonal->s_Deltas;
+
                 for (std::size_t i = 0u; i < components.size(); ++i)
                 {
                     CSeasonalComponent &component = components[i];
-                    double mean = component.meanValue();
-                    component.interpolate(m_LastInterpolateTime,
-                                          m_InterpolationWeight,
-                                          state != SC_FORECASTING);
-                    if (state == SC_CAPTURE_LEVEL_SHIFT)
-                    {
-                        double shift = component.meanValue() - mean;
-                        shifts[std::make_pair(component.time().windowStart(),
-                                              component.time().windowEnd())] += shift;
-                    }
-                    if (component.time().inWindow(time))
-                    {
-                        history[i] += 1.0;
-                    }
+                    component.interpolate(m_LastInterpolatedTime, !this->forecasting());
                 }
 
                 minimizeAbsSlope(components, deltas);
-
-                TMeanAccumulator shift;
-                for (TTimeTimePrDoubleFMapCItr i = shifts.begin(); i < shifts.end(); ++i)
-                {
-                    shift.add(i->second, i->first.second - i->first.first);
-                }
-                m_Level += CBasicStatistics::mean(shift);
-
-                this->apply(SC_INTERPOLATED, message);
             }
+
+            this->apply(SC_INTERPOLATED, message);
         }
         break;
     case SC_DISABLED:
         break;
     default:
-        LOG_ERROR("Components in a bad state: " << m_Machine.state());
+        LOG_ERROR("Components in a bad state: " << state);
         this->apply(SC_RESET, message);
         break;
     }
@@ -1727,29 +1802,27 @@ void CTimeSeriesDecompositionDetail::CComponents::decayRate(double decayRate)
     }
 }
 
-void CTimeSeriesDecompositionDetail::CComponents::propagateForwards(core_t::TTime start,
-                                                                    core_t::TTime end)
+void CTimeSeriesDecompositionDetail::CComponents::propagateForwards(core_t::TTime start, core_t::TTime end)
 {
+    LOG_TRACE("Aging at " << end);
+
     double time =  static_cast<double>(end - start)
                  / static_cast<double>(this->propagationForwardsByTimeInterval());
 
-    time *= m_Machine.state() == SC_SHIFTING_LEVEL ? 5.0 : 1.0;
     double factor = ::exp(-m_DecayRate * time);
 
+    if (m_Trend)
+    {
+        m_Trend->s_Regression.age(factor);
+    }
     if (m_Seasonal)
     {
         for (std::size_t i = 0u; i < m_Seasonal->s_Components.size(); ++i)
         {
             CSeasonalComponent &component = m_Seasonal->s_Components[i];
-            component.propagateForwardsByTime(time, m_Machine.state() == SC_SHIFTING_LEVEL);
-            if (component.time().inWindow((start + end) / 2))
-            {
-                m_Seasonal->s_HistoryLengths[i] *= factor;
-            }
+            component.propagateForwardsByTime(time);
         }
     }
-
-    m_Moments.age(factor);
 }
 
 bool CTimeSeriesDecompositionDetail::CComponents::forecasting(void) const
@@ -1764,6 +1837,10 @@ void CTimeSeriesDecompositionDetail::CComponents::forecast(void)
 
 bool CTimeSeriesDecompositionDetail::CComponents::initialized(void) const
 {
+    if (m_Trend)
+    {
+        return true;
+    }
     const TComponentVec &components = this->seasonal();
     for (std::size_t i = 0u; components.size(); ++i)
     {
@@ -1775,6 +1852,15 @@ bool CTimeSeriesDecompositionDetail::CComponents::initialized(void) const
     return false;
 }
 
+TTrendCRef CTimeSeriesDecompositionDetail::CComponents::trend(void) const
+{
+    return m_Trend ? CTrendCRef(m_Trend->s_Regression,
+                                m_Trend->s_Variance,
+                                m_Trend->s_TimeOrigin,
+                                this->forecasting() ? FOREVER :  m_LastInterpolatedTime
+                                                               + this->interpolateInterval()) : NO_TREND;
+}
+
 const TComponentVec &CTimeSeriesDecompositionDetail::CComponents::seasonal(void) const
 {
     return m_Seasonal ? m_Seasonal->s_Components : NO_COMPONENTS;
@@ -1782,31 +1868,28 @@ const TComponentVec &CTimeSeriesDecompositionDetail::CComponents::seasonal(void)
 
 double CTimeSeriesDecompositionDetail::CComponents::meanValue(void) const
 {
-    return this->initialized() ? meanOf(&CSeasonalComponent::meanValue, this->seasonal()) :
-                                 CBasicStatistics::mean(m_Moments);
+    return this->initialized() ? (  this->trend().mean(m_LastInterpolatedTime,
+                                                       m_LastInterpolatedTime + this->interpolateInterval())
+                                  + meanOf(&CSeasonalComponent::meanValue, this->seasonal())) : 0.0;
 }
 
 double CTimeSeriesDecompositionDetail::CComponents::meanValue(core_t::TTime time) const
 {
-    return this->initialized() ? meanValueAt(time, this->seasonal()) :
-                                 CBasicStatistics::mean(m_Moments);
+    return this->initialized() ?  this->trend().mean(m_LastInterpolatedTime,
+                                                     m_LastInterpolatedTime + this->interpolateInterval())
+                                + meanValueAt(time, this->seasonal()) : 0.0;
 }
 
 double CTimeSeriesDecompositionDetail::CComponents::meanVariance(void) const
 {
-    return this->initialized() ? meanOf(&CSeasonalComponent::meanVariance, this->seasonal()) :
-                                 CBasicStatistics::maximumLikelihoodVariance(m_Moments);
-}
-
-double CTimeSeriesDecompositionDetail::CComponents::level(void) const
-{
-    return m_Level;
+    return this->initialized() ?  this->trend().variance()
+                                + meanOf(&CSeasonalComponent::meanVariance, this->seasonal()) : 0.0;
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::skipTime(core_t::TTime skipInterval)
 {
     core_t::TTime interpolateInterval = this->interpolateInterval();
-    m_LastInterpolateTime = CIntegerTools::floor(  m_LastInterpolateTime
+    m_NextInterpolateTime = CIntegerTools::floor(  m_NextInterpolateTime
                                                  + skipInterval
                                                  + interpolateInterval, interpolateInterval);
 }
@@ -1829,22 +1912,22 @@ uint64_t CTimeSeriesDecompositionDetail::CComponents::checksum(uint64_t seed) co
     seed = CChecksum::calculate(seed, m_DecayRate);
     seed = CChecksum::calculate(seed, m_BucketLength);
     seed = CChecksum::calculate(seed, m_SeasonalComponentSize);
-    seed = CChecksum::calculate(seed, m_LastInterpolateTime);
-    seed = CChecksum::calculate(seed, m_InterpolationWeight);
-    seed = CChecksum::calculate(seed, m_Level);
-    seed = CChecksum::calculate(seed, m_Seasonal);
-    return CChecksum::calculate(seed, m_Moments);
+    seed = CChecksum::calculate(seed, m_LastInterpolatedTime);
+    seed = CChecksum::calculate(seed, m_NextInterpolateTime);
+    seed = CChecksum::calculate(seed, m_Trend);
+    return CChecksum::calculate(seed, m_Seasonal);
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::debugMemoryUsage(core::CMemoryUsage::TMemoryUsagePtr mem) const
 {
     mem->setName("CComponents");
+    core::CMemoryDebug::dynamicSize("m_Trend", m_Trend, mem);
     core::CMemoryDebug::dynamicSize("m_Seasonal", m_Seasonal, mem);
 }
 
 std::size_t CTimeSeriesDecompositionDetail::CComponents::memoryUsage(void) const
 {
-    return core::CMemory::dynamicSize(m_Seasonal);
+    return core::CMemory::dynamicSize(m_Trend) + core::CMemory::dynamicSize(m_Seasonal);
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::apply(std::size_t symbol, const SMessage &message)
@@ -1852,11 +1935,11 @@ void CTimeSeriesDecompositionDetail::CComponents::apply(std::size_t symbol, cons
     if (symbol == SC_RESET)
     {
         // TODO broadcast recover message.
+        m_Trend.reset();
         m_Seasonal.reset();
     }
 
     std::size_t old = m_Machine.state();
-
     m_Machine.apply(symbol);
     std::size_t state = m_Machine.state();
 
@@ -1864,30 +1947,15 @@ void CTimeSeriesDecompositionDetail::CComponents::apply(std::size_t symbol, cons
     {
         LOG_TRACE(SC_STATES[old] << "," << SC_ALPHABET[symbol] << " -> " << SC_STATES[state]);
 
-        if (old == SC_SHIFTING_LEVEL)
-        {
-            if (m_Seasonal)
-            {
-                m_Seasonal->resetVariance(this->meanVariance());
-            }
-            m_InterpolationWeight = 1.0;
-        }
-
         switch (state)
         {
         case SC_NORMAL:
         case SC_FORECASTING:
-            break;
-        case SC_SHIFTING_LEVEL:
-            break;
-        case SC_CAPTURE_LEVEL_SHIFT:
-            this->interpolate(message);
-            this->apply(symbol, message);
-            break;
         case SC_NEW_COMPONENTS:
             this->interpolate(message);
             break;
         case SC_DISABLED:
+            m_Trend.reset();
             m_Seasonal.reset();
             break;
         default:
@@ -1902,19 +1970,16 @@ bool CTimeSeriesDecompositionDetail::CComponents::shouldInterpolate(core_t::TTim
 {
     core_t::TTime interpolateInterval = this->interpolateInterval();
     std::size_t state = m_Machine.state();
-
-    if (state == SC_NEW_COMPONENTS || state == SC_CAPTURE_LEVEL_SHIFT)
+    if (state == SC_NEW_COMPONENTS)
     {
-        m_LastInterpolateTime = CIntegerTools::floor(time, interpolateInterval);
+        m_NextInterpolateTime = CIntegerTools::ceil(time + 1, interpolateInterval);
         return true;
     }
-
-    if (time - m_LastInterpolateTime >= interpolateInterval)
+    if (time >= m_NextInterpolateTime)
     {
-        m_LastInterpolateTime = CIntegerTools::floor(time, interpolateInterval);
-        return m_InterpolationWeight > 0.0;
+        m_NextInterpolateTime = CIntegerTools::ceil(time + 1, interpolateInterval);
+        return true;
     }
-
     return false;
 }
 
@@ -1939,6 +2004,50 @@ bool CTimeSeriesDecompositionDetail::CComponents::CScopeNotifyOnStateChange::cha
     return m_Watcher;
 }
 
+CTimeSeriesDecompositionDetail::CComponents::STrend::STrend(void) :
+        s_Variance(0.0),
+        s_TimeOrigin(boost::numeric::bounds<core_t::TTime>::lowest())
+{}
+
+bool CTimeSeriesDecompositionDetail::CComponents::STrend::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
+{
+    do
+    {
+        const std::string &name = traverser.name();
+        RESTORE(REGRESSION_TAG,
+                traverser.traverseSubLevel(
+                    boost::bind(&TRegression::acceptRestoreTraverser, &s_Regression, _1)))
+        RESTORE_BUILT_IN(VARIANCE_TAG, s_Variance)
+        RESTORE_BUILT_IN(TIME_ORIGIN_TAG, s_TimeOrigin)
+    }
+    while (traverser.next());
+    return true;
+}
+
+void CTimeSeriesDecompositionDetail::CComponents::STrend::acceptPersistInserter(core::CStatePersistInserter &inserter) const
+{
+    inserter.insertLevel(REGRESSION_TAG, boost::bind(&TRegression::acceptPersistInserter, &s_Regression, _1));
+    inserter.insertValue(VARIANCE_TAG, s_Variance);
+    inserter.insertValue(TIME_ORIGIN_TAG, s_TimeOrigin);
+}
+
+void CTimeSeriesDecompositionDetail::CComponents::STrend::refresh(core_t::TTime time)
+{
+    if (time - 3 * WEEK >= s_TimeOrigin)
+    {
+        LOG_TRACE("shifting");
+        s_Regression.shiftAbscissa(-regressionTime(time, s_TimeOrigin));
+        s_TimeOrigin = time;
+    }
+}
+
+uint64_t CTimeSeriesDecompositionDetail::CComponents::STrend::checksum(uint64_t seed) const
+{
+    seed = CChecksum::calculate(seed, s_Regression);
+    seed = CChecksum::calculate(seed, s_Variance);
+    return CChecksum::calculate(seed, s_TimeOrigin);
+}
+
 bool CTimeSeriesDecompositionDetail::CComponents::SSeasonal::acceptRestoreTraverser(double decayRate,
                                                                                     core_t::TTime bucketLength,
                                                                                     core::CStateRestoreTraverser &traverser)
@@ -1946,18 +2055,12 @@ bool CTimeSeriesDecompositionDetail::CComponents::SSeasonal::acceptRestoreTraver
     do
     {
         const std::string &name = traverser.name();
-        RESTORE_NO_ERROR(COMPONENT_TAG,
-                         s_Components.push_back(CSeasonalComponent(decayRate,
-                                                                   static_cast<double>(bucketLength),
-                                                                   traverser)))
+        RESTORE_NO_ERROR(COMPONENT_TAG, s_Components.push_back(
+                CSeasonalComponent(decayRate, static_cast<double>(bucketLength), traverser)))
         RESTORE_SETUP_TEARDOWN(DELTA_TAG,
                                double delta,
                                core::CStringUtils::stringToType(traverser.value(), delta),
                                s_Deltas.push_back(delta))
-        RESTORE_SETUP_TEARDOWN(HISTORY_LENGTHS_TAG,
-                               double history,
-                               core::CStringUtils::stringToType(traverser.value(), history),
-                               s_HistoryLengths.push_back(history))
     }
     while (traverser.next());
     return true;
@@ -1969,23 +2072,29 @@ void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::acceptPersistInsert
     {
         inserter.insertLevel(COMPONENT_TAG, boost::bind(&CSeasonalComponent::acceptPersistInserter, &s_Components[i], _1));
         inserter.insertValue(DELTA_TAG, s_Deltas[i], core::CIEEE754::E_SinglePrecision);
-        inserter.insertValue(HISTORY_LENGTHS_TAG, s_HistoryLengths[i], core::CIEEE754::E_SinglePrecision);
     }
 }
 
-void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::resetVariance(double variance)
+void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::shift(double shift)
 {
+    typedef boost::container::flat_set<TTimeTimePr> TTimeTimePrFSet;
+
+    TTimeTimePrFSet processed;
     for (std::size_t i = 0u; i < s_Components.size(); ++i)
     {
-        s_Components[i].resetVariance(variance);
+        core_t::TTime start = s_Components[i].time().windowStart();
+        core_t::TTime end   = s_Components[i].time().windowEnd();
+        if (processed.insert(std::make_pair(start, end)).second)
+        {
+            s_Components[i].shift(shift);
+        }
     }
 }
 
 uint64_t CTimeSeriesDecompositionDetail::CComponents::SSeasonal::checksum(uint64_t seed) const
 {
     seed = CChecksum::calculate(seed, s_Components);
-    seed = CChecksum::calculate(seed, s_Deltas);
-    return CChecksum::calculate(seed, s_HistoryLengths);
+    return CChecksum::calculate(seed, s_Deltas);
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::debugMemoryUsage(core::CMemoryUsage::TMemoryUsagePtr mem) const

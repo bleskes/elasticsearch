@@ -375,7 +375,7 @@ class MODEL_EXPORT CModelTools
                     {
                         if (trend[i]->initialized())
                         {
-                            (*result)[i] = sample[i] - trend[i]->level();
+                            (*result)[i] = sample[i];
                         }
                     }
                 }

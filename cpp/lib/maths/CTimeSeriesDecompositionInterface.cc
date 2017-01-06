@@ -37,11 +37,10 @@ typedef std::vector<double> TDoubleVec;
 typedef core::CSmallVector<double, 4> TDouble4Vec;
 const std::size_t NUMBER_SAMPLES = 100u;
 
-//! Compute the hash of \p a and \p b.
-uint64_t hash(uint64_t seed, double a, double b)
+//! Compute the hash of \p x.
+uint64_t hash(uint64_t seed, double x)
 {
-    seed = core::CHashing::hashCombine(seed, static_cast<uint64_t>(a));
-    return core::CHashing::hashCombine(seed, static_cast<uint64_t>(b));
+    return core::CHashing::hashCombine(seed, static_cast<uint64_t>(x));
 }
 
 }
@@ -71,14 +70,13 @@ bool initializePrior(core_t::TTime bucketLength,
     // small tolerance when generating the samples with which to
     // initialize the prior.
 
-    double mean = decomposition.level();
     double variance = 2.25 * decomposition.meanVariance();
     double sd = ::sqrt(variance);
-    uint64_t seed = hash(0, mean, variance);
+    uint64_t seed = hash(0, variance);
 
     TDoubleVec samples;
     CPRNG::CXorOShiro128Plus rng(seed);
-    CSampling::normalSample(rng, mean, variance, NUMBER_SAMPLES, samples);
+    CSampling::normalSample(rng, 0.0, variance, NUMBER_SAMPLES, samples);
     std::sort(samples.begin(), samples.end());
 
     double weight = 0.2 * static_cast<double>(decomposition.period())
@@ -130,10 +128,9 @@ bool initializePrior(core_t::TTime bucketLength,
         {
             return false;
         }
-        mean[i] = decomposition[i]->level();
         covariance[i][i] = 2.25 * decomposition[i]->meanVariance();
         sd += covariance[i][i];
-        seed = hash(seed, mean[i], covariance[i][i]);
+        seed = hash(seed, covariance[i][i]);
     }
     sd /= static_cast<double>(dimension);
     sd = ::sqrt(sd);

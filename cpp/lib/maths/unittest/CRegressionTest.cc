@@ -21,6 +21,7 @@
 #include <core/CRapidXmlStatePersistInserter.h>
 #include <core/CRapidXmlStateRestoreTraverser.h>
 
+#include <maths/CIntegration.h>
 #include <maths/CRegression.h>
 
 #include <test/CRandomNumbers.h>
@@ -69,11 +70,11 @@ typedef boost::array<double, 4> TDoubleArray4;
 
 }
 
-void CRegressionTest::testLeastSquareOnlineInvariants(void)
+void CRegressionTest::testInvariants(void)
 {
-    LOG_DEBUG("+---------------------------------------------------+");
-    LOG_DEBUG("|  CRegressionTest::testLeastSquareOnlineInvariants |");
-    LOG_DEBUG("+---------------------------------------------------+");
+    LOG_DEBUG("+----------------------------------+");
+    LOG_DEBUG("|  CRegressionTest::testInvariants |");
+    LOG_DEBUG("+----------------------------------+");
 
     // Test at (local) minimum of quadratic residuals.
 
@@ -138,11 +139,11 @@ void CRegressionTest::testLeastSquareOnlineInvariants(void)
     }
 }
 
-void CRegressionTest::testLeastSquareOnlineFit(void)
+void CRegressionTest::testFit(void)
 {
-    LOG_DEBUG("+---------------------------------------------+");
-    LOG_DEBUG("|  CRegressionTest::testLeastSquareOnlineFit  |");
-    LOG_DEBUG("+---------------------------------------------+");
+    LOG_DEBUG("+----------------------------+");
+    LOG_DEBUG("|  CRegressionTest::testFit  |");
+    LOG_DEBUG("+----------------------------+");
 
     test::CRandomNumbers rng;
 
@@ -226,11 +227,14 @@ void CRegressionTest::testLeastSquareOnlineFit(void)
     }
 }
 
-void CRegressionTest::testLeastSquareOnlineShift(void)
+void CRegressionTest::testShiftAbscissa(void)
 {
-    LOG_DEBUG("+-----------------------------------------------+");
-    LOG_DEBUG("|  CRegressionTest::testLeastSquareOnlineShift  |");
-    LOG_DEBUG("+-----------------------------------------------+");
+    LOG_DEBUG("+--------------------------------------+");
+    LOG_DEBUG("|  CRegressionTest::testShiftAbscissa  |");
+    LOG_DEBUG("+--------------------------------------+");
+
+    // Test shifting the abscissa is equivalent to updating
+    // with shifted X-values.
 
     {
         double intercept = 5.0;
@@ -249,7 +253,7 @@ void CRegressionTest::testLeastSquareOnlineShift(void)
         TDoubleArray2 params1;
         ls.parameters(params1);
 
-        ls.shift(-50.0);
+        ls.shiftAbscissa(-50.0);
         TDoubleArray2 params2;
         ls.parameters(params2);
 
@@ -284,7 +288,7 @@ void CRegressionTest::testLeastSquareOnlineShift(void)
         TDoubleArray3 params1;
         ls.parameters(params1);
 
-        ls.shift(-50.0);
+        ls.shiftAbscissa(-50.0);
         TDoubleArray3 params2;
         ls.parameters(params2);
 
@@ -306,11 +310,44 @@ void CRegressionTest::testLeastSquareOnlineShift(void)
     }
 }
 
-void CRegressionTest::testLeastSquareOnlineAge(void)
+void CRegressionTest::testShiftOrdinate(void)
 {
-    LOG_DEBUG("+---------------------------------------------+");
-    LOG_DEBUG("|  CRegressionTest::testLeastSquareOnlineAge  |");
-    LOG_DEBUG("+---------------------------------------------+");
+    LOG_DEBUG("+--------------------------------------+");
+    LOG_DEBUG("|  CRegressionTest::testShiftOrdinate  |");
+    LOG_DEBUG("+--------------------------------------+");
+
+    // Test that translating the regression by a some delta
+    // produces the desired translation and no change to any
+    // of the derivatives.
+
+    maths::CRegression::CLeastSquaresOnline<3, double> regression;
+    for (double x = 0.0; x < 100.0; x += 1.0)
+    {
+        regression.add(x, 0.01 * x * x * x - 0.2 * x * x + 1.0 * x + 10.0);
+    }
+
+    TDoubleArray4 params1;
+    regression.parameters(params1);
+
+    regression.shiftOrdinate(1000.0);
+
+    TDoubleArray4 params2;
+    regression.parameters(params2);
+
+    LOG_DEBUG("parameters 1 = " << core::CContainerPrinter::print(params1));
+    LOG_DEBUG("parameters 2 = " << core::CContainerPrinter::print(params2));
+
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(1000.0 + params1[0], params2[0], 1e-6 * ::fabs(params1[0]));
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(         params1[1], params2[1], 1e-6 * ::fabs(params1[1]));
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(         params1[2], params2[2], 1e-6 * ::fabs(params1[2]));
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(         params1[3], params2[3], 1e-6 * ::fabs(params1[3]));
+}
+
+void CRegressionTest::testAge(void)
+{
+    LOG_DEBUG("+----------------------------+");
+    LOG_DEBUG("|  CRegressionTest::testAge  |");
+    LOG_DEBUG("+----------------------------+");
 
     // Test that the regression is mean reverting.
 
@@ -473,9 +510,9 @@ void CRegressionTest::testPrediction(void)
 
         if (x > x0 + 2.0)
         {
-            ls1.shift(-2.0);
-            ls2.shift(-2.0);
-            ls3.shift(-2.0);
+            ls1.shiftAbscissa(-2.0);
+            ls2.shiftAbscissa(-2.0);
+            ls3.shiftAbscissa(-2.0);
             x0 += 2.0;
         }
 
@@ -743,6 +780,79 @@ void CRegressionTest::testScale(void)
     CPPUNIT_ASSERT_EQUAL(maths::CBasicStatistics::count(regression3.statistic()), 5.0);
 }
 
+template<std::size_t N>
+class CRegressionPrediction
+{
+    public:
+        typedef double result_type;
+
+    public:
+        CRegressionPrediction(const maths::CRegression::CLeastSquaresOnline<N, double> &regression) :
+            m_Regression(regression)
+        {}
+
+        bool operator()(double x, double &result) const
+        {
+            result = maths::CRegression::predict(m_Regression, x);
+            return true;
+        }
+
+    private:
+        maths::CRegression::CLeastSquaresOnline<N, double> m_Regression;
+};
+
+void CRegressionTest::testMean(void)
+{
+    LOG_DEBUG("+-----------------------------+");
+    LOG_DEBUG("|  CRegressionTest::testMean  |");
+    LOG_DEBUG("+-----------------------------+");
+
+    // Test that the mean agrees with the numeric integration
+    // of the regression.
+
+    test::CRandomNumbers rng;
+    for (std::size_t i = 0; i < 5; ++i)
+    {
+        TDoubleVec coeffs;
+        rng.generateUniformSamples(-1.0, 1.0, 4, coeffs);
+        maths::CRegression::CLeastSquaresOnline<3, double> regression;
+        for (double x = 0.0; x < 10.0; x += 1.0)
+        {
+            regression.add(x,  0.2 * coeffs[0] * x * x * x
+                             + 0.4 * coeffs[1] * x * x
+                             + coeffs[2] * x
+                             + 2.0 * coeffs[3]);
+        }
+
+        double expected;
+        maths::CIntegration::gaussLegendre<maths::CIntegration::OrderThree>(CRegressionPrediction<3>(regression),
+                                                                            10.0, 15.0, expected);
+        expected /= 5.0;
+        double actual = regression.mean(10.0, 15.0);
+        LOG_DEBUG("expected = " << expected);
+        LOG_DEBUG("actual   = " << actual);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, 1e-6);
+
+        // Test interval spanning 0.0.
+        maths::CIntegration::gaussLegendre<maths::CIntegration::OrderThree>(CRegressionPrediction<3>(regression),
+                                                                            -3.0, 0.0, expected);
+        expected /= 3.0;
+        actual = regression.mean(-3.0, 0.0);
+        LOG_DEBUG("expected = " << expected);
+        LOG_DEBUG("actual   = " << actual);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, 1e-6);
+
+        // Test zero length interval.
+        maths::CIntegration::gaussLegendre<maths::CIntegration::OrderThree>(CRegressionPrediction<3>(regression),
+                                                                            -3.0, -3.0 + 1e-7, expected);
+        expected /= 1e-7;
+        actual = regression.mean(-3.0, -3.0);
+        LOG_DEBUG("expected = " << expected);
+        LOG_DEBUG("actual   = " << actual);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, 1e-6);
+    }
+}
+
 void CRegressionTest::testCovariances(void)
 {
     LOG_DEBUG("+------------------------------------+");
@@ -860,9 +970,9 @@ void CRegressionTest::testPersist(void)
     core::CRapidXmlStateRestoreTraverser traverser(parser);
 
     maths::CRegression::CLeastSquaresOnline<2, double> restoredRegression;
-    CPPUNIT_ASSERT(traverser.traverseSubLevel(boost::bind(&maths::CRegression::CLeastSquaresOnline<2, double>::acceptRestoreTraverser,
-                                                          &restoredRegression,
-                                                          _1)));
+    CPPUNIT_ASSERT(traverser.traverseSubLevel(boost::bind(
+            &maths::CRegression::CLeastSquaresOnline<2, double>::acceptRestoreTraverser,
+            &restoredRegression, _1)));
 
     CPPUNIT_ASSERT_EQUAL(origRegression.checksum(),
                          restoredRegression.checksum());
@@ -881,17 +991,20 @@ CppUnit::Test *CRegressionTest::suite(void)
     CppUnit::TestSuite *suiteOfTests = new CppUnit::TestSuite("CRegressionTest");
 
     suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
-                                   "CRegressionTest::testLeastSquareOnlineInvariants",
-                                   &CRegressionTest::testLeastSquareOnlineInvariants) );
+                                   "CRegressionTest::testInvariants",
+                                   &CRegressionTest::testInvariants) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
-                                   "CRegressionTest::testLeastSquareOnlineFit",
-                                   &CRegressionTest::testLeastSquareOnlineFit) );
+                                   "CRegressionTest::testFit",
+                                   &CRegressionTest::testFit) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
-                                   "CRegressionTest::testLeastSquareOnlineShift",
-                                   &CRegressionTest::testLeastSquareOnlineShift) );
+                                   "CRegressionTest::testShiftAbscissa",
+                                   &CRegressionTest::testShiftAbscissa) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
-                                   "CRegressionTest::testLeastSquareOnlineAge",
-                                   &CRegressionTest::testLeastSquareOnlineAge) );
+                                   "CRegressionTest::testShiftOrdinate",
+                                   &CRegressionTest::testShiftOrdinate) );
+    suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
+                                   "CRegressionTest::testAge",
+                                   &CRegressionTest::testAge) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
                                    "CRegressionTest::testPrediction",
                                    &CRegressionTest::testPrediction) );
@@ -904,6 +1017,9 @@ CppUnit::Test *CRegressionTest::suite(void)
     suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
                                    "CRegressionTest::testScale",
                                    &CRegressionTest::testScale) );
+    suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
+                                   "CRegressionTest::testMean",
+                                   &CRegressionTest::testMean) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CRegressionTest>(
                                    "CRegressionTest::testCovariances",
                                    &CRegressionTest::testCovariances) );

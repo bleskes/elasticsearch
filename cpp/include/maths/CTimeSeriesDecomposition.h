@@ -147,23 +147,19 @@ class MATHS_EXPORT CTimeSeriesDecomposition : public CTimeSeriesDecompositionInt
         //! Get the mean value of the baseline.
         virtual double mean(void) const;
 
-        //! Get the level of the baseline.
-        //!
-        //! If the time series contains step changes this is its current
-        //! level otherwise this will be zero.
-        virtual double level(void) const;
-
         //! Get the value of the time series baseline at \p time.
         //!
         //! \param[in] time The time of interest.
-        //! \param[in] confidence The symmetric confidence interval
-        //! for the baseline as a percentage.
-        virtual TDoubleDoublePr baseline(core_t::TTime time, double confidence, bool smooth = true) const;
+        //! \param[in] confidence The symmetric confidence interval for the
+        //! baseline as a percentage.
+        //! \param[in] components The components to include in the baseline.
+        virtual TDoubleDoublePr baseline(core_t::TTime time,
+                                         double confidence,
+                                         EComponents components = E_All,
+                                         bool smooth = true) const;
 
-        //! Detrend \p value from the time series being modeled
-        //! by removing any periodic component at \p time.
-        //!
-        //! \note That detrending preserves the time series mean.
+        //! Detrend \p value from the time series being modeled by removing
+        //! any trend and periodic component at \p time.
         virtual double detrend(core_t::TTime time, double value, double confidence) const;
 
         //! Get the mean variance of the baseline.
@@ -237,11 +233,11 @@ class MATHS_EXPORT CTimeSeriesDecomposition : public CTimeSeriesDecompositionInt
         //! components.
         TMediatorPtr m_Mediator;
 
-        //! The test for daily and weekly periodicity.
-        CDailyWeeklyTest m_DailyWeeklyTest;
+        //! The test for a large time scale smooth trend.
+        CLongTermTrendTest m_LongTermTrendTest;
 
-        //! The test for level shifts in the trend.
-        CLevelShiftTest m_LevelShiftTest;
+        //! The test for daily and weekly periodic components.
+        CDailyWeeklyTest m_DailyWeeklyTest;
 
         //! The state for modeling the components of the decomposition.
         CComponents m_Components;

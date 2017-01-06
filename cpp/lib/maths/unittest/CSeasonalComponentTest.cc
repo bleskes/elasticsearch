@@ -71,8 +71,7 @@ class CTestSeasonalComponent : public maths::CSeasonalComponent
                                           valueInterpolationType,
                                           varianceInterpolationType),
                 m_StartTime(startTime)
-        {
-        }
+        {}
 
         bool initialize(void)
         {
@@ -834,7 +833,7 @@ void CSeasonalComponentTest::testPersist(void)
     LOG_DEBUG("|  CSeasonalComponentTest::testPersist  |");
     LOG_DEBUG("+---------------------------------------+");
 
-    // Checkcore::constants::DAYat serialization is idempotent.
+    // Check that persistence is idempotent.
 
     const core_t::TTime startTime = 1354492800;
     const core_t::TTime minute = 60;
@@ -903,14 +902,21 @@ void CSeasonalComponentTest::testPersist(void)
     {
         TDoubleDoublePr xo = origSeasonal.value(time, 80.0);
         TDoubleDoublePr xn = restoredSeasonal.value(time, 80.0);
-        LOG_DEBUG("xo = " << core::CContainerPrinter::print(xo)
-                  << ", xn = " << core::CContainerPrinter::print(xn));
+        if (time % (15 * minute) == 0)
+        {
+            LOG_DEBUG("xo = " << core::CContainerPrinter::print(xo)
+                      << ", xn = " << core::CContainerPrinter::print(xn));
+
+        }
         CPPUNIT_ASSERT_DOUBLES_EQUAL(xo.first, xn.first, 0.3);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(xo.second, xn.second, 0.3);
         TDoubleDoublePr vo = origSeasonal.variance(time, 80.0);
         TDoubleDoublePr vn = origSeasonal.variance(time, 80.0);
-        LOG_DEBUG("vo = " << core::CContainerPrinter::print(vo)
-                  << ", vn = " << core::CContainerPrinter::print(vn));
+        if (time % (15 * minute) == 0)
+        {
+            LOG_DEBUG("vo = " << core::CContainerPrinter::print(vo)
+                      << ", vn = " << core::CContainerPrinter::print(vn));
+        }
         CPPUNIT_ASSERT_DOUBLES_EQUAL(vo.first, vn.first, 1e-3);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(vo.second, vn.second, 1e-3);
     }

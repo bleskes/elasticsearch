@@ -645,7 +645,7 @@ void CEventRateModelTest::testOnlineRare(void)
 
     LOG_DEBUG("origXml = " << origXml);
     LOG_DEBUG("size = " << origXml.size());
-    CPPUNIT_ASSERT(origXml.size() < 4000);
+    CPPUNIT_ASSERT(origXml.size() < 4100);
 
     // Restore the XML into a new filter
     core::CRapidXmlParser parser;
@@ -847,9 +847,6 @@ void CEventRateModelTest::testOnlineProbabilityCalculationForHighNonZeroCount(vo
 void CEventRateModelTest::testOnlineCorrelatedNoTrend(void)
 {
     LOG_DEBUG("*** testOnlineCorrelatedNoTrend ***");
-
-    // FIXME
-    return;
 
     // Check we find the correct correlated variables, and identify
     // correlate and marginal anomalies.
@@ -1116,11 +1113,11 @@ void CEventRateModelTest::testOnlineCorrelatedTrend(void)
 {
     LOG_DEBUG("*** testOnlineCorrelatedTrend ***");
 
-    // Check we find the correct correlated variables, and identify
-    // correlate and marginal anomalies.
-
     // FIXME
     return;
+
+    // Check we find the correct correlated variables, and identify
+    // correlate and marginal anomalies.
 
     typedef core::CTriple<double, std::size_t, std::string> TDoubleSizeStrTr;
     typedef maths::CBasicStatistics::COrderStatisticsHeap<TDoubleSizeStrTr> TMinAccumulator;
@@ -3102,7 +3099,7 @@ void CEventRateModelTest::testDecayRateControl(void)
         LOG_DEBUG("mean = " << maths::CBasicStatistics::mean(meanPredictionError));
         LOG_DEBUG("reference = " << maths::CBasicStatistics::mean(meanReferencePredictionError));
         CPPUNIT_ASSERT(        maths::CBasicStatistics::mean(meanPredictionError)
-                       < 0.82 * maths::CBasicStatistics::mean(meanReferencePredictionError));
+                       < 0.85 * maths::CBasicStatistics::mean(meanReferencePredictionError));
     }
 }
 

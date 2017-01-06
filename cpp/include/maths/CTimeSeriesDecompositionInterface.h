@@ -56,6 +56,13 @@ class MATHS_EXPORT CTimeSeriesDecompositionInterface : virtual public CTimeSerie
     public:
         typedef CConstantWeights TWeights;
 
+        enum EComponents
+        {
+            E_Seasonal = 0x1,
+            E_Trend    = 0x2,
+            E_All      = 0x3
+        };
+
     public:
         virtual ~CTimeSeriesDecompositionInterface(void);
 
@@ -111,18 +118,19 @@ class MATHS_EXPORT CTimeSeriesDecompositionInterface : virtual public CTimeSerie
         //! Get the mean value of the baseline.
         virtual double mean(void) const = 0;
 
-        //! Get the level of the baseline.
-        virtual double level(void) const = 0;
-
         //! Get the value of the time series baseline at \p time.
         //!
         //! \param[in] time The time of interest.
-        //! \param[in] confidence The symmetric confidence interval
-        //! for the baseline as a percentage.
-        virtual TDoubleDoublePr baseline(core_t::TTime time, double confidence, bool smooth = true) const = 0;
+        //! \param[in] confidence The symmetric confidence interval for the
+        //! baseline as a percentage.
+        //! \param[in] components The components to include in the baseline.
+        virtual TDoubleDoublePr baseline(core_t::TTime time,
+                                         double confidence,
+                                         EComponents components = E_All,
+                                         bool smooth = true) const = 0;
 
-        //! Detrend \p value from the time series being modeled
-        //! by removing any periodic component at \p time.
+        //! Detrend \p value from the time series being modeled by removing
+        //! any periodic component at \p time.
         //!
         //! \note That detrending preserves the time series mean.
         virtual double detrend(core_t::TTime time, double value, double confidence) const = 0;
@@ -133,10 +141,9 @@ class MATHS_EXPORT CTimeSeriesDecompositionInterface : virtual public CTimeSerie
         //! Compute the variance scale at \p time.
         //!
         //! \param[in] time The time of interest.
-        //! \param[in] variance The variance of the distribution
-        //! to scale.
-        //! \param[in] confidence The symmetric confidence interval
-        //! for the variance scale as a percentage.
+        //! \param[in] variance The variance of the distribution to scale.
+        //! \param[in] confidence The symmetric confidence interval for the
+        //! variance scale as a percentage.
         virtual TDoubleDoublePr scale(core_t::TTime time, double variance, double confidence) const = 0;
 
         //! Propagate the state forwards to \p time.

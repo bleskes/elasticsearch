@@ -22,12 +22,14 @@ class CSeasonalComponentAdaptiveBucketingTest : public CppUnit::TestFixture
 {
     public:
         void testInitialize(void);
+        void testSwap(void);
         void testRefine(void);
         void testPropagateForwardsByTime(void);
         void testMinimumBucketLength(void);
         void testUnintialized(void);
         void testKnots(void);
         void testLongTermTrendKnots(void);
+        void testShiftValue(void);
         void testPersist(void);
 
         static CppUnit::Test *suite(void);

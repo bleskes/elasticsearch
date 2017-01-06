@@ -92,6 +92,7 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
 {
     public:
         typedef std::vector<double> TDoubleVec;
+        typedef std::vector<std::size_t> TSizeVec;
         typedef std::vector<CFloatStorage> TFloatVec;
         typedef CRegression::CLeastSquaresOnline<1, double> TDoubleRegression;
         typedef CRegression::CLeastSquaresOnline<1, CFloatStorage> TRegression;
@@ -150,11 +151,11 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
                 //! Get the period.
                 core_t::TTime period(void) const;
 
-                //! Get the shift applied to the regression time.
-                core_t::TTime regressionShift(void) const;
+                //! Get the origin of the time coordinates.
+                core_t::TTime regressionOrigin(void) const;
 
-                //! Set the shift applied to the regression time.
-                void regressionShift(core_t::TTime time);
+                //! Set the origin of the time coordinates.
+                void regressionOrigin(core_t::TTime time);
 
                 //! Get the decay rate scaled from \p fromPeriod period to
                 //! \p toPeriod period.
@@ -178,9 +179,9 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
                 core_t::TTime m_WindowEnd;
                 //! The periodic repeat.
                 core_t::TTime m_Period;
-                //! The shift applied to the regression time in order
-                //! to maintain a reasonably conditioned Gramian.
-                core_t::TTime m_RegressionShift;
+                //! The origin of the time coordinates used to maintain
+                //! a reasonably conditioned Gramian of the design matrix.
+                core_t::TTime m_RegressionOrigin;
         };
 
     public:
@@ -232,8 +233,8 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
         //! allocated memory.
         void clear(void);
 
-        //! Reset the bucket variances to \p variance.
-        void resetVariances(double variance);
+        //! Shift the regressions' ordinates by \p shift.
+        void shiftValue(double shift);
 
         //! Add the function value at \p time.
         //!
@@ -327,8 +328,8 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
         //! \param[in] endpoints The old end points.
         void refresh(const TFloatVec &endpoints);
 
-        //! Shift the regressions to \p time.
-        void shiftRegressions(core_t::TTime time);
+        //! Shift the regressions' abscissas by minus \p time.
+        void shiftTime(core_t::TTime time);
 
         //! Get the age of the bucketing at \p time.
         double bucketingAgeAt(core_t::TTime time) const;

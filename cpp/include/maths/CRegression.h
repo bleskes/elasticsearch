@@ -215,9 +215,9 @@ class MATHS_EXPORT CRegression
                 //! allow the shift \f$a b\f$ to increase. This function computes
                 //! the impact of a change in \f$a b\f$ on the stored statistics.
                 //!
-                //! \param[in] dx The change in the shift that will subsequently
-                //! be applied to the abscissa.
-                void shift(double dx)
+                //! \param[in] dx The shift that will subsequently be applied to
+                //! the abscissa.
+                void shiftAbscissa(double dx)
                 {
                     if (CBasicStatistics::count(m_S) == 0.0)
                     {
@@ -261,6 +261,26 @@ class MATHS_EXPORT CRegression
                         }
                     }
                     LOG_TRACE("S(after) = " << CBasicStatistics::mean(m_S));
+                }
+
+                //! Translate the ordinates by \p dy.
+                //!
+                //! \param[in] dy The shift that will subsequently be applied to
+                //! the ordinates.
+                void shiftOrdinate(double dy)
+                {
+                    double n = CBasicStatistics::count(m_S);
+
+                    if (n == 0.0)
+                    {
+                        return;
+                    }
+
+                    const TVector &s = CBasicStatistics::mean(m_S);
+                    for (std::size_t i = 0u; i < N; ++i)
+                    {
+                        CBasicStatistics::moment<0>(m_S)(i+2*N-1) += s(i) * dy;
+                    }
                 }
 
                 //! Multiply the statistics' count by \p scale.
@@ -422,6 +442,41 @@ class MATHS_EXPORT CRegression
                     return CBasicStatistics::mean(m_S)(2*N-1);
                 }
 
+                //! Get the mean in the interval [\p a, \p b].
+                double mean(double a, double b) const
+                {
+                    double result = 0.0;
+
+                    double interval = b - a;
+
+                    TArray params;
+                    this->parameters(params);
+
+                    if (interval == 0.0)
+                    {
+                        result = params[0];
+                        double xi = a;
+                        for (std::size_t i = 1u; i < params.size(); ++i, xi *= a)
+                        {
+                            result += params[i] * xi;
+                        }
+                        return result;
+                    }
+
+                    for (std::size_t i = 0u; i < N; ++i)
+                    {
+                        for (std::size_t j = 0u; j <= i; ++j)
+                        {
+                            result +=  this->binom(i+1, j+1)
+                                     * params[i] / static_cast<double>(i+1)
+                                     * ::pow(a, static_cast<double>(i-j))
+                                     * ::pow(interval, static_cast<double>(j+1));
+                        }
+                    }
+
+                    return result / interval;
+                }
+
                 //! Get the vector statistic.
                 const TVectorMeanAccumulator &statistic(void) const
                 {
@@ -458,6 +513,10 @@ class MATHS_EXPORT CRegression
                 //! The binomial coefficient (n m).
                 double binom(std::size_t n, std::size_t m) const
                 {
+                    if (m == n || m == 0)
+                    {
+                        return 1.0;
+                    }
                     double n_ = static_cast<double>(n);
                     double m_ = static_cast<double>(m);
                     return ::exp(  boost::math::lgamma(n_ + 1.0)
@@ -568,6 +627,32 @@ class MATHS_EXPORT CRegression
                 //! values in the information matrix and vector.
                 TVectorMeanAccumulator m_S;
         };
+
+        //! Get the predicted value of \p r at \p t.
+        template<std::size_t N, typename T>
+        static double predict(const CLeastSquaresOnline<N, T> &r, double x)
+        {
+            if (r.range() < MINIMUM_RANGE_TO_PREDICT)
+            {
+                return r.mean();
+            }
+
+            typename CLeastSquaresOnline<N, T>::TArray params;
+            r.parameters(params);
+
+            double result = params[0];
+            double xi = x;
+            for (std::size_t i = 1u; i < params.size(); ++i, xi *= x)
+            {
+                result += params[i] * xi;
+            }
+            return result;
+        }
+
+    private:
+        //! The minimum range of the predictor variable for which we'll
+        //! forward predict using the higher order terms.
+        static const double MINIMUM_RANGE_TO_PREDICT;
 };
 
 template<std::size_t N_, typename T>
