@@ -477,7 +477,7 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 typedef CBasicStatistics::SSampleMeanVar<double>::TAccumulator TMeanVarAccumulator;
 
                 //! \brief The long term trend.
-                struct STrend
+                struct MATHS_EXPORT STrend
                 {
                     STrend(void);
 
@@ -506,7 +506,7 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                 typedef boost::shared_ptr<STrend> TTrendPtr;
 
                 //! \brief The seasonal components of the decomposition.
-                struct SSeasonal
+                struct MATHS_EXPORT SSeasonal
                 {
                     //! Initialize by reading state from \p traverser.
                     bool acceptRestoreTraverser(double decayRate,
