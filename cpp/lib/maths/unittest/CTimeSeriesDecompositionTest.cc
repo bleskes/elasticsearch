@@ -1573,7 +1573,7 @@ void CTimeSeriesDecompositionTest::testLongTermTrend(void)
         LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
 
         CPPUNIT_ASSERT(totalSumResidual / totalSumValue < 0.34);
-        CPPUNIT_ASSERT(totalMaxResidual / totalMaxValue < 0.37);
+        CPPUNIT_ASSERT(totalMaxResidual / totalMaxValue < 0.375);
 
         //file << "t = " << core::CContainerPrinter::print(times) << ";\n";
         //file << "f = " << core::CContainerPrinter::print(values) << ";\n";
