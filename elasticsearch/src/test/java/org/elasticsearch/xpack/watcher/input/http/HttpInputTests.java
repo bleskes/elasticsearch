@@ -19,8 +19,10 @@ package org.elasticsearch.xpack.watcher.input.http;
 
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.MapBuilder;
+import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -44,6 +46,7 @@ import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.xpack.watcher.input.InputBuilders;
 import org.elasticsearch.xpack.watcher.input.simple.ExecutableSimpleInput;
 import org.elasticsearch.xpack.watcher.input.simple.SimpleInput;
+import org.elasticsearch.xpack.watcher.test.MockTextTemplateEngine;
 import org.elasticsearch.xpack.watcher.trigger.schedule.IntervalSchedule;
 import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTrigger;
 import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTriggerEvent;
@@ -54,8 +57,10 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.joda.time.DateTime;
 import org.junit.Before;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -72,7 +77,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -84,7 +88,7 @@ public class HttpInputTests extends ESTestCase {
     @Before
     public void init() throws Exception {
         httpClient = mock(HttpClient.class);
-        templateEngine = mock(TextTemplateEngine.class);
+        templateEngine = new MockTextTemplateEngine();
         HttpAuthRegistry registry = new HttpAuthRegistry(singletonMap("basic", new BasicAuthFactory(null)));
         httpParser = new HttpInputFactory(Settings.EMPTY, httpClient, templateEngine, new HttpRequestTemplate.Parser(registry));
     }
@@ -109,29 +113,28 @@ public class HttpInputTests extends ESTestCase {
                 break;
             case 3:
                 response = new HttpResponse(123, "{\"key\" : \"value\"}".getBytes(StandardCharsets.UTF_8),
-                    singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[] { XContentType.JSON.mediaType() }));
+                        singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[]{XContentType.JSON.mediaType()}));
                 httpInput = InputBuilders.httpInput(request.build()).build();
                 break;
             case 4:
                 response = new HttpResponse(123, "key: value".getBytes(StandardCharsets.UTF_8),
-                        singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[] { XContentType.YAML.mediaType() }));
+                        singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[]{XContentType.YAML.mediaType()}));
                 httpInput = InputBuilders.httpInput(request.build()).build();
                 break;
             case 5:
                 response = new HttpResponse(123, "---\nkey: value".getBytes(StandardCharsets.UTF_8),
-                        singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[] { "unrecognized_content_type" }));
+                        singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[]{"unrecognized_content_type"}));
                 httpInput = InputBuilders.httpInput(request.build()).expectedResponseXContentType(HttpContentType.YAML).build();
                 break;
             default:
                 response = new HttpResponse(123, "{\"key\" : \"value\"}".getBytes(StandardCharsets.UTF_8),
-                        singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[] { "unrecognized_content_type" }));
+                        singletonMap(HttpHeaders.Names.CONTENT_TYPE, new String[]{"unrecognized_content_type"}));
                 httpInput = InputBuilders.httpInput(request.build()).build();
                 break;
         }
 
         ExecutableHttpInput input = new ExecutableHttpInput(httpInput, logger, httpClient, templateEngine);
         when(httpClient.execute(any(HttpRequest.class))).thenReturn(response);
-        when(templateEngine.render(eq(new TextTemplate("_body")), any(Map.class))).thenReturn("_body");
 
         WatchExecutionContext ctx = createWatchExecutionContext();
         HttpInput.Result result = input.execute(ctx, new Payload.Simple());
@@ -150,7 +153,6 @@ public class HttpInputTests extends ESTestCase {
         String notJson = "This is not json";
         HttpResponse response = new HttpResponse(123, notJson.getBytes(StandardCharsets.UTF_8));
         when(httpClient.execute(any(HttpRequest.class))).thenReturn(response);
-        when(templateEngine.render(eq(new TextTemplate("_body")), any(Map.class))).thenReturn("_body");
 
         WatchExecutionContext ctx = createWatchExecutionContext();
         HttpInput.Result result = input.execute(ctx, new Payload.Simple());
@@ -229,8 +231,8 @@ public class HttpInputTests extends ESTestCase {
     public void testParserInvalidHttpMethod() throws Exception {
         XContentBuilder builder = jsonBuilder().startObject()
                 .startObject("request")
-                    .field("method", "_method")
-                    .field("body", "_body")
+                .field("method", "_method")
+                .field("body", "_body")
                 .endObject()
                 .endObject();
         XContentParser parser = createParser(builder);
@@ -253,7 +255,7 @@ public class HttpInputTests extends ESTestCase {
         ExecutableHttpInput input = new ExecutableHttpInput(httpInput, logger, httpClient, templateEngine);
 
         Map<String, String[]> responseHeaders = new HashMap<>();
-        responseHeaders.put(headerName, new String[] { headerValue });
+        responseHeaders.put(headerName, new String[]{headerValue});
         HttpResponse response;
         if (responseHasContent) {
             response = new HttpResponse(200, "body".getBytes(StandardCharsets.UTF_8), responseHeaders);
@@ -263,8 +265,6 @@ public class HttpInputTests extends ESTestCase {
         }
 
         when(httpClient.execute(any(HttpRequest.class))).thenReturn(response);
-
-        when(templateEngine.render(eq(new TextTemplate("_body")), any(Map.class))).thenReturn("_body");
 
         WatchExecutionContext ctx = createWatchExecutionContext();
         HttpInput.Result result = input.execute(ctx, new Payload.Simple());
@@ -287,7 +287,7 @@ public class HttpInputTests extends ESTestCase {
         Map<String, String[]> headers = new HashMap<>(1);
         String contentType = randomFrom("application/json", "application/json; charset=UTF-8", "text/html", "application/yaml",
                 "application/smile", "application/cbor");
-        headers.put("Content-Type", new String[] { contentType });
+        headers.put("Content-Type", new String[]{contentType});
         String body = "{\"foo\":\"bar\"}";
         HttpResponse httpResponse = new HttpResponse(200, body, headers);
         when(httpClient.execute(any())).thenReturn(httpResponse);
@@ -310,6 +310,48 @@ public class HttpInputTests extends ESTestCase {
         assertThat(result.statusCode, is(200));
         assertThat(result.payload().data(), hasKey("_status_code"));
         assertThat(result.payload().data().get("_status_code"), is(200));
+    }
+
+    public void testDeprecationCheck() throws Exception {
+        HttpRequestTemplate[] triggeringTemplates = new HttpRequestTemplate[]{
+                HttpRequestTemplate.builder("localhost", 9200).path("<logstash-{now%2Fd}>").build(),
+                HttpRequestTemplate.builder("localhost", 9200).path("<>").build()
+        };
+
+        for (HttpRequestTemplate template : triggeringTemplates) {
+            HttpInput httpInput = InputBuilders.httpInput(template).build();
+            ExecutableHttpInput input = new ExecutableHttpInput(httpInput, logger, httpClient, templateEngine);
+            assertLoggingMessageAfterExecution(input, template, true);
+        }
+
+        HttpRequestTemplate[] templatesNotTriggeredLogMessage = new HttpRequestTemplate[]{
+                HttpRequestTemplate.builder("localhost", 9200).build(),
+                HttpRequestTemplate.builder("localhost", 9200).path("/%3Clogstash-%7Bnow%2Fd%7D%3E").build(),
+                HttpRequestTemplate.builder("localhost", 9200).path("/foo/bar/baz").build(),
+                HttpRequestTemplate.builder("localhost", 9200).path("/something.with.a.dot").build(),
+                HttpRequestTemplate.builder("localhost", 9200).path("/foo/bar/_search").build()
+        };
+
+        for (HttpRequestTemplate template : templatesNotTriggeredLogMessage) {
+            HttpInput httpInput = InputBuilders.httpInput(template).build();
+            ExecutableHttpInput input = new ExecutableHttpInput(httpInput, logger, httpClient, templateEngine);
+            assertLoggingMessageAfterExecution(input, template, false);
+        }
+    }
+
+    private void assertLoggingMessageAfterExecution(ExecutableHttpInput input, HttpRequestTemplate template,
+                                                    boolean expectedMessageLogged) throws IOException {
+        try (ThreadContext threadContext = new ThreadContext(Settings.EMPTY)) {
+            // NOTE: by adding it to the logger, we allow any concurrent test to write to it (from their own threads)
+            DeprecationLogger.setThreadContext(threadContext);
+            input.execute(createWatchExecutionContext(), Payload.EMPTY);
+
+            if (expectedMessageLogged) {
+                assertWarnings("watch [test-watch] url [http://localhost:9200/" +
+                        templateEngine.render(template.path(), Collections.emptyMap()) +
+                        "] in [http input] needs to be a valid URI (properly encoded) in 6.0");
+            }
+        }
     }
 
     private WatchExecutionContext createWatchExecutionContext() {

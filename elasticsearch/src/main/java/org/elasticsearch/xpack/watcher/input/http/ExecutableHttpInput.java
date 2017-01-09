@@ -20,6 +20,8 @@ package org.elasticsearch.xpack.watcher.input.http;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -33,15 +35,17 @@ import org.elasticsearch.xpack.watcher.input.ExecutableInput;
 import org.elasticsearch.xpack.watcher.support.Variables;
 import org.elasticsearch.xpack.watcher.support.XContentFilterKeysUtils;
 import org.elasticsearch.xpack.watcher.watch.Payload;
+import org.elasticsearch.xpack.watcher.watch.Watch;
 
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.elasticsearch.xpack.watcher.input.http.HttpInput.TYPE;
 
-/**
- */
 public class ExecutableHttpInput extends ExecutableInput<HttpInput, HttpInput.Result> {
 
     private final HttpClient client;
@@ -58,6 +62,7 @@ public class ExecutableHttpInput extends ExecutableInput<HttpInput, HttpInput.Re
         try {
             Map<String, Object> model = Variables.createCtxModel(ctx, payload);
             request = input.getRequest().render(templateEngine, model);
+            checkUrlDepreciation(ctx.watch(), "http input", request, logger);
             return doExecute(ctx, request);
         } catch (Exception e) {
             logger.error("failed to execute [{}] input for watch [{}], reason [{}]", TYPE, ctx.watch().id(), e.getMessage());
@@ -108,5 +113,22 @@ public class ExecutableHttpInput extends ExecutableInput<HttpInput, HttpInput.Re
         }
 
         return new HttpInput.Result(request, response.status(), new Payload.Simple(payloadMap));
+    }
+
+    /**
+     * A special method to check if a watch uses unencoded parts of an URL - because of https://github.com/elastic/x-pack/pull/4434
+     * this will break with 6.0 and we use the deprecation logger to warn people about this.
+     *
+     */
+    public static void checkUrlDepreciation(Watch watch, String desc, HttpRequest request, Logger logger) {
+        if (Strings.isNullOrEmpty(request.path()) == false) {
+            try {
+                new URL(request.scheme().scheme(), request.host(), request.port(), request.path()).toURI();
+            } catch (MalformedURLException | URISyntaxException e) {
+                DeprecationLogger deprecationLogger = new DeprecationLogger(logger);
+                deprecationLogger.deprecated("watch [{}] url [{}://{}:{}/{}] in [{}] needs to be a valid URI (properly encoded) in 6.0",
+                        watch.id(), request.scheme().scheme(), request.host(), request.port(), request.path(), desc);
+            }
+        }
     }
 }

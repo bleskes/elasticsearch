@@ -31,6 +31,8 @@ import org.elasticsearch.xpack.watcher.watch.Payload;
 
 import java.util.Map;
 
+import static org.elasticsearch.xpack.watcher.input.http.ExecutableHttpInput.checkUrlDepreciation;
+
 /**
  */
 public class ExecutableWebhookAction extends ExecutableAction<WebhookAction> {
@@ -47,8 +49,8 @@ public class ExecutableWebhookAction extends ExecutableAction<WebhookAction> {
     @Override
     public Action.Result execute(String actionId, WatchExecutionContext ctx, Payload payload) throws Exception {
         Map<String, Object> model = Variables.createCtxModel(ctx, payload);
-
         HttpRequest request = action.requestTemplate.render(templateEngine, model);
+        checkUrlDepreciation(ctx.watch(), "webhook action", request, logger);
 
         if (ctx.simulateAction(actionId)) {
             return new WebhookAction.Result.Simulated(request);

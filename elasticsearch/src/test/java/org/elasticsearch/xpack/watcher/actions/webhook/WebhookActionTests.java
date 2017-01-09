@@ -18,7 +18,9 @@
 package org.elasticsearch.xpack.watcher.actions.webhook;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -57,14 +59,15 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 
-import java.io.IOException;
-import java.util.Map;
-
 import javax.mail.internet.AddressException;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.mockExecutionContext;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.containsString;
@@ -112,7 +115,7 @@ public class WebhookActionTests extends ESTestCase {
 
         WebhookAction action = new WebhookAction(httpRequest);
         ExecutableWebhookAction executable = new ExecutableWebhookAction(action, logger, httpClient, templateEngine);
-        WatchExecutionContext ctx = WatcherTestUtils.mockExecutionContext("_id", new Payload.Simple("foo", "bar"));
+        WatchExecutionContext ctx = mockExecutionContext("_id", new Payload.Simple("foo", "bar"));
 
         Action.Result actionResult = executable.execute("_id", ctx, Payload.EMPTY);
 
@@ -131,7 +134,7 @@ public class WebhookActionTests extends ESTestCase {
         if (method != null) {
             builder.method(method);
         }
-        if (params != null){
+        if (params != null) {
             builder.putParams(params);
         }
         return builder.build();
@@ -191,7 +194,7 @@ public class WebhookActionTests extends ESTestCase {
         String watchId = "_watch";
         String actionId = randomAsciiOfLength(5);
 
-        HttpMethod method = randomFrom(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD,  null);
+        HttpMethod method = randomFrom(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, null);
         HttpRequestTemplate request = getHttpRequestTemplate(method, host, TEST_PORT, path, body, null);
 
         WebhookAction action = WebhookAction.builder(request).build();
@@ -279,6 +282,46 @@ public class WebhookActionTests extends ESTestCase {
         assertThat(result, Matchers.instanceOf(WebhookAction.Result.Success.class));
     }
 
+    public void testDeprecationCheck() throws Exception {
+        HttpRequestTemplate[] triggeringTemplates = new HttpRequestTemplate[] {
+                HttpRequestTemplate.builder("localhost", 9200).path("<logstash-{now%2Fd}>").build(),
+                HttpRequestTemplate.builder("localhost", 9200).path("<>").build()
+        };
+
+        for (HttpRequestTemplate template : triggeringTemplates) {
+            assertDeprecationLogMessage(template, true);
+        }
+
+
+        HttpRequestTemplate[] templatesNotTriggeredLogMessage = new HttpRequestTemplate[]{
+                HttpRequestTemplate.builder("localhost", 9200).path("/foo/bar/baz").build(),
+                HttpRequestTemplate.builder("localhost", 9200).path("/something.with.a.dot").build(),
+                HttpRequestTemplate.builder("localhost", 9200).build()
+        };
+
+        for (HttpRequestTemplate template : templatesNotTriggeredLogMessage) {
+            assertDeprecationLogMessage(template, false);
+        }
+    }
+
+    private void assertDeprecationLogMessage(HttpRequestTemplate template, boolean expectedDeprecationMessage) throws Exception {
+        HttpClient client = mock(HttpClient.class);
+        when(client.execute(any(HttpRequest.class))).thenReturn(new HttpResponse(200));
+
+        ExecutableWebhookAction executable = new ExecutableWebhookAction(new WebhookAction(template), logger, client, templateEngine);
+
+        try (ThreadContext threadContext = new ThreadContext(Settings.EMPTY)) {
+            // NOTE: by adding it to the logger, we allow any concurrent test to write to it (from their own threads)
+            DeprecationLogger.setThreadContext(threadContext);
+            executable.execute("_id", mockExecutionContext("_id", Payload.EMPTY), Payload.EMPTY);
+            if (expectedDeprecationMessage) {
+                assertWarnings("watch [_id] url [http://localhost:9200/" +
+                        templateEngine.render(template.path(), Collections.emptyMap()) +
+                        "] in [webhook action] needs to be a valid URI (properly encoded) in 6.0");
+            }
+        }
+    }
+
     private Watch createWatch(String watchId, final String account) throws AddressException, IOException {
         return WatcherTestUtils.createTestWatch(watchId,
                 mock(WatcherClientProxy.class),
@@ -292,7 +335,9 @@ public class WebhookActionTests extends ESTestCase {
                 },
                 mock(WatcherSearchTemplateService.class),
                 logger);
-    };
+    }
+
+    ;
 
     private enum ExecuteScenario {
         ErrorCode() {
@@ -334,7 +379,7 @@ public class WebhookActionTests extends ESTestCase {
 
         Success() {
             @Override
-            public HttpClient client() throws IOException{
+            public HttpClient client() throws IOException {
                 HttpClient client = mock(HttpClient.class);
                 when(client.execute(any(HttpRequest.class)))
                         .thenReturn(new HttpResponse(randomIntBetween(200, 399)));
@@ -355,7 +400,7 @@ public class WebhookActionTests extends ESTestCase {
 
         NoExecute() {
             @Override
-            public HttpClient client() throws IOException{
+            public HttpClient client() throws IOException {
                 return mock(HttpClient.class);
             }
 
@@ -367,6 +412,6 @@ public class WebhookActionTests extends ESTestCase {
 
         public abstract HttpClient client() throws IOException;
 
-        public abstract void assertResult(HttpClient client, Action.Result result) throws Exception ;
+        public abstract void assertResult(HttpClient client, Action.Result result) throws Exception;
     }
 }
