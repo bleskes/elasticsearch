@@ -221,7 +221,9 @@ Action<GetCategoriesDefinitionAction.Request, GetCategoriesDefinitionAction.Resp
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
             result.doXContentBody(builder, params);
+            builder.endObject();
             return builder;
         }
 

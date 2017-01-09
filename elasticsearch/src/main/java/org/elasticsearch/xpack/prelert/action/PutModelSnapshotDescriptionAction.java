@@ -207,9 +207,11 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+            builder.startObject();
             builder.field(ACKNOWLEDGED.getPreferredName(), true);
             builder.field(MODEL.getPreferredName());
             builder = model.toXContent(builder, params);
+            builder.endObject();
             return builder;
         }
 
