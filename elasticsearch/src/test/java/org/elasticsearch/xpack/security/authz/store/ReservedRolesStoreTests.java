@@ -67,7 +67,7 @@ import static org.hamcrest.Matchers.is;
 public class ReservedRolesStoreTests extends ESTestCase {
 
     public void testIsReserved() {
-        assertThat(ReservedRolesStore.isReserved("kibana"), is(true));
+        assertThat(ReservedRolesStore.isReserved("kibana_system"), is(true));
         assertThat(ReservedRolesStore.isReserved("superuser"), is(true));
         assertThat(ReservedRolesStore.isReserved("foobar"), is(false));
         assertThat(ReservedRolesStore.isReserved(SystemUser.ROLE_NAME), is(true));
@@ -104,7 +104,7 @@ public class ReservedRolesStoreTests extends ESTestCase {
     }
 
     public void testKibanaRole() {
-        RoleDescriptor roleDescriptor = new ReservedRolesStore().roleDescriptor("kibana");
+        RoleDescriptor roleDescriptor = new ReservedRolesStore().roleDescriptor("kibana_system");
         assertNotNull(roleDescriptor);
         assertThat(roleDescriptor.getMetadata(), hasEntry("_reserved", true));
 

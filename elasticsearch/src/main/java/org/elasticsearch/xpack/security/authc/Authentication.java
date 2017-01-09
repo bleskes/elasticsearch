@@ -37,11 +37,13 @@ public class Authentication {
     private final User user;
     private final RealmRef authenticatedBy;
     private final RealmRef lookedUpBy;
+    private final Version version;
 
     public Authentication(User user, RealmRef authenticatedBy, RealmRef lookedUpBy) {
         this.user = Objects.requireNonNull(user);
         this.authenticatedBy = Objects.requireNonNull(authenticatedBy);
         this.lookedUpBy = lookedUpBy;
+        this.version = Version.CURRENT;
     }
 
     public Authentication(StreamInput in) throws IOException {
@@ -52,6 +54,7 @@ public class Authentication {
         } else {
             this.lookedUpBy = null;
         }
+        this.version = in.getVersion();
     }
 
     public User getUser() {
@@ -80,6 +83,10 @@ public class Authentication {
 
     public RealmRef getLookedUpBy() {
         return lookedUpBy;
+    }
+
+    public Version getVersion() {
+        return version;
     }
 
     public static Authentication readFromContext(ThreadContext ctx, CryptoService cryptoService, boolean sign)
