@@ -30,7 +30,7 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
 import org.elasticsearch.xpack.prelert.action.FlushJobAction;
-import org.elasticsearch.xpack.prelert.action.JobDataAction;
+import org.elasticsearch.xpack.prelert.action.PostDataAction;
 import org.elasticsearch.xpack.prelert.action.StartSchedulerAction;
 import org.elasticsearch.xpack.prelert.action.UpdateSchedulerStatusAction;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
@@ -72,7 +72,7 @@ import static org.mockito.Mockito.when;
 public class ScheduledJobRunnerTests extends ESTestCase {
 
     private Client client;
-    private ActionFuture<JobDataAction.Response> jobDataFuture;
+    private ActionFuture<PostDataAction.Response> jobDataFuture;
     private ActionFuture<FlushJobAction.Response> flushJobFuture;
     private ClusterService clusterService;
     private ThreadPool threadPool;
@@ -111,7 +111,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
             return null;
         }).when(executorService).submit(any(Runnable.class));
         when(threadPool.executor(PrelertPlugin.SCHEDULED_RUNNER_THREAD_POOL_NAME)).thenReturn(executorService);
-        when(client.execute(same(JobDataAction.INSTANCE), any())).thenReturn(jobDataFuture);
+        when(client.execute(same(PostDataAction.INSTANCE), any())).thenReturn(jobDataFuture);
         when(client.execute(same(FlushJobAction.INSTANCE), any())).thenReturn(flushJobFuture);
 
         scheduledJobRunner = new ScheduledJobRunner(threadPool, client, clusterService, jobProvider, dataExtractorFactory,
@@ -145,7 +145,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
         InputStream in = new ByteArrayInputStream("".getBytes(Charset.forName("utf-8")));
         when(dataExtractor.next()).thenReturn(Optional.of(in));
-        when(jobDataFuture.get()).thenReturn(new JobDataAction.Response(dataCounts));
+        when(jobDataFuture.get()).thenReturn(new PostDataAction.Response(dataCounts));
         Consumer<Exception> handler = mockConsumer();
         StartSchedulerAction.SchedulerTask task = mock(StartSchedulerAction.SchedulerTask.class);
         scheduledJobRunner.run("scheduler1", 0L, 60000L, task, handler);
@@ -153,7 +153,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());
         verify(threadPool, times(1)).executor(PrelertPlugin.SCHEDULED_RUNNER_THREAD_POOL_NAME);
         verify(threadPool, never()).schedule(any(), any(), any());
-        verify(client).execute(same(JobDataAction.INSTANCE), eq(new JobDataAction.Request("foo")));
+        verify(client).execute(same(PostDataAction.INSTANCE), eq(new PostDataAction.Request("foo")));
         verify(client).execute(same(FlushJobAction.INSTANCE), any());
         verify(client).execute(same(INSTANCE), eq(new Request("scheduler1", SchedulerStatus.STARTED)), any());
         verify(client).execute(same(INSTANCE), eq(new Request("scheduler1", SchedulerStatus.STOPPED)), any());
@@ -177,7 +177,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         when(dataExtractorFactory.newExtractor(schedulerConfig, job)).thenReturn(dataExtractor);
         when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
         when(dataExtractor.next()).thenThrow(new RuntimeException("dummy"));
-        when(jobDataFuture.get()).thenReturn(new JobDataAction.Response(dataCounts));
+        when(jobDataFuture.get()).thenReturn(new PostDataAction.Response(dataCounts));
         Consumer<Exception> handler = mockConsumer();
         StartSchedulerAction.SchedulerTask task = mock(StartSchedulerAction.SchedulerTask.class);
         scheduledJobRunner.run("scheduler1", 0L, 60000L, task, handler);
@@ -185,7 +185,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         verify(dataExtractor).newSearch(eq(0L), eq(60000L), any());
         verify(threadPool, times(1)).executor(PrelertPlugin.SCHEDULED_RUNNER_THREAD_POOL_NAME);
         verify(threadPool, never()).schedule(any(), any(), any());
-        verify(client, never()).execute(same(JobDataAction.INSTANCE), eq(new JobDataAction.Request("foo")));
+        verify(client, never()).execute(same(PostDataAction.INSTANCE), eq(new PostDataAction.Request("foo")));
         verify(client, never()).execute(same(FlushJobAction.INSTANCE), any());
         verify(client).execute(same(INSTANCE), eq(new Request("scheduler1", SchedulerStatus.STARTED)), any());
         verify(client).execute(same(INSTANCE), eq(new Request("scheduler1", SchedulerStatus.STOPPED)), any());
@@ -210,7 +210,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         when(dataExtractor.hasNext()).thenReturn(true).thenReturn(false);
         InputStream in = new ByteArrayInputStream("".getBytes(Charset.forName("utf-8")));
         when(dataExtractor.next()).thenReturn(Optional.of(in));
-        when(jobDataFuture.get()).thenReturn(new JobDataAction.Response(dataCounts));
+        when(jobDataFuture.get()).thenReturn(new PostDataAction.Response(dataCounts));
         Consumer<Exception> handler = mockConsumer();
         boolean cancelled = randomBoolean();
         StartSchedulerAction.SchedulerTask task = new StartSchedulerAction.SchedulerTask(1, "type", "action", null, "scheduler1");
@@ -222,7 +222,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
             task.stop();
             verify(client).execute(same(INSTANCE), eq(new Request("scheduler1", SchedulerStatus.STOPPED)), any());
         } else {
-            verify(client).execute(same(JobDataAction.INSTANCE), eq(new JobDataAction.Request("foo")));
+            verify(client).execute(same(PostDataAction.INSTANCE), eq(new PostDataAction.Request("foo")));
             verify(client).execute(same(FlushJobAction.INSTANCE), any());
             verify(threadPool, times(1)).schedule(eq(new TimeValue(480100)), eq(PrelertPlugin.SCHEDULED_RUNNER_THREAD_POOL_NAME), any());
         }

@@ -51,24 +51,24 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-public class PutModelSnapshotDescriptionAction extends
-Action<PutModelSnapshotDescriptionAction.Request, PutModelSnapshotDescriptionAction.Response,
-PutModelSnapshotDescriptionAction.RequestBuilder> {
+public class UpdateModelSnapshotAction extends
+Action<UpdateModelSnapshotAction.Request, UpdateModelSnapshotAction.Response,
+UpdateModelSnapshotAction.RequestBuilder> {
 
-    public static final PutModelSnapshotDescriptionAction INSTANCE = new PutModelSnapshotDescriptionAction();
-    public static final String NAME = "cluster:admin/prelert/modelsnapshot/put/description";
+    public static final UpdateModelSnapshotAction INSTANCE = new UpdateModelSnapshotAction();
+    public static final String NAME = "cluster:admin/prelert/model_snapshots/update";
 
-    private PutModelSnapshotDescriptionAction() {
+    private UpdateModelSnapshotAction() {
         super(NAME);
     }
 
     @Override
-    public PutModelSnapshotDescriptionAction.RequestBuilder newRequestBuilder(ElasticsearchClient client) {
+    public UpdateModelSnapshotAction.RequestBuilder newRequestBuilder(ElasticsearchClient client) {
         return new RequestBuilder(client, this);
     }
 
     @Override
-    public PutModelSnapshotDescriptionAction.Response newResponse() {
+    public UpdateModelSnapshotAction.Response newResponse() {
         return new Response();
     }
 
@@ -251,7 +251,7 @@ PutModelSnapshotDescriptionAction.RequestBuilder> {
 
     public static class RequestBuilder extends ActionRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, PutModelSnapshotDescriptionAction action) {
+        public RequestBuilder(ElasticsearchClient client, UpdateModelSnapshotAction action) {
             super(client, action, new Request());
         }
     }
