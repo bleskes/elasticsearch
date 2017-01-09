@@ -135,8 +135,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         QueryPage<AnomalyRecord> persistedRecords = jobProvider.records(JOB_ID, new RecordsQueryBuilder().includeInterim(true).build());
         assertResultsAreSame(records, persistedRecords);
 
-        QueryPage<Influencer> persistedInfluencers =
-                jobProvider.influencers(JOB_ID, new InfluencersQueryBuilder().includeInterim(true).build());
+        QueryPage<Influencer> persistedInfluencers = getInfluencers();
         assertResultsAreSame(influencers, persistedInfluencers);
 
         QueryPage<CategoryDefinition> persistedDefinition = getCategoryDefinition(Long.toString(categoryDefinition.getCategoryId()));
@@ -197,7 +196,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         nonInterimBucket.setRecords(Collections.emptyList());
         assertEquals(nonInterimBucket, persistedBucket.results().get(0));
 
-        QueryPage<Influencer> persistedInfluencers = jobProvider.influencers(JOB_ID, new InfluencersQueryBuilder().build());
+        QueryPage<Influencer> persistedInfluencers = getInfluencers();
         assertEquals(0, persistedInfluencers.count());
 
         QueryPage<AnomalyRecord> persistedRecords = jobProvider.records(JOB_ID, new RecordsQueryBuilder().includeInterim(true).build());
@@ -500,6 +499,24 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         CountDownLatch latch = new CountDownLatch(1);
         jobProvider.modelSizeStats(JOB_ID, modelSizeStats -> {
             resultHolder.set(modelSizeStats);
+            latch.countDown();
+        }, e -> {
+            errorHolder.set(e);
+            latch.countDown();
+        });
+        latch.await();
+        if (errorHolder.get() != null) {
+            throw errorHolder.get();
+        }
+        return resultHolder.get();
+    }
+
+    private QueryPage<Influencer> getInfluencers() throws Exception {
+        AtomicReference<Exception> errorHolder = new AtomicReference<>();
+        AtomicReference<QueryPage<Influencer>> resultHolder = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        jobProvider.influencers(JOB_ID, new InfluencersQueryBuilder().build(), page -> {
+            resultHolder.set(page);
             latch.countDown();
         }, e -> {
             errorHolder.set(e);
