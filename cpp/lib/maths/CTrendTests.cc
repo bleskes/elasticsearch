@@ -54,7 +54,7 @@ typedef std::vector<double> TDoubleVec;
 typedef std::vector<core_t::TTime> TTimeVec;
 typedef std::pair<double, double> TDoubleDoublePr;
 typedef std::pair<std::size_t, std::size_t> TSizeSizePr;
-typedef std::vector<TSizeSizePr> TSizeSizePrVec;
+typedef core::CSmallVector<TSizeSizePr, 2> TSizeSizePr2Vec;
 typedef boost::array<CFloatStorage, 2> TFloatArray;
 typedef CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;
 typedef std::vector<TMeanAccumulator> TMeanAccumulatorVec;
@@ -62,7 +62,7 @@ typedef CTrendTests::TMeanVarAccumulator TMeanVarAccumulator;
 typedef CTrendTests::TFloatMeanAccumulator TFloatMeanAccumulator;
 typedef CTrendTests::TFloatMeanAccumulatorVec TFloatMeanAccumulatorVec;
 typedef CTrendTests::CPeriodicity::TTimeTimePr2Vec TTimeTimePr2Vec;
-typedef CTrendTests::TTimeTimePrMeanVarAccumulatorPrVec TTimeTimePrMeanVarAccumulatorPrVec;
+typedef CTrendTests::TTimeTimePrMeanVarAccumulatorPr TTimeTimePrMeanVarAccumulatorPr;
 
 const core_t::TTime HOUR     = core::constants::HOUR;
 const core_t::TTime DAY      = core::constants::DAY;
@@ -168,7 +168,7 @@ TTimeTimePr2Vec computeWindows(core_t::TTime start,
 //! Get the index ranges corresponding to \p windows.
 std::size_t indexWindows(const TTimeTimePr2Vec &windows,
                          core_t::TTime bucketLength,
-                         TSizeSizePrVec &result)
+                         TSizeSizePr2Vec &result)
 {
     std::size_t length = 0u;
     result.reserve(windows.size());
@@ -184,7 +184,7 @@ std::size_t indexWindows(const TTimeTimePr2Vec &windows,
 //! Compute the periodic trend from \p values falling in \p windows.
 template<typename T>
 void periodicTrend(const TFloatMeanAccumulatorVec &values,
-                   const TSizeSizePrVec &windows, T &trend)
+                   const TSizeSizePr2Vec &windows, T &trend)
 {
     if (!trend.empty())
     {
@@ -210,7 +210,7 @@ void periodicTrend(const TFloatMeanAccumulatorVec &values,
                    const TTimeTimePr2Vec &windows,
                    core_t::TTime bucketLength, T &trend)
 {
-    TSizeSizePrVec windows_;
+    TSizeSizePr2Vec windows_;
     indexWindows(windows, bucketLength, windows_);
     periodicTrend(values, windows_, trend);
 }
@@ -229,13 +229,8 @@ void averageValue(const TFloatMeanAccumulatorVec &values,
     }
 }
 
-namespace detail
-{
-
-typedef CTrendTests::TTimeTimePrMeanVarAccumulatorPr TTimeTimePrMeanVarAccumulatorPr;
-
 //! Extract the count.
-double count(const TMeanVarAccumulator &value)
+template<typename T> double count(const T &value)
 {
     return CBasicStatistics::count(value);
 }
@@ -247,7 +242,7 @@ double count(const TTimeTimePrMeanVarAccumulatorPr &value)
 }
 
 //! Extract the mean.
-double mean(const TMeanVarAccumulator &value)
+template<typename T> double mean(const T &value)
 {
     return CBasicStatistics::mean(value);
 }
@@ -258,8 +253,6 @@ double mean(const TTimeTimePrMeanVarAccumulatorPr &value)
     return CBasicStatistics::mean(value.second);
 }
 
-}
-
 //! Compute the variance of the \p trend values.
 template<typename T>
 double trendVariance(const T &trend)
@@ -267,7 +260,7 @@ double trendVariance(const T &trend)
     TMeanVarAccumulator result;
     for (std::size_t i = 0u; i < trend.size(); ++i)
     {
-        result.add(detail::mean(trend[i]), detail::count(trend[i]));
+        result.add(mean(trend[i]), count(trend[i]));
     }
     return CBasicStatistics::variance(result);
 }
@@ -281,16 +274,16 @@ double trendAmplitude(const T &trend)
     TMeanAccumulator level;
     for (std::size_t i = 0u; i < trend.size(); ++i)
     {
-        level.add(detail::mean(trend[i]), detail::count(trend[i]));
+        level.add(mean(trend[i]), count(trend[i]));
     }
 
     TMaxAccumulator result;
     result.add(0.0);
     for (std::size_t i = 0u; i < trend.size(); ++i)
     {
-        if (detail::count(trend[i]) > 0.0)
+        if (count(trend[i]) > 0.0)
         {
-            result.add(::fabs(detail::mean(trend[i]) - CBasicStatistics::mean(level)));
+            result.add(::fabs(mean(trend[i]) - CBasicStatistics::mean(level)));
         }
     }
 
@@ -364,10 +357,11 @@ double minimumAutocorrelation(double variance,
 //! after subtracting \p trend.
 //!
 //! \sa CTrendTests::autocorrelation.
+template<typename T>
 double remainderAutocorrelation(std::size_t offset,
                                 core_t::TTime bucketLength,
                                 const TFloatMeanAccumulatorVec &values,
-                                const TTimeTimePrMeanVarAccumulatorPrVec &trend,
+                                const std::vector<T> &trend,
                                 const TTimeTimePr2Vec &windows)
 {
     if (windows.empty())
@@ -375,7 +369,7 @@ double remainderAutocorrelation(std::size_t offset,
         return 0.0;
     }
 
-    TSizeSizePrVec windows_;
+    TSizeSizePr2Vec windows_;
     std::size_t n = indexWindows(windows, bucketLength, windows_);
 
     TFloatMeanAccumulatorVec residuals(n);
@@ -386,7 +380,7 @@ double remainderAutocorrelation(std::size_t offset,
         {
             if (CBasicStatistics::count(residuals[i]) > 0.0)
             {
-                residuals[i].s_Moments[0] -= detail::mean(trend[j]);
+                residuals[i].s_Moments[0] -= mean(trend[j]);
             }
         }
     }
@@ -399,7 +393,7 @@ const std::string TIME_ORIGIN_TAG("b");
 const std::string TREND_TAG("c");
 const std::string VARIANCES_TAG("d");
 
-// CPiecewiseConstant
+// CStepChange
 const std::string RNG_TAG("a");
 const std::string BUCKET_LENGTH_TAG("b");
 const std::string PROBABILITY_TAG("c");
@@ -437,12 +431,20 @@ const std::string BUCKET_VALUE_TAG("e");
 const std::string START_OF_PARTITION_TAG("a");
 const std::string HAS_PERIODS_TAG("b");
 
+// CScanningPeriodicity
+//const std::string BUCKET_LENGTH_TAG("b");
+const std::string START_TIME_TAG("c");
+//const std::string BUCKET_VALUES_TAG("e");
+
+
 //! The maximum significance of a test statistic.
 const double MAXIMUM_SIGNIFICANCE = 0.005;
 //! The confidence interval used for test statistic values.
 const double CONFIDENCE_INTERVAL = 80.0;
 
 }
+
+//////// CTrend ////////
 
 CTrendTests::CTrend::CTrend(double decayRate) :
         m_DecayRate(decayRate),
@@ -558,11 +560,12 @@ double CTrendTests::CTrend::time(core_t::TTime time) const
 
 const double CTrendTests::CTrend::HAS_TREND_VARIANCE_RATIO = 0.5;
 
+//////// CStepChange ////////
 
-CTrendTests::CPiecewiseConstant::CPiecewiseConstant(core_t::TTime bucketLength,
-                                                    std::size_t n,
-                                                    double p,
-                                                    double decayRate) :
+CTrendTests::CStepChange::CStepChange(core_t::TTime bucketLength,
+                                      std::size_t n,
+                                      double p,
+                                      double decayRate) :
         m_DecayRate(decayRate),
         m_BucketLength(bucketLength),
         m_P(CTools::truncate(p, 1e-10, 1.0)),
@@ -572,7 +575,7 @@ CTrendTests::CPiecewiseConstant::CPiecewiseConstant(core_t::TTime bucketLength,
         m_Variance(0.0)
 {}
 
-void CTrendTests::CPiecewiseConstant::swap(CPiecewiseConstant &other)
+void CTrendTests::CStepChange::swap(CStepChange &other)
 {
     std::swap(m_Rng, other.m_Rng);
     std::swap(m_DecayRate, other.m_DecayRate);
@@ -584,7 +587,7 @@ void CTrendTests::CPiecewiseConstant::swap(CPiecewiseConstant &other)
     std::swap(m_Variance, other.m_Variance);
 }
 
-bool CTrendTests::CPiecewiseConstant::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
+bool CTrendTests::CStepChange::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
 {
     do
     {
@@ -603,7 +606,7 @@ bool CTrendTests::CPiecewiseConstant::acceptRestoreTraverser(core::CStateRestore
     return true;
 }
 
-void CTrendTests::CPiecewiseConstant::acceptPersistInserter(core::CStatePersistInserter &inserter) const
+void CTrendTests::CStepChange::acceptPersistInserter(core::CStatePersistInserter &inserter) const
 {
     inserter.insertValue(RNG_TAG, m_Rng.toString());
     inserter.insertValue(BUCKET_LENGTH_TAG, m_BucketLength);
@@ -614,17 +617,17 @@ void CTrendTests::CPiecewiseConstant::acceptPersistInserter(core::CStatePersistI
     inserter.insertValue(VARIANCE_TAG, m_Variance.toDelimited());
 }
 
-void CTrendTests::CPiecewiseConstant::clear(void)
+void CTrendTests::CStepChange::clear(void)
 {
     m_Samples.clear();
 }
 
-void CTrendTests::CPiecewiseConstant::decayRate(double decayRate)
+void CTrendTests::CStepChange::decayRate(double decayRate)
 {
     m_DecayRate = decayRate;
 }
 
-void CTrendTests::CPiecewiseConstant::propagateForwardsByTime(double time)
+void CTrendTests::CStepChange::propagateForwardsByTime(double time)
 {
     if (time < 0.0)
     {
@@ -636,7 +639,7 @@ void CTrendTests::CPiecewiseConstant::propagateForwardsByTime(double time)
     m_Variance.age(factor);
 }
 
-void CTrendTests::CPiecewiseConstant::add(core_t::TTime time, double value)
+void CTrendTests::CStepChange::add(core_t::TTime time, double value)
 {
     if (time > m_NextSampleTime)
     {
@@ -657,7 +660,7 @@ void CTrendTests::CPiecewiseConstant::add(core_t::TTime time, double value)
     }
 }
 
-CTrendTests::CPiecewiseConstant::CResult CTrendTests::CPiecewiseConstant::captureVarianceAndTest(void)
+CTrendTests::CStepChange::CResult CTrendTests::CStepChange::captureVarianceAndTest(void)
 {
     std::size_t n = m_Samples.size();
 
@@ -750,7 +753,7 @@ CTrendTests::CPiecewiseConstant::CResult CTrendTests::CPiecewiseConstant::captur
     return CResult(passed ? (even ? E_True : E_Undetermined) : E_False, m_Level, m_Level - oldLevel);
 }
 
-uint64_t CTrendTests::CPiecewiseConstant::checksum(uint64_t seed) const
+uint64_t CTrendTests::CStepChange::checksum(uint64_t seed) const
 {
     seed = CChecksum::calculate(seed, m_DecayRate);
     seed = CChecksum::calculate(seed, m_BucketLength);
@@ -761,33 +764,34 @@ uint64_t CTrendTests::CPiecewiseConstant::checksum(uint64_t seed) const
     return CChecksum::calculate(seed, m_Variance);
 }
 
-CTrendTests::CPiecewiseConstant::CResult::CResult(void) :
+CTrendTests::CStepChange::CResult::CResult(void) :
         m_FoundShift(E_False),
         m_Level(0.0),
         m_Shift(0.0)
 {}
 
-CTrendTests::CPiecewiseConstant::CResult::CResult(ETernaryBool foundShift, double level, double shift) :
+CTrendTests::CStepChange::CResult::CResult(ETernaryBool foundShift, double level, double shift) :
         m_FoundShift(foundShift),
         m_Level(level),
         m_Shift(shift)
 {}
 
-CTrendTests::ETernaryBool CTrendTests::CPiecewiseConstant::CResult::value(void) const
+CTrendTests::ETernaryBool CTrendTests::CStepChange::CResult::value(void) const
 {
     return m_FoundShift;
 }
 
-double CTrendTests::CPiecewiseConstant::CResult::level(void) const
+double CTrendTests::CStepChange::CResult::level(void) const
 {
     return m_Level;
 }
 
-double CTrendTests::CPiecewiseConstant::CResult::shift(void) const
+double CTrendTests::CStepChange::CResult::shift(void) const
 {
     return m_Shift;
 }
 
+//////// CRandomizedPeriodicity ////////
 
 CTrendTests::CRandomizedPeriodicity::CRandomizedPeriodicity(void) :
         m_DayRefreshedProjections(-DAY_RESAMPLE_INTERVAL),
@@ -1133,6 +1137,7 @@ TDoubleVec CTrendTests::CRandomizedPeriodicity::ms_WeekPeriodicProjections[N] = 
 atomic_t::atomic<core_t::TTime> CTrendTests::CRandomizedPeriodicity::ms_WeekResampled(-WEEK_RESAMPLE_INTERVAL);
 core::CMutex CTrendTests::CRandomizedPeriodicity::ms_Lock;
 
+//////// CPeriodicity ////////
 
 CTrendTests::CPeriodicity::CPeriodicity(double decayRate) :
         m_DecayRate(decayRate),
@@ -1178,16 +1183,9 @@ void CTrendTests::CPeriodicity::acceptPersistInserter(core::CStatePersistInserte
 bool CTrendTests::CPeriodicity::initialize(core_t::TTime bucketLength,
                                            core_t::TTime window,
                                            TTime2Vec periods,
-                                           TTime2Vec partition)
+                                           TTime2Vec partition,
+                                           const TFloatMeanAccumulatorVec &initial)
 {
-    std::size_t n = boost::size(PERMITTED_BUCKET_LENGTHS);
-    if (bucketLength > PERMITTED_BUCKET_LENGTHS[n - 1])
-    {
-        return false;
-    }
-    bucketLength = *std::lower_bound(PERMITTED_BUCKET_LENGTHS,
-                                     PERMITTED_BUCKET_LENGTHS + n, bucketLength);
-
     // The following conditions need to hold:
     //   - We're only interested in decomposing into two components,
     //   - The window needs to be at least twice the longest period,
@@ -1199,7 +1197,7 @@ bool CTrendTests::CPeriodicity::initialize(core_t::TTime bucketLength,
     if (    periods.size() != 2
         || (partition.size() != 0 && partition.size() != 2)
         ||  window <= periods[1]
-        || (window % periods[1]) != 0
+        || (window > 2 * periods[1] && (window % periods[1]) != 0)
         || (periods[0] % bucketLength) != 0
         || (periods[1] % bucketLength) != 0
         || (periods[1] % periods[0]) != 0
@@ -1216,6 +1214,10 @@ bool CTrendTests::CPeriodicity::initialize(core_t::TTime bucketLength,
     m_Partition    = partition;
     m_BucketLength = bucketLength;
     m_BucketValues.resize(static_cast<std::size_t>(window / m_BucketLength));
+    std::copy(initial.begin(),
+              initial.begin() + std::min(initial.size(), m_BucketValues.size()),
+              m_BucketValues.begin());
+
     return true;
 }
 
@@ -1901,10 +1903,7 @@ void CTrendTests::CPeriodicity::initializeBuckets(std::size_t period,
     }
 }
 
-const core_t::TTime CTrendTests::CPeriodicity::PERMITTED_BUCKET_LENGTHS[] =
-    {
-        60, 300, 1800, 3600, 7200, 10800, 14400, 21600, 28800, 43200, 86400, 172800
-    };
+const TFloatMeanAccumulatorVec CTrendTests::CPeriodicity::NO_BUCKET_VALUES;
 const double CTrendTests::CPeriodicity::ACCURATE_TEST_POPULATED_FRACTION = 0.9;
 const double CTrendTests::CPeriodicity::MINIMUM_COEFFICIENT_OF_VARIATION = 1e-4;
 const double CTrendTests::CPeriodicity::HAS_PERIOD_VARIANCE_RATIO = 0.7;
@@ -2088,11 +2087,237 @@ double CTrendTests::CPeriodicity::SStatistics::varianceThreshold(void) const
     return HAS_PERIOD_VARIANCE_RATIO * s_UnexplainedVariance;
 }
 
+//////// CScanningPeriodicity ////////
+
+CTrendTests::CScanningPeriodicity::CScanningPeriodicity(std::size_t size, core_t::TTime bucketLength) :
+        m_BucketLength(bucketLength),
+        m_StartTime(boost::numeric::bounds<core_t::TTime>::lowest()),
+        m_BucketValues(size % 2 == 0 ? size : size + 1)
+{}
+
+void CTrendTests::CScanningPeriodicity::swap(CScanningPeriodicity &other)
+{
+    std::swap(m_BucketLength, other.m_BucketLength);
+    std::swap(m_StartTime, other.m_StartTime);
+    m_BucketValues.swap(other.m_BucketValues);
+}
+
+bool CTrendTests::CScanningPeriodicity::acceptRestoreTraverser(core::CStateRestoreTraverser &traverser)
+{
+    do
+    {
+        const std::string &name = traverser.name();
+        RESTORE_BUILT_IN(BUCKET_LENGTH_TAG, m_BucketLength)
+        RESTORE_BUILT_IN(START_TIME_TAG, m_StartTime)
+        RESTORE(BUCKET_VALUE_TAG, CBasicStatistics::restoreSampleCentralMoments(traverser, m_BucketValues));
+    }
+    while (traverser.next());
+    return true;
+}
+
+void CTrendTests::CScanningPeriodicity::acceptPersistInserter(core::CStatePersistInserter &inserter) const
+{
+    inserter.insertValue(BUCKET_LENGTH_TAG, m_BucketLength);
+    inserter.insertValue(START_TIME_TAG, m_StartTime);
+    CBasicStatistics::persistSampleCentralMoments(m_BucketValues, BUCKET_VALUE_TAG, inserter);
+}
+
+void CTrendTests::CScanningPeriodicity::initialize(core_t::TTime time)
+{
+    m_StartTime = time;
+}
+
+void CTrendTests::CScanningPeriodicity::add(core_t::TTime time, double value, double weight)
+{
+    if (this->needToCompress(time))
+    {
+        std::size_t n = m_BucketValues.size();
+        for (std::size_t i = 0u, j = 0u; i < n; i += 2, ++j)
+        {
+            m_BucketValues[j] = m_BucketValues[i] + m_BucketValues[i + 1];
+        }
+        std::fill_n(m_BucketValues.begin() + n / 2, n / 2, TFloatMeanAccumulator());
+        m_BucketLength *= 2;
+    }
+    m_BucketValues[(time - m_StartTime) / m_BucketLength].add(value, weight);
+}
+
+bool CTrendTests::CScanningPeriodicity::needToCompress(core_t::TTime time) const
+{
+    return time >= m_StartTime + static_cast<core_t::TTime>(m_BucketValues.size()) * m_BucketLength;
+}
+
+CTrendTests::CScanningPeriodicity::TPeriodicityResultPr CTrendTests::CScanningPeriodicity::test(void) const
+{
+    typedef std::pair<double, std::size_t> TDoubleSizePr;
+    typedef CBasicStatistics::COrderStatisticsStack<TDoubleSizePr, 5, std::greater<TDoubleSizePr> > TMaxAccumulator;
+
+    // Compute the linear autocorrelations padding to the maximum offset
+    // to avoid windowing effects.
+
+    std::size_t n = m_BucketValues.size();
+    std::size_t pad = n / 3;
+
+    TFloatMeanAccumulatorVec values(m_BucketValues);
+
+    TDoubleVec correlations;
+    values.resize(n + pad);
+    autocorrelations(values, correlations);
+    values.resize(n);
+
+    // We retain the top 5 linear autocorrelations, averaging over offsets
+    // which are integer multiples of the period since these should have
+    // high autocorrelation if the signal is periodic, so we have a high
+    // chance of finding the highest cyclic autocorrelation.
+
+    TMaxAccumulator candidates;
+    correlations.resize(pad);
+    for (std::size_t p = 4; p < correlations.size(); ++p)
+    {
+        double correlation = this->meanForPeriodicOffsets(correlations, p);
+        LOG_TRACE("correlation(" << p << ") = " << correlation);
+        candidates.add(std::make_pair(correlation, p));
+    }
+
+    std::size_t periods_[2];
+    double correlation = -1.0;
+
+    std::size_t candidatePeriods[5];
+    for (std::size_t i = 0u; i < candidates.count(); ++i)
+    {
+        candidatePeriods[i] = candidates[i].second;
+    }
+    candidates.clear();
+    for (std::size_t i = 0u; i < 5; ++i)
+    {
+        std::size_t p = candidatePeriods[i];
+        this->resize(n - n % p, values);
+        candidates.add(std::make_pair(autocorrelation(p, values), p));
+    }
+    candidates.sort();
+    LOG_TRACE("candidate periods = " << candidates.print());
+    periods_[0] = candidates[0].second;
+
+    // Find the highest autocorrelation harmonic of the base period.
+
+    candidates.clear();
+    for (std::size_t divisor = 2; 4 * divisor <= periods_[0]; ++divisor)
+    {
+        if (periods_[0] % divisor == 0)
+        {
+            std::size_t p = periods_[0] / divisor;
+            candidates.add(std::make_pair(autocorrelation(p, values), p));
+        }
+    }
+    candidates.sort();
+    LOG_TRACE("candidate short periods = " << candidates.print());
+    if (candidates.count() > 0)
+    {
+        periods_[1] = candidates[0].second;
+        correlation = candidates[0].first;
+    }
+
+    // Find the highest autocorrelation multiple of the base period.
+
+    TMeanAccumulatorVec trend(periods_[0]);
+    {
+        std::size_t w = n - n % periods_[0];
+        this->resize(w, values);
+        periodicTrend(values, TSizeSizePr2Vec(1, TSizeSizePr(0, w)), trend);
+    }
+    LOG_TRACE("periodic trend = " << core::CContainerPrinter::print(values));
+    candidates.clear();
+    candidates.add(std::make_pair(-1.0, 2 * periods_[0]));
+    for (std::size_t p = 2 * periods_[0]; 2 * p <= values.size(); p += periods_[0])
+    {
+        std::size_t w = n - n % p;
+        this->resize(w, values);
+        core_t::TTime window = static_cast<core_t::TTime>(w) * m_BucketLength;
+        candidates.add(std::make_pair(
+                remainderAutocorrelation(p, m_BucketLength, values, trend,
+                                         TTimeTimePr2Vec(1, TTimeTimePr(0, window))), p));
+    }
+    candidates.sort();
+    LOG_TRACE("candidate long periods = " << candidates.print());
+    if (candidates[0].first >= correlation)
+    {
+        periods_[1] = candidates[0].second;
+    }
+
+    // Configure the full periodicity test.
+
+    if (periods_[1] < periods_[0])
+    {
+        std::swap(periods_[0], periods_[1]);
+    }
+    TTime2Vec periods(2);
+    periods[0] = static_cast<core_t::TTime>(periods_[0]) * m_BucketLength;
+    periods[1] = static_cast<core_t::TTime>(periods_[1]) * m_BucketLength;
+    core_t::TTime window = static_cast<core_t::TTime>(
+            (n - n % (n > 2 * periods_[1] ? periods_[1] : periods_[0]))) * m_BucketLength;
+    LOG_TRACE("bucket length = " << m_BucketLength
+              << ", window = " << window
+              << ", periods to test = " << core::CContainerPrinter::print(periods)
+              << ", # values = " << values.size())
+    CPeriodicity test;
+    test.initialize(m_BucketLength, window, periods, TTime2Vec(), values);
+
+    return std::make_pair(test, test.test());
+}
+
+uint64_t CTrendTests::CScanningPeriodicity::checksum(uint64_t seed) const
+{
+    seed = CChecksum::calculate(seed, m_BucketLength);
+    seed = CChecksum::calculate(seed, m_StartTime);
+    return CChecksum::calculate(seed, m_BucketValues);
+}
+
+void CTrendTests::CScanningPeriodicity::resize(std::size_t size, TFloatMeanAccumulatorVec &values) const
+{
+    std::size_t n = values.size();
+    values.resize(size);
+    for (std::size_t i = n; i < size; ++i)
+    {
+        values[i] = m_BucketValues[i];
+    }
+}
+
+double CTrendTests::CScanningPeriodicity::meanForPeriodicOffsets(const TDoubleVec &correlations,
+                                                                 std::size_t period) const
+{
+
+    TMeanAccumulator result;
+    for (std::size_t offset = period; offset < correlations.size(); offset += period)
+    {
+        result.add(this->correctForPad(correlations[offset], offset));
+    }
+    return CBasicStatistics::mean(result);
+}
+
+double CTrendTests::CScanningPeriodicity::correctForPad(double correlation, std::size_t offset) const
+{
+    return correlation * static_cast<double>(m_BucketValues.size())
+                       / static_cast<double>(m_BucketValues.size() - offset);
+}
+
 
 CTrendTests::CPeriodicity *CTrendTests::dailyAndWeekly(core_t::TTime bucketLength, double decayRate)
 {
     static const core_t::TTime PERIODS[]   = { DAY, WEEK };
     static const core_t::TTime PARTITION[] = { WEEKEND, WEEKDAYS };
+    static const core_t::TTime PERMITTED_BUCKET_LENGTHS[] =
+        {
+            60, 300, 1800, 3600, 7200, 10800, 14400, 21600, 28800, 43200, 86400, 172800
+        };
+
+    std::size_t n = boost::size(PERMITTED_BUCKET_LENGTHS);
+    if (bucketLength > PERMITTED_BUCKET_LENGTHS[n - 1])
+    {
+        return 0;
+    }
+    bucketLength = *std::lower_bound(PERMITTED_BUCKET_LENGTHS,
+                                     PERMITTED_BUCKET_LENGTHS + n, bucketLength);
+
     CPeriodicity *result = new CPeriodicity(decayRate);
     core_t::TTime window = 2 * WEEK * (std::max(bucketLength, HOUR) / HOUR);
     TTime2Vec periods(PERIODS, PERIODS + 2);
@@ -2159,6 +2384,31 @@ void CTrendTests::autocorrelations(const TFloatMeanAccumulatorVec &values, TDoub
     f.reserve(n);
     for (std::size_t i = 0u; i < n; ++i)
     {
+        std::size_t j = i;
+        for (/**/; j < n && CBasicStatistics::count(values[j]) == 0; ++j);
+        if (i != j)
+        {
+            // Infer missing values by linearly interpolating.
+            if (j == n)
+            {
+                f.resize(n, CSignal::TComplex(0.0, 0.0));
+                break;
+            }
+            else if (i == 0)
+            {
+                f.resize(j - 1, CSignal::TComplex(0.0, 0.0));
+            }
+            else
+            {
+                for (std::size_t k = i; k < j; ++k)
+                {
+                    double alpha = static_cast<double>(k - i + 1) / static_cast<double>(j - i + 1);
+                    double real  = CBasicStatistics::mean(values[j]) - mean;
+                    f.push_back((1.0 - alpha) * f[i-1] + alpha * CSignal::TComplex(real, 0.0));
+                }
+            }
+            i = j;
+        }
         f.push_back(CSignal::TComplex(CBasicStatistics::mean(values[i]) - mean, 0.0));
     }
 

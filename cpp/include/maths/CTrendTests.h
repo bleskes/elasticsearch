@@ -190,7 +190,7 @@ class MATHS_EXPORT CTrendTests
         //! randomly down sample the function values and test to see if
         //! adding the optimum knot point both causes both a large and
         //! statistically significant decrease in the residual variance.
-        class MATHS_EXPORT CPiecewiseConstant
+        class MATHS_EXPORT CStepChange
         {
             public:
                 class MATHS_EXPORT CResult
@@ -224,13 +224,13 @@ class MATHS_EXPORT CTrendTests
                 //! \param[in] n The number of values to sample.
                 //! \param[in] p The probability with which to sample a value.
                 //! \param[in] decayRate The rate at which information is lost.
-                CPiecewiseConstant(core_t::TTime bucketLength,
-                                   std::size_t n,
-                                   double p,
-                                   double decayRate = 0.0);
+                CStepChange(core_t::TTime bucketLength,
+                            std::size_t n,
+                            double p,
+                            double decayRate = 0.0);
 
                 //! Efficiently swap the contents of this and \p other.
-                void swap(CPiecewiseConstant &other);
+                void swap(CStepChange &other);
 
                 //! Initialize by reading state from \p traverser.
                 bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
@@ -507,6 +507,10 @@ class MATHS_EXPORT CTrendTests
                 };
 
             public:
+                //! An empty collection of bucket values.
+                static const TFloatMeanAccumulatorVec NO_BUCKET_VALUES;
+
+            public:
                 explicit CPeriodicity(double decayRate = 0.0);
 
                 //! Efficiently swap the contents of two tests.
@@ -525,7 +529,8 @@ class MATHS_EXPORT CTrendTests
                 bool initialize(core_t::TTime bucketLength,
                                 core_t::TTime window,
                                 TTime2Vec periods,
-                                TTime2Vec partition);
+                                TTime2Vec partition,
+                                const TFloatMeanAccumulatorVec &initial = NO_BUCKET_VALUES);
 
                 //! Check if the test is initialized.
                 bool initialized(void) const;
@@ -723,6 +728,72 @@ class MATHS_EXPORT CTrendTests
                 TTime2Vec m_Partition;
 
                 //! The mean bucket values.
+                TFloatMeanAccumulatorVec m_BucketValues;
+        };
+
+        //! \brief Implements a test that scans through a range of frequencies
+        //! looking for different periodic components in the data.
+        //!
+        //! DESCRIPTION:\n
+        //! This performs a scan for increasingly low frequency periodic
+        //! components maintaining a fixed size buffer. We find the most
+        //! promising candidate periods using linear autocorrelation and
+        //! then test them using our standard periodicity test.
+        //!
+        //! In order to maintain a fixed space the bucket length is increased
+        //! as soon as the observed data span exceeds the test size multiplied
+        //! by the current bucket span.
+        class MATHS_EXPORT CScanningPeriodicity
+        {
+            public:
+                typedef std::pair<CPeriodicity, CPeriodicity::CResult> TPeriodicityResultPr;
+
+            public:
+                CScanningPeriodicity(std::size_t size, core_t::TTime bucketLength);
+
+                //! Efficiently swap the contents of this and \p other.
+                void swap(CScanningPeriodicity &other);
+
+                //! Initialize by reading state from \p traverser.
+                bool acceptRestoreTraverser(core::CStateRestoreTraverser &traverser);
+
+                //! Persist state by passing information to \p inserter.
+                void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
+
+                //! Set the start time to \p time.
+                void initialize(core_t::TTime time);
+
+                //! Add \p value at \p time.
+                void add(core_t::TTime time, double value, double weight = 1.0);
+
+                //! Check if we need to compress by increasing the bucket span.
+                bool needToCompress(core_t::TTime) const;
+
+                //! Check if there periodic components.
+                TPeriodicityResultPr test(void) const;
+
+                //! Get a checksum for this object.
+                uint64_t checksum(uint64_t seed = 0) const;
+
+            private:
+                //! Resize the bucket values to \p size.
+                void resize(std::size_t size, TFloatMeanAccumulatorVec &values) const;
+
+                //! Compute the mean of the autocorrelation at integer multiples
+                //! of \p period.
+                double meanForPeriodicOffsets(const TDoubleVec &correlations, std::size_t period) const;
+
+                //! Correct the autocorrelation calculated on padded data.
+                double correctForPad(double correlation, std::size_t offset) const;
+
+            private:
+                //! The bucket length.
+                core_t::TTime m_BucketLength;
+
+                //! The time of the first data point.
+                core_t::TTime m_StartTime;
+
+                //! The bucket values.
                 TFloatMeanAccumulatorVec m_BucketValues;
         };
 

@@ -324,17 +324,17 @@ void CTrendTestsTest::testTrend(void)
     CPPUNIT_ASSERT(meanTimeToDetect < 23 * DAY);
 }
 
-void CTrendTestsTest::testPiecewiseConstant(void)
+void CTrendTestsTest::testStepChange(void)
 {
-    LOG_DEBUG("+------------------------------------------+");
-    LOG_DEBUG("|  CTrendTestsTest::testPiecewiseConstant  |");
-    LOG_DEBUG("+------------------------------------------+");
+    LOG_DEBUG("+-----------------------------------+");
+    LOG_DEBUG("|  CTrendTestsTest::testStepChange  |");
+    LOG_DEBUG("+-----------------------------------+");
 
     // Test to see if we can successfully find knot points without
     // false positive in a piecewise constant approximation to a
     // variety of time series.
 
-    typedef maths::CTrendTests::CPiecewiseConstant::CResult TResult;
+    typedef maths::CTrendTests::CStepChange::CResult TResult;
 
     test::CRandomNumbers rng;
 
@@ -345,7 +345,7 @@ void CTrendTestsTest::testPiecewiseConstant(void)
         LOG_DEBUG("Uniform");
         {
             rng.generateUniformSamples(0.0, 20.0, 1000, samples);
-            maths::CTrendTests::CPiecewiseConstant test(HALF_HOUR, 24, 0.5);
+            maths::CTrendTests::CStepChange test(HALF_HOUR, 24, 0.5);
             core_t::TTime time = 0;
             for (std::size_t i = 0u; i < samples.size(); ++i, time += HALF_HOUR)
             {
@@ -359,7 +359,7 @@ void CTrendTestsTest::testPiecewiseConstant(void)
         LOG_DEBUG("Normal");
         {
             rng.generateNormalSamples(0.0, 50.0, 1000, samples);
-            maths::CTrendTests::CPiecewiseConstant test(FIVE_MINS, 24, 0.1);
+            maths::CTrendTests::CStepChange test(FIVE_MINS, 24, 0.1);
             core_t::TTime time = 0;
             for (std::size_t i = 0u; i < samples.size(); ++i, time += FIVE_MINS)
             {
@@ -373,7 +373,7 @@ void CTrendTestsTest::testPiecewiseConstant(void)
         LOG_DEBUG("Log-Normal");
         {
             rng.generateLogNormalSamples(0.5, 3.0, 1000, samples);
-            maths::CTrendTests::CPiecewiseConstant test(HALF_HOUR, 24, 0.5);
+            maths::CTrendTests::CStepChange test(HALF_HOUR, 24, 0.5);
             core_t::TTime time = 0;
             for (std::size_t i = 0u; i < samples.size(); ++i, time += HALF_HOUR)
             {
@@ -394,7 +394,7 @@ void CTrendTestsTest::testPiecewiseConstant(void)
         TDoubleVec noise;
         rng.generateUniformSamples(-5.0, 5.0, 50 * DAY / HALF_HOUR, noise);
 
-        maths::CTrendTests::CPiecewiseConstant test(HALF_HOUR, 24, 0.5);
+        maths::CTrendTests::CStepChange test(HALF_HOUR, 24, 0.5);
 
         std::size_t shifts = 0u;
 
@@ -432,7 +432,7 @@ void CTrendTestsTest::testPiecewiseConstant(void)
         TDoubleVec noise;
         rng.generateNormalSamples(0.0, 100.0, 5 * WEEK / FIVE_MINS, noise);
 
-        maths::CTrendTests::CPiecewiseConstant test(FIVE_MINS, 30, 0.1);
+        maths::CTrendTests::CStepChange test(FIVE_MINS, 30, 0.1);
 
         std::size_t shifts = 0u;
 
@@ -989,6 +989,149 @@ void CTrendTestsTest::testPeriodicity(void)
     }
 }
 
+void CTrendTestsTest::testScanningPeriodicity(void)
+{
+    LOG_DEBUG("+--------------------------------------------+");
+    LOG_DEBUG("|  CTrendTestsTest::testScanningPeriodicity  |");
+    LOG_DEBUG("+--------------------------------------------+");
+
+    typedef maths::CTrendTests::CScanningPeriodicity::TPeriodicityResultPr TPeriodicityResultPr;
+
+    test::CRandomNumbers rng;
+
+    std::string partitions[2];
+    std::string periods[2];
+
+    LOG_DEBUG("Smooth")
+    {
+        TDoubleVec timeseries;
+        for (core_t::TTime time = 0; time <= 2 * WEEK; time += HALF_HOUR)
+        {
+            double trend = 15.0 + 10.0 * ::sin(0.7 * boost::math::double_constants::two_pi
+                                                   * static_cast<double>(time)
+                                                   / static_cast<double>(DAY));
+            timeseries.push_back(trend);
+        }
+
+        maths::CTrendTests::CScanningPeriodicity test(240, HALF_HOUR);
+        test.initialize(0);
+
+        core_t::TTime time = 0;
+        for (std::size_t i = 0u; i < timeseries.size(); ++i, time += HALF_HOUR)
+        {
+            if (test.needToCompress(time))
+            {
+                TPeriodicityResultPr result = test.test();
+                periods[0] = core::CStringUtils::typeToString(result.first.periods()[0]);
+                periods[1] = core::CStringUtils::typeToString(result.first.periods()[1]);
+                LOG_DEBUG("time = " << time);
+                LOG_DEBUG("periods = " << result.second.print(partitions, periods));
+
+                CPPUNIT_ASSERT(result.second.periodic());
+
+                maths::CTrendTests::CPeriodicity::EPeriod period =
+                        result.second.periods(maths::CTrendTests::CPeriodicity::E_FullInterval);
+                CPPUNIT_ASSERT_EQUAL(maths::CTrendTests::CPeriodicity::E_LongPeriod, period);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(DAY) / 0.7,
+                                             static_cast<double>(result.first.periods()[1]),
+                                             900.0);
+                break;
+            }
+            test.add(time, timeseries[i]);
+        }
+    }
+
+    LOG_DEBUG("Smooth + Noise")
+    {
+        TDoubleVec timeseries;
+        for (core_t::TTime time = 0; time <= 2 * WEEK; time += HALF_HOUR)
+        {
+            double trend = 15.0 + 10.0 * ::sin(0.4 * boost::math::double_constants::two_pi
+                                                   * static_cast<double>(time)
+                                                   / static_cast<double>(DAY));
+            timeseries.push_back(trend);
+        }
+
+        TDoubleVec noise;
+        rng.generateNormalSamples(0.0, 4.0, timeseries.size(), noise);
+
+        maths::CTrendTests::CScanningPeriodicity test(240, HALF_HOUR);
+        test.initialize(0);
+
+        core_t::TTime time = 0;
+        std::size_t periodic = 0;
+        for (std::size_t i = 0u; i < timeseries.size(); ++i, time += HALF_HOUR)
+        {
+            if (test.needToCompress(time))
+            {
+                TPeriodicityResultPr result = test.test();
+                periods[0] = core::CStringUtils::typeToString(result.first.periods()[0]);
+                periods[1] = core::CStringUtils::typeToString(result.first.periods()[1]);
+                if (result.second.periodic())
+                {
+                    LOG_DEBUG("time = " << time);
+                    LOG_DEBUG("periods = " << result.second.print(partitions, periods));
+                    maths::CTrendTests::CPeriodicity::EPeriod period =
+                            result.second.periods(maths::CTrendTests::CPeriodicity::E_FullInterval);
+                    CPPUNIT_ASSERT_EQUAL(maths::CTrendTests::CPeriodicity::E_LongPeriod, period);
+                    CPPUNIT_ASSERT_EQUAL(static_cast<double>(DAY) / 0.4,
+                                         static_cast<double>(result.first.periods()[1]));
+                    ++periodic;
+                    break;
+                }
+            }
+            test.add(time, timeseries[i] + noise[i]);
+        }
+        CPPUNIT_ASSERT_EQUAL(std::size_t(1), periodic);
+    }
+
+
+    LOG_DEBUG("Multiple");
+    {
+        TDoubleVec timeseries;
+        for (core_t::TTime time = 0; time <= 8 * WEEK; time += HALF_HOUR)
+        {
+            double trend = 30.0 + 20.0 * ::sin(0.2 * boost::math::double_constants::two_pi
+                                                   * static_cast<double>(time)
+                                                   / static_cast<double>(DAY))
+                                + 10.0 * ::sin(0.1 * boost::math::double_constants::two_pi
+                                                   * static_cast<double>(time)
+                                                   / static_cast<double>(DAY));
+            timeseries.push_back(trend);
+        }
+
+        maths::CTrendTests::CScanningPeriodicity test(120, HALF_HOUR);
+        test.initialize(0);
+
+        core_t::TTime time = 0;
+        for (std::size_t i = 0u; i < timeseries.size(); ++i, time += HALF_HOUR)
+        {
+            if (test.needToCompress(time))
+            {
+                TPeriodicityResultPr result = test.test();
+                periods[0] = core::CStringUtils::typeToString(result.first.periods()[0]);
+                periods[1] = core::CStringUtils::typeToString(result.first.periods()[1]);
+                if (result.second.periodic())
+                {
+                    LOG_DEBUG("time = " << time);
+                    LOG_DEBUG("periods = " << result.second.print(partitions, periods));
+                    maths::CTrendTests::CPeriodicity::EPeriod period =
+                            result.second.periods(maths::CTrendTests::CPeriodicity::E_FullInterval);
+                    CPPUNIT_ASSERT_EQUAL(maths::CTrendTests::CPeriodicity::E_BothPeriods, period);
+                    CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(DAY) / 0.2,
+                                                 static_cast<double>(result.first.periods()[0]),
+                                                 0.2 * static_cast<double>(DAY));
+                    CPPUNIT_ASSERT_DOUBLES_EQUAL(static_cast<double>(DAY) / 0.1,
+                                                 static_cast<double>(result.first.periods()[1]),
+                                                 0.4 * static_cast<double>(DAY));
+                }
+            }
+            test.add(time, timeseries[i]);
+        }
+
+    }
+}
+
 void CTrendTestsTest::testAutocorrelations(void)
 {
     LOG_DEBUG("+-----------------------------------------+");
@@ -1043,7 +1186,7 @@ void CTrendTestsTest::testPersist(void)
     LOG_DEBUG("Test CTrendTests::CTrend");
     {
         TDoubleVec timeseries;
-        for (core_t::TTime time = 0; time < 2 * WEEK + 1; time += HALF_HOUR)
+        for (core_t::TTime time = 0; time <= 2 * WEEK; time += HALF_HOUR)
         {
             double daily = 15.0 + 10.0 * ::sin(boost::math::double_constants::two_pi
                                                * static_cast<double>(time)
@@ -1157,7 +1300,7 @@ void CTrendTestsTest::testPersist(void)
     LOG_DEBUG("Test CTrendTests::CPeriodicity");
     {
         TDoubleVec timeseries;
-        for (core_t::TTime time = 0; time < 2 * WEEK + 1; time += HALF_HOUR)
+        for (core_t::TTime time = 0; time <= 2 * WEEK; time += HALF_HOUR)
         {
             double daily = 15.0 + 10.0 * ::sin(boost::math::double_constants::two_pi
                                                * static_cast<double>(time)
@@ -1205,10 +1348,10 @@ void CTrendTestsTest::testPersist(void)
         CPPUNIT_ASSERT_EQUAL(origXml, newXml);
     }
 
-    LOG_DEBUG("Test CTrendTests::CPiecewiseConstant");
+    LOG_DEBUG("Test CTrendTests::CStepChange");
     {
         TDoubleVec timeseries;
-        for (core_t::TTime time = 0; time < 2 * WEEK + 1; time += HALF_HOUR)
+        for (core_t::TTime time = 0; time <= 2 * WEEK; time += HALF_HOUR)
         {
             double daily = 15.0 + 10.0 * ::sin(boost::math::double_constants::two_pi
                                                * static_cast<double>(time)
@@ -1220,7 +1363,7 @@ void CTrendTestsTest::testPersist(void)
         TDoubleVec noise;
         rng.generateNormalSamples(20.0, 16.0, timeseries.size(), noise);
 
-        maths::CTrendTests::CPiecewiseConstant orig(HALF_HOUR, 24, 0.5);
+        maths::CTrendTests::CStepChange orig(HALF_HOUR, 24, 0.5);
         core_t::TTime time = 0;
         for (std::size_t i = 0u; i < timeseries.size(); ++i, time += HALF_HOUR)
         {
@@ -1240,13 +1383,52 @@ void CTrendTestsTest::testPersist(void)
 
         LOG_DEBUG("XML representation:\n" << origXml);
 
-        maths::CTrendTests::CPiecewiseConstant restored(FIVE_MINS, 48, 0.16);
+        maths::CTrendTests::CStepChange restored(FIVE_MINS, 48, 0.16);
         {
             core::CRapidXmlParser parser;
             CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origXml));
             core::CRapidXmlStateRestoreTraverser traverser(parser);
             CPPUNIT_ASSERT(traverser.traverseSubLevel(boost::bind(
-                    &maths::CTrendTests::CPiecewiseConstant::acceptRestoreTraverser, &restored, _1)));
+                    &maths::CTrendTests::CStepChange::acceptRestoreTraverser, &restored, _1)));
+        }
+        CPPUNIT_ASSERT_EQUAL(orig.checksum(), restored.checksum());
+
+        std::string newXml;
+        {
+            core::CRapidXmlStatePersistInserter inserter("root");
+            restored.acceptPersistInserter(inserter);
+            inserter.toXml(newXml);
+        }
+        CPPUNIT_ASSERT_EQUAL(origXml, newXml);
+    }
+
+    LOG_DEBUG("Test CTrendTests::CScanningPeriodicity");
+    {
+        maths::CTrendTests::CScanningPeriodicity orig(120, HALF_HOUR);
+        orig.initialize(0);
+        for (core_t::TTime time = 0; time <= 2 * WEEK; time += HALF_HOUR)
+        {
+            orig.add(time, 15.0 + 10.0 * ::sin(boost::math::double_constants::two_pi
+                                               * static_cast<double>(time)
+                                               / static_cast<double>(DAY)));
+        }
+
+        std::string origXml;
+        {
+            core::CRapidXmlStatePersistInserter inserter("root");
+            orig.acceptPersistInserter(inserter);
+            inserter.toXml(origXml);
+        }
+
+        LOG_DEBUG("XML representation:\n" << origXml);
+
+        maths::CTrendTests::CScanningPeriodicity restored(10, FIVE_MINS);
+        {
+            core::CRapidXmlParser parser;
+            CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origXml));
+            core::CRapidXmlStateRestoreTraverser traverser(parser);
+            CPPUNIT_ASSERT(traverser.traverseSubLevel(boost::bind(
+                    &maths::CTrendTests::CScanningPeriodicity::acceptRestoreTraverser, &restored, _1)));
         }
         CPPUNIT_ASSERT_EQUAL(orig.checksum(), restored.checksum());
 
@@ -1268,14 +1450,17 @@ CppUnit::Test *CTrendTestsTest::suite(void)
                                    "CTrendTestsTest::testTrend",
                                    &CTrendTestsTest::testTrend) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTrendTestsTest>(
-                                   "CTrendTestsTest::testPiecewiseConstant",
-                                   &CTrendTestsTest::testPiecewiseConstant) );
+                                   "CTrendTestsTest::testStepChange",
+                                   &CTrendTestsTest::testStepChange) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTrendTestsTest>(
                                    "CTrendTestsTest::testRandomizedPeriodicity",
                                    &CTrendTestsTest::testRandomizedPeriodicity) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTrendTestsTest>(
                                    "CTrendTestsTest::testPeriodicity",
                                    &CTrendTestsTest::testPeriodicity) );
+    suiteOfTests->addTest( new CppUnit::TestCaller<CTrendTestsTest>(
+                                   "CTrendTestsTest::testScanningPeriodicity",
+                                   &CTrendTestsTest::testScanningPeriodicity) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTrendTestsTest>(
                                    "CTrendTestsTest::testAutocorrelations",
                                    &CTrendTestsTest::testAutocorrelations) );

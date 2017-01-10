@@ -1278,6 +1278,10 @@ void CTimeSeriesDecompositionDetail::CDailyWeeklyTest::apply(std::size_t symbol,
             {
                 m_StartedRegularTest = time;
                 m_RegularTest.reset(CTrendTests::dailyAndWeekly(m_BucketLength, regularTestDecayRate(m_DecayRate)));
+                if (!m_RegularTest)
+                {
+                    this->apply(DW_NOT_TESTING, message);
+                }
             }
             break;
         case DW_NOT_TESTING:
