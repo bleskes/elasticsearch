@@ -936,13 +936,8 @@ public class JobProviderTests extends ESTestCase {
 
         int from = 4;
         int size = 3;
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
-
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
         QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, from, size);
@@ -965,7 +960,6 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(6, snapshots.get(1).getSnapshotDocCount());
     }
 
-    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testModelSnapshots_WithDescription()
             throws InterruptedException, ExecutionException, IOException {
         String jobId = "TestJobIdentificationForInfluencers";
@@ -993,17 +987,16 @@ public class JobProviderTests extends ESTestCase {
 
         int from = 4;
         int size = 3;
-        ArgumentCaptor<QueryBuilder> queryBuilder = ArgumentCaptor.forClass(QueryBuilder.class);
+        QueryBuilder[] qbHolder = new QueryBuilder[1];
         SearchResponse response = createSearchResponse(true, source);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME).addClusterStatusYellowResponse()
-                .prepareSearch(AnomalyDetectorsIndex.jobResultsIndexName(jobId),
-                        ModelSnapshot.TYPE.getPreferredName(), from, size, response, queryBuilder);
-
-        Client client = clientBuilder.build();
+        Client client = getMockedClient(qb -> qbHolder[0] = qb, response);
         JobProvider provider = createProvider(client);
 
-        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, from, size, null, null, "sortfield", true, "snappyId",
-                "description1");
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        QueryPage<ModelSnapshot>[] hodor = new QueryPage[1];
+        provider.modelSnapshots(jobId, from, size, null, null, "sortfield", true, "snappyId", "description1",
+                p -> hodor[0] = p, RuntimeException::new);
+        QueryPage<ModelSnapshot> page = hodor[0];
         assertEquals(2L, page.count());
         List<ModelSnapshot> snapshots = page.results();
 
@@ -1021,7 +1014,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(999L, snapshots.get(1).getRestorePriority());
         assertEquals(6, snapshots.get(1).getSnapshotDocCount());
 
-        String queryString = queryBuilder.getValue().toString();
+        String queryString = qbHolder[0].toString();
         assertTrue(queryString.matches("(?s).*snapshot_id.*value. : .snappyId.*description.*value. : .description1.*"));
     }
 
@@ -1099,7 +1092,6 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(0.0, buckets.get(3).getMaxNormalizedProbability(), 0.001);
     }
 
-    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/prelert-legacy/issues/127")
     public void testRestoreStateToStream() throws Exception {
         Map<String, Object> categorizerState = new HashMap<>();
         categorizerState.put("catName", "catVal");
