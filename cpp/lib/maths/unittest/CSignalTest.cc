@@ -301,7 +301,7 @@ void CSignalTest::testFFTRandomized(void)
     rng.generateUniformSamples(2, 100, 1000, lengths);
 
     for (std::size_t i = 0u, j = 0u;
-         i < lengths.size() && j < components.size();
+         i < lengths.size() && j + 2 * lengths[i] < components.size();
          ++i, j += 2*lengths[i])
     {
         maths::CSignal::TComplexVec expected;
@@ -321,7 +321,7 @@ void CSignalTest::testFFTRandomized(void)
             error += std::abs(actual[k] - expected[k]);
         }
 
-        if (i % 5 == 0)
+        if (i % 5 == 0 || error >= 1e-5)
         {
             LOG_DEBUG("length = " << lengths[i] << ", error  = " << error);
         }
@@ -346,7 +346,7 @@ void CSignalTest::testIFFTRandomized(void)
     rng.generateUniformSamples(2, 100, 1000, lengths);
 
     for (std::size_t i = 0u, j = 0u;
-         i < lengths.size() && j < components.size();
+         i < lengths.size() && j + 2 * lengths[i] < components.size();
          ++i, j += 2*lengths[i])
     {
         maths::CSignal::TComplexVec expected;
@@ -366,7 +366,7 @@ void CSignalTest::testIFFTRandomized(void)
             error += std::abs(actual[k] - expected[k]);
         }
 
-        if (i % 5 == 0)
+        if (i % 5 == 0 || error >= 1e-5)
         {
             LOG_DEBUG("length = " << lengths[i] << ", error  = " << error);
         }
@@ -391,7 +391,7 @@ void CSignalTest::testFFTIFFTIdempotency(void)
     rng.generateUniformSamples(2, 100, 1000, lengths);
 
     for (std::size_t i = 0u, j = 0u;
-         i < lengths.size() && j < components.size();
+         i < lengths.size() && j + 2 * lengths[i] < components.size();
          ++i, j += 2*lengths[i])
     {
         maths::CSignal::TComplexVec expected;
@@ -411,7 +411,7 @@ void CSignalTest::testFFTIFFTIdempotency(void)
             error += std::abs(actual[k] - expected[k]);
         }
 
-        if (i % 5 == 0)
+        if (i % 5 == 0 || error >= 1e-5)
         {
             LOG_DEBUG("length = " << lengths[i] << ", error  = " << error);
         }
