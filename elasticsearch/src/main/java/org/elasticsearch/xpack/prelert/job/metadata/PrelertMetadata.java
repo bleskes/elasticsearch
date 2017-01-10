@@ -30,7 +30,6 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
 import org.elasticsearch.xpack.prelert.job.messages.Messages;
@@ -271,7 +270,7 @@ public class PrelertMetadata implements MetaData.Custom {
             return this;
         }
 
-        public Builder putScheduler(SchedulerConfig schedulerConfig, SearchRequestParsers searchRequestParsers) {
+        public Builder putScheduler(SchedulerConfig schedulerConfig) {
             if (schedulers.containsKey(schedulerConfig.getId())) {
                 throw new ResourceAlreadyExistsException("A scheduler with id [" + schedulerConfig.getId() + "] already exists");
             }
@@ -286,9 +285,6 @@ public class PrelertMetadata implements MetaData.Custom {
                         + "] already exists for job [" + jobId + "]");
             }
             ScheduledJobValidator.validate(schedulerConfig, job);
-
-            // Check that aggregations can be built
-            schedulerConfig.buildAggregations(searchRequestParsers.aggParsers);
 
             return putScheduler(new Scheduler(schedulerConfig, SchedulerStatus.STOPPED));
         }

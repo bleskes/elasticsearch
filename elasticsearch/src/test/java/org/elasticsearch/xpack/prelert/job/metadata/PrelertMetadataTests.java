@@ -25,7 +25,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchRequestParsers;
+import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
 import org.elasticsearch.xpack.prelert.job.Job;
 import org.elasticsearch.xpack.prelert.job.JobStatus;
@@ -44,7 +44,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.mockito.Mockito.mock;
 
 public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMetadata> {
 
@@ -54,7 +53,23 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         int numJobs = randomIntBetween(0, 10);
         for (int i = 0; i < numJobs; i++) {
             Job job = JobTests.createRandomizedJob();
-            builder.putJob(job, false);
+            if (job.getDataDescription() != null && job.getDataDescription().getFormat() == DataDescription.DataFormat.ELASTICSEARCH) {
+                SchedulerConfig schedulerConfig = SchedulerConfigTests.createRandomizedSchedulerConfig(job.getId());
+                if (schedulerConfig.getAggregations() != null) {
+                    AnalysisConfig.Builder analysisConfig = new AnalysisConfig.Builder(job.getAnalysisConfig().getDetectors());
+                    analysisConfig.setSummaryCountFieldName("doc_count");
+                    Job.Builder jobBuilder = new Job.Builder(job);
+                    jobBuilder.setAnalysisConfig(analysisConfig);
+                    job = jobBuilder.build();
+                }
+                builder.putJob(job, false);
+                builder.putScheduler(schedulerConfig);
+                if (randomBoolean()) {
+                    builder.updateSchedulerStatus(schedulerConfig.getId(), SchedulerStatus.STARTED);
+                }
+            } else {
+                builder.putJob(job, false);
+            }
             if (randomBoolean()) {
                 builder.updateStatus(job.getId(), JobStatus.OPENING, randomBoolean() ? "first reason" : null);
                 if (randomBoolean()) {
@@ -62,13 +77,6 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
                     if (randomBoolean()) {
                         builder.updateStatus(job.getId(), JobStatus.CLOSING, randomBoolean() ? "third reason" : null);
                     }
-                }
-            }
-            if (job.getDataDescription() != null && job.getDataDescription().getFormat() == DataDescription.DataFormat.ELASTICSEARCH) {
-                SchedulerConfig schedulerConfig = SchedulerConfigTests.createRandomizedSchedulerConfig(job.getId());
-                builder.putScheduler(schedulerConfig, mock(SearchRequestParsers.class));
-                if (randomBoolean()) {
-                    builder.updateSchedulerStatus(schedulerConfig.getId(), SchedulerStatus.STARTED);
                 }
             }
         }
@@ -174,7 +182,7 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         SchedulerConfig schedulerConfig1 = createSchedulerConfig("scheduler1", job1.getId()).build();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(job1, false);
-        builder.putScheduler(schedulerConfig1, mock(SearchRequestParsers.class));
+        builder.putScheduler(schedulerConfig1);
 
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class, () -> builder.deleteJob(job1.getId()));
         assertThat(e.status(), equalTo(RestStatus.CONFLICT));
@@ -192,7 +200,7 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         SchedulerConfig schedulerConfig1 = createSchedulerConfig("scheduler1", job1.getId()).build();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(job1, false);
-        builder.putScheduler(schedulerConfig1, mock(SearchRequestParsers.class));
+        builder.putScheduler(schedulerConfig1);
 
         PrelertMetadata result = builder.build();
         assertThat(result.getJobs().get("foo"), sameInstance(job1));
@@ -212,7 +220,7 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         SchedulerConfig schedulerConfig1 = createSchedulerConfig("scheduler1", "missing-job").build();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
 
-        expectThrows(ResourceNotFoundException.class, () -> builder.putScheduler(schedulerConfig1, null));
+        expectThrows(ResourceNotFoundException.class, () -> builder.putScheduler(schedulerConfig1));
     }
 
     public void testPutScheduler_failBecauseSchedulerIdIsAlreadyTaken() {
@@ -220,9 +228,9 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         SchedulerConfig schedulerConfig1 = createSchedulerConfig("scheduler1", job1.getId()).build();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(job1, false);
-        builder.putScheduler(schedulerConfig1, mock(SearchRequestParsers.class));
+        builder.putScheduler(schedulerConfig1);
 
-        expectThrows(ResourceAlreadyExistsException.class, () -> builder.putScheduler(schedulerConfig1, null));
+        expectThrows(ResourceAlreadyExistsException.class, () -> builder.putScheduler(schedulerConfig1));
     }
 
     public void testPutScheduler_failBecauseJobAlreadyHasScheduler() {
@@ -231,10 +239,10 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         SchedulerConfig schedulerConfig2 = createSchedulerConfig("scheduler2", job1.getId()).build();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(job1, false);
-        builder.putScheduler(schedulerConfig1, mock(SearchRequestParsers.class));
+        builder.putScheduler(schedulerConfig1);
 
         ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
-                () -> builder.putScheduler(schedulerConfig2, mock(SearchRequestParsers.class)));
+                () -> builder.putScheduler(schedulerConfig2));
         assertThat(e.status(), equalTo(RestStatus.CONFLICT));
     }
 
@@ -247,7 +255,7 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(job1.build(), false);
 
-        expectThrows(IllegalArgumentException.class, () -> builder.putScheduler(schedulerConfig1, mock(SearchRequestParsers.class)));
+        expectThrows(IllegalArgumentException.class, () -> builder.putScheduler(schedulerConfig1));
     }
 
     public void testRemoveScheduler_failBecauseSchedulerStarted() {
@@ -255,7 +263,7 @@ public class PrelertMetadataTests extends AbstractSerializingTestCase<PrelertMet
         SchedulerConfig schedulerConfig1 = createSchedulerConfig("scheduler1", job1.getId()).build();
         PrelertMetadata.Builder builder = new PrelertMetadata.Builder();
         builder.putJob(job1, false);
-        builder.putScheduler(schedulerConfig1, mock(SearchRequestParsers.class));
+        builder.putScheduler(schedulerConfig1);
         builder.updateStatus("foo", JobStatus.OPENING, null);
         builder.updateStatus("foo", JobStatus.OPENED, null);
         builder.updateSchedulerStatus("scheduler1", SchedulerStatus.STARTED);

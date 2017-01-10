@@ -25,7 +25,6 @@ import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.mock.orig.Mockito;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.prelert.PrelertPlugin;
@@ -133,7 +132,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         Job job = jobBuilder.build();
         PrelertMetadata prelertMetadata = new PrelertMetadata.Builder()
                 .putJob(job, false)
-                .putScheduler(schedulerConfig, mock(SearchRequestParsers.class))
+                .putScheduler(schedulerConfig)
                 .updateStatus("foo", JobStatus.OPENED, null)
                 .build();
         when(clusterService.state()).thenReturn(ClusterState.builder(new ClusterName("_name"))
@@ -166,7 +165,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         Job job = jobBuilder.build();
         PrelertMetadata prelertMetadata = new PrelertMetadata.Builder()
                 .putJob(job, false)
-                .putScheduler(schedulerConfig, mock(SearchRequestParsers.class))
+                .putScheduler(schedulerConfig)
                 .updateStatus("foo", JobStatus.OPENED, null)
                 .build();
         when(clusterService.state()).thenReturn(ClusterState.builder(new ClusterName("_name"))
@@ -198,7 +197,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
         Job job = jobBuilder.build();
         PrelertMetadata prelertMetadata = new PrelertMetadata.Builder()
                 .putJob(job, false)
-                .putScheduler(schedulerConfig, mock(SearchRequestParsers.class))
+                .putScheduler(schedulerConfig)
                 .updateStatus("foo", JobStatus.OPENED, null)
                 .build();
         when(clusterService.state()).thenReturn(ClusterState.builder(new ClusterName("_name"))
@@ -259,7 +258,7 @@ public class ScheduledJobRunnerTests extends ESTestCase {
 
         SchedulerConfig schedulerConfig1 = createSchedulerConfig("foo-scheduler", "foo").build();
         PrelertMetadata prelertMetadata2 = new PrelertMetadata.Builder(prelertMetadata1)
-                .putScheduler(schedulerConfig1, mock(SearchRequestParsers.class))
+                .putScheduler(schedulerConfig1)
                 .build();
         e = expectThrows(ElasticsearchStatusException.class,
                 () -> ScheduledJobRunner.validate("foo-scheduler", prelertMetadata2));
