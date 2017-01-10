@@ -164,8 +164,6 @@ public class ScheduledJobRunner extends AbstractComponent {
                 holder.problemTracker.finishReport();
                 doScheduleRealtime(nextDelayInMsSinceEpoch, jobId, holder);
             });
-        } else {
-            holder.stop(null);
         }
     }
 

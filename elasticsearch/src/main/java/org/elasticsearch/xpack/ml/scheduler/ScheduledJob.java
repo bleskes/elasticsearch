@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 class ScheduledJob {
@@ -47,7 +48,6 @@ class ScheduledJob {
     private final DataExtractorFactory dataExtractorFactory;
     private final Supplier<Long> currentTimeSupplier;
 
-    private volatile DataExtractor dataExtractor;
     private volatile long lookbackStartTimeMs;
     private volatile Long lastEndTimeMs;
     private volatile boolean running = true;
@@ -113,9 +113,6 @@ class ScheduledJob {
     }
 
     public void stop() {
-        if (dataExtractor != null) {
-            dataExtractor.cancel();
-        }
         running = false;
         auditor.info(Messages.getMessage(Messages.JOB_AUDIT_SCHEDULER_STOPPED));
     }
@@ -133,8 +130,12 @@ class ScheduledJob {
 
         RuntimeException error = null;
         long recordCount = 0;
-        dataExtractor = dataExtractorFactory.newExtractor(start, end);
+        DataExtractor dataExtractor = dataExtractorFactory.newExtractor(start, end);
         while (dataExtractor.hasNext()) {
+            if (!isRunning() && !dataExtractor.isCancelled()) {
+                dataExtractor.cancel();
+            }
+
             Optional<InputStream> extractedData;
             try {
                 extractedData = dataExtractor.next();
@@ -145,12 +146,7 @@ class ScheduledJob {
             if (extractedData.isPresent()) {
                 DataCounts counts;
                 try (InputStream in = extractedData.get()) {
-                    PostDataAction.Request request = new PostDataAction.Request(jobId);
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    Streams.copy(in, outputStream);
-                    request.setContent(new BytesArray(outputStream.toByteArray()));
-                    PostDataAction.Response response = client.execute(PostDataAction.INSTANCE, request).get();
-                    counts = response.getDataCounts();
+                    counts = postData(in);
                 } catch (Exception e) {
                     if (e instanceof InterruptedException) {
                         Thread.currentThread().interrupt();
@@ -164,7 +160,6 @@ class ScheduledJob {
                 }
             }
         }
-        dataExtractor = null;
 
         lastEndTimeMs = Math.max(lastEndTimeMs == null ? 0 : lastEndTimeMs, end - 1);
 
@@ -188,6 +183,15 @@ class ScheduledJob {
         }
     }
 
+    private DataCounts postData(InputStream inputStream) throws IOException, ExecutionException, InterruptedException {
+        PostDataAction.Request request = new PostDataAction.Request(jobId);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Streams.copy(inputStream, outputStream);
+        request.setContent(new BytesArray(outputStream.toByteArray()));
+        PostDataAction.Response response = client.execute(PostDataAction.INSTANCE, request).get();
+        return response.getDataCounts();
+    }
+
     private long nextRealtimeTimestamp() {
         long epochMs = currentTimeSupplier.get() + frequencyMs;
         return toIntervalStartEpochMs(epochMs) + NEXT_TASK_DELAY_MS;
@@ -204,7 +208,6 @@ class ScheduledJob {
         AnalysisProblemException(Throwable cause) {
             super(cause);
         }
-
     }
 
     class ExtractionProblemException extends RuntimeException {
