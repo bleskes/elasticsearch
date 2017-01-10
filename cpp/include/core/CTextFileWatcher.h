@@ -121,7 +121,7 @@ class CORE_EXPORT CTextFileWatcher : private CNonCopyable
         static bool statSize(int fd, COsFileFuncs::TOffset &offset);
 
         //! Return the inode of the file (must be open)
-        static bool statInode(int fd, ino_t &inode);
+        static bool statInode(int fd, COsFileFuncs::TIno &inode);
 
         //! Update the example delimiter if it's currently unset and we have a
         //! valid example
@@ -140,7 +140,7 @@ class CORE_EXPORT CTextFileWatcher : private CNonCopyable
         CDelimiter            m_Delimiter;
         int                   m_Fd;
         COsFileFuncs::TOffset m_Offset;
-        ino_t                 m_Inode;
+        COsFileFuncs::TIno    m_Inode;
 
         //! The characters in the last read (after the last delimiter)
         std::string           m_LastRead;

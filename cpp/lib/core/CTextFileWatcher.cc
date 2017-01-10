@@ -94,7 +94,7 @@ bool CTextFileWatcher::init(const std::string &fileName,
     }
 
     // Get the inode
-    ino_t inode;
+    COsFileFuncs::TIno inode;
 
     if (CTextFileWatcher::statInode(fd, inode) == false)
     {
@@ -134,7 +134,7 @@ bool CTextFileWatcher::statSize(int fd, COsFileFuncs::TOffset &offset)
     return true;
 }
 
-bool CTextFileWatcher::statInode(int fd, ino_t &inode)
+bool CTextFileWatcher::statInode(int fd, COsFileFuncs::TIno &inode)
 {
     if (fd < 0)
     {
@@ -327,7 +327,7 @@ bool CTextFileWatcher::checkForMovedFile(void)
     }
 
     // Compare inodes
-    ino_t inode;
+    COsFileFuncs::TIno inode;
 
     if (this->statInode(fd, inode) == false)
     {

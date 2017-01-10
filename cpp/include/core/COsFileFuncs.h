@@ -20,6 +20,7 @@
 
 #ifdef Windows
 #include <io.h>
+#include <stdint.h>
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -107,9 +108,34 @@ class CORE_EXPORT COsFileFuncs : private CNonInstantiatable
         typedef mode_t          TMode;
 #endif
 
+        //! Inode type (to be used instead of ino_t)
+#ifdef Windows
+        typedef uint64_t        TIno;
+#else
+        typedef ino_t           TIno;
+#endif
+
         //! Stat buffer struct (to be used instead of struct stat)
 #ifdef Windows
-        typedef struct _stati64 TStat;
+        struct SStat
+        {
+            // Member names don't conform to the coding standards because they
+            // need to match those of struct stat
+            _dev_t         st_dev;
+            //! Replaces the _ino_t member of _stati64
+            TIno           st_ino;
+            unsigned short st_mode;
+            short          st_nlink;
+            short          st_uid;
+            short          st_gid;
+            _dev_t         st_rdev;
+            __int64        st_size;
+            __time64_t     st_atime;
+            __time64_t     st_mtime;
+            __time64_t     st_ctime;
+        };
+
+        typedef SStat           TStat;
 #else
         typedef struct stat     TStat;
 #endif

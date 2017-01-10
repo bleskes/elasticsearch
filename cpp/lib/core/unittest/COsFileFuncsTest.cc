@@ -43,7 +43,7 @@ void COsFileFuncsTest::testInode(void)
     std::string implFile("COsFileFuncsTest.cc");
 
     ::memset(&statBuf, 0, sizeof(statBuf));
-    ino_t headerDirect(0);
+    ml::core::COsFileFuncs::TIno headerDirect(0);
     CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(headerFile.c_str(),
                                                               &statBuf));
     headerDirect = statBuf.st_ino;
@@ -51,7 +51,7 @@ void COsFileFuncsTest::testInode(void)
               headerDirect);
 
     ::memset(&statBuf, 0, sizeof(statBuf));
-    ino_t headerOpen(0);
+    ml::core::COsFileFuncs::TIno headerOpen(0);
     int headerFd(ml::core::COsFileFuncs::open(headerFile.c_str(),
                                                    ml::core::COsFileFuncs::RDONLY));
     CPPUNIT_ASSERT(headerFd != -1);
@@ -63,7 +63,7 @@ void COsFileFuncsTest::testInode(void)
               headerOpen);
 
     ::memset(&statBuf, 0, sizeof(statBuf));
-    ino_t implDirect(0);
+    ml::core::COsFileFuncs::TIno implDirect(0);
     CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(implFile.c_str(),
                                                               &statBuf));
     implDirect = statBuf.st_ino;
@@ -71,7 +71,7 @@ void COsFileFuncsTest::testInode(void)
               implDirect);
 
     ::memset(&statBuf, 0, sizeof(statBuf));
-    ino_t implOpen(0);
+    ml::core::COsFileFuncs::TIno implOpen(0);
     int implFd(ml::core::COsFileFuncs::open(implFile.c_str(),
                                                  ml::core::COsFileFuncs::RDONLY));
     CPPUNIT_ASSERT(implFd != -1);

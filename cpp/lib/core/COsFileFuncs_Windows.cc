@@ -189,11 +189,26 @@ int COsFileFuncs::close(int fildes)
 
 int COsFileFuncs::fstat(int fildes, TStat *buf)
 {
-    int res(::_fstati64(fildes, buf));
+    struct _stati64 tmpBuf;
+    int res(::_fstati64(fildes, &tmpBuf));
     if (res != 0)
     {
         return res;
     }
+
+    // Copy the members from the temporary stat structure to our replacement
+    // (which has a bigger st_ino member)
+    buf->st_dev = tmpBuf.st_dev;
+    buf->st_ino = tmpBuf.st_ino;
+    buf->st_mode = tmpBuf.st_mode;
+    buf->st_nlink = tmpBuf.st_nlink;
+    buf->st_uid = tmpBuf.st_uid;
+    buf->st_gid = tmpBuf.st_gid;
+    buf->st_rdev = tmpBuf.st_rdev;
+    buf->st_size = tmpBuf.st_size;
+    buf->st_atime = tmpBuf.st_atime;
+    buf->st_mtime = tmpBuf.st_mtime;
+    buf->st_ctime = tmpBuf.st_ctime;
 
     // By default, Windows always sets the st_ino member to 0 - try to do
     // something better
@@ -210,26 +225,33 @@ int COsFileFuncs::fstat(int fildes, TStat *buf)
         return -1;
     }
 
-    // Sadly the file ID is 64 bits and ino_t is 16, so we have to shrink
-    // the 8 bytes of the file ID into just 2.  The hope is that by using
-    // XOR we won't get the same number if a file is moved and recreated,
-    // which is the use case we care about.  However, there's still a risk
-    // that 2 different 64 bit file IDs generate the same 16 bit ino_t.
-    buf->st_ino = static_cast<ino_t>(info.nFileIndexLow ^
-                                     (info.nFileIndexLow >> 16) ^
-                                     info.nFileIndexHigh ^
-                                     (info.nFileIndexHigh >> 16));
+    buf->st_ino = static_cast<TIno>(info.nFileIndexLow) | (static_cast<TIno>(info.nFileIndexHigh) << 32);
 
     return 0;
 }
 
 int COsFileFuncs::stat(const char *path, TStat *buf)
 {
-    int res(::_stati64(path, buf));
+    struct _stati64 tmpBuf;
+    int res(::_stati64(path, &tmpBuf));
     if (res != 0)
     {
         return res;
     }
+
+    // Copy the members from the temporary stat structure to our replacement
+    // (which has a bigger st_ino member)
+    buf->st_dev = tmpBuf.st_dev;
+    buf->st_ino = tmpBuf.st_ino;
+    buf->st_mode = tmpBuf.st_mode;
+    buf->st_nlink = tmpBuf.st_nlink;
+    buf->st_uid = tmpBuf.st_uid;
+    buf->st_gid = tmpBuf.st_gid;
+    buf->st_rdev = tmpBuf.st_rdev;
+    buf->st_size = tmpBuf.st_size;
+    buf->st_atime = tmpBuf.st_atime;
+    buf->st_mtime = tmpBuf.st_mtime;
+    buf->st_ctime = tmpBuf.st_ctime;
 
     // If we're dealing with something other than a normal file, we're done
     if ((buf->st_mode & _S_IFREG) == 0)
@@ -260,15 +282,7 @@ int COsFileFuncs::stat(const char *path, TStat *buf)
         return -1;
     }
 
-    // Sadly the file ID is 64 bits and ino_t is 16, so we have to shrink
-    // the 8 bytes of the file ID into just 2.  The hope is that by using
-    // XOR we won't get the same number if a file is moved and recreated,
-    // which is the use case we care about.  However, there's still a risk
-    // that 2 different 64 bit file IDs generate the same 16 bit ino_t.
-    buf->st_ino = static_cast<ino_t>(info.nFileIndexLow ^
-                                     (info.nFileIndexLow >> 16) ^
-                                     info.nFileIndexHigh ^
-                                     (info.nFileIndexHigh >> 16));
+    buf->st_ino = static_cast<TIno>(info.nFileIndexLow) | (static_cast<TIno>(info.nFileIndexHigh) << 32);
 
     CloseHandle(handle);
 
