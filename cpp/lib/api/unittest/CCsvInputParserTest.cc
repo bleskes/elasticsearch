@@ -480,8 +480,8 @@ void CCsvInputParserTest::testDateParse(void)
     CTimeCheckingVisitor::TTimeVec expectedTimes(boost::begin(EXPECTED_TIMES),
                                                  boost::end(EXPECTED_TIMES));
 
-    // These tests assume they're being run in the UK - they won't work in other
-    // timezones!
+    // Ensure we are in UK timewise
+    CPPUNIT_ASSERT(prelert::core::CTimezone::setTimezone("Europe/London"));
 
     {
         std::ifstream csvStrm("testfiles/s.csv");
