@@ -35,7 +35,6 @@ import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptSettings;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.common.http.HttpClient;
 import org.elasticsearch.xpack.common.http.HttpMethod;
@@ -304,9 +303,7 @@ public class WatchTests extends ESTestCase {
         Watch.Parser watchParser = new Watch.Parser(settings, triggerService, actionRegistry, inputRegistry, xContentRegistry(), null,
                 SystemClock.INSTANCE);
 
-        SearchRequestParsers searchParsers = new SearchRequestParsers();
-        WatcherSearchTemplateService searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, searchParsers,
-                xContentRegistry());
+        WatcherSearchTemplateService searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, xContentRegistry());
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject();
@@ -432,8 +429,7 @@ public class WatchTests extends ESTestCase {
         Map<String, InputFactory> parsers = new HashMap<>();
         switch (inputType) {
             case SearchInput.TYPE:
-                SearchRequestParsers searchParsers = new SearchRequestParsers();
-                parsers.put(SearchInput.TYPE, new SearchInputFactory(settings, client, searchParsers, xContentRegistry(), scriptService));
+                parsers.put(SearchInput.TYPE, new SearchInputFactory(settings, client, xContentRegistry(), scriptService));
                 return new InputRegistry(Settings.EMPTY, parsers);
             default:
                 parsers.put(SimpleInput.TYPE, new SimpleInputFactory(settings));
@@ -482,10 +478,9 @@ public class WatchTests extends ESTestCase {
     }
 
     private TransformRegistry transformRegistry() {
-        SearchRequestParsers searchParsers = new SearchRequestParsers();
         Map<String, TransformFactory> factories = new HashMap<>();
         factories.put(ScriptTransform.TYPE, new ScriptTransformFactory(settings, scriptService));
-        factories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, client, searchParsers, xContentRegistry(), scriptService));
+        factories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, client, xContentRegistry(), scriptService));
         return new TransformRegistry(Settings.EMPTY, unmodifiableMap(factories));
     }
 

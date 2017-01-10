@@ -33,7 +33,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
@@ -180,8 +179,7 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
                                                             SearchType searchType,
                                                             boolean upgradeSearchSource,
                                                             String defaultLegacyScriptLanguage,
-                                                            ParseFieldMatcher parseFieldMatcher,
-                                                            SearchRequestParsers searchRequestParsers) throws IOException {
+                                                            ParseFieldMatcher parseFieldMatcher) throws IOException {
         List<String> indices = new ArrayList<>();
         List<String> types = new ArrayList<>();
         IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;

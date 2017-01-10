@@ -52,7 +52,6 @@ import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptService;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.threadpool.ExecutorBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Transport;
@@ -109,7 +108,6 @@ import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -234,7 +232,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
     @Override
     public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
                                                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
-                                               SearchRequestParsers searchRequestParsers, NamedXContentRegistry xContentRegistry) {
+                                               NamedXContentRegistry xContentRegistry) {
         List<Object> components = new ArrayList<>();
         components.add(sslService);
 
@@ -269,8 +267,8 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
                 httpTemplateParser, scriptService, httpAuthRegistry);
         components.addAll(notificationComponents);
 
-        components.addAll(watcher.createComponents(getClock(), scriptService, internalClient, searchRequestParsers, licenseState,
-                httpClient, xContentRegistry, components));
+        components.addAll(watcher.createComponents(getClock(), scriptService, internalClient, licenseState, httpClient, xContentRegistry,
+                components));
 
         // just create the reloader as it will pull all of the loaded ssl configurations and start watching them
         new SSLConfigurationReloader(settings, env, sslService, resourceWatcherService);

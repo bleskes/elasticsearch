@@ -43,7 +43,6 @@ import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptSettings;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.threadpool.ExecutorBuilder;
 import org.elasticsearch.threadpool.FixedExecutorBuilder;
 import org.elasticsearch.xpack.XPackPlugin;
@@ -187,7 +186,7 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
     }
 
     public Collection<Object> createComponents(Clock clock, ScriptService scriptService, InternalClient internalClient,
-                                               SearchRequestParsers searchRequestParsers, XPackLicenseState licenseState,
+                                               XPackLicenseState licenseState,
                                                HttpClient httpClient, NamedXContentRegistry xContentRegistry,
                                                Collection<Object> components) {
         final Map<String, ConditionFactory> parsers = new HashMap<>();
@@ -202,8 +201,7 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
         final ConditionRegistry conditionRegistry = new ConditionRegistry(Collections.unmodifiableMap(parsers), clock);
         final Map<String, TransformFactory> transformFactories = new HashMap<>();
         transformFactories.put(ScriptTransform.TYPE, new ScriptTransformFactory(settings, scriptService));
-        transformFactories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, internalClient, searchRequestParsers,
-                xContentRegistry, scriptService));
+        transformFactories.put(SearchTransform.TYPE, new SearchTransformFactory(settings, internalClient, xContentRegistry, scriptService));
         final TransformRegistry transformRegistry = new TransformRegistry(settings, Collections.unmodifiableMap(transformFactories));
 
         final Map<String, ActionFactory> actionFactoryMap = new HashMap<>();

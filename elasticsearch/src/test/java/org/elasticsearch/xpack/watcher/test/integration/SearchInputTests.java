@@ -29,7 +29,6 @@ import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.script.MockMustacheScriptEngine;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptService;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
@@ -156,9 +155,8 @@ public class SearchInputTests extends ESIntegTestCase {
         XContentParser parser = createParser(builder);
         parser.nextToken();
 
-        SearchRequestParsers searchParsers = new SearchRequestParsers();
         SearchInputFactory factory = new SearchInputFactory(Settings.EMPTY, WatcherClientProxy.of(client()),
-                                                            searchParsers, xContentRegistry(), scriptService());
+                                                            xContentRegistry(), scriptService());
 
         SearchInput searchInput = factory.parseInput("_id", parser, false);
         assertEquals(SearchInput.TYPE, searchInput.type());
@@ -169,7 +167,6 @@ public class SearchInputTests extends ESIntegTestCase {
         String master = internalCluster().getMasterName();
         return new WatcherSearchTemplateService(internalCluster().clusterService(master).getSettings(),
                 internalCluster().getInstance(ScriptService.class, master),
-                internalCluster().getInstance(SearchRequestParsers.class, master),
                 internalCluster().getInstance(NamedXContentRegistry.class, master)
         );
     }

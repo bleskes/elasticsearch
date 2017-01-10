@@ -30,7 +30,6 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.xpack.watcher.Watcher;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
@@ -48,15 +47,12 @@ public class WatcherSearchTemplateService extends AbstractComponent {
 
     private final ScriptService scriptService;
     private final ParseFieldMatcher parseFieldMatcher;
-    private final SearchRequestParsers searchRequestParsers;
     private final NamedXContentRegistry xContentRegistry;
 
     @Inject
-    public WatcherSearchTemplateService(Settings settings, ScriptService scriptService, SearchRequestParsers searchRequestParsers,
-            NamedXContentRegistry xContentRegistry) {
+    public WatcherSearchTemplateService(Settings settings, ScriptService scriptService, NamedXContentRegistry xContentRegistry) {
         super(settings);
         this.scriptService = scriptService;
-        this.searchRequestParsers = searchRequestParsers;
         this.parseFieldMatcher = new ParseFieldMatcher(settings);
         this.xContentRegistry = xContentRegistry;
     }

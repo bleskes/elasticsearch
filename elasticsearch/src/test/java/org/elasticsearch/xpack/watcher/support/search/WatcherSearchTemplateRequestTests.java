@@ -27,7 +27,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.search.SearchModule;
-import org.elasticsearch.search.SearchRequestParsers;
 import org.elasticsearch.test.ESTestCase;
 
 import java.io.IOException;
@@ -54,7 +53,7 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
             parser.nextToken();
 
             WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(
-                    logger, parser, randomFrom(SearchType.values()), false, null, null, null);
+                    logger, parser, randomFrom(SearchType.values()), false, null, null);
             assertNotNull(result.getTemplate());
             assertThat(result.getTemplate().getIdOrCode(), equalTo(expectedScript));
             assertThat(result.getTemplate().getLang(), equalTo(expectedLang));
@@ -100,10 +99,8 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
         XContentParser parser = createParser(contentBuilder);
         parser.nextToken();
 
-        SearchRequestParsers searchRequestParsers = new SearchModule(Settings.EMPTY, false, Collections.emptyList())
-                .getSearchRequestParsers();
         WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(
-                logger, parser, SearchType.DEFAULT, true, "your_legacy_lang", ParseFieldMatcher.STRICT, searchRequestParsers);
+                logger, parser, SearchType.DEFAULT, true, "your_legacy_lang", ParseFieldMatcher.STRICT);
         Map<String, Object> parsedResult = XContentHelper.convertToMap(result.getSearchSource(), true).v2();
         // after upgrading the language must be equal to legacy language, because no language was defined explicitly in these scripts:
         assertThat(XContentMapValues.extractValue("query.script.script.lang", parsedResult), equalTo("your_legacy_lang"));
