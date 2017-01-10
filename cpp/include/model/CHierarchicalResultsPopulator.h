@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CHierarchicalResultsPopulator_h
-#define INCLUDED_prelert_model_CHierarchicalResultsPopulator_h
+#ifndef INCLUDED_ml_model_CHierarchicalResultsPopulator_h
+#define INCLUDED_ml_model_CHierarchicalResultsPopulator_h
 
 #include <model/CHierarchicalResults.h>
 #include <model/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -46,4 +46,4 @@ class MODEL_EXPORT CHierarchicalResultsPopulator : public CHierarchicalResultsVi
 }
 }
 
-#endif // INCLUDED_prelert_model_CHierarchicalResultsPopulator_h
+#endif // INCLUDED_ml_model_CHierarchicalResultsPopulator_h

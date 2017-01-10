@@ -24,7 +24,7 @@
 #include <model/CFeatureData.h>
 #include <model/ModelTypes.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

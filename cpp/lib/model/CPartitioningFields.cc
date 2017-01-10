@@ -15,7 +15,7 @@
 
 #include <model/CPartitioningFields.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

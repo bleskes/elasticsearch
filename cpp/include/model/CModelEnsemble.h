@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CModelEnsemble_h
-#define INCLUDED_prelert_model_CModelEnsemble_h
+#ifndef INCLUDED_ml_model_CModelEnsemble_h
+#define INCLUDED_ml_model_CModelEnsemble_h
 
 #include <core/CNonCopyable.h>
 #include <core/CoreTypes.h>
@@ -38,7 +38,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -490,4 +490,4 @@ class MODEL_EXPORT CModelEnsemble : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_model_CModelEnsemble_h
+#endif // INCLUDED_ml_model_CModelEnsemble_h

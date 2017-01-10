@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_ConfigTypes_h
-#define INCLUDED_prelert_config_ConfigTypes_h
+#ifndef INCLUDED_ml_config_ConfigTypes_h
+#define INCLUDED_ml_config_ConfigTypes_h
 
 #include <config/ImportExport.h>
 
 #include <iosfwd>
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace config_t
 {
@@ -153,4 +153,4 @@ std::ostream &operator<<(std::ostream &o, ESide side);
 }
 }
 
-#endif // INCLUDED_prelert_config_ConfigTypes_h
+#endif // INCLUDED_ml_config_ConfigTypes_h

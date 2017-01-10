@@ -71,7 +71,7 @@ void CStringSimilarityTesterTest::testStringSimilarity(void)
     std::string str7;
     std::string str8;
 
-    prelert::core::CStringSimilarityTester sst;
+    ml::core::CStringSimilarityTester sst;
 
     double similarity1(0.0);
     CPPUNIT_ASSERT(sst.similarity(str1, str2, similarity1));
@@ -146,7 +146,7 @@ void CStringSimilarityTesterTest::testStringSimilarity(void)
 
 void CStringSimilarityTesterTest::testLevensteinDistance(void)
 {
-    prelert::core::CStringSimilarityTester sst;
+    ml::core::CStringSimilarityTester sst;
 
     std::string cat("cat");
     std::string dog("dog");
@@ -191,7 +191,7 @@ void CStringSimilarityTesterTest::testLevensteinDistance(void)
 
 void CStringSimilarityTesterTest::testLevensteinDistance2(void)
 {
-    prelert::core::CStringSimilarityTester sst;
+    ml::core::CStringSimilarityTester sst;
 
     typedef std::vector<std::string> TStrVec;
 
@@ -268,7 +268,7 @@ void CStringSimilarityTesterTest::testLevensteinDistance2(void)
 
 void CStringSimilarityTesterTest::testLevensteinDistanceThroughputDifferent(void)
 {
-    prelert::core::CStringSimilarityTester sst;
+    ml::core::CStringSimilarityTester sst;
 
     typedef std::vector<std::string> TStrVec;
 
@@ -287,9 +287,9 @@ void CStringSimilarityTesterTest::testLevensteinDistanceThroughputDifferent(void
         }
     }
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting Levenstein distance throughput test for low commonality strings at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     for (size_t i = 0; i < TEST_SIZE; ++i)
     {
@@ -303,9 +303,9 @@ void CStringSimilarityTesterTest::testLevensteinDistanceThroughputDifferent(void
         }
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished Levenstein distance throughput test for low commonality strings at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Levenstein distance throughput test for low commonality strings with size " <<
              TEST_SIZE << " and maximum string length " << MAX_LEN <<
@@ -314,7 +314,7 @@ void CStringSimilarityTesterTest::testLevensteinDistanceThroughputDifferent(void
 
 void CStringSimilarityTesterTest::testLevensteinDistanceThroughputSimilar(void)
 {
-    prelert::core::CStringSimilarityTester sst;
+    ml::core::CStringSimilarityTester sst;
 
     typedef std::vector<std::string> TStrVec;
 
@@ -340,9 +340,9 @@ void CStringSimilarityTesterTest::testLevensteinDistanceThroughputSimilar(void)
         }
     }
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting Levenstein distance throughput test for similar strings at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     for (size_t i = 0; i < TEST_SIZE; ++i)
     {
@@ -356,9 +356,9 @@ void CStringSimilarityTesterTest::testLevensteinDistanceThroughputSimilar(void)
         }
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished Levenstein distance throughput test for similar strings at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Levenstein distance throughput test for similar strings with size " <<
              TEST_SIZE << " and " << EXTRA_CHARS << " extra characters took " <<
@@ -371,7 +371,7 @@ void CStringSimilarityTesterTest::testLevensteinDistanceAlgorithmEquivalence(voi
     // the same results as the simple algorithm.  We take advantage of
     // friendship to call the private implementation methods directly.
 
-    prelert::core::CStringSimilarityTester sst;
+    ml::core::CStringSimilarityTester sst;
 
     std::string cat("cat");
     std::string dog("dog");
@@ -395,7 +395,7 @@ void CStringSimilarityTesterTest::testLevensteinDistanceAlgorithmEquivalence(voi
 
 void CStringSimilarityTesterTest::testWeightedEditDistance(void)
 {
-    prelert::core::CStringSimilarityTester sst;
+    ml::core::CStringSimilarityTester sst;
 
     typedef std::pair<std::string, size_t> TStrSizePr;
     typedef std::vector<TStrSizePr>        TStrSizePrVec;

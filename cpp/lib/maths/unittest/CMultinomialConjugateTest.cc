@@ -39,7 +39,7 @@
 #include <utility>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 using namespace handy_typedefs;
 
 typedef std::vector<double> TDoubleVec;

@@ -19,7 +19,7 @@
 #include <core/CLogger.h>
 #include <core/CSmallVector.h>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {

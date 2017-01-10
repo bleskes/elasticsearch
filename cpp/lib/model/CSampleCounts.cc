@@ -29,7 +29,7 @@
 
 #include <boost/ref.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -336,4 +336,4 @@ CSampleCounts::name(const CDataGatherer &gatherer,
 }
 
 } // model
-} // prelert
+} // ml

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CFeatureData_h
-#define INCLUDED_prelert_model_CFeatureData_h
+#ifndef INCLUDED_ml_model_CFeatureData_h
+#define INCLUDED_ml_model_CFeatureData_h
 
 #include <core/CMemoryUsage.h>
 #include <core/CoreTypes.h>
@@ -31,7 +31,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -122,4 +122,4 @@ struct MODEL_EXPORT SMetricFeatureData
 }
 }
 
-#endif // INCLUDED_prelert_model_CFeatureData_h
+#endif // INCLUDED_ml_model_CFeatureData_h

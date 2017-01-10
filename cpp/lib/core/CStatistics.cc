@@ -27,7 +27,7 @@
 #include <ostream>
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -246,5 +246,5 @@ std::ostream &operator<<(std::ostream &o, const CStatistics &/*stats*/)
 }
 
 } // core
-} // prelert
+} // ml
 

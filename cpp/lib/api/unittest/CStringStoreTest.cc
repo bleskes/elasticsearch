@@ -31,7 +31,7 @@
 
 #include <sstream>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {
@@ -44,10 +44,10 @@ namespace
 //! IMPLEMENTATION DECISIONS:\n
 //! Only the minimal set of required functions are implemented.
 //!
-class CMockOutputWriter : public prelert::api::CJsonOutputWriter
+class CMockOutputWriter : public ml::api::CJsonOutputWriter
 {
     public:
-        typedef boost::tuple<prelert::core_t::TTime, double /* probability */,
+        typedef boost::tuple<ml::core_t::TTime, double /* probability */,
             std::string /* byFieldName*/, std::string /* overFieldName */,
             std::string /* partitionFieldName */> TResultsTp;
         typedef std::vector<TResultsTp> TResultsVec;
@@ -56,7 +56,7 @@ class CMockOutputWriter : public prelert::api::CJsonOutputWriter
     public:
         //! Constructor
         CMockOutputWriter(void) :
-            prelert::api::CJsonOutputWriter("job", m_Writer)
+            ml::api::CJsonOutputWriter("job", m_Writer)
         { }
 
         //! Destructor
@@ -64,11 +64,11 @@ class CMockOutputWriter : public prelert::api::CJsonOutputWriter
         {
             // Finalise the Json writer so it doesn't try and write to
             // m_Writer which will have been destroyed first
-            prelert::api::CJsonOutputWriter::finalise();
+            ml::api::CJsonOutputWriter::finalise();
         }
 
         //! Override for handling the anomaly results
-        virtual bool acceptResult(const prelert::api::CHierarchicalResultsWriter::SResults &results)
+        virtual bool acceptResult(const ml::api::CHierarchicalResultsWriter::SResults &results)
         {
             if (results.s_ByFieldName != "count")
             {

@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CTokenListDataTyper_h
-#define INCLUDED_prelert_api_CTokenListDataTyper_h
+#ifndef INCLUDED_ml_api_CTokenListDataTyper_h
+#define INCLUDED_ml_api_CTokenListDataTyper_h
 
 #include <core/CLogger.h>
 #include <core/CStringSimilarityTester.h>
@@ -28,7 +28,7 @@
 #include <ctype.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -290,5 +290,5 @@ class CTokenListDataTyper : public CBaseTokenListDataTyper
 }
 }
 
-#endif // INCLUDED_prelert_api_CTokenListDataTyper_h
+#endif // INCLUDED_ml_api_CTokenListDataTyper_h
 

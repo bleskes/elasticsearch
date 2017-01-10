@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultimodalPriorUtils_h
-#define INCLUDED_prelert_maths_CMultimodalPriorUtils_h
+#ifndef INCLUDED_ml_maths_CMultimodalPriorUtils_h
+#define INCLUDED_ml_maths_CMultimodalPriorUtils_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/CSmallVector.h>
@@ -41,7 +41,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1105,4 +1105,4 @@ class MATHS_EXPORT CMultimodalPriorUtils : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultimodalPriorUtils_h
+#endif // INCLUDED_ml_maths_CMultimodalPriorUtils_h

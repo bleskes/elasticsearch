@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CModelParams_h
-#define INCLUDED_prelert_model_CModelParams_h
+#ifndef INCLUDED_ml_model_CModelParams_h
+#define INCLUDED_ml_model_CModelParams_h
 
 #include <core/CLogger.h>
 #include <core/CMemoryUsage.h>
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -177,4 +177,4 @@ struct MODEL_EXPORT SModelParams
 }
 }
 
-#endif // INCLUDED_prelert_model_CModelParams_h
+#endif // INCLUDED_ml_model_CModelParams_h

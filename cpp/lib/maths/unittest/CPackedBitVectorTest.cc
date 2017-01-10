@@ -28,7 +28,7 @@
 #include <bitset>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 typedef std::vector<bool> TBoolVec;
 typedef std::vector<std::size_t> TSizeVec;

@@ -12,13 +12,13 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_vfprog_CIncrementer_h
-#define INCLUDED_prelert_vfprog_CIncrementer_h
+#ifndef INCLUDED_ml_vfprog_CIncrementer_h
+#define INCLUDED_ml_vfprog_CIncrementer_h
 
 #include <stddef.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace vfprog
 {
@@ -59,5 +59,5 @@ class CIncrementer
 }
 }
 
-#endif // INCLUDED_prelert_vfprog_CIncrementer_h
+#endif // INCLUDED_ml_vfprog_CIncrementer_h
 

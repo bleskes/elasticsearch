@@ -41,7 +41,7 @@ const std::string LEVEL_NAME("level");
 const std::string PID_NAME("pid");
 // Cast this to int64_t as the type varies between int32_t and uint32_t on
 // different platforms and int64_t covers both
-const int64_t     PID(static_cast<int64_t>(prelert::core::CProcess::instance().id()));
+const int64_t     PID(static_cast<int64_t>(ml::core::CProcess::instance().id()));
 const std::string THREAD_NAME("thread");
 const std::string MESSAGE_NAME("message");
 const std::string NDC_NAME("ndc");
@@ -53,7 +53,7 @@ const std::string PROPERTIES_NAME("properties");
 }
 
 // NB: log4cxx extensions have to go in the log4cxx namespace, hence cannot
-// stick to the convention of our code being in the prelert namespace.  Worse,
+// stick to the convention of our code being in the ml namespace.  Worse,
 // certain log4cxx macros require using directives rather than nesting the
 // method definitions in the namespaces!
 using namespace log4cxx;

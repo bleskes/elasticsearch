@@ -49,7 +49,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/unordered_map.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

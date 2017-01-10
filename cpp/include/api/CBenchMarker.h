@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CBenchMarker_h
-#define INCLUDED_prelert_api_CBenchMarker_h
+#ifndef INCLUDED_ml_api_CBenchMarker_h
+#define INCLUDED_ml_api_CBenchMarker_h
 
 #include <core/CRegex.h>
 
@@ -25,20 +25,20 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
 
 
 //! \brief
-//! Benchmark Prelert categorisation using regexes.
+//! Benchmark Ml categorisation using regexes.
 //!
 //! DESCRIPTION:\n
-//! Benchmark the performance of Prelert categorisation by
+//! Benchmark the performance of Ml categorisation by
 //! using mutually exclusive regexes created manually.  The
 //! idea is that all messages that match a given regex should
-//! be categorised the same way by Prelert.
+//! be categorised the same way by Ml.
 //!
 //! IMPLEMENTATION DECISIONS:\n
 //! Messages that don't match any of the regexes are considered
@@ -51,7 +51,7 @@ class API_EXPORT CBenchMarker
         //! A count and and example string
         typedef std::pair<size_t, std::string>             TSizeStrPr;
 
-        //! Used for mapping Prelert type to count and example
+        //! Used for mapping Ml type to count and example
         typedef std::map<int, TSizeStrPr>                  TIntSizeStrPrMap;
         typedef TIntSizeStrPrMap::iterator                 TIntSizeStrPrMapItr;
         typedef TIntSizeStrPrMap::const_iterator           TIntSizeStrPrMapCItr;
@@ -70,7 +70,7 @@ class API_EXPORT CBenchMarker
         //! Initialise from a file
         bool init(const std::string &regexFilename);
 
-        //! Add a message together with the type Prelert assigned to it
+        //! Add a message together with the type Ml assigned to it
         void addResult(const std::string &message,
                        int type);
 
@@ -92,5 +92,5 @@ class API_EXPORT CBenchMarker
 }
 }
 
-#endif // INCLUDED_prelert_api_CBenchMarker_h
+#endif // INCLUDED_ml_api_CBenchMarker_h
 

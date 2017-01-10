@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CCooccurrences_h
-#define INCLUDED_prelert_maths_CCooccurrences_h
+#ifndef INCLUDED_ml_maths_CCooccurrences_h
+#define INCLUDED_ml_maths_CCooccurrences_h
 
 #include <core/CMemoryUsage.h>
 
@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -121,4 +121,4 @@ class MATHS_EXPORT CCooccurrences
 }
 }
 
-#endif // INCLUDED_prelert_maths_CCooccurrences_h
+#endif // INCLUDED_ml_maths_CCooccurrences_h

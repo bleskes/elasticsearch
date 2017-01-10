@@ -86,49 +86,49 @@ CppUnit::Test *CFieldConfigTest::suite()
 
 void CFieldConfigTest::testTrivial(void)
 {
-    prelert::api::CFieldConfig config("count", "prelertcategory");
+    ml::api::CFieldConfig config("count", "mlcategory");
 
-    const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+    const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
     CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-    prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+    ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
     CPPUNIT_ASSERT(iter != fields.end());
     CPPUNIT_ASSERT(iter->fieldName().empty());
-    CPPUNIT_ASSERT_EQUAL(std::string("prelertcategory"), iter->byFieldName());
+    CPPUNIT_ASSERT_EQUAL(std::string("mlcategory"), iter->byFieldName());
     CPPUNIT_ASSERT(iter->overFieldName().empty());
     CPPUNIT_ASSERT(iter->partitionFieldName().empty());
     CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-    CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-    CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+    CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+    CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
 
-    const prelert::api::CFieldConfig::TStrSet &superset = config.fieldNameSuperset();
+    const ml::api::CFieldConfig::TStrSet &superset = config.fieldNameSuperset();
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.size());
-    CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("prelertcategory"));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("mlcategory"));
 }
 
 void CFieldConfigTest::testValid(void)
 {
-    this->testValidFile(boost::bind(&prelert::api::CFieldConfig::initFromFile, _1, _2),
-                        "testfiles/new_prelertfields.conf");
+    this->testValidFile(boost::bind(&ml::api::CFieldConfig::initFromFile, _1, _2),
+                        "testfiles/new_mlfields.conf");
 }
 
 void CFieldConfigTest::testInvalid(void)
 {
-    this->testInvalidFile(boost::bind(&prelert::api::CFieldConfig::initFromFile, _1, _2),
-                          "testfiles/new_invalidprelertfields.conf");
+    this->testInvalidFile(boost::bind(&ml::api::CFieldConfig::initFromFile, _1, _2),
+                          "testfiles/new_invalidmlfields.conf");
 }
 
 void CFieldConfigTest::testValidSummaryCountFieldName(void)
 {
-    this->testValidSummaryCountFieldNameFile(boost::bind(&prelert::api::CFieldConfig::initFromFile, _1, _2),
-                                             "testfiles/new_prelertfields_summarycount.conf");
+    this->testValidSummaryCountFieldNameFile(boost::bind(&ml::api::CFieldConfig::initFromFile, _1, _2),
+                                             "testfiles/new_mlfields_summarycount.conf");
 }
 
 void CFieldConfigTest::testValidClauses(void)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime");
 
         CPPUNIT_ASSERT(config.initFromClause(clause));
@@ -137,21 +137,21 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("ResponseTime"), iter->fieldName());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("metric(ResponseTime)");
 
         CPPUNIT_ASSERT(config.initFromClause(clause));
@@ -160,21 +160,21 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("ResponseTime"), iter->fieldName());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime");
         clause.push_back("BY");
         clause.push_back("Airline");
@@ -185,22 +185,22 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("ResponseTime"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime");
         clause.push_back("BY");
         clause.push_back("Airline");
@@ -214,22 +214,22 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("ResponseTime"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("influencerfield=nationality");
         clause.push_back("ResponseTime");
         clause.push_back("BY");
@@ -245,22 +245,22 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("ResponseTime"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("min(ResponseTime),");
         clause.push_back("count");
         clause.push_back("By");
@@ -273,17 +273,17 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("ResponseTime"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("min"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("min"), iter->verboseFunctionName());
         ++iter;
@@ -293,13 +293,13 @@ void CFieldConfigTest::testValidClauses(void)
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("count,sum(ResponseTime)");
         clause.push_back("By");
         clause.push_back("Airline");
@@ -310,17 +310,17 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), iter->verboseFunctionName());
         ++iter;
@@ -330,13 +330,13 @@ void CFieldConfigTest::testValidClauses(void)
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("count");
         clause.push_back(",max(ResponseTime)");
         clause.push_back("by");
@@ -349,17 +349,17 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), iter->verboseFunctionName());
         ++iter;
@@ -369,13 +369,13 @@ void CFieldConfigTest::testValidClauses(void)
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("count");
         clause.push_back("ResponseTime");
         clause.push_back("bY");
@@ -387,17 +387,17 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), iter->verboseFunctionName());
         ++iter;
@@ -407,13 +407,13 @@ void CFieldConfigTest::testValidClauses(void)
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("low_count");
         clause.push_back("high_count");
         clause.push_back("bY");
@@ -425,17 +425,17 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("low_c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("low_count"), iter->verboseFunctionName());
         ++iter;
@@ -445,13 +445,13 @@ void CFieldConfigTest::testValidClauses(void)
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("high_c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("high_count"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("avg(avg_responsetime)");
         clause.push_back("max(max_responsetime)");
         clause.push_back("median(median_responsetime)");
@@ -465,17 +465,17 @@ void CFieldConfigTest::testValidClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(3), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("avg_responsetime"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("avg"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("avg"), iter->verboseFunctionName());
         ++iter;
@@ -485,8 +485,8 @@ void CFieldConfigTest::testValidClauses(void)
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
         ++iter;
@@ -496,9 +496,9 @@ void CFieldConfigTest::testValidClauses(void)
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_IndividualMetricMedian, iter->function());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_IndividualMetricMedian, iter->function());
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("median"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("median"), iter->verboseFunctionName());
     }
@@ -506,16 +506,16 @@ void CFieldConfigTest::testValidClauses(void)
 
 void CFieldConfigTest::testInvalidClauses(void)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("by");
 
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime()");
         clause.push_back("BY");
         clause.push_back("Airline");
@@ -523,7 +523,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime");
         clause.push_back("Over");
         clause.push_back("By");
@@ -531,7 +531,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("BY");
         clause.push_back("ResponseTime");
         clause.push_back("over");
@@ -539,7 +539,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("OVER");
         clause.push_back("ResponseTime");
         clause.push_back("by");
@@ -547,7 +547,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime");
         clause.push_back("BY");
         clause.push_back("over");
@@ -555,7 +555,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime");
         clause.push_back("BY");
         clause.push_back("by");
@@ -563,7 +563,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("ResponseTime,");
         clause.push_back("By");
         clause.push_back("count");
@@ -571,14 +571,14 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("count,ResponseTime");
         clause.push_back("By");
 
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("count");
         clause.push_back(",ResponseTime");
         clause.push_back("count");
@@ -588,14 +588,14 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("bY");
         clause.push_back("Airline");
 
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("metrc(ResponseTime)");
         clause.push_back("BY");
         clause.push_back("Airline");
@@ -603,7 +603,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("count");
         clause.push_back("by");
         clause.push_back("Airline");
@@ -613,7 +613,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("low_count(wrong)");
         clause.push_back("by");
         clause.push_back("Airline");
@@ -621,7 +621,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("metric(responsetime)");
         clause.push_back("by");
         clause.push_back("Airline");
@@ -630,7 +630,7 @@ void CFieldConfigTest::testInvalidClauses(void)
         CPPUNIT_ASSERT(!config.initFromClause(clause));
     }
     {
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("responsetime");
         clause.push_back("by");
         clause.push_back("Airline");
@@ -643,29 +643,29 @@ void CFieldConfigTest::testInvalidClauses(void)
 void CFieldConfigTest::testFieldOptions(void)
 {
     {
-        prelert::api::CFieldConfig::CFieldOptions opt("count", 42);
+        ml::api::CFieldConfig::CFieldOptions opt("count", 42);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_IndividualRareCount, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_IndividualRareCount, opt.function());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), opt.fieldName());
         CPPUNIT_ASSERT_EQUAL(42, opt.configKey());
         CPPUNIT_ASSERT(opt.byFieldName().empty());
         CPPUNIT_ASSERT(opt.overFieldName().empty());
         CPPUNIT_ASSERT(opt.partitionFieldName().empty());
         CPPUNIT_ASSERT(opt.useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(opt.function()));
     }
     {
-        prelert::model::function_t::EFunction function;
+        ml::model::function_t::EFunction function;
         std::string fieldName;
-        CPPUNIT_ASSERT(prelert::api::CFieldConfig::parseFieldString(false,
+        CPPUNIT_ASSERT(ml::api::CFieldConfig::parseFieldString(false,
                                                                     true,
                                                                     true,
                                                                     "c",
                                                                     function,
                                                                     fieldName));
 
-        prelert::api::CFieldConfig::CFieldOptions opt(function,
+        ml::api::CFieldConfig::CFieldOptions opt(function,
                                                       fieldName,
                                                       1,
                                                       "byField",
@@ -675,66 +675,66 @@ void CFieldConfigTest::testFieldOptions(void)
                                                       false,
                                                       true);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_PopulationCount, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_PopulationCount, opt.function());
         CPPUNIT_ASSERT(opt.fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(1, opt.configKey());
         CPPUNIT_ASSERT_EQUAL(std::string("byField"), opt.byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("overField"), opt.overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("partitionField"), opt.partitionFieldName());
         CPPUNIT_ASSERT(opt.useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), opt.verboseFunctionName());
     }
     {
-        prelert::model::function_t::EFunction function;
+        ml::model::function_t::EFunction function;
         std::string fieldName;
-        CPPUNIT_ASSERT(prelert::api::CFieldConfig::parseFieldString(false,
+        CPPUNIT_ASSERT(ml::api::CFieldConfig::parseFieldString(false,
                                                                     false,
                                                                     false,
                                                                     "count()",
                                                                     function,
                                                                     fieldName));
 
-        prelert::api::CFieldConfig::CFieldOptions opt(function, fieldName, 3, "", "", "", false, false, false);
+        ml::api::CFieldConfig::CFieldOptions opt(function, fieldName, 3, "", "", "", false, false, false);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_IndividualRareCount, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_IndividualRareCount, opt.function());
         CPPUNIT_ASSERT(opt.fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(3, opt.configKey());
         CPPUNIT_ASSERT(opt.byFieldName().empty());
         CPPUNIT_ASSERT(opt.overFieldName().empty());
         CPPUNIT_ASSERT(opt.partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), opt.verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig::CFieldOptions opt("bytes", 4);
+        ml::api::CFieldConfig::CFieldOptions opt("bytes", 4);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_IndividualMetric, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_IndividualMetric, opt.function());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), opt.fieldName());
         CPPUNIT_ASSERT_EQUAL(4, opt.configKey());
         CPPUNIT_ASSERT(opt.byFieldName().empty());
         CPPUNIT_ASSERT(opt.overFieldName().empty());
         CPPUNIT_ASSERT(opt.partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), opt.verboseFunctionName());
     }
     {
-        prelert::model::function_t::EFunction function;
+        ml::model::function_t::EFunction function;
         std::string fieldName;
-        CPPUNIT_ASSERT(prelert::api::CFieldConfig::parseFieldString(false,
+        CPPUNIT_ASSERT(ml::api::CFieldConfig::parseFieldString(false,
                                                                     true,
                                                                     false,
                                                                     "dc(category)",
                                                                     function,
                                                                     fieldName));
 
-        prelert::api::CFieldConfig::CFieldOptions opt(function,
+        ml::api::CFieldConfig::CFieldOptions opt(function,
                                                       fieldName,
                                                       5,
                                                       "",
@@ -744,93 +744,93 @@ void CFieldConfigTest::testFieldOptions(void)
                                                       false,
                                                       false);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_PopulationDistinctCount, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_PopulationDistinctCount, opt.function());
         CPPUNIT_ASSERT(opt.byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(5, opt.configKey());
         CPPUNIT_ASSERT_EQUAL(std::string("category"), opt.fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("overField"), opt.overFieldName());
         CPPUNIT_ASSERT(opt.partitionFieldName().empty());
         CPPUNIT_ASSERT(!opt.useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("dc"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("distinct_count"), opt.verboseFunctionName());
     }
     {
-        prelert::model::function_t::EFunction function;
+        ml::model::function_t::EFunction function;
         std::string fieldName;
-        CPPUNIT_ASSERT(prelert::api::CFieldConfig::parseFieldString(false,
+        CPPUNIT_ASSERT(ml::api::CFieldConfig::parseFieldString(false,
                                                                     true,
                                                                     false,
-                                                                    "info_content(prelertsub)",
+                                                                    "info_content(mlsub)",
                                                                     function,
                                                                     fieldName));
 
-        prelert::api::CFieldConfig::CFieldOptions opt(function,
+        ml::api::CFieldConfig::CFieldOptions opt(function,
                                                       fieldName,
                                                       6,
                                                       "",
-                                                      "prelerthrd",
+                                                      "mlhrd",
                                                       "",
                                                       false,
                                                       false,
                                                       false);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_PopulationInfoContent, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_PopulationInfoContent, opt.function());
         CPPUNIT_ASSERT(opt.byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(6, opt.configKey());
-        CPPUNIT_ASSERT_EQUAL(std::string("prelertsub"), opt.fieldName());
-        CPPUNIT_ASSERT_EQUAL(std::string("prelerthrd"), opt.overFieldName());
+        CPPUNIT_ASSERT_EQUAL(std::string("mlsub"), opt.fieldName());
+        CPPUNIT_ASSERT_EQUAL(std::string("mlhrd"), opt.overFieldName());
         CPPUNIT_ASSERT(opt.partitionFieldName().empty());
         CPPUNIT_ASSERT(!opt.useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("info_content"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("info_content"), opt.verboseFunctionName());
     }
     {
-        prelert::model::function_t::EFunction function;
+        ml::model::function_t::EFunction function;
         std::string fieldName;
-        CPPUNIT_ASSERT(prelert::api::CFieldConfig::parseFieldString(false,
+        CPPUNIT_ASSERT(ml::api::CFieldConfig::parseFieldString(false,
                                                                     true,
                                                                     false,
-                                                                    "high_info_content(prelertsub)",
+                                                                    "high_info_content(mlsub)",
                                                                     function,
                                                                     fieldName));
 
-        prelert::api::CFieldConfig::CFieldOptions opt(function,
+        ml::api::CFieldConfig::CFieldOptions opt(function,
                                                       fieldName,
                                                       1,
                                                       "",
-                                                      "prelerthrd",
+                                                      "mlhrd",
                                                       "datacenter",
                                                       false,
                                                       false,
                                                       false);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_PopulationHighInfoContent, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_PopulationHighInfoContent, opt.function());
         CPPUNIT_ASSERT(opt.byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(1, opt.configKey());
-        CPPUNIT_ASSERT_EQUAL(std::string("prelertsub"), opt.fieldName());
-        CPPUNIT_ASSERT_EQUAL(std::string("prelerthrd"), opt.overFieldName());
+        CPPUNIT_ASSERT_EQUAL(std::string("mlsub"), opt.fieldName());
+        CPPUNIT_ASSERT_EQUAL(std::string("mlhrd"), opt.overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("datacenter"), opt.partitionFieldName());
         CPPUNIT_ASSERT(!opt.useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("high_info_content"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("high_info_content"), opt.verboseFunctionName());
     }
     {
-        prelert::model::function_t::EFunction function;
+        ml::model::function_t::EFunction function;
         std::string fieldName;
-        CPPUNIT_ASSERT(prelert::api::CFieldConfig::parseFieldString(false,
+        CPPUNIT_ASSERT(ml::api::CFieldConfig::parseFieldString(false,
                                                                     true,
                                                                     true,
                                                                     "rare()",
                                                                     function,
                                                                     fieldName));
 
-        prelert::api::CFieldConfig::CFieldOptions opt(function,
+        ml::api::CFieldConfig::CFieldOptions opt(function,
                                                       fieldName,
                                                       1,
                                                       "byField",
@@ -840,29 +840,29 @@ void CFieldConfigTest::testFieldOptions(void)
                                                       false,
                                                       false);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_PopulationRare, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_PopulationRare, opt.function());
         CPPUNIT_ASSERT(opt.fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(1, opt.configKey());
         CPPUNIT_ASSERT_EQUAL(std::string("byField"), opt.byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("overField"), opt.overFieldName());
         CPPUNIT_ASSERT(opt.partitionFieldName().empty());
         CPPUNIT_ASSERT(!opt.useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("rare"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("rare"), opt.verboseFunctionName());
     }
     {
-        prelert::model::function_t::EFunction function;
+        ml::model::function_t::EFunction function;
         std::string fieldName;
-        CPPUNIT_ASSERT(prelert::api::CFieldConfig::parseFieldString(false,
+        CPPUNIT_ASSERT(ml::api::CFieldConfig::parseFieldString(false,
                                                                     true,
                                                                     true,
                                                                     "rare_count",
                                                                     function,
                                                                     fieldName));
 
-        prelert::api::CFieldConfig::CFieldOptions opt(function,
+        ml::api::CFieldConfig::CFieldOptions opt(function,
                                                       fieldName,
                                                       1,
                                                       "byField",
@@ -872,15 +872,15 @@ void CFieldConfigTest::testFieldOptions(void)
                                                       false,
                                                       true);
 
-        CPPUNIT_ASSERT_EQUAL(prelert::model::function_t::E_PopulationRareCount, opt.function());
+        CPPUNIT_ASSERT_EQUAL(ml::model::function_t::E_PopulationRareCount, opt.function());
         CPPUNIT_ASSERT(opt.fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(1, opt.configKey());
         CPPUNIT_ASSERT_EQUAL(std::string("byField"), opt.byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("overField"), opt.overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("partitionField"), opt.partitionFieldName());
         CPPUNIT_ASSERT(opt.useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(opt.function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(opt.function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(opt.function()));
         CPPUNIT_ASSERT_EQUAL(std::string("rare_count"), opt.terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("rare_count"), opt.verboseFunctionName());
     }
@@ -889,9 +889,9 @@ void CFieldConfigTest::testFieldOptions(void)
 void CFieldConfigTest::testValidPopulationClauses(void)
 {
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("count");
         clause.push_back("OVER");
         clause.push_back("Airline");
@@ -902,23 +902,23 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("Airline"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("c");
         clause.push_back("over");
         clause.push_back("SRC");
@@ -929,23 +929,23 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("SRC"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("c"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("count"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("high_dc(DPT)");
         clause.push_back("over");
         clause.push_back("SRC");
@@ -956,26 +956,26 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("DPT"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("SRC"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("high_dc"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("high_distinct_count"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
-        clause.push_back("info_content(prelertsub)");
+        ml::api::CFieldConfig::TStrVec clause;
+        clause.push_back("info_content(mlsub)");
         clause.push_back("over");
-        clause.push_back("prelerthrd");
+        clause.push_back("mlhrd");
 
         CPPUNIT_ASSERT(config.initFromClause(clause));
         CPPUNIT_ASSERT(!config.havePartitionFields());
@@ -983,23 +983,23 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(std::string("prelertsub"), iter->fieldName());
-        CPPUNIT_ASSERT_EQUAL(std::string("prelerthrd"), iter->overFieldName());
+        CPPUNIT_ASSERT_EQUAL(std::string("mlsub"), iter->fieldName());
+        CPPUNIT_ASSERT_EQUAL(std::string("mlhrd"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("info_content"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("info_content"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("rare");
         clause.push_back("fr");
         clause.push_back("By");
@@ -1013,16 +1013,16 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("rare"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("rare"), iter->verboseFunctionName());
         ++iter;
@@ -1031,15 +1031,15 @@ void CFieldConfigTest::testValidPopulationClauses(void)
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("fr"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("freq_rare"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("bytes");
         clause.push_back("Over");
         clause.push_back("pid");
@@ -1050,23 +1050,23 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("pid"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("sum(bytes)");
         clause.push_back("Over");
         clause.push_back("pid");
@@ -1077,23 +1077,23 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("pid"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("max(bytes)");
         clause.push_back("BY");
         clause.push_back("uri_path");
@@ -1106,23 +1106,23 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
     }
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("fr");
         clause.push_back("min(bytes)");
         clause.push_back("by");
@@ -1136,16 +1136,16 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("fr"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("freq_rare"), iter->verboseFunctionName());
         ++iter;
@@ -1154,8 +1154,8 @@ void CFieldConfigTest::testValidPopulationClauses(void)
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("min"), iter->terseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("min"), iter->verboseFunctionName());
     }
@@ -1163,9 +1163,9 @@ void CFieldConfigTest::testValidPopulationClauses(void)
     // Test exactly the same clause as above but after telling the config that
     // it can't accept population configurations
     {
-        prelert::api::CFieldConfig config(false);
+        ml::api::CFieldConfig config(false);
 
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("fr");
         clause.push_back("min(bytes)");
         clause.push_back("by");
@@ -1179,21 +1179,21 @@ void CFieldConfigTest::testValidPopulationClauses(void)
 
 void CFieldConfigTest::testValidPopulation(void)
 {
-    this->testValidPopulationFile(boost::bind(&prelert::api::CFieldConfig::initFromFile, _1, _2),
-                                  "testfiles/new_populationprelertfields.conf");
+    this->testValidPopulationFile(boost::bind(&ml::api::CFieldConfig::initFromFile, _1, _2),
+                                  "testfiles/new_populationmlfields.conf");
 }
 
 void CFieldConfigTest::testDefaultCategorizationField(void)
 {
-    this->testDefaultCategorizationFieldFile(boost::bind(&prelert::api::CFieldConfig::initFromFile, _1, _2),
-                                             "testfiles/new_prelertfields_sos_message_cat.conf");
+    this->testDefaultCategorizationFieldFile(boost::bind(&ml::api::CFieldConfig::initFromFile, _1, _2),
+                                             "testfiles/new_mlfields_sos_message_cat.conf");
 }
 
 void CFieldConfigTest::testCategorizationFieldWithFilters(void)
 {
-    std::string fileName("testfiles/new_prelertfields_categorization_filters.conf");
+    std::string fileName("testfiles/new_mlfields_categorization_filters.conf");
 
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     CPPUNIT_ASSERT(config.initFromFile(fileName));
     CPPUNIT_ASSERT(!config.havePartitionFields());
@@ -1203,7 +1203,7 @@ void CFieldConfigTest::testCategorizationFieldWithFilters(void)
 
     const std::string &categorizationFieldName = config.categorizationFieldName();
     CPPUNIT_ASSERT_EQUAL(std::string("message"), categorizationFieldName);
-    const prelert::api::CFieldConfig::TStrVec &filters = config.categorizationFilters();
+    const ml::api::CFieldConfig::TStrVec &filters = config.categorizationFilters();
     CPPUNIT_ASSERT(filters.empty() == false);
     CPPUNIT_ASSERT_EQUAL(std::size_t(2), filters.size());
     CPPUNIT_ASSERT_EQUAL(std::string("foo"), config.categorizationFilters()[0]);
@@ -1214,8 +1214,8 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
 {
     {
         // Basic case with no excludefrequent
-        prelert::api::CFieldConfig config;
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig config;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("partitionfield=host");
         clause.push_back("max(bytes)");
         clause.push_back("BY");
@@ -1230,24 +1230,24 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
 
         LOG_TRACE(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(true, iter->useNull());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_None, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_None, iter->excludeFrequent());
     }
     {
         // "by" excludefrequent
-        prelert::api::CFieldConfig config;
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig config;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("PartitionField=host");
         clause.push_back("excludeFrequent=by");
         clause.push_back("max(bytes)");
@@ -1263,24 +1263,24 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
 
         LOG_TRACE(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(true, iter->useNull());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_By, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_By, iter->excludeFrequent());
     }
     {
         // "over" excludefrequent
-        prelert::api::CFieldConfig config;
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig config;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("partitionfield=host");
         clause.push_back("excludefrequent=OVER");
         clause.push_back("max(bytes)");
@@ -1296,24 +1296,24 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
 
         LOG_TRACE(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(true, iter->useNull());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_Over, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_Over, iter->excludeFrequent());
     }
     {
         // "by" and "over" excludefrequent
-        prelert::api::CFieldConfig config;
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig config;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("partitionfield=host");
         clause.push_back("excludefrequent=All");
         clause.push_back("max(bytes)");
@@ -1329,24 +1329,24 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
 
         LOG_TRACE(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(true, iter->useNull());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("uri_path"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_Both, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_Both, iter->excludeFrequent());
     }
     {
         // Invalid partition excludefrequent
-        prelert::api::CFieldConfig config;
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig config;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("partitionfield=host");
         clause.push_back("excludefrequent=partition");
         clause.push_back("max(bytes)");
@@ -1360,8 +1360,8 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
     }
     {
         // "by" excludefrequent with no "by" field
-        prelert::api::CFieldConfig config;
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig config;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("partitionfield=host");
         clause.push_back("excludefrequent=By");
         clause.push_back("max(bytes)");
@@ -1375,23 +1375,23 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
 
         LOG_TRACE(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(true, iter->useNull());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->overFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_None, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_None, iter->excludeFrequent());
     }
     {
         // "over" excludefrequent with no "over" field
-        prelert::api::CFieldConfig config;
-        prelert::api::CFieldConfig::TStrVec clause;
+        ml::api::CFieldConfig config;
+        ml::api::CFieldConfig::TStrVec clause;
         clause.push_back("partitionfield=host");
         clause.push_back("excludefrequent=over");
         clause.push_back("max(bytes)");
@@ -1405,40 +1405,40 @@ void CFieldConfigTest::testExcludeFrequentClauses(void)
 
         LOG_TRACE(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT_EQUAL(true, iter->useNull());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("clientip"), iter->byFieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("host"), iter->partitionFieldName());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         CPPUNIT_ASSERT_EQUAL(std::string("max"), iter->verboseFunctionName());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_None, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_None, iter->excludeFrequent());
     }
 }
 
 void CFieldConfigTest::testExcludeFrequent(void)
 {
-    this->testExcludeFrequentFile(boost::bind(&prelert::api::CFieldConfig::initFromFile, _1, _2),
-                                  "testfiles/new_prelertfields_excludefrequent.conf");
+    this->testExcludeFrequentFile(boost::bind(&ml::api::CFieldConfig::initFromFile, _1, _2),
+                                  "testfiles/new_mlfields_excludefrequent.conf");
 }
 
 void CFieldConfigTest::testSlashes(void)
 {
-    this->testSlashesFile(boost::bind(&prelert::api::CFieldConfig::initFromFile, _1, _2),
-                          "testfiles/new_prelertfields_slashes.conf");
+    this->testSlashesFile(boost::bind(&ml::api::CFieldConfig::initFromFile, _1, _2),
+                          "testfiles/new_mlfields_slashes.conf");
 }
 
 void CFieldConfigTest::testClauseTokenise(void)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     {
         std::string clause;
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1446,7 +1446,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("responsetime by airline");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1457,7 +1457,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("\"responsetime\" by \"airline\"");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1468,7 +1468,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("\"funny field\" by \"airline\"");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1479,7 +1479,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("\"field with escaped \\\" quotes\" by \"airline\"");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1490,7 +1490,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("\"field with nested , comma\" by \"airline\"");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1501,7 +1501,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("\"field with escaped escape\\\\\" by \"airline\"");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1512,7 +1512,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("one,two,three  by  airline");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1525,7 +1525,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("one, two ,three by airline");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1538,7 +1538,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("one\t two ,\tthree by airline");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1551,7 +1551,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("\"one,\",\",two \"\t\" three,\" by airline");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1564,7 +1564,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("responsetime by airline partitionfield=host");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1576,7 +1576,7 @@ void CFieldConfigTest::testClauseTokenise(void)
     }
     {
         std::string clause("responsetime by airline partitionfield=\"funny field\"");
-        prelert::api::CFieldConfig::TStrVec tokens;
+        ml::api::CFieldConfig::TStrVec tokens;
 
         CPPUNIT_ASSERT(config.tokenise(clause, tokens));
 
@@ -1590,22 +1590,22 @@ void CFieldConfigTest::testClauseTokenise(void)
 
 void CFieldConfigTest::testUtf8Bom(void)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
-    CPPUNIT_ASSERT(config.initFromFile("testfiles/new_prelertfields_with_utf8_bom.conf"));
+    CPPUNIT_ASSERT(config.initFromFile("testfiles/new_mlfields_with_utf8_bom.conf"));
 }
 
 void CFieldConfigTest::testAddByOverPartitionInfluencers(void)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
-    CPPUNIT_ASSERT(config.initFromFile("testfiles/new_prelertfields_excludefrequent.conf"));
+    CPPUNIT_ASSERT(config.initFromFile("testfiles/new_mlfields_excludefrequent.conf"));
 
     CPPUNIT_ASSERT(config.influencerFieldNames().empty());
 
     config.addInfluencerFieldsFromByOverPartitionFields();
 
-    prelert::api::CFieldConfig::TStrVec copyInfluencers(config.influencerFieldNames());
+    ml::api::CFieldConfig::TStrVec copyInfluencers(config.influencerFieldNames());
     std::sort(copyInfluencers.begin(), copyInfluencers.end());
 
     CPPUNIT_ASSERT_EQUAL(size_t(6), copyInfluencers.size());
@@ -1619,19 +1619,19 @@ void CFieldConfigTest::testAddByOverPartitionInfluencers(void)
 
 void CFieldConfigTest::testAddOptions(void)
 {
-    prelert::api::CFieldConfig configFromFile;
-    prelert::api::CFieldConfig configFromScratch;
+    ml::api::CFieldConfig configFromFile;
+    ml::api::CFieldConfig configFromScratch;
 
-    CPPUNIT_ASSERT(configFromFile.initFromFile("testfiles/new_populationprelertfields.conf"));
+    CPPUNIT_ASSERT(configFromFile.initFromFile("testfiles/new_populationmlfields.conf"));
 
-    prelert::api::CFieldConfig::CFieldOptions options1("count",
+    ml::api::CFieldConfig::CFieldOptions options1("count",
                                                        1,
                                                        "SRC",
                                                        false,
                                                        false);
     CPPUNIT_ASSERT(configFromScratch.addOptions(options1));
 
-    prelert::api::CFieldConfig::CFieldOptions options2(prelert::model::function_t::E_PopulationCount,
+    ml::api::CFieldConfig::CFieldOptions options2(ml::model::function_t::E_PopulationCount,
                                                        "",
                                                        2,
                                                        "DPT",
@@ -1648,7 +1648,7 @@ void CFieldConfigTest::testAddOptions(void)
 void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
                                      const std::string &fileName)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     CPPUNIT_ASSERT(initFunc(&config, fileName));
     CPPUNIT_ASSERT(!config.havePartitionFields());
@@ -1657,18 +1657,18 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
 
     LOG_DEBUG(config.debug());
 
-    const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+    const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
     CPPUNIT_ASSERT_EQUAL(size_t(48), fields.size());
 
-    prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+    ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
     {
         CPPUNIT_ASSERT(iter->fieldName().empty());
-        CPPUNIT_ASSERT_EQUAL(std::string("prelertcategory"), iter->byFieldName());
+        CPPUNIT_ASSERT_EQUAL(std::string("mlcategory"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         iter++;
     }
     {
@@ -1677,8 +1677,8 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         iter++;
     }
     {
@@ -1687,8 +1687,8 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         iter++;
     }
     {
@@ -1697,8 +1697,8 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         iter++;
     }
     {
@@ -1707,8 +1707,8 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         iter++;
     }
     {
@@ -1717,12 +1717,12 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         iter++;
     }
 
-    const prelert::api::CFieldConfig::TStrSet &superset = config.fieldNameSuperset();
+    const ml::api::CFieldConfig::TStrSet &superset = config.fieldNameSuperset();
     CPPUNIT_ASSERT_EQUAL(size_t(47), superset.size());
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("alert"));
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("bytes"));
@@ -1756,7 +1756,7 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("originpostoffice"));
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("originuserid"));
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("peername"));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("prelertcategory"));
+    CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("mlcategory"));
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("previoushop"));
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("process"));
     CPPUNIT_ASSERT_EQUAL(size_t(1), superset.count("reportdestination"));
@@ -1778,7 +1778,7 @@ void CFieldConfigTest::testValidFile(TInitFromFileFunc initFunc,
 void CFieldConfigTest::testInvalidFile(TInitFromFileFunc initFunc,
                                        const std::string &fileName)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     CPPUNIT_ASSERT(!initFunc(&config, fileName));
 }
@@ -1786,7 +1786,7 @@ void CFieldConfigTest::testInvalidFile(TInitFromFileFunc initFunc,
 void CFieldConfigTest::testValidSummaryCountFieldNameFile(TInitFromFileFunc initFunc,
                                                           const std::string &fileName)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     CPPUNIT_ASSERT(initFunc(&config, fileName));
     CPPUNIT_ASSERT(!config.havePartitionFields());
@@ -1797,24 +1797,24 @@ void CFieldConfigTest::testValidPopulationFile(TInitFromFileFunc initFunc,
                                                const std::string &fileName)
 {
     {
-        prelert::api::CFieldConfig config;
+        ml::api::CFieldConfig config;
         CPPUNIT_ASSERT(initFunc(&config, fileName));
         CPPUNIT_ASSERT(!config.havePartitionFields());
         CPPUNIT_ASSERT(config.summaryCountFieldName().empty());
 
         LOG_DEBUG(config.debug());
 
-        const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+        const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
         CPPUNIT_ASSERT_EQUAL(size_t(2), fields.size());
-        prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+        ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("SRC"), iter->byFieldName());
         CPPUNIT_ASSERT(iter->overFieldName().empty());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
         ++iter;
         CPPUNIT_ASSERT(iter != fields.end());
         CPPUNIT_ASSERT(iter->fieldName().empty());
@@ -1822,14 +1822,14 @@ void CFieldConfigTest::testValidPopulationFile(TInitFromFileFunc initFunc,
         CPPUNIT_ASSERT_EQUAL(std::string("SRC"), iter->overFieldName());
         CPPUNIT_ASSERT(iter->partitionFieldName().empty());
         CPPUNIT_ASSERT_EQUAL(true, iter->useNull());
-        CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-        CPPUNIT_ASSERT_EQUAL(true, prelert::model::function_t::isPopulation(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+        CPPUNIT_ASSERT_EQUAL(true, ml::model::function_t::isPopulation(iter->function()));
     }
 
     // Test exactly the same file again but after telling the config that it
     // can't accept population configurations
     {
-        prelert::api::CFieldConfig config(false);
+        ml::api::CFieldConfig config(false);
         CPPUNIT_ASSERT(!initFunc(&config, fileName));
     }
 }
@@ -1837,7 +1837,7 @@ void CFieldConfigTest::testValidPopulationFile(TInitFromFileFunc initFunc,
 void CFieldConfigTest::testDefaultCategorizationFieldFile(TInitFromFileFunc initFunc,
                                                           const std::string &fileName)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     CPPUNIT_ASSERT(initFunc(&config, fileName));
     CPPUNIT_ASSERT(!config.havePartitionFields());
@@ -1849,35 +1849,35 @@ void CFieldConfigTest::testDefaultCategorizationFieldFile(TInitFromFileFunc init
     CPPUNIT_ASSERT_EQUAL(std::string("message"), categorizationFieldName);
     CPPUNIT_ASSERT(config.categorizationFilters().empty());
 
-    const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+    const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
     CPPUNIT_ASSERT_EQUAL(size_t(1), fields.size());
-    prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+    ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
     CPPUNIT_ASSERT(iter != fields.end());
     CPPUNIT_ASSERT(iter->fieldName().empty());
-    CPPUNIT_ASSERT_EQUAL(std::string("prelertcategory"), iter->byFieldName());
+    CPPUNIT_ASSERT_EQUAL(std::string("mlcategory"), iter->byFieldName());
     CPPUNIT_ASSERT(iter->overFieldName().empty());
     CPPUNIT_ASSERT(iter->partitionFieldName().empty());
     CPPUNIT_ASSERT_EQUAL(false, iter->useNull());
-    CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isMetric(iter->function()));
-    CPPUNIT_ASSERT_EQUAL(false, prelert::model::function_t::isPopulation(iter->function()));
+    CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isMetric(iter->function()));
+    CPPUNIT_ASSERT_EQUAL(false, ml::model::function_t::isPopulation(iter->function()));
 }
 
 void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
                                                const std::string &fileName)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     CPPUNIT_ASSERT(initFunc(&config, fileName));
     CPPUNIT_ASSERT(config.havePartitionFields());
     CPPUNIT_ASSERT(config.summaryCountFieldName().empty());
 
-    const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+    const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
     CPPUNIT_ASSERT_EQUAL(size_t(8), fields.size());
-    prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+    ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
 
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_Both, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_Both, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->verboseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("dest_ip"), iter->byFieldName());
@@ -1887,7 +1887,7 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
     }
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_None, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_None, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("metric"), iter->verboseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("responsetime"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("airline"), iter->byFieldName());
@@ -1897,7 +1897,7 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
     }
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_By, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_By, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->verboseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("dest_ip"), iter->byFieldName());
@@ -1907,7 +1907,7 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
     }
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_By, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_By, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->verboseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("src_ip"), iter->byFieldName());
@@ -1917,7 +1917,7 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
     }
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_By, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_By, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->verboseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT_EQUAL(std::string("src_ip"),  iter->byFieldName());
@@ -1927,7 +1927,7 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
     }
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_Over, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_Over, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("sum"), iter->verboseFunctionName());
         CPPUNIT_ASSERT_EQUAL(std::string("bytes"), iter->fieldName());
         CPPUNIT_ASSERT(iter->byFieldName().empty());
@@ -1937,7 +1937,7 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
     }
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_By, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_By, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("rare"), iter->verboseFunctionName());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("process"), iter->byFieldName());
@@ -1947,7 +1947,7 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
     }
     {
         CPPUNIT_ASSERT(iter != fields.end());
-        CPPUNIT_ASSERT_EQUAL(prelert::model_t::E_XF_None, iter->excludeFrequent());
+        CPPUNIT_ASSERT_EQUAL(ml::model_t::E_XF_None, iter->excludeFrequent());
         CPPUNIT_ASSERT_EQUAL(std::string("rare"), iter->verboseFunctionName());
         CPPUNIT_ASSERT(iter->fieldName().empty());
         CPPUNIT_ASSERT_EQUAL(std::string("client"), iter->byFieldName());
@@ -1960,15 +1960,15 @@ void CFieldConfigTest::testExcludeFrequentFile(TInitFromFileFunc initFunc,
 void CFieldConfigTest::testSlashesFile(TInitFromFileFunc initFunc,
                                        const std::string &fileName)
 {
-    prelert::api::CFieldConfig config;
+    ml::api::CFieldConfig config;
 
     CPPUNIT_ASSERT(initFunc(&config, fileName));
 
     LOG_DEBUG(config.debug());
 
-    const prelert::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
+    const ml::api::CFieldConfig::TFieldOptionsMIndex &fields = config.fieldOptions();
 
-    for (prelert::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
+    for (ml::api::CFieldConfig::TFieldOptionsMIndexCItr iter = fields.begin();
          iter != fields.end();
          ++iter)
     {

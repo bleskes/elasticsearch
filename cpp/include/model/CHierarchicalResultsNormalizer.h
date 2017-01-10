@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CHierarchicalResultsNormalizer_h
-#define INCLUDED_prelert_model_CHierarchicalResultsNormalizer_h
+#ifndef INCLUDED_ml_model_CHierarchicalResultsNormalizer_h
+#define INCLUDED_ml_model_CHierarchicalResultsNormalizer_h
 
 #include <core/CNonCopyable.h>
 
@@ -27,7 +27,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -229,4 +229,4 @@ class MODEL_EXPORT CHierarchicalResultsNormalizer :
 }
 }
 
-#endif // INCLUDED_prelert_model_CHierarchicalResultsNormalizer_h
+#endif // INCLUDED_ml_model_CHierarchicalResultsNormalizer_h

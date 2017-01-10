@@ -25,7 +25,7 @@ namespace
 const char *CPP_SRC_HOME("CPP_SRC_HOME");
 }
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

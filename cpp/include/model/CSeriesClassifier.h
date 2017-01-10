@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CSeriesClassifier_h
-#define INCLUDED_prelert_model_CSeriesClassifier_h
+#ifndef INCLUDED_ml_model_CSeriesClassifier_h
+#define INCLUDED_ml_model_CSeriesClassifier_h
 
 #include <core/CSmallVector.h>
 
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -90,4 +90,4 @@ class MODEL_EXPORT CSeriesClassifier
 }
 }
 
-#endif // INCLUDED_prelert_model_CSeriesClassifier_h
+#endif // INCLUDED_ml_model_CSeriesClassifier_h

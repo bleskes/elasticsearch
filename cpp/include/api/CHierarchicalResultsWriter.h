@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_api_CHierarchicalResultsWriter_h
-#define INCLUDED_prelert_api_CHierarchicalResultsWriter_h
+#ifndef INCLUDED_ml_api_CHierarchicalResultsWriter_h
+#define INCLUDED_ml_api_CHierarchicalResultsWriter_h
 
 #include <api/ImportExport.h>
 
@@ -24,7 +24,7 @@
 #include <model/CHierarchicalResults.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -201,4 +201,4 @@ class API_EXPORT CHierarchicalResultsWriter : public model::CHierarchicalResults
 }
 }
 
-#endif // INCLUDED_prelert_api_CHierarchicalResultsWriter_h
+#endif // INCLUDED_ml_api_CHierarchicalResultsWriter_h

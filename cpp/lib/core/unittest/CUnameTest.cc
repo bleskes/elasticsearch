@@ -31,13 +31,13 @@ CppUnit::Test *CUnameTest::suite()
 
 void CUnameTest::testUname(void)
 {
-    LOG_DEBUG(prelert::core::CUname::sysName());
-    LOG_DEBUG(prelert::core::CUname::nodeName());
-    LOG_DEBUG(prelert::core::CUname::release());
-    LOG_DEBUG(prelert::core::CUname::version());
-    LOG_DEBUG(prelert::core::CUname::machine());
-    LOG_DEBUG(prelert::core::CUname::all());
-    LOG_DEBUG(prelert::core::CUname::prelertPlatform());
-    LOG_DEBUG(prelert::core::CUname::prelertOsVer());
+    LOG_DEBUG(ml::core::CUname::sysName());
+    LOG_DEBUG(ml::core::CUname::nodeName());
+    LOG_DEBUG(ml::core::CUname::release());
+    LOG_DEBUG(ml::core::CUname::version());
+    LOG_DEBUG(ml::core::CUname::machine());
+    LOG_DEBUG(ml::core::CUname::all());
+    LOG_DEBUG(ml::core::CUname::mlPlatform());
+    LOG_DEBUG(ml::core::CUname::mlOsVer());
 }
 

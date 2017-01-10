@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CJsonOutputWriter_h
-#define INCLUDED_prelert_api_CJsonOutputWriter_h
+#ifndef INCLUDED_ml_api_CJsonOutputWriter_h
+#define INCLUDED_ml_api_CJsonOutputWriter_h
 
 #include <core/CMutex.h>
 #include <core/CoreTypes.h>
@@ -41,7 +41,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -495,5 +495,5 @@ class API_EXPORT CJsonOutputWriter : public COutputHandler
 }
 }
 
-#endif // INCLUDED_prelert_api_CJsonOutputWriter_h
+#endif // INCLUDED_ml_api_CJsonOutputWriter_h
 

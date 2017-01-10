@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CPRNG_h
-#define INCLUDED_prelert_maths_CPRNG_h
+#ifndef INCLUDED_ml_maths_CPRNG_h
+#define INCLUDED_ml_maths_CPRNG_h
 
 #include <core/CNonInstantiatable.h>
 
@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -311,4 +311,4 @@ class MATHS_EXPORT CPRNG : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CPRNG_h
+#endif // INCLUDED_ml_maths_CPRNG_h

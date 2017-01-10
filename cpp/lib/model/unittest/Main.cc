@@ -51,7 +51,7 @@
 
 int main(int argc, const char **argv)
 {
-    prelert::test::CTestRunner runner(argc, argv);
+    ml::test::CTestRunner runner(argc, argv);
     runner.addTest( CAnnotatedProbabilityBuilderTest::suite() );
     runner.addTest( CAnomalyChainTest::suite() );
     runner.addTest( CAnomalyScoreTest::suite() );

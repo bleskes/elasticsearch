@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_COneOfNPrior_h
-#define INCLUDED_prelert_maths_COneOfNPrior_h
+#ifndef INCLUDED_ml_maths_COneOfNPrior_h
+#define INCLUDED_ml_maths_COneOfNPrior_h
 
 #include <core/CMemory.h>
 #include <core/CNonCopyable.h>
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -376,4 +376,4 @@ class MATHS_EXPORT COneOfNPrior : public CPrior
 }
 }
 
-#endif // INCLUDED_prelert_maths_COneOfNPrior_h
+#endif // INCLUDED_ml_maths_COneOfNPrior_h

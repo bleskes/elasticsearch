@@ -15,7 +15,7 @@
 #include <core/CDataSearcher.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

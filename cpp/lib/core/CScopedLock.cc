@@ -17,7 +17,7 @@
 #include <core/CMutex.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

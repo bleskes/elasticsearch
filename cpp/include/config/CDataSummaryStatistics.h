@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CDataSummaryStatistics_h
-#define INCLUDED_prelert_config_CDataSummaryStatistics_h
+#ifndef INCLUDED_ml_config_CDataSummaryStatistics_h
+#define INCLUDED_ml_config_CDataSummaryStatistics_h
 
 #include <core/CoreTypes.h>
 
@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -259,4 +259,4 @@ class CONFIG_EXPORT CNumericDataSummaryStatistics : public CDataSummaryStatistic
 }
 }
 
-#endif // INCLUDED_prelert_config_CDataSummaryStatistics_h
+#endif // INCLUDED_ml_config_CDataSummaryStatistics_h

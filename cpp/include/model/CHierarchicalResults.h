@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CHierarchicalResults_h
-#define INCLUDED_prelert_model_CHierarchicalResults_h
+#ifndef INCLUDED_ml_model_CHierarchicalResults_h
+#define INCLUDED_ml_model_CHierarchicalResults_h
 
 #include <maths/COrderings.h>
 
@@ -35,7 +35,7 @@
 
 class CHierarchicalResultsTest;
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -68,14 +68,14 @@ typedef std::vector<TStrPtrStrPtrPrDoublePr> TStrPtrStrPtrPrDoublePrVec;
 //! config file. It corresponds to the following command line
 //! syntax:
 //! <pre>
-//!   prelertautodetect <function>[(X)] [by Y] [over Z]
+//!   mlautodetect <function>[(X)] [by Y] [over Z]
 //! </pre>
 //!
 //! So, examples include
-//!   -# prelertautodetect count
-//!   -# prelertautodetect count by status
-//!   -# prelertautodetect sum(bytes) over host
-//!   -# prelertautodetect rare by uri_path over clientip
+//!   -# mlautodetect count
+//!   -# mlautodetect count by status
+//!   -# mlautodetect sum(bytes) over host
+//!   -# mlautodetect rare by uri_path over clientip
 //!   -# and so on.
 struct MODEL_EXPORT SResultSpec
 {
@@ -149,9 +149,9 @@ struct SDetectorProbability
 //! aggregate results for each object of interest.
 //!
 //! For example, if the following searches are run:
-//!   - prelertautodetect count by host
-//!   - prelertautodetect sum(bytes) over host
-//!   - prelertautodetect rare(process) by host
+//!   - mlautodetect count by host
+//!   - mlautodetect sum(bytes) over host
+//!   - mlautodetect rare(process) by host
 //!
 //! The the common field of interest is "host" and we obtain aggregate
 //! results for each host as well as an overall aggregate result.
@@ -522,4 +522,4 @@ class MODEL_EXPORT CHierarchicalResultsVisitor
 }
 }
 
-#endif // INCLUDED_prelert_model_CHierarchicalResults_h
+#endif // INCLUDED_ml_model_CHierarchicalResults_h

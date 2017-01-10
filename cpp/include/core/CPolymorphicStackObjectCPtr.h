@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CPolymorphicStackObjectCPtr_h
-#define INCLUDED_prelert_core_CPolymorphicStackObjectCPtr_h
+#ifndef INCLUDED_ml_core_CPolymorphicStackObjectCPtr_h
+#define INCLUDED_ml_core_CPolymorphicStackObjectCPtr_h
 
 #include <core/ImportExport.h>
 
 #include <boost/type_traits/remove_const.hpp>
 #include <boost/variant.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -128,4 +128,4 @@ class CPolymorphicStackObjectCPtr
 }
 }
 
-#endif // INCLUDED_prelert_core_CPolymorphicStackObjectCPtr_h
+#endif // INCLUDED_ml_core_CPolymorphicStackObjectCPtr_h

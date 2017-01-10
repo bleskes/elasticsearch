@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CIoManager_h
-#define INCLUDED_prelert_api_CIoManager_h
+#ifndef INCLUDED_ml_api_CIoManager_h
+#define INCLUDED_ml_api_CIoManager_h
 
 #include <core/CNamedPipeFactory.h>
 #include <core/CNonCopyable.h>
@@ -24,7 +24,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -33,7 +33,7 @@ namespace api
 //! Manages the various IO streams of an API command.
 //!
 //! DESCRIPTION:\n
-//! Prelert C++ commands that can be run from Java can take input
+//! Ml C++ commands that can be run from Java can take input
 //! from and send output to:
 //! 1) STDIN/STDOUT
 //! 2) Standard files on disk
@@ -141,5 +141,5 @@ class API_EXPORT CIoManager : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_api_CIoManager_h
+#endif // INCLUDED_ml_api_CIoManager_h
 

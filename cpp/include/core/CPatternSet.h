@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CPatternSet_h
-#define INCLUDED_prelert_model_CPatternSet_h
+#ifndef INCLUDED_ml_model_CPatternSet_h
+#define INCLUDED_ml_model_CPatternSet_h
 
 #include <core/CFlatPrefixTree.h>
 #include <core/ImportExport.h>
@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -86,4 +86,4 @@ class CORE_EXPORT CPatternSet
 }
 }
 
-#endif // INCLUDED_prelert_model_CPatternSet_h
+#endif // INCLUDED_ml_model_CPatternSet_h

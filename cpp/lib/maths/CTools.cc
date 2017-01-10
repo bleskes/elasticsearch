@@ -55,7 +55,7 @@ T user_overflow_error(const char */*function*/, const char */*message*/, const T
 }
 }
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -78,7 +78,7 @@ inline double pdf(const DISTRIBUTION &distribution, double x)
 
 inline double pdf(const CLogTDistribution &distribution, double x)
 {
-    return prelert::maths::pdf(distribution, x);
+    return ml::maths::pdf(distribution, x);
 }
 
 } // adapters::

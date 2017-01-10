@@ -20,7 +20,7 @@
 #include <dlfcn.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -115,7 +115,7 @@ intptr_t CRuntimeLoadedLibrary::funcAddr(const std::string &funcName) const
     return func;
 }
 
-std::string CRuntimeLoadedLibrary::prelertLibDir(void)
+std::string CRuntimeLoadedLibrary::mlLibDir(void)
 {
     return CProgName::progDir() + "/../lib";
 }

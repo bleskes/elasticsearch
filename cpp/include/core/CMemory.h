@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CMemory_h
-#define INCLUDED_prelert_core_CMemory_h
+#ifndef INCLUDED_ml_core_CMemory_h
+#define INCLUDED_ml_core_CMemory_h
 
 #include <core/CLogger.h>
 #include <core/CMemoryUsage.h>
@@ -38,7 +38,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -174,9 +174,9 @@ struct STypeInfoLess
 //!
 //! DESCRIPTION:\n
 //! Core memory usage template class. Provides a method for determining
-//! the memory used by different prelert classes and standard containers
+//! the memory used by different ml classes and standard containers
 //!
-//! Prelert classes can declare a public member function:
+//! Ml classes can declare a public member function:
 //!     std::size_t memoryUsage(void) const;
 //!
 //! which should call CMemory::dynamicSize(t); on all its dynamic members
@@ -597,7 +597,7 @@ struct SDebugMemoryDynamicSize<T, typename enable_if_member_debug_function<T, &T
 //! CMemory class for creating a detailed breakdown of memory used by
 //! classes and containers, utilising the CMemoryUsage class.
 //!
-//! Prelert classes can declare a public member function:
+//! Ml classes can declare a public member function:
 //!     void debugMemoryUsage(CMemoryUsage::TMemoryUsagePtr) const;
 //!
 //! which should call CMemoryDebug::dynamicSize("t_name", t, memUsagePtr); on all its dynamic members
@@ -894,6 +894,6 @@ class CORE_EXPORT CMemoryDebug : private CNonInstantiatable
 };
 
 } // core
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_core_CMemory_h
+#endif // INCLUDED_ml_core_CMemory_h

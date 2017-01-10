@@ -54,15 +54,15 @@ class CSetupVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             return false;
         }
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CCsvInputParser::TStrVec &/*fieldNames*/,
-                        const prelert::api::CCsvInputParser::TStrStrUMap &dataRowFields)
+                        const ml::api::CCsvInputParser::TStrVec &/*fieldNames*/,
+                        const ml::api::CCsvInputParser::TStrStrUMap &dataRowFields)
         {
             if (!isDryRun)
             {
@@ -99,7 +99,7 @@ class CSetupVisitor
 
     private:
         size_t                                   m_RecordsPerBlock;
-        prelert::api::CLineifiedJsonOutputWriter m_OutputWriter;
+        ml::api::CLineifiedJsonOutputWriter m_OutputWriter;
 };
 
 class CVisitor
@@ -112,7 +112,7 @@ class CVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CLineifiedJsonInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CLineifiedJsonInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             m_SeenSettings = true;
 
@@ -124,8 +124,8 @@ class CVisitor
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CLineifiedJsonInputParser::TStrVec &/*fieldNames*/,
-                        const prelert::api::CLineifiedJsonInputParser::TStrStrUMap &/*dataRowFields*/)
+                        const ml::api::CLineifiedJsonInputParser::TStrVec &/*fieldNames*/,
+                        const ml::api::CLineifiedJsonInputParser::TStrStrUMap &/*dataRowFields*/)
         {
             if (!isDryRun)
             {
@@ -177,7 +177,7 @@ void CLineifiedJsonInputParserTest::runTest(bool allDocsSameStructure)
 
     CSetupVisitor setupVisitor;
 
-    prelert::api::CCsvInputParser setupParser(ifs);
+    ml::api::CCsvInputParser setupParser(ifs);
 
     CPPUNIT_ASSERT(setupParser.readStream(false,
                                           boost::ref(setupVisitor),
@@ -187,22 +187,22 @@ void CLineifiedJsonInputParserTest::runTest(bool allDocsSameStructure)
     static const size_t TEST_SIZE(5000);
     std::istringstream input(setupVisitor.input(TEST_SIZE));
 
-    prelert::api::CLineifiedJsonInputParser parser(input,
+    ml::api::CLineifiedJsonInputParser parser(input,
                                                    allDocsSameStructure);
 
     CVisitor visitor;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     CPPUNIT_ASSERT(parser.readStream(false,
                                      boost::ref(visitor),
                                      boost::ref(visitor)));
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(setupVisitor.recordsPerBlock() * TEST_SIZE, visitor.recordCount());
 

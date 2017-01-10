@@ -18,7 +18,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

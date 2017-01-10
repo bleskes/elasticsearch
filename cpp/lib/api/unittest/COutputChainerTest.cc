@@ -42,10 +42,10 @@ CppUnit::Test *COutputChainerTest::suite()
 
 void COutputChainerTest::testChaining(void)
 {
-    static const prelert::core_t::TTime BUCKET_SIZE(3600);
+    static const ml::core_t::TTime BUCKET_SIZE(3600);
 
     std::string inputFileName("testfiles/big_ascending.txt");
-    std::string outputFileName(prelert::test::CTestTmpDir::tmpDir() + "/chainerOutput.txt");
+    std::string outputFileName(ml::test::CTestTmpDir::tmpDir() + "/chainerOutput.txt");
 
     {
         // Open the input and output files
@@ -58,26 +58,26 @@ void COutputChainerTest::testChaining(void)
         // Set up the processing chain as:
         // big.txt -> typer -> chainer -> detector -> chainerOutput.txt
 
-        prelert::model::CLimits limits;
-        prelert::api::CFieldConfig fieldConfig;
-        CPPUNIT_ASSERT(fieldConfig.initFromFile("testfiles/new_prelertfields.conf"));
+        ml::model::CLimits limits;
+        ml::api::CFieldConfig fieldConfig;
+        CPPUNIT_ASSERT(fieldConfig.initFromFile("testfiles/new_mlfields.conf"));
 
-        prelert::model::CModelConfig modelConfig =
-                prelert::model::CModelConfig::defaultConfig(BUCKET_SIZE);
+        ml::model::CModelConfig modelConfig =
+                ml::model::CModelConfig::defaultConfig(BUCKET_SIZE);
 
-        prelert::api::CJsonOutputWriter outputWriter("job", outputStrm);
+        ml::api::CJsonOutputWriter outputWriter("job", outputStrm);
 
-        prelert::api::CAnomalyDetector detector("job",
+        ml::api::CAnomalyDetector detector("job",
                                                 limits,
                                                 fieldConfig,
                                                 modelConfig,
                                                 outputWriter);
 
-        prelert::api::COutputChainer outputChainer(detector);
+        ml::api::COutputChainer outputChainer(detector);
 
         CMockDataProcessor mockProcessor(outputChainer);
 
-        prelert::api::CCsvInputParser parser(inputStrm);
+        ml::api::CCsvInputParser parser(inputStrm);
 
         CPPUNIT_ASSERT(parser.readStream(false,
                                          boost::bind(&CMockDataProcessor::handleSettings,
@@ -93,7 +93,7 @@ void COutputChainerTest::testChaining(void)
     // Check the results by re-reading the output file
     std::ifstream reReadStrm(outputFileName.c_str());
     std::string line;
-    std::string modelSizeString("\"" + prelert::api::CJsonOutputWriter::MODEL_BYTES + "\":");
+    std::string modelSizeString("\"" + ml::api::CJsonOutputWriter::MODEL_BYTES + "\":");
 
     std::string expectedLineStart("{\"bucket\":{\"job_id\":\"job\",\"timestamp\":1347199200000,");
 

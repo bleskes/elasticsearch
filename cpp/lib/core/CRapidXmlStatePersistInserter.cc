@@ -21,7 +21,7 @@
 #include <iterator>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

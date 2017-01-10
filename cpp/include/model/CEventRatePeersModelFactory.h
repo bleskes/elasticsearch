@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CEventRatePeersModelFactory_h
-#define INCLUDED_prelert_model_CEventRatePeersModelFactory_h
+#ifndef INCLUDED_ml_model_CEventRatePeersModelFactory_h
+#define INCLUDED_ml_model_CEventRatePeersModelFactory_h
 
 #include <model/CModelFactory.h>
 #include <model/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -238,4 +238,4 @@ class MODEL_EXPORT CEventRatePeersModelFactory : public CModelFactory
 }
 }
 
-#endif // INCLUDED_prelert_model_CEventRatePeersModelFactory_h
+#endif // INCLUDED_ml_model_CEventRatePeersModelFactory_h

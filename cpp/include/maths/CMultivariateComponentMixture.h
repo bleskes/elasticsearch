@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateComponentMixture_h
-#define INCLUDED_prelert_maths_CMultivariateComponentMixture_h
+#ifndef INCLUDED_ml_maths_CMultivariateComponentMixture_h
+#define INCLUDED_ml_maths_CMultivariateComponentMixture_h
 
 #include <core/CPolymorphicStackObjectCPtr.h>
 
@@ -27,7 +27,7 @@
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -224,4 +224,4 @@ class MATHS_EXPORT CMultivariateComponentMixture : public CMultivariateComponent
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultivariateComponentMixture_h
+#endif // INCLUDED_ml_maths_CMultivariateComponentMixture_h

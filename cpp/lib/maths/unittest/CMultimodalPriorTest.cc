@@ -43,7 +43,7 @@
 
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 using namespace handy_typedefs;
 
 namespace
@@ -1682,7 +1682,7 @@ void CMultimodalPriorTest::testPersist(void)
     // The XML representation of the new filter should be the same as the original
     std::string newXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         restoredFilter.acceptPersistInserter(inserter);
         inserter.toXml(newXml);
     }

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CLogNormalMeanPrecConjugate_h
-#define INCLUDED_prelert_maths_CLogNormalMeanPrecConjugate_h
+#ifndef INCLUDED_ml_maths_CLogNormalMeanPrecConjugate_h
+#define INCLUDED_ml_maths_CLogNormalMeanPrecConjugate_h
 
 #include <core/CMemory.h>
 
@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -437,4 +437,4 @@ class MATHS_EXPORT CLogNormalMeanPrecConjugate : public CPrior
 }
 }
 
-#endif // INCLUDED_prelert_maths_CLogNormalMeanPrecConjugate_h
+#endif // INCLUDED_ml_maths_CLogNormalMeanPrecConjugate_h

@@ -28,7 +28,7 @@
 #include <boost/optional.hpp>
 #include <boost/range.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace maths;
 using namespace test;
 
@@ -320,7 +320,7 @@ void CProbabilityAggregatorsTest::testLogJointProbabilityOfLessLikelySamples(voi
         while (std::getline(ifs, line))
         {
             double probability;
-            CPPUNIT_ASSERT(prelert::core::CStringUtils::stringToType(line, probability));
+            CPPUNIT_ASSERT(ml::core::CStringUtils::stringToType(line, probability));
             logJointProbability.add(probability);
             jointProbability.add(probability);
         }

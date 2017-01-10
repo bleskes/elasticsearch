@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_domain_name_entropy_CIpAddressTest_h
-#define INCLUDED_prelert_domain_name_entropy_CIpAddressTest_h
+#ifndef INCLUDED_ml_domain_name_entropy_CIpAddressTest_h
+#define INCLUDED_ml_domain_name_entropy_CIpAddressTest_h
 
 #include <core/CRegex.h>
 
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace domain_name_entropy
 {
@@ -51,5 +51,5 @@ class CIpAddressTest
 }
 }
 
-#endif // INCLUDED_prelert_domain_name_entropy_CIpAddressTest_h
+#endif // INCLUDED_ml_domain_name_entropy_CIpAddressTest_h
 

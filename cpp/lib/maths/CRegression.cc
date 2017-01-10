@@ -15,7 +15,7 @@
 
 #include <maths/CRegression.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

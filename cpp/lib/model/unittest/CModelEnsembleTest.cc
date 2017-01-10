@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 typedef std::pair<core_t::TTime, std::size_t> TTimeSizePr;

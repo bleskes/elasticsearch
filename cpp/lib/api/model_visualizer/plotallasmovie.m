@@ -4,7 +4,7 @@ xax1=-1;
 xax2=25;
 ipid='172.18.51.67';
 skipframesatstart=0;
-statefactor=6; #we have input data at 10mins but get prelertstate every 60mins. So take 6 samples of input when plotting histogram.
+statefactor=6; #we have input data at 10mins but get mlstate every 60mins. So take 6 samples of input when plotting histogram.
 
 ts_length=100;
 

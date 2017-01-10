@@ -40,7 +40,7 @@
 namespace
 {
 
-void reportPersistComplete(prelert::core_t::TTime /*snapshotTimestamp*/,
+void reportPersistComplete(ml::core_t::TTime /*snapshotTimestamp*/,
                            const std::string &description,
                            const std::string &snapshotIdIn,
                            size_t numDocsIn,
@@ -77,27 +77,27 @@ CppUnit::Test *CSingleStreamDataAdderTest::suite()
 
 void CSingleStreamDataAdderTest::testDetectorPersistBy(void)
 {
-    prelert::maths::CScopeDisableNormalizeOnRestore disabler;
+    ml::maths::CScopeDisableNormalizeOnRestore disabler;
 
-    this->detectorPersistHelper("testfiles/new_prelertfields.conf",
+    this->detectorPersistHelper("testfiles/new_mlfields.conf",
                                 "testfiles/big_ascending.txt",
                                 0);
 }
 
 void CSingleStreamDataAdderTest::testDetectorPersistOver(void)
 {
-    prelert::maths::CScopeDisableNormalizeOnRestore disabler;
+    ml::maths::CScopeDisableNormalizeOnRestore disabler;
 
-    this->detectorPersistHelper("testfiles/new_prelertfields_over.conf",
+    this->detectorPersistHelper("testfiles/new_mlfields_over.conf",
                                 "testfiles/big_ascending.txt",
                                 0);
 }
 
 void CSingleStreamDataAdderTest::testDetectorPersistPartition(void)
 {
-    prelert::maths::CScopeDisableNormalizeOnRestore disabler;
+    ml::maths::CScopeDisableNormalizeOnRestore disabler;
 
-    this->detectorPersistHelper("testfiles/new_prelertfields_partition.conf",
+    this->detectorPersistHelper("testfiles/new_mlfields_partition.conf",
                                 "testfiles/big_ascending.txt",
                                 0);
 }
@@ -121,35 +121,35 @@ void CSingleStreamDataAdderTest::detectorPersistHelper(const std::string &config
                                                        int latencyBuckets)
 {
     // Start by creating a detector with non-trivial state
-    static const prelert::core_t::TTime BUCKET_SIZE(3600);
+    static const ml::core_t::TTime BUCKET_SIZE(3600);
 
     // Open the input and output files
     std::ifstream inputStrm(inputFilename.c_str());
     CPPUNIT_ASSERT(inputStrm.is_open());
 
-    std::ofstream outputStrm(prelert::core::COsFileFuncs::NULL_FILENAME);
+    std::ofstream outputStrm(ml::core::COsFileFuncs::NULL_FILENAME);
     CPPUNIT_ASSERT(outputStrm.is_open());
 
-    prelert::model::CLimits limits;
-    prelert::api::CFieldConfig fieldConfig;
+    ml::model::CLimits limits;
+    ml::api::CFieldConfig fieldConfig;
     CPPUNIT_ASSERT(fieldConfig.initFromFile(configFileName));
 
-    prelert::model::CModelConfig modelConfig =
-            prelert::model::CModelConfig::defaultConfig(BUCKET_SIZE,
-                                                        prelert::model::CModelConfig::DEFAULT_BATCH_LENGTH,
-                                                        prelert::model::CModelConfig::APERIODIC,
-                                                        prelert::model_t::E_None,
+    ml::model::CModelConfig modelConfig =
+            ml::model::CModelConfig::defaultConfig(BUCKET_SIZE,
+                                                        ml::model::CModelConfig::DEFAULT_BATCH_LENGTH,
+                                                        ml::model::CModelConfig::APERIODIC,
+                                                        ml::model_t::E_None,
                                                         "",
                                                         BUCKET_SIZE * latencyBuckets,
                                                         0,
                                                         false,
                                                         "");
 
-    prelert::api::CJsonOutputWriter outputWriter("job", outputStrm);
+    ml::api::CJsonOutputWriter outputWriter("job", outputStrm);
 
     std::string origSnapshotId;
     std::size_t numOrigDocs(0);
-    prelert::api::CAnomalyDetector origDetector("job",
+    ml::api::CAnomalyDetector origDetector("job",
                                                 limits,
                                                 fieldConfig,
                                                 modelConfig,
@@ -162,13 +162,13 @@ void CSingleStreamDataAdderTest::detectorPersistHelper(const std::string &config
                                                             boost::ref(origSnapshotId),
                                                             boost::ref(numOrigDocs)));
 
-    prelert::api::CCsvInputParser parser(inputStrm);
+    ml::api::CCsvInputParser parser(inputStrm);
 
     CPPUNIT_ASSERT(parser.readStream(false,
-                                     boost::bind(&prelert::api::CAnomalyDetector::handleSettings,
+                                     boost::bind(&ml::api::CAnomalyDetector::handleSettings,
                                                  &origDetector,
                                                  _1),
-                                     boost::bind(&prelert::api::CAnomalyDetector::handleRecord,
+                                     boost::bind(&ml::api::CAnomalyDetector::handleRecord,
                                                  &origDetector,
                                                  _1,
                                                  _2,
@@ -179,8 +179,8 @@ void CSingleStreamDataAdderTest::detectorPersistHelper(const std::string &config
     std::string origPersistedState;
     {
         std::ostringstream *strm(0);
-        prelert::api::CSingleStreamDataAdder::TOStreamP ptr(strm = new std::ostringstream());
-        prelert::api::CSingleStreamDataAdder persister(ptr);
+        ml::api::CSingleStreamDataAdder::TOStreamP ptr(strm = new std::ostringstream());
+        ml::api::CSingleStreamDataAdder persister(ptr);
         CPPUNIT_ASSERT(origDetector.persistState(persister));
         origPersistedState = strm->str();
     }
@@ -189,7 +189,7 @@ void CSingleStreamDataAdderTest::detectorPersistHelper(const std::string &config
 
     std::string restoredSnapshotId;
     std::size_t numRestoredDocs(0);
-    prelert::api::CAnomalyDetector restoredDetector("job",
+    ml::api::CAnomalyDetector restoredDetector("job",
                                                     limits,
                                                     fieldConfig,
                                                     modelConfig,
@@ -203,10 +203,10 @@ void CSingleStreamDataAdderTest::detectorPersistHelper(const std::string &config
                                                                 boost::ref(numRestoredDocs)));
 
     {
-        prelert::core_t::TTime completeToTime(0);
+        ml::core_t::TTime completeToTime(0);
 
-        prelert::api::CSingleStreamSearcher::TIStreamP strm(new std::istringstream(this->mapPersistFormatToRestoreFormat(origPersistedState)));
-        prelert::api::CSingleStreamSearcher retriever(strm);
+        ml::api::CSingleStreamSearcher::TIStreamP strm(new std::istringstream(this->mapPersistFormatToRestoreFormat(origPersistedState)));
+        ml::api::CSingleStreamSearcher retriever(strm);
         CPPUNIT_ASSERT(restoredDetector.restoreState(retriever, completeToTime));
         CPPUNIT_ASSERT(completeToTime > 0);
     }
@@ -216,18 +216,18 @@ void CSingleStreamDataAdderTest::detectorPersistHelper(const std::string &config
     std::string newPersistedState;
     {
         std::ostringstream *strm(0);
-        prelert::api::CSingleStreamDataAdder::TOStreamP ptr(strm = new std::ostringstream());
-        prelert::api::CSingleStreamDataAdder persister(ptr);
+        ml::api::CSingleStreamDataAdder::TOStreamP ptr(strm = new std::ostringstream());
+        ml::api::CSingleStreamDataAdder persister(ptr);
         CPPUNIT_ASSERT(restoredDetector.persistState(persister));
         newPersistedState = strm->str();
     }
 
     // The snapshot ID can be different between the two persists, so replace the
     // first occurrence of it (which is in the bulk metadata)
-    CPPUNIT_ASSERT_EQUAL(size_t(1), prelert::core::CStringUtils::replaceFirst(origSnapshotId,
+    CPPUNIT_ASSERT_EQUAL(size_t(1), ml::core::CStringUtils::replaceFirst(origSnapshotId,
                                                                               "snap",
                                                                               origPersistedState));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), prelert::core::CStringUtils::replaceFirst(restoredSnapshotId,
+    CPPUNIT_ASSERT_EQUAL(size_t(1), ml::core::CStringUtils::replaceFirst(restoredSnapshotId,
                                                                               "snap",
                                                                               newPersistedState));
 
@@ -236,7 +236,7 @@ void CSingleStreamDataAdderTest::detectorPersistHelper(const std::string &config
 
 std::string CSingleStreamDataAdderTest::mapPersistFormatToRestoreFormat(const std::string &persistedData)
 {
-    LOG_TRACE("Persisted:" << prelert::core_t::LINE_ENDING << persistedData);
+    LOG_TRACE("Persisted:" << ml::core_t::LINE_ENDING << persistedData);
 
     // Persist format is:
     // { bulk metadata }
@@ -288,7 +288,7 @@ std::string CSingleStreamDataAdderTest::mapPersistFormatToRestoreFormat(const st
     }
 
     const std::string &restoredData = output.str();
-    LOG_TRACE("Restored:" << prelert::core_t::LINE_ENDING << restoredData);
+    LOG_TRACE("Restored:" << ml::core_t::LINE_ENDING << restoredData);
     return restoredData;
 }
 

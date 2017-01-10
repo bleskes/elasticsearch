@@ -19,7 +19,7 @@
 #include <ostream>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -64,7 +64,7 @@ bool CSingleStreamDataAdder::streamComplete(TOStreamP &stream,
         // Each Elasticsearch document must be followed by a newline
         stream->put('\n');
 
-        // The Prelert format is to separate documents with zero bytes
+        // The Ml format is to separate documents with zero bytes
         stream->put('\0');
     }
 

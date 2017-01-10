@@ -41,7 +41,7 @@
 
 #include <math.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace handy_typedefs;
 
 namespace

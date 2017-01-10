@@ -36,24 +36,24 @@ const size_t TEST_COUNT(1000000000);
 typedef std::pair<size_t, uint64_t> TSizeUInt64Pr;
 
 size_t benchmark(char testId,
-                 prelert::vfprog::CIncrementer &incrementer,
+                 ml::vfprog::CIncrementer &incrementer,
                  size_t count)
 {
     size_t val(0);
     switch (testId)
     {
         case '1':
-            val = prelert::vfprog::CLooper::inlinedProgramCallLoop(incrementer,
+            val = ml::vfprog::CLooper::inlinedProgramCallLoop(incrementer,
                                                                    count,
                                                                    val);
             break;
         case '2':
-            val = prelert::vfprog::CLooper::nonVirtualProgramCallLoop(incrementer,
+            val = ml::vfprog::CLooper::nonVirtualProgramCallLoop(incrementer,
                                                                       count,
                                                                       val);
             break;
         case '3':
-            val = prelert::vfprog::CLooper::virtualProgramCallLoop(incrementer,
+            val = ml::vfprog::CLooper::virtualProgramCallLoop(incrementer,
                                                                    count,
                                                                    val);
             break;
@@ -63,39 +63,39 @@ size_t benchmark(char testId,
 }
 
 size_t benchmark(char testId,
-                 prelert::vflib::CIncrementer &incrementer,
+                 ml::vflib::CIncrementer &incrementer,
                  size_t count)
 {
     size_t val(0);
     switch (testId)
     {
         case '4':
-            val = prelert::vfprog::CLooper::inlinedLibraryCallLoop(incrementer,
+            val = ml::vfprog::CLooper::inlinedLibraryCallLoop(incrementer,
                                                                    count,
                                                                    val);
             break;
         case '5':
-            val = prelert::vfprog::CLooper::nonVirtualLibraryCallLoop(incrementer,
+            val = ml::vfprog::CLooper::nonVirtualLibraryCallLoop(incrementer,
                                                                       count,
                                                                       val);
             break;
         case '6':
-            val = prelert::vfprog::CLooper::virtualLibraryCallLoop(incrementer,
+            val = ml::vfprog::CLooper::virtualLibraryCallLoop(incrementer,
                                                                    count,
                                                                    val);
             break;
         case '7':
-            val = prelert::vflib::CLooper::inlinedLibraryCallLoop(incrementer,
+            val = ml::vflib::CLooper::inlinedLibraryCallLoop(incrementer,
                                                                   count,
                                                                   val);
             break;
         case '8':
-            val = prelert::vflib::CLooper::nonVirtualLibraryCallLoop(incrementer,
+            val = ml::vflib::CLooper::nonVirtualLibraryCallLoop(incrementer,
                                                                      count,
                                                                      val);
             break;
         case '9':
-            val = prelert::vflib::CLooper::virtualLibraryCallLoop(incrementer,
+            val = ml::vflib::CLooper::virtualLibraryCallLoop(incrementer,
                                                                   count,
                                                                   val);
             break;
@@ -108,7 +108,7 @@ template <typename INCREMENTER>
 TSizeUInt64Pr benchmark(char testId,
                         INCREMENTER &incrementer)
 {
-    prelert::core::CMonotonicTime clock;
+    ml::core::CMonotonicTime clock;
     TSizeUInt64Pr result;
 
     // Do a few calls without measurement to warm up the CPU cache
@@ -127,11 +127,11 @@ TSizeUInt64Pr benchmark(char testId)
 {
     if (testId < '4')
     {
-        prelert::vfprog::CIncrementer incrementer;
+        ml::vfprog::CIncrementer incrementer;
         return benchmark(testId, incrementer);
     }
 
-    prelert::vflib::CIncrementer incrementer;
+    ml::vflib::CIncrementer incrementer;
     return benchmark(testId, incrementer);
 }
 

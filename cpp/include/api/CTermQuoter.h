@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CTermQuoter_h
-#define INCLUDED_prelert_api_CTermQuoter_h
+#ifndef INCLUDED_ml_api_CTermQuoter_h
+#define INCLUDED_ml_api_CTermQuoter_h
 
 #include <core/CNonInstantiatable.h>
 
@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -93,5 +93,5 @@ class API_EXPORT CTermQuoter : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_api_CTermQuoter_h
+#endif // INCLUDED_ml_api_CTermQuoter_h
 

@@ -39,19 +39,19 @@ void CFileDeleterTest::testDelete(void)
     std::string fileName("CFileDeleterTest.txt");
 
     {
-        prelert::core::CFileDeleter deleter(fileName);
+        ml::core::CFileDeleter deleter(fileName);
 
         {
             std::ofstream testFile(fileName.c_str());
             testFile << "to be deleted" << std::endl;
         } // The file should exist by the time the stream is closed here
 
-        CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::access(fileName.c_str(),
-                                                                    prelert::core::COsFileFuncs::EXISTS));
+        CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::access(fileName.c_str(),
+                                                                    ml::core::COsFileFuncs::EXISTS));
     } // The file should be deleted here
 
-    CPPUNIT_ASSERT_EQUAL(-1, prelert::core::COsFileFuncs::access(fileName.c_str(),
-                                                                 prelert::core::COsFileFuncs::EXISTS));
+    CPPUNIT_ASSERT_EQUAL(-1, ml::core::COsFileFuncs::access(fileName.c_str(),
+                                                                 ml::core::COsFileFuncs::EXISTS));
 
     CPPUNIT_ASSERT_EQUAL(ENOENT, errno);
 }

@@ -108,7 +108,7 @@ void CXmlParserTest::testParse1File(void)
     std::string badFileName = "./testfiles/CXmlParser_bad.xml";
     std::string goodFileName = "./testfiles/CXmlParser1.xml";
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(!parser.parseFile(badFileName));
     CPPUNIT_ASSERT(parser.parseFile(goodFileName));
@@ -120,7 +120,7 @@ void CXmlParserTest::testParse1String(void)
 {
     std::string goodString = CXmlParserTest::fileToString("./testfiles/CXmlParser1.xml");
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseString(goodString));
 
@@ -131,11 +131,11 @@ void CXmlParserTest::testParse2(void)
 {
     std::string goodFileName = "./testfiles/CXmlParser2.xml";
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseFile(goodFileName));
 
-    prelert::core::CXmlParser::TXmlNodeVec nodes;
+    ml::core::CXmlParser::TXmlNodeVec nodes;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("//badpath", nodes));
     CPPUNIT_ASSERT(nodes.empty());
@@ -180,7 +180,7 @@ void CXmlParserTest::testNavigate(void)
 {
     std::string goodFileName = "./testfiles/CXmlParser2.xml";
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseFile(goodFileName));
 
@@ -216,12 +216,12 @@ void CXmlParserTest::testParseXInclude(void)
     std::string goodFileName = "./testfiles/CXmlParser3.xml";
     std::string badFileName = "./testfiles/CXmlParser4.xml";
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(!parser.parseFile(badFileName));
     CPPUNIT_ASSERT(parser.parseFile(goodFileName));
 
-    prelert::core::CXmlParser::TXmlNodeVec nodes;
+    ml::core::CXmlParser::TXmlNodeVec nodes;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("//badpath", nodes));
     CPPUNIT_ASSERT(nodes.empty());
@@ -266,16 +266,16 @@ void CXmlParserTest::testParse3(void)
 {
     std::string fileName = "./testfiles/CXmlParser5.xml";
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseFile(fileName));
 
-    prelert::core::CXmlParser::TXmlNodeVec arguments;
+    ml::core::CXmlParser::TXmlNodeVec arguments;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/ItemSearchResponse/OperationRequest/Arguments/Argument", arguments));
     CPPUNIT_ASSERT_EQUAL(size_t(7), arguments.size());
 
-    for (prelert::core::CXmlParser::TXmlNodeVecItr itr = arguments.begin();
+    for (ml::core::CXmlParser::TXmlNodeVecItr itr = arguments.begin();
          itr != arguments.end();
          ++itr)
     {
@@ -318,7 +318,7 @@ void CXmlParserTest::testParse4(void)
 {
     std::string fileName = "./testfiles/CXmlParser1.xml";
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseFile(fileName));
 
@@ -347,7 +347,7 @@ void CXmlParserTest::testParse4(void)
 
 void CXmlParserTest::testParse5(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     std::string xml = "\
 <root> \
@@ -358,13 +358,13 @@ void CXmlParserTest::testParse5(void)
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlParser::TStrStrMap values;
+    ml::core::CXmlParser::TStrStrMap values;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/root/*", values));
 
     CPPUNIT_ASSERT_EQUAL(values.size(), size_t(3));
 
-    prelert::core::CXmlParser::TStrStrMapCItr itr = values.find("name1");
+    ml::core::CXmlParser::TStrStrMapCItr itr = values.find("name1");
     CPPUNIT_ASSERT(itr != values.end());
     CPPUNIT_ASSERT_EQUAL(itr->second, std::string("value1"));
     itr = values.find("name2");
@@ -379,7 +379,7 @@ void CXmlParserTest::testParse6(void)
 {
 
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     std::string xml = "\
 <root> \
@@ -390,7 +390,7 @@ void CXmlParserTest::testParse6(void)
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlParser::TStrVec values;
+    ml::core::CXmlParser::TStrVec values;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/root/name", values));
 
@@ -401,7 +401,7 @@ void CXmlParserTest::testParse6(void)
     CPPUNIT_ASSERT_EQUAL(values[2], std::string("value3"));
 }
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     std::string xml = "\
 <root> \
@@ -411,14 +411,14 @@ void CXmlParserTest::testParse6(void)
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlParser::TStrVec values;
+    ml::core::CXmlParser::TStrVec values;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/root/names/*", values));
 
     CPPUNIT_ASSERT(values.empty());
 }
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     std::string xml = "\
 <root> \
@@ -429,14 +429,14 @@ void CXmlParserTest::testParse6(void)
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlParser::TStrSet values;
+    ml::core::CXmlParser::TStrSet values;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/root/name", values));
 
     CPPUNIT_ASSERT_EQUAL(values.size(), size_t(3));
 }
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     std::string xml = "\
 <root> \
@@ -447,7 +447,7 @@ void CXmlParserTest::testParse6(void)
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlParser::TStrSet values;
+    ml::core::CXmlParser::TStrSet values;
 
     CPPUNIT_ASSERT(!parser.evalXPathExpression("/root/name", values));
 }
@@ -456,22 +456,22 @@ void CXmlParserTest::testParse6(void)
 
 void CXmlParserTest::testConvert1(void)
 {
-    prelert::core::CXmlParser::TStrStrMap values;
+    ml::core::CXmlParser::TStrStrMap values;
 
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("key", "<&sdacasdc"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("count", "12"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("desc", "sdac asdc asdc\nadsc\nasdc\n"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("key", "<&sdacasdc"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("count", "12"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("desc", "sdac asdc asdc\nadsc\nasdc\n"));
 
     std::string xml;
-    prelert::core::CXmlParser::convert("test_convert", values, xml);
+    ml::core::CXmlParser::convert("test_convert", values, xml);
 
     LOG_DEBUG(xml);
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlNode node;
+    ml::core::CXmlNode node;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/test_convert/key", node));
     CPPUNIT_ASSERT_EQUAL(std::string("<&sdacasdc"), node.value());
@@ -483,17 +483,17 @@ void CXmlParserTest::testConvert1(void)
 
 void CXmlParserTest::testConvert2(void)
 {
-    prelert::core::CXmlParser::TStrStrMap values;
+    ml::core::CXmlParser::TStrStrMap values;
 
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("key", "<&sdacasdc"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("count", "12"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("desc", "sdac asdc asdc\nadsc\nasdc\n"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("key", "<&sdacasdc"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("count", "12"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("desc", "sdac asdc asdc\nadsc\nasdc\n"));
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.convert("test_convert", values));
 
-    prelert::core::CXmlNode node;
+    ml::core::CXmlNode node;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/test_convert/key", node));
     CPPUNIT_ASSERT_EQUAL(std::string("<&sdacasdc"), node.value());
@@ -505,24 +505,24 @@ void CXmlParserTest::testConvert2(void)
 
 void CXmlParserTest::testConvert3(void)
 {
-    prelert::core::CXmlParser::TStrStrMap values;
+    ml::core::CXmlParser::TStrStrMap values;
 
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("key", "<&sdacasdc"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("count", "1"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("field@name=idle cpu %", "96"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("field@name=user cpu %", "3"));
-    values.insert(prelert::core::CXmlParser::TStrStrMap::value_type("field@name=system cpu %", "1"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("key", "<&sdacasdc"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("count", "1"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("field@name=idle cpu %", "96"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("field@name=user cpu %", "3"));
+    values.insert(ml::core::CXmlParser::TStrStrMap::value_type("field@name=system cpu %", "1"));
 
     std::string xml;
-    prelert::core::CXmlParser::convert("test_convert", values, xml);
+    ml::core::CXmlParser::convert("test_convert", values, xml);
 
     LOG_DEBUG(xml);
 
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlNode node;
+    ml::core::CXmlNode node;
 
     CPPUNIT_ASSERT(parser.evalXPathExpression("/test_convert/key", node));
     CPPUNIT_ASSERT_EQUAL(std::string("<&sdacasdc"), node.value());
@@ -540,10 +540,10 @@ void CXmlParserTest::testConvert4(void)
 {
     // Use a standard node hierarchy to allow for comparison with the
     // standards-compliant XML parser
-    prelert::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP root(CRapidXmlParserTest::makeTestNodeHierarchy());
+    ml::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP root(CRapidXmlParserTest::makeTestNodeHierarchy());
 
     std::string converted;
-    prelert::core::CXmlParser::convert(*root, converted);
+    ml::core::CXmlParser::convert(*root, converted);
 
     LOG_DEBUG("Converted node hierarchy is:\n" << converted);
 
@@ -571,7 +571,7 @@ void CXmlParserTest::testConvert4(void)
 
 void CXmlParserTest::testAddNewChildNode(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     std::string xml = "\
 <root> \
@@ -601,7 +601,7 @@ void CXmlParserTest::testSetRootNode(void)
 {
 
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.setRootNode("root"));
 
@@ -616,7 +616,7 @@ void CXmlParserTest::testSetRootNode(void)
     CPPUNIT_ASSERT_EQUAL(std::string("value2"), value);
 }
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.setRootNode("root"));
 
@@ -632,13 +632,13 @@ void CXmlParserTest::testDump(void)
 {
     std::string fileName = "./testfiles/CXmlParser1.xml";
 
-    prelert::core::CXmlParser parser1;
+    ml::core::CXmlParser parser1;
     CPPUNIT_ASSERT(parser1.parseFile(fileName));
     this->testParse1(parser1);
 
     std::string expected = parser1.dumpToString();
 
-    prelert::core::CXmlParser parser2;
+    ml::core::CXmlParser parser2;
     CPPUNIT_ASSERT(parser2.parseString(expected));
     this->testParse1(parser2);
 }
@@ -660,9 +660,9 @@ std::string CXmlParserTest::fileToString(const std::string &fileName)
     return ret;
 }
 
-void CXmlParserTest::testParse1(const prelert::core::CXmlParser &parser)
+void CXmlParserTest::testParse1(const ml::core::CXmlParser &parser)
 {
-    prelert::core::CXmlNode node;
+    ml::core::CXmlNode node;
     std::string             value;
 
     CPPUNIT_ASSERT(!parser.evalXPathExpression("//badpath", node));
@@ -694,7 +694,7 @@ void CXmlParserTest::testParse1(const prelert::core::CXmlParser &parser)
     CPPUNIT_ASSERT_EQUAL(std::string("ItemSearchResponse"), parser.rootElementName());
 }
 
-bool CXmlParserTest::testAttribute(const prelert::core::CXmlNode &node,
+bool CXmlParserTest::testAttribute(const ml::core::CXmlNode &node,
                                    const std::string &key,
                                    const std::string &expected)
 {
@@ -715,17 +715,17 @@ bool CXmlParserTest::testAttribute(const prelert::core::CXmlNode &node,
 
 void CXmlParserTest::testMakeValidName(void)
 {
-    CPPUNIT_ASSERT_EQUAL(std::string("name"), prelert::core::CXmlParser::makeValidName("name"));
-    CPPUNIT_ASSERT_EQUAL(std::string("name1"), prelert::core::CXmlParser::makeValidName("name1"));
-    CPPUNIT_ASSERT_EQUAL(std::string("_name"), prelert::core::CXmlParser::makeValidName("1name"));
-    CPPUNIT_ASSERT_EQUAL(std::string("name_2"), prelert::core::CXmlParser::makeValidName("name/2"));
-    CPPUNIT_ASSERT_EQUAL(std::string("_name_"), prelert::core::CXmlParser::makeValidName("_name_"));
-    CPPUNIT_ASSERT_EQUAL(std::string("__cencl01b_System_System_Calls_sec"), prelert::core::CXmlParser::makeValidName("\\\\cencl01b\\System\\System Calls/sec"));
+    CPPUNIT_ASSERT_EQUAL(std::string("name"), ml::core::CXmlParser::makeValidName("name"));
+    CPPUNIT_ASSERT_EQUAL(std::string("name1"), ml::core::CXmlParser::makeValidName("name1"));
+    CPPUNIT_ASSERT_EQUAL(std::string("_name"), ml::core::CXmlParser::makeValidName("1name"));
+    CPPUNIT_ASSERT_EQUAL(std::string("name_2"), ml::core::CXmlParser::makeValidName("name/2"));
+    CPPUNIT_ASSERT_EQUAL(std::string("_name_"), ml::core::CXmlParser::makeValidName("_name_"));
+    CPPUNIT_ASSERT_EQUAL(std::string("__cencl01b_System_System_Calls_sec"), ml::core::CXmlParser::makeValidName("\\\\cencl01b\\System\\System Calls/sec"));
 }
 
 void CXmlParserTest::testChangeChild(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.setRootNode("root"));
     CPPUNIT_ASSERT(parser.addNewChildNode("name1", "value1"));
@@ -785,7 +785,7 @@ void CXmlParserTest::testHugeDoc(void)
     // up as a problem in huge XML documents.
 
     // First, create an enormous XML document
-    std::string fileName(prelert::test::CTestTmpDir::tmpDir() + "/huge.xml");
+    std::string fileName(ml::test::CTestTmpDir::tmpDir() + "/huge.xml");
     std::ofstream ofs(fileName.c_str());
     CPPUNIT_ASSERT_MESSAGE(fileName, ofs.is_open());
 
@@ -799,12 +799,12 @@ void CXmlParserTest::testHugeDoc(void)
 
     ofs << "</nodes>" << std::endl;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting huge XPath test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
-    prelert::core::CXmlParser parser;
-    prelert::core::CXmlParser::TStrSet valueSet;
+    ml::core::CXmlParser parser;
+    ml::core::CXmlParser::TStrSet valueSet;
 
     CPPUNIT_ASSERT(parser.parseFile(fileName));
 
@@ -812,9 +812,9 @@ void CXmlParserTest::testHugeDoc(void)
     // astronomical amount of time - don't wait more than a minute for it!
     CPPUNIT_ASSERT(parser.evalXPathExpression("/nodes/node", valueSet));
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished huge XPath test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(NUM_NODES, valueSet.size());
 
@@ -830,18 +830,18 @@ void CXmlParserTest::testParseSpeed(void)
 
     std::string testString(CXmlParserTest::fileToString("./testfiles/CXmlParser2.xml"));
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting parse speed test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
-    prelert::core::CXmlNodeWithChildrenPool nodePool;
+    ml::core::CXmlNodeWithChildrenPool nodePool;
 
     for (size_t count = 0; count < TEST_SIZE; ++count)
     {
-        prelert::core::CXmlParser parser;
+        ml::core::CXmlParser parser;
         CPPUNIT_ASSERT(parser.parseString(testString));
 
-        prelert::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
+        ml::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
         CPPUNIT_ASSERT(parser.toNodeHierarchy(nodePool, rootNodePtr));
 
         CPPUNIT_ASSERT(rootNodePtr != 0);
@@ -849,9 +849,9 @@ void CXmlParserTest::testParseSpeed(void)
         nodePool.recycle(rootNodePtr);
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished parse speed test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Parsing " << TEST_SIZE << " documents took " <<
              (end - start) << " seconds");
@@ -863,21 +863,21 @@ void CXmlParserTest::testConvertSpeed(void)
 
     // Use a standard node hierarchy to allow for comparison with the
     // standards-compliant XML parser
-    prelert::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP root(CRapidXmlParserTest::makeTestNodeHierarchy());
+    ml::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP root(CRapidXmlParserTest::makeTestNodeHierarchy());
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting convert speed test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     for (size_t count = 0; count < TEST_SIZE; ++count)
     {
         std::string converted;
-        prelert::core::CXmlParser::convert(*root, converted);
+        ml::core::CXmlParser::convert(*root, converted);
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished convert speed test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Converting " << TEST_SIZE << " documents took " <<
              (end - start) << " seconds");
@@ -885,14 +885,14 @@ void CXmlParserTest::testConvertSpeed(void)
 
 void CXmlParserTest::testComplexXPath(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
     CPPUNIT_ASSERT(parser.parseFile("testfiles/withNs.xml"));
 
     bool disabled(false);
 
     // This convoluted query is a workaround for the fact that Splunk's XML
     // responses have a default namespace but don't give it a name!
-    CPPUNIT_ASSERT(parser.evalXPathExpression("//*[local-name()='title' and .='prelert']/..//*[local-name()='key' and @name='disabled']",
+    CPPUNIT_ASSERT(parser.evalXPathExpression("//*[local-name()='title' and .='ml']/..//*[local-name()='key' and @name='disabled']",
                                               disabled));
     CPPUNIT_ASSERT_EQUAL(true, disabled);
 }

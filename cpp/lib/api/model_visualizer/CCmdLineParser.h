@@ -13,14 +13,14 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_visualiser_CCmdLineParser_h
-#define INCLUDED_prelert_model_visualiser_CCmdLineParser_h
+#ifndef INCLUDED_ml_model_visualiser_CCmdLineParser_h
+#define INCLUDED_ml_model_visualiser_CCmdLineParser_h
 
 #include <core/CoreTypes.h>
 
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace model_visualiser
 {
@@ -49,5 +49,5 @@ class CCmdLineParser
 }
 }
 
-#endif // INCLUDED_prelert_model_visualiser_CCmdLineParser_h
+#endif // INCLUDED_ml_model_visualiser_CCmdLineParser_h
 

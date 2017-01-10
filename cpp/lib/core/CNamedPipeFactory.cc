@@ -61,7 +61,7 @@ const bool SIGPIPE_IGNORED(ignoreSigPipe());
 
 }
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

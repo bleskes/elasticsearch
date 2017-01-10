@@ -19,7 +19,7 @@
 #include <api/COutputHandler.h>
 
 
-CMockDataProcessor::CMockDataProcessor(prelert::api::COutputHandler &outputHandler)
+CMockDataProcessor::CMockDataProcessor(ml::api::COutputHandler &outputHandler)
     : m_OutputHandler(outputHandler),
       m_NumRecordsHandled(0),
       m_WriteFieldNames(true)
@@ -72,8 +72,8 @@ void CMockDataProcessor::finalise(void)
 {
 }
 
-bool CMockDataProcessor::restoreState(prelert::core::CDataSearcher &restoreSearcher,
-                                      prelert::core_t::TTime &completeToTime)
+bool CMockDataProcessor::restoreState(ml::core::CDataSearcher &restoreSearcher,
+                                      ml::core_t::TTime &completeToTime)
 {
     // Pass on the request in case we're chained
     if (m_OutputHandler.restoreState(restoreSearcher,
@@ -85,7 +85,7 @@ bool CMockDataProcessor::restoreState(prelert::core::CDataSearcher &restoreSearc
     return true;
 }
 
-bool CMockDataProcessor::persistState(prelert::core::CDataAdder &persister)
+bool CMockDataProcessor::persistState(ml::core::CDataAdder &persister)
 {
     // Pass on the request in case we're chained
     if (m_OutputHandler.persistState(persister) == false)
@@ -101,7 +101,7 @@ uint64_t CMockDataProcessor::numRecordsHandled(void) const
     return m_NumRecordsHandled;
 }
 
-prelert::api::COutputHandler &CMockDataProcessor::outputHandler(void)
+ml::api::COutputHandler &CMockDataProcessor::outputHandler(void)
 {
     return m_OutputHandler;
 }

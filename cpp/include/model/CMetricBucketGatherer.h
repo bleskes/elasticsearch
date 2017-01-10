@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CMetricBucketGatherer_h
-#define INCLUDED_prelert_model_CMetricBucketGatherer_h
+#ifndef INCLUDED_ml_model_CMetricBucketGatherer_h
+#define INCLUDED_ml_model_CMetricBucketGatherer_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -331,4 +331,4 @@ class MODEL_EXPORT CMetricBucketGatherer : public CBucketGatherer
 }
 }
 
-#endif // INCLUDED_prelert_model_CMetricBucketGatherer_h
+#endif // INCLUDED_ml_model_CMetricBucketGatherer_h

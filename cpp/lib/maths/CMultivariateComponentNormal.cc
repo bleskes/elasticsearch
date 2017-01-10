@@ -15,7 +15,7 @@
 
 #include <maths/CMultivariateComponentNormal.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

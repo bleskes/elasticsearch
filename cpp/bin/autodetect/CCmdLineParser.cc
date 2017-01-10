@@ -24,7 +24,7 @@
 #include <iostream>
 
 
-namespace prelert
+namespace ml
 {
 namespace autodetect
 {

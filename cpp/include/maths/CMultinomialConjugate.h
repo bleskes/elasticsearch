@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultinomialConjugate_h
-#define INCLUDED_prelert_maths_CMultinomialConjugate_h
+#ifndef INCLUDED_ml_maths_CMultinomialConjugate_h
+#define INCLUDED_ml_maths_CMultinomialConjugate_h
 
 #include <core/CMemory.h>
 
@@ -22,7 +22,7 @@
 #include <maths/CPrior.h>
 #include <maths/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -439,4 +439,4 @@ class MATHS_EXPORT CMultinomialConjugate : public CPrior
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultinomialConjugate_h
+#endif // INCLUDED_ml_maths_CMultinomialConjugate_h

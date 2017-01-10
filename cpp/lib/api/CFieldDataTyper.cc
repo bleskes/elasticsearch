@@ -34,7 +34,7 @@
 #include <sstream>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -50,7 +50,7 @@ const std::string EXAMPLES_COLLECTOR_TAG("c");
 
 // Initialise statics
 const std::string   CFieldDataTyper::ML_STATE_INDEX(".ml-state");
-const std::string   CFieldDataTyper::PRELERTCATEGORY_NAME("prelertcategory");
+const std::string   CFieldDataTyper::MLCATEGORY_NAME("mlcategory");
 const double        CFieldDataTyper::SIMILARITY_THRESHOLD(0.7);
 const std::string   CFieldDataTyper::STATE_TYPE("categorizer_state");
 const std::string   CFieldDataTyper::STATE_VERSION("1");
@@ -63,10 +63,10 @@ CFieldDataTyper::CFieldDataTyper(const std::string &jobId,
                                  CJsonOutputWriter &jsonOutputWriter)
     : m_JobId(jobId),
       m_OutputHandler(outputHandler),
-      m_ExtraFieldNames(1, PRELERTCATEGORY_NAME),
+      m_ExtraFieldNames(1, MLCATEGORY_NAME),
       m_WriteFieldNames(true),
       m_NumRecordsHandled(0),
-      m_OutputFieldCategory(m_Overrides[PRELERTCATEGORY_NAME]),
+      m_OutputFieldCategory(m_Overrides[MLCATEGORY_NAME]),
       m_MaxMatchingLength(0),
       m_JsonOutputWriter(jsonOutputWriter),
       m_ExamplesCollector(limits.maxExamples()),

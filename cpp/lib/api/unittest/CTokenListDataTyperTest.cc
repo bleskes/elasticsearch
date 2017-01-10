@@ -26,7 +26,7 @@
 namespace
 {
 
-typedef prelert::api::CTokenListDataTyper<true,  // Warping
+typedef ml::api::CTokenListDataTyper<true,  // Warping
                                           true,  // Underscores
                                           true,  // Dots
                                           true,  // Dashes
@@ -35,7 +35,7 @@ typedef prelert::api::CTokenListDataTyper<true,  // Warping
                                           true,  // Ignore date words
                                           false, // Ignore field names
                                           2,     // Min dictionary word length
-                                          prelert::core::CWordDictionary::TWeightVerbs5Other2>
+                                          ml::core::CWordDictionary::TWeightVerbs5Other2>
         TTokenListDataTyperKeepsFields;
 
 const TTokenListDataTyperKeepsFields::TTokenListReverseSearchCreatorIntfCPtr NO_REVERSE_SEARCH_CREATOR;
@@ -83,13 +83,13 @@ CppUnit::Test *CTokenListDataTyperTest::suite()
 void CTokenListDataTyperTest::setUp(void)
 {
     // Enable trace level logging for these unit tests
-    prelert::core::CLogger::instance().setLoggingLevel(prelert::core::CLogger::E_Trace);
+    ml::core::CLogger::instance().setLoggingLevel(ml::core::CLogger::E_Trace);
 }
 
 void CTokenListDataTyperTest::tearDown(void)
 {
     // Revert to debug level logging for any subsequent unit tests
-    prelert::core::CLogger::instance().setLoggingLevel(prelert::core::CLogger::E_Debug);
+    ml::core::CLogger::instance().setLoggingLevel(ml::core::CLogger::E_Debug);
 }
 
 void CTokenListDataTyperTest::testHexData(void)
@@ -227,7 +227,7 @@ void CTokenListDataTyperTest::testPersist(void)
 
     std::string origXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         origTyper.acceptPersistInserter(inserter);
         inserter.toXml(origXml);
     }
@@ -237,9 +237,9 @@ void CTokenListDataTyperTest::testPersist(void)
     // Restore the XML into a new typer
     TTokenListDataTyperKeepsFields restoredTyper(NO_REVERSE_SEARCH_CREATOR, 0.7);
     {
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origXml));
-        prelert::core::CRapidXmlStateRestoreTraverser traverser(parser);
+        ml::core::CRapidXmlStateRestoreTraverser traverser(parser);
         CPPUNIT_ASSERT(traverser.traverseSubLevel(boost::bind(&TTokenListDataTyperKeepsFields::acceptRestoreTraverser,
                                                               &restoredTyper,
                                                               _1)));
@@ -248,7 +248,7 @@ void CTokenListDataTyperTest::testPersist(void)
     // The XML representation of the new typer should be the same as the original
     std::string newXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         restoredTyper.acceptPersistInserter(inserter);
         inserter.toXml(newXml);
     }

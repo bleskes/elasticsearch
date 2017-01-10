@@ -36,7 +36,7 @@
 #include <boost/optional.hpp>
 #include <boost/range.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 namespace
@@ -370,7 +370,7 @@ void CMetricDataGathererTest::singleSeriesTests(void)
             // same as the original
             std::string newXml;
             {
-                prelert::core::CRapidXmlStatePersistInserter inserter("root");
+                ml::core::CRapidXmlStatePersistInserter inserter("root");
                 restoredGatherer.acceptPersistInserter(inserter);
                 inserter.toXml(newXml);
             }
@@ -621,7 +621,7 @@ void CMetricDataGathererTest::multipleSeriesTests(void)
     // Test persistence. (We check for idempotency.)
     std::string origXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         gatherer.acceptPersistInserter(inserter);
         inserter.toXml(origXml);
     }
@@ -1184,7 +1184,7 @@ void CMetricDataGathererTest::singleSeriesOutOfOrderTests(void)
             // same as the original
             std::string newXml;
             {
-                prelert::core::CRapidXmlStatePersistInserter inserter("root");
+                ml::core::CRapidXmlStatePersistInserter inserter("root");
                 restoredGatherer.acceptPersistInserter(inserter);
                 inserter.toXml(newXml);
             }
@@ -1824,7 +1824,7 @@ void CMetricDataGathererTest::testMultivariate(void)
             // same as the original
             std::string newXml;
             {
-                prelert::core::CRapidXmlStatePersistInserter inserter("root");
+                ml::core::CRapidXmlStatePersistInserter inserter("root");
                 restoredGatherer.acceptPersistInserter(inserter);
                 inserter.toXml(newXml);
             }

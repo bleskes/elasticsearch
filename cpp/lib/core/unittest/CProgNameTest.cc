@@ -35,7 +35,7 @@ CppUnit::Test *CProgNameTest::suite()
 
 void CProgNameTest::testProgName(void)
 {
-    std::string progName(prelert::core::CProgName::progName());
+    std::string progName(ml::core::CProgName::progName());
 
     LOG_DEBUG("Current program name is " << progName);
 
@@ -44,11 +44,11 @@ void CProgNameTest::testProgName(void)
 
 void CProgNameTest::testProgDir(void)
 {
-    std::string progDir(prelert::core::CProgName::progDir());
+    std::string progDir(ml::core::CProgName::progDir());
 
     LOG_DEBUG("Current program directory is " << progDir);
 
-    prelert::core::CRegex expectedPathRegex;
+    ml::core::CRegex expectedPathRegex;
     CPPUNIT_ASSERT(expectedPathRegex.init(".+[\\\\/]lib[\\\\/]core[\\\\/]unittest$"));
     CPPUNIT_ASSERT(expectedPathRegex.matches(progDir));
 }

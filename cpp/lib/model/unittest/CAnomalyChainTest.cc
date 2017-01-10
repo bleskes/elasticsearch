@@ -27,7 +27,7 @@
 
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 void CAnomalyChainTest::testAll(void)
 {

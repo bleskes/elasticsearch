@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CNotEnoughDataPenalty_h
-#define INCLUDED_prelert_config_CNotEnoughDataPenalty_h
+#ifndef INCLUDED_ml_config_CNotEnoughDataPenalty_h
+#define INCLUDED_ml_config_CNotEnoughDataPenalty_h
 
 #include <config/CPenalty.h>
 #include <config/ImportExport.h>
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -79,4 +79,4 @@ class CONFIG_EXPORT CNotEnoughDataPenalty : public CPenalty
 }
 }
 
-#endif // INCLUDED_prelert_config_CNotEnoughDataPenalty_h
+#endif // INCLUDED_ml_config_CNotEnoughDataPenalty_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CPackedBitVector_h
-#define INCLUDED_prelert_maths_CPackedBitVector_h
+#ifndef INCLUDED_ml_maths_CPackedBitVector_h
+#define INCLUDED_ml_maths_CPackedBitVector_h
 
 #include <core/CStatePersistInserter.h>
 #include <core/CStateRestoreTraverser.h>
@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -160,4 +160,4 @@ std::ostream &operator<<(std::ostream &o, const CPackedBitVector &v);
 }
 }
 
-#endif // INCLUDED_prelert_maths_CPackedBitVector_h
+#endif // INCLUDED_ml_maths_CPackedBitVector_h

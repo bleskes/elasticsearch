@@ -30,7 +30,7 @@
 
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 void CProbabilityCalibratorTest::testCalibration(void)
 {

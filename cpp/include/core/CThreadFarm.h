@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CThreadFarm_h
-#define INCLUDED_prelert_core_CThreadFarm_h
+#ifndef INCLUDED_ml_core_CThreadFarm_h
+#define INCLUDED_ml_core_CThreadFarm_h
 
 #include <core/CLogger.h>
 #include <core/CMutex.h>
@@ -31,7 +31,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -288,5 +288,5 @@ class CThreadFarm : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CThreadFarm_h
+#endif // INCLUDED_ml_core_CThreadFarm_h
 

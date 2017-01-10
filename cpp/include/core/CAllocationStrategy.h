@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CAllocationStrategy_h
-#define INCLUDED_prelert_core_CAllocationStrategy_h
+#ifndef INCLUDED_ml_core_CAllocationStrategy_h
+#define INCLUDED_ml_core_CAllocationStrategy_h
 
 #include <core/ImportExport.h>
 
 #include <algorithm>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -88,6 +88,6 @@ class CORE_EXPORT CAllocationStrategy
 
 } // core
 
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_core_CAllocationStrategy_h
+#endif // INCLUDED_ml_core_CAllocationStrategy_h

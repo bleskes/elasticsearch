@@ -20,13 +20,13 @@ CPP_PLATFORM_HOME=$(CPP_DISTRIBUTION_HOME)/platform/darwin-x86_64
 CC=clang
 CXX=clang++ -std=c++11 -stdlib=libc++
 
-ifndef PRELERT_DEBUG
+ifndef ML_DEBUG
 OPTCFLAGS=-O3
 OPTCPPFLAGS=-DNDEBUG
 endif
 
-ifdef PRELERT_DEBUG
-ifdef PRELERT_COVERAGE
+ifdef ML_DEBUG
+ifdef ML_COVERAGE
 COVERAGE=--coverage
 endif
 endif
@@ -64,8 +64,8 @@ XMLLIBS=-lxml2
 JAVANATIVEINCLUDES=-I`/usr/libexec/java_home`/include
 JAVANATIVELDFLAGS=-L`/usr/libexec/java_home`/jre/lib/server
 JAVANATIVELIBS=-ljvm
-PRELERT_VERSION_NUM=$(shell cat $(CPP_SRC_HOME)/../gradle.properties | grep '^elasticsearchVersion' | awk -F= '{ print $$2 }' | xargs echo | sed 's/-.*//')
-DYNAMICLIBLDFLAGS=-current_version $(PRELERT_VERSION_NUM) -compatibility_version $(PRELERT_VERSION_NUM) -dynamiclib -Wl,-dead_strip_dylibs $(COVERAGE) -Wl,-install_name,@rpath/$(notdir $(TARGET)) -L$(CPP_PLATFORM_HOME)/lib -Wl,-rpath,@loader_path/.
+ML_VERSION_NUM=$(shell cat $(CPP_SRC_HOME)/../gradle.properties | grep '^elasticsearchVersion' | awk -F= '{ print $$2 }' | xargs echo | sed 's/-.*//')
+DYNAMICLIBLDFLAGS=-current_version $(ML_VERSION_NUM) -compatibility_version $(ML_VERSION_NUM) -dynamiclib -Wl,-dead_strip_dylibs $(COVERAGE) -Wl,-install_name,@rpath/$(notdir $(TARGET)) -L$(CPP_PLATFORM_HOME)/lib -Wl,-rpath,@loader_path/.
 CPPUNITLIBS=-lcppunit
 LOG4CXXLIBS=-llog4cxx
 ZLIBLIBS=-lz

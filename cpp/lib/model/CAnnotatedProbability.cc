@@ -22,7 +22,7 @@
 
 #include <model/CStringStore.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

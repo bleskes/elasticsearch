@@ -17,7 +17,7 @@
 #include <limits>
 #include <sstream>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

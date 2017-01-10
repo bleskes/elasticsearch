@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CRandomProjectionClusterer_h
-#define INCLUDED_prelert_maths_CRandomProjectionClusterer_h
+#ifndef INCLUDED_ml_maths_CRandomProjectionClusterer_h
+#define INCLUDED_ml_maths_CRandomProjectionClusterer_h
 
 #include <maths/CAgglomerativeClusterer.h>
 #include <maths/CBasicStatistics.h>
@@ -36,7 +36,7 @@
 #include <limits>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -863,4 +863,4 @@ class CRandomProjectionClustererOnline : public CRandomProjectionClusterer<N>
 }
 }
 
-#endif // INCLUDED_prelert_maths_CRandomProjectionClusterer_h
+#endif // INCLUDED_ml_maths_CRandomProjectionClusterer_h

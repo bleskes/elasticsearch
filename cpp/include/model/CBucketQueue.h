@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CBucketQueue_h
-#define INCLUDED_prelert_model_CBucketQueue_h
+#ifndef INCLUDED_ml_model_CBucketQueue_h
+#define INCLUDED_ml_model_CBucketQueue_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CMemory.h>
@@ -27,7 +27,7 @@
 
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -426,4 +426,4 @@ const std::string CBucketQueue<T>::INDEX_TAG("b");
 }
 }
 
-#endif // INCLUDED_prelert_model_CBucketQueue_h
+#endif // INCLUDED_ml_model_CBucketQueue_h

@@ -28,7 +28,7 @@
 
 #include <iomanip>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

@@ -21,7 +21,7 @@
 
 #include <iostream>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -105,5 +105,5 @@ void CCompressOStream::CCompressThread::shutdown(void)
 }
 
 } // core
-} // prelert
+} // ml
 

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CIndividualModel_h
-#define INCLUDED_prelert_model_CIndividualModel_h
+#ifndef INCLUDED_ml_model_CIndividualModel_h
+#define INCLUDED_ml_model_CIndividualModel_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -35,7 +35,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -519,4 +519,4 @@ class MODEL_EXPORT CIndividualModel : public CModel
 }
 }
 
-#endif // INCLUDED_prelert_model_CIndividualModel_h
+#endif // INCLUDED_ml_model_CIndividualModel_h

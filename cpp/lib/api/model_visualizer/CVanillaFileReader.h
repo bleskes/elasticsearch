@@ -13,14 +13,14 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_visualiser_CVanillaFileReader_h
-#define INCLUDED_prelert_model_visualiser_CVanillaFileReader_h
+#ifndef INCLUDED_ml_model_visualiser_CVanillaFileReader_h
+#define INCLUDED_ml_model_visualiser_CVanillaFileReader_h
 
 #include <model/CDataSearcher.h>
 
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace model_visualiser
 {
@@ -48,4 +48,4 @@ class CVanillaFileReader : public model::CDataSearcher
 }
 }
 
-#endif // INCLUDED_prelert_model_visualiser_CVanillaFileReader_h
+#endif // INCLUDED_ml_model_visualiser_CVanillaFileReader_h

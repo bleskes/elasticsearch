@@ -64,15 +64,15 @@ class CSetupVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             return false;
         }
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CCsvInputParser::TStrVec &fieldNames,
-                        const prelert::api::CCsvInputParser::TStrStrUMap &dataRowFields)
+                        const ml::api::CCsvInputParser::TStrVec &fieldNames,
+                        const ml::api::CCsvInputParser::TStrStrUMap &dataRowFields)
         {
             if (isDryRun)
             {
@@ -93,7 +93,7 @@ class CSetupVisitor
             this->appendNumber(fieldNames.size(), m_EncodedDataBlock);
             for (size_t index = 0; index < fieldNames.size(); ++index)
             {
-                prelert::api::CCsvInputParser::TStrStrUMapCItr iter = dataRowFields.find(fieldNames[index]);
+                ml::api::CCsvInputParser::TStrStrUMapCItr iter = dataRowFields.find(fieldNames[index]);
                 CPPUNIT_ASSERT(iter != dataRowFields.end());
                 const std::string &fieldValue = iter->second;
                 this->appendNumber(fieldValue.length(), m_EncodedDataBlock);
@@ -154,7 +154,7 @@ class CVisitor
         {
         }
 
-        CVisitor(const prelert::api::CCsvInputParser::TStrVec &expectedFieldNames)
+        CVisitor(const ml::api::CCsvInputParser::TStrVec &expectedFieldNames)
             : m_Fast(false),
               m_RecordCount(0),
               m_ExpectedFieldNames(expectedFieldNames)
@@ -162,7 +162,7 @@ class CVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CLengthEncodedInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CLengthEncodedInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             // Length encoded input parser does not process settings
             CPPUNIT_ASSERT(false);
@@ -172,8 +172,8 @@ class CVisitor
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CLengthEncodedInputParser::TStrVec &fieldNames,
-                        const prelert::api::CLengthEncodedInputParser::TStrStrUMap &dataRowFields)
+                        const ml::api::CLengthEncodedInputParser::TStrVec &fieldNames,
+                        const ml::api::CLengthEncodedInputParser::TStrStrUMap &dataRowFields)
         {
             if (!isDryRun)
             {
@@ -197,7 +197,7 @@ class CVisitor
             CPPUNIT_ASSERT_EQUAL(m_ExpectedFieldNames.size(), fieldNames.size());
 
             // Now check the actual fields
-            for (prelert::api::CCsvInputParser::TStrStrUMapCItr iter = dataRowFields.begin();
+            for (ml::api::CCsvInputParser::TStrStrUMapCItr iter = dataRowFields.begin();
                  iter != dataRowFields.end();
                  ++iter)
             {
@@ -208,16 +208,16 @@ class CVisitor
             CPPUNIT_ASSERT_EQUAL(fieldNames.size(), dataRowFields.size());
 
             // Check the line count is consistent with the _raw field
-            prelert::api::CCsvInputParser::TStrStrUMapCItr rawIter = dataRowFields.find("_raw");
+            ml::api::CCsvInputParser::TStrStrUMapCItr rawIter = dataRowFields.find("_raw");
             CPPUNIT_ASSERT(rawIter != dataRowFields.end());
-            prelert::api::CCsvInputParser::TStrStrUMapCItr lineCountIter = dataRowFields.find("linecount");
+            ml::api::CCsvInputParser::TStrStrUMapCItr lineCountIter = dataRowFields.find("linecount");
             CPPUNIT_ASSERT(lineCountIter != dataRowFields.end());
 
             size_t expectedLineCount(1 + std::count(rawIter->second.begin(),
                                                     rawIter->second.end(),
                                                     '\n'));
             size_t lineCount(0);
-            CPPUNIT_ASSERT(prelert::core::CStringUtils::stringToType(lineCountIter->second, lineCount));
+            CPPUNIT_ASSERT(ml::core::CStringUtils::stringToType(lineCountIter->second, lineCount));
             CPPUNIT_ASSERT_EQUAL(expectedLineCount, lineCount);
 
             return true;
@@ -231,7 +231,7 @@ class CVisitor
     private:
         bool                                   m_Fast;
         size_t                                 m_RecordCount;
-        prelert::api::CCsvInputParser::TStrVec m_ExpectedFieldNames;
+        ml::api::CCsvInputParser::TStrVec m_ExpectedFieldNames;
 
 };
 
@@ -245,7 +245,7 @@ void CLengthEncodedInputParserTest::testCsvEquivalence(void)
 
     CSetupVisitor setupVisitor;
 
-    prelert::api::CCsvInputParser setupParser(ifs);
+    ml::api::CCsvInputParser setupParser(ifs);
 
     CPPUNIT_ASSERT(setupParser.readStream(false,
                                           boost::ref(setupVisitor),
@@ -255,9 +255,9 @@ void CLengthEncodedInputParserTest::testCsvEquivalence(void)
     std::istringstream input(setupVisitor.input(1),
                              std::ios::in | std::ios::binary);
 
-    prelert::api::CLengthEncodedInputParser parser(input);
+    ml::api::CLengthEncodedInputParser parser(input);
 
-    prelert::api::CCsvInputParser::TStrVec expectedFieldNames;
+    ml::api::CCsvInputParser::TStrVec expectedFieldNames;
     expectedFieldNames.push_back("_cd");
     expectedFieldNames.push_back("_indextime");
     expectedFieldNames.push_back("_kv");
@@ -306,7 +306,7 @@ void CLengthEncodedInputParserTest::testThroughput(void)
 
     CSetupVisitor setupVisitor;
 
-    prelert::api::CCsvInputParser setupParser(ifs);
+    ml::api::CCsvInputParser setupParser(ifs);
 
     CPPUNIT_ASSERT(setupParser.readStream(false,
                                           boost::ref(setupVisitor),
@@ -318,21 +318,21 @@ void CLengthEncodedInputParserTest::testThroughput(void)
     std::istringstream input(setupVisitor.input(TEST_SIZE),
                              std::ios::in | std::ios::binary);
 
-    prelert::api::CLengthEncodedInputParser parser(input);
+    ml::api::CLengthEncodedInputParser parser(input);
 
     CVisitor visitor;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     CPPUNIT_ASSERT(parser.readStream(false,
                                      boost::ref(visitor),
                                      boost::ref(visitor)));
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(setupVisitor.recordsPerBlock() * TEST_SIZE, visitor.recordCount());
 
@@ -353,7 +353,7 @@ void CLengthEncodedInputParserTest::testCorruptStreamDetection(void)
     std::istringstream input(dodgyInput,
                              std::ios::in | std::ios::binary);
 
-    prelert::api::CLengthEncodedInputParser parser(input);
+    ml::api::CLengthEncodedInputParser parser(input);
 
     CVisitor visitor;
 

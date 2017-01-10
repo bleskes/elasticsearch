@@ -19,7 +19,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

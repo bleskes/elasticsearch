@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CChecksum_h
-#define INCLUDED_prelert_maths_CChecksum_h
+#ifndef INCLUDED_ml_maths_CChecksum_h
+#define INCLUDED_ml_maths_CChecksum_h
 
 #include <core/CHashing.h>
 #include <core/CStringUtils.h>
@@ -33,7 +33,7 @@
 #include <string>
 #include <utility>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -380,4 +380,4 @@ class MATHS_EXPORT CChecksum
 }
 }
 
-#endif // INCLUDED_prelert_maths_CChecksum_h
+#endif // INCLUDED_ml_maths_CChecksum_h

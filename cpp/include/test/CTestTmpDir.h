@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_test_CTestTmpDir_h
-#define INCLUDED_prelert_test_CTestTmpDir_h
+#ifndef INCLUDED_ml_test_CTestTmpDir_h
+#define INCLUDED_ml_test_CTestTmpDir_h
 
 #include <core/CNonInstantiatable.h>
 
@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {
@@ -49,5 +49,5 @@ class TEST_EXPORT CTestTmpDir : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_test_CTestTmpDir_h
+#endif // INCLUDED_ml_test_CTestTmpDir_h
 

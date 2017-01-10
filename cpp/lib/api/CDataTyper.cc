@@ -15,7 +15,7 @@
 #include <api/CDataTyper.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

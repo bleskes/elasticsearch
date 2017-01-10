@@ -21,7 +21,7 @@
 #include <iostream>
 
 
-namespace prelert
+namespace ml
 {
 namespace syslogparsertester
 {
@@ -30,7 +30,7 @@ namespace syslogparsertester
 const std::string CCmdLineParser::DESCRIPTION =
 "Usage: syslog_parser_tester [options]\n"
 "Development tool to verify format of syslog parsing config XML files\n"
-"E.g. ./syslog_parser_tester --config syslog_parser.xml --syslogline 'prelert1234.log:<prelert-1234.1.p2ps: Error: Thu Oct 23  17:53:15 2008> Transport node error on node 0x9876<END>                 '\n"
+"E.g. ./syslog_parser_tester --config syslog_parser.xml --syslogline 'ml1234.log:<ml-1234.1.p2ps: Error: Thu Oct 23  17:53:15 2008> Transport node error on node 0x9876<END>                 '\n"
 "Options:";
 
 

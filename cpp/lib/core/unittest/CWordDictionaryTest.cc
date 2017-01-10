@@ -41,7 +41,7 @@ CppUnit::Test *CWordDictionaryTest::suite()
 
 void CWordDictionaryTest::testLookups(void)
 {
-    const prelert::core::CWordDictionary &dict = prelert::core::CWordDictionary::instance();
+    const ml::core::CWordDictionary &dict = ml::core::CWordDictionary::instance();
 
     CPPUNIT_ASSERT(dict.isInDictionary("hello"));
     CPPUNIT_ASSERT(dict.isInDictionary("Hello"));
@@ -59,107 +59,107 @@ void CWordDictionaryTest::testLookups(void)
 
 void CWordDictionaryTest::testPartOfSpeech(void)
 {
-    const prelert::core::CWordDictionary &dict = prelert::core::CWordDictionary::instance();
+    const ml::core::CWordDictionary &dict = ml::core::CWordDictionary::instance();
 
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_NotInDictionary,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_NotInDictionary,
                          dict.partOfSpeech("ajksdf"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_UnknownPart,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_UnknownPart,
                          dict.partOfSpeech("callback"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Noun,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Noun,
                          dict.partOfSpeech("House"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Plural,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Plural,
                          dict.partOfSpeech("Houses"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Verb,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Verb,
                          dict.partOfSpeech("COMPLETED"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Adjective,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Adjective,
                          dict.partOfSpeech("heavy"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Adverb,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Adverb,
                          dict.partOfSpeech("slowly"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Conjunction,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Conjunction,
                          dict.partOfSpeech("AND"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Preposition,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Preposition,
                          dict.partOfSpeech("without"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Interjection,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Interjection,
                          dict.partOfSpeech("gosh"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_Pronoun,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_Pronoun,
                          dict.partOfSpeech("hers"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_DefiniteArticle,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_DefiniteArticle,
                          dict.partOfSpeech("the"));
-    CPPUNIT_ASSERT_EQUAL(prelert::core::CWordDictionary::E_IndefiniteArticle,
+    CPPUNIT_ASSERT_EQUAL(ml::core::CWordDictionary::E_IndefiniteArticle,
                          dict.partOfSpeech("a"));
 }
 
 void CWordDictionaryTest::testWeightingFunctors(void)
 {
     {
-        prelert::core::CWordDictionary::TWeightAll2 weighter;
+        ml::core::CWordDictionary::TWeightAll2 weighter;
 
         CPPUNIT_ASSERT_EQUAL(size_t(0),
-                             weighter(prelert::core::CWordDictionary::E_NotInDictionary));
+                             weighter(ml::core::CWordDictionary::E_NotInDictionary));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_UnknownPart));
+                             weighter(ml::core::CWordDictionary::E_UnknownPart));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Noun));
+                             weighter(ml::core::CWordDictionary::E_Noun));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Plural));
+                             weighter(ml::core::CWordDictionary::E_Plural));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Verb));
+                             weighter(ml::core::CWordDictionary::E_Verb));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Adjective));
+                             weighter(ml::core::CWordDictionary::E_Adjective));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Adverb));
+                             weighter(ml::core::CWordDictionary::E_Adverb));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Conjunction));
+                             weighter(ml::core::CWordDictionary::E_Conjunction));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Preposition));
+                             weighter(ml::core::CWordDictionary::E_Preposition));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Interjection));
+                             weighter(ml::core::CWordDictionary::E_Interjection));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Pronoun));
+                             weighter(ml::core::CWordDictionary::E_Pronoun));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_DefiniteArticle));
+                             weighter(ml::core::CWordDictionary::E_DefiniteArticle));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_IndefiniteArticle));
+                             weighter(ml::core::CWordDictionary::E_IndefiniteArticle));
     }
     {
-        prelert::core::CWordDictionary::TWeightVerbs5Other2 weighter;
+        ml::core::CWordDictionary::TWeightVerbs5Other2 weighter;
 
         CPPUNIT_ASSERT_EQUAL(size_t(0),
-                             weighter(prelert::core::CWordDictionary::E_NotInDictionary));
+                             weighter(ml::core::CWordDictionary::E_NotInDictionary));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_UnknownPart));
+                             weighter(ml::core::CWordDictionary::E_UnknownPart));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Noun));
+                             weighter(ml::core::CWordDictionary::E_Noun));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Plural));
+                             weighter(ml::core::CWordDictionary::E_Plural));
         CPPUNIT_ASSERT_EQUAL(size_t(5),
-                             weighter(prelert::core::CWordDictionary::E_Verb));
+                             weighter(ml::core::CWordDictionary::E_Verb));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Adjective));
+                             weighter(ml::core::CWordDictionary::E_Adjective));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Adverb));
+                             weighter(ml::core::CWordDictionary::E_Adverb));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Conjunction));
+                             weighter(ml::core::CWordDictionary::E_Conjunction));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Preposition));
+                             weighter(ml::core::CWordDictionary::E_Preposition));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Interjection));
+                             weighter(ml::core::CWordDictionary::E_Interjection));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_Pronoun));
+                             weighter(ml::core::CWordDictionary::E_Pronoun));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_DefiniteArticle));
+                             weighter(ml::core::CWordDictionary::E_DefiniteArticle));
         CPPUNIT_ASSERT_EQUAL(size_t(2),
-                             weighter(prelert::core::CWordDictionary::E_IndefiniteArticle));
+                             weighter(ml::core::CWordDictionary::E_IndefiniteArticle));
     }
 }
 
 void CWordDictionaryTest::testPerformance(void)
 {
-    const prelert::core::CWordDictionary &dict = prelert::core::CWordDictionary::instance();
+    const ml::core::CWordDictionary &dict = ml::core::CWordDictionary::instance();
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting word dictionary throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     static const size_t TEST_SIZE(100000);
     for (size_t count = 0; count < TEST_SIZE; ++count)
@@ -178,9 +178,9 @@ void CWordDictionaryTest::testPerformance(void)
         dict.isInDictionary("HELLO2");
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished word dictionary throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Word dictionary throughput test took " << (end - start) <<
              " seconds");

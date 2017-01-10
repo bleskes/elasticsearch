@@ -21,7 +21,7 @@
 
 #include <boost/make_shared.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

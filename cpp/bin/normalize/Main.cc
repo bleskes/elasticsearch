@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     std::string            modelConfigFile;
     std::string            logProperties;
     std::string            logPipe;
-    prelert::core_t::TTime bucketSpan(0);
+    ml::core_t::TTime bucketSpan(0);
     bool                   lengthEncodedInput(false);
     std::string            inputFileName;
     bool                   isInputFileNamedPipe(false);
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     std::string            license;
     bool                   writeCsv(false);
     bool                   perPartitionNormalization(false);
-    if (prelert::normalize::CCmdLineParser::parse(argc,
+    if (ml::normalize::CCmdLineParser::parse(argc,
                                                   argv,
                                                   modelConfigFile,
                                                   logProperties,
@@ -86,12 +86,12 @@ int main(int argc, char **argv)
 
     // Construct the IO manager before reconfiguring the logger, as it performs
     // std::ios actions that only work before first use
-    prelert::api::CIoManager ioMgr(inputFileName,
+    ml::api::CIoManager ioMgr(inputFileName,
                                    isInputFileNamedPipe,
                                    outputFileName,
                                    isOutputFileNamedPipe);
 
-    if (prelert::core::CLogger::instance().reconfigure(logPipe, logProperties) == false)
+    if (ml::core::CLogger::instance().reconfigure(logPipe, logProperties) == false)
     {
         LOG_FATAL("Could not reconfigure logging");
         return EXIT_FAILURE;
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     // Log the program version immediately after reconfiguring the logger.  This
     // must be done from the program, and NOT a shared library, as each program
     // statically links its own version library.
-    LOG_INFO(prelert::ver::CBuildInfo::fullInfo());
+    LOG_INFO(ml::ver::CBuildInfo::fullInfo());
 
     if (ioMgr.initIo() == false)
     {
@@ -108,50 +108,50 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (prelert::core::CLicenseValidator::validate(license) == false)
+    if (ml::core::CLicenseValidator::validate(license) == false)
     {
         LOG_FATAL("Invalid license");
         return EXIT_FAILURE;
     }
 
-    prelert::model::CModelConfig modelConfig =
-            prelert::model::CModelConfig::defaultConfig(bucketSpan);
+    ml::model::CModelConfig modelConfig =
+            ml::model::CModelConfig::defaultConfig(bucketSpan);
     if (!modelConfigFile.empty() && modelConfig.init(modelConfigFile) == false)
     {
-        LOG_FATAL("Prelert model config file '" << modelConfigFile <<
+        LOG_FATAL("Ml model config file '" << modelConfigFile <<
                   "' could not be loaded");
         return EXIT_FAILURE;
     }
     modelConfig.perPartitionNormalization(perPartitionNormalization);
 
     // There's a choice of input and output formats for the numbers to be normalised
-    typedef boost::scoped_ptr<prelert::api::CInputParser> TScopedInputParserP;
+    typedef boost::scoped_ptr<ml::api::CInputParser> TScopedInputParserP;
     TScopedInputParserP inputParser;
     if (lengthEncodedInput)
     {
-        inputParser.reset(new prelert::api::CLengthEncodedInputParser(ioMgr.inputStream()));
+        inputParser.reset(new ml::api::CLengthEncodedInputParser(ioMgr.inputStream()));
     }
     else
     {
-        inputParser.reset(new prelert::api::CCsvInputParser(ioMgr.inputStream(),
-                                                            prelert::api::CCsvInputParser::COMMA));
+        inputParser.reset(new ml::api::CCsvInputParser(ioMgr.inputStream(),
+                                                            ml::api::CCsvInputParser::COMMA));
     }
 
-    typedef boost::scoped_ptr<prelert::api::COutputHandler> TScopedOutputHandlerP;
+    typedef boost::scoped_ptr<ml::api::COutputHandler> TScopedOutputHandlerP;
     TScopedOutputHandlerP outputWriter;
     if (writeCsv)
     {
-        outputWriter.reset(new prelert::api::CCsvOutputWriter(ioMgr.outputStream()));
+        outputWriter.reset(new ml::api::CCsvOutputWriter(ioMgr.outputStream()));
     }
     else
     {
-        outputWriter.reset(new prelert::api::CLineifiedJsonOutputWriter({ prelert::api::CResultNormalizer::PROBABILITY_NAME,
-                                                                          prelert::api::CResultNormalizer::NORMALIZED_SCORE_NAME },
+        outputWriter.reset(new ml::api::CLineifiedJsonOutputWriter({ ml::api::CResultNormalizer::PROBABILITY_NAME,
+                                                                          ml::api::CResultNormalizer::NORMALIZED_SCORE_NAME },
                                                                         ioMgr.outputStream()));
     }
 
     // This object will do the work
-    prelert::api::CResultNormalizer normalizer(modelConfig, *outputWriter);
+    ml::api::CResultNormalizer normalizer(modelConfig, *outputWriter);
 
     // Restore state
     if (!quantilesStateFile.empty())
@@ -169,8 +169,8 @@ int main(int argc, char **argv)
 
     // Now handle the numbers to be normalised from stdin
     if (inputParser->readStream(false,
-                                prelert::api::CInputParser::TSettingsFunc(),
-                                boost::bind(&prelert::api::CResultNormalizer::handleRecord,
+                                ml::api::CInputParser::TSettingsFunc(),
+                                boost::bind(&ml::api::CResultNormalizer::handleRecord,
                                             &normalizer,
                                             _1,
                                             _2,
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
     // This message makes it easier to spot process crashes in a log file - if
     // this isn't present in the log for a given PID and there's no other log
     // message indicating early exit then the process has probably core dumped
-    LOG_INFO("Prelert normalizer exiting");
+    LOG_INFO("Ml normalizer exiting");
 
     return EXIT_SUCCESS;
 }

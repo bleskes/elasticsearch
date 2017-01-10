@@ -19,7 +19,7 @@
 
 #include <config/CAutoconfigurerParams.h>
 
-using namespace prelert;
+using namespace ml;
 
 void CAutoconfigurerParamsTest::testDefaults(void)
 {

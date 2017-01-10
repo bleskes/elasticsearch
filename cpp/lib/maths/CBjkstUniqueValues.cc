@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <iterator>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

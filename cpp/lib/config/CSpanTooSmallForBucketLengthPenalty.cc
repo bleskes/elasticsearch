@@ -20,7 +20,7 @@
 #include <config/CDetectorSpecification.h>
 #include <config/CTools.h>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

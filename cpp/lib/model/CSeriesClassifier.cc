@@ -25,7 +25,7 @@
 #include <numeric>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

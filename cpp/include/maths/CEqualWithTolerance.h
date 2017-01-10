@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_maths_CEqualWithTolerance_h
-#define INCLUDED_prelert_maths_CEqualWithTolerance_h
+#ifndef INCLUDED_ml_maths_CEqualWithTolerance_h
+#define INCLUDED_ml_maths_CEqualWithTolerance_h
 
 #include <core/CLogger.h>
 
@@ -23,7 +23,7 @@
 
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -187,5 +187,5 @@ class CEqualWithTolerance : public std::binary_function<T, T, bool>,
 }
 }
 
-#endif // INCLUDED_prelert_maths_CEqualWithTolerance_h
+#endif // INCLUDED_ml_maths_CEqualWithTolerance_h
 

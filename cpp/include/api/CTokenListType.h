@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CTokenListType_h
-#define INCLUDED_prelert_api_CTokenListType_h
+#ifndef INCLUDED_ml_api_CTokenListType_h
+#define INCLUDED_ml_api_CTokenListType_h
 
 #include <api/ImportExport.h>
 
@@ -23,7 +23,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -34,10 +34,10 @@ namespace api
 {
 
 //! \brief
-//! The data associated with this Prelert 'type'
+//! The data associated with this Ml 'type'
 //!
 //! DESCRIPTION:\n
-//! The data associated with this Prelert 'type'
+//! The data associated with this Ml 'type'
 //!
 //! IMPLEMENTATION DECISIONS:\n
 //! Base the type on a string
@@ -176,5 +176,5 @@ class API_EXPORT CTokenListType
 }
 }
 
-#endif // INCLUDED_prelert_api_CTokenListType_h
+#endif // INCLUDED_ml_api_CTokenListType_h
 

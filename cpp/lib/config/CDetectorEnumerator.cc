@@ -24,7 +24,7 @@
 #include <boost/range.hpp>
 #include <boost/ref.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

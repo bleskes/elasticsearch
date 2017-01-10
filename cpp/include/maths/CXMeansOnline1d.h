@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CXMeansOnline1d_h
-#define INCLUDED_prelert_maths_CXMeansOnline1d_h
+#ifndef INCLUDED_ml_maths_CXMeansOnline1d_h
+#define INCLUDED_ml_maths_CXMeansOnline1d_h
 
 #include <core/CMemory.h>
 
@@ -31,7 +31,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -491,4 +491,4 @@ class MATHS_EXPORT CXMeansOnline1d : public CClusterer1d
 }
 }
 
-#endif // INCLUDED_prelert_maths_CXMeansOnline1d_h
+#endif // INCLUDED_ml_maths_CXMeansOnline1d_h

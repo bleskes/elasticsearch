@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CAnnotatedProbability_h
-#define INCLUDED_prelert_model_CAnnotatedProbability_h
+#ifndef INCLUDED_ml_model_CAnnotatedProbability_h
+#define INCLUDED_ml_model_CAnnotatedProbability_h
 
 #include <core/CSmallVector.h>
 
@@ -29,7 +29,7 @@
 #include <vector>
 #include <utility>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -182,4 +182,4 @@ struct MODEL_EXPORT SAnnotatedProbability
 }
 }
 
-#endif // INCLUDED_prelert_model_CAnnotatedProbability_h
+#endif // INCLUDED_ml_model_CAnnotatedProbability_h

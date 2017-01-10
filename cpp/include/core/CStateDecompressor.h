@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CStateDecompressor_h
-#define INCLUDED_prelert_core_CStateDecompressor_h
+#ifndef INCLUDED_ml_core_CStateDecompressor_h
+#define INCLUDED_ml_core_CStateDecompressor_h
 
 #include <core/CDataSearcher.h>
 #include <core/ImportExport.h>
@@ -23,7 +23,7 @@
 #include <rapidjson/pullreader.h>
 #include <rapidjson/GenericReadStream.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -39,7 +39,7 @@ namespace core
 //! the underlying data - so this class basically fits on top
 //! of an existing CDataSearcher (and it's counterpart CStateCompressor
 //! on top of a CDataAdder) to enable compression for the
-//! prelert persist interface
+//! ml persist interface
 //!
 //! IMPLEMENTATION DECISIONS:\n
 //! Not copyable.
@@ -161,5 +161,5 @@ class CORE_EXPORT CStateDecompressor : public CDataSearcher
 }
 }
 
-#endif // INCLUDED_prelert_core_CStateDecompressor_h
+#endif // INCLUDED_ml_core_CStateDecompressor_h
 

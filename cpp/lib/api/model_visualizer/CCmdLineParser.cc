@@ -22,7 +22,7 @@
 #include <iostream>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model_visualiser
 {

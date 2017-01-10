@@ -42,7 +42,7 @@
 
 #include <numeric>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

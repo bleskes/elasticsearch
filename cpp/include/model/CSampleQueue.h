@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CSampleQueue_h
-#define INCLUDED_prelert_model_CSampleQueue_h
+#ifndef INCLUDED_ml_model_CSampleQueue_h
+#define INCLUDED_ml_model_CSampleQueue_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CHashing.h>
@@ -43,7 +43,7 @@
 #include <cmath>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -625,4 +625,4 @@ const std::string CSampleQueue<STATISTIC>::SUB_SAMPLE_TAG("a");
 }
 }
 
-#endif // INCLUDED_prelert_model_CSampleQueue_h
+#endif // INCLUDED_ml_model_CSampleQueue_h

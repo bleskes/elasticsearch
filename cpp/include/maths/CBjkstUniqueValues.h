@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CBjkstUniqueValues_h
-#define INCLUDED_prelert_maths_CBjkstUniqueValues_h
+#ifndef INCLUDED_ml_maths_CBjkstUniqueValues_h
+#define INCLUDED_ml_maths_CBjkstUniqueValues_h
 
 #include <core/CHashing.h>
 #include <core/CMemory.h>
@@ -32,7 +32,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -186,4 +186,4 @@ class MATHS_EXPORT CBjkstUniqueValues
 }
 }
 
-#endif // INCLUDED_prelert_maths_CBjkstUniqueValues_h
+#endif // INCLUDED_ml_maths_CBjkstUniqueValues_h

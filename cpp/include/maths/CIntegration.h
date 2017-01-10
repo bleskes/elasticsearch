@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CIntegration_h
-#define INCLUDED_prelert_maths_CIntegration_h
+#ifndef INCLUDED_ml_maths_CIntegration_h
+#define INCLUDED_ml_maths_CIntegration_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -34,7 +34,7 @@
 
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -760,4 +760,4 @@ typename CIntegration::CSparseGaussLegendreQuadrature<O, D>::TPtr CIntegration::
 }
 }
 
-#endif // INCLUDED_prelert_maths_CIntegration_h
+#endif // INCLUDED_ml_maths_CIntegration_h

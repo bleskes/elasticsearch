@@ -21,7 +21,7 @@
 
 #include <utility>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

@@ -19,7 +19,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -40,13 +40,13 @@ class CResourceLimitTest : public CppUnit::TestFixture
         static CppUnit::Test *suite(void);
 
     private:
-        void importCsvDataWithLimiter(prelert::core_t::TTime firstTime,
-                                      prelert::core_t::TTime bucketLength,
+        void importCsvDataWithLimiter(ml::core_t::TTime firstTime,
+                                      ml::core_t::TTime bucketLength,
                                       CResultWriter &outputResults,
                                       const std::string &fileName,
-                                      prelert::model::CAnomalyDetector &detector,
+                                      ml::model::CAnomalyDetector &detector,
                                       std::size_t limitCutoff,
-                                      prelert::model::CResourceMonitor &resourceMonitor);
+                                      ml::model::CResourceMonitor &resourceMonitor);
 };
 
 #endif // INCLUDED_CResourceLimitTest_h

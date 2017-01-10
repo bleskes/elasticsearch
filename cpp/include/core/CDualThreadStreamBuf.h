@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CDualThreadStreamBuf_h
-#define INCLUDED_prelert_core_CDualThreadStreamBuf_h
+#ifndef INCLUDED_ml_core_CDualThreadStreamBuf_h
+#define INCLUDED_ml_core_CDualThreadStreamBuf_h
 
 #include <core/CCondition.h>
 #include <core/CMutex.h>
@@ -25,7 +25,7 @@
 #include <streambuf>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -52,7 +52,7 @@ namespace core
 //!
 //! The member functions of this class mainly overload the virtual
 //! protected members of the std::streambuf class, and hence have
-//! names that aren't very Prelert-like.
+//! names that aren't very Ml-like.
 //!
 //! Some members are not overloaded, namely setbuf(), seekpos(),
 //! and imbue(), which means the class can't have its buffer
@@ -199,5 +199,5 @@ class CORE_EXPORT CDualThreadStreamBuf : public std::streambuf
 }
 }
 
-#endif // INCLUDED_prelert_core_CDualThreadStreamBuf_h
+#endif // INCLUDED_ml_core_CDualThreadStreamBuf_h
 

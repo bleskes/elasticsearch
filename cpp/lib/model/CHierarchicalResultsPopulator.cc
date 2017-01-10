@@ -21,7 +21,7 @@
 #include <model/CLimits.h>
 #include <model/CModel.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

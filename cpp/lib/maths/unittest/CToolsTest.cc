@@ -28,7 +28,7 @@
 #include <boost/range.hpp>
 #include <boost/math/concepts/real_concept.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace maths;
 using namespace test;
 
@@ -71,7 +71,7 @@ TDoubleBoolPr stationaryPoint(const DISTRIBUTION &distribution)
 }
 TDoubleBoolPr stationaryPoint(const CLogTDistribution &logt)
 {
-    return TDoubleBoolPr(prelert::maths::mode(logt), true);
+    return TDoubleBoolPr(ml::maths::mode(logt), true);
 }
 TDoubleBoolPr stationaryPoint(const boost::math::beta_distribution<> &beta)
 {
@@ -90,7 +90,7 @@ double pdf(const DISTRIBUTION &distribution, const double &x)
 }
 double pdf(const CLogTDistribution &logt, const double &x)
 {
-    return prelert::maths::pdf(logt, x);
+    return ml::maths::pdf(logt, x);
 }
 
 template<typename DISTRIBUTION>
@@ -100,7 +100,7 @@ double cdf(const DISTRIBUTION &distribution, const double &x)
 }
 double cdf(const CLogTDistribution &logt, const double &x)
 {
-    return prelert::maths::cdf(logt, x);
+    return ml::maths::cdf(logt, x);
 }
 
 template<typename DISTRIBUTION>
@@ -110,7 +110,7 @@ double cdfComplement(const DISTRIBUTION &distribution, const double &x)
 }
 double cdfComplement(const CLogTDistribution &logt, const double &x)
 {
-    return prelert::maths::cdfComplement(logt, x);
+    return ml::maths::cdfComplement(logt, x);
 }
 
 } // adapters::

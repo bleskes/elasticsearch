@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_domain_name_entropy_CCompressUtils_h
-#define INCLUDED_prelert_domain_name_entropy_CCompressUtils_h
+#ifndef INCLUDED_ml_domain_name_entropy_CCompressUtils_h
+#define INCLUDED_ml_domain_name_entropy_CCompressUtils_h
 
 #include <string>
 #include <vector>
@@ -23,7 +23,7 @@
 
 #include <core/CNonCopyable.h>
 
-namespace prelert
+namespace ml
 {
 namespace domain_name_entropy
 {
@@ -87,4 +87,4 @@ class CCompressUtils : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_domain_name_entropy_CCompressUtils_h
+#endif // INCLUDED_ml_domain_name_entropy_CCompressUtils_h

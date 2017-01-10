@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CEntropySketch_h
-#define INCLUDED_prelert_maths_CEntropySketch_h
+#ifndef INCLUDED_ml_maths_CEntropySketch_h
+#define INCLUDED_ml_maths_CEntropySketch_h
 
 #include <maths/ImportExport.h>
 
@@ -22,7 +22,7 @@
 #include <vector>
 #include <stdint.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -68,4 +68,4 @@ class MATHS_EXPORT CEntropySketch
 }
 }
 
-#endif // INCLUDED_prelert_maths_CEntropySketch_h
+#endif // INCLUDED_ml_maths_CEntropySketch_h

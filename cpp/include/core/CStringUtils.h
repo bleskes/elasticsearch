@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CStringUtils_h
-#define INCLUDED_prelert_core_CStringUtils_h
+#ifndef INCLUDED_ml_core_CStringUtils_h
+#define INCLUDED_ml_core_CStringUtils_h
 
 #include <core/CIEEE754.h>
 #include <core/CNonInstantiatable.h>
@@ -24,7 +24,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -300,5 +300,5 @@ class CORE_EXPORT CStringUtils : private CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_CStringUtils_h
+#endif // INCLUDED_ml_core_CStringUtils_h
 

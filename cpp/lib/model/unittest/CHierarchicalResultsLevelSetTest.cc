@@ -70,23 +70,23 @@ class CTestNodeFactory
         }
 };
 
-class CConcreteHierarchicalResultsLevelSet : public prelert::model::CHierarchicalResultsLevelSet<TestNode>
+class CConcreteHierarchicalResultsLevelSet : public ml::model::CHierarchicalResultsLevelSet<TestNode>
 {
 public:
     CConcreteHierarchicalResultsLevelSet(const TestNode &root)
-    :prelert::model::CHierarchicalResultsLevelSet<TestNode>(root)
+    :ml::model::CHierarchicalResultsLevelSet<TestNode>(root)
     {
 
     }
 
     //! Visit a node.
-    virtual void visit(const prelert::model::CHierarchicalResults &/*results*/, const TNode &/*node*/,
+    virtual void visit(const ml::model::CHierarchicalResults &/*results*/, const TNode &/*node*/,
                         bool /*pivot*/)
     {
     }
 
     // make public
-    using prelert::model::CHierarchicalResultsLevelSet<TestNode>::elements;
+    using ml::model::CHierarchicalResultsLevelSet<TestNode>::elements;
 };
 
 void print(const TestNode *node)
@@ -96,25 +96,25 @@ void print(const TestNode *node)
 
 void CHierarchicalResultsLevelSetTest::testElements_withPerPartitionNormalisation(void)
 {
-    prelert::model::hierarchical_results_detail::TStrPtr UNSET = boost::make_shared<std::string>("");
-    prelert::model::hierarchical_results_detail::TStrPtr PARTITION_A = boost::make_shared<std::string>("pA");
-    prelert::model::hierarchical_results_detail::TStrPtr PARTITION_B = boost::make_shared<std::string>("pB");
-    prelert::model::hierarchical_results_detail::TStrPtr PARTITION_C = boost::make_shared<std::string>("pC");
+    ml::model::hierarchical_results_detail::TStrPtr UNSET = boost::make_shared<std::string>("");
+    ml::model::hierarchical_results_detail::TStrPtr PARTITION_A = boost::make_shared<std::string>("pA");
+    ml::model::hierarchical_results_detail::TStrPtr PARTITION_B = boost::make_shared<std::string>("pB");
+    ml::model::hierarchical_results_detail::TStrPtr PARTITION_C = boost::make_shared<std::string>("pC");
 
-    prelert::model::hierarchical_results_detail::TStrPtr PARTITION_VALUE_1 = boost::make_shared<std::string>("v1");
-    prelert::model::hierarchical_results_detail::TStrPtr PARTITION_VALUE_2 = boost::make_shared<std::string>("v2");
-    prelert::model::hierarchical_results_detail::TStrPtr PARTITION_VALUE_3 = boost::make_shared<std::string>("v3");
+    ml::model::hierarchical_results_detail::TStrPtr PARTITION_VALUE_1 = boost::make_shared<std::string>("v1");
+    ml::model::hierarchical_results_detail::TStrPtr PARTITION_VALUE_2 = boost::make_shared<std::string>("v2");
+    ml::model::hierarchical_results_detail::TStrPtr PARTITION_VALUE_3 = boost::make_shared<std::string>("v3");
 
 
 
     TestNode root("root");
 
-    prelert::model::hierarchical_results_detail::SResultSpec spec;
+    ml::model::hierarchical_results_detail::SResultSpec spec;
     spec.s_PartitionFieldName = PARTITION_A;
     spec.s_PartitionFieldValue = PARTITION_VALUE_1;
-    prelert::model::SAnnotatedProbability emptyAnnotatedProb;
+    ml::model::SAnnotatedProbability emptyAnnotatedProb;
 
-    prelert::model::hierarchical_results_detail::SResultSpec unsetSpec;
+    ml::model::hierarchical_results_detail::SResultSpec unsetSpec;
 
     CConcreteHierarchicalResultsLevelSet::TNode parent(unsetSpec, emptyAnnotatedProb);
     CConcreteHierarchicalResultsLevelSet::TNode child(spec, emptyAnnotatedProb);
@@ -143,7 +143,7 @@ void CHierarchicalResultsLevelSetTest::testElements_withPerPartitionNormalisatio
         CPPUNIT_ASSERT_EQUAL(std::string("pAv1"), result[0]->s_Name);
 
 
-        prelert::model::hierarchical_results_detail::SResultSpec specB;
+        ml::model::hierarchical_results_detail::SResultSpec specB;
         specB.s_PartitionFieldName = PARTITION_B;
         specB.s_PartitionFieldValue = PARTITION_VALUE_1;
 

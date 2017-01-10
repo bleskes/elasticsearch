@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CPartitioningFields_h
-#define INCLUDED_prelert_model_CPartitioningFields_h
+#ifndef INCLUDED_ml_model_CPartitioningFields_h
+#define INCLUDED_ml_model_CPartitioningFields_h
 
 #include <model/ImportExport.h>
 
@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -72,5 +72,5 @@ class MODEL_EXPORT CPartitioningFields
 }
 }
 
-#endif // INCLUDED_prelert_model_CPartitioningFields_h
+#endif // INCLUDED_ml_model_CPartitioningFields_h
 

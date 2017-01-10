@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CBlockingMessageQueue_h
-#define INCLUDED_prelert_core_CBlockingMessageQueue_h
+#ifndef INCLUDED_ml_core_CBlockingMessageQueue_h
+#define INCLUDED_ml_core_CBlockingMessageQueue_h
 
 #include <core/CCondition.h>
 #include <core/CLogger.h>
@@ -26,7 +26,7 @@
 #include <boost/shared_ptr.hpp>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -304,5 +304,5 @@ class CBlockingMessageQueue
 }
 }
 
-#endif // INCLUDED_prelert_core_CBlockingMessageQueue_h
+#endif // INCLUDED_ml_core_CBlockingMessageQueue_h
 

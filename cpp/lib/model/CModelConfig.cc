@@ -39,7 +39,7 @@
 
 #include <fstream>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -96,7 +96,7 @@ const double CModelConfig::DEFAULT_AGGREGATION_STYLE_PARAMS[][model_t::NUMBER_AG
         { 0.5, 0.5, 1.0, 1.0 }
     };
 // The default for maximumanomalousprobability now matches the default
-// for unusualprobabilitythreshold in prelertlimits.conf - this avoids
+// for unusualprobabilitythreshold in mllimits.conf - this avoids
 // inconsistencies in output
 const double CModelConfig::DEFAULT_MAXIMUM_ANOMALOUS_PROBABILITY(0.035);
 const double CModelConfig::DEFAULT_NOISE_PERCENTILE(50.0);

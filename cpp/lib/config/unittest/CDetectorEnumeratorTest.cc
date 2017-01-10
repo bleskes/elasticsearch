@@ -23,7 +23,7 @@
 
 #include <sstream>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {

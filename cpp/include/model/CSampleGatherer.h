@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CSampleGatherer_h
-#define INCLUDED_prelert_model_CSampleGatherer_h
+#ifndef INCLUDED_ml_model_CSampleGatherer_h
+#define INCLUDED_ml_model_CSampleGatherer_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -46,7 +46,7 @@
 #include <iterator>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -547,4 +547,4 @@ inline std::ostream &operator<<(std::ostream &o,
 }
 }
 
-#endif // INCLUDED_prelert_model_CSampleGatherer_h
+#endif // INCLUDED_ml_model_CSampleGatherer_h

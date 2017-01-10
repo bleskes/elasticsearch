@@ -70,7 +70,7 @@ void CLoggerTest::testLogging(void)
 
 void CLoggerTest::testReconfiguration(void)
 {
-    prelert::core::CLogger &logger = prelert::core::CLogger::instance();
+    ml::core::CLogger &logger = ml::core::CLogger::instance();
 
     LOG_DEBUG("Starting logger reconfiguration test");
 
@@ -92,11 +92,11 @@ void CLoggerTest::testReconfiguration(void)
 
 void CLoggerTest::testSetLevel(void)
 {
-    prelert::core::CLogger &logger = prelert::core::CLogger::instance();
+    ml::core::CLogger &logger = ml::core::CLogger::instance();
 
     LOG_DEBUG("Starting logger level test");
 
-    CPPUNIT_ASSERT(logger.setLoggingLevel(prelert::core::CLogger::E_Error));
+    CPPUNIT_ASSERT(logger.setLoggingLevel(ml::core::CLogger::E_Error));
 
     LOG_TRACE("SHOULD NOT BE SEEN");
     LOG_DEBUG("SHOULD NOT BE SEEN");
@@ -105,7 +105,7 @@ void CLoggerTest::testSetLevel(void)
     LOG_ERROR("Should be seen");
     LOG_FATAL("Should be seen");
 
-    CPPUNIT_ASSERT(logger.setLoggingLevel(prelert::core::CLogger::E_Info));
+    CPPUNIT_ASSERT(logger.setLoggingLevel(ml::core::CLogger::E_Info));
 
     LOG_TRACE("SHOULD NOT BE SEEN");
     LOG_DEBUG("SHOULD NOT BE SEEN");
@@ -114,7 +114,7 @@ void CLoggerTest::testSetLevel(void)
     LOG_ERROR("Should be seen");
     LOG_FATAL("Should be seen");
 
-    CPPUNIT_ASSERT(logger.setLoggingLevel(prelert::core::CLogger::E_Trace));
+    CPPUNIT_ASSERT(logger.setLoggingLevel(ml::core::CLogger::E_Trace));
 
     LOG_TRACE("Should be seen");
     LOG_DEBUG("Should be seen");
@@ -123,7 +123,7 @@ void CLoggerTest::testSetLevel(void)
     LOG_ERROR("Should be seen");
     LOG_FATAL("Should be seen");
 
-    CPPUNIT_ASSERT(logger.setLoggingLevel(prelert::core::CLogger::E_Warn));
+    CPPUNIT_ASSERT(logger.setLoggingLevel(ml::core::CLogger::E_Warn));
 
     LOG_TRACE("SHOULD NOT BE SEEN");
     LOG_DEBUG("SHOULD NOT BE SEEN");
@@ -132,7 +132,7 @@ void CLoggerTest::testSetLevel(void)
     LOG_ERROR("Should be seen");
     LOG_FATAL("Should be seen");
 
-    CPPUNIT_ASSERT(logger.setLoggingLevel(prelert::core::CLogger::E_Fatal));
+    CPPUNIT_ASSERT(logger.setLoggingLevel(ml::core::CLogger::E_Fatal));
 
     LOG_TRACE("SHOULD NOT BE SEEN");
     LOG_DEBUG("SHOULD NOT BE SEEN");
@@ -141,13 +141,13 @@ void CLoggerTest::testSetLevel(void)
     LOG_ERROR("SHOULD NOT BE SEEN");
     LOG_FATAL("Should be seen");
 
-    CPPUNIT_ASSERT(logger.setLoggingLevel(prelert::core::CLogger::E_Debug));
+    CPPUNIT_ASSERT(logger.setLoggingLevel(ml::core::CLogger::E_Debug));
 
     LOG_DEBUG("Finished logger level test");
 }
 
 void CLoggerTest::testLogEnvironment(void)
 {
-    prelert::core::CLogger::instance().logEnvironment();
+    ml::core::CLogger::instance().logEnvironment();
 }
 

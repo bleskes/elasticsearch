@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_test_CTestRunner_h
-#define INCLUDED_prelert_test_CTestRunner_h
+#ifndef INCLUDED_ml_test_CTestRunner_h
+#define INCLUDED_ml_test_CTestRunner_h
 
 #include <test/ImportExport.h>
 
@@ -23,7 +23,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {
@@ -63,7 +63,7 @@ namespace test
 //! int
 //! main(int argc, const char **argv)
 //! {
-//!     prelert::test::CTestRunner runner(argc, argv);
+//!     ml::test::CTestRunner runner(argc, argv);
 //!
 //!     runner.addTest( CClass1Test::suite() );
 //!     runner.addTest( CClass2Test::suite() );
@@ -128,5 +128,5 @@ class TEST_EXPORT CTestRunner : public CppUnit::TextTestRunner
 }
 }
 
-#endif // INCLUDED_prelert_test_CTestRunner_h
+#endif // INCLUDED_ml_test_CTestRunner_h
 

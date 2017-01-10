@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CDetectorSpecification_h
-#define INCLUDED_prelert_config_CDetectorSpecification_h
+#ifndef INCLUDED_ml_config_CDetectorSpecification_h
+#define INCLUDED_ml_config_CDetectorSpecification_h
 
 #include <core/CoreTypes.h>
 
@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -307,4 +307,4 @@ class CONFIG_EXPORT CDetectorSpecification : boost::equality_comparable< CDetect
 }
 }
 
-#endif // INCLUDED_prelert_config_CDetectorSpecification_h
+#endif // INCLUDED_ml_config_CDetectorSpecification_h

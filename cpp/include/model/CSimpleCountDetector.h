@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_model_CSimpleCountDetector_h
-#define INCLUDED_prelert_model_CSimpleCountDetector_h
+#ifndef INCLUDED_ml_model_CSimpleCountDetector_h
+#define INCLUDED_ml_model_CSimpleCountDetector_h
 
 #include <core/CoreTypes.h>
 
@@ -23,7 +23,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -38,7 +38,7 @@ class CModelConfig;
 //! in each time bucket.
 //!
 //! The output of this class is used to plot event rate charts in
-//! the Prelert Splunk app, and removes the burden of maintaining
+//! the Ml Splunk app, and removes the burden of maintaining
 //! accurate overall event counts from the real anomaly detector
 //! classes.
 //!
@@ -89,5 +89,5 @@ class MODEL_EXPORT CSimpleCountDetector : public CAnomalyDetector
 }
 }
 
-#endif // INCLUDED_prelert_model_CSimpleCountDetector_h
+#endif // INCLUDED_ml_model_CSimpleCountDetector_h
 

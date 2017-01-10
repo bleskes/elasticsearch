@@ -20,7 +20,7 @@
 extern char *__progname;
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

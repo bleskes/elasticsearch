@@ -19,7 +19,7 @@
 #include <core/CWindowsError.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

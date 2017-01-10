@@ -25,7 +25,7 @@
 #include "CCmdLineParser.h"
 #include "CTransactionStore.h"
 
-using namespace prelert;
+using namespace ml;
 
 int main(int argc, char **argv)
 {

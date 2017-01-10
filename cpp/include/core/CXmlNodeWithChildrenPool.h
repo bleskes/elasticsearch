@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CXmlNodeWithChildrenPool_h
-#define INCLUDED_prelert_core_CXmlNodeWithChildrenPool_h
+#ifndef INCLUDED_ml_core_CXmlNodeWithChildrenPool_h
+#define INCLUDED_ml_core_CXmlNodeWithChildrenPool_h
 
 #include <core/CStringUtils.h>
 #include <core/CXmlNodeWithChildren.h>
@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -101,5 +101,5 @@ class CORE_EXPORT CXmlNodeWithChildrenPool
 }
 }
 
-#endif // INCLUDED_prelert_core_CXmlNodeWithChildrenPool_h
+#endif // INCLUDED_ml_core_CXmlNodeWithChildrenPool_h
 

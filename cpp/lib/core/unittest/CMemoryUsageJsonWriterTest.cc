@@ -20,7 +20,7 @@
 
 #include <sstream>
 
-using namespace prelert;
+using namespace ml;
 
 CppUnit::Test *CMemoryUsageJsonWriterTest::suite()
 {

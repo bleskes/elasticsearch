@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CCompositeFunctions_h
-#define INCLUDED_prelert_maths_CCompositeFunctions_h
+#ifndef INCLUDED_ml_maths_CCompositeFunctions_h
+#define INCLUDED_ml_maths_CCompositeFunctions_h
 
 #include <maths/ImportExport.h>
 
@@ -25,7 +25,7 @@
 
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -299,4 +299,4 @@ class MATHS_EXPORT CCompositeFunctions
 }
 }
 
-#endif // INCLUDED_prelert_maths_CCompositeFunctions_h
+#endif // INCLUDED_ml_maths_CCompositeFunctions_h

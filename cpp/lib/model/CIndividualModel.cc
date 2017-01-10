@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <map>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

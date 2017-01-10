@@ -33,23 +33,23 @@ CppUnit::Test *CTermQuoterTest::suite()
 
 void CTermQuoterTest::testDoubleQuoting(void)
 {
-    CPPUNIT_ASSERT_EQUAL(std::string("\"\""), prelert::api::CTermQuoter::doubleQuote(""));
+    CPPUNIT_ASSERT_EQUAL(std::string("\"\""), ml::api::CTermQuoter::doubleQuote(""));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("simple"), prelert::api::CTermQuoter::doubleQuote("simple"));
+    CPPUNIT_ASSERT_EQUAL(std::string("simple"), ml::api::CTermQuoter::doubleQuote("simple"));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("\"complex\\\\\""), prelert::api::CTermQuoter::doubleQuote("complex\\"));
+    CPPUNIT_ASSERT_EQUAL(std::string("\"complex\\\\\""), ml::api::CTermQuoter::doubleQuote("complex\\"));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("\"more \\\"complex\\\"| \""), prelert::api::CTermQuoter::doubleQuote("more \"complex\"| "));
+    CPPUNIT_ASSERT_EQUAL(std::string("\"more \\\"complex\\\"| \""), ml::api::CTermQuoter::doubleQuote("more \"complex\"| "));
 }
 
 void CTermQuoterTest::testSingleQuoting(void)
 {
-    CPPUNIT_ASSERT_EQUAL(std::string("''"), prelert::api::CTermQuoter::singleQuote(""));
+    CPPUNIT_ASSERT_EQUAL(std::string("''"), ml::api::CTermQuoter::singleQuote(""));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("simple"), prelert::api::CTermQuoter::singleQuote("simple"));
+    CPPUNIT_ASSERT_EQUAL(std::string("simple"), ml::api::CTermQuoter::singleQuote("simple"));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("'complex\\\\'"), prelert::api::CTermQuoter::singleQuote("complex\\"));
+    CPPUNIT_ASSERT_EQUAL(std::string("'complex\\\\'"), ml::api::CTermQuoter::singleQuote("complex\\"));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("'more \"complex\"| '"), prelert::api::CTermQuoter::singleQuote("more \"complex\"| "));
+    CPPUNIT_ASSERT_EQUAL(std::string("'more \"complex\"| '"), ml::api::CTermQuoter::singleQuote("more \"complex\"| "));
 }
 

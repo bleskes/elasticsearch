@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CInformationCriteria_h
-#define INCLUDED_prelert_maths_CInformationCriteria_h
+#ifndef INCLUDED_ml_maths_CInformationCriteria_h
+#define INCLUDED_ml_maths_CInformationCriteria_h
 
 #include <core/Constants.h>
 
@@ -26,7 +26,7 @@
 #include <limits>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -362,4 +362,4 @@ class CGaussianInfoCriterion
 }
 }
 
-#endif // INCLUDED_prelert_maths_CInformationCriteria_h
+#endif // INCLUDED_ml_maths_CInformationCriteria_h

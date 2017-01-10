@@ -33,7 +33,7 @@
 
 #include <algorithm>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CStateMachine_h
-#define INCLUDED_prelert_core_CStateMachine_h
+#ifndef INCLUDED_ml_core_CStateMachine_h
+#define INCLUDED_ml_core_CStateMachine_h
 
 #include <core/AtomicTypes.h>
 #include <core/CoreTypes.h>
@@ -26,7 +26,7 @@
 #include <deque>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

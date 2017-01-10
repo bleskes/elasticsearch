@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CPolledDataPenalty_h
-#define INCLUDED_prelert_config_CPolledDataPenalty_h
+#ifndef INCLUDED_ml_config_CPolledDataPenalty_h
+#define INCLUDED_ml_config_CPolledDataPenalty_h
 
 #include <core/CoreTypes.h>
 
@@ -23,7 +23,7 @@
 
 #include <boost/optional.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -63,4 +63,4 @@ class CONFIG_EXPORT CPolledDataPenalty : public CPenalty
 }
 }
 
-#endif // INCLUDED_prelert_config_CPolledDataPenalty_h
+#endif // INCLUDED_ml_config_CPolledDataPenalty_h

@@ -35,7 +35,7 @@
 #include <sstream>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

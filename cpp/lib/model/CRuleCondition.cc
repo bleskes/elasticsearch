@@ -21,7 +21,7 @@
 #include <model/CRuleCondition.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

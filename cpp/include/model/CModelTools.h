@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CModelTools_h
-#define INCLUDED_prelert_model_CModelTools_h
+#ifndef INCLUDED_ml_model_CModelTools_h
+#define INCLUDED_ml_model_CModelTools_h
 
 #include <core/CAllocationStrategy.h>
 #include <core/CLogger.h>
@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -434,4 +434,4 @@ class MODEL_EXPORT CModelTools
 }
 }
 
-#endif // INCLUDED_prelert_model_CModelTools_h
+#endif // INCLUDED_ml_model_CModelTools_h

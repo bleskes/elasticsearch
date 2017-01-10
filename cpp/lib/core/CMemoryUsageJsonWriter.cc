@@ -21,7 +21,7 @@ const std::string MEMORY("memory");
 const std::string UNUSED("unused");
 }
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -87,4 +87,4 @@ void CMemoryUsageJsonWriter::finalise()
 
 
 } // core
-} // prelert
+} // ml

@@ -31,7 +31,7 @@
 
 #include <test/CRandomNumbers.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 typedef std::vector<double> TDoubleVec;

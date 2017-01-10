@@ -38,7 +38,7 @@ void CDynamicMeanTest::testAll(void)
     double   sample3[] = { 1,1,3,3,1,1,3,1,1,4,1,1,1,1,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
     //double   sample[] = { 1,2,3,4,5,6,7,8,9,10 };
 
-    typedef prelert::maths::CDynamicMean<int> TIntMean;
+    typedef ml::maths::CDynamicMean<int> TIntMean;
     TIntMean v;
 
     double mean(0.0);

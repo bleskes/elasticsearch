@@ -28,7 +28,7 @@
 #include <boost/ref.hpp>
 #include <boost/unordered_set.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace core;
 
 void CHashingTest::testUniversalHash(void)

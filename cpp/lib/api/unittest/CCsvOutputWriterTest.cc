@@ -53,9 +53,9 @@ void CCsvOutputWriterTest::testAdd(void)
     // In this test, the output is the input plus an extra field - no input
     // fields are changed
 
-    prelert::api::CCsvOutputWriter writer;
+    ml::api::CCsvOutputWriter writer;
 
-    prelert::api::CCsvOutputWriter::TStrVec splunkFieldNames;
+    ml::api::CCsvOutputWriter::TStrVec splunkFieldNames;
     splunkFieldNames.push_back("_cd");
     splunkFieldNames.push_back("_indextime");
     splunkFieldNames.push_back("_kv");
@@ -83,12 +83,12 @@ void CCsvOutputWriterTest::testAdd(void)
     splunkFieldNames.push_back("timeendpos");
     splunkFieldNames.push_back("timestartpos");
 
-    prelert::api::CCsvOutputWriter::TStrVec prelertFieldNames;
-    prelertFieldNames.push_back("prelert_type");
+    ml::api::CCsvOutputWriter::TStrVec mlFieldNames;
+    mlFieldNames.push_back("ml_type");
 
-    CPPUNIT_ASSERT(writer.fieldNames(splunkFieldNames, prelertFieldNames));
+    CPPUNIT_ASSERT(writer.fieldNames(splunkFieldNames, mlFieldNames));
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap originalFields;
+    ml::api::CCsvOutputWriter::TStrStrUMap originalFields;
     originalFields["_cd"] = "0:3933689";
     originalFields["_indextime"] = "1337698174";
     originalFields["_kv"] = "1";
@@ -116,16 +116,16 @@ void CCsvOutputWriterTest::testAdd(void)
     originalFields["timeendpos"] = "22";
     originalFields["timestartpos"] = "0";
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap prelertFields;
-    prelertFields["prelert_type"] = "75";
+    ml::api::CCsvOutputWriter::TStrStrUMap mlFields;
+    mlFields["ml_type"] = "75";
 
-    CPPUNIT_ASSERT(writer.writeRow(false, originalFields, prelertFields));
+    CPPUNIT_ASSERT(writer.writeRow(false, originalFields, mlFields));
 
     std::string output(writer.internalString());
 
     LOG_DEBUG("Output is:\n" << output);
 
-    for (prelert::api::CCsvOutputWriter::TStrVecCItr iter = splunkFieldNames.begin();
+    for (ml::api::CCsvOutputWriter::TStrVecCItr iter = splunkFieldNames.begin();
          iter != splunkFieldNames.end();
          ++iter)
     {
@@ -133,15 +133,15 @@ void CCsvOutputWriterTest::testAdd(void)
         CPPUNIT_ASSERT(output.find(*iter) != std::string::npos);
     }
 
-    for (prelert::api::CCsvOutputWriter::TStrVecCItr iter = prelertFieldNames.begin();
-         iter != prelertFieldNames.end();
+    for (ml::api::CCsvOutputWriter::TStrVecCItr iter = mlFieldNames.begin();
+         iter != mlFieldNames.end();
          ++iter)
     {
         LOG_DEBUG("Checking output contains '" << *iter << "'");
         CPPUNIT_ASSERT(output.find(*iter) != std::string::npos);
     }
 
-    for (prelert::api::CCsvOutputWriter::TStrStrUMapCItr iter = originalFields.begin();
+    for (ml::api::CCsvOutputWriter::TStrStrUMapCItr iter = originalFields.begin();
          iter != originalFields.end();
          ++iter)
     {
@@ -149,8 +149,8 @@ void CCsvOutputWriterTest::testAdd(void)
         CPPUNIT_ASSERT(output.find(iter->second) != std::string::npos);
     }
 
-    for (prelert::api::CCsvOutputWriter::TStrStrUMapCItr iter = prelertFields.begin();
-         iter != prelertFields.end();
+    for (ml::api::CCsvOutputWriter::TStrStrUMapCItr iter = mlFields.begin();
+         iter != mlFields.end();
          ++iter)
     {
         LOG_DEBUG("Checking output contains '" << iter->second << "'");
@@ -162,9 +162,9 @@ void CCsvOutputWriterTest::testOverwrite(void)
 {
     // In this test, some fields from the input are changed in the output
 
-    prelert::api::CCsvOutputWriter writer;
+    ml::api::CCsvOutputWriter writer;
 
-    prelert::api::CCsvOutputWriter::TStrVec splunkFieldNames;
+    ml::api::CCsvOutputWriter::TStrVec splunkFieldNames;
     splunkFieldNames.push_back("_cd");
     splunkFieldNames.push_back("_indextime");
     splunkFieldNames.push_back("_kv");
@@ -192,13 +192,13 @@ void CCsvOutputWriterTest::testOverwrite(void)
     splunkFieldNames.push_back("timeendpos");
     splunkFieldNames.push_back("timestartpos");
 
-    prelert::api::CCsvOutputWriter::TStrVec prelertFieldNames;
-    prelertFieldNames.push_back("eventtype");
-    prelertFieldNames.push_back("prelert_type");
+    ml::api::CCsvOutputWriter::TStrVec mlFieldNames;
+    mlFieldNames.push_back("eventtype");
+    mlFieldNames.push_back("ml_type");
 
-    CPPUNIT_ASSERT(writer.fieldNames(splunkFieldNames, prelertFieldNames));
+    CPPUNIT_ASSERT(writer.fieldNames(splunkFieldNames, mlFieldNames));
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap originalFields;
+    ml::api::CCsvOutputWriter::TStrStrUMap originalFields;
     originalFields["_cd"] = "0:3933689";
     originalFields["_indextime"] = "1337698174";
     originalFields["_kv"] = "1";
@@ -226,18 +226,18 @@ void CCsvOutputWriterTest::testOverwrite(void)
     originalFields["timeendpos"] = "22";
     originalFields["timestartpos"] = "0";
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap prelertFields;
-    prelertFields["_cd"] = "2:8934689";
-    prelertFields["date_zone"] = "GMT";
-    prelertFields["prelert_type"] = "42";
+    ml::api::CCsvOutputWriter::TStrStrUMap mlFields;
+    mlFields["_cd"] = "2:8934689";
+    mlFields["date_zone"] = "GMT";
+    mlFields["ml_type"] = "42";
 
-    CPPUNIT_ASSERT(writer.writeRow(false, originalFields, prelertFields));
+    CPPUNIT_ASSERT(writer.writeRow(false, originalFields, mlFields));
 
     std::string output(writer.internalString());
 
     LOG_DEBUG("Output is:\n" << output);
 
-    for (prelert::api::CCsvOutputWriter::TStrVecCItr iter = splunkFieldNames.begin();
+    for (ml::api::CCsvOutputWriter::TStrVecCItr iter = splunkFieldNames.begin();
          iter != splunkFieldNames.end();
          ++iter)
     {
@@ -245,20 +245,20 @@ void CCsvOutputWriterTest::testOverwrite(void)
         CPPUNIT_ASSERT(output.find(*iter) != std::string::npos);
     }
 
-    for (prelert::api::CCsvOutputWriter::TStrVecCItr iter = prelertFieldNames.begin();
-         iter != prelertFieldNames.end();
+    for (ml::api::CCsvOutputWriter::TStrVecCItr iter = mlFieldNames.begin();
+         iter != mlFieldNames.end();
          ++iter)
     {
         LOG_DEBUG("Checking output contains '" << *iter << "'");
         CPPUNIT_ASSERT(output.find(*iter) != std::string::npos);
     }
 
-    for (prelert::api::CCsvOutputWriter::TStrStrUMapCItr iter = originalFields.begin();
+    for (ml::api::CCsvOutputWriter::TStrStrUMapCItr iter = originalFields.begin();
          iter != originalFields.end();
          ++iter)
     {
-        // The Prelert fields should override the originals
-        if (prelertFields.find(iter->first) == prelertFields.end())
+        // The Ml fields should override the originals
+        if (mlFields.find(iter->first) == mlFields.end())
         {
             LOG_DEBUG("Checking output contains '" << iter->second << "'");
             CPPUNIT_ASSERT(output.find(iter->second) != std::string::npos);
@@ -270,8 +270,8 @@ void CCsvOutputWriterTest::testOverwrite(void)
         }
     }
 
-    for (prelert::api::CCsvOutputWriter::TStrStrUMapCItr iter = prelertFields.begin();
-         iter != prelertFields.end();
+    for (ml::api::CCsvOutputWriter::TStrStrUMapCItr iter = mlFields.begin();
+         iter != mlFields.end();
          ++iter)
     {
         LOG_DEBUG("Checking output contains '" << iter->second << "'");
@@ -284,12 +284,12 @@ void CCsvOutputWriterTest::testThroughput(void)
     // In this test, some fields from the input are changed in the output
 
     // Write to /dev/null (Unix) or nul (Windows)
-    std::ofstream ofs(prelert::core::COsFileFuncs::NULL_FILENAME);
+    std::ofstream ofs(ml::core::COsFileFuncs::NULL_FILENAME);
     CPPUNIT_ASSERT(ofs.is_open());
 
-    prelert::api::CCsvOutputWriter writer(ofs);
+    ml::api::CCsvOutputWriter writer(ofs);
 
-    prelert::api::CCsvOutputWriter::TStrVec splunkFieldNames;
+    ml::api::CCsvOutputWriter::TStrVec splunkFieldNames;
     splunkFieldNames.push_back("_cd");
     splunkFieldNames.push_back("_indextime");
     splunkFieldNames.push_back("_kv");
@@ -317,11 +317,11 @@ void CCsvOutputWriterTest::testThroughput(void)
     splunkFieldNames.push_back("timeendpos");
     splunkFieldNames.push_back("timestartpos");
 
-    prelert::api::CCsvOutputWriter::TStrVec prelertFieldNames;
-    prelertFieldNames.push_back("eventtype");
-    prelertFieldNames.push_back("prelert_type");
+    ml::api::CCsvOutputWriter::TStrVec mlFieldNames;
+    mlFieldNames.push_back("eventtype");
+    mlFieldNames.push_back("ml_type");
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap originalFields;
+    ml::api::CCsvOutputWriter::TStrStrUMap originalFields;
     originalFields["_cd"] = "0:3933689";
     originalFields["_indextime"] = "1337698174";
     originalFields["_kv"] = "1";
@@ -349,28 +349,28 @@ void CCsvOutputWriterTest::testThroughput(void)
     originalFields["timeendpos"] = "22";
     originalFields["timestartpos"] = "0";
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap prelertFields;
-    prelertFields["_cd"] = "2:8934689";
-    prelertFields["date_zone"] = "GMT";
-    prelertFields["prelert_type"] = "42";
+    ml::api::CCsvOutputWriter::TStrStrUMap mlFields;
+    mlFields["_cd"] = "2:8934689";
+    mlFields["date_zone"] = "GMT";
+    mlFields["ml_type"] = "42";
 
     // Write the record this many times
     static const size_t TEST_SIZE(75000);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
-    CPPUNIT_ASSERT(writer.fieldNames(splunkFieldNames, prelertFieldNames));
+    CPPUNIT_ASSERT(writer.fieldNames(splunkFieldNames, mlFieldNames));
 
     for (size_t count = 0; count < TEST_SIZE; ++count)
     {
-        CPPUNIT_ASSERT(writer.writeRow(false, originalFields, prelertFields));
+        CPPUNIT_ASSERT(writer.writeRow(false, originalFields, mlFields));
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Writing " << TEST_SIZE <<
              " records took " << (end - start) << " seconds");
@@ -378,9 +378,9 @@ void CCsvOutputWriterTest::testThroughput(void)
 
 void CCsvOutputWriterTest::testExcelQuoting(void)
 {
-    prelert::api::CCsvOutputWriter writer;
+    ml::api::CCsvOutputWriter writer;
 
-    prelert::api::CCsvOutputWriter::TStrVec fieldNames;
+    ml::api::CCsvOutputWriter::TStrVec fieldNames;
     fieldNames.push_back("no_special");
     fieldNames.push_back("contains_quote");
     fieldNames.push_back("contains_quote_quote");
@@ -391,7 +391,7 @@ void CCsvOutputWriterTest::testExcelQuoting(void)
 
     CPPUNIT_ASSERT(writer.fieldNames(fieldNames));
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap fieldValues;
+    ml::api::CCsvOutputWriter::TStrStrUMap fieldValues;
     fieldValues["no_special"] = "a";
     fieldValues["contains_quote"] = "\"";
     fieldValues["contains_quote_quote"] = "\"\"";
@@ -427,11 +427,11 @@ void CCsvOutputWriterTest::testExcelQuoting(void)
 
 void CCsvOutputWriterTest::testNonExcelQuoting(void)
 {
-    prelert::api::CCsvOutputWriter writer(false,
+    ml::api::CCsvOutputWriter writer(false,
                                           true,
                                           '\\');
 
-    prelert::api::CCsvOutputWriter::TStrVec fieldNames;
+    ml::api::CCsvOutputWriter::TStrVec fieldNames;
     fieldNames.push_back("no_special");
     fieldNames.push_back("contains_quote");
     fieldNames.push_back("contains_escape");
@@ -443,7 +443,7 @@ void CCsvOutputWriterTest::testNonExcelQuoting(void)
 
     CPPUNIT_ASSERT(writer.fieldNames(fieldNames));
 
-    prelert::api::CCsvOutputWriter::TStrStrUMap fieldValues;
+    ml::api::CCsvOutputWriter::TStrStrUMap fieldValues;
     fieldValues["no_special"] = "a";
     fieldValues["contains_quote"] = "\"";
     fieldValues["contains_escape"] = "\\";

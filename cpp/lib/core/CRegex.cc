@@ -86,7 +86,7 @@ const char *translateErrorCode(boost::regex_constants::error_type code)
 } // anonymous namespace
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

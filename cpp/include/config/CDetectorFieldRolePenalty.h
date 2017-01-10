@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CDetectorFieldRolePenalty_h
-#define INCLUDED_prelert_config_CDetectorFieldRolePenalty_h
+#ifndef INCLUDED_ml_config_CDetectorFieldRolePenalty_h
+#define INCLUDED_ml_config_CDetectorFieldRolePenalty_h
 
 #include <config/Constants.h>
 #include <config/CPenalty.h>
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -61,4 +61,4 @@ class CDetectorFieldRolePenalty : public CPenalty
 }
 }
 
-#endif // INCLUDED_prelert_config_CDetectorFieldRolePenalty_h
+#endif // INCLUDED_ml_config_CDetectorFieldRolePenalty_h

@@ -31,9 +31,9 @@ CppUnit::Test *CProcessTest::suite()
 
 void CProcessTest::testPids(void)
 {
-    prelert::core::CProcess &process = prelert::core::CProcess::instance();
-    prelert::core::CProcess::TPid pid = process.id();
-    prelert::core::CProcess::TPid ppid = process.parentId();
+    ml::core::CProcess &process = ml::core::CProcess::instance();
+    ml::core::CProcess::TPid pid = process.id();
+    ml::core::CProcess::TPid ppid = process.parentId();
 
     LOG_DEBUG("PID = " << pid << " and parent PID = " << ppid);
 

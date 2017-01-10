@@ -14,7 +14,7 @@
  */
 #include <core/CStat.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -50,5 +50,5 @@ uint64_t CStat::value(void) const
 
 } // core
 
-} // prelert
+} // ml
 

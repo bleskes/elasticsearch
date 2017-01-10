@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_Constants_h
-#define INCLUDED_prelert_core_Constants_h
+#ifndef INCLUDED_ml_core_Constants_h
+#define INCLUDED_ml_core_Constants_h
 
 #include <core/CoreTypes.h>
 
 #include <limits>
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -71,4 +71,4 @@ const char PATH_SEPARATOR = '/';
 }
 }
 
-#endif // INCLUDED_prelert_core_Constants_h
+#endif // INCLUDED_ml_core_Constants_h

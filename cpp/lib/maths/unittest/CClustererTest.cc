@@ -24,7 +24,7 @@
 #include <set>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 void CClustererTest::testIndexGenerator(void)
 {

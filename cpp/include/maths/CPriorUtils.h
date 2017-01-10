@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CPriorUtils_h
-#define INCLUDED_prelert_maths_CPriorUtils_h
+#ifndef INCLUDED_ml_maths_CPriorUtils_h
+#define INCLUDED_ml_maths_CPriorUtils_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/CSmallVector.h>
@@ -23,7 +23,7 @@
 #include <maths/ImportExport.h>
 #include <maths/MathsTypes.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -140,4 +140,4 @@ class MATHS_EXPORT CPriorUtils : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CPriorUtils_h
+#endif // INCLUDED_ml_maths_CPriorUtils_h

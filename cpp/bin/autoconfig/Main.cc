@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     bool        isOutputFileNamedPipe(false);
     bool        verbose(false);
     bool        writeDetectorConfigs(false);
-    if (prelert::autoconfig::CCmdLineParser::parse(argc,
+    if (ml::autoconfig::CCmdLineParser::parse(argc,
                                                    argv,
                                                    logProperties,
                                                    logPipe,
@@ -86,12 +86,12 @@ int main(int argc, char **argv)
 
     // Construct the IO manager before reconfiguring the logger, as it performs
     // std::ios actions that only work before first use
-    prelert::api::CIoManager ioMgr(inputFileName,
+    ml::api::CIoManager ioMgr(inputFileName,
                                    isInputFileNamedPipe,
                                    outputFileName,
                                    isOutputFileNamedPipe);
 
-    if (prelert::core::CLogger::instance().reconfigure(logPipe, logProperties) == false)
+    if (ml::core::CLogger::instance().reconfigure(logPipe, logProperties) == false)
     {
         LOG_FATAL("Could not reconfigure logging");
         return EXIT_FAILURE;
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     // Log the program version immediately after reconfiguring the logger.  This
     // must be done from the program, and NOT a shared library, as each program
     // statically links its own version library.
-    LOG_INFO(prelert::ver::CBuildInfo::fullInfo());
+    LOG_INFO(ml::ver::CBuildInfo::fullInfo());
 
     if (ioMgr.initIo() == false)
     {
@@ -108,48 +108,48 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (prelert::core::CLicenseValidator::validate(license) == false)
+    if (ml::core::CLicenseValidator::validate(license) == false)
     {
         LOG_FATAL("Invalid license");
         return EXIT_FAILURE;
     }
 
-    typedef boost::scoped_ptr<prelert::api::CInputParser> TScopedInputParserP;
+    typedef boost::scoped_ptr<ml::api::CInputParser> TScopedInputParserP;
     TScopedInputParserP inputParser;
     if (lengthEncodedInput)
     {
-        inputParser.reset(new prelert::api::CLengthEncodedInputParser(ioMgr.inputStream()));
+        inputParser.reset(new ml::api::CLengthEncodedInputParser(ioMgr.inputStream()));
     }
     else
     {
-        inputParser.reset(new prelert::api::CCsvInputParser(ioMgr.inputStream(), delimiter));
+        inputParser.reset(new ml::api::CCsvInputParser(ioMgr.inputStream(), delimiter));
     }
 
     // This manages the full parameterization of the autoconfigurer.
-    prelert::config::CAutoconfigurerParams params(timeField, timeFormat, verbose, writeDetectorConfigs);
+    ml::config::CAutoconfigurerParams params(timeField, timeFormat, verbose, writeDetectorConfigs);
     params.init(configFile);
 
     // This is responsible for outputting the config.
-    prelert::config::CReportWriter writer(ioMgr.outputStream());
+    ml::config::CReportWriter writer(ioMgr.outputStream());
 
     // Need a new CAutoconfigurer for doing the actual heavy lifting.
-    prelert::config::CAutoconfigurer configurer(params, writer);
+    ml::config::CAutoconfigurer configurer(params, writer);
 
     // The skeleton avoids the need to duplicate a lot of boilerplate code
-    prelert::api::CCmdSkeleton skeleton(0, // no restoration at present
+    ml::api::CCmdSkeleton skeleton(0, // no restoration at present
                                         0, // no persistence at present
                                         *inputParser,
                                         configurer);
     if (skeleton.ioLoop() == false)
     {
-        LOG_FATAL("Prelert autoconfig failed");
+        LOG_FATAL("Ml autoconfig failed");
         return EXIT_FAILURE;
     }
 
     // This message makes it easier to spot process crashes in a log file - if
     // this isn't present in the log for a given PID and there's no other log
     // message indicating early exit then the process has probably core dumped
-    LOG_INFO("Prelert autoconfig exiting");
+    LOG_INFO("Ml autoconfig exiting");
 
     return EXIT_SUCCESS;
 }

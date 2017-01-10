@@ -21,7 +21,7 @@
 
 #include <boost/unordered_map.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace api;
 
 namespace

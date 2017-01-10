@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CSignal_h
-#define INCLUDED_prelert_maths_CSignal_h
+#ifndef INCLUDED_ml_maths_CSignal_h
+#define INCLUDED_ml_maths_CSignal_h
 
 #include <maths/ImportExport.h>
 
 #include <complex>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -56,4 +56,4 @@ class MATHS_EXPORT CSignal
 }
 }
 
-#endif // INCLUDED_prelert_maths_CSignal_h
+#endif // INCLUDED_ml_maths_CSignal_h

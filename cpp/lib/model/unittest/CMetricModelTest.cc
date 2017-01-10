@@ -54,7 +54,7 @@
 #include <vector>
 #include <utility>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 namespace
@@ -521,7 +521,7 @@ void CMetricModelTest::testOnlineSample(void)
                     // The XML representation of the new filter should be the same as the original
                     std::string newXml;
                     {
-                        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+                        ml::core::CRapidXmlStatePersistInserter inserter("root");
                         restoredModel->acceptPersistInserter(inserter);
                         inserter.toXml(newXml);
                     }
@@ -794,7 +794,7 @@ void CMetricModelTest::testOnlineMultivariateSample(void)
                 // The XML representation of the new filter should be the same as the original
                 std::string newXml;
                 {
-                    prelert::core::CRapidXmlStatePersistInserter inserter("root");
+                    ml::core::CRapidXmlStatePersistInserter inserter("root");
                     restoredModel->acceptPersistInserter(inserter);
                     inserter.toXml(newXml);
                 }
@@ -981,7 +981,7 @@ void CMetricModelTest::testOnlineProbabilityCalculationForMedian(void)
 
     std::size_t pid(0);
     const CMetricModel::TFeatureData *fd = model.featureData(
-                                    prelert::model_t::E_IndividualMedianByPerson, pid,
+                                    ml::model_t::E_IndividualMedianByPerson, pid,
                                     time - bucketLength);
 
     // assert there is only 1 value in the last bucket and its the median
@@ -2432,7 +2432,7 @@ void CMetricModelTest::testCorrelatePersist(void)
             // The XML representation of the new filter should be the same as the original
             std::string newXml;
             {
-                prelert::core::CRapidXmlStatePersistInserter inserter("root");
+                ml::core::CRapidXmlStatePersistInserter inserter("root");
                 restoredModel->acceptPersistInserter(inserter);
                 inserter.toXml(newXml);
             }

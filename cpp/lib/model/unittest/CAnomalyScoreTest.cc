@@ -42,7 +42,7 @@
 #include <sstream>
 #include <stdio.h>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {
@@ -633,10 +633,10 @@ void CAnomalyScoreTest::testJsonConversion(void)
     rapidjson::Document doc;
     doc.Parse<rapidjson::kParseDefaultFlags>(toJson.c_str());
 
-    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::PRELERTCUE_ATTRIBUTE.c_str()));
-    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::PRELERTKEY_ATTRIBUTE.c_str()));
-    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::PRELERTQUANTILESDESCRIPTION_ATTRIBUTE.c_str()));
-    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::PRELERTVERSION_ATTRIBUTE.c_str()));
+    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::MLCUE_ATTRIBUTE.c_str()));
+    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::MLKEY_ATTRIBUTE.c_str()));
+    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::MLQUANTILESDESCRIPTION_ATTRIBUTE.c_str()));
+    CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::MLVERSION_ATTRIBUTE.c_str()));
     CPPUNIT_ASSERT(doc.HasMember(model::CAnomalyScore::TIME_ATTRIBUTE.c_str()));
     CPPUNIT_ASSERT(doc.HasMember("a"));
 

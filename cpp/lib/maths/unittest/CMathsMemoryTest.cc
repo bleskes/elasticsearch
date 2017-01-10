@@ -29,7 +29,7 @@
 #include <maths/CTools.h>
 #include <maths/CXMeansOnline1d.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace maths;
 
 void CMathsMemoryTest::testTimeSeriesDecompositions(void)

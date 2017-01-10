@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CEventRateModel_h
-#define INCLUDED_prelert_model_CEventRateModel_h
+#ifndef INCLUDED_ml_model_CEventRateModel_h
+#define INCLUDED_ml_model_CEventRateModel_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -39,7 +39,7 @@ namespace
 {
 class CMockEventRateModel;
 }
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -213,7 +213,7 @@ class MODEL_EXPORT CEventRateModel : public CIndividualModel
         //! Output the current bucket statistics by repeatedly calling the
         //! supplied function.  ALL bucket statistics are output, not just those
         //! considered anomalous.  This is used as the implementation of the
-        //! prelertstats command in the Splunk app.
+        //! mlstats command in the Splunk app.
         virtual void outputCurrentBucketStatistics(const std::string &partitionFieldValue,
                                                    const TBucketStatsOutputFunc &outputFunc) const;
         //@}
@@ -378,4 +378,4 @@ class MODEL_EXPORT CEventRateModel : public CIndividualModel
 }
 }
 
-#endif // INCLUDED_prelert_model_CEventRateModel_h
+#endif // INCLUDED_ml_model_CEventRateModel_h

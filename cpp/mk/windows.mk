@@ -26,7 +26,7 @@ ifndef CRT_OPT
 CRT_OPT=-MD
 endif
 
-ifndef PRELERT_DEBUG
+ifndef ML_DEBUG
 OPTCFLAGS=-O2 -Qfast_transcendentals -GS-
 OPTCFLAGS+= -Qvec-report:1
 OPTCPPFLAGS=-DNDEBUG
@@ -84,7 +84,7 @@ OBJECT_FILE_EXT=.obj
 DYNAMIC_LIB_EXT=.dll
 DYNAMIC_LIB_DIR=bin
 IMPORT_LIB_DIR=lib
-RESOURCE_FILE=$(OBJS_DIR)/prelert.res
+RESOURCE_FILE=$(OBJS_DIR)/ml.res
 STATIC_LIB_EXT=.lib
 SHELL_SCRIPT_EXT=.bat
 # This temp directory assumes we're running in a Unix-like shell such as Git bash

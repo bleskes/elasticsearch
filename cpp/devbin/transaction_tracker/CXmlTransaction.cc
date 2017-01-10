@@ -19,7 +19,7 @@
 #include <set>
 
 
-namespace prelert
+namespace ml
 {
 namespace devbin
 {

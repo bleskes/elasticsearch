@@ -21,7 +21,7 @@
 #include <boost/range.hpp>
 #include <boost/shared_ptr.hpp>
 
-using namespace prelert;
+using namespace ml;
 
 void CFunctionalTest::testIsNull(void)
 {

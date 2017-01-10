@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CAnnotatedProbabilityBuilder_h
-#define INCLUDED_prelert_model_CAnnotatedProbabilityBuilder_h
+#ifndef INCLUDED_ml_model_CAnnotatedProbabilityBuilder_h
+#define INCLUDED_ml_model_CAnnotatedProbabilityBuilder_h
 
 #include <maths/CBasicStatistics.h>
 
@@ -28,7 +28,7 @@
 
 #include <boost/optional.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -100,4 +100,4 @@ class MODEL_EXPORT CAnnotatedProbabilityBuilder : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_model_CAnnotatedProbabilityBuilder_h
+#endif // INCLUDED_ml_model_CAnnotatedProbabilityBuilder_h

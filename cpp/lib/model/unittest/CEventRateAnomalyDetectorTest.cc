@@ -41,42 +41,42 @@
 namespace
 {
 
-typedef std::vector<prelert::core_t::TTime> TTimeVec;
+typedef std::vector<ml::core_t::TTime> TTimeVec;
 typedef std::vector<std::string> TStrVec;
-typedef std::map<prelert::core_t::TTime, double> TTimeDoubleMap;
+typedef std::map<ml::core_t::TTime, double> TTimeDoubleMap;
 typedef TTimeDoubleMap::const_iterator TTimeDoubleMapCItr;
-typedef std::pair<prelert::core_t::TTime, std::string> TTimeStrPr;
+typedef std::pair<ml::core_t::TTime, std::string> TTimeStrPr;
 typedef std::set<TTimeStrPr> TTimeStrPrSet;
 
 const std::string EMPTY_STRING;
 
-class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
+class CResultWriter : public ml::model::CHierarchicalResultsVisitor
 {
     public:
-        CResultWriter(const prelert::model::CModelConfig &modelConfig,
-                      const prelert::model::CLimits &limits)
+        CResultWriter(const ml::model::CModelConfig &modelConfig,
+                      const ml::model::CLimits &limits)
             : m_ModelConfig(modelConfig),
             m_Limits(limits),
               m_Calls(0)
         {
         }
 
-        void operator()(prelert::model::CAnomalyDetector &detector,
-                        prelert::core_t::TTime start,
-                        prelert::core_t::TTime end)
+        void operator()(ml::model::CAnomalyDetector &detector,
+                        ml::core_t::TTime start,
+                        ml::core_t::TTime end)
         {
-            prelert::model::CHierarchicalResults results;
+            ml::model::CHierarchicalResults results;
             detector.buildResults(start, end, results);
             results.buildHierarchy();
-            prelert::model::CHierarchicalResultsAggregator aggregator(m_ModelConfig);
+            ml::model::CHierarchicalResultsAggregator aggregator(m_ModelConfig);
             results.bottomUpBreadthFirst(aggregator);
-            prelert::model::CHierarchicalResultsProbabilityFinalizer finalizer;
+            ml::model::CHierarchicalResultsProbabilityFinalizer finalizer;
             results.bottomUpBreadthFirst(finalizer);
             results.bottomUpBreadthFirst(*this);
         }
 
-        virtual void visit(const prelert::model::CHierarchicalResults &results,
-                           const prelert::model::CHierarchicalResults::TNode &node,
+        virtual void visit(const ml::model::CHierarchicalResults &results,
+                           const ml::model::CHierarchicalResults::TNode &node,
                            bool pivot)
         {
             if (pivot)
@@ -100,7 +100,7 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
 
 
             const std::string analysisFieldValue = *node.s_Spec.s_PersonFieldValue;
-            prelert::core_t::TTime bucketTime = node.s_BucketStartTime;
+            ml::core_t::TTime bucketTime = node.s_BucketStartTime;
             double anomalyFactor = node.s_RawAnomalyScore;
             LOG_DEBUG(analysisFieldValue << " bucket time " << bucketTime
                       << " anomalyFactor " << anomalyFactor);
@@ -109,8 +109,8 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
             m_AnomalyScores[bucketTime] += anomalyFactor;
         }
 
-        bool operator()(prelert::core_t::TTime time,
-                        const prelert::model::CHierarchicalResults::TNode &node,
+        bool operator()(ml::core_t::TTime time,
+                        const ml::model::CHierarchicalResults::TNode &node,
                         bool isBucketInfluencer)
         {
             LOG_DEBUG((isBucketInfluencer ? "BucketInfluencer" :  "Influencer ")
@@ -141,23 +141,23 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
         }
 
     private:
-        const prelert::model::CModelConfig &m_ModelConfig;
-        prelert::model::CLimits            m_Limits;
+        const ml::model::CModelConfig &m_ModelConfig;
+        ml::model::CLimits            m_Limits;
         std::size_t                        m_Calls;
         TTimeStrPrSet                      m_AllAnomalies;
         TTimeDoubleMap                     m_AnomalyScores;
 };
 
-void importData(prelert::core_t::TTime firstTime,
-                prelert::core_t::TTime lastTime,
-                prelert::core_t::TTime bucketLength,
+void importData(ml::core_t::TTime firstTime,
+                ml::core_t::TTime lastTime,
+                ml::core_t::TTime bucketLength,
                 CResultWriter &outputResults,
                 const TStrVec &fileNames,
-                prelert::model::CAnomalyDetector &detector)
+                ml::model::CAnomalyDetector &detector)
 {
     typedef boost::shared_ptr<std::ifstream> TifstreamPtr;
     typedef std::vector<TifstreamPtr> TifstreamPtrVec;
-    typedef std::vector<prelert::core_t::TTime> TTimeVec;
+    typedef std::vector<ml::core_t::TTime> TTimeVec;
 
     TifstreamPtrVec ifss;
     for (std::size_t i = 0u; i < fileNames.size(); ++i)
@@ -167,17 +167,17 @@ void importData(prelert::core_t::TTime firstTime,
         ifss.push_back(ifs);
     }
 
-    prelert::core_t::TTime lastBucketTime = prelert::maths::CIntegerTools::ceil(firstTime, bucketLength);
+    ml::core_t::TTime lastBucketTime = ml::maths::CIntegerTools::ceil(firstTime, bucketLength);
 
     TTimeVec times(ifss.size());
     for (std::size_t i = 0u; i < ifss.size(); ++i)
     {
         std::string line;
         std::getline(*ifss[i], line);
-        CPPUNIT_ASSERT(prelert::core::CStringUtils::stringToType(line, times[i]));
+        CPPUNIT_ASSERT(ml::core::CStringUtils::stringToType(line, times[i]));
     }
 
-    prelert::core_t::TTime time(0);
+    ml::core_t::TTime time(0);
     for (;;)
     {
         std::size_t file(std::min_element(times.begin(), times.end()) - times.begin());
@@ -185,7 +185,7 @@ void importData(prelert::core_t::TTime firstTime,
         std::string attributeFieldValue = fileNames[file];
         time = times[file];
 
-        if (time == std::numeric_limits<prelert::core_t::TTime>::max())
+        if (time == std::numeric_limits<ml::core_t::TTime>::max())
         {
             break;
         }
@@ -199,19 +199,19 @@ void importData(prelert::core_t::TTime firstTime,
                           lastBucketTime + bucketLength);
         }
 
-        prelert::model::CAnomalyDetector::TStrCPtrVec fieldValues;
+        ml::model::CAnomalyDetector::TStrCPtrVec fieldValues;
         fieldValues.push_back(&attributeFieldValue);
         detector.addRecord(time, fieldValues);
 
         std::string line;
         if (!std::getline(*ifss[file], line))
         {
-            times[file] = std::numeric_limits<prelert::core_t::TTime>::max();
+            times[file] = std::numeric_limits<ml::core_t::TTime>::max();
             ifss[file].reset();
         }
         else
         {
-            CPPUNIT_ASSERT(prelert::core::CStringUtils::stringToType(line, times[file]));
+            CPPUNIT_ASSERT(ml::core::CStringUtils::stringToType(line, times[file]));
         }
     }
 
@@ -236,21 +236,21 @@ void CEventRateAnomalyDetectorTest::testAnomalies(void)
     // were extracted from Splunk's demo data, as were the times in the test
     // files that we load.
     static const size_t                 EXPECTED_ANOMALOUS_HOURS(12);
-    static const prelert::core_t::TTime FIRST_TIME(1346713620);
-    static const prelert::core_t::TTime LAST_TIME(1347317974);
-    static const prelert::core_t::TTime BUCKET_SIZE(1800);
+    static const ml::core_t::TTime FIRST_TIME(1346713620);
+    static const ml::core_t::TTime LAST_TIME(1347317974);
+    static const ml::core_t::TTime BUCKET_SIZE(1800);
     static const double                 HIGH_ANOMALY_SCORE(0.003);
 
-    prelert::model::CModelConfig modelConfig =
-            prelert::model::CModelConfig::defaultConfig(BUCKET_SIZE);
-    prelert::model::CLimits limits;
+    ml::model::CModelConfig modelConfig =
+            ml::model::CModelConfig::defaultConfig(BUCKET_SIZE);
+    ml::model::CLimits limits;
 
-    prelert::model::CSearchKey key(1, // identifier
-                                   prelert::model::function_t::E_IndividualRareCount,
+    ml::model::CSearchKey key(1, // identifier
+                                   ml::model::function_t::E_IndividualRareCount,
                                    false,
-                                   prelert::model_t::E_XF_None,
+                                   ml::model_t::E_XF_None,
                                    EMPTY_STRING, "status");
-    prelert::model::CAnomalyDetector detector(1, // identifier
+    ml::model::CAnomalyDetector detector(1, // identifier
                                               limits,
                                               modelConfig,
                                               EMPTY_STRING,
@@ -303,23 +303,23 @@ void CEventRateAnomalyDetectorTest::testAnomalies(void)
 
 void CEventRateAnomalyDetectorTest::testPersist(void)
 {
-    static const prelert::core_t::TTime FIRST_TIME(1346713620);
-    static const prelert::core_t::TTime LAST_TIME(1347317974);
-    static const prelert::core_t::TTime BUCKET_SIZE(3600);
+    static const ml::core_t::TTime FIRST_TIME(1346713620);
+    static const ml::core_t::TTime LAST_TIME(1347317974);
+    static const ml::core_t::TTime BUCKET_SIZE(3600);
 
-    prelert::maths::CScopeDisableNormalizeOnRestore disabler;
+    ml::maths::CScopeDisableNormalizeOnRestore disabler;
 
-    prelert::model::CModelConfig modelConfig =
-            prelert::model::CModelConfig::defaultConfig(BUCKET_SIZE);
-    prelert::model::CLimits limits;
+    ml::model::CModelConfig modelConfig =
+            ml::model::CModelConfig::defaultConfig(BUCKET_SIZE);
+    ml::model::CLimits limits;
 
-    prelert::model::CSearchKey key(1, // identifier
-                                   prelert::model::function_t::E_IndividualCount,
+    ml::model::CSearchKey key(1, // identifier
+                                   ml::model::function_t::E_IndividualCount,
                                    false,
-                                   prelert::model_t::E_XF_None,
+                                   ml::model_t::E_XF_None,
                                    "", "status");
 
-    prelert::model::CAnomalyDetector origDetector(1, // identifier
+    ml::model::CAnomalyDetector origDetector(1, // identifier
                                                   limits,
                                                   modelConfig,
                                                   "",
@@ -333,7 +333,7 @@ void CEventRateAnomalyDetectorTest::testPersist(void)
 
     std::string origXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         origDetector.acceptPersistInserter(inserter);
         inserter.toXml(origXml);
     }
@@ -341,17 +341,17 @@ void CEventRateAnomalyDetectorTest::testPersist(void)
     LOG_DEBUG("Event rate detector XML representation:\n" << origXml);
 
     // Restore the XML into a new detector
-    prelert::model::CAnomalyDetector restoredDetector(1, // identifier
+    ml::model::CAnomalyDetector restoredDetector(1, // identifier
                                                       limits,
                                                       modelConfig,
                                                       "",
                                                       0,
                                                       modelConfig.factory(key));
     {
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origXml));
-        prelert::core::CRapidXmlStateRestoreTraverser traverser(parser);
-        CPPUNIT_ASSERT(traverser.traverseSubLevel(boost::bind(&prelert::model::CAnomalyDetector::acceptRestoreTraverser,
+        ml::core::CRapidXmlStateRestoreTraverser traverser(parser);
+        CPPUNIT_ASSERT(traverser.traverseSubLevel(boost::bind(&ml::model::CAnomalyDetector::acceptRestoreTraverser,
                                                               &restoredDetector,
                                                               _1)));
     }
@@ -359,7 +359,7 @@ void CEventRateAnomalyDetectorTest::testPersist(void)
     // The XML representation of the new typer should be the same as the original
     std::string newXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         restoredDetector.acceptPersistInserter(inserter);
         inserter.toXml(newXml);
     }

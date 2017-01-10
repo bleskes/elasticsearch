@@ -52,12 +52,12 @@ namespace
 // call instance() during the static initialisation phase of the program.  Of
 // course, the instance may already be constructed before this if another static
 // object has used it.
-const prelert::core::CLogger &DO_NOT_USE_THIS_VARIABLE =
-                                             prelert::core::CLogger::instance();
+const ml::core::CLogger &DO_NOT_USE_THIS_VARIABLE =
+                                             ml::core::CLogger::instance();
 }
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -123,7 +123,7 @@ CLogger::CLogger(void)
     {
         if (m_Logger != 0)
         {
-            // (Can't use the Prelert LOG_ERROR macro here, as the object
+            // (Can't use the Ml LOG_ERROR macro here, as the object
             // it references is only part constructed.)
             LOG4CXX_ERROR(m_Logger,
                           "Could not initialise logger: " << e.what());
@@ -190,7 +190,7 @@ log4cxx::LoggerPtr CLogger::logger(void)
 
 void CLogger::fatal(void)
 {
-    throw std::runtime_error("Prelert Fatal Exception");
+    throw std::runtime_error("Ml Fatal Exception");
 }
 
 bool CLogger::setLoggingLevel(ELevel level)
@@ -416,8 +416,8 @@ void CLogger::massageProperties(log4cxx::helpers::Properties &props) const
     std::ostringstream pidStrm;
     pidStrm << CProcess::instance().id();
 
-    // Set up Prelert specific mappings
-    // 1) %D with the path to the Prelert base log directory
+    // Set up Ml specific mappings
+    // 1) %D with the path to the Ml base log directory
     // 2) %N with the program name
     // 3) %P with the program's process ID
     TLogCharLogStrMap mappings;

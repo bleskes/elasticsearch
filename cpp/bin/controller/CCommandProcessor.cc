@@ -28,7 +28,7 @@ const std::string TAB(1, '\t');
 const std::string EMPTY_STRING;
 }
 
-namespace prelert
+namespace ml
 {
 namespace controller
 {

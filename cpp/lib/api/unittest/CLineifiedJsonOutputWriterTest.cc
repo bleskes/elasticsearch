@@ -37,13 +37,13 @@ CppUnit::Test *CLineifiedJsonOutputWriterTest::suite()
 
 void CLineifiedJsonOutputWriterTest::testStringOutput(void)
 {
-    prelert::api::CLineifiedJsonOutputWriter::TStrStrUMap dataRowFields;
+    ml::api::CLineifiedJsonOutputWriter::TStrStrUMap dataRowFields;
     dataRowFields["probability"] = "0.01";
     dataRowFields["normalized_score"] = "2.2";
-    prelert::api::CLineifiedJsonOutputWriter::TStrStrUMap overrideDataRowFields;
+    ml::api::CLineifiedJsonOutputWriter::TStrStrUMap overrideDataRowFields;
     overrideDataRowFields["normalized_score"] = "3.3";
 
-    prelert::api::CLineifiedJsonOutputWriter writer;
+    ml::api::CLineifiedJsonOutputWriter writer;
     CPPUNIT_ASSERT(writer.writeRow(false, dataRowFields, overrideDataRowFields));
 
     const std::string &output = writer.internalString();
@@ -53,13 +53,13 @@ void CLineifiedJsonOutputWriterTest::testStringOutput(void)
 
 void CLineifiedJsonOutputWriterTest::testNumericOutput(void)
 {
-    prelert::api::CLineifiedJsonOutputWriter::TStrStrUMap dataRowFields;
+    ml::api::CLineifiedJsonOutputWriter::TStrStrUMap dataRowFields;
     dataRowFields["probability"] = "0.01";
     dataRowFields["normalized_score"] = "2.2";
-    prelert::api::CLineifiedJsonOutputWriter::TStrStrUMap overrideDataRowFields;
+    ml::api::CLineifiedJsonOutputWriter::TStrStrUMap overrideDataRowFields;
     overrideDataRowFields["normalized_score"] = "3.3";
 
-    prelert::api::CLineifiedJsonOutputWriter writer({ "probability", "normalized_score" });
+    ml::api::CLineifiedJsonOutputWriter writer({ "probability", "normalized_score" });
     CPPUNIT_ASSERT(writer.writeRow(false, dataRowFields, overrideDataRowFields));
 
     const std::string &output = writer.internalString();

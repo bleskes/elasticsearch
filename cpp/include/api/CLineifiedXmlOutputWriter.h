@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CLineifiedXmlOutputWriter_h
-#define INCLUDED_prelert_api_CLineifiedXmlOutputWriter_h
+#ifndef INCLUDED_ml_api_CLineifiedXmlOutputWriter_h
+#define INCLUDED_ml_api_CLineifiedXmlOutputWriter_h
 
 #include <core/CXmlNodeWithChildrenPool.h>
 
@@ -25,7 +25,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -99,5 +99,5 @@ class API_EXPORT CLineifiedXmlOutputWriter : public COutputHandler
 }
 }
 
-#endif // INCLUDED_prelert_api_CLineifiedXmlOutputWriter_h
+#endif // INCLUDED_ml_api_CLineifiedXmlOutputWriter_h
 

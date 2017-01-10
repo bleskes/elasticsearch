@@ -39,11 +39,11 @@ void    CStudentTTestTest::testSamples(void)
 {
     double  sample[] = { 0,0,0,0,0,0,1,0,0,0,0,0,0 };
 
-    prelert::maths::CStudentTTest::TDoubleVec sampleVec(sample, sample+sizeof(sample)/sizeof(sample[0]));
+    ml::maths::CStudentTTest::TDoubleVec sampleVec(sample, sample+sizeof(sample)/sizeof(sample[0]));
 
     double  probability(0.0);
 
-    CPPUNIT_ASSERT(prelert::maths::CStudentTTest::oneSampleTest(sampleVec, probability));
+    CPPUNIT_ASSERT(ml::maths::CStudentTTest::oneSampleTest(sampleVec, probability));
 
     LOG_DEBUG(probability);
 }

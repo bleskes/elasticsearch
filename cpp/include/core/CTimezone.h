@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CTimezone_h
-#define INCLUDED_prelert_core_CTimezone_h
+#ifndef INCLUDED_ml_core_CTimezone_h
+#define INCLUDED_ml_core_CTimezone_h
 
 #include <core/CFastMutex.h>
 #include <core/CNonCopyable.h>
@@ -27,7 +27,7 @@
 #include <time.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -134,5 +134,5 @@ class CORE_EXPORT CTimezone : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CTimezone_h
+#endif // INCLUDED_ml_core_CTimezone_h
 

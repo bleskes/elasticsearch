@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CModel_h
-#define INCLUDED_prelert_model_CModel_h
+#ifndef INCLUDED_ml_model_CModel_h
+#define INCLUDED_ml_model_CModel_h
 
 #include <core/CMemory.h>
 #include <core/CNonCopyable.h>
@@ -46,7 +46,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -580,7 +580,7 @@ class MODEL_EXPORT CModel : private core::CNonCopyable
         //! Output the current bucket statistics by repeatedly calling the
         //! supplied function.  ALL bucket statistics are output, not just those
         //! considered anomalous.  This is used as the implementation of the
-        //! prelertstats command in the Splunk app.
+        //! mlstats command in the Splunk app.
         virtual void outputCurrentBucketStatistics(const std::string &partitionFieldValue,
                                                    const TBucketStatsOutputFunc &outputFunc) const = 0;
 
@@ -1005,4 +1005,4 @@ class MODEL_EXPORT CModel : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_model_CModel_h
+#endif // INCLUDED_ml_model_CModel_h

@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-namespace prelert
+namespace ml
 {
 namespace devbin
 {
@@ -56,7 +56,7 @@ bool CCmdLineParser::parse(int argc,
         }
         if (vm.count("version") > 0)
         {
-            std::cerr << prelert::ver::CBuildInfo::fullInfo() << std::endl;
+            std::cerr << ml::ver::CBuildInfo::fullInfo() << std::endl;
             return false;
         }
         if (vm.count("filename") > 0)

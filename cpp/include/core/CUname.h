@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CUname_h
-#define INCLUDED_prelert_core_CUname_h
+#ifndef INCLUDED_ml_core_CUname_h
+#define INCLUDED_ml_core_CUname_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/ImportExport.h>
@@ -21,7 +21,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -61,16 +61,16 @@ class CORE_EXPORT CUname : private CNonInstantiatable
         //! one chosen if the first implementation had been in C++, keeping the
         //! format the same makes life easier the code on www.prelert.com that
         //! decodes incoming usage information.
-        static std::string prelertPlatform(void);
+        static std::string mlPlatform(void);
 
         //! On Unix this is equivalent to uname -r; on Windows it's the
         //! underlying Windows NT version.
-        static std::string prelertOsVer(void);
+        static std::string mlOsVer(void);
 };
 
 
 }
 }
 
-#endif // INCLUDED_prelert_core_CUname_h
+#endif // INCLUDED_ml_core_CUname_h
 

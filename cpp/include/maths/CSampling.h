@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CSampling_h
-#define INCLUDED_prelert_maths_CSampling_h
+#ifndef INCLUDED_ml_maths_CSampling_h
+#define INCLUDED_ml_maths_CSampling_h
 
 #include <core/CFastMutex.h>
 #include <core/CNonCopyable.h>
@@ -31,7 +31,7 @@
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -544,4 +544,4 @@ static void multivariateNormalSampleDelegate(CPRNG::CXorShift1024Mult &rng,     
 }
 }
 
-#endif // INCLUDED_prelert_maths_CSampling_h
+#endif // INCLUDED_ml_maths_CSampling_h

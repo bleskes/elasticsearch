@@ -45,7 +45,7 @@ CppUnit::Test *CJsonStateRestoreTraverserTest::suite()
 namespace
 {
 
-bool traverse2ndLevel(prelert::core::CStateRestoreTraverser &traverser)
+bool traverse2ndLevel(ml::core::CStateRestoreTraverser &traverser)
 {
     CPPUNIT_ASSERT_EQUAL(std::string("level2A"), traverser.name());
     CPPUNIT_ASSERT_EQUAL(std::string("3.14"), traverser.value());
@@ -59,7 +59,7 @@ bool traverse2ndLevel(prelert::core::CStateRestoreTraverser &traverser)
     return true;
 }
 
-bool traverse1stLevel1(prelert::core::CStateRestoreTraverser &traverser)
+bool traverse1stLevel1(ml::core::CStateRestoreTraverser &traverser)
 {
     CPPUNIT_ASSERT_EQUAL(std::string("level1A"), traverser.name());
     CPPUNIT_ASSERT_EQUAL(std::string("a"), traverser.value());
@@ -77,7 +77,7 @@ bool traverse1stLevel1(prelert::core::CStateRestoreTraverser &traverser)
     return true;
 }
 
-bool traverse1stLevel2(prelert::core::CStateRestoreTraverser &traverser)
+bool traverse1stLevel2(ml::core::CStateRestoreTraverser &traverser)
 {
     CPPUNIT_ASSERT_EQUAL(std::string("level1A"), traverser.name());
     CPPUNIT_ASSERT_EQUAL(std::string("a"), traverser.value());
@@ -99,7 +99,7 @@ bool traverse1stLevel2(prelert::core::CStateRestoreTraverser &traverser)
     return true;
 }
 
-bool traverse2ndLevelEmpty(prelert::core::CStateRestoreTraverser &traverser)
+bool traverse2ndLevelEmpty(ml::core::CStateRestoreTraverser &traverser)
 {
     CPPUNIT_ASSERT(traverser.name().empty());
     CPPUNIT_ASSERT(traverser.value().empty());
@@ -109,7 +109,7 @@ bool traverse2ndLevelEmpty(prelert::core::CStateRestoreTraverser &traverser)
     return true;
 }
 
-bool traverse1stLevel3(prelert::core::CStateRestoreTraverser &traverser)
+bool traverse1stLevel3(ml::core::CStateRestoreTraverser &traverser)
 {
     CPPUNIT_ASSERT_EQUAL(std::string("level1A"), traverser.name());
     CPPUNIT_ASSERT_EQUAL(std::string("a"), traverser.value());
@@ -131,7 +131,7 @@ bool traverse1stLevel3(prelert::core::CStateRestoreTraverser &traverser)
     return true;
 }
 
-bool traverse1stLevel4(prelert::core::CStateRestoreTraverser &traverser)
+bool traverse1stLevel4(ml::core::CStateRestoreTraverser &traverser)
 {
     CPPUNIT_ASSERT_EQUAL(std::string("level1A"), traverser.name());
     CPPUNIT_ASSERT_EQUAL(std::string("a"), traverser.value());
@@ -156,7 +156,7 @@ void CJsonStateRestoreTraverserTest::testRestore1(void)
     std::string json("{\"_source\":{\"level1A\":\"a\",\"level1B\":\"25\",\"level1C\":{\"level2A\":\"3.14\",\"level2B\":\"z\"}}}");
     std::istringstream strm(json);
 
-    prelert::core::CJsonStateRestoreTraverser traverser(strm);
+    ml::core::CJsonStateRestoreTraverser traverser(strm);
 
     CPPUNIT_ASSERT_EQUAL(std::string("_source"), traverser.name());
     CPPUNIT_ASSERT(traverser.hasSubLevel());
@@ -169,7 +169,7 @@ void CJsonStateRestoreTraverserTest::testRestore2(void)
     std::string json("{\"_source\":{\"level1A\":\"a\",\"level1B\":\"25\",\"level1C\":{\"level2A\":\"3.14\",\"level2B\":\"z\"},\"level1D\":\"afterAscending\"}}");
     std::istringstream strm(json);
 
-    prelert::core::CJsonStateRestoreTraverser traverser(strm);
+    ml::core::CJsonStateRestoreTraverser traverser(strm);
 
     CPPUNIT_ASSERT_EQUAL(std::string("_source"), traverser.name());
     CPPUNIT_ASSERT(traverser.hasSubLevel());
@@ -182,7 +182,7 @@ void CJsonStateRestoreTraverserTest::testRestore3(void)
     std::string json("{\"_source\":{\"level1A\":\"a\",\"level1B\":\"25\",\"level1C\":{},\"level1D\":\"afterAscending\"}}");
     std::istringstream strm(json);
 
-    prelert::core::CJsonStateRestoreTraverser traverser(strm);
+    ml::core::CJsonStateRestoreTraverser traverser(strm);
 
     CPPUNIT_ASSERT_EQUAL(std::string("_source"), traverser.name());
     CPPUNIT_ASSERT(traverser.hasSubLevel());
@@ -195,7 +195,7 @@ void CJsonStateRestoreTraverserTest::testRestore4(void)
     std::string json("{\"_source\":{\"level1A\":\"a\",\"level1B\":\"25\",\"level1C\":{\"level2A\":\"3.14\",\"level2B\":\"z\"}}}");
     std::istringstream strm(json);
 
-    prelert::core::CJsonStateRestoreTraverser traverser(strm);
+    ml::core::CJsonStateRestoreTraverser traverser(strm);
 
     CPPUNIT_ASSERT_EQUAL(std::string("_source"), traverser.name());
     CPPUNIT_ASSERT(traverser.hasSubLevel());
@@ -212,7 +212,7 @@ void CJsonStateRestoreTraverserTest::testParsingBooleanFields(void)
 
     std::istringstream strm(json);
 
-    prelert::core::CJsonStateRestoreTraverser traverser(strm);
+    ml::core::CJsonStateRestoreTraverser traverser(strm);
 
     CPPUNIT_ASSERT_EQUAL(std::string("_index"), traverser.name());
     CPPUNIT_ASSERT_EQUAL(std::string("categorization-test"), traverser.value());

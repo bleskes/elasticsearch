@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_learn_CMessageBuffer_h
-#define INCLUDED_prelert_learn_CMessageBuffer_h
+#ifndef INCLUDED_ml_learn_CMessageBuffer_h
+#define INCLUDED_ml_learn_CMessageBuffer_h
 
 #include <core/CCondition.h>
 #include <core/CLogger.h>
@@ -25,7 +25,7 @@
 #include <limits>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -167,5 +167,5 @@ class CMessageBuffer
 }
 }
 
-#endif // INCLUDED_prelert_learn_CMessageBuffer_h
+#endif // INCLUDED_ml_learn_CMessageBuffer_h
 

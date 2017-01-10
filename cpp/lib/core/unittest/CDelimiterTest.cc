@@ -68,9 +68,9 @@ void CDelimiterTest::testSimpleTokenise(void)
 
     LOG_DEBUG("Input data:\n" << testData << '\n');
 
-    prelert::core::CDelimiter delimiter("\n", "\\w+\\s+\\d+,\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+\\w+", true);
+    ml::core::CDelimiter delimiter("\n", "\\w+\\s+\\d+,\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+\\w+", true);
 
-    prelert::core::CStringUtils::TStrVec delimited;
+    ml::core::CStringUtils::TStrVec delimited;
     std::string remainder;
 
     delimiter.tokenise(testData, false, delimited, remainder);
@@ -115,9 +115,9 @@ void CDelimiterTest::testRegexTokenise(void)
     LOG_DEBUG("Input data:\n" << testData << '\n');
 
     // Regex matches line terminator for either Windows or Unix text
-    prelert::core::CDelimiter delimiter("\r?\n", "\\w+\\s+\\d+,\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+\\w+", true);
+    ml::core::CDelimiter delimiter("\r?\n", "\\w+\\s+\\d+,\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+\\w+", true);
 
-    prelert::core::CStringUtils::TStrVec delimited;
+    ml::core::CStringUtils::TStrVec delimited;
     std::string remainder;
 
     delimiter.tokenise(testData, false, delimited, remainder);
@@ -152,10 +152,10 @@ void CDelimiterTest::testQuotedTokenise(void)
 
     LOG_DEBUG("Input data:\n" << testData << '\n');
 
-    prelert::core::CDelimiter delimiter(",");
+    ml::core::CDelimiter delimiter(",");
     delimiter.quote('"');
 
-    prelert::core::CStringUtils::TStrVec delimited;
+    ml::core::CStringUtils::TStrVec delimited;
     std::string remainder;
 
     delimiter.tokenise(testData, false, delimited, remainder);
@@ -180,10 +180,10 @@ void CDelimiterTest::testQuotedEscapedTokenise(void)
 
     LOG_DEBUG("Input data:\n" << testData << '\n');
 
-    prelert::core::CDelimiter delimiter(",");
+    ml::core::CDelimiter delimiter(",");
     delimiter.quote('"');
 
-    prelert::core::CStringUtils::TStrVec delimited;
+    ml::core::CStringUtils::TStrVec delimited;
     std::string remainder;
 
     delimiter.tokenise(testData, false, delimited, remainder);
@@ -208,10 +208,10 @@ void CDelimiterTest::testInvalidQuotedTokenise(void)
 
     LOG_DEBUG("Input data:\n" << testData << '\n');
 
-    prelert::core::CDelimiter delimiter(",");
+    ml::core::CDelimiter delimiter(",");
     delimiter.quote('"');
 
-    prelert::core::CStringUtils::TStrVec delimited;
+    ml::core::CStringUtils::TStrVec delimited;
     std::string remainder;
 
     delimiter.tokenise(testData, false, delimited, remainder);
@@ -231,10 +231,10 @@ void CDelimiterTest::testQuoteEqualsEscapeTokenise(void)
 
     LOG_DEBUG("Input data:\n" << testData << '\n');
 
-    prelert::core::CDelimiter delimiter(",");
+    ml::core::CDelimiter delimiter(",");
     delimiter.quote('"', '"');
 
-    prelert::core::CStringUtils::TStrVec delimited;
+    ml::core::CStringUtils::TStrVec delimited;
     std::string remainder;
 
     delimiter.tokenise(testData, false, delimited, remainder);
@@ -256,16 +256,16 @@ void CDelimiterTest::testXmlParse(void)
 {
     {
         // Test invalid constructor
-        prelert::core::CDelimiter delimiter("(");
+        ml::core::CDelimiter delimiter("(");
         CPPUNIT_ASSERT(!delimiter.valid());
     }
     {
         // Test invalid constructor
-        prelert::core::CDelimiter delimiter("(", "(");
+        ml::core::CDelimiter delimiter("(", "(");
         CPPUNIT_ASSERT(!delimiter.valid());
     }
     {
-        prelert::core::CXmlParser parser;
+        ml::core::CXmlParser parser;
         std::string xml = "<delimiter quote=\"'\" escape=\"^\" \
 delimiter_followed_by_regex=\"start.*more.*end\" \
 delimiter_followed_by_time=\"true\"><![CDATA[\
@@ -273,14 +273,14 @@ start.*middle.*end]]></delimiter>";
 
         CPPUNIT_ASSERT(parser.parseString(xml));
 
-        prelert::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
+        ml::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
         CPPUNIT_ASSERT(parser.toNodeHierarchy(rootNodePtr));
         CPPUNIT_ASSERT(rootNodePtr != 0);
 
-        prelert::core::CDelimiter delimiter;
+        ml::core::CDelimiter delimiter;
         CPPUNIT_ASSERT(delimiter.parse(*rootNodePtr));
 
-        prelert::core::CXmlNode node = delimiter.toXmlNode();
+        ml::core::CXmlNode node = delimiter.toXmlNode();
         CPPUNIT_ASSERT_EQUAL(std::string("name=delimiter;value=start.*middle.*end;quote=';escape=^;delimiter_followed_by_regex=start.*more.*end;delimiter_followed_by_time=true;"),
                              node.dump());
 

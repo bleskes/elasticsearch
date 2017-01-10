@@ -12,14 +12,14 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_controller_CBlockingCallCancellerThread_h
-#define INCLUDED_prelert_controller_CBlockingCallCancellerThread_h
+#ifndef INCLUDED_ml_controller_CBlockingCallCancellerThread_h
+#define INCLUDED_ml_controller_CBlockingCallCancellerThread_h
 
 #include <core/CThread.h>
 
 #include <iosfwd>
 
-namespace prelert
+namespace ml
 {
 namespace controller
 {
@@ -74,4 +74,4 @@ class CBlockingCallCancellerThread : public core::CThread
 }
 }
 
-#endif // INCLUDED_prelert_controller_CBlockingCallCancellerThread_h
+#endif // INCLUDED_ml_controller_CBlockingCallCancellerThread_h

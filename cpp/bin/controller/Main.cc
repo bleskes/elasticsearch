@@ -13,10 +13,10 @@
  * strictly prohibited.
  */
 //! \brief
-//! Controller to start other Prelert processes.
+//! Controller to start other Ml processes.
 //!
 //! DESCRIPTION:\n
-//! Starts other Prelert processes based on commands sent to it
+//! Starts other Ml processes based on commands sent to it
 //! through a named pipe.
 //!
 //! Each command has the following format:
@@ -70,15 +70,15 @@
 int main(int argc, char **argv)
 {
     const std::string &defaultNamedPipePath =
-            prelert::core::CNamedPipeFactory::defaultPath();
-    const std::string &progName = prelert::core::CProgName::progName();
+            ml::core::CNamedPipeFactory::defaultPath();
+    const std::string &progName = ml::core::CProgName::progName();
     const std::string &parentPidStr =
-            prelert::core::CStringUtils::typeToString(prelert::core::CProcess::instance().parentId());
+            ml::core::CStringUtils::typeToString(ml::core::CProcess::instance().parentId());
 
     // Read command line options
     std::string logPipe(defaultNamedPipePath + progName + "_log_" + parentPidStr);
     std::string commandPipe(defaultNamedPipePath + progName + "_command_" + parentPidStr);
-    if (prelert::controller::CCmdLineParser::parse(argc,
+    if (ml::controller::CCmdLineParser::parse(argc,
                                                    argv,
                                                    logPipe,
                                                    commandPipe) == false)
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     // 4) No plugin code ever runs
     // This thread will detect the death of the Java process because this
     // process's STDIN will be closed.
-    prelert::controller::CBlockingCallCancellerThread cancellerThread(prelert::core::CThread::currentThreadId(),
+    ml::controller::CBlockingCallCancellerThread cancellerThread(ml::core::CThread::currentThreadId(),
                                                                       std::cin);
     if (cancellerThread.start() == false)
     {
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (prelert::core::CLogger::instance().reconfigureLogToNamedPipe(logPipe) == false)
+    if (ml::core::CLogger::instance().reconfigureLogToNamedPipe(logPipe) == false)
     {
         LOG_FATAL("Could not reconfigure logging");
         cancellerThread.stop();
@@ -113,10 +113,10 @@ int main(int argc, char **argv)
     // Log the program version immediately after reconfiguring the logger.  This
     // must be done from the program, and NOT a shared library, as each program
     // statically links its own version library.
-    LOG_INFO(prelert::ver::CBuildInfo::fullInfo());
+    LOG_INFO(ml::ver::CBuildInfo::fullInfo());
 
-    prelert::core::CNamedPipeFactory::TIStreamP commandStream =
-            prelert::core::CNamedPipeFactory::openPipeStreamRead(commandPipe);
+    ml::core::CNamedPipeFactory::TIStreamP commandStream =
+            ml::core::CNamedPipeFactory::openPipeStreamRead(commandPipe);
     if (commandStream == 0)
     {
         LOG_FATAL("Could not open command pipe");
@@ -127,8 +127,8 @@ int main(int argc, char **argv)
     // Change directory to the directory containing this program, because the
     // permitted paths all assume the current working directory contains the
     // permitted programs
-    const std::string &progDir = prelert::core::CProgName::progDir();
-    if (prelert::core::COsFileFuncs::chdir(progDir.c_str()) == -1)
+    const std::string &progDir = ml::core::CProgName::progDir();
+    if (ml::core::COsFileFuncs::chdir(progDir.c_str()) == -1)
     {
         LOG_FATAL("Could not change directory to '" << progDir << "': " <<
                   ::strerror(errno));
@@ -136,12 +136,12 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    prelert::controller::CCommandProcessor::TStrVec permittedProcessPaths;
+    ml::controller::CCommandProcessor::TStrVec permittedProcessPaths;
     permittedProcessPaths.push_back("./autoconfig");
     permittedProcessPaths.push_back("./autodetect");
     permittedProcessPaths.push_back("./normalize");
 
-    prelert::controller::CCommandProcessor processor(permittedProcessPaths);
+    ml::controller::CCommandProcessor processor(permittedProcessPaths);
     processor.processCommands(*commandStream);
 
     cancellerThread.stop();
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     // This message makes it easier to spot process crashes in a log file - if
     // this isn't present in the log for a given PID and there's no other log
     // message indicating early exit then the process has probably core dumped
-    LOG_INFO("Prelert controller exiting");
+    LOG_INFO("Ml controller exiting");
 
     return EXIT_SUCCESS;
 }

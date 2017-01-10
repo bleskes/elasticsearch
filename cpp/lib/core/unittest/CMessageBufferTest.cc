@@ -57,7 +57,7 @@ namespace
                 return m_FlushInterval;
             }
 
-            prelert::core_t::TTime flushMessages(TStrVec &messages)
+            ml::core_t::TTime flushMessages(TStrVec &messages)
             {
                 LOG_DEBUG("Flush messages " << m_Buffer.size());
 
@@ -76,7 +76,7 @@ namespace
                 this->flushMessages(messages);
             }
 
-            void    processMessages(const TStrVec &messages, prelert::core_t::TTime)
+            void    processMessages(const TStrVec &messages, ml::core_t::TTime)
             {
                 m_Results.insert(m_Results.end(), messages.begin(), messages.end());
 
@@ -99,7 +99,7 @@ void    CMessageBufferTest::testAll(void)
 {
     CBuffer buffer(10);
 
-    prelert::core::CMessageBuffer<std::string, CBuffer>   queue(buffer);
+    ml::core::CMessageBuffer<std::string, CBuffer>   queue(buffer);
 
     CPPUNIT_ASSERT(queue.start());
 

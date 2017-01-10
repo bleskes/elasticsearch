@@ -59,7 +59,7 @@ namespace
                 // the timing functionality
                 if (m_SleepTime > 0)
                 {
-                    prelert::core::CSleep::sleep(m_SleepTime);
+                    ml::core::CSleep::sleep(m_SleepTime);
                 }
             }
 
@@ -81,7 +81,7 @@ void CMessageQueueTest::testSendReceive(void)
 {
     CReceiver receiver;
 
-    prelert::core::CMessageQueue<std::string, CReceiver> queue(receiver);
+    ml::core::CMessageQueue<std::string, CReceiver> queue(receiver);
 
     CPPUNIT_ASSERT(queue.start());
 
@@ -113,7 +113,7 @@ void CMessageQueueTest::testTiming(void)
     CReceiver receiver(29);
 
     static const size_t NUM_TO_TIME(100);
-    prelert::core::CMessageQueue<std::string,
+    ml::core::CMessageQueue<std::string,
                                  CReceiver,
                                  NUM_TO_TIME> queue(receiver);
 

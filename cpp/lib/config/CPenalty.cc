@@ -22,7 +22,7 @@
 #include <config/CDetectorSpecification.h>
 #include <config/Constants.h>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

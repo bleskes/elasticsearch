@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CTrendTests_h
-#define INCLUDED_prelert_maths_CTrendTests_h
+#ifndef INCLUDED_ml_maths_CTrendTests_h
+#define INCLUDED_ml_maths_CTrendTests_h
 
 #include <core/AtomicTypes.h>
 #include <core/CoreTypes.h>
@@ -36,7 +36,7 @@
 
 class CTrendTestsTest;
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -850,4 +850,4 @@ class MATHS_EXPORT CTrendTests
 }
 }
 
-#endif // INCLUDED_prelert_maths_CTrendTests_h
+#endif // INCLUDED_ml_maths_CTrendTests_h

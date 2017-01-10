@@ -63,7 +63,7 @@ void CBlockingMessageQueueTest::testSendReceive(void)
 
     static const size_t QUEUE_SIZE(100);
 
-    prelert::core::CBlockingMessageQueue<std::string, CReceiver, QUEUE_SIZE> queue(receiver);
+    ml::core::CBlockingMessageQueue<std::string, CReceiver, QUEUE_SIZE> queue(receiver);
 
     CPPUNIT_ASSERT(queue.start());
 

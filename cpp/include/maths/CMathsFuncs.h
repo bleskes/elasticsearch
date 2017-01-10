@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_maths_CMathsFuncs_h
-#define INCLUDED_prelert_maths_CMathsFuncs_h
+#ifndef INCLUDED_ml_maths_CMathsFuncs_h
+#define INCLUDED_ml_maths_CMathsFuncs_h
 
 #include <core/CNonInstantiatable.h>
 
@@ -24,7 +24,7 @@
 #include <functional>
 #include <iterator>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -339,5 +339,5 @@ class MATHS_EXPORT CMathsFuncs : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMathsFuncs_h
+#endif // INCLUDED_ml_maths_CMathsFuncs_h
 

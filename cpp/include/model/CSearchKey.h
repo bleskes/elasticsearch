@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CSearchKey_h
-#define INCLUDED_prelert_model_CSearchKey_h
+#ifndef INCLUDED_ml_model_CSearchKey_h
+#define INCLUDED_ml_model_CSearchKey_h
 
 #include <core/CHashing.h>
 
@@ -33,7 +33,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -289,5 +289,5 @@ class CStrKeyPrEqual
 }
 }
 
-#endif // INCLUDED_prelert_model_CSearchKey_h
+#endif // INCLUDED_ml_model_CSearchKey_h
 

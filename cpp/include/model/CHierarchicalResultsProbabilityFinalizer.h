@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CHierarchicalResultsProbabilityFinalizer_h
-#define INCLUDED_prelert_model_CHierarchicalResultsProbabilityFinalizer_h
+#ifndef INCLUDED_ml_model_CHierarchicalResultsProbabilityFinalizer_h
+#define INCLUDED_ml_model_CHierarchicalResultsProbabilityFinalizer_h
 
 #include <model/CHierarchicalResults.h>
 #include <model/ModelTypes.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -45,4 +45,4 @@ class MODEL_EXPORT CHierarchicalResultsProbabilityFinalizer : public CHierarchic
 }
 }
 
-#endif // INCLUDED_prelert_model_CHierarchicalResultsProbabilityFinalizer_h
+#endif // INCLUDED_ml_model_CHierarchicalResultsProbabilityFinalizer_h

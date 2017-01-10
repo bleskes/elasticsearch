@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CModelConfig_h
-#define INCLUDED_prelert_model_CModelConfig_h
+#ifndef INCLUDED_ml_model_CModelConfig_h
+#define INCLUDED_ml_model_CModelConfig_h
 
 #include <core/CoreTypes.h>
 
@@ -35,7 +35,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -599,4 +599,4 @@ class MODEL_EXPORT CModelConfig
 }
 }
 
-#endif // INCLUDED_prelert_model_CModelConfig_h
+#endif // INCLUDED_ml_model_CModelConfig_h

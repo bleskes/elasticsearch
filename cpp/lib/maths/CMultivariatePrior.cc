@@ -22,7 +22,7 @@
 
 #include <boost/iterator/transform_iterator.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

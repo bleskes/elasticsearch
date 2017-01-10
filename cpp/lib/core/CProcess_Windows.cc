@@ -29,7 +29,7 @@
 namespace
 {
 
-// The wait hint of 10 seconds is about three times the observed time Prelert
+// The wait hint of 10 seconds is about three times the observed time Ml
 // services generally take to shut down.  However, it is better to give too high
 // a hint than too low a hint, as we don't want the service controller reporting
 // an error prematurely.
@@ -78,7 +78,7 @@ const DWORD PPID(findParentProcessId());
 }
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -95,7 +95,7 @@ CProcess::CProcess(void)
     : m_IsService(false),
       m_Initialised(false),
       m_Running(false),
-      m_PrelertMainFunc(0),
+      m_MlMainFunc(0),
       m_ServiceHandle(0)
 {
 }
@@ -125,13 +125,13 @@ CProcess::TPid CProcess::parentId(void) const
     return PPID;
 }
 
-bool CProcess::startDispatcher(TPrelertMainFunc prelertMain,
+bool CProcess::startDispatcher(TMlMainFunc mlMain,
                                int argc,
                                char *argv[])
 {
-    if (prelertMain == 0)
+    if (mlMain == 0)
     {
-        LOG_ABORT("NULL prelertMain() function passed");
+        LOG_ABORT("NULL mlMain() function passed");
     }
 
     if (argc <= 0)
@@ -143,7 +143,7 @@ bool CProcess::startDispatcher(TPrelertMainFunc prelertMain,
         return false;
     }
 
-    m_PrelertMainFunc = prelertMain;
+    m_MlMainFunc = mlMain;
     m_Args.reserve(argc);
     for (int count = 0; count < argc; ++count)
     {
@@ -180,7 +180,7 @@ bool CProcess::startDispatcher(TPrelertMainFunc prelertMain,
     m_IsService = false;
     m_Running = true;
 
-    bool success(m_PrelertMainFunc(argc, argv) == EXIT_SUCCESS);
+    bool success(m_MlMainFunc(argc, argv) == EXIT_SUCCESS);
 
     // Only log process status messages if the logger has been reconfigured to
     // log somewhere more sensible that STDERR.  (This prevents us spoiling the
@@ -258,7 +258,7 @@ void WINAPI CProcess::serviceMain(DWORD argc, char *argv[])
         return;
     }
 
-    if (process.m_PrelertMainFunc != 0)
+    if (process.m_MlMainFunc != 0)
     {
         typedef boost::scoped_array<char *> TScopedCharPArray;
 
@@ -288,7 +288,7 @@ void WINAPI CProcess::serviceMain(DWORD argc, char *argv[])
         }
 
         process.m_Running = true;
-        int ret(process.m_PrelertMainFunc(mergedArgC, mergedArgV.get()));
+        int ret(process.m_MlMainFunc(mergedArgC, mergedArgV.get()));
 
         // Only log process status messages if the logger has been reconfigured
         // to log somewhere more sensible that STDERR.  (This prevents us

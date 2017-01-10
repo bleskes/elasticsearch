@@ -17,7 +17,7 @@
 
 #include <maths/CLinearAlgebra.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

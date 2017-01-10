@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_vflib_CLooper_h
-#define INCLUDED_prelert_vflib_CLooper_h
+#ifndef INCLUDED_ml_vflib_CLooper_h
+#define INCLUDED_ml_vflib_CLooper_h
 
 #include <vflib/ImportExport.h>
 
 #include <stddef.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace vflib
 {
@@ -64,5 +64,5 @@ class VFLIB_EXPORT CLooper
 }
 }
 
-#endif // INCLUDED_prelert_vflib_CLooper_h
+#endif // INCLUDED_ml_vflib_CLooper_h
 

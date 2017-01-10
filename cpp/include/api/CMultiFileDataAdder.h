@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CMultiFileDataAdder_h
-#define INCLUDED_prelert_api_CMultiFileDataAdder_h
+#ifndef INCLUDED_ml_api_CMultiFileDataAdder_h
+#define INCLUDED_ml_api_CMultiFileDataAdder_h
 
 #include <core/CDataAdder.h>
 
@@ -21,13 +21,13 @@
 
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
 
 //! \brief
-//! A file based persister for writing Prelert models.
+//! A file based persister for writing Ml models.
 //!
 //! DESCRIPTION:\n
 //! Output file paths are a concatenation of the baseFilename
@@ -93,5 +93,5 @@ class API_EXPORT CMultiFileDataAdder : public core::CDataAdder
 }
 }
 
-#endif // INCLUDED_prelert_api_CMultiFileDataAdder_h
+#endif // INCLUDED_ml_api_CMultiFileDataAdder_h
 

@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_autodetect_CCmdLineParser_h
-#define INCLUDED_prelert_autodetect_CCmdLineParser_h
+#ifndef INCLUDED_ml_autodetect_CCmdLineParser_h
+#define INCLUDED_ml_autodetect_CCmdLineParser_h
 
 #include <core/CoreTypes.h>
 
@@ -21,7 +21,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace autodetect
 {
@@ -94,4 +94,4 @@ class CCmdLineParser
 }
 }
 
-#endif // INCLUDED_prelert_autodetect_CCmdLineParser_h
+#endif // INCLUDED_ml_autodetect_CCmdLineParser_h

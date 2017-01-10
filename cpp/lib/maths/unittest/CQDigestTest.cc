@@ -31,7 +31,7 @@
 
 #include <set>
 
-using namespace prelert;
+using namespace ml;
 using namespace maths;
 using namespace test;
 

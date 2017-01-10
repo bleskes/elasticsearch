@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CJsonStatePersistInserter_h
-#define INCLUDED_prelert_core_CJsonStatePersistInserter_h
+#ifndef INCLUDED_ml_core_CJsonStatePersistInserter_h
+#define INCLUDED_ml_core_CJsonStatePersistInserter_h
 
 #include <core/CStatePersistInserter.h>
 #include <core/ImportExport.h>
@@ -24,7 +24,7 @@
 #include <iosfwd>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -90,5 +90,5 @@ class CORE_EXPORT CJsonStatePersistInserter : public CStatePersistInserter
 }
 }
 
-#endif // INCLUDED_prelert_core_CJsonStatePersistInserter_h
+#endif // INCLUDED_ml_core_CJsonStatePersistInserter_h
 

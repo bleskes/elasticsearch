@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CFieldConfig_h
-#define INCLUDED_prelert_api_CFieldConfig_h
+#ifndef INCLUDED_ml_api_CFieldConfig_h
+#define INCLUDED_ml_api_CFieldConfig_h
 
 #include <core/BoostMultiIndex.h>
 #include <core/CPatternSet.h>
@@ -37,7 +37,7 @@
 class CFieldConfigTest;
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -47,7 +47,7 @@ namespace api
 //! Holds field configuration options.
 //!
 //! DESCRIPTION:\n
-//! Holds configuration options that define how Prelert custom
+//! Holds configuration options that define how Ml custom
 //! search commands should interpret fields in events.
 //!
 //! IMPLEMENTATION DECISIONS:\n
@@ -86,7 +86,7 @@ namespace api
 //! influencer.1 = client_ip
 //! influencer.2 = uri_path
 //!
-//! Within the Prelert model code "person field" corresponds to the
+//! Within the Ml model code "person field" corresponds to the
 //! "by field" for individual models and "over field" for population
 //! models.  For population models the "by field" is referred to as
 //! the "attribute field" in model library code.
@@ -299,7 +299,7 @@ class API_EXPORT CFieldConfig
                 const std::string &overFieldName(void) const;
                 const std::string &partitionFieldName(void) const;
                 bool useNull(void) const;
-                prelert::model_t::EExcludeFrequent excludeFrequent(void) const;
+                ml::model_t::EExcludeFrequent excludeFrequent(void) const;
 
                 //! Map back from the function enum to the shortest possible
                 //! function name that could be used to specify the function
@@ -643,5 +643,5 @@ std::ostream &operator<<(std::ostream &strm,
 }
 }
 
-#endif // INCLUDED_prelert_api_CFieldConfig_h
+#endif // INCLUDED_ml_api_CFieldConfig_h
 

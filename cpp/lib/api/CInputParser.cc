@@ -15,7 +15,7 @@
 #include <api/CInputParser.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

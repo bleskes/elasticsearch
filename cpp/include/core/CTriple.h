@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CTriple_h
-#define INCLUDED_prelert_core_CTriple_h
+#ifndef INCLUDED_ml_core_CTriple_h
+#define INCLUDED_ml_core_CTriple_h
 
 #include <core/CMemory.h>
 #include <core/CMemoryUsage.h>
@@ -28,7 +28,7 @@
 #include <string.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -143,5 +143,5 @@ std::ostream &operator<<(std::ostream &o, const CTriple<T1, T2, T3> &triple)
 }
 }
 
-#endif // INCLUDED_prelert_core_CTriple_h
+#endif // INCLUDED_ml_core_CTriple_h
 

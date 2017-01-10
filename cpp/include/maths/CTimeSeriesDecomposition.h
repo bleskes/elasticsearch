@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CTimeSeriesDecomposition_h
-#define INCLUDED_prelert_maths_CTimeSeriesDecomposition_h
+#ifndef INCLUDED_ml_maths_CTimeSeriesDecomposition_h
+#define INCLUDED_ml_maths_CTimeSeriesDecomposition_h
 
 #include <maths/CBasicStatistics.h>
 #include <maths/CTimeSeriesDecompositionDetail.h>
@@ -25,7 +25,7 @@
 
 class CTimeSeriesDecompositionTest;
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -248,4 +248,4 @@ class MATHS_EXPORT CTimeSeriesDecomposition : public CTimeSeriesDecompositionInt
 }
 }
 
-#endif // INCLUDED_prelert_maths_CTimeSeriesDecomposition_h
+#endif // INCLUDED_ml_maths_CTimeSeriesDecomposition_h

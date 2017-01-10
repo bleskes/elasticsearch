@@ -32,9 +32,9 @@ CppUnit::Test *CRapidXmlStatePersistInserterTest::suite()
 namespace
 {
 
-void insert2ndLevel(prelert::core::CStatePersistInserter &inserter)
+void insert2ndLevel(ml::core::CStatePersistInserter &inserter)
 {
-    inserter.insertValue("level2A", 3.14, prelert::core::CIEEE754::E_SinglePrecision);
+    inserter.insertValue("level2A", 3.14, ml::core::CIEEE754::E_SinglePrecision);
     inserter.insertValue("level2B", 'z');
 }
 
@@ -42,11 +42,11 @@ void insert2ndLevel(prelert::core::CStatePersistInserter &inserter)
 
 void CRapidXmlStatePersistInserterTest::testPersist(void)
 {
-    prelert::core::CRapidXmlStatePersistInserter::TStrStrMap rootAttributes;
+    ml::core::CRapidXmlStatePersistInserter::TStrStrMap rootAttributes;
     rootAttributes["attr1"] = "attrVal1";
     rootAttributes["attr2"] = "attrVal2";
 
-    prelert::core::CRapidXmlStatePersistInserter inserter("root", rootAttributes);
+    ml::core::CRapidXmlStatePersistInserter inserter("root", rootAttributes);
 
     inserter.insertValue("level1A", "a");
     inserter.insertValue("level1B", 25);

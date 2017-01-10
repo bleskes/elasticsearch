@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CSleep_h
-#define INCLUDED_prelert_core_CSleep_h
+#ifndef INCLUDED_ml_core_CSleep_h
+#define INCLUDED_ml_core_CSleep_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/ImportExport.h>
@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -72,5 +72,5 @@ class CORE_EXPORT CSleep : private CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_CSleep_h
+#endif // INCLUDED_ml_core_CSleep_h
 

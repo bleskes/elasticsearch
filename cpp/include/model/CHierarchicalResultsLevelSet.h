@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CHierarchicalResultsLevelSet_h
-#define INCLUDED_prelert_model_CHierarchicalResultsLevelSet_h
+#ifndef INCLUDED_ml_model_CHierarchicalResultsLevelSet_h
+#define INCLUDED_ml_model_CHierarchicalResultsLevelSet_h
 
 #include <core/CCompressedDictionary.h>
 
@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -355,4 +355,4 @@ typename CHierarchicalResultsLevelSet<T>::TDictionary CHierarchicalResultsLevelS
 }
 }
 
-#endif // INCLUDED_prelert_model_CHierarchicalResultsLevelSet_h
+#endif // INCLUDED_ml_model_CHierarchicalResultsLevelSet_h

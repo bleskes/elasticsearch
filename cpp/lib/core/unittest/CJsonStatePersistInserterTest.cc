@@ -35,9 +35,9 @@ CppUnit::Test *CJsonStatePersistInserterTest::suite()
 namespace
 {
 
-void insert2ndLevel(prelert::core::CStatePersistInserter &inserter)
+void insert2ndLevel(ml::core::CStatePersistInserter &inserter)
 {
-    inserter.insertValue("level2A", 3.14, prelert::core::CIEEE754::E_SinglePrecision);
+    inserter.insertValue("level2A", 3.14, ml::core::CIEEE754::E_SinglePrecision);
     inserter.insertValue("level2B", 'z');
 }
 
@@ -48,7 +48,7 @@ void CJsonStatePersistInserterTest::testPersist(void)
     std::ostringstream strm;
 
     {
-        prelert::core::CJsonStatePersistInserter inserter(strm);
+        ml::core::CJsonStatePersistInserter inserter(strm);
 
         inserter.insertValue("level1A", "a");
         inserter.insertValue("level1B", 25);
@@ -56,7 +56,7 @@ void CJsonStatePersistInserterTest::testPersist(void)
     }
 
     std::string json(strm.str());
-    prelert::core::CStringUtils::trimWhitespace(json);
+    ml::core::CStringUtils::trimWhitespace(json);
 
     LOG_DEBUG("JSON is: " << json);
 

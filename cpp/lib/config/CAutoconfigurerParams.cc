@@ -32,7 +32,7 @@
 #include <fstream>
 #include <functional>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

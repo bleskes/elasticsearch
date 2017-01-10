@@ -19,7 +19,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -36,15 +36,15 @@ class CResourceMonitorTest : public CppUnit::TestFixture
         static CppUnit::Test *suite();
 
     private:
-        void reportCallback(const prelert::model::CResourceMonitor::SResults &results);
+        void reportCallback(const ml::model::CResourceMonitor::SResults &results);
 
-        void addTestData(prelert::core_t::TTime &firstTime, const prelert::core_t::TTime bucketLength,
+        void addTestData(ml::core_t::TTime &firstTime, const ml::core_t::TTime bucketLength,
                      const std::size_t buckets, const std::size_t newPeoplePerBucket,
-                     std::size_t &startOffset, prelert::model::CAnomalyDetector &detector,
-                     prelert::model::CResourceMonitor &monitor);
+                     std::size_t &startOffset, ml::model::CAnomalyDetector &detector,
+                     ml::model::CResourceMonitor &monitor);
 
     private:
-        prelert::model::CResourceMonitor::SResults m_CallbackResults;
+        ml::model::CResourceMonitor::SResults m_CallbackResults;
 };
 
 #endif // INCLUDED_CResourceMonitorTest_h

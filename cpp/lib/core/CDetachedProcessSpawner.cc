@@ -88,7 +88,7 @@ bool setupFileActions(posix_spawn_file_actions_t *fileActions)
 
 }
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

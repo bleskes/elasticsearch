@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CBootstrapClusterer_h
-#define INCLUDED_prelert_maths_CBootstrapClusterer_h
+#ifndef INCLUDED_ml_maths_CBootstrapClusterer_h
+#define INCLUDED_ml_maths_CBootstrapClusterer_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -37,7 +37,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1286,4 +1286,4 @@ void bootstrapCluster(std::vector<POINT> &points,
 }
 }
 
-#endif // INCLUDED_prelert_maths_CBootstrapClusterer_h
+#endif // INCLUDED_ml_maths_CBootstrapClusterer_h

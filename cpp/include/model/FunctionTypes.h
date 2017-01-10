@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_function_t_FunctionTypes_h
-#define INCLUDED_prelert_model_function_t_FunctionTypes_h
+#ifndef INCLUDED_ml_model_function_t_FunctionTypes_h
+#define INCLUDED_ml_model_function_t_FunctionTypes_h
 
 #include <model/ImportExport.h>
 #include <model/ModelTypes.h>
@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -260,5 +260,5 @@ std::ostream &operator<<(std::ostream &o, EFunction function);
 }
 }
 
-#endif // INCLUDED_prelert_model_function_t_FunctionTypes_h
+#endif // INCLUDED_ml_model_function_t_FunctionTypes_h
 

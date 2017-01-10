@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_maths_CDynamicMean_h
-#define INCLUDED_prelert_maths_CDynamicMean_h
+#ifndef INCLUDED_ml_maths_CDynamicMean_h
+#define INCLUDED_ml_maths_CDynamicMean_h
 
 #include <core/CLogger.h>
 
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -202,5 +202,5 @@ class CDynamicMean
 }
 }
 
-#endif // INCLUDED_prelert_maths_CDynamicMean_h
+#endif // INCLUDED_ml_maths_CDynamicMean_h
 

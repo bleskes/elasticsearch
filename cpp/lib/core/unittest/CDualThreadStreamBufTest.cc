@@ -52,10 +52,10 @@ CppUnit::Test *CDualThreadStreamBufTest::suite()
 namespace
 {
 
-class CInputThread : public prelert::core::CThread
+class CInputThread : public ml::core::CThread
 {
     public:
-        CInputThread(prelert::core::CDualThreadStreamBuf &buffer,
+        CInputThread(ml::core::CDualThreadStreamBuf &buffer,
                      uint32_t delay = 0,
                      size_t fatalAfter = 0)
             : m_Buffer(buffer),
@@ -82,7 +82,7 @@ class CInputThread : public prelert::core::CThread
                 m_TotalData += line.length();
                 ++m_TotalData; // For the delimiter
                 CPPUNIT_ASSERT_EQUAL(static_cast<std::streampos>(m_TotalData), strm.tellg());
-                prelert::core::CSleep::sleep(m_Delay);
+                ml::core::CSleep::sleep(m_Delay);
                 if (count == m_FatalAfter)
                 {
                     m_Buffer.signalFatalError();
@@ -96,7 +96,7 @@ class CInputThread : public prelert::core::CThread
         }
 
     private:
-        prelert::core::CDualThreadStreamBuf &m_Buffer;
+        ml::core::CDualThreadStreamBuf &m_Buffer;
         uint32_t                            m_Delay;
         size_t                              m_FatalAfter;
         size_t                              m_TotalData;
@@ -126,13 +126,13 @@ void CDualThreadStreamBufTest::testThroughput(void)
     size_t dataSize(::strlen(DATA));
     size_t totalDataSize(TEST_SIZE * dataSize);
 
-    prelert::core::CDualThreadStreamBuf buf;
+    ml::core::CDualThreadStreamBuf buf;
     CInputThread inputThread(buf);
     inputThread.start();
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting REST buffer throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     for (size_t count = 0; count < TEST_SIZE; ++count)
     {
@@ -156,9 +156,9 @@ void CDualThreadStreamBufTest::testThroughput(void)
 
     inputThread.waitForFinish();
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished REST buffer throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(totalDataSize, inputThread.totalData());
 
@@ -175,13 +175,13 @@ void CDualThreadStreamBufTest::testSlowConsumer(void)
     size_t numNewLines(std::count(DATA, DATA + dataSize, '\n'));
     size_t totalDataSize(TEST_SIZE * dataSize);
 
-    prelert::core::CDualThreadStreamBuf buf;
+    ml::core::CDualThreadStreamBuf buf;
     CInputThread inputThread(buf, DELAY);
     inputThread.start();
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting REST buffer slow consumer test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     for (size_t count = 0; count < TEST_SIZE; ++count)
     {
@@ -200,20 +200,20 @@ void CDualThreadStreamBufTest::testSlowConsumer(void)
 
     inputThread.waitForFinish();
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished REST buffer slow consumer test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(totalDataSize, inputThread.totalData());
 
-    prelert::core_t::TTime duration(end - start);
+    ml::core_t::TTime duration(end - start);
     LOG_INFO("REST buffer slow consumer test with test size " << TEST_SIZE <<
              ", " << numNewLines << " newlines per message and delay " <<
              DELAY << "ms took " << duration << " seconds");
 
-    prelert::core_t::TTime delaySecs(static_cast<prelert::core_t::TTime>((DELAY * numNewLines * TEST_SIZE) / 1000));
+    ml::core_t::TTime delaySecs(static_cast<ml::core_t::TTime>((DELAY * numNewLines * TEST_SIZE) / 1000));
     CPPUNIT_ASSERT(duration >= delaySecs);
-    static const prelert::core_t::TTime TOLERANCE(3);
+    static const ml::core_t::TTime TOLERANCE(3);
     CPPUNIT_ASSERT(duration <= delaySecs + TOLERANCE);
 }
 
@@ -221,7 +221,7 @@ void CDualThreadStreamBufTest::testPutback(void)
 {
     size_t dataSize(::strlen(DATA));
 
-    prelert::core::CDualThreadStreamBuf buf;
+    ml::core::CDualThreadStreamBuf buf;
 
     std::streamsize toWrite(static_cast<std::streamsize>(dataSize));
     const char *ptr(DATA);
@@ -277,7 +277,7 @@ void CDualThreadStreamBufTest::testFatal(void)
     CPPUNIT_ASSERT(dataSize < BUFFER_CAPACITY);
     CPPUNIT_ASSERT(BUFFER_CAPACITY * 3 < TEST_SIZE * dataSize);
 
-    prelert::core::CDualThreadStreamBuf buf(BUFFER_CAPACITY);
+    ml::core::CDualThreadStreamBuf buf(BUFFER_CAPACITY);
     CInputThread inputThread(buf, 1000, 1);
     inputThread.start();
 

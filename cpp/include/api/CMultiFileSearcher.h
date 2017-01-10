@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CMultiFileSearcher_h
-#define INCLUDED_prelert_api_CMultiFileSearcher_h
+#ifndef INCLUDED_ml_api_CMultiFileSearcher_h
+#define INCLUDED_ml_api_CMultiFileSearcher_h
 
 #include <core/CDataSearcher.h>
 
@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -69,5 +69,5 @@ class API_EXPORT CMultiFileSearcher : public core::CDataSearcher
 }
 }
 
-#endif // INCLUDED_prelert_api_CMultiFileSearcher_h
+#endif // INCLUDED_ml_api_CMultiFileSearcher_h
 

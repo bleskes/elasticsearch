@@ -18,7 +18,7 @@
 #include <core/CPatternSet.h>
 
 
-using namespace prelert;
+using namespace ml;
 using namespace core;
 
 CppUnit::Test *CPatternSetTest::suite()

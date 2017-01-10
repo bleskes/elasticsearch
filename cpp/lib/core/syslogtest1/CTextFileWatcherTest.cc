@@ -76,10 +76,10 @@ class CVisitor
 
 void CTextFileWatcherTest::testSyslog(void)
 {
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
-    CPPUNIT_ASSERT(watcher.init("files/prelerttest.log", "<END>\n",
-                    prelert::core::CTextFileWatcher::E_End));
+    CPPUNIT_ASSERT(watcher.init("files/mltest.log", "<END>\n",
+                    ml::core::CTextFileWatcher::E_End));
     CVisitor v;
 
     for (;;)
@@ -96,7 +96,7 @@ void CTextFileWatcherTest::testSyslog(void)
             return;
         }
 
-        prelert::core::CSleep::sleep(1000);
+        ml::core::CSleep::sleep(1000);
     }
 
 }

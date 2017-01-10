@@ -24,7 +24,7 @@
 #include <sstream>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -167,7 +167,7 @@ void CBenchMarker::dumpResults(void) const
              << "\tNumber of messages in manual category " << total << core_t::LINE_ENDING;
 
         const TIntSizeStrPrMap &counts = measureVecIter->second;
-        strm << "\tNumber of Prelert categories that include this manual category "
+        strm << "\tNumber of Ml categories that include this manual category "
              << counts.size() << core_t::LINE_ENDING;
 
         if (counts.size() == 1)
@@ -228,7 +228,7 @@ void CBenchMarker::dumpResults(void) const
     strm << "Total number of messages passed to benchmarker "
          << m_TotalMessages << core_t::LINE_ENDING
          << "Total number of scored messages " << m_ScoredMessages << core_t::LINE_ENDING
-         << "Number of scored messages correctly categorised by Prelert "
+         << "Number of scored messages correctly categorised by Ml "
          << good << core_t::LINE_ENDING
          << "Overall accuracy for scored messages "
          << (double(good) / double(m_ScoredMessages)) * 100.0 << '%' << core_t::LINE_ENDING

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CLongTailPenalty_h
-#define INCLUDED_prelert_config_CLongTailPenalty_h
+#ifndef INCLUDED_ml_config_CLongTailPenalty_h
+#define INCLUDED_ml_config_CLongTailPenalty_h
 
 #include <config/CPenalty.h>
 #include <config/ImportExport.h>
@@ -22,7 +22,7 @@
 #include <boost/ref.hpp>
 #include <boost/unordered_map.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -80,4 +80,4 @@ class CONFIG_EXPORT CLongTailPenalty : public CPenalty
 }
 }
 
-#endif // INCLUDED_prelert_config_CLongTailPenalty_h
+#endif // INCLUDED_ml_config_CLongTailPenalty_h

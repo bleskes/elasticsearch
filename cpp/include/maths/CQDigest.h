@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CQDigest_h
-#define INCLUDED_prelert_maths_CQDigest_h
+#ifndef INCLUDED_ml_maths_CQDigest_h
+#define INCLUDED_ml_maths_CQDigest_h
 
 #include <core/CNonCopyable.h>
 
@@ -28,7 +28,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -447,4 +447,4 @@ class MATHS_EXPORT CQDigest : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CQDigest_h
+#endif // INCLUDED_ml_maths_CQDigest_h

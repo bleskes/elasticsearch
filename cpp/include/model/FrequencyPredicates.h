@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_FrequencyPredicates_h
-#define INCLUDED_prelert_model_FrequencyPredicates_h
+#ifndef INCLUDED_ml_model_FrequencyPredicates_h
+#define INCLUDED_ml_model_FrequencyPredicates_h
 
 #include <model/CDataGatherer.h>
 #include <model/CModel.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -82,4 +82,4 @@ class MODEL_EXPORT CAttributeFrequencyGreaterThan
 }
 }
 
-#endif // INCLUDED_prelert_model_FrequencyPredicates_h
+#endif // INCLUDED_ml_model_FrequencyPredicates_h

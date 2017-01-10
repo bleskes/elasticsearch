@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CEventData_h
-#define INCLUDED_prelert_model_CEventData_h
+#ifndef INCLUDED_ml_model_CEventData_h
+#define INCLUDED_ml_model_CEventData_h
 
 #include <core/CoreTypes.h>
 #include <core/CSmallVector.h>
@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -165,4 +165,4 @@ class MODEL_EXPORT CEventData
 }
 }
 
-#endif // INCLUDED_prelert_model_CEventData_h
+#endif // INCLUDED_ml_model_CEventData_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CXMeans_h
-#define INCLUDED_prelert_maths_CXMeans_h
+#ifndef INCLUDED_ml_maths_CXMeans_h
+#define INCLUDED_ml_maths_CXMeans_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -36,7 +36,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -493,4 +493,4 @@ class CXMeans
 }
 }
 
-#endif // INCLUDED_prelert_maths_CXMeans_h
+#endif // INCLUDED_ml_maths_CXMeans_h

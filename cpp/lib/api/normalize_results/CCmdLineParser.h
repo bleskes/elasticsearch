@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_normalize_results_CCmdLineParser_h
-#define INCLUDED_prelert_normalize_results_CCmdLineParser_h
+#ifndef INCLUDED_ml_normalize_results_CCmdLineParser_h
+#define INCLUDED_ml_normalize_results_CCmdLineParser_h
 
 #include <core/CoreTypes.h>
 
@@ -21,7 +21,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace normalize_results
 {
@@ -58,5 +58,5 @@ class CCmdLineParser
 }
 }
 
-#endif // INCLUDED_prelert_normalize_results_CCmdLineParser_h
+#endif // INCLUDED_ml_normalize_results_CCmdLineParser_h
 

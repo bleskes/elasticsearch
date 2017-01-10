@@ -31,7 +31,7 @@
 //!
 //! IMPLEMENTATION DECISIONS:\n
 //!
-class CMockDataAdder : public prelert::core::CDataAdder
+class CMockDataAdder : public ml::core::CDataAdder
 {
     public:
         typedef std::vector<std::string> TStrVec;

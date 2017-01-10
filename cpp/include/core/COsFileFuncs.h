@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_COsFileFuncs_h
-#define INCLUDED_prelert_core_COsFileFuncs_h
+#ifndef INCLUDED_ml_core_COsFileFuncs_h
+#define INCLUDED_ml_core_COsFileFuncs_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/ImportExport.h>
@@ -28,7 +28,7 @@
 #endif
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -49,7 +49,7 @@ namespace core
 //! a) The names don't quite always adhere to the coding standards
 //! b) They're very much old style C functions in their interface
 //! Further wrapping should be applied to make this pure portability
-//! layer more C++-like and more Prelert-like.
+//! layer more C++-like and more Ml-like.
 //!
 //! On Unix sizes are left to the system headers, i.e. we'd define
 //! _LARGEFILE_SOURCE and let the macros in the system headers decide
@@ -137,5 +137,5 @@ class CORE_EXPORT COsFileFuncs : private CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_COsFileFuncs_h
+#endif // INCLUDED_ml_core_COsFileFuncs_h
 

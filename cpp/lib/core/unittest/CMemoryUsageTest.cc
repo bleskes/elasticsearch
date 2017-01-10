@@ -28,7 +28,7 @@
 #include <string>
 #include <limits>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {

@@ -15,7 +15,7 @@
 #include <core/CShellArgQuoter.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

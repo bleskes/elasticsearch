@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CCompressedDictionary_h
-#define INCLUDED_prelert_core_CCompressedDictionary_h
+#ifndef INCLUDED_ml_core_CCompressedDictionary_h
+#define INCLUDED_ml_core_CCompressedDictionary_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CHashing.h>
@@ -32,7 +32,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -278,4 +278,4 @@ const char CCompressedDictionary<N>::CWord::DELIMITER(',');
 }
 }
 
-#endif // INCLUDED_prelert_core_CCompressedDictionary_h
+#endif // INCLUDED_ml_core_CCompressedDictionary_h

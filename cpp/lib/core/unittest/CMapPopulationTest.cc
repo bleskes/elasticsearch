@@ -73,7 +73,7 @@ CMapPopulationTest::CTestData::CTestData(size_t fillSize)
         {
             m_StringKeys[index] += char('a' + ::rand() % 26);
         }
-        m_StringKeys[index] += prelert::core::CStringUtils::typeToString(index);
+        m_StringKeys[index] += ml::core::CStringUtils::typeToString(index);
         m_CharPtrKeys[index] = m_StringKeys[index].c_str();
 
         // Values are 16 to 32 printable ASCII characters in length
@@ -137,15 +137,15 @@ void CMapPopulationTest::testMapInsertStr(void)
 {
     TStrStrMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting map insert string test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addInsert(m_TestData->stringKeys(), m_TestData->stringVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished map insert string test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Map insert string test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<
@@ -156,15 +156,15 @@ void CMapPopulationTest::testMapInsertCharP(void)
 {
     TStrStrMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting map insert char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addInsert(m_TestData->charPtrKeys(), m_TestData->charPtrVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished map insert char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Map insert char pointer test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<
@@ -175,15 +175,15 @@ void CMapPopulationTest::testMapOpSqBracStr(void)
 {
     TStrStrMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting map operator[] string test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addOpSqBrac(m_TestData->stringKeys(), m_TestData->stringVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished map operator[] string test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Map operator[] string test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<
@@ -194,15 +194,15 @@ void CMapPopulationTest::testMapOpSqBracCharP(void)
 {
     TStrStrMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting map operator[] char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addOpSqBrac(m_TestData->charPtrKeys(), m_TestData->charPtrVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished map operator[] char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Map operator[] char pointer test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<
@@ -213,15 +213,15 @@ void CMapPopulationTest::testUMapInsertStr(void)
 {
     TStrStrUMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting unordered map insert string test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addInsert(m_TestData->stringKeys(), m_TestData->stringVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished unordered map insert string test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Unordered map insert string test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<
@@ -232,15 +232,15 @@ void CMapPopulationTest::testUMapInsertCharP(void)
 {
     TStrStrUMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting unordered map insert char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addInsert(m_TestData->charPtrKeys(), m_TestData->charPtrVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished unordered map insert char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Unordered map insert char pointer test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<
@@ -251,15 +251,15 @@ void CMapPopulationTest::testUMapOpSqBracStr(void)
 {
     TStrStrUMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting unordered map operator[] string test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addOpSqBrac(m_TestData->stringKeys(), m_TestData->stringVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished unordered map operator[] string test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Unordered map operator[] string test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<
@@ -270,15 +270,15 @@ void CMapPopulationTest::testUMapOpSqBracCharP(void)
 {
     TStrStrUMapVec testVec(TEST_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting unordered map operator[] char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     this->addOpSqBrac(m_TestData->charPtrKeys(), m_TestData->charPtrVals(), testVec);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished unordered map operator[] char pointer test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Unordered map operator[] char pointer test with fill size " << FILL_SIZE <<
              " and test size " << TEST_SIZE << " took " << (end - start) <<

@@ -41,25 +41,25 @@ void CHexUtilsTest::testHexOutput(void)
 
     // Test empty output
     {
-        prelert::core::CHexUtils::TDataVec noData;
+        ml::core::CHexUtils::TDataVec noData;
 
         std::ostringstream strm1;
-        strm1 << prelert::core::CHexUtils(noData);
+        strm1 << ml::core::CHexUtils(noData);
 
         std::ostringstream strm2;
-        strm2 << prelert::core::CHexUtils(noData, false);
+        strm2 << ml::core::CHexUtils(noData, false);
 
         std::ostringstream strm3;
-        strm3 << prelert::core::CHexUtils(noData, false, false);
+        strm3 << ml::core::CHexUtils(noData, false, false);
 
         std::ostringstream strm4;
-        strm4 << prelert::core::CHexUtils(0, 0);
+        strm4 << ml::core::CHexUtils(0, 0);
 
         std::ostringstream strm5;
-        strm5 << prelert::core::CHexUtils(0, 0, false);
+        strm5 << ml::core::CHexUtils(0, 0, false);
 
         std::ostringstream strm6;
-        strm6 << prelert::core::CHexUtils(0, 0, false, false);
+        strm6 << ml::core::CHexUtils(0, 0, false, false);
 
         CPPUNIT_ASSERT(strm1.str() == strm4.str());
         CPPUNIT_ASSERT(strm2.str() == strm5.str());
@@ -78,7 +78,7 @@ void CHexUtilsTest::testHexOutput(void)
 
     // Test random data
     {
-        prelert::core::CHexUtils::TDataVec randomData;
+        ml::core::CHexUtils::TDataVec randomData;
         randomData.reserve(100);
 
         for (size_t count = 0; count < 100; ++count)
@@ -87,22 +87,22 @@ void CHexUtilsTest::testHexOutput(void)
         }
 
         std::ostringstream strm1;
-        strm1 << prelert::core::CHexUtils(randomData);
+        strm1 << ml::core::CHexUtils(randomData);
 
         std::ostringstream strm2;
-        strm2 << prelert::core::CHexUtils(randomData, false);
+        strm2 << ml::core::CHexUtils(randomData, false);
 
         std::ostringstream strm3;
-        strm3 << prelert::core::CHexUtils(randomData, false, false);
+        strm3 << ml::core::CHexUtils(randomData, false, false);
 
         std::ostringstream strm4;
-        strm4 << prelert::core::CHexUtils(&randomData[0], randomData.size());
+        strm4 << ml::core::CHexUtils(&randomData[0], randomData.size());
 
         std::ostringstream strm5;
-        strm5 << prelert::core::CHexUtils(&randomData[0], randomData.size(), false);
+        strm5 << ml::core::CHexUtils(&randomData[0], randomData.size(), false);
 
         std::ostringstream strm6;
-        strm6 << prelert::core::CHexUtils(&randomData[0], randomData.size(), false, false);
+        strm6 << ml::core::CHexUtils(&randomData[0], randomData.size(), false, false);
 
         CPPUNIT_ASSERT(strm1.str() == strm4.str());
         CPPUNIT_ASSERT(strm2.str() == strm5.str());

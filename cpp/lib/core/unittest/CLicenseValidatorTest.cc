@@ -32,17 +32,17 @@ CppUnit::Test *CLicenseValidatorTest::suite()
 
 void CLicenseValidatorTest::testValidate(void)
 {
-    prelert::core::CProcess::TPid ppid(prelert::core::CProcess::instance().parentId());
+    ml::core::CProcess::TPid ppid(ml::core::CProcess::instance().parentId());
 
-    CPPUNIT_ASSERT(prelert::core::CLicenseValidator::validate(prelert::core::CStringUtils::typeToString(ppid)));
-    CPPUNIT_ASSERT(!prelert::core::CLicenseValidator::validate(prelert::core::CStringUtils::typeToString(ppid + 1)));
-    CPPUNIT_ASSERT(!prelert::core::CLicenseValidator::validate(prelert::core::CStringUtils::typeToString(ppid - 1)));
-    CPPUNIT_ASSERT(prelert::core::CLicenseValidator::validate(prelert::core::CStringUtils::typeToString(ppid + 926213)));
-    CPPUNIT_ASSERT(prelert::core::CLicenseValidator::validate(prelert::core::CStringUtils::typeToString(ppid + 77 * 926213)));
-    CPPUNIT_ASSERT(!prelert::core::CLicenseValidator::validate(""));
-    CPPUNIT_ASSERT(!prelert::core::CLicenseValidator::validate(" "));
-    CPPUNIT_ASSERT(!prelert::core::CLicenseValidator::validate("0"));
-    CPPUNIT_ASSERT(!prelert::core::CLicenseValidator::validate("a"));
-    CPPUNIT_ASSERT(!prelert::core::CLicenseValidator::validate(prelert::core::CStringUtils::typeToString(ppid) + "a"));
+    CPPUNIT_ASSERT(ml::core::CLicenseValidator::validate(ml::core::CStringUtils::typeToString(ppid)));
+    CPPUNIT_ASSERT(!ml::core::CLicenseValidator::validate(ml::core::CStringUtils::typeToString(ppid + 1)));
+    CPPUNIT_ASSERT(!ml::core::CLicenseValidator::validate(ml::core::CStringUtils::typeToString(ppid - 1)));
+    CPPUNIT_ASSERT(ml::core::CLicenseValidator::validate(ml::core::CStringUtils::typeToString(ppid + 926213)));
+    CPPUNIT_ASSERT(ml::core::CLicenseValidator::validate(ml::core::CStringUtils::typeToString(ppid + 77 * 926213)));
+    CPPUNIT_ASSERT(!ml::core::CLicenseValidator::validate(""));
+    CPPUNIT_ASSERT(!ml::core::CLicenseValidator::validate(" "));
+    CPPUNIT_ASSERT(!ml::core::CLicenseValidator::validate("0"));
+    CPPUNIT_ASSERT(!ml::core::CLicenseValidator::validate("a"));
+    CPPUNIT_ASSERT(!ml::core::CLicenseValidator::validate(ml::core::CStringUtils::typeToString(ppid) + "a"));
 }
 

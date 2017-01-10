@@ -17,7 +17,7 @@
 
 #include <model/CModelDetailsView.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

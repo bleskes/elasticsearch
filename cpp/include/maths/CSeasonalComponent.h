@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CSeasonalComponent_h
-#define INCLUDED_prelert_maths_CSeasonalComponent_h
+#ifndef INCLUDED_ml_maths_CSeasonalComponent_h
+#define INCLUDED_ml_maths_CSeasonalComponent_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -29,7 +29,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -318,4 +318,4 @@ class MATHS_EXPORT CSeasonalComponent
 }
 }
 
-#endif // INCLUDED_prelert_maths_CSeasonalComponent_h
+#endif // INCLUDED_ml_maths_CSeasonalComponent_h

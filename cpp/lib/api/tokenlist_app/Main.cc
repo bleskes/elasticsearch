@@ -18,8 +18,8 @@
 //! DESCRIPTION:\n
 //! A simple debugger for Splunk app processor
 //!
-//! Data from Splunk dumped in JSON format (via prelertdump)
-//! is feed into the Prelert analysis methods
+//! Data from Splunk dumped in JSON format (via mldump)
+//! is feed into the Ml analysis methods
 //!
 //! IMPLEMENTATION DECISIONS:\n
 //! JSON used as interchange format between python and C++
@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {

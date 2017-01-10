@@ -12,13 +12,13 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_model_CResultsQueue_h
-#define INCLUDED_prelert_model_CResultsQueue_h
+#ifndef INCLUDED_ml_model_CResultsQueue_h
+#define INCLUDED_ml_model_CResultsQueue_h
 
 #include <model/CBucketQueue.h>
 #include <model/CHierarchicalResults.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -87,7 +87,7 @@ class MODEL_EXPORT CResultsQueue
 };
 
 } // model
-} // prelert
+} // ml
 
 
-#endif // INCLUDED_prelert_model_CResultsQueue_h
+#endif // INCLUDED_ml_model_CResultsQueue_h

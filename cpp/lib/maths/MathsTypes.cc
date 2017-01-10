@@ -25,7 +25,7 @@
 
 #include <stdexcept>
 
-namespace prelert
+namespace ml
 {
 namespace maths_t
 {

@@ -30,7 +30,7 @@
 typedef std::vector<double> TDoubleVec;
 typedef std::vector<std::size_t> TSizeVec;
 
-using namespace prelert;
+using namespace ml;
 
 void CCategoricalToolsTest::testProbabilityOfLessLikelyMultinomialSample(void)
 {

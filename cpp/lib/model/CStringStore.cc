@@ -24,7 +24,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -208,5 +208,5 @@ void CStringStore::clearEverythingTestOnly(void)
 }
 
 } // model
-} // prelert
+} // ml
 

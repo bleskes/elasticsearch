@@ -20,7 +20,7 @@
 #include "CXmlOperation.h"
 
 
-namespace prelert
+namespace ml
 {
 namespace devbin
 {

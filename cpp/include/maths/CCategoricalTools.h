@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CCategoricalTools_h
-#define INCLUDED_prelert_maths_CCategoricalTools_h
+#ifndef INCLUDED_ml_maths_CCategoricalTools_h
+#define INCLUDED_ml_maths_CCategoricalTools_h
 
 #include <core/CNonCopyable.h>
 #include <core/CNonInstantiatable.h>
@@ -24,7 +24,7 @@
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -160,4 +160,4 @@ class MATHS_EXPORT CCategoricalTools : core::CNonInstantiatable, core::CNonCopya
 }
 }
 
-#endif // INCLUDED_prelert_maths_CCategoricalTools_h
+#endif // INCLUDED_ml_maths_CCategoricalTools_h

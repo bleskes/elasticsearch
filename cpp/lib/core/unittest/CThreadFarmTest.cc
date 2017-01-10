@@ -91,21 +91,21 @@ namespace
             void processResult(const CString &result)
             {
                 LOG_DEBUG("Process result " << result.str() <<
-                          " in thread " << prelert::core::CThread::currentThreadId());
+                          " in thread " << ml::core::CThread::currentThreadId());
 
-                prelert::core::CScopedLock lock(m_Mutex);
+                ml::core::CScopedLock lock(m_Mutex);
                 m_OutstandingOutput.erase(result.str());
             }
 
             void addExpectedOutput(const std::string &expected)
             {
-                prelert::core::CScopedLock lock(m_Mutex);
+                ml::core::CScopedLock lock(m_Mutex);
                 m_OutstandingOutput.insert(expected);
             }
 
             bool haveAllExpected(void)
             {
-                prelert::core::CScopedLock lock(m_Mutex);
+                ml::core::CScopedLock lock(m_Mutex);
 
                 TStrSet::iterator iter = m_OutstandingOutput.begin();
                 if (iter != m_OutstandingOutput.end())
@@ -120,7 +120,7 @@ namespace
             typedef std::set<std::string> TStrSet;
 
             TStrSet      m_OutstandingOutput;
-            prelert::core::CMutex m_Mutex;
+            ml::core::CMutex m_Mutex;
     };
 
     class CProcessor
@@ -148,7 +148,7 @@ void CThreadFarmTest::testSendReceive(void)
 {
     CHandler handler;
 
-    prelert::core::CThreadFarm<CHandler, CProcessor, std::string, CString> farm(handler, "test");
+    ml::core::CThreadFarm<CHandler, CProcessor, std::string, CString> farm(handler, "test");
 
     CProcessor proc1("1");
     CPPUNIT_ASSERT(farm.addProcessor(proc1));

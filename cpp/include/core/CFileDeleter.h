@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CFileDeleter_h
-#define INCLUDED_prelert_core_CFileDeleter_h
+#ifndef INCLUDED_ml_core_CFileDeleter_h
+#define INCLUDED_ml_core_CFileDeleter_h
 
 #include <core/CNonCopyable.h>
 #include <core/ImportExport.h>
@@ -21,7 +21,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -61,5 +61,5 @@ class CORE_EXPORT CFileDeleter : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CFileDeleter_h
+#endif // INCLUDED_ml_core_CFileDeleter_h
 

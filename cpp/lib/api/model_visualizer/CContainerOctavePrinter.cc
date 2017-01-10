@@ -15,7 +15,7 @@
 
 #include "CContainerOctavePrinter.h"
 
-namespace prelert
+namespace ml
 {
 namespace model_visualiser
 {

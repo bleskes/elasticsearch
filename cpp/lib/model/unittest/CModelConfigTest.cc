@@ -23,7 +23,7 @@
 #include <model/CMetricModelFactory.h>
 #include <model/CModelConfig.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 namespace
@@ -41,7 +41,7 @@ void CModelConfigTest::testNormal(void)
 {
     {
         CModelConfig config = CModelConfig::defaultConfig(1800);
-        CPPUNIT_ASSERT(config.init("testfiles/prelertmodel.conf"));
+        CPPUNIT_ASSERT(config.init("testfiles/mlmodel.conf"));
 
         CPPUNIT_ASSERT_EQUAL(static_cast<std::size_t>(3u), config.batchOverlap());
         CPPUNIT_ASSERT_EQUAL(0.5, config.factory(1, INDIVIDUAL_COUNT)->modelParams().s_LearnRate);
@@ -120,7 +120,7 @@ void CModelConfigTest::testErrors(void)
 {
     {
         CModelConfig config1 = CModelConfig::defaultConfig(1800);
-        CPPUNIT_ASSERT(!config1.init("testfiles/invalidprelertmodel.conf"));
+        CPPUNIT_ASSERT(!config1.init("testfiles/invalidmlmodel.conf"));
         CModelConfig config2 = CModelConfig::defaultConfig(1800);
 
         CPPUNIT_ASSERT_EQUAL(config2.batchOverlap(), config1.batchOverlap());

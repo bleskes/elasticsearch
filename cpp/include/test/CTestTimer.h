@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_test_CTestTimer_h
-#define INCLUDED_prelert_test_CTestTimer_h
+#ifndef INCLUDED_ml_test_CTestTimer_h
+#define INCLUDED_ml_test_CTestTimer_h
 
 #include <core/CStopWatch.h>
 
@@ -27,7 +27,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {
@@ -81,5 +81,5 @@ class TEST_EXPORT CTestTimer : public CppUnit::TestListener
 }
 }
 
-#endif // INCLUDED_prelert_test_CTestTimer_h
+#endif // INCLUDED_ml_test_CTestTimer_h
 

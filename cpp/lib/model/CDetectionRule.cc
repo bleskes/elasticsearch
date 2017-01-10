@@ -17,7 +17,7 @@
 
 #include <model/CDataGatherer.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

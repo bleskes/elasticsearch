@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CDynamicStringIdRegistry_h
-#define INCLUDED_prelert_model_CDynamicStringIdRegistry_h
+#ifndef INCLUDED_ml_model_CDynamicStringIdRegistry_h
+#define INCLUDED_ml_model_CDynamicStringIdRegistry_h
 
 #include <core/CoreTypes.h>
 #include <core/CCompressedDictionary.h>
@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -188,4 +188,4 @@ class MODEL_EXPORT CDynamicStringIdRegistry
 }
 }
 
-#endif // INCLUDED_prelert_model_CDynamicStringIdRegistry_h
+#endif // INCLUDED_ml_model_CDynamicStringIdRegistry_h

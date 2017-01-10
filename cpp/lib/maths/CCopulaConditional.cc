@@ -14,7 +14,7 @@
  */
 #include <maths/CCopulaConditional.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CKMostCorrelated_h
-#define INCLUDED_prelert_maths_CKMostCorrelated_h
+#ifndef INCLUDED_ml_maths_CKMostCorrelated_h
+#define INCLUDED_ml_maths_CKMostCorrelated_h
 
 #include <maths/CBasicStatistics.h>
 #include <maths/CLinearAlgebra.h>
@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -268,4 +268,4 @@ class MATHS_EXPORT CKMostCorrelated
 }
 }
 
-#endif // INCLUDED_prelert_maths_CKMostCorrelated_h
+#endif // INCLUDED_ml_maths_CKMostCorrelated_h

@@ -52,7 +52,7 @@ namespace
 {
 
 
-class CUnprotectedAdder : public prelert::core::CThread
+class CUnprotectedAdder : public ml::core::CThread
 {
     public:
         CUnprotectedAdder(uint32_t sleepTime,
@@ -72,7 +72,7 @@ class CUnprotectedAdder : public prelert::core::CThread
             for (uint32_t count = 0; count < m_Iterations; ++count)
             {
                 m_Variable += m_Increment;
-                prelert::core::CSleep::sleep(m_SleepTime);
+                ml::core::CSleep::sleep(m_SleepTime);
             }
         }
 
@@ -88,7 +88,7 @@ class CUnprotectedAdder : public prelert::core::CThread
         volatile uint32_t &m_Variable;
 };
 
-class CAtomicAdder : public prelert::core::CThread
+class CAtomicAdder : public ml::core::CThread
 {
     public:
         CAtomicAdder(uint32_t sleepTime,
@@ -108,7 +108,7 @@ class CAtomicAdder : public prelert::core::CThread
             for (uint32_t count = 0; count < m_Iterations; ++count)
             {
                 m_Variable.fetch_add(m_Increment);
-                prelert::core::CSleep::sleep(m_SleepTime);
+                ml::core::CSleep::sleep(m_SleepTime);
             }
         }
 
@@ -124,10 +124,10 @@ class CAtomicAdder : public prelert::core::CThread
         atomic_t::atomic_uint_fast32_t &m_Variable;
 };
 
-class CFastMutexProtectedAdder : public prelert::core::CThread
+class CFastMutexProtectedAdder : public ml::core::CThread
 {
     public:
-        CFastMutexProtectedAdder(prelert::core::CFastMutex &mutex,
+        CFastMutexProtectedAdder(ml::core::CFastMutex &mutex,
                                  uint32_t sleepTime,
                                  uint32_t iterations,
                                  uint32_t increment,
@@ -145,10 +145,10 @@ class CFastMutexProtectedAdder : public prelert::core::CThread
         {
             for (uint32_t count = 0; count < m_Iterations; ++count)
             {
-                prelert::core::CScopedFastLock lock(m_Mutex);
+                ml::core::CScopedFastLock lock(m_Mutex);
 
                 m_Variable += m_Increment;
-                prelert::core::CSleep::sleep(m_SleepTime);
+                ml::core::CSleep::sleep(m_SleepTime);
             }
         }
 
@@ -158,17 +158,17 @@ class CFastMutexProtectedAdder : public prelert::core::CThread
         }
 
     private:
-        prelert::core::CFastMutex &m_Mutex;
+        ml::core::CFastMutex &m_Mutex;
         uint32_t                  m_SleepTime;
         uint32_t                  m_Iterations;
         uint32_t                  m_Increment;
         volatile uint32_t         &m_Variable;
 };
 
-class CMutexProtectedAdder : public prelert::core::CThread
+class CMutexProtectedAdder : public ml::core::CThread
 {
     public:
-        CMutexProtectedAdder(prelert::core::CMutex &mutex,
+        CMutexProtectedAdder(ml::core::CMutex &mutex,
                              uint32_t sleepTime,
                              uint32_t iterations,
                              uint32_t increment,
@@ -186,10 +186,10 @@ class CMutexProtectedAdder : public prelert::core::CThread
         {
             for (uint32_t count = 0; count < m_Iterations; ++count)
             {
-                prelert::core::CScopedLock lock(m_Mutex);
+                ml::core::CScopedLock lock(m_Mutex);
 
                 m_Variable += m_Increment;
-                prelert::core::CSleep::sleep(m_SleepTime);
+                ml::core::CSleep::sleep(m_SleepTime);
             }
         }
 
@@ -199,17 +199,17 @@ class CMutexProtectedAdder : public prelert::core::CThread
         }
 
     private:
-        prelert::core::CMutex &m_Mutex;
+        ml::core::CMutex &m_Mutex;
         uint32_t              m_SleepTime;
         uint32_t              m_Iterations;
         uint32_t              m_Increment;
         volatile uint32_t     &m_Variable;
 };
 
-class CWriteLockProtectedAdder : public prelert::core::CThread
+class CWriteLockProtectedAdder : public ml::core::CThread
 {
     public:
-        CWriteLockProtectedAdder(prelert::core::CReadWriteLock &readWriteLock,
+        CWriteLockProtectedAdder(ml::core::CReadWriteLock &readWriteLock,
                                  uint32_t sleepTime,
                                  uint32_t iterations,
                                  uint32_t increment,
@@ -227,10 +227,10 @@ class CWriteLockProtectedAdder : public prelert::core::CThread
         {
             for (uint32_t count = 0; count < m_Iterations; ++count)
             {
-                prelert::core::CScopedWriteLock lock(m_ReadWriteLock);
+                ml::core::CScopedWriteLock lock(m_ReadWriteLock);
 
                 m_Variable += m_Increment;
-                prelert::core::CSleep::sleep(m_SleepTime);
+                ml::core::CSleep::sleep(m_SleepTime);
             }
         }
 
@@ -240,17 +240,17 @@ class CWriteLockProtectedAdder : public prelert::core::CThread
         }
 
     private:
-        prelert::core::CReadWriteLock &m_ReadWriteLock;
+        ml::core::CReadWriteLock &m_ReadWriteLock;
         uint32_t                      m_SleepTime;
         uint32_t                      m_Iterations;
         uint32_t                      m_Increment;
         volatile uint32_t             &m_Variable;
 };
 
-class CReadLockProtectedReader : public prelert::core::CThread
+class CReadLockProtectedReader : public ml::core::CThread
 {
     public:
-        CReadLockProtectedReader(prelert::core::CReadWriteLock &readWriteLock,
+        CReadLockProtectedReader(ml::core::CReadWriteLock &readWriteLock,
                                  uint32_t sleepTime,
                                  uint32_t iterations,
                                  volatile uint32_t &variable)
@@ -272,10 +272,10 @@ class CReadLockProtectedReader : public prelert::core::CThread
         {
             for (uint32_t count = 0; count < m_Iterations; ++count)
             {
-                prelert::core::CScopedReadLock lock(m_ReadWriteLock);
+                ml::core::CScopedReadLock lock(m_ReadWriteLock);
 
                 m_LastRead = m_Variable;
-                prelert::core::CSleep::sleep(m_SleepTime);
+                ml::core::CSleep::sleep(m_SleepTime);
             }
         }
 
@@ -285,7 +285,7 @@ class CReadLockProtectedReader : public prelert::core::CThread
         }
 
     private:
-        prelert::core::CReadWriteLock &m_ReadWriteLock;
+        ml::core::CReadWriteLock &m_ReadWriteLock;
         uint32_t                      m_SleepTime;
         uint32_t                      m_Iterations;
         volatile uint32_t             &m_Variable;
@@ -299,7 +299,7 @@ class CReadLockProtectedReader : public prelert::core::CThread
 void CReadWriteLockTest::testReadLock(void)
 {
     uint32_t testVariable(0);
-    prelert::core::CReadWriteLock readWriteLock;
+    ml::core::CReadWriteLock readWriteLock;
 
     // Each reader will do 1 second of "work" inside a read lock.  If they all
     // work at the same time (which they should) then the test will take around
@@ -309,7 +309,7 @@ void CReadWriteLockTest::testReadLock(void)
     CReadLockProtectedReader reader2(readWriteLock, 100, 10, testVariable);
     CReadLockProtectedReader reader3(readWriteLock, 100, 10, testVariable);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
 
     reader1.start();
     reader2.start();
@@ -321,8 +321,8 @@ void CReadWriteLockTest::testReadLock(void)
     reader2.stop();
     reader3.stop();
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
-    prelert::core_t::TTime duration(end - start);
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
+    ml::core_t::TTime duration(end - start);
 
     LOG_INFO("Reader concurrency test took " << duration << " seconds");
 
@@ -341,7 +341,7 @@ void CReadWriteLockTest::testWriteLock(void)
     static const uint32_t TEST_SIZE(50000);
 
     uint32_t testVariable(0);
-    prelert::core::CReadWriteLock readWriteLock;
+    ml::core::CReadWriteLock readWriteLock;
 
     CWriteLockProtectedAdder writer1(readWriteLock, 0, TEST_SIZE, 1, testVariable);
     CWriteLockProtectedAdder writer2(readWriteLock, 0, TEST_SIZE, 5, testVariable);
@@ -368,9 +368,9 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
     {
         uint32_t testVariable(0);
 
-        prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime start(ml::core::CTimeUtils::now());
         LOG_INFO("Starting unlocked throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(start));
+                 ml::core::CTimeUtils::toTimeString(start));
 
         CUnprotectedAdder writer1(0, TEST_SIZE, 1, testVariable);
         CUnprotectedAdder writer2(0, TEST_SIZE, 5, testVariable);
@@ -384,9 +384,9 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
         writer2.stop();
         writer3.stop();
 
-        prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime end(ml::core::CTimeUtils::now());
         LOG_INFO("Finished unlocked throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(end));
+                 ml::core::CTimeUtils::toTimeString(end));
 
         LOG_INFO("Unlocked throughput test with test size " <<
                  TEST_SIZE << " took " << (end - start) << " seconds");
@@ -404,9 +404,9 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
     {
         atomic_t::atomic_uint_fast32_t testVariable(0);
 
-        prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime start(ml::core::CTimeUtils::now());
         LOG_INFO("Starting atomic throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(start));
+                 ml::core::CTimeUtils::toTimeString(start));
 
         CAtomicAdder writer1(0, TEST_SIZE, 1, testVariable);
         CAtomicAdder writer2(0, TEST_SIZE, 5, testVariable);
@@ -420,9 +420,9 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
         writer2.stop();
         writer3.stop();
 
-        prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime end(ml::core::CTimeUtils::now());
         LOG_INFO("Finished atomic throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(end));
+                 ml::core::CTimeUtils::toTimeString(end));
 
         LOG_INFO("Atomic throughput test with test size " <<
                  TEST_SIZE << " took " << (end - start) << " seconds");
@@ -433,11 +433,11 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
     }
     {
         uint32_t testVariable(0);
-        prelert::core::CFastMutex mutex;
+        ml::core::CFastMutex mutex;
 
-        prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime start(ml::core::CTimeUtils::now());
         LOG_INFO("Starting fast mutex lock throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(start));
+                 ml::core::CTimeUtils::toTimeString(start));
 
         CFastMutexProtectedAdder writer1(mutex, 0, TEST_SIZE, 1, testVariable);
         CFastMutexProtectedAdder writer2(mutex, 0, TEST_SIZE, 5, testVariable);
@@ -451,9 +451,9 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
         writer2.stop();
         writer3.stop();
 
-        prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime end(ml::core::CTimeUtils::now());
         LOG_INFO("Finished fast mutex lock throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(end));
+                 ml::core::CTimeUtils::toTimeString(end));
 
         LOG_INFO("Fast mutex lock throughput test with test size " <<
                  TEST_SIZE << " took " << (end - start) << " seconds");
@@ -465,11 +465,11 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
     }
     {
         uint32_t testVariable(0);
-        prelert::core::CMutex mutex;
+        ml::core::CMutex mutex;
 
-        prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime start(ml::core::CTimeUtils::now());
         LOG_INFO("Starting mutex lock throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(start));
+                 ml::core::CTimeUtils::toTimeString(start));
 
         CMutexProtectedAdder writer1(mutex, 0, TEST_SIZE, 1, testVariable);
         CMutexProtectedAdder writer2(mutex, 0, TEST_SIZE, 5, testVariable);
@@ -483,9 +483,9 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
         writer2.stop();
         writer3.stop();
 
-        prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime end(ml::core::CTimeUtils::now());
         LOG_INFO("Finished mutex lock throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(end));
+                 ml::core::CTimeUtils::toTimeString(end));
 
         LOG_INFO("Mutex lock throughput test with test size " <<
                  TEST_SIZE << " took " << (end - start) << " seconds");
@@ -497,11 +497,11 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
     }
     {
         uint32_t testVariable(0);
-        prelert::core::CReadWriteLock readWriteLock;
+        ml::core::CReadWriteLock readWriteLock;
 
-        prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime start(ml::core::CTimeUtils::now());
         LOG_INFO("Starting read-write lock throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(start));
+                 ml::core::CTimeUtils::toTimeString(start));
 
         CWriteLockProtectedAdder writer1(readWriteLock, 0, TEST_SIZE, 1, testVariable);
         CWriteLockProtectedAdder writer2(readWriteLock, 0, TEST_SIZE, 5, testVariable);
@@ -515,9 +515,9 @@ void CReadWriteLockTest::testPerformanceVersusMutex(void)
         writer2.stop();
         writer3.stop();
 
-        prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+        ml::core_t::TTime end(ml::core::CTimeUtils::now());
         LOG_INFO("Finished read-write lock throughput test at " <<
-                 prelert::core::CTimeUtils::toTimeString(end));
+                 ml::core::CTimeUtils::toTimeString(end));
 
         LOG_INFO("Read-write lock throughput test with test size " <<
                  TEST_SIZE << " took " << (end - start) << " seconds");

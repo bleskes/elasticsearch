@@ -20,7 +20,7 @@
 #include <rapidjson/rapidjson.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -277,7 +277,7 @@ bool CJsonStateRestoreTraverser::start(void)
         m_IsArrayOfObjects = true;
     }
 
-    // For Prelert state the first token should be the start of a JSON
+    // For Ml state the first token should be the start of a JSON
     // object, but we don't store it
     if (token.type != rapidjson::kTokenObjectStart)
     {

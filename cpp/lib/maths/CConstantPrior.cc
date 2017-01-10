@@ -33,7 +33,7 @@
 
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

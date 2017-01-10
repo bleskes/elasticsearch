@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CIEEE754_h
-#define INCLUDED_prelert_core_CIEEE754_h
+#ifndef INCLUDED_ml_core_CIEEE754_h
+#define INCLUDED_ml_core_CIEEE754_h
 
 #include <core/ImportExport.h>
 
@@ -24,7 +24,7 @@
 #include <string.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -90,4 +90,4 @@ class CORE_EXPORT CIEEE754
 }
 }
 
-#endif // INCLUDED_prelert_core_CIEEE754_h
+#endif // INCLUDED_ml_core_CIEEE754_h

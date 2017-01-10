@@ -27,7 +27,7 @@
 
 #include <boost/make_shared.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 namespace

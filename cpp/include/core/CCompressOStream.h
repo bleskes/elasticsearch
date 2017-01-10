@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CCompressOStream_h
-#define INCLUDED_prelert_core_CCompressOStream_h
+#ifndef INCLUDED_ml_core_CCompressOStream_h
+#define INCLUDED_ml_core_CCompressOStream_h
 
 #include <core/CDualThreadStreamBuf.h>
 #include <core/CStateCompressor.h>
 #include <core/CThread.h>
 #include <core/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -89,6 +89,6 @@ class CORE_EXPORT CCompressOStream : public std::ostream
 };
 
 } // core
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_core_CCompressOStream_h
+#endif // INCLUDED_ml_core_CCompressOStream_h

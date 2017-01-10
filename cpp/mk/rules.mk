@@ -99,7 +99,7 @@ endif
 
 endif
 
-$(OBJS_DIR)/%.res: $(CPP_SRC_HOME)/mk/%.rc $(CPP_SRC_HOME)/../gradle.properties $(CPP_SRC_HOME)/mk/prelert.ico $(CPP_SRC_HOME)/mk/make_rc_defines.sh
+$(OBJS_DIR)/%.res: $(CPP_SRC_HOME)/mk/%.rc $(CPP_SRC_HOME)/../gradle.properties $(CPP_SRC_HOME)/mk/ml.ico $(CPP_SRC_HOME)/mk/make_rc_defines.sh
 	$(RC) $(CPPFLAGS) $(shell $(CPP_SRC_HOME)/mk/make_rc_defines.sh $(notdir $(TARGET))) -Fo$@ $<
 
 # Initialise includes and local libs

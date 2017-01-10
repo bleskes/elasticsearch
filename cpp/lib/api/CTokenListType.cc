@@ -25,7 +25,7 @@
 #include <functional>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

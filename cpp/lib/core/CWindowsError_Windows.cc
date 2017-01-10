@@ -34,7 +34,7 @@ int fmaRes(::_set_FMA3_enable(0));
 }
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

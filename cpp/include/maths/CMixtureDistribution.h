@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMixtureDistribution_h
-#define INCLUDED_prelert_maths_CMixtureDistribution_h
+#ifndef INCLUDED_ml_maths_CMixtureDistribution_h
+#define INCLUDED_ml_maths_CMixtureDistribution_h
 
 #include <core/CLogger.h>
 #include <core/CStringUtils.h>
@@ -39,7 +39,7 @@
 
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -652,4 +652,4 @@ double quantile(const CMixtureDistribution<T> &distribution, const double q)
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMixtureDistribution_h
+#endif // INCLUDED_ml_maths_CMixtureDistribution_h

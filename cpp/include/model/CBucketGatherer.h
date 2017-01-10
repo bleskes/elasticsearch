@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CBucketGatherer_h
-#define INCLUDED_prelert_model_CBucketGatherer_h
+#ifndef INCLUDED_ml_model_CBucketGatherer_h
+#define INCLUDED_ml_model_CBucketGatherer_h
 
 #include <core/CLogger.h>
 #include <core/CMemory.h>
@@ -43,7 +43,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -495,4 +495,4 @@ class MODEL_EXPORT CBucketGatherer
 }
 }
 
-#endif // INCLUDED_prelert_model_CBucketGatherer_h
+#endif // INCLUDED_ml_model_CBucketGatherer_h

@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CMaskIterator_h
-#define INCLUDED_prelert_core_CMaskIterator_h
+#ifndef INCLUDED_ml_core_CMaskIterator_h
+#define INCLUDED_ml_core_CMaskIterator_h
 
 #include <boost/operators.hpp>
 
 #include <iterator>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -185,4 +185,4 @@ CMaskIterator<ITR> end_masked(ITR i, const std::vector<ptrdiff_t> &mask)
 }
 }
 
-#endif // INCLUDED_prelert_core_CMaskIterator_h
+#endif // INCLUDED_ml_core_CMaskIterator_h

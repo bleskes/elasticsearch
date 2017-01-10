@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_ver_CBuildInfo_h
-#define INCLUDED_prelert_ver_CBuildInfo_h
+#ifndef INCLUDED_ml_ver_CBuildInfo_h
+#define INCLUDED_ml_ver_CBuildInfo_h
 
 #include <core/CNonInstantiatable.h>
 
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace ver
 {
@@ -43,7 +43,7 @@ namespace ver
 //! Placeholders within these templates are substituted with the exact version
 //! number, build number, build year and developer's name.
 //!
-//! The version library is a static library that is linked to each Prelert
+//! The version library is a static library that is linked to each Ml
 //! program.  It must never be linked into a shared library.  This rule means
 //! that it can show up situations where a programs from different builds
 //! have been mixed up - each program will have its own distinct copy of the
@@ -75,5 +75,5 @@ class CBuildInfo : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_CBuildInfo_h
+#endif // INCLUDED_ml_core_CBuildInfo_h
 

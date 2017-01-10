@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CStatistics_h
-#define INCLUDED_prelert_core_CStatistics_h
+#ifndef INCLUDED_ml_core_CStatistics_h
+#define INCLUDED_ml_core_CStatistics_h
 
 #include <core/ImportExport.h>
 #include <core/CNonCopyable.h>
@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-namespace prelert
+namespace ml
 {
 namespace stat_t
 {
@@ -158,6 +158,6 @@ class CORE_EXPORT CStatistics : private CNonCopyable
 };
 
 } // core
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_core_CStatistics_h
+#endif // INCLUDED_ml_core_CStatistics_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CBoundingBox_h
-#define INCLUDED_prelert_maths_CBoundingBox_h
+#ifndef INCLUDED_ml_maths_CBoundingBox_h
+#define INCLUDED_ml_maths_CBoundingBox_h
 
 #include <core/CMemory.h>
 
@@ -24,7 +24,7 @@
 #include <ostream>
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -142,4 +142,4 @@ class CBoundingBox
 }
 }
 
-#endif // INCLUDED_prelert_maths_CBoundingBox_h
+#endif // INCLUDED_ml_maths_CBoundingBox_h

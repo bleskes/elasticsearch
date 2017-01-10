@@ -13,10 +13,10 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_RestoreMacros_h
-#define INCLUDED_prelert_core_RestoreMacros_h
+#ifndef INCLUDED_ml_core_RestoreMacros_h
+#define INCLUDED_ml_core_RestoreMacros_h
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -66,4 +66,4 @@ namespace core
 }
 }
 
-#endif // INCLUDED_prelert_core_RestoreMacros_h
+#endif // INCLUDED_ml_core_RestoreMacros_h

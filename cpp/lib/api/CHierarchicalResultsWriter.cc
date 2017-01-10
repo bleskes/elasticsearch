@@ -21,7 +21,7 @@
 
 #include <boost/optional.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

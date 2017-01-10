@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CCounter_h
-#define INCLUDED_prelert_maths_CCounter_h
+#ifndef INCLUDED_ml_maths_CCounter_h
+#define INCLUDED_ml_maths_CCounter_h
 
 #include <core/CoreTypes.h>
 
@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -198,5 +198,5 @@ class MATHS_EXPORT CCounter
 }
 }
 
-#endif // INCLUDED_prelert_maths_CCounter_h
+#endif // INCLUDED_ml_maths_CCounter_h
 

@@ -28,7 +28,7 @@
 
 #include <iostream>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -191,4 +191,4 @@ std::size_t CMemoryUsageEstimator::maximumExtrapolation(EComponent component) co
 }
 
 } // model
-} // prelert
+} // ml

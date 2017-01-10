@@ -27,7 +27,7 @@
 #include <model/CMetricModel.h>
 #include <model/CMetricPopulationModel.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

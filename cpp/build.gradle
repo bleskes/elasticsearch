@@ -1,8 +1,8 @@
-description = 'Builds the Prelert Engine native binaries'
+description = 'Builds the Ml Engine native binaries'
 
 import org.elastic.gradle.UploadS3Task
 
-String artifact_name = 'prelert-cpp' +
+String artifact_name = 'ml-cpp' +
     (project.isWindows ? "-windows-x86_64" : (project.isMacOsX ? "-darwin-x86_64" :
     (project.isLinux ? "-linux-x86_64" : "-sunos-x86_64")))
 
@@ -83,17 +83,17 @@ task check {
 task assemble {
     enabled = project.cppEnabled
     dependsOn 'buildZip'
-    description = 'Assemble the cpp part of prelert'
+    description = 'Assemble the cpp part of ml'
 }
 
 task build(dependsOn: [check, assemble]) {
   group = 'Build'
-  description = 'Assembles and tests the cpp part of prelert'
+  description = 'Assembles and tests the cpp part of ml'
 }
 
 task upload(type: UploadS3Task, dependsOn: [build]) {
   enabled = project.cppEnabled && project.uploadEnabled
   description = 'upload cpp zip to S3 Bucket'
   bucket 'prelert-artifacts'
-  upload buildZip.outputs.files.singleFile, "maven/${project.group}/prelert-cpp/${project.version}/${buildZip.outputs.files.singleFile.name}"
+  upload buildZip.outputs.files.singleFile, "maven/${project.group}/ml-cpp/${project.version}/${buildZip.outputs.files.singleFile.name}"
 }

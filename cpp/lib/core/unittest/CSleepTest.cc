@@ -33,13 +33,13 @@ CppUnit::Test *CSleepTest::suite()
 
 void CSleepTest::testSleep(void)
 {
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
 
-    prelert::core::CSleep::sleep(7500);
+    ml::core::CSleep::sleep(7500);
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
 
-    prelert::core_t::TTime diff(end - start);
+    ml::core_t::TTime diff(end - start);
     LOG_DEBUG("During 7.5 second wait, the clock advanced by " <<
               diff << " seconds");
 

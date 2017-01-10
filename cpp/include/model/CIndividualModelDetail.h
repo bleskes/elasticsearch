@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CIndividualModelDetail_h
-#define INCLUDED_prelert_model_CIndividualModelDetail_h
+#ifndef INCLUDED_ml_model_CIndividualModelDetail_h
+#define INCLUDED_ml_model_CIndividualModelDetail_h
 
 #include <model/CDataGatherer.h>
 #include <model/CIndividualModel.h>
 #include <model/CProbabilityAndInfluenceCalculator.h>
 #include "CStringStore.h"
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -166,4 +166,4 @@ bool CIndividualModel::addProbabilityAndInfluences(std::size_t pid,
 }
 }
 
-#endif // INCLUDED_prelert_model_CIndividualModelDetail_h
+#endif // INCLUDED_ml_model_CIndividualModelDetail_h

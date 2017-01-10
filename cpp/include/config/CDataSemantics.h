@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CDataSemantics_h
-#define INCLUDED_prelert_config_CDataSemantics_h
+#ifndef INCLUDED_ml_config_CDataSemantics_h
+#define INCLUDED_ml_config_CDataSemantics_h
 
 #include <maths/CBasicStatistics.h>
 #include <maths/CBjkstUniqueValues.h>
@@ -29,7 +29,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -170,4 +170,4 @@ class CONFIG_EXPORT CDataSemantics
 }
 }
 
-#endif // INCLUDED_prelert_config_CValueSemantics_h
+#endif // INCLUDED_ml_config_CValueSemantics_h

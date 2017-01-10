@@ -13,14 +13,14 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CRadialBasisFunction_h
-#define INCLUDED_prelert_maths_CRadialBasisFunction_h
+#ifndef INCLUDED_ml_maths_CRadialBasisFunction_h
+#define INCLUDED_ml_maths_CRadialBasisFunction_h
 
 #include <maths/ImportExport.h>
 
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -236,4 +236,4 @@ class MATHS_EXPORT CInverseQuadraticBasisFunction : public CRadialBasisFunction
 }
 }
 
-#endif // INCLUDED_prelert_maths_CRadialBasisFunction_h
+#endif // INCLUDED_ml_maths_CRadialBasisFunction_h

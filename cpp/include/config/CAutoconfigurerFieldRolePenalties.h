@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CAutoconfigurerFieldRolePenalties_h
-#define INCLUDED_prelert_config_CAutoconfigurerFieldRolePenalties_h
+#ifndef INCLUDED_ml_config_CAutoconfigurerFieldRolePenalties_h
+#define INCLUDED_ml_config_CAutoconfigurerFieldRolePenalties_h
 
 #include <core/CNonCopyable.h>
 
@@ -22,7 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -73,4 +73,4 @@ class CONFIG_EXPORT CAutoconfigurerFieldRolePenalties : core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_config_CAutoconfigurerFieldRolePenalties_h
+#endif // INCLUDED_ml_config_CAutoconfigurerFieldRolePenalties_h

@@ -26,7 +26,7 @@
 
 #include <test/CRandomNumbers.h>
 
-using namespace prelert;
+using namespace ml;
 
 typedef std::vector<double> TDoubleVec;
 typedef maths::CBasicStatistics::SSampleMean<double>::TAccumulator TMeanAccumulator;

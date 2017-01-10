@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -246,4 +246,4 @@ void CStateDecompressor::CDechunkFilter::close(void)
 }
 
 } // core
-} // prelert
+} // ml

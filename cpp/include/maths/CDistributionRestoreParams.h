@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CDistributionRestoreParams_h
-#define INCLUDED_prelert_maths_CDistributionRestoreParams_h
+#ifndef INCLUDED_ml_maths_CDistributionRestoreParams_h
+#define INCLUDED_ml_maths_CDistributionRestoreParams_h
 
 #include <maths/ImportExport.h>
 #include <maths/MathsTypes.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -53,4 +53,4 @@ struct MATHS_EXPORT SDistributionRestoreParams
 }
 }
 
-#endif // INCLUDED_prelert_maths_CDistributionRestoreParams_h
+#endif // INCLUDED_ml_maths_CDistributionRestoreParams_h

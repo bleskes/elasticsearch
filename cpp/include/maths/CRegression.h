@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CRegression_h
-#define INCLUDED_prelert_maths_CRegression_h
+#ifndef INCLUDED_ml_maths_CRegression_h
+#define INCLUDED_ml_maths_CRegression_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -35,7 +35,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -661,4 +661,4 @@ const std::string CRegression::CLeastSquaresOnline<N_, T>::STATISTIC_TAG("a");
 }
 }
 
-#endif // INCLUDED_prelert_maths_CRegression_h
+#endif // INCLUDED_ml_maths_CRegression_h

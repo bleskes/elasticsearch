@@ -22,7 +22,7 @@ namespace
 static const DWORD SPIN_COUNT(4000);
 }
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

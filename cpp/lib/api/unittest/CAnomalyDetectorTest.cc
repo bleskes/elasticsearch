@@ -44,7 +44,7 @@ namespace
 //! IMPLEMENTATION DECISIONS:\n
 //! Only the minimal set of required functions are implemented.
 //!
-class CMockOutputWriter : public prelert::api::CJsonOutputWriter
+class CMockOutputWriter : public ml::api::CJsonOutputWriter
 {
     public:
         typedef std::vector<double> TResultsVec;
@@ -53,7 +53,7 @@ class CMockOutputWriter : public prelert::api::CJsonOutputWriter
     public:
         //! Constructor
         CMockOutputWriter(void) :
-            prelert::api::CJsonOutputWriter("job", m_Writer)
+            ml::api::CJsonOutputWriter("job", m_Writer)
         { }
 
         //! Destructor
@@ -61,13 +61,13 @@ class CMockOutputWriter : public prelert::api::CJsonOutputWriter
         {
             // Finalise the Json writer so it doesn't try and write to
             // m_Writer which will have been destroyed first
-            prelert::api::CJsonOutputWriter::finalise();
+            ml::api::CJsonOutputWriter::finalise();
         }
 
         //! Override for handling the anomaly results
-        virtual bool acceptResult(const prelert::api::CHierarchicalResultsWriter::SResults &results)
+        virtual bool acceptResult(const ml::api::CHierarchicalResultsWriter::SResults &results)
         {
-            if ((results.s_ByFieldName != "count") && (results.s_ResultType == prelert::api::CHierarchicalResultsWriter::E_Result))
+            if ((results.s_ByFieldName != "count") && (results.s_ResultType == ml::api::CHierarchicalResultsWriter::E_Result))
             {
                 m_Results.push_back(results.s_CurrentMean[0]);
             }
@@ -93,7 +93,7 @@ class CMockOutputWriter : public prelert::api::CJsonOutputWriter
         TResultsVec m_Results;
 };
 
-class CSingleResultVisitor : public prelert::model::CHierarchicalResultsVisitor
+class CSingleResultVisitor : public ml::model::CHierarchicalResultsVisitor
 {
     public:
         CSingleResultVisitor(void) : m_LastResult(0.0)
@@ -102,7 +102,7 @@ class CSingleResultVisitor : public prelert::model::CHierarchicalResultsVisitor
         virtual ~CSingleResultVisitor(void)
         { }
 
-        virtual void visit(const prelert::model::CHierarchicalResults &/*results*/,
+        virtual void visit(const ml::model::CHierarchicalResults &/*results*/,
                            const TNode &node,
                            bool /*pivot*/)
         {
@@ -116,7 +116,7 @@ class CSingleResultVisitor : public prelert::model::CHierarchicalResultsVisitor
                 {
                     return;
                 }
-                const prelert::model::SAttributeProbability &attribute =
+                const ml::model::SAttributeProbability &attribute =
                     node.s_AnnotatedProbability.s_AttributeProbabilities[0];
 
                 m_LastResult = node.s_Model->currentBucketValue(attribute.s_Feature,
@@ -133,7 +133,7 @@ class CSingleResultVisitor : public prelert::model::CHierarchicalResultsVisitor
         double m_LastResult;
 };
 
-class CMultiResultVisitor : public prelert::model::CHierarchicalResultsVisitor
+class CMultiResultVisitor : public ml::model::CHierarchicalResultsVisitor
 {
     public:
         CMultiResultVisitor(void) : m_LastResult(0.0)
@@ -142,7 +142,7 @@ class CMultiResultVisitor : public prelert::model::CHierarchicalResultsVisitor
         virtual ~CMultiResultVisitor(void)
         { }
 
-        virtual void visit(const prelert::model::CHierarchicalResults &/*results*/,
+        virtual void visit(const ml::model::CHierarchicalResults &/*results*/,
                            const TNode &node,
                            bool /*pivot*/)
         {
@@ -157,7 +157,7 @@ class CMultiResultVisitor : public prelert::model::CHierarchicalResultsVisitor
                     return;
                 }
                 std::size_t pid;
-                const prelert::model::CDataGatherer &gatherer = node.s_Model->dataGatherer();
+                const ml::model::CDataGatherer &gatherer = node.s_Model->dataGatherer();
                 if (!gatherer.personId(*node.s_Spec.s_PersonFieldValue, pid))
                 {
                     LOG_ERROR("No identifier for '"
@@ -166,7 +166,7 @@ class CMultiResultVisitor : public prelert::model::CHierarchicalResultsVisitor
                 }
                 for (std::size_t i = 0; i < node.s_AnnotatedProbability.s_AttributeProbabilities.size(); ++i)
                 {
-                    const prelert::model::SAttributeProbability &attribute =
+                    const ml::model::SAttributeProbability &attribute =
                         node.s_AnnotatedProbability.s_AttributeProbabilities[i];
                     m_LastResult += node.s_Model->currentBucketValue(attribute.s_Feature,
                                             pid, attribute.s_Cid, node.s_BucketStartTime)[0];
@@ -183,7 +183,7 @@ class CMultiResultVisitor : public prelert::model::CHierarchicalResultsVisitor
         double m_LastResult;
 };
 
-class CResultsScoreVisitor : public prelert::model::CHierarchicalResultsVisitor
+class CResultsScoreVisitor : public ml::model::CHierarchicalResultsVisitor
 {
     public:
         CResultsScoreVisitor(int score) : m_Score(score)
@@ -192,7 +192,7 @@ class CResultsScoreVisitor : public prelert::model::CHierarchicalResultsVisitor
         virtual ~CResultsScoreVisitor(void)
         { }
 
-        virtual void visit(const prelert::model::CHierarchicalResults &/*results*/,
+        virtual void visit(const ml::model::CHierarchicalResults &/*results*/,
                            const TNode &node,
                            bool /*pivot*/)
         {
@@ -206,12 +206,12 @@ class CResultsScoreVisitor : public prelert::model::CHierarchicalResultsVisitor
         int m_Score;
 };
 
-bool findLine(const std::string &regex, const prelert::core::CRegex::TStrVec &lines)
+bool findLine(const std::string &regex, const ml::core::CRegex::TStrVec &lines)
 {
-    prelert::core::CRegex rx;
+    ml::core::CRegex rx;
     rx.init(regex);
     std::size_t pos = 0;
-    for (prelert::core::CRegex::TStrVecCItr i = lines.begin(); i != lines.end(); ++i)
+    for (ml::core::CRegex::TStrVecCItr i = lines.begin(); i != lines.end(); ++i)
     {
         if (rx.search(*i, pos))
         {
@@ -222,11 +222,11 @@ bool findLine(const std::string &regex, const prelert::core::CRegex::TStrVec &li
 }
 
 
-const prelert::core_t::TTime BUCKET_SIZE(3600);
+const ml::core_t::TTime BUCKET_SIZE(3600);
 
 }
 
-using namespace prelert;
+using namespace ml;
 
 void CAnomalyDetectorTest::testBadTimes(void)
 {

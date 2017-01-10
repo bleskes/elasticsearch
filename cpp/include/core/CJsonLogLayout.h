@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CJsonLogLayout_h
-#define INCLUDED_prelert_core_CJsonLogLayout_h
+#ifndef INCLUDED_ml_core_CJsonLogLayout_h
+#define INCLUDED_ml_core_CJsonLogLayout_h
 
 #include <core/ImportExport.h>
 
 #include <log4cxx/layout.h>
 
 // NB: log4cxx extensions have to go in the log4cxx namespace, hence cannot
-// stick to the convention of our code being in the prelert namespace.  This
+// stick to the convention of our code being in the ml namespace.  This
 // is due to use of (log4cxx mandated) macros in the implementation.
 namespace log4cxx
 {
@@ -35,7 +35,7 @@ namespace helpers
 //! fields are based on those used by log4cxx's built in XMLLayout class.
 //!
 //! IMPLEMENTATION DECISIONS:\n
-//! Violates several aspects of the Prelert coding standards in order
+//! Violates several aspects of the Ml coding standards in order
 //! to work with log4cxx macros and other conventions.
 //!
 class CORE_EXPORT CJsonLogLayout : public Layout
@@ -91,5 +91,5 @@ extern const helpers::ClassRegistration &CJsonLogLayoutRegistration;
 } // end log4cxx
 
 
-#endif // INCLUDED_prelert_core_CJsonLogLayout_h
+#endif // INCLUDED_ml_core_CJsonLogLayout_h
 

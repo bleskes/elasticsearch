@@ -34,7 +34,7 @@
 
 #include <fstream>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {
@@ -1776,7 +1776,7 @@ void CTimeSeriesDecompositionTest::testPersist(void)
 
         std::string origXml;
         {
-            prelert::core::CRapidXmlStatePersistInserter inserter("root");
+            ml::core::CRapidXmlStatePersistInserter inserter("root");
             origDecomposition.acceptPersistInserter(inserter);
             inserter.toXml(origXml);
         }
@@ -1826,7 +1826,7 @@ void CTimeSeriesDecompositionTest::testPersist(void)
 
         std::string origXml;
         {
-            prelert::core::CRapidXmlStatePersistInserter inserter("root");
+            ml::core::CRapidXmlStatePersistInserter inserter("root");
             origDecomposition.acceptPersistInserter(inserter);
             inserter.toXml(origXml);
         }

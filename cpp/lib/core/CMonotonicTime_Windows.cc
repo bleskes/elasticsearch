@@ -18,7 +18,7 @@
 #include <core/WindowsSafe.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

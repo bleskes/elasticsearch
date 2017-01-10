@@ -37,10 +37,10 @@ void CBoxPlotDataJsonWriterTest::testWriteFlat(void)
 {
     std::ostringstream sstream;
     {
-        prelert::api::CBoxPlotDataJsonWriter writer(sstream);
+        ml::api::CBoxPlotDataJsonWriter writer(sstream);
 
-        prelert::model::CBoxPlotData plotData(1ul, "pName", "pValue", "", "bName");
-        plotData.get(prelert::model_t::E_IndividualCountByBucketAndPerson, "bName") = prelert::model::CBoxPlotData::SByFieldData(1.0,  2.0, 3.0);
+        ml::model::CBoxPlotData plotData(1ul, "pName", "pValue", "", "bName");
+        plotData.get(ml::model_t::E_IndividualCountByBucketAndPerson, "bName") = ml::model::CBoxPlotData::SByFieldData(1.0,  2.0, 3.0);
 
         writer.writeFlat("job-id", plotData);
     }

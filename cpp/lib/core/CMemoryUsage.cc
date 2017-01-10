@@ -19,7 +19,7 @@
 
 #include <sstream>
 
-namespace prelert
+namespace ml
 {
 
 namespace core
@@ -247,4 +247,4 @@ void CMemoryUsage::print(std::ostream &outStream) const
 
 } // core
 
-} // prelert
+} // ml

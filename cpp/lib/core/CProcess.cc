@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -37,7 +37,7 @@ CProcess::CProcess(void)
     : m_IsService(false),
       m_Initialised(false),
       m_Running(false),
-      m_PrelertMainFunc(0)
+      m_MlMainFunc(0)
 {
 }
 
@@ -62,16 +62,16 @@ CProcess::TPid CProcess::parentId(void) const
     return ::getppid();
 }
 
-bool CProcess::startDispatcher(TPrelertMainFunc prelertMain,
+bool CProcess::startDispatcher(TMlMainFunc mlMain,
                                int argc,
                                char *argv[])
 {
-    if (prelertMain == 0)
+    if (mlMain == 0)
     {
-        LOG_ABORT("NULL prelertMain() function passed");
+        LOG_ABORT("NULL mlMain() function passed");
     }
 
-    m_PrelertMainFunc = prelertMain;
+    m_MlMainFunc = mlMain;
     m_Args.reserve(argc);
     for (int count = 0; count < argc; ++count)
     {
@@ -81,7 +81,7 @@ bool CProcess::startDispatcher(TPrelertMainFunc prelertMain,
     // For Unix, this method just passes on the call
     m_Running = true;
 
-    bool success(m_PrelertMainFunc(argc, argv) == EXIT_SUCCESS);
+    bool success(m_MlMainFunc(argc, argv) == EXIT_SUCCESS);
 
     // Only log process status messages if the logger has been reconfigured to
     // log somewhere more sensible that STDERR.  (This prevents us spoiling the

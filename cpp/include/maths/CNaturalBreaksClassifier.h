@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CNaturalBreaksClassifier_h
-#define INCLUDED_prelert_maths_CNaturalBreaksClassifier_h
+#ifndef INCLUDED_ml_maths_CNaturalBreaksClassifier_h
+#define INCLUDED_ml_maths_CNaturalBreaksClassifier_h
 
 #include <core/CMemory.h>
 
@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -362,4 +362,4 @@ class MATHS_EXPORT CNaturalBreaksClassifier
 }
 }
 
-#endif // INCLUDED_prelert_maths_CNaturalBreaksClassifier_h
+#endif // INCLUDED_ml_maths_CNaturalBreaksClassifier_h

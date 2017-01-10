@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_maths_ImportExport_h
-#define INCLUDED_prelert_maths_ImportExport_h
+#ifndef INCLUDED_ml_maths_ImportExport_h
+#define INCLUDED_ml_maths_ImportExport_h
 
 //! On Windows, it's necessary to explicitly export functions from
 //! DLLs.  The simplest way to do this for C++ classes is to add
@@ -44,5 +44,5 @@
 
 #endif
 
-#endif // INCLUDED_prelert_maths_ImportExport_h
+#endif // INCLUDED_ml_maths_ImportExport_h
 

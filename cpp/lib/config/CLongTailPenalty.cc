@@ -28,7 +28,7 @@
 
 #include <boost/unordered_map.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

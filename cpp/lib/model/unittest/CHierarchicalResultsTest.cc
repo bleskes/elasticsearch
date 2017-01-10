@@ -50,7 +50,7 @@
 #include <string>
 #include <sstream>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {
@@ -465,8 +465,8 @@ class CProbabilityGatherer : public model::CHierarchicalResultsLevelSet<SNodePro
 class CWriterFunc
 {
     public:
-        bool operator()(prelert::core_t::TTime time,
-                       const prelert::model::CHierarchicalResults::TNode &node,
+        bool operator()(ml::core_t::TTime time,
+                       const ml::model::CHierarchicalResults::TNode &node,
                        bool isBucketInfluencer)
         {
             LOG_DEBUG((isBucketInfluencer ? "BucketInfluencer" :  "Influencer ")
@@ -495,16 +495,16 @@ void addAggregateValues(double w1,
 void addResult(int detector,
                bool isPopulation,
                const std::string &functionName,
-               prelert::model::function_t::EFunction function,
+               ml::model::function_t::EFunction function,
                const std::string &partitionFieldName,
                const std::string &partitionFieldValue,
                const std::string &personFieldName,
                const std::string &personFieldValue,
                const std::string &valueFieldName,
                double p,
-               prelert::model::CHierarchicalResults &results)
+               ml::model::CHierarchicalResults &results)
 {
-    prelert::model::SAnnotatedProbability annotatedProbability(p);
+    ml::model::SAnnotatedProbability annotatedProbability(p);
     results.addModelResult(detector, isPopulation, functionName, function, partitionFieldName,
                            partitionFieldValue, personFieldName, personFieldValue, valueFieldName,
                            annotatedProbability);
@@ -513,17 +513,17 @@ void addResult(int detector,
 void addResult(int detector,
                bool isPopulation,
                const std::string &functionName,
-               prelert::model::function_t::EFunction function,
+               ml::model::function_t::EFunction function,
                const std::string &partitionFieldName,
                const std::string &partitionFieldValue,
                const std::string &personFieldName,
                const std::string &personFieldValue,
                const std::string &valueFieldName,
                double p,
-               const prelert::model::CModel *model,
-               prelert::model::CHierarchicalResults &results)
+               const ml::model::CModel *model,
+               ml::model::CHierarchicalResults &results)
 {
-    prelert::model::SAnnotatedProbability annotatedProbability(p);
+    ml::model::SAnnotatedProbability annotatedProbability(p);
     results.addModelResult(detector, isPopulation, functionName, function, partitionFieldName,
                            partitionFieldValue, personFieldName, personFieldValue, valueFieldName,
                            annotatedProbability, model);
@@ -563,7 +563,7 @@ void CHierarchicalResultsTest::testBreadthFirstVisit(void)
 
     static const std::string FUNC("min");
 
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMin);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMin);
 
     addResult(1, false, FUNC, function, PART1, part1, PERS, pers1, VAL1, 0.1, results);
     addResult(1, false, FUNC, function, PART1, part1, PERS, pers2, VAL1, 0.1, results);
@@ -629,7 +629,7 @@ void CHierarchicalResultsTest::testDepthFirstVisit(void)
 
     static const std::string FUNC("max");
 
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
     addResult(1, false, FUNC, function, PART1, part1, PERS, pers1, VAL1, 0.1, results);
     addResult(1, false, FUNC, function, PART1, part1, PERS, pers2, VAL1, 0.1, results);
@@ -710,7 +710,7 @@ void CHierarchicalResultsTest::testBuildHierarchy(void)
     LOG_DEBUG("*** testBuildHierarchy ***");
 
     static const std::string FUNC("mean");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMean);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMean);
 
     // Test vanilla by / over.
     {
@@ -826,7 +826,7 @@ void CHierarchicalResultsTest::testBuildHierarchyGivenPartitionsWithSinglePerson
     LOG_DEBUG("*** testBuildHierarchyGivenPartitionsWithSinglePersonFieldValue ***");
 
     static const std::string FUNC("mean");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMean);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMean);
 
     std::string partition("par");
     std::string partition1("par_1");
@@ -882,7 +882,7 @@ void CHierarchicalResultsTest::testBasicVisitor(void)
     LOG_DEBUG("*** testBasicVisitor ***");
 
     static const std::string FUNC("max");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
     // Test by and over
     {
@@ -1071,7 +1071,7 @@ void CHierarchicalResultsTest::testAggregator(void)
     double score = 0.0;
     double probability = 1.0;
     static const std::string FUNC("max");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
     // Test by.
     {
@@ -1216,7 +1216,7 @@ void CHierarchicalResultsTest::testInfluence(void)
     model::CModelConfig modelConfig = model::CModelConfig::defaultConfig();
     model::CHierarchicalResultsAggregator aggregator(modelConfig);
     std::string FUNC("max");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
     TStrPtr i2(boost::make_shared<std::string>("i2"));
     TStrPtr i1(boost::make_shared<std::string>("i1"));
@@ -1361,7 +1361,7 @@ void CHierarchicalResultsTest::testScores(void)
     model::CHierarchicalResultsProbabilityFinalizer finalizer;
     CCheckScores checkScores;
     static const std::string FUNC("max");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
     // Test vanilla by / over.
     {
@@ -1456,7 +1456,7 @@ void CHierarchicalResultsTest::testWriter(void)
     CWriteConsistencyChecker writeConsistencyChecker(limits);
 
     static const std::string FUNC("max");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
     // Test complex.
     {
@@ -1530,7 +1530,7 @@ void CHierarchicalResultsTest::testNormalizer(void)
     model::CHierarchicalResultsProbabilityFinalizer finalizer;
     model::CHierarchicalResultsNormalizer normalizer(modelConfig);
     static const std::string FUNC("max");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
     // Not using TRUE and FALSE as they clash with Windows macros
 
@@ -1754,7 +1754,7 @@ void CHierarchicalResultsTest::testDetectorEqualizing(void)
         aggregator.setJob(model::CHierarchicalResultsAggregator::E_UpdateAndCorrect);
         CProbabilityGatherer probabilityGatherer;
         static const std::string FUNC("max");
-        static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+        static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
         const std::string fields[][7] =
             {
@@ -1865,7 +1865,7 @@ void CHierarchicalResultsTest::testDetectorEqualizing(void)
         model::CHierarchicalResultsAggregator aggregator(modelConfig);
         aggregator.setJob(model::CHierarchicalResultsAggregator::E_UpdateAndCorrect);
         static const std::string FUNC("max");
-        static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMax);
+        static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMax);
 
         const std::string fields[][7] =
             {
@@ -1950,7 +1950,7 @@ void CHierarchicalResultsTest::testShouldWritePartition()
     std::string partition2("par_2");
 
     static const std::string FUNC("mean");
-    static const prelert::model::function_t::EFunction function(prelert::model::function_t::E_IndividualMetricMean);
+    static const ml::model::function_t::EFunction function(ml::model::function_t::E_IndividualMetricMean);
 
     model::CHierarchicalResults results;
     addResult(1, false, FUNC, function, PART1, partition1, PERS, pers1, VAL1, 0.001, results);
@@ -1962,7 +1962,7 @@ void CHierarchicalResultsTest::testShouldWritePartition()
     results.postorderDepthFirst(printer);
     LOG_DEBUG("\nhierarchy:\n" << printer.result());
 
-    const prelert::model::CHierarchicalResults::TNode *root = results.root();
+    const ml::model::CHierarchicalResults::TNode *root = results.root();
     CPPUNIT_ASSERT_EQUAL(std::size_t(2), root->s_Children.size());
 
     CNodeExtractor extract;
@@ -1980,13 +1980,13 @@ void CHierarchicalResultsTest::testShouldWritePartition()
     CPPUNIT_ASSERT_EQUAL(std::size_t(2), extract.partitionNodes()[1]->s_Children.size());
 
     model::CModelConfig modelConfig = model::CModelConfig::defaultConfig();
-    prelert::model::CHierarchicalResultsAggregator aggregator(modelConfig);
+    ml::model::CHierarchicalResultsAggregator aggregator(modelConfig);
     results.bottomUpBreadthFirst(aggregator);
 
     model::CLimits limits;
-    CPPUNIT_ASSERT(prelert::model::CHierarchicalResultsVisitor::shouldWriteResult(limits,
+    CPPUNIT_ASSERT(ml::model::CHierarchicalResultsVisitor::shouldWriteResult(limits,
                                 results, *extract.partitionNodes()[0], false));
-    CPPUNIT_ASSERT(prelert::model::CHierarchicalResultsVisitor::shouldWriteResult(limits,
+    CPPUNIT_ASSERT(ml::model::CHierarchicalResultsVisitor::shouldWriteResult(limits,
                                 results, *extract.partitionNodes()[1], false));
 }
 

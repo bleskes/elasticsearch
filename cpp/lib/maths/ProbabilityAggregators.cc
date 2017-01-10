@@ -28,7 +28,7 @@
 #include <boost/numeric/conversion/bounds.hpp>
 #include <boost/range.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

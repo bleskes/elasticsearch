@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {

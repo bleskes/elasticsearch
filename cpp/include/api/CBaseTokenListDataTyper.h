@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CBaseTokenListDataTyper_h
-#define INCLUDED_prelert_api_CBaseTokenListDataTyper_h
+#ifndef INCLUDED_ml_api_CBaseTokenListDataTyper_h
+#define INCLUDED_ml_api_CBaseTokenListDataTyper_h
 
 #include <core/BoostMultiIndex.h>
 
@@ -34,7 +34,7 @@
 class CBaseTokenListDataTyperTest;
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -313,5 +313,5 @@ API_EXPORT std::ostream &operator<<(std::ostream &strm,
 }
 }
 
-#endif // INCLUDED_prelert_api_CBaseTokenListDataTyper_h
+#endif // INCLUDED_ml_api_CBaseTokenListDataTyper_h
 

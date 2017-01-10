@@ -24,7 +24,7 @@
 #undef isinf
 #endif
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

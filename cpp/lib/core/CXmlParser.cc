@@ -31,7 +31,7 @@
 #include <string.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -39,7 +39,7 @@ namespace core
 
 const std::string CXmlParser::ATTRIBUTE_SEPARATOR("@");
 const std::string CXmlParser::ATTRIBUTE_EQUALS("=");
-// 4 spaces to match the Prelert coding standards
+// 4 spaces to match the Ml coding standards
 const size_t      CXmlParser::DEFAULT_INDENT_SPACES(4);
 const size_t      CXmlParser::MAX_INDENT_SPACES(10);
 // The number of spaces in this constant MUST match the maximum above
@@ -395,7 +395,7 @@ bool CXmlParser::evalXPathExpression(const std::string &xpathExpr,
 std::string CXmlParser::dumpToString(void) const
 {
     // The xmlTreeIndentString "global" is really a per-thread variable.
-    // 4 spaces per indent to match Prelert standard.
+    // 4 spaces per indent to match Ml standard.
     xmlTreeIndentString = "    ";
 
     std::string result;
@@ -421,7 +421,7 @@ std::string CXmlParser::dumpToString(void) const
 void CXmlParser::dumpToStdout(void) const
 {
     // The xmlTreeIndentString "global" is really a per-thread variable.
-    // 4 spaces per indent to match Prelert standard.
+    // 4 spaces per indent to match Ml standard.
     xmlTreeIndentString = "    ";
 
     if (m_Doc != 0)
@@ -1180,7 +1180,7 @@ bool CXmlParser::toNodeHierarchy(const xmlNode &parentNode,
     return true;
 }
 
-// 'Prelert' error handler
+// 'Ml' error handler
 // Note, this is called on every error
 // TODO print a consolidated error message
 void CXmlParser::errorHandler(void * /* ctxt */, const char *msg, ...)

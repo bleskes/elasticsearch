@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CTextFileReader_h
-#define INCLUDED_prelert_core_CTextFileReader_h
+#ifndef INCLUDED_ml_core_CTextFileReader_h
+#define INCLUDED_ml_core_CTextFileReader_h
 
 #include <core/ImportExport.h>
 
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -61,5 +61,5 @@ class CORE_EXPORT CTextFileReader
 }
 }
 
-#endif // INCLUDED_prelert_core_CTextFileReader_h
+#endif // INCLUDED_ml_core_CTextFileReader_h
 

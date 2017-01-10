@@ -16,7 +16,7 @@
 #include "CModelTypesTest.h"
 #include <model/ModelTypes.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 void CModelTypesTest::testAll(void)

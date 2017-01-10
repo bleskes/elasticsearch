@@ -17,7 +17,7 @@
 #include <fcntl.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_Constants_h
-#define INCLUDED_prelert_maths_Constants_h
+#ifndef INCLUDED_ml_maths_Constants_h
+#define INCLUDED_ml_maths_Constants_h
 
 #include <core/CSmallVector.h>
 
 #include <maths/ImportExport.h>
 #include <maths/MathsTypes.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -96,4 +96,4 @@ MATHS_EXPORT double maxModelPenalty(double numberSamples);
 }
 }
 
-#endif // INCLUDED_prelert_maths_Constants_h
+#endif // INCLUDED_ml_maths_Constants_h

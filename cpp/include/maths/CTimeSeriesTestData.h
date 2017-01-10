@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CTimeSeriesTestData_h
-#define INCLUDED_prelert_maths_CTimeSeriesTestData_h
+#ifndef INCLUDED_ml_maths_CTimeSeriesTestData_h
+#define INCLUDED_ml_maths_CTimeSeriesTestData_h
 
 #include <core/CoreTypes.h>
 
@@ -24,7 +24,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -140,5 +140,5 @@ class MATHS_EXPORT CTimeSeriesTestData
 }
 }
 
-#endif // INCLUDED_prelert_maths_CTimeSeriesTestData_h
+#endif // INCLUDED_ml_maths_CTimeSeriesTestData_h
 

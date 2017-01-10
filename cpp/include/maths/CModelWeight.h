@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CModelWeight_h
-#define INCLUDED_prelert_maths_CModelWeight_h
+#ifndef INCLUDED_ml_maths_CModelWeight_h
+#define INCLUDED_ml_maths_CModelWeight_h
 
 #include <core/CLogger.h>
 
@@ -27,7 +27,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -178,4 +178,4 @@ class CScopeNormalizeWeights : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CModelWeight_h
+#endif // INCLUDED_ml_maths_CModelWeight_h

@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CTimeUtils_h
-#define INCLUDED_prelert_core_CTimeUtils_h
+#ifndef INCLUDED_ml_core_CTimeUtils_h
+#define INCLUDED_ml_core_CTimeUtils_h
 
 #include <core/CFastMutex.h>
 #include <core/CNonInstantiatable.h>
@@ -25,7 +25,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -39,7 +39,7 @@ namespace core
 //! this class should never be constructed.
 //!
 //! IMPLEMENTATION DECISIONS:\n
-//! Class consoidates time methods used throughout the Prelert
+//! Class consoidates time methods used throughout the Ml
 //! codebase.
 //!
 class CORE_EXPORT CTimeUtils : private CNonInstantiatable
@@ -125,5 +125,5 @@ class CORE_EXPORT CTimeUtils : private CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_CTimeUtils_h
+#endif // INCLUDED_ml_core_CTimeUtils_h
 

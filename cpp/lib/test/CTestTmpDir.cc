@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {

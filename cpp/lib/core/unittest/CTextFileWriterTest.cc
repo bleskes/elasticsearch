@@ -56,36 +56,36 @@ CppUnit::Test *CTextFileWriterTest::suite()
 
 void CTextFileWriterTest::setUp(void)
 {
-    std::string cmd("cp testfiles/CTextFileWriterTest.txt " + prelert::test::CTestTmpDir::tmpDir());
+    std::string cmd("cp testfiles/CTextFileWriterTest.txt " + ml::test::CTestTmpDir::tmpDir());
     CPPUNIT_ASSERT_EQUAL(0, ::system(cmd.c_str()));
 }
 
 void CTextFileWriterTest::tearDown(void)
 {
-    std::string cmd("rm -f " + prelert::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTest.txt");
+    std::string cmd("rm -f " + ml::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTest.txt");
     CPPUNIT_ASSERT_EQUAL(0, ::system(cmd.c_str()));
 }
 
 void CTextFileWriterTest::testInitNew(void)
 {
-    std::string fileName(prelert::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTestNew.txt");
+    std::string fileName(ml::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTestNew.txt");
     {
         typedef std::vector<std::string> TStrVec;
         typedef TStrVec::const_iterator  TStrVecCItr;
 
-        prelert::core::CTextFileWriter writer(true);
+        ml::core::CTextFileWriter writer(true);
 
         CPPUNIT_ASSERT(!writer.isOpen());
 
         CPPUNIT_ASSERT(writer.init(fileName,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
 
         CPPUNIT_ASSERT(writer.isOpen());
 
         writer.close();
 
         CPPUNIT_ASSERT(writer.init(fileName,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
 
         const std::string text[] = { "line1",
                                      "sdcsdac",
@@ -128,11 +128,11 @@ void CTextFileWriterTest::testInitStart(void)
     typedef std::vector<std::string> TStrVec;
     typedef TStrVec::const_iterator  TStrVecCItr;
 
-    prelert::core::CTextFileWriter writer(true);
+    ml::core::CTextFileWriter writer(true);
 
-    std::string fileName(prelert::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTest.txt");
+    std::string fileName(ml::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTest.txt");
     CPPUNIT_ASSERT(writer.init(fileName,
-                               prelert::core::CTextFileWriter::E_Start));
+                               ml::core::CTextFileWriter::E_Start));
 
     const std::string text[] = { "line1",
                                  "sdcsdac",
@@ -168,11 +168,11 @@ void CTextFileWriterTest::testInitEnd(void)
     typedef std::vector<std::string> TStrVec;
     typedef TStrVec::const_iterator  TStrVecCItr;
 
-    prelert::core::CTextFileWriter writer(true);
+    ml::core::CTextFileWriter writer(true);
 
-    std::string fileName(prelert::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTest.txt");
+    std::string fileName(ml::test::CTestTmpDir::tmpDir() + "/CTextFileWriterTest.txt");
     CPPUNIT_ASSERT(writer.init(fileName,
-                               prelert::core::CTextFileWriter::E_End));
+                               ml::core::CTextFileWriter::E_End));
 
     std::string actual;
     {
@@ -225,9 +225,9 @@ void CTextFileWriterTest::testInitEnd(void)
 
 void CTextFileWriterTest::testFdLimit(void)
 {
-    std::string base(prelert::test::CTestTmpDir::tmpDir() + "/prelert_testFdLimit.");
+    std::string base(ml::test::CTestTmpDir::tmpDir() + "/ml_testFdLimit.");
     {
-        typedef boost::shared_ptr<prelert::core::CTextFileWriter> TTextFileWriterP;
+        typedef boost::shared_ptr<ml::core::CTextFileWriter> TTextFileWriterP;
         typedef std::list<TTextFileWriterP> TTextFileWriterPList;
 
         TTextFileWriterPList junk;
@@ -238,10 +238,10 @@ void CTextFileWriterTest::testFdLimit(void)
 
             strm << base << i;
 
-            TTextFileWriterP writer(new prelert::core::CTextFileWriter(false));
+            TTextFileWriterP writer(new ml::core::CTextFileWriter(false));
 
             CPPUNIT_ASSERT(writer->init(strm.str(),
-                                    prelert::core::CTextFileWriter::E_End));
+                                    ml::core::CTextFileWriter::E_End));
 
             LOG_DEBUG("Opened " << strm.str());
 
@@ -258,82 +258,82 @@ void CTextFileWriterTest::testFdLimit(void)
 
 void CTextFileWriterTest::testWriteLineEndings(void)
 {
-    std::string testFile(prelert::test::CTestTmpDir::tmpDir() + "/prelertLineEndingTest.txt");
+    std::string testFile(ml::test::CTestTmpDir::tmpDir() + "/mlLineEndingTest.txt");
 
-    size_t lineEndSize(::strlen(prelert::core_t::LINE_ENDING));
-    prelert::core::COsFileFuncs::TStat statBuf;
+    size_t lineEndSize(::strlen(ml::core_t::LINE_ENDING));
+    ml::core::COsFileFuncs::TStat statBuf;
     size_t fileSize(0);
 
     // 1 - binary mode, write line with one letter
     {
-        prelert::core::CTextFileWriter writer(false);
+        ml::core::CTextFileWriter writer(false);
         CPPUNIT_ASSERT(writer.init(testFile,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
         CPPUNIT_ASSERT(writer.writeLine("a"));
     }
 
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
     fileSize = static_cast<size_t>(statBuf.st_size);
     CPPUNIT_ASSERT_EQUAL(size_t(1 + lineEndSize), fileSize);
 
     // 2 - text mode, write line with one letter
     {
-        prelert::core::CTextFileWriter writer(true);
+        ml::core::CTextFileWriter writer(true);
         CPPUNIT_ASSERT(writer.init(testFile,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
         CPPUNIT_ASSERT(writer.writeLine("a"));
     }
 
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
     fileSize = static_cast<size_t>(statBuf.st_size);
     CPPUNIT_ASSERT_EQUAL(size_t(1 + lineEndSize), fileSize);
 
     // 3 - binary mode, write one letter
     {
-        prelert::core::CTextFileWriter writer(false);
+        ml::core::CTextFileWriter writer(false);
         CPPUNIT_ASSERT(writer.init(testFile,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
         CPPUNIT_ASSERT(writer.write("a"));
     }
 
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
     fileSize = static_cast<size_t>(statBuf.st_size);
     CPPUNIT_ASSERT_EQUAL(size_t(1), fileSize);
 
     // 4 - text mode, write one letter
     {
-        prelert::core::CTextFileWriter writer(true);
+        ml::core::CTextFileWriter writer(true);
         CPPUNIT_ASSERT(writer.init(testFile,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
         CPPUNIT_ASSERT(writer.write("a"));
     }
 
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
     fileSize = static_cast<size_t>(statBuf.st_size);
     CPPUNIT_ASSERT_EQUAL(size_t(1), fileSize);
 
     // 5 - binary mode, write a letter followed by a line feed
     {
-        prelert::core::CTextFileWriter writer(false);
+        ml::core::CTextFileWriter writer(false);
         CPPUNIT_ASSERT(writer.init(testFile,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
         CPPUNIT_ASSERT(writer.write("a\n"));
     }
 
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
     fileSize = static_cast<size_t>(statBuf.st_size);
     // NB: here on Windows the file should still have a Unix line ending
     CPPUNIT_ASSERT_EQUAL(size_t(1 + 1), fileSize);
 
     // 6 - text mode, write a letter followed by a line feed
     {
-        prelert::core::CTextFileWriter writer(true);
+        ml::core::CTextFileWriter writer(true);
         CPPUNIT_ASSERT(writer.init(testFile,
-                                   prelert::core::CTextFileWriter::E_Start));
+                                   ml::core::CTextFileWriter::E_Start));
         CPPUNIT_ASSERT(writer.write("a\n"));
     }
 
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(testFile.c_str(), &statBuf));
     fileSize = static_cast<size_t>(statBuf.st_size);
     CPPUNIT_ASSERT_EQUAL(size_t(1 + lineEndSize), fileSize);
 

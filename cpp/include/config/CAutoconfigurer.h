@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CAutoconfigurer_h
-#define INCLUDED_prelert_config_CAutoconfigurer_h
+#ifndef INCLUDED_ml_config_CAutoconfigurer_h
+#define INCLUDED_ml_config_CAutoconfigurer_h
 
 #include <api/CDataProcessor.h>
 
@@ -22,7 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -88,4 +88,4 @@ class CONFIG_EXPORT CAutoconfigurer : public api::CDataProcessor
 }
 }
 
-#endif // INCLUDED_prelert_config_CAutoconfigurer_h
+#endif // INCLUDED_ml_config_CAutoconfigurer_h

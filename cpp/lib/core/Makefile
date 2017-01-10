@@ -34,7 +34,7 @@ CONF_INSTALL_DIR=$(CPP_DISTRIBUTION_HOME)/resources
 # operating system.
 all: build
 	$(MKDIR) $(CONF_INSTALL_DIR)
-	$(INSTALL) prelert-en.dict $(CONF_INSTALL_DIR)
+	$(INSTALL) ml-en.dict $(CONF_INSTALL_DIR)
 ifeq ($(OS),Windows)
 	$(INSTALL) date_time_zonespec.csv $(CONF_INSTALL_DIR)
 endif

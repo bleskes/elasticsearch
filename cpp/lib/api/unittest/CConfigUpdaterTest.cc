@@ -24,7 +24,7 @@
 #include <string>
 
 
-using namespace prelert;
+using namespace ml;
 using namespace api;
 
 CppUnit::Test *CConfigUpdaterTest::suite()

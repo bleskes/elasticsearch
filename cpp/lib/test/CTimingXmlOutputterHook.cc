@@ -22,7 +22,7 @@
 #include <cppunit/tools/XmlElement.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {

@@ -30,7 +30,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

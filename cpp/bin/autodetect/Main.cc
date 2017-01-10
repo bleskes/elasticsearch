@@ -66,8 +66,8 @@ namespace
 class CFirstProcessorPeriodicPersist
 {
     public:
-        CFirstProcessorPeriodicPersist(prelert::api::CDataProcessor &firstProcessor,
-                                       prelert::core::CDataAdder &persister)
+        CFirstProcessorPeriodicPersist(ml::api::CDataProcessor &firstProcessor,
+                                       ml::core::CDataAdder &persister)
             : m_FirstProcessor(firstProcessor),
               m_Persister(persister)
         {
@@ -79,8 +79,8 @@ class CFirstProcessorPeriodicPersist
         }
 
     private:
-        prelert::api::CDataProcessor &m_FirstProcessor;
-        prelert::core::CDataAdder    &m_Persister;
+        ml::api::CDataProcessor &m_FirstProcessor;
+        ml::core::CDataAdder    &m_Persister;
 };
 
 }
@@ -88,7 +88,7 @@ class CFirstProcessorPeriodicPersist
 
 int main(int argc, char **argv)
 {
-    typedef prelert::autodetect::CCmdLineParser::TStrVec TStrVec;
+    typedef ml::autodetect::CCmdLineParser::TStrVec TStrVec;
 
     // Read command line options
     std::string            limitConfigFile;
@@ -98,19 +98,19 @@ int main(int argc, char **argv)
     std::string            jobId;
     std::string            logProperties;
     std::string            logPipe;
-    prelert::core_t::TTime bucketSpan(0);
-    prelert::core_t::TTime batchSpan(prelert::model::CModelConfig::DEFAULT_BATCH_LENGTH);
-    prelert::core_t::TTime latency(0);
-    std::size_t            period(prelert::model::CModelConfig::APERIODIC);
+    ml::core_t::TTime bucketSpan(0);
+    ml::core_t::TTime batchSpan(ml::model::CModelConfig::DEFAULT_BATCH_LENGTH);
+    ml::core_t::TTime latency(0);
+    std::size_t            period(ml::model::CModelConfig::APERIODIC);
     std::string            summaryCountFieldName;
     char                   delimiter('\t');
     bool                   lengthEncodedInput(false);
-    std::string            timeField(prelert::api::CAnomalyDetector::DEFAULT_TIME_FIELD_NAME);
+    std::string            timeField(ml::api::CAnomalyDetector::DEFAULT_TIME_FIELD_NAME);
     std::string            timeFormat;
     std::string            quantilesStateFile;
     bool                   deleteStateFiles(false);
-    prelert::core_t::TTime persistInterval(-1);
-    prelert::core_t::TTime maxQuantileInterval(-1);
+    ml::core_t::TTime persistInterval(-1);
+    ml::core_t::TTime maxQuantileInterval(-1);
     std::string            inputFileName;
     bool                   isInputFileNamedPipe(false);
     std::string            outputFileName;
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     std::string            multipleBucketspans;
     bool                   perPartitionNormalization(false);
     TStrVec                clauseTokens;
-    if (prelert::autodetect::CCmdLineParser::parse(argc,
+    if (ml::autodetect::CCmdLineParser::parse(argc,
                                                    argv,
                                                    limitConfigFile,
                                                    modelConfigFile,
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 
     // Construct the IO manager before reconfiguring the logger, as it performs
     // std::ios actions that only work before first use
-    prelert::api::CIoManager ioMgr(inputFileName,
+    ml::api::CIoManager ioMgr(inputFileName,
                                    isInputFileNamedPipe,
                                    outputFileName,
                                    isOutputFileNamedPipe,
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
                                    persistFileName,
                                    isPersistFileNamedPipe);
 
-    if (prelert::core::CLogger::instance().reconfigure(logPipe, logProperties) == false)
+    if (ml::core::CLogger::instance().reconfigure(logPipe, logProperties) == false)
     {
         LOG_FATAL("Could not reconfigure logging");
         return EXIT_FAILURE;
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
     // Log the program version immediately after reconfiguring the logger.  This
     // must be done from the program, and NOT a shared library, as each program
     // statically links its own version library.
-    LOG_INFO(prelert::ver::CBuildInfo::fullInfo());
+    LOG_INFO(ml::ver::CBuildInfo::fullInfo());
 
     if (ioMgr.initIo() == false)
     {
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (prelert::core::CLicenseValidator::validate(license) == false)
+    if (ml::core::CLicenseValidator::validate(license) == false)
     {
         LOG_FATAL("Invalid license");
         return EXIT_FAILURE;
@@ -211,20 +211,20 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    prelert::model::CLimits limits;
+    ml::model::CLimits limits;
     if (!limitConfigFile.empty() && limits.init(limitConfigFile) == false)
     {
-        LOG_FATAL("Prelert limit config file '" << limitConfigFile <<
+        LOG_FATAL("Ml limit config file '" << limitConfigFile <<
                   "' could not be loaded");
         return EXIT_FAILURE;
     }
 
-    prelert::api::CFieldConfig fieldConfig;
+    ml::api::CFieldConfig fieldConfig;
 
-    prelert::model_t::ESummaryMode summaryMode(summaryCountFieldName.empty() ? prelert::model_t::E_None
-                                                                             : prelert::model_t::E_Manual);
-    prelert::model::CModelConfig modelConfig =
-            prelert::model::CModelConfig::defaultConfig(bucketSpan,
+    ml::model_t::ESummaryMode summaryMode(summaryCountFieldName.empty() ? ml::model_t::E_None
+                                                                             : ml::model_t::E_Manual);
+    ml::model::CModelConfig modelConfig =
+            ml::model::CModelConfig::defaultConfig(bucketSpan,
                                                         batchSpan,
                                                         period,
                                                         summaryMode,
@@ -234,36 +234,36 @@ int main(int argc, char **argv)
                                                         multivariateByFields,
                                                         multipleBucketspans);
     modelConfig.perPartitionNormalization(perPartitionNormalization);
-    modelConfig.detectionRules(prelert::model::CModelConfig::TIntDetectionRuleVecUMapCRef(fieldConfig.detectionRules()));
+    modelConfig.detectionRules(ml::model::CModelConfig::TIntDetectionRuleVecUMapCRef(fieldConfig.detectionRules()));
     if (!modelConfigFile.empty() && modelConfig.init(modelConfigFile) == false)
     {
-        LOG_FATAL("Prelert model config file '" << modelConfigFile <<
+        LOG_FATAL("Ml model config file '" << modelConfigFile <<
                   "' could not be loaded");
         return EXIT_FAILURE;
     }
 
     if (!modelDebugConfigFile.empty() && modelConfig.configureDebug(modelDebugConfigFile) == false)
     {
-        LOG_FATAL("Prelert model debug config file '" << modelDebugConfigFile <<
+        LOG_FATAL("Ml model debug config file '" << modelDebugConfigFile <<
                   "' could not be loaded");
         return EXIT_FAILURE;
     }
 
-    typedef boost::scoped_ptr<prelert::core::CDataSearcher> TScopedDataSearcherP;
+    typedef boost::scoped_ptr<ml::core::CDataSearcher> TScopedDataSearcherP;
     TScopedDataSearcherP restoreSearcher;
     if (ioMgr.restoreStream() != 0)
     {
-        restoreSearcher.reset(new prelert::api::CSingleStreamSearcher(ioMgr.restoreStream()));
+        restoreSearcher.reset(new ml::api::CSingleStreamSearcher(ioMgr.restoreStream()));
     }
 
-    typedef boost::scoped_ptr<prelert::core::CDataAdder> TScopedDataAdderP;
+    typedef boost::scoped_ptr<ml::core::CDataAdder> TScopedDataAdderP;
     TScopedDataAdderP persister;
     if (ioMgr.persistStream() != 0)
     {
-        persister.reset(new prelert::api::CSingleStreamDataAdder(ioMgr.persistStream()));
+        persister.reset(new ml::api::CSingleStreamDataAdder(ioMgr.persistStream()));
     }
 
-    typedef boost::scoped_ptr<prelert::api::CBackgroundPersister> TScopedBackgroundPersisterP;
+    typedef boost::scoped_ptr<ml::api::CBackgroundPersister> TScopedBackgroundPersisterP;
     TScopedBackgroundPersisterP periodicPersister;
     if (persistInterval >= 0)
     {
@@ -274,22 +274,22 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        periodicPersister.reset(new prelert::api::CBackgroundPersister(*persister));
+        periodicPersister.reset(new ml::api::CBackgroundPersister(*persister));
     }
 
-    typedef boost::scoped_ptr<prelert::api::CInputParser> TScopedInputParserP;
+    typedef boost::scoped_ptr<ml::api::CInputParser> TScopedInputParserP;
     TScopedInputParserP inputParser;
     if (lengthEncodedInput)
     {
-        inputParser.reset(new prelert::api::CLengthEncodedInputParser(ioMgr.inputStream()));
+        inputParser.reset(new ml::api::CLengthEncodedInputParser(ioMgr.inputStream()));
     }
     else
     {
-        inputParser.reset(new prelert::api::CCsvInputParser(ioMgr.inputStream(),
+        inputParser.reset(new ml::api::CCsvInputParser(ioMgr.inputStream(),
                                                             delimiter));
     }
 
-    prelert::api::CJsonOutputWriter outputWriter(jobId, ioMgr.outputStream());
+    ml::api::CJsonOutputWriter outputWriter(jobId, ioMgr.outputStream());
     outputWriter.limitNumberRecords(maxAnomalyRecords);
 
     if (fieldConfig.initFromCmdLine(fieldConfigFile,
@@ -300,12 +300,12 @@ int main(int argc, char **argv)
     }
 
     // The anomaly detector knows how to detect anomalies
-    prelert::api::CAnomalyDetector detector(jobId,
+    ml::api::CAnomalyDetector detector(jobId,
                                             limits,
                                             fieldConfig,
                                             modelConfig,
                                             outputWriter,
-                                            boost::bind(&prelert::api::CJsonOutputWriter::reportPersistComplete,
+                                            boost::bind(&ml::api::CJsonOutputWriter::reportPersistComplete,
                                                         &outputWriter,
                                                         _1,
                                                         _2,
@@ -335,15 +335,15 @@ int main(int argc, char **argv)
         }
     }
 
-    prelert::api::CDataProcessor *firstProcessor(&detector);
+    ml::api::CDataProcessor *firstProcessor(&detector);
 
     // Chain the detector's input
-    prelert::api::COutputChainer outputChainer(detector);
+    ml::api::COutputChainer outputChainer(detector);
 
     // The typer knows how to assign categories to records
-    prelert::api::CFieldDataTyper typer(jobId, fieldConfig, limits, outputChainer, outputWriter);
+    ml::api::CFieldDataTyper typer(jobId, fieldConfig, limits, outputChainer, outputWriter);
 
-    if (fieldConfig.fieldNameSuperset().count(prelert::api::CFieldDataTyper::PRELERTCATEGORY_NAME) > 0)
+    if (fieldConfig.fieldNameSuperset().count(ml::api::CFieldDataTyper::MLCATEGORY_NAME) > 0)
     {
         firstProcessor = &typer;
     }
@@ -355,7 +355,7 @@ int main(int argc, char **argv)
     }
 
     // The skeleton avoids the need to duplicate a lot of boilerplate code
-    prelert::api::CCmdSkeleton skeleton(restoreSearcher.get(),
+    ml::api::CCmdSkeleton skeleton(restoreSearcher.get(),
                                         persister.get(),
                                         *inputParser,
                                         *firstProcessor);
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
 
     if (!ioLoopSucceeded)
     {
-        LOG_FATAL("Prelert anomaly detection failed");
+        LOG_FATAL("Ml anomaly detection failed");
         return EXIT_FAILURE;
     }
 
@@ -379,12 +379,12 @@ int main(int argc, char **argv)
     }
 
     // Print out the runtime stats generated during this execution context
-    LOG_DEBUG(prelert::core::CStatistics::instance());
+    LOG_DEBUG(ml::core::CStatistics::instance());
 
     // This message makes it easier to spot process crashes in a log file - if
     // this isn't present in the log for a given PID and there's no other log
     // message indicating early exit then the process has probably core dumped
-    LOG_INFO("Prelert anomaly detector exiting");
+    LOG_INFO("Ml anomaly detector exiting");
 
     return EXIT_SUCCESS;
 }

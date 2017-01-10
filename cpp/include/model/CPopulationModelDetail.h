@@ -13,14 +13,14 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CPopulationModelDetail_h
-#define INCLUDED_prelert_model_CPopulationModelDetail_h
+#ifndef INCLUDED_ml_model_CPopulationModelDetail_h
+#define INCLUDED_ml_model_CPopulationModelDetail_h
 
 #include <model/CPopulationModel.h>
 
 #include <model/CDataGatherer.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -97,4 +97,4 @@ void CPopulationModel::applyFilters(model_t::EFeature feature,
 }
 }
 
-#endif // INCLUDED_prelert_model_CPopulationModelDetail_h
+#endif // INCLUDED_ml_model_CPopulationModelDetail_h

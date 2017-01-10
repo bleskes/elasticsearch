@@ -26,7 +26,7 @@ class CFieldConfigTest : public CppUnit::TestFixture
 {
     public:
         typedef boost::function2<bool,
-                                 prelert::api::CFieldConfig *,
+                                 ml::api::CFieldConfig *,
                                  const std::string &> TInitFromFileFunc;
 
     public:

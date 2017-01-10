@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_ProbabilityAggregators_h
-#define INCLUDED_prelert_maths_ProbabilityAggregators_h
+#ifndef INCLUDED_ml_maths_ProbabilityAggregators_h
+#define INCLUDED_ml_maths_ProbabilityAggregators_h
 
 #include <core/CoreTypes.h>
 
@@ -23,7 +23,7 @@
 
 #include <iosfwd>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -328,4 +328,4 @@ class MATHS_EXPORT CLogProbabilityOfMFromNExtremeSamples : private boost::addabl
 }
 }
 
-#endif // INCLUDED_prelert_maths_ProbabilityAggregators_h
+#endif // INCLUDED_ml_maths_ProbabilityAggregators_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CDetectionRule_h
-#define INCLUDED_prelert_model_CDetectionRule_h
+#ifndef INCLUDED_ml_model_CDetectionRule_h
+#define INCLUDED_ml_model_CDetectionRule_h
 
 #include <model/CModel.h>
 #include <model/CRuleCondition.h>
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -123,4 +123,4 @@ class MODEL_EXPORT CDetectionRule
 }
 }
 
-#endif // INCLUDED_prelert_model_CDetectionRule_h
+#endif // INCLUDED_ml_model_CDetectionRule_h

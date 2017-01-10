@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CDataSearcher_h
-#define INCLUDED_prelert_core_CDataSearcher_h
+#ifndef INCLUDED_ml_core_CDataSearcher_h
+#define INCLUDED_ml_core_CDataSearcher_h
 
 #include <core/CDataAdder.h>
 #include <core/CNonCopyable.h>
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -81,5 +81,5 @@ class CORE_EXPORT CDataSearcher : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CDataSearcher_h
+#endif // INCLUDED_ml_core_CDataSearcher_h
 

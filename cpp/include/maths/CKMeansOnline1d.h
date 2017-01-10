@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CKMeansOnline1d_h
-#define INCLUDED_prelert_maths_CKMeansOnline1d_h
+#ifndef INCLUDED_ml_maths_CKMeansOnline1d_h
+#define INCLUDED_ml_maths_CKMeansOnline1d_h
 
 #include <maths/CClusterer.h>
 #include <maths/CNormalMeanPrecConjugate.h>
@@ -22,7 +22,7 @@
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -159,4 +159,4 @@ class MATHS_EXPORT CKMeansOnline1d : public CClusterer1d
 }
 }
 
-#endif // INCLUDED_prelert_maths_CKMeansOnline1d_h
+#endif // INCLUDED_ml_maths_CKMeansOnline1d_h

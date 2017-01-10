@@ -19,7 +19,7 @@
 #include <cppunit/Test.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {

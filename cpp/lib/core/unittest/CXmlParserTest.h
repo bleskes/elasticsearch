@@ -19,7 +19,7 @@
 
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -57,11 +57,11 @@ class CXmlParserTest : public CppUnit::TestFixture
         static CppUnit::Test *suite();
 
     private:
-        static void testParse1(const prelert::core::CXmlParser &parser);
+        static void testParse1(const ml::core::CXmlParser &parser);
 
         static std::string fileToString(const std::string &fileName);
 
-        static bool testAttribute(const prelert::core::CXmlNode &node,
+        static bool testAttribute(const ml::core::CXmlNode &node,
                                   const std::string &key,
                                   const std::string &expected);
 };

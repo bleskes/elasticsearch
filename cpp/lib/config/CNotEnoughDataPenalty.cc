@@ -29,7 +29,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

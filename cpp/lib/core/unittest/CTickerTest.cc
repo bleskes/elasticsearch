@@ -59,12 +59,12 @@ void CTickerTest::testTicker(void)
 {
     CReceiver receiver;
 
-    prelert::core::CTicker<CReceiver> ticker(100, receiver);
+    ml::core::CTicker<CReceiver> ticker(100, receiver);
 
     LOG_DEBUG("About to start ticker");
     CPPUNIT_ASSERT(ticker.start());
 
-    prelert::core::CSleep::sleep(1000);
+    ml::core::CSleep::sleep(1000);
 
     // Should receive 9 or 10 ticks
     size_t tickCount(receiver.ticks());

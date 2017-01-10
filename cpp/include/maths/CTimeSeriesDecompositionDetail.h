@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CTimeSeriesDecompositionDetail_h
-#define INCLUDED_prelert_maths_CTimeSeriesDecompositionDetail_h
+#ifndef INCLUDED_ml_maths_CTimeSeriesDecompositionDetail_h
+#define INCLUDED_ml_maths_CTimeSeriesDecompositionDetail_h
 
 #include <core/CoreTypes.h>
 #include <core/CSmallVector.h>
@@ -30,7 +30,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -585,4 +585,4 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
 }
 }
 
-#endif // INCLUDED_prelert_maths_CTimeSeriesDecompositionDetail_h
+#endif // INCLUDED_ml_maths_CTimeSeriesDecompositionDetail_h

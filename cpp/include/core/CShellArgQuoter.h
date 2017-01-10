@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CShellArgQuoter_h
-#define INCLUDED_prelert_core_CShellArgQuoter_h
+#ifndef INCLUDED_ml_core_CShellArgQuoter_h
+#define INCLUDED_ml_core_CShellArgQuoter_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/ImportExport.h>
@@ -21,7 +21,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -53,5 +53,5 @@ class CORE_EXPORT CShellArgQuoter : private CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_CShellArgQuoter_h
+#endif // INCLUDED_ml_core_CShellArgQuoter_h
 

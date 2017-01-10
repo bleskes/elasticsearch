@@ -67,7 +67,7 @@ class CVisitor
         {
         }
 
-        CVisitor(const prelert::api::CCsvInputParser::TStrVec &expectedFieldNames)
+        CVisitor(const ml::api::CCsvInputParser::TStrVec &expectedFieldNames)
             : m_Fast(false),
               m_RecordCount(0),
               m_ExpectedFieldNames(expectedFieldNames)
@@ -75,7 +75,7 @@ class CVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             // CSV input parser does not process settings
             CPPUNIT_ASSERT(false);
@@ -85,8 +85,8 @@ class CVisitor
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CCsvInputParser::TStrVec &fieldNames,
-                        const prelert::api::CCsvInputParser::TStrStrUMap &dataRowFields)
+                        const ml::api::CCsvInputParser::TStrVec &fieldNames,
+                        const ml::api::CCsvInputParser::TStrStrUMap &dataRowFields)
         {
             if (!isDryRun)
             {
@@ -110,7 +110,7 @@ class CVisitor
             CPPUNIT_ASSERT_EQUAL(m_ExpectedFieldNames.size(), fieldNames.size());
 
             // Now check the actual fields
-            for (prelert::api::CCsvInputParser::TStrStrUMapCItr iter = dataRowFields.begin();
+            for (ml::api::CCsvInputParser::TStrStrUMapCItr iter = dataRowFields.begin();
                  iter != dataRowFields.end();
                  ++iter)
             {
@@ -121,16 +121,16 @@ class CVisitor
             CPPUNIT_ASSERT_EQUAL(fieldNames.size(), dataRowFields.size());
 
             // Check the line count is consistent with the _raw field
-            prelert::api::CCsvInputParser::TStrStrUMapCItr rawIter = dataRowFields.find("_raw");
+            ml::api::CCsvInputParser::TStrStrUMapCItr rawIter = dataRowFields.find("_raw");
             CPPUNIT_ASSERT(rawIter != dataRowFields.end());
-            prelert::api::CCsvInputParser::TStrStrUMapCItr lineCountIter = dataRowFields.find("linecount");
+            ml::api::CCsvInputParser::TStrStrUMapCItr lineCountIter = dataRowFields.find("linecount");
             CPPUNIT_ASSERT(lineCountIter != dataRowFields.end());
 
             size_t expectedLineCount(1 + std::count(rawIter->second.begin(),
                                                     rawIter->second.end(),
                                                     '\n'));
             size_t lineCount(0);
-            CPPUNIT_ASSERT(prelert::core::CStringUtils::stringToType(lineCountIter->second, lineCount));
+            CPPUNIT_ASSERT(ml::core::CStringUtils::stringToType(lineCountIter->second, lineCount));
             CPPUNIT_ASSERT_EQUAL(expectedLineCount, lineCount);
 
             return true;
@@ -144,13 +144,13 @@ class CVisitor
     private:
         bool                                   m_Fast;
         size_t                                 m_RecordCount;
-        prelert::api::CCsvInputParser::TStrVec m_ExpectedFieldNames;
+        ml::api::CCsvInputParser::TStrVec m_ExpectedFieldNames;
 };
 
 class CTimeCheckingVisitor
 {
     public:
-        typedef std::vector<prelert::core_t::TTime> TTimeVec;
+        typedef std::vector<ml::core_t::TTime> TTimeVec;
 
     public:
         CTimeCheckingVisitor(const std::string &timeField,
@@ -164,7 +164,7 @@ class CTimeCheckingVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             // CSV input parser does not process settings
             CPPUNIT_ASSERT(false);
@@ -174,8 +174,8 @@ class CTimeCheckingVisitor
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CCsvInputParser::TStrVec &fieldNames,
-                        const prelert::api::CCsvInputParser::TStrStrUMap &dataRowFields)
+                        const ml::api::CCsvInputParser::TStrVec &fieldNames,
+                        const ml::api::CCsvInputParser::TStrStrUMap &dataRowFields)
         {
             if (isDryRun)
             {
@@ -185,7 +185,7 @@ class CTimeCheckingVisitor
             // Check the time field exists
             CPPUNIT_ASSERT(m_RecordCount < m_ExpectedTimes.size());
 
-            prelert::api::CCsvInputParser::TStrVecCItr fieldNameIter =
+            ml::api::CCsvInputParser::TStrVecCItr fieldNameIter =
                     std::find(fieldNames.begin(),
                               fieldNames.end(),
                               m_TimeField);
@@ -194,17 +194,17 @@ class CTimeCheckingVisitor
             CPPUNIT_ASSERT_EQUAL(fieldNames.size(), dataRowFields.size());
 
             // Now check the actual time
-            prelert::api::CCsvInputParser::TStrStrUMapCItr fieldIter = dataRowFields.find(m_TimeField);
+            ml::api::CCsvInputParser::TStrStrUMapCItr fieldIter = dataRowFields.find(m_TimeField);
             CPPUNIT_ASSERT(fieldIter != dataRowFields.end());
-            prelert::core_t::TTime timeVal(0);
+            ml::core_t::TTime timeVal(0);
             if (m_TimeFormat.empty())
             {
-                CPPUNIT_ASSERT(prelert::core::CStringUtils::stringToType(fieldIter->second,
+                CPPUNIT_ASSERT(ml::core::CStringUtils::stringToType(fieldIter->second,
                                                                          timeVal));
             }
             else
             {
-                CPPUNIT_ASSERT(prelert::core::CTimeUtils::strptime(m_TimeFormat,
+                CPPUNIT_ASSERT(ml::core::CTimeUtils::strptime(m_TimeFormat,
                                                                    fieldIter->second,
                                                                    timeVal));
                 LOG_DEBUG("Converted " << fieldIter->second <<
@@ -239,7 +239,7 @@ class CQuoteCheckingVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             // CSV input parser does not process settings
             CPPUNIT_ASSERT(false);
@@ -249,8 +249,8 @@ class CQuoteCheckingVisitor
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CCsvInputParser::TStrVec &fieldNames,
-                        const prelert::api::CCsvInputParser::TStrStrUMap &dataRowFields)
+                        const ml::api::CCsvInputParser::TStrVec &fieldNames,
+                        const ml::api::CCsvInputParser::TStrStrUMap &dataRowFields)
         {
             if (isDryRun)
             {
@@ -260,7 +260,7 @@ class CQuoteCheckingVisitor
             CPPUNIT_ASSERT_EQUAL(fieldNames.size(), dataRowFields.size());
 
             // Now check quoted fields
-            prelert::api::CCsvInputParser::TStrStrUMapCItr fieldIter = dataRowFields.find("q1");
+            ml::api::CCsvInputParser::TStrStrUMapCItr fieldIter = dataRowFields.find("q1");
             CPPUNIT_ASSERT(fieldIter != dataRowFields.end());
             CPPUNIT_ASSERT_EQUAL(std::string(""), fieldIter->second);
 
@@ -298,9 +298,9 @@ void CCsvInputParserTest::testSimpleDelims(void)
     std::ifstream simpleStrm("testfiles/simple.txt");
     CPPUNIT_ASSERT(simpleStrm.is_open());
 
-    prelert::api::CCsvInputParser parser(simpleStrm);
+    ml::api::CCsvInputParser parser(simpleStrm);
 
-    prelert::api::CCsvInputParser::TStrVec expectedFieldNames;
+    ml::api::CCsvInputParser::TStrVec expectedFieldNames;
     expectedFieldNames.push_back("_cd");
     expectedFieldNames.push_back("_indextime");
     expectedFieldNames.push_back("_kv");
@@ -342,9 +342,9 @@ void CCsvInputParserTest::testComplexDelims(void)
     std::ifstream complexStrm("testfiles/complex.txt");
     CPPUNIT_ASSERT(complexStrm.is_open());
 
-    prelert::api::CCsvInputParser parser(complexStrm);
+    ml::api::CCsvInputParser parser(complexStrm);
 
-    prelert::api::CCsvInputParser::TStrVec expectedFieldNames;
+    ml::api::CCsvInputParser::TStrVec expectedFieldNames;
     expectedFieldNames.push_back("_cd");
     expectedFieldNames.push_back("_indextime");
     expectedFieldNames.push_back("_kv");
@@ -420,21 +420,21 @@ void CCsvInputParserTest::testThroughput(void)
     }
     LOG_DEBUG("Input size is " << input.length());
 
-    prelert::api::CCsvInputParser parser(input);
+    ml::api::CCsvInputParser parser(input);
 
     CVisitor visitor;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     CPPUNIT_ASSERT(parser.readStream(false,
                                      boost::ref(visitor),
                                      boost::ref(visitor)));
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(recordsPerBlock * TEST_SIZE, visitor.recordCount());
 
@@ -444,7 +444,7 @@ void CCsvInputParserTest::testThroughput(void)
 
 void CCsvInputParserTest::testDateParse(void)
 {
-    static const prelert::core_t::TTime EXPECTED_TIMES[] = {
+    static const ml::core_t::TTime EXPECTED_TIMES[] = {
         1359331200,
         1359331200,
         1359331207,
@@ -481,7 +481,7 @@ void CCsvInputParserTest::testDateParse(void)
                                                  boost::end(EXPECTED_TIMES));
 
     // Ensure we are in UK timewise
-    CPPUNIT_ASSERT(prelert::core::CTimezone::setTimezone("Europe/London"));
+    CPPUNIT_ASSERT(ml::core::CTimezone::setTimezone("Europe/London"));
 
     {
         std::ifstream csvStrm("testfiles/s.csv");
@@ -491,7 +491,7 @@ void CCsvInputParserTest::testDateParse(void)
                                      "",
                                      expectedTimes);
 
-        prelert::api::CCsvInputParser parser(csvStrm);
+        ml::api::CCsvInputParser parser(csvStrm);
 
         CPPUNIT_ASSERT(parser.readStream(false,
                                          boost::ref(visitor),
@@ -505,7 +505,7 @@ void CCsvInputParserTest::testDateParse(void)
                                      "%b %d %Y %I:%M:%S %p",
                                      expectedTimes);
 
-        prelert::api::CCsvInputParser parser(csvStrm);
+        ml::api::CCsvInputParser parser(csvStrm);
 
         CPPUNIT_ASSERT(parser.readStream(false,
                                          boost::ref(visitor),
@@ -519,7 +519,7 @@ void CCsvInputParserTest::testDateParse(void)
                                      "%Y-%m-%d %H:%M:%S",
                                      expectedTimes);
 
-        prelert::api::CCsvInputParser parser(csvStrm);
+        ml::api::CCsvInputParser parser(csvStrm);
 
         CPPUNIT_ASSERT(parser.readStream(false,
                                          boost::ref(visitor),
@@ -533,7 +533,7 @@ void CCsvInputParserTest::testDateParse(void)
                                      "%Y-%m-%d %H:%M:%S %Z",
                                      expectedTimes);
 
-        prelert::api::CCsvInputParser parser(csvStrm);
+        ml::api::CCsvInputParser parser(csvStrm);
 
         CPPUNIT_ASSERT(parser.readStream(false,
                                          boost::ref(visitor),
@@ -541,7 +541,7 @@ void CCsvInputParserTest::testDateParse(void)
     }
 
     // Switch to US Eastern time for this test
-    CPPUNIT_ASSERT(prelert::core::CTimezone::setTimezone("America/New_York"));
+    CPPUNIT_ASSERT(ml::core::CTimezone::setTimezone("America/New_York"));
 
     {
         std::ifstream csvStrm("testfiles/YmdHMSZ_EST.csv");
@@ -551,7 +551,7 @@ void CCsvInputParserTest::testDateParse(void)
                                      "%Y-%m-%d %H:%M:%S %Z",
                                      expectedTimes);
 
-        prelert::api::CCsvInputParser parser(csvStrm);
+        ml::api::CCsvInputParser parser(csvStrm);
 
         CPPUNIT_ASSERT(parser.readStream(false,
                                          boost::ref(visitor),
@@ -560,7 +560,7 @@ void CCsvInputParserTest::testDateParse(void)
 
     // Set the timezone back to nothing, i.e. let the operating system decide
     // what to use
-    CPPUNIT_ASSERT(prelert::core::CTimezone::setTimezone(""));
+    CPPUNIT_ASSERT(ml::core::CTimezone::setTimezone(""));
 }
 
 void CCsvInputParserTest::testQuoteParsing(void)
@@ -575,7 +575,7 @@ void CCsvInputParserTest::testQuoteParsing(void)
         "x,,\"\",\"\"\"\",\"\"\"\"\"\",x\n"
     );
 
-    prelert::api::CCsvInputParser parser(input);
+    ml::api::CCsvInputParser parser(input);
 
     CQuoteCheckingVisitor visitor;
 

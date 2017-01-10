@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {

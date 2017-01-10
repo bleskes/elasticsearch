@@ -20,7 +20,7 @@
 #include <core/CRapidXmlStatePersistInserter.h>
 #include <core/CRapidXmlStateRestoreTraverser.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace api;
 
 void CCategoryExamplesCollectorTest::testAddGivenMaxExamplesIsZero(void)

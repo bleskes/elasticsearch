@@ -15,7 +15,7 @@
 
 #include <maths/CClusterer.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

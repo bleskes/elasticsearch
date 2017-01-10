@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CProcess_h
-#define INCLUDED_prelert_core_CProcess_h
+#ifndef INCLUDED_ml_core_CProcess_h
+#define INCLUDED_ml_core_CProcess_h
 
 #include <core/CFastMutex.h>
 #include <core/CNonCopyable.h>
@@ -30,7 +30,7 @@
 #endif
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -62,8 +62,8 @@ class CORE_EXPORT CProcess : private CNonCopyable
         static const char *STOPPED_MSG;
 
     public:
-        //! Prototype of the prelertMain() function
-        typedef int (*TPrelertMainFunc)(int, char *[]);
+        //! Prototype of the mlMain() function
+        typedef int (*TMlMainFunc)(int, char *[]);
 
         //! Vector of process arguments
         typedef std::vector<std::string> TStrVec;
@@ -93,10 +93,10 @@ class CORE_EXPORT CProcess : private CNonCopyable
         TPid parentId(void) const;
 
         //! If this process is not running as a Windows service, this call will
-        //! immediately pass control to the prelertMain() function.  If this
+        //! immediately pass control to the mlMain() function.  If this
         //! process is running as a Windows service, the thread that calls this
         //! method will become the service dispatcher thread.
-        bool startDispatcher(TPrelertMainFunc prelertMain,
+        bool startDispatcher(TMlMainFunc mlMain,
                              int argc,
                              char *argv[]);
 
@@ -144,8 +144,8 @@ class CORE_EXPORT CProcess : private CNonCopyable
         //! Is this process running?
         bool                  m_Running;
 
-        //! Address of the prelertMain() function to call
-        TPrelertMainFunc      m_PrelertMainFunc;
+        //! Address of the mlMain() function to call
+        TMlMainFunc      m_MlMainFunc;
 
         //! Original arguments passed to the program's main() function
         TStrVec               m_Args;
@@ -167,5 +167,5 @@ class CORE_EXPORT CProcess : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CProcess_h
+#endif // INCLUDED_ml_core_CProcess_h
 

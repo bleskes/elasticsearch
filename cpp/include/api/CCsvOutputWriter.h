@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CCsvOutputWriter_h
-#define INCLUDED_prelert_api_CCsvOutputWriter_h
+#ifndef INCLUDED_ml_api_CCsvOutputWriter_h
+#define INCLUDED_ml_api_CCsvOutputWriter_h
 
 #include <api/COutputHandler.h>
 #include <api/ImportExport.h>
@@ -25,7 +25,7 @@
 #include <utility>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -178,5 +178,5 @@ class API_EXPORT CCsvOutputWriter : public COutputHandler
 }
 }
 
-#endif // INCLUDED_prelert_api_CCsvOutputWriter_h
+#endif // INCLUDED_ml_api_CCsvOutputWriter_h
 

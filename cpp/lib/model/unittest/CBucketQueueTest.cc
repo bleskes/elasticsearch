@@ -24,7 +24,7 @@
 
 #include <boost/bind.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 typedef std::pair<std::size_t, std::size_t> TSizeSizePr;

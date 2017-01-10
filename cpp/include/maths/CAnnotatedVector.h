@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CAnnotatedVector_h
-#define INCLUDED_prelert_maths_CAnnotatedVector_h
+#ifndef INCLUDED_ml_maths_CAnnotatedVector_h
+#define INCLUDED_ml_maths_CAnnotatedVector_h
 
 #include <core/CMemory.h>
 
@@ -22,7 +22,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -80,4 +80,4 @@ class CAnnotatedVector : public VECTOR
 }
 }
 
-#endif // INCLUDED_prelert_maths_CAnnotatedVector_h
+#endif // INCLUDED_ml_maths_CAnnotatedVector_h

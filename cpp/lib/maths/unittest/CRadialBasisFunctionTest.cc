@@ -23,7 +23,7 @@
 
 #include <boost/range.hpp>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {

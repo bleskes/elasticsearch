@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CForecast_h
-#define INCLUDED_prelert_maths_CForecast_h
+#ifndef INCLUDED_ml_maths_CForecast_h
+#define INCLUDED_ml_maths_CForecast_h
 
 #include <core/CoreTypes.h>
 
@@ -22,7 +22,7 @@
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -65,4 +65,4 @@ void forecast(const CTimeSeriesDecompositionInterface *trend,
 }
 }
 
-#endif // INCLUDED_prelert_maths_CForecast_h
+#endif // INCLUDED_ml_maths_CForecast_h

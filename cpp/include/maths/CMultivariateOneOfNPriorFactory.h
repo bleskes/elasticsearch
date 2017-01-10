@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateOneOfNPriorFactory_h
-#define INCLUDED_prelert_maths_CMultivariateOneOfNPriorFactory_h
+#ifndef INCLUDED_ml_maths_CMultivariateOneOfNPriorFactory_h
+#define INCLUDED_ml_maths_CMultivariateOneOfNPriorFactory_h
 
 #include <maths/ImportExport.h>
 #include <maths/MathsTypes.h>
@@ -23,7 +23,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -59,4 +59,4 @@ class MATHS_EXPORT CMultivariateOneOfNPriorFactory
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultivariateOneOfNPriorFactory_h
+#endif // INCLUDED_ml_maths_CMultivariateOneOfNPriorFactory_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CMemoryUsageEstimator_h
-#define INCLUDED_prelert_core_CMemoryUsageEstimator_h
+#ifndef INCLUDED_ml_core_CMemoryUsageEstimator_h
+#define INCLUDED_ml_core_CMemoryUsageEstimator_h
 
 #include <core/CMemory.h>
 
@@ -26,7 +26,7 @@
 
 #include <utility>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -110,6 +110,6 @@ class MODEL_EXPORT CMemoryUsageEstimator
 };
 
 } // model
-} // prelert
+} // ml
 
-#endif //INCLUDED_prelert_core_CMemoryUsageEstimator_h
+#endif //INCLUDED_ml_core_CMemoryUsageEstimator_h

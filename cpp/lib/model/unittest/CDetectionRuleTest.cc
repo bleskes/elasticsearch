@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 namespace

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CHashing_h
-#define INCLUDED_prelert_core_CHashing_h
+#ifndef INCLUDED_ml_core_CHashing_h
+#define INCLUDED_ml_core_CHashing_h
 
 #include <core/CFastMutex.h>
 #include <core/CNonInstantiatable.h>
@@ -32,7 +32,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -574,4 +574,4 @@ uint64_t CHashing::CSafeMurmurHash2String64::operator()(const std::string &key) 
 }
 }
 
-#endif // INCLUDED_prelert_core_CHashing_h
+#endif // INCLUDED_ml_core_CHashing_h

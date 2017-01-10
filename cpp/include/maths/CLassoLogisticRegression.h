@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CLassoLogisticRegression_h
-#define INCLUDED_prelert_maths_CLassoLogisticRegression_h
+#ifndef INCLUDED_ml_maths_CLassoLogisticRegression_h
+#define INCLUDED_ml_maths_CLassoLogisticRegression_h
 
 #include <maths/COrderings.h>
 #include <maths/ImportExport.h>
@@ -24,7 +24,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -487,4 +487,4 @@ class MATHS_EXPORT CLassoLogisticRegressionSparse : CLassoLogisticRegression<TSp
 }
 }
 
-#endif // INCLUDED_prelert_maths_CLassoLogisticRegression_h
+#endif // INCLUDED_ml_maths_CLassoLogisticRegression_h

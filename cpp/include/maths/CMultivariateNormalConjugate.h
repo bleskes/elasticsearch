@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateNormalConjugate_h
-#define INCLUDED_prelert_maths_CMultivariateNormalConjugate_h
+#ifndef INCLUDED_ml_maths_CMultivariateNormalConjugate_h
+#define INCLUDED_ml_maths_CMultivariateNormalConjugate_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -44,7 +44,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1318,4 +1318,4 @@ const double CMultivariateNormalConjugate<N>::MINIMUM_GAUSSIAN_DEGREES_FREEDOM(1
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultivariateNormalConjugate_h
+#endif // INCLUDED_ml_maths_CMultivariateNormalConjugate_h

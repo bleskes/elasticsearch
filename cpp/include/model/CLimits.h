@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_model_CLimits_h
-#define INCLUDED_prelert_model_CLimits_h
+#ifndef INCLUDED_ml_model_CLimits_h
+#define INCLUDED_ml_model_CLimits_h
 
 #include <core/CLogger.h>
 #include <core/CStringUtils.h>
@@ -28,7 +28,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -37,11 +37,11 @@ namespace model
 //! Holds configurable limits for the models.
 //!
 //! DESCRIPTION:\n
-//! Holds limits that prevent Prelert custom search commands from
+//! Holds limits that prevent Ml custom search commands from
 //! taking too long to run or using excessive amounts of memory.
 //!
 //! IMPLEMENTATION DECISIONS:\n
-//! Configuration of Prelert's analytics commands is stored in Splunk style
+//! Configuration of Ml's analytics commands is stored in Splunk style
 //! config files, which are basically Windows .ini files with hash as
 //! the comment character instead of semi-colon.
 //!
@@ -163,5 +163,5 @@ class MODEL_EXPORT CLimits
 }
 }
 
-#endif // INCLUDED_prelert_model_CLimits_h
+#endif // INCLUDED_ml_model_CLimits_h
 

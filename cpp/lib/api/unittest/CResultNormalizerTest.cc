@@ -39,20 +39,20 @@ CppUnit::Test *CResultNormalizerTest::suite()
 
 void CResultNormalizerTest::testInitNormalizer(void)
 {
-    prelert::model::CModelConfig modelConfig = prelert::model::CModelConfig::defaultConfig(3600);
+    ml::model::CModelConfig modelConfig = ml::model::CModelConfig::defaultConfig(3600);
 
-    prelert::api::CCsvOutputWriter outputWriter;
+    ml::api::CCsvOutputWriter outputWriter;
 
-    prelert::api::CResultNormalizer normalizer(modelConfig, outputWriter);
+    ml::api::CResultNormalizer normalizer(modelConfig, outputWriter);
 
     CPPUNIT_ASSERT(normalizer.initNormalizer("testfiles/quantilesState.json"));
 
     std::ifstream inputStrm("testfiles/normalizerInput.csv");
-    prelert::api::CCsvInputParser inputParser(inputStrm,
-                                              prelert::api::CCsvInputParser::COMMA);
+    ml::api::CCsvInputParser inputParser(inputStrm,
+                                              ml::api::CCsvInputParser::COMMA);
     CPPUNIT_ASSERT(inputParser.readStream(false,
-                                          prelert::api::CInputParser::TSettingsFunc(),
-                                          boost::bind(&prelert::api::CResultNormalizer::handleRecord,
+                                          ml::api::CInputParser::TSettingsFunc(),
+                                          boost::bind(&ml::api::CResultNormalizer::handleRecord,
                                                       &normalizer,
                                                       _1,
                                                       _2,

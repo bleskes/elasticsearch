@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CAnomalyScore_h
-#define INCLUDED_prelert_model_CAnomalyScore_h
+#ifndef INCLUDED_ml_model_CAnomalyScore_h
+#define INCLUDED_ml_model_CAnomalyScore_h
 
 #include <core/CoreTypes.h>
 
@@ -34,7 +34,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -66,10 +66,10 @@ class MODEL_EXPORT CAnomalyScore
         typedef std::vector<std::string>     TStrVec;
 
         //! XML attributes for the root XML tag of a persisted normalizer
-        static const std::string PRELERTCUE_ATTRIBUTE;
-        static const std::string PRELERTKEY_ATTRIBUTE;
-        static const std::string PRELERTQUANTILESDESCRIPTION_ATTRIBUTE;
-        static const std::string PRELERTVERSION_ATTRIBUTE;
+        static const std::string MLCUE_ATTRIBUTE;
+        static const std::string MLKEY_ATTRIBUTE;
+        static const std::string MLQUANTILESDESCRIPTION_ATTRIBUTE;
+        static const std::string MLVERSION_ATTRIBUTE;
         static const std::string TIME_ATTRIBUTE;
         static const std::string KEY;
         static const std::string CURRENT_XML_VERSION;
@@ -320,5 +320,5 @@ class MODEL_EXPORT CAnomalyScore
 }
 }
 
-#endif // INCLUDED_prelert_model_CAnomalyScore_h
+#endif // INCLUDED_ml_model_CAnomalyScore_h
 

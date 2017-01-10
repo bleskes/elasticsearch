@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CBackgroundPersister_h
-#define INCLUDED_prelert_api_CBackgroundPersister_h
+#ifndef INCLUDED_ml_api_CBackgroundPersister_h
+#define INCLUDED_ml_api_CBackgroundPersister_h
 
 #include <core/CDataAdder.h>
 #include <core/CFastMutex.h>
@@ -23,7 +23,7 @@
 #include <api/ImportExport.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -127,5 +127,5 @@ class API_EXPORT CBackgroundPersister : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_api_CBackgroundPersister_h
+#endif // INCLUDED_ml_api_CBackgroundPersister_h
 

@@ -19,7 +19,7 @@
 #include <maths/CPriorUtils.h>
 #include <maths/CTools.h>
 
-namespace prelert
+namespace ml
 {
 using namespace handy_typedefs;
 

@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 typedef std::vector<double> TDoubleVec;
 typedef std::vector<std::size_t> TSizeVec;

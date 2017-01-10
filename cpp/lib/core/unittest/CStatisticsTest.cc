@@ -31,7 +31,7 @@ namespace
 
 const int TEST_STAT = 0u;
 
-class CStatisticsTestRunner : public prelert::core::CThread
+class CStatisticsTestRunner : public ml::core::CThread
 {
 public:
     CStatisticsTestRunner(void) : m_I(0), m_N(0)
@@ -49,11 +49,11 @@ private:
     {
         if (m_I < 6)
         {
-            prelert::core::CStatistics::stat(TEST_STAT + m_I).increment();
+            ml::core::CStatistics::stat(TEST_STAT + m_I).increment();
         }
         else
         {
-            prelert::core::CStatistics::stat(TEST_STAT + m_I - m_N).decrement();
+            ml::core::CStatistics::stat(TEST_STAT + m_I - m_N).decrement();
         }
     }
 
@@ -84,7 +84,7 @@ CppUnit::Test *CStatisticsTest::suite()
 void CStatisticsTest::testStatistics(void)
 {
     LOG_TRACE("Starting Statistics test");
-    prelert::core::CStatistics &stats = prelert::core::CStatistics::instance();
+    ml::core::CStatistics &stats = ml::core::CStatistics::instance();
 
     static const int N = 6;
     for (int i = 0; i < N; i++)
@@ -134,40 +134,40 @@ void CStatisticsTest::testStatistics(void)
 void CStatisticsTest::testPersist(void)
 {
     LOG_DEBUG("Starting persist test");
-    prelert::core::CStatistics &stats = prelert::core::CStatistics::instance();
+    ml::core::CStatistics &stats = ml::core::CStatistics::instance();
 
     // Check that a save/restore with all zeros is Ok
-    for (int i = 0; i < prelert::stat_t::E_LastEnumStat; i++)
+    for (int i = 0; i < ml::stat_t::E_LastEnumStat; i++)
     {
         stats.stat(i).set(0);
     }
 
     std::string origStaticsXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         stats.staticsAcceptPersistInserter(inserter);
         inserter.toXml(origStaticsXml);
     }
 
     {
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origStaticsXml));
-        prelert::core::CRapidXmlStateRestoreTraverser traverser(parser);
+        ml::core::CRapidXmlStateRestoreTraverser traverser(parser);
         CPPUNIT_ASSERT(traverser.traverseSubLevel(
-            &prelert::core::CStatistics::staticsAcceptRestoreTraverser));
+            &ml::core::CStatistics::staticsAcceptRestoreTraverser));
     }
 
-    for (int i = 0; i < prelert::stat_t::E_LastEnumStat; i++)
+    for (int i = 0; i < ml::stat_t::E_LastEnumStat; i++)
     {
         CPPUNIT_ASSERT_EQUAL(uint64_t(0), stats.stat(i).value());
     }
 
     // Set some other values and check that restore puts all to zero
-    for (int i = 0; i < prelert::stat_t::E_LastEnumStat; i++)
+    for (int i = 0; i < ml::stat_t::E_LastEnumStat; i++)
     {
         stats.stat(i).set(567 + (i * 3));
     }
-    for (int i = 0; i < prelert::stat_t::E_LastEnumStat; i++)
+    for (int i = 0; i < ml::stat_t::E_LastEnumStat; i++)
     {
         CPPUNIT_ASSERT_EQUAL(uint64_t(567 + (i * 3)), stats.stat(i).value());
     }
@@ -175,49 +175,49 @@ void CStatisticsTest::testPersist(void)
     // Save this state
     std::string newStaticsXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         stats.staticsAcceptPersistInserter(inserter);
         inserter.toXml(newStaticsXml);
     }
 
     // Restore the original all-zero state
     {
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origStaticsXml));
-        prelert::core::CRapidXmlStateRestoreTraverser traverser(parser);
+        ml::core::CRapidXmlStateRestoreTraverser traverser(parser);
         CPPUNIT_ASSERT(traverser.traverseSubLevel(
-            &prelert::core::CStatistics::staticsAcceptRestoreTraverser));
+            &ml::core::CStatistics::staticsAcceptRestoreTraverser));
     }
 
-    for (int i = 0; i < prelert::stat_t::E_LastEnumStat; i++)
+    for (int i = 0; i < ml::stat_t::E_LastEnumStat; i++)
     {
         CPPUNIT_ASSERT_EQUAL(uint64_t(0), stats.stat(i).value());
     }
 
     // Restore the non-zero state
     {
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(newStaticsXml));
-        prelert::core::CRapidXmlStateRestoreTraverser traverser(parser);
+        ml::core::CRapidXmlStateRestoreTraverser traverser(parser);
         CPPUNIT_ASSERT(traverser.traverseSubLevel(
-            &prelert::core::CStatistics::staticsAcceptRestoreTraverser));
+            &ml::core::CStatistics::staticsAcceptRestoreTraverser));
     }
 
-    for (int i = 0; i < prelert::stat_t::E_LastEnumStat; i++)
+    for (int i = 0; i < ml::stat_t::E_LastEnumStat; i++)
     {
         CPPUNIT_ASSERT_EQUAL(uint64_t(567 + (i * 3)), stats.stat(i).value());
     }
 
     // Restore the zero state to clean up
     {
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origStaticsXml));
-        prelert::core::CRapidXmlStateRestoreTraverser traverser(parser);
+        ml::core::CRapidXmlStateRestoreTraverser traverser(parser);
         CPPUNIT_ASSERT(traverser.traverseSubLevel(
-            &prelert::core::CStatistics::staticsAcceptRestoreTraverser));
+            &ml::core::CStatistics::staticsAcceptRestoreTraverser));
     }
 
-    for (int i = 0; i < prelert::stat_t::E_LastEnumStat; i++)
+    for (int i = 0; i < ml::stat_t::E_LastEnumStat; i++)
     {
         CPPUNIT_ASSERT_EQUAL(uint64_t(0), stats.stat(i).value());
     }
@@ -225,15 +225,15 @@ void CStatisticsTest::testPersist(void)
     std::ostringstream ss;
     ss << stats;
     const std::string output(ss.str());
-    prelert::core::CRegex::TStrVec tokens;
+    ml::core::CRegex::TStrVec tokens;
     {
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         regex.init("\n");
         regex.split(output, tokens);
     }
-    for (prelert::core::CRegex::TStrVecCItr i = tokens.begin(); i != (tokens.end() - 1); ++i)
+    for (ml::core::CRegex::TStrVecCItr i = tokens.begin(); i != (tokens.end() - 1); ++i)
     {
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         // Look for "name":"E.*"value": 0}
         regex.init(".*\"name\":\"E.*\"value\":0.*");
         CPPUNIT_ASSERT(regex.matches(*i));

@@ -22,7 +22,7 @@
 
 #include <boost/bind.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

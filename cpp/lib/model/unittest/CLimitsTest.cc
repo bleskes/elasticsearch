@@ -36,24 +36,24 @@ CppUnit::Test *CLimitsTest::suite()
 
 void CLimitsTest::testTrivial(void)
 {
-    prelert::model::CLimits config;
+    ml::model::CLimits config;
 
-    CPPUNIT_ASSERT_EQUAL(prelert::model::CLimits::DEFAULT_AUTOCONFIG_EVENTS, config.autoConfigEvents());
-    CPPUNIT_ASSERT_EQUAL(prelert::model::CLimits::DEFAULT_ANOMALY_MAX_TIME_BUCKETS, config.anomalyMaxTimeBuckets());
-    CPPUNIT_ASSERT_EQUAL(prelert::model::CLimits::DEFAULT_RESULTS_MAX_EXAMPLES, config.maxExamples());
-    CPPUNIT_ASSERT_EQUAL(prelert::model::CLimits::DEFAULT_RESULTS_UNUSUAL_PROBABILITY_THRESHOLD / 100.0,
+    CPPUNIT_ASSERT_EQUAL(ml::model::CLimits::DEFAULT_AUTOCONFIG_EVENTS, config.autoConfigEvents());
+    CPPUNIT_ASSERT_EQUAL(ml::model::CLimits::DEFAULT_ANOMALY_MAX_TIME_BUCKETS, config.anomalyMaxTimeBuckets());
+    CPPUNIT_ASSERT_EQUAL(ml::model::CLimits::DEFAULT_RESULTS_MAX_EXAMPLES, config.maxExamples());
+    CPPUNIT_ASSERT_EQUAL(ml::model::CLimits::DEFAULT_RESULTS_UNUSUAL_PROBABILITY_THRESHOLD / 100.0,
                          config.unusualProbabilityThreshold());
-    CPPUNIT_ASSERT_EQUAL(prelert::model::CLimits::DEFAULT_MEMORY_LIMIT_MB,
+    CPPUNIT_ASSERT_EQUAL(ml::model::CLimits::DEFAULT_MEMORY_LIMIT_MB,
                          config.memoryLimitMB());
 }
 
 void CLimitsTest::testValid(void)
 {
-    prelert::model::CLimits config;
-    CPPUNIT_ASSERT(config.init("testfiles/prelertlimits.conf"));
+    ml::model::CLimits config;
+    CPPUNIT_ASSERT(config.init("testfiles/mllimits.conf"));
 
     // This one isn't present in the config file so should be defaulted
-    CPPUNIT_ASSERT_EQUAL(prelert::model::CLimits::DEFAULT_ANOMALY_MAX_TIME_BUCKETS,
+    CPPUNIT_ASSERT_EQUAL(ml::model::CLimits::DEFAULT_ANOMALY_MAX_TIME_BUCKETS,
                          config.anomalyMaxTimeBuckets());
 
     CPPUNIT_ASSERT_EQUAL(size_t(8), config.maxExamples());
@@ -65,7 +65,7 @@ void CLimitsTest::testValid(void)
 
 void CLimitsTest::testInvalid(void)
 {
-    prelert::model::CLimits config;
-    CPPUNIT_ASSERT(!config.init("testfiles/invalidprelertlimits.conf"));
+    ml::model::CLimits config;
+    CPPUNIT_ASSERT(!config.init("testfiles/invalidmllimits.conf"));
 }
 

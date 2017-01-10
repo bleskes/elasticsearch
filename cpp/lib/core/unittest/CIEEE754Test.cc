@@ -23,7 +23,7 @@
 
 #include <math.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace core;
 
 void CIEEE754Test::testRound(void)

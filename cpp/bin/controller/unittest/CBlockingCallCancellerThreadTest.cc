@@ -27,10 +27,10 @@
 namespace
 {
 
-class CEofThread : public prelert::core::CThread
+class CEofThread : public ml::core::CThread
 {
     public:
-        CEofThread(prelert::core::CDualThreadStreamBuf &buf)
+        CEofThread(ml::core::CDualThreadStreamBuf &buf)
             : m_Buf(buf)
         {
         }
@@ -38,7 +38,7 @@ class CEofThread : public prelert::core::CThread
     protected:
         virtual void run(void)
         {
-            prelert::core::CSleep::sleep(100);
+            ml::core::CSleep::sleep(100);
 
             m_Buf.signalEndOfFile();
         }
@@ -48,7 +48,7 @@ class CEofThread : public prelert::core::CThread
         }
 
     private:
-        prelert::core::CDualThreadStreamBuf &m_Buf;
+        ml::core::CDualThreadStreamBuf &m_Buf;
 };
 
 }
@@ -66,7 +66,7 @@ CppUnit::Test *CBlockingCallCancellerThreadTest::suite()
 
 void CBlockingCallCancellerThreadTest::testCancelBlock(void)
 {
-    prelert::core::CDualThreadStreamBuf buf;
+    ml::core::CDualThreadStreamBuf buf;
     std::istream monStrm(&buf);
 
     // The CBlockingCallCancellerThread should wake up the blocking open of the
@@ -79,12 +79,12 @@ void CBlockingCallCancellerThreadTest::testCancelBlock(void)
     CEofThread eofThread(buf);
     CPPUNIT_ASSERT(eofThread.start());
 
-    prelert::controller::CBlockingCallCancellerThread cancellerThread(prelert::core::CThread::currentThreadId(),
+    ml::controller::CBlockingCallCancellerThread cancellerThread(ml::core::CThread::currentThreadId(),
                                                                       monStrm);
     CPPUNIT_ASSERT(cancellerThread.start());
 
-    prelert::core::CNamedPipeFactory::TIStreamP pipeStrm =
-            prelert::core::CNamedPipeFactory::openPipeStreamRead(prelert::core::CNamedPipeFactory::defaultPath() + "test_pipe");
+    ml::core::CNamedPipeFactory::TIStreamP pipeStrm =
+            ml::core::CNamedPipeFactory::openPipeStreamRead(ml::core::CNamedPipeFactory::defaultPath() + "test_pipe");
     CPPUNIT_ASSERT(pipeStrm == 0);
 
     CPPUNIT_ASSERT(cancellerThread.stop());

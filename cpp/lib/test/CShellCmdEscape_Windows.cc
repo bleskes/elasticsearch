@@ -17,7 +17,7 @@
 #include <core/CStringUtils.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {

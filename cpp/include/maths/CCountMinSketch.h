@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CCountMinSketch_h
-#define INCLUDED_prelert_maths_CCountMinSketch_h
+#ifndef INCLUDED_ml_maths_CCountMinSketch_h
+#define INCLUDED_ml_maths_CCountMinSketch_h
 
 #include <core/CHashing.h>
 #include <core/CMemory.h>
@@ -26,7 +26,7 @@
 
 #include <boost/variant.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -177,4 +177,4 @@ class MATHS_EXPORT CCountMinSketch
 }
 }
 
-#endif // INCLUDED_prelert_maths_CCountMinSketch_h
+#endif // INCLUDED_ml_maths_CCountMinSketch_h

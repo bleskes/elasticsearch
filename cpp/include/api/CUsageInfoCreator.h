@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CUsageInfoCreator_h
-#define INCLUDED_prelert_api_CUsageInfoCreator_h
+#ifndef INCLUDED_ml_api_CUsageInfoCreator_h
+#define INCLUDED_ml_api_CUsageInfoCreator_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/CoreTypes.h>
@@ -23,7 +23,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -38,7 +38,7 @@ namespace api
 //! The information returned is:
 //! 1) Product version number, e.g. 4.2.10
 //! 2) Customer ID, e.g. dev@prelert.com
-//! 3) Prelert platform name, e.g. linux64
+//! 3) Ml platform name, e.g. linux64
 //! 4) Detailed OS version, e.g. 2.6.32-220.el6.x86_64
 //!
 //! IMPLEMENTATION DECISIONS:\n
@@ -72,5 +72,5 @@ class API_EXPORT CUsageInfoCreator : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_api_CUsageInfoCreator_h
+#endif // INCLUDED_ml_api_CUsageInfoCreator_h
 

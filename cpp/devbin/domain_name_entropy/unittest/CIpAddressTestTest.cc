@@ -18,7 +18,7 @@
 
 #include "../CIpAddressTest.h"
 
-using namespace prelert;
+using namespace ml;
 using namespace domain_name_entropy;
 
 CppUnit::Test *CIpAddressTestTest::suite()

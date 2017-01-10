@@ -23,7 +23,7 @@
 #include <cstddef>
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

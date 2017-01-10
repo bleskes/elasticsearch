@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CCondition_h
-#define INCLUDED_prelert_core_CCondition_h
+#ifndef INCLUDED_ml_core_CCondition_h
+#define INCLUDED_ml_core_CCondition_h
 
 #include <core/CNonCopyable.h>
 #include <core/ImportExport.h>
@@ -25,7 +25,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -89,5 +89,5 @@ class CORE_EXPORT CCondition : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CCondition_h
+#endif // INCLUDED_ml_core_CCondition_h
 

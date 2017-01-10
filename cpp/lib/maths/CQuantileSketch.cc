@@ -30,7 +30,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

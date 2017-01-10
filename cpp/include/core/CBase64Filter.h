@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CBase64Filter_h
-#define INCLUDED_prelert_core_CBase64Filter_h
+#ifndef INCLUDED_ml_core_CBase64Filter_h
+#define INCLUDED_ml_core_CBase64Filter_h
 
 #include <core/CLogger.h>
 #include <core/ImportExport.h>
@@ -33,7 +33,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 
 namespace core
@@ -363,6 +363,6 @@ class CORE_EXPORT CBase64Decoder
 
 } // core
 
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_core_CBase64Filter_h
+#endif // INCLUDED_ml_core_CBase64Filter_h

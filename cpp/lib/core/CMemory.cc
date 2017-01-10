@@ -15,7 +15,7 @@
 #include <core/CMemory.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

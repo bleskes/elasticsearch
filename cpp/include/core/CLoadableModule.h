@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CLoadableModule_h
-#define INCLUDED_prelert_core_CLoadableModule_h
+#ifndef INCLUDED_ml_core_CLoadableModule_h
+#define INCLUDED_ml_core_CLoadableModule_h
 
 #include <core/CLogger.h>
 #include <core/CRuntimeLoadedLibrary.h>
@@ -24,7 +24,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -110,5 +110,5 @@ class CORE_EXPORT CLoadableModule : private CRuntimeLoadedLibrary
 }
 }
 
-#endif // INCLUDED_prelert_core_CLoadableModule_h
+#endif // INCLUDED_ml_core_CLoadableModule_h
 

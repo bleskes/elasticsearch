@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_model_CResourceMonitor_h
-#define INCLUDED_prelert_model_CResourceMonitor_h
+#ifndef INCLUDED_ml_model_CResourceMonitor_h
+#define INCLUDED_ml_model_CResourceMonitor_h
 
 #include <core/CoreTypes.h>
 
@@ -28,7 +28,7 @@ class CResourceMonitorTest;
 class CResourceLimitTest;
 class CAnomalyDetectorLimitTest;
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -208,7 +208,7 @@ class MODEL_EXPORT CResourceMonitor
 
 } // model
 
-} // prelert
+} // ml
 
 
-#endif // INCLUDED_prelert_model_CResourceMonitor_h
+#endif // INCLUDED_ml_model_CResourceMonitor_h

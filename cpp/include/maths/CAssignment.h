@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CAssignment_h
-#define INCLUDED_prelert_maths_CAssignment_h
+#ifndef INCLUDED_ml_maths_CAssignment_h
+#define INCLUDED_ml_maths_CAssignment_h
 
 #include <maths/ImportExport.h>
 
@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -63,4 +63,4 @@ class MATHS_EXPORT CAssignment
 
 }
 }
-#endif // INCLUDED_prelert_maths_CAssignment_h
+#endif // INCLUDED_ml_maths_CAssignment_h

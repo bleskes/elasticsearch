@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_devbin_CXmlOperation_h
-#define INCLUDED_prelert_devbin_CXmlOperation_h
+#ifndef INCLUDED_ml_devbin_CXmlOperation_h
+#define INCLUDED_ml_devbin_CXmlOperation_h
 
 #include <core/CXmlNodeWithChildren.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 
-namespace prelert
+namespace ml
 {
 namespace devbin
 {
@@ -78,4 +78,4 @@ class CXmlOperation
 }
 }
 
-#endif // INCLUDED_prelert_devbin_CXmlOperation_h
+#endif // INCLUDED_ml_devbin_CXmlOperation_h

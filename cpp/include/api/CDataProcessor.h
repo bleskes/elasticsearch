@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CDataProcessor_h
-#define INCLUDED_prelert_api_CDataProcessor_h
+#ifndef INCLUDED_ml_api_CDataProcessor_h
+#define INCLUDED_ml_api_CDataProcessor_h
 
 #include <core/CNonCopyable.h>
 #include <core/CoreTypes.h>
@@ -28,7 +28,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -118,5 +118,5 @@ class API_EXPORT CDataProcessor : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_api_CDataProcessor_h
+#endif // INCLUDED_ml_api_CDataProcessor_h
 

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CFieldRolePenalty_h
-#define INCLUDED_prelert_config_CFieldRolePenalty_h
+#ifndef INCLUDED_ml_config_CFieldRolePenalty_h
+#define INCLUDED_ml_config_CFieldRolePenalty_h
 
 #include <core/CoreTypes.h>
 
@@ -27,7 +27,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -152,4 +152,4 @@ class CONFIG_EXPORT CDistinctCountThresholdPenalty : public CPenalty
 }
 }
 
-#endif // INCLUDED_prelert_config_CFieldRolePenalty_h
+#endif // INCLUDED_ml_config_CFieldRolePenalty_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CGradientDescent_h
-#define INCLUDED_prelert_maths_CGradientDescent_h
+#ifndef INCLUDED_ml_maths_CGradientDescent_h
+#define INCLUDED_ml_maths_CGradientDescent_h
 
 #include <core/CLogger.h>
 #include <core/CNonCopyable.h>
@@ -25,7 +25,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -118,4 +118,4 @@ class MATHS_EXPORT CGradientDescent
 }
 }
 
-#endif // INCLUDED_prelert_maths_CGradientDescent_h
+#endif // INCLUDED_ml_maths_CGradientDescent_h

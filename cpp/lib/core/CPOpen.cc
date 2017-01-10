@@ -15,7 +15,7 @@
 #include <core/CPOpen.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

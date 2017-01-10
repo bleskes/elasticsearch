@@ -27,7 +27,7 @@
 #include "CTopLevelDomainDb.h"
 
 
-namespace prelert
+namespace ml
 {
 namespace domain_name_entropy
 {

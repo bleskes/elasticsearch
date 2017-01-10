@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CKMeansFast_h
-#define INCLUDED_prelert_maths_CKMeansFast_h
+#ifndef INCLUDED_ml_maths_CKMeansFast_h
+#define INCLUDED_ml_maths_CKMeansFast_h
 
 #include <core/CLogger.h>
 
@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -668,4 +668,4 @@ class CKMeansPlusPlusInitialization : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CKMeansFast_h
+#endif // INCLUDED_ml_maths_CKMeansFast_h

@@ -17,7 +17,7 @@
 #include <maths/CIntegration.h>
 #include <maths/CPriorUtils.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -86,4 +86,4 @@ bool CPrior::expectation(const F &f,
 }
 
 } // maths
-} // prelert
+} // ml

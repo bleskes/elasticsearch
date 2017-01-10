@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CSingleStreamDataAdder_h
-#define INCLUDED_prelert_api_CSingleStreamDataAdder_h
+#ifndef INCLUDED_ml_api_CSingleStreamDataAdder_h
+#define INCLUDED_ml_api_CSingleStreamDataAdder_h
 
 #include <core/CDataAdder.h>
 
@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -85,5 +85,5 @@ class API_EXPORT CSingleStreamDataAdder : public core::CDataAdder
 }
 }
 
-#endif // INCLUDED_prelert_api_CSingleStreamDataAdder_h
+#endif // INCLUDED_ml_api_CSingleStreamDataAdder_h
 

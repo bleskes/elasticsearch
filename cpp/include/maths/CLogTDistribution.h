@@ -13,14 +13,14 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CLogTDistribution_h
-#define INCLUDED_prelert_maths_CLogTDistribution_h
+#ifndef INCLUDED_ml_maths_CLogTDistribution_h
+#define INCLUDED_ml_maths_CLogTDistribution_h
 
 #include <maths/ImportExport.h>
 
 #include <boost/optional.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -93,4 +93,4 @@ double quantile(const CLogTDistribution &distribution, double q);
 }
 }
 
-#endif // INCLUDED_prelert_maths_CLogTDistribution_h
+#endif // INCLUDED_ml_maths_CLogTDistribution_h

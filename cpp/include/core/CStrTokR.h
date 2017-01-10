@@ -12,14 +12,14 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CStrTokR_h
-#define INCLUDED_prelert_core_CStrTokR_h
+#ifndef INCLUDED_ml_core_CStrTokR_h
+#define INCLUDED_ml_core_CStrTokR_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/ImportExport.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -45,5 +45,5 @@ class CORE_EXPORT CStrTokR : private CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_CStrTokR_h
+#endif // INCLUDED_ml_core_CStrTokR_h
 

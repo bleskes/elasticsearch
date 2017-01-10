@@ -17,7 +17,7 @@
 #include <limits>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

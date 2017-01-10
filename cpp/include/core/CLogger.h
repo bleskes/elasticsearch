@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CLogger_h
-#define INCLUDED_prelert_core_CLogger_h
+#ifndef INCLUDED_ml_core_CLogger_h
+#define INCLUDED_ml_core_CLogger_h
 
 #include <core/CNamedPipeFactory.h>
 #include <core/CNonCopyable.h>
@@ -26,17 +26,17 @@
 #include <stdio.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
 
 
 //! \brief
-//! Core logging class in Prelert
+//! Core logging class in Ml
 //!
 //! DESCRIPTION:\n
-//! Core logging class in Prelert.  Access to the actual logging
+//! Core logging class in Ml.  Access to the actual logging
 //! commands should be through macros.
 //!
 //! Errors that mean something has gone wrong, but the application
@@ -64,7 +64,7 @@ namespace core
 //!
 //! By default, logging is to stderr.  However, it's possible to
 //! tell the logger to reinitialise itself using a properties file.
-//! The vast majority of Prelert processes that we ship will
+//! The vast majority of Ml processes that we ship will
 //! log to a named pipe that's being read from by the Elasticsearch
 //! JVM.
 //!
@@ -136,10 +136,10 @@ class CORE_EXPORT CLogger : private CNonCopyable
         CLogger(void);
         ~CLogger(void);
 
-        //! Replace Prelert specific patterns in log4cxx properties.  In
-        //! addition to the patterns usually supported by log4cxx, Prelert will
+        //! Replace Ml specific patterns in log4cxx properties.  In
+        //! addition to the patterns usually supported by log4cxx, Ml will
         //! substitute:
-        //! 1) %D with the path to the Prelert base log directory
+        //! 1) %D with the path to the Ml base log directory
         //! 2) %N with the program's name
         //! 3) %P with the program's process ID
         void massageProperties(log4cxx::helpers::Properties &props) const;
@@ -147,7 +147,7 @@ class CORE_EXPORT CLogger : private CNonCopyable
         typedef std::map<log4cxx::logchar, log4cxx::LogString> TLogCharLogStrMap;
         typedef TLogCharLogStrMap::const_iterator              TLogCharLogStrMapCItr;
 
-        //! Replace Prelert specific mappings in a single string
+        //! Replace Ml specific mappings in a single string
         void massageString(const TLogCharLogStrMap &mappings,
                            const log4cxx::LogString &oldStr,
                            log4cxx::LogString &newStr) const;
@@ -178,22 +178,22 @@ class CORE_EXPORT CLogger : private CNonCopyable
 
 
 //! Log at a level known at compile time
-#define LOG_TRACE(message) LOG4CXX_TRACE(prelert::core::CLogger::instance().logger(), message)
-#define LOG_DEBUG(message) LOG4CXX_DEBUG(prelert::core::CLogger::instance().logger(), message)
-#define LOG_INFO(message)  LOG4CXX_INFO(prelert::core::CLogger::instance().logger(), message)
-#define LOG_WARN(message)  LOG4CXX_WARN(prelert::core::CLogger::instance().logger(), message)
-#define LOG_ERROR(message) LOG4CXX_ERROR(prelert::core::CLogger::instance().logger(), message)
-#define LOG_FATAL(message) LOG4CXX_FATAL(prelert::core::CLogger::instance().logger(), message)
-#define LOG_ABORT(message) LOG4CXX_FATAL(prelert::core::CLogger::instance().logger(), message); \
-                           prelert::core::CLogger::fatal()
+#define LOG_TRACE(message) LOG4CXX_TRACE(ml::core::CLogger::instance().logger(), message)
+#define LOG_DEBUG(message) LOG4CXX_DEBUG(ml::core::CLogger::instance().logger(), message)
+#define LOG_INFO(message)  LOG4CXX_INFO(ml::core::CLogger::instance().logger(), message)
+#define LOG_WARN(message)  LOG4CXX_WARN(ml::core::CLogger::instance().logger(), message)
+#define LOG_ERROR(message) LOG4CXX_ERROR(ml::core::CLogger::instance().logger(), message)
+#define LOG_FATAL(message) LOG4CXX_FATAL(ml::core::CLogger::instance().logger(), message)
+#define LOG_ABORT(message) LOG4CXX_FATAL(ml::core::CLogger::instance().logger(), message); \
+                           ml::core::CLogger::fatal()
 
 //! Log at a level specified at runtime as a string, for example
 //! LOG_AT_LEVEL("WARN", "Stay away from here " << username)
-#define LOG_AT_LEVEL(level, message) LOG4CXX_LOGLS(prelert::core::CLogger::instance().logger(), log4cxx::Level::toLevel(level), message)
+#define LOG_AT_LEVEL(level, message) LOG4CXX_LOGLS(ml::core::CLogger::instance().logger(), log4cxx::Level::toLevel(level), message)
 
 
 }
 }
 
-#endif // INCLUDED_prelert_core_CLogger_h
+#endif // INCLUDED_ml_core_CLogger_h
 

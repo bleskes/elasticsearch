@@ -22,7 +22,7 @@
 #include <ostream>
 #include <stdint.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

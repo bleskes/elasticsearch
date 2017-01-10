@@ -30,7 +30,7 @@ CppUnit::Test *CMutexTest::suite()
 
 void CMutexTest::testRecursive(void)
 {
-    prelert::core::CMutex mutex;
+    ml::core::CMutex mutex;
 
     mutex.lock();
     mutex.unlock();

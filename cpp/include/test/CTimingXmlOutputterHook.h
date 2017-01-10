@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_test_CTimingXmlOutputterHook_h
-#define INCLUDED_prelert_test_CTimingXmlOutputterHook_h
+#ifndef INCLUDED_ml_test_CTimingXmlOutputterHook_h
+#define INCLUDED_ml_test_CTimingXmlOutputterHook_h
 
 #include <test/ImportExport.h>
 
@@ -24,7 +24,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {
@@ -80,5 +80,5 @@ class TEST_EXPORT CTimingXmlOutputterHook : public CppUnit::XmlOutputterHook
 }
 }
 
-#endif // INCLUDED_prelert_test_CTimingXmlOutputterHook_h
+#endif // INCLUDED_ml_test_CTimingXmlOutputterHook_h
 

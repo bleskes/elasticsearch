@@ -22,7 +22,7 @@
 
 #include <test/CRandomNumbers.h>
 
-using namespace prelert;
+using namespace ml;
 
 typedef std::vector<double> TDoubleVec;
 typedef maths::CVectorNx1<double, 2> TVector2;

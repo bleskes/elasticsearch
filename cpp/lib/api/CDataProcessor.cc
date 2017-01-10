@@ -16,7 +16,7 @@
 
 #include <core/CLogger.h>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

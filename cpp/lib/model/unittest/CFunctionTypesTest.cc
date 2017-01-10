@@ -20,7 +20,7 @@
 
 #include <model/FunctionTypes.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 void CFunctionTypesTest::testFeaturesToFunction(void)

@@ -15,7 +15,7 @@
 
 #include <core/CPersistUtils.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

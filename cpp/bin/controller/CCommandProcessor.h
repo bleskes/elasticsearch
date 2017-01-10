@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_controller_CCommandProcessor_h
-#define INCLUDED_prelert_controller_CCommandProcessor_h
+#ifndef INCLUDED_ml_controller_CCommandProcessor_h
+#define INCLUDED_ml_controller_CCommandProcessor_h
 
 #include <core/CDetachedProcessSpawner.h>
 
@@ -22,7 +22,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace controller
 {
@@ -84,4 +84,4 @@ class CCommandProcessor
 }
 }
 
-#endif // INCLUDED_prelert_controller_CCommandProcessor_h
+#endif // INCLUDED_ml_controller_CCommandProcessor_h

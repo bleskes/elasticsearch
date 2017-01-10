@@ -20,13 +20,13 @@ CPP_PLATFORM_HOME=$(CPP_DISTRIBUTION_HOME)/platform/linux-x86_64
 CC=gcc
 CXX=g++ -std=gnu++0x
 
-ifndef PRELERT_DEBUG
+ifndef ML_DEBUG
 OPTCFLAGS=-O3 -Wdisabled-optimization
 OPTCPPFLAGS=-DNDEBUG
 endif
 
-ifdef PRELERT_DEBUG
-ifdef PRELERT_COVERAGE
+ifdef ML_DEBUG
+ifdef ML_COVERAGE
 COVERAGE=--coverage
 endif
 endif

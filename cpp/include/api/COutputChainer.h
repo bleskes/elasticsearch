@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_COutputChainer_h
-#define INCLUDED_prelert_api_COutputChainer_h
+#ifndef INCLUDED_ml_api_COutputChainer_h
+#define INCLUDED_ml_api_COutputChainer_h
 
 #include <api/COutputHandler.h>
 #include <api/ImportExport.h>
@@ -23,7 +23,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -40,8 +40,8 @@ class CDataProcessor;
 //! DESCRIPTION:\n
 //! Pass the output of one CDataProcessor object to another one.
 //! This enables multiple processing steps to be performed within a
-//! single Prelert process, avoiding the overhead of converting to CSV
-//! and back where Prelert custom search commands would be adjacent in
+//! single Ml process, avoiding the overhead of converting to CSV
+//! and back where Ml custom search commands would be adjacent in
 //! a search pipe.
 //!
 //! IMPLEMENTATION DECISIONS:\n
@@ -130,5 +130,5 @@ class API_EXPORT COutputChainer : public COutputHandler
 }
 }
 
-#endif // INCLUDED_prelert_api_COutputChainer_h
+#endif // INCLUDED_ml_api_COutputChainer_h
 

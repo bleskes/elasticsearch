@@ -15,7 +15,7 @@
 #include <core/CXmlNode.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

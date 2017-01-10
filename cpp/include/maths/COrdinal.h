@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_COrdinal_h
-#define INCLUDED_prelert_maths_COrdinal_h
+#ifndef INCLUDED_ml_maths_COrdinal_h
+#define INCLUDED_ml_maths_COrdinal_h
 
 #include <maths/ImportExport.h>
 
@@ -23,7 +23,7 @@
 #include <iosfwd>
 #include <stdint.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -93,4 +93,4 @@ friend std::ostream &operator<<(std::ostream &o, COrdinal ord);
 }
 }
 
-#endif // INCLUDED_prelert_maths_COrdinal_h
+#endif // INCLUDED_ml_maths_COrdinal_h

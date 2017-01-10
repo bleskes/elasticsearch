@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CDecayRateController_h
-#define INCLUDED_prelert_model_CDecayRateController_h
+#ifndef INCLUDED_ml_model_CDecayRateController_h
+#define INCLUDED_ml_model_CDecayRateController_h
 
 #include <core/CoreTypes.h>
 #include <core/CSmallVector.h>
@@ -25,7 +25,7 @@
 
 #include <stdint.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -111,4 +111,4 @@ class MODEL_EXPORT CDecayRateController
 }
 }
 
-#endif // INCLUDED_prelert_model_CDecayRateController_h
+#endif // INCLUDED_ml_model_CDecayRateController_h

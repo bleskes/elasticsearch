@@ -17,7 +17,7 @@
 #include <ctype.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

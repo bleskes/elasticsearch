@@ -21,7 +21,7 @@
 
 #include <maths/CChecksum.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

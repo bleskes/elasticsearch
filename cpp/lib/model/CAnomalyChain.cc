@@ -21,7 +21,7 @@
 
 #include <maths/COrderings.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

@@ -24,7 +24,7 @@
 
 #include <test/CRandomNumbers.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace maths;
 using namespace test;
 

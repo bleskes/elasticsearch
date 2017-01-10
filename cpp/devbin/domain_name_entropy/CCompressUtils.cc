@@ -19,7 +19,7 @@
 #include <iostream>
 
 
-namespace prelert
+namespace ml
 {
 namespace domain_name_entropy
 {

@@ -27,7 +27,7 @@ typedef boost::uniform_int<> TDistribution;
 typedef boost::random::variate_generator<TRandom&, TDistribution> TGenerator;
 typedef boost::generator_iterator<TGenerator> TGeneratorItr;
 
-using namespace prelert;
+using namespace ml;
 using namespace core;
 
 namespace

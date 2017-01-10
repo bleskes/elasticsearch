@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CRapidXmlStatePersistInserter_h
-#define INCLUDED_prelert_core_CRapidXmlStatePersistInserter_h
+#ifndef INCLUDED_ml_core_CRapidXmlStatePersistInserter_h
+#define INCLUDED_ml_core_CRapidXmlStatePersistInserter_h
 
 #include <core/CStatePersistInserter.h>
 #include <core/CStringCache.h>
@@ -24,7 +24,7 @@
 #include <map>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -103,5 +103,5 @@ class CORE_EXPORT CRapidXmlStatePersistInserter : public CStatePersistInserter
 }
 }
 
-#endif // INCLUDED_prelert_core_CRapidXmlStatePersistInserter_h
+#endif // INCLUDED_ml_core_CRapidXmlStatePersistInserter_h
 

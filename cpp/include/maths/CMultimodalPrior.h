@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultimodalPrior_h
-#define INCLUDED_prelert_maths_CMultimodalPrior_h
+#ifndef INCLUDED_ml_maths_CMultimodalPrior_h
+#define INCLUDED_ml_maths_CMultimodalPrior_h
 
 #include <core/CMemory.h>
 
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -433,4 +433,4 @@ class MATHS_EXPORT CMultimodalPrior : public CPrior
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultimodalPrior_h
+#endif // INCLUDED_ml_maths_CMultimodalPrior_h

@@ -15,7 +15,7 @@
 
 #include <maths/CGramSchmidt.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

@@ -31,7 +31,7 @@
 #include <stdexcept>
 #include <sstream>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

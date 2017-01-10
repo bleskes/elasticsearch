@@ -19,7 +19,7 @@
 #include <mach/mach_time.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

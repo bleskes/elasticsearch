@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CStateCompressor_h
-#define INCLUDED_prelert_core_CStateCompressor_h
+#ifndef INCLUDED_ml_core_CStateCompressor_h
+#define INCLUDED_ml_core_CStateCompressor_h
 
 #include <core/CDataAdder.h>
 #include <core/ImportExport.h>
@@ -23,7 +23,7 @@
 #include <ios>
 #include <ostream>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -41,7 +41,7 @@ class CCompressOStream;
 //! the underlying data store - so this class basically fits on top
 //! of an existing CDataAdder (and it's counterpart CStateDecompressor
 //! on top of a CDataSearcher) to enable compression for the
-//! prelert persist interface
+//! ml persist interface
 //!
 //! IMPLEMENTATION DECISIONS:\n
 //! Not copyable.
@@ -174,5 +174,5 @@ class CORE_EXPORT CStateCompressor : public CDataAdder
 }
 }
 
-#endif // INCLUDED_prelert_core_CStateCompressor_h
+#endif // INCLUDED_ml_core_CStateCompressor_h
 

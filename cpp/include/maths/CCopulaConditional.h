@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CCopulaConditional_h
-#define INCLUDED_prelert_maths_CCopulaConditional_h
+#ifndef INCLUDED_ml_maths_CCopulaConditional_h
+#define INCLUDED_ml_maths_CCopulaConditional_h
 
 #include <maths/CMultivariateComponent.h>
 #include <maths/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -194,4 +194,4 @@ class MATHS_EXPORT CCopulaConditional : public CMultivariateComponent
 }
 }
 
-#endif // INCLUDED_prelert_maths_CCopulaConditional_h
+#endif // INCLUDED_ml_maths_CCopulaConditional_h

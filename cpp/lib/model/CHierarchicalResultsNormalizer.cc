@@ -30,7 +30,7 @@
 
 #include <algorithm>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -303,8 +303,8 @@ CHierarchicalResultsNormalizer::ERestoreOutcome
             }
         }
 
-        // The PRELERTCUE_ATTRIBUTE should always be the first field
-        if (traverser.name() != CAnomalyScore::PRELERTCUE_ATTRIBUTE)
+        // The MLCUE_ATTRIBUTE should always be the first field
+        if (traverser.name() != CAnomalyScore::MLCUE_ATTRIBUTE)
         {
             if (!traverser.next())
             {
@@ -312,7 +312,7 @@ CHierarchicalResultsNormalizer::ERestoreOutcome
                 return E_Ok;
             }
 
-            LOG_ERROR("Expected " << CAnomalyScore::PRELERTCUE_ATTRIBUTE <<
+            LOG_ERROR("Expected " << CAnomalyScore::MLCUE_ATTRIBUTE <<
                       " field in quantiles JSON got " << traverser.name() <<
                       " = " << traverser.value());
             return E_Corrupt;
@@ -345,21 +345,21 @@ CHierarchicalResultsNormalizer::ERestoreOutcome
                 if (!traverser.next())
                 {
                     LOG_ERROR("Cannot restore hierarchical normalizer - end of object reached when " <<
-                              CAnomalyScore::PRELERTKEY_ATTRIBUTE << " was expected");
+                              CAnomalyScore::MLKEY_ATTRIBUTE << " was expected");
                     return E_Corrupt;
                 }
 
                 if (!traverser.next())
                 {
                     LOG_ERROR("Cannot restore hierarchical normalizer - end of object reached when " <<
-                              CAnomalyScore::PRELERTQUANTILESDESCRIPTION_ATTRIBUTE << " was expected");
+                              CAnomalyScore::MLQUANTILESDESCRIPTION_ATTRIBUTE << " was expected");
                     return E_Corrupt;
                 }
 
-                if (traverser.name() != CAnomalyScore::PRELERTQUANTILESDESCRIPTION_ATTRIBUTE)
+                if (traverser.name() != CAnomalyScore::MLQUANTILESDESCRIPTION_ATTRIBUTE)
                 {
                     LOG_ERROR("Cannot restore hierarchical normalizer - " <<
-                              CAnomalyScore::PRELERTQUANTILESDESCRIPTION_ATTRIBUTE <<
+                              CAnomalyScore::MLQUANTILESDESCRIPTION_ATTRIBUTE <<
                               " element expected but found " << traverser.name() << '=' << traverser.value());
                     return E_Corrupt;
                 }

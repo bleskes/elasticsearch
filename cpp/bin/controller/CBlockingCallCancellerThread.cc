@@ -19,7 +19,7 @@
 #include <istream>
 
 
-namespace prelert
+namespace ml
 {
 namespace controller
 {

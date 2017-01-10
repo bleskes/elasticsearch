@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CProbabilityCalibrator_h
-#define INCLUDED_prelert_model_CProbabilityCalibrator_h
+#ifndef INCLUDED_ml_model_CProbabilityCalibrator_h
+#define INCLUDED_ml_model_CProbabilityCalibrator_h
 
 #include <maths/ImportExport.h>
 
 #include <boost/shared_ptr.hpp>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -93,4 +93,4 @@ class MATHS_EXPORT CProbabilityCalibrator
 }
 }
 
-#endif // INCLUDED_prelert_model_CProbabilityCalibrator_h
+#endif // INCLUDED_ml_model_CProbabilityCalibrator_h

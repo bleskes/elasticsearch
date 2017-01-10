@@ -26,7 +26,7 @@
 
 #include <cstdio>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

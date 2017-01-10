@@ -19,7 +19,7 @@
 
 #include <maths/CPriorUtils.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

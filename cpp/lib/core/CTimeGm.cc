@@ -15,7 +15,7 @@
 #include <core/CTimeGm.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

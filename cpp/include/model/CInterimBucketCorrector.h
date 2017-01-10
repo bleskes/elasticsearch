@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CInterimBucketCorrector_h
-#define INCLUDED_prelert_model_CInterimBucketCorrector_h
+#ifndef INCLUDED_ml_model_CInterimBucketCorrector_h
+#define INCLUDED_ml_model_CInterimBucketCorrector_h
 
 #include <core/CMemory.h>
 
@@ -24,7 +24,7 @@
 #include <model/ImportExport.h>
 #include <model/ModelTypes.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -123,4 +123,4 @@ class MODEL_EXPORT CInterimBucketCorrector
 }
 }
 
-#endif // INCLUDED_prelert_model_CInterimBucketCorrector_h
+#endif // INCLUDED_ml_model_CInterimBucketCorrector_h

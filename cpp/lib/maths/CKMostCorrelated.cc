@@ -37,7 +37,7 @@ namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
 namespace bgm = boost::geometry::model;
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

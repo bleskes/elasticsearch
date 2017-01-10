@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CPriorStateSerialiser_h
-#define INCLUDED_prelert_maths_CPriorStateSerialiser_h
+#ifndef INCLUDED_ml_maths_CPriorStateSerialiser_h
+#define INCLUDED_ml_maths_CPriorStateSerialiser_h
 
 #include <core/CNonInstantiatable.h>
 
@@ -23,7 +23,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -88,5 +88,5 @@ class MATHS_EXPORT CPriorStateSerialiser
 }
 }
 
-#endif // INCLUDED_prelert_maths_CPriorStateSerialiser_h
+#endif // INCLUDED_ml_maths_CPriorStateSerialiser_h
 

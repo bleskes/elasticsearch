@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CBasicStatistics_h
-#define INCLUDED_prelert_maths_CBasicStatistics_h
+#ifndef INCLUDED_ml_maths_CBasicStatistics_h
+#define INCLUDED_ml_maths_CBasicStatistics_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CHashing.h>
@@ -46,7 +46,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1960,5 +1960,5 @@ void CBasicStatistics::SSampleCentralMoments<T, ORDER>::add(const U &x,
 }
 }
 
-#endif // INCLUDED_prelert_maths_CBasicStatistics_h
+#endif // INCLUDED_ml_maths_CBasicStatistics_h
 

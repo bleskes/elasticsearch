@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CQuantileSketch_h
-#define INCLUDED_prelert_maths_CQuantileSketch_h
+#ifndef INCLUDED_ml_maths_CQuantileSketch_h
+#define INCLUDED_ml_maths_CQuantileSketch_h
 
 #include <maths/CFloatStorage.h>
 #include <maths/ImportExport.h>
@@ -24,7 +24,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -168,4 +168,4 @@ inline std::ostream &operator<<(std::ostream &o, const CQuantileSketch &qs)
 }
 }
 
-#endif // INCLUDED_prelert_maths_CQuantileSketch_h
+#endif // INCLUDED_ml_maths_CQuantileSketch_h

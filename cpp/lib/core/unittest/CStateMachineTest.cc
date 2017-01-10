@@ -29,7 +29,7 @@
 
 #include <boost/range.hpp>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {
@@ -228,7 +228,7 @@ void CStateMachineTest::testPersist(void)
     CPPUNIT_ASSERT_EQUAL(original.checksum(), restored.checksum());
     std::string newXml;
     {
-        prelert::core::CRapidXmlStatePersistInserter inserter("root");
+        ml::core::CRapidXmlStatePersistInserter inserter("root");
         restored.acceptPersistInserter(inserter);
         inserter.toXml(newXml);
     }

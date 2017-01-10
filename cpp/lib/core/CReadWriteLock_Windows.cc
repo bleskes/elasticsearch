@@ -15,7 +15,7 @@
 #include <core/CReadWriteLock.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

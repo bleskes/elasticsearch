@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CRapidXmlParser_h
-#define INCLUDED_prelert_core_CRapidXmlParser_h
+#ifndef INCLUDED_ml_core_CRapidXmlParser_h
+#define INCLUDED_ml_core_CRapidXmlParser_h
 
 #include <core/CXmlParserIntf.h>
 #include <core/ImportExport.h>
@@ -26,7 +26,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -197,5 +197,5 @@ class CORE_EXPORT CRapidXmlParser : public CXmlParserIntf
 }
 }
 
-#endif // INCLUDED_prelert_core_CRapidXmlParser_h
+#endif // INCLUDED_ml_core_CRapidXmlParser_h
 

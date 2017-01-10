@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {

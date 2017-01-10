@@ -13,14 +13,14 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CLinearAlgebraFwd_h
-#define INCLUDED_prelert_maths_CLinearAlgebraFwd_h
+#ifndef INCLUDED_ml_maths_CLinearAlgebraFwd_h
+#define INCLUDED_ml_maths_CLinearAlgebraFwd_h
 
 #include <maths/ImportExport.h>
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -48,4 +48,4 @@ template<typename VECTOR, typename ANNOTATION> class CAnnotatedVector;
 }
 }
 
-#endif // INCLUDED_prelert_maths_CLinearAlgebraFwd_h
+#endif // INCLUDED_ml_maths_CLinearAlgebraFwd_h

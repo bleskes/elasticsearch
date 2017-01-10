@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_Constants_h
-#define INCLUDED_prelert_config_Constants_h
+#ifndef INCLUDED_ml_config_Constants_h
+#define INCLUDED_ml_config_Constants_h
 
 #include <core/Constants.h>
 
@@ -23,7 +23,7 @@
 #include <cstddef>
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -78,4 +78,4 @@ CONFIG_EXPORT const std::string &name(std::size_t index);
 }
 }
 
-#endif // INCLUDED_prelert_config_Constants_h
+#endif // INCLUDED_ml_config_Constants_h

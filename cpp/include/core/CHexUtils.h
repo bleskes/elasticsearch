@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CHexUtils_h
-#define INCLUDED_prelert_core_CHexUtils_h
+#ifndef INCLUDED_ml_core_CHexUtils_h
+#define INCLUDED_ml_core_CHexUtils_h
 
 #include <core/ImportExport.h>
 
@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -85,5 +85,5 @@ CORE_EXPORT std::ostream &operator<<(std::ostream &strm, const CHexUtils &hex);
 }
 
 
-#endif // INCLUDED_prelert_core_CHexUtils_h
+#endif // INCLUDED_ml_core_CHexUtils_h
 

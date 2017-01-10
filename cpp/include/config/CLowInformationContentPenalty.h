@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CLowInformationContentPenalty_h
-#define INCLUDED_prelert_config_CLowInformationContentPenalty_h
+#ifndef INCLUDED_ml_config_CLowInformationContentPenalty_h
+#define INCLUDED_ml_config_CLowInformationContentPenalty_h
 
 #include <config/CPenalty.h>
 #include <config/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -54,4 +54,4 @@ class CONFIG_EXPORT CLowInformationContentPenalty : public CPenalty
 }
 }
 
-#endif // INCLUDED_prelert_config_CLowInformationContentPenalty_h
+#endif // INCLUDED_ml_config_CLowInformationContentPenalty_h

@@ -37,14 +37,14 @@ void COsFileFuncsTest::testInode(void)
     // that fulfils the purpose of determining when a file has been renamed and
     // another one with the original name has been created.
 
-    prelert::core::COsFileFuncs::TStat statBuf;
+    ml::core::COsFileFuncs::TStat statBuf;
 
     std::string headerFile("COsFileFuncsTest.h");
     std::string implFile("COsFileFuncsTest.cc");
 
     ::memset(&statBuf, 0, sizeof(statBuf));
     ino_t headerDirect(0);
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(headerFile.c_str(),
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(headerFile.c_str(),
                                                               &statBuf));
     headerDirect = statBuf.st_ino;
     LOG_DEBUG("Inode for " << headerFile << " from directory is " <<
@@ -52,19 +52,19 @@ void COsFileFuncsTest::testInode(void)
 
     ::memset(&statBuf, 0, sizeof(statBuf));
     ino_t headerOpen(0);
-    int headerFd(prelert::core::COsFileFuncs::open(headerFile.c_str(),
-                                                   prelert::core::COsFileFuncs::RDONLY));
+    int headerFd(ml::core::COsFileFuncs::open(headerFile.c_str(),
+                                                   ml::core::COsFileFuncs::RDONLY));
     CPPUNIT_ASSERT(headerFd != -1);
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::fstat(headerFd,
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::fstat(headerFd,
                                                                &statBuf));
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::close(headerFd));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::close(headerFd));
     headerOpen = statBuf.st_ino;
     LOG_DEBUG("Inode for " << headerFile << " from open file is " <<
               headerOpen);
 
     ::memset(&statBuf, 0, sizeof(statBuf));
     ino_t implDirect(0);
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat(implFile.c_str(),
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat(implFile.c_str(),
                                                               &statBuf));
     implDirect = statBuf.st_ino;
     LOG_DEBUG("Inode for " << implFile << " from directory is " <<
@@ -72,12 +72,12 @@ void COsFileFuncsTest::testInode(void)
 
     ::memset(&statBuf, 0, sizeof(statBuf));
     ino_t implOpen(0);
-    int implFd(prelert::core::COsFileFuncs::open(implFile.c_str(),
-                                                 prelert::core::COsFileFuncs::RDONLY));
+    int implFd(ml::core::COsFileFuncs::open(implFile.c_str(),
+                                                 ml::core::COsFileFuncs::RDONLY));
     CPPUNIT_ASSERT(implFd != -1);
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::fstat(implFd,
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::fstat(implFd,
                                                                &statBuf));
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::close(implFd));
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::close(implFd));
     implOpen = statBuf.st_ino;
     LOG_DEBUG("Inode for " << implFile << " from open file is " <<
               implOpen);

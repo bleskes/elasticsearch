@@ -15,7 +15,7 @@
 
 #include <core/CContainerPrinter.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

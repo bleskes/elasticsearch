@@ -30,17 +30,17 @@ CppUnit::Test *CAnomalyFactorCalculatorTest::suite()
 
 void CAnomalyFactorCalculatorTest::testFromProb(void)
 {
-    CPPUNIT_ASSERT_EQUAL(int32_t(0), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(0.5));
-    CPPUNIT_ASSERT_EQUAL(int32_t(25), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-78));
-    CPPUNIT_ASSERT_EQUAL(int32_t(50), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-154));
-    CPPUNIT_ASSERT_EQUAL(int32_t(75), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-231));
-    CPPUNIT_ASSERT_EQUAL(int32_t(100), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-308));
+    CPPUNIT_ASSERT_EQUAL(int32_t(0), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(0.5));
+    CPPUNIT_ASSERT_EQUAL(int32_t(25), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-78));
+    CPPUNIT_ASSERT_EQUAL(int32_t(50), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-154));
+    CPPUNIT_ASSERT_EQUAL(int32_t(75), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-231));
+    CPPUNIT_ASSERT_EQUAL(int32_t(100), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(1.0e-308));
 
     // Special case
-    CPPUNIT_ASSERT_EQUAL(int32_t(100), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(0.0));
+    CPPUNIT_ASSERT_EQUAL(int32_t(100), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(0.0));
 
     // These are errors
-    CPPUNIT_ASSERT_EQUAL(int32_t(0), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(-0.1));
-    CPPUNIT_ASSERT_EQUAL(int32_t(0), prelert::maths::CAnomalyFactorCalculator::fromDistributionProb(1.1));
+    CPPUNIT_ASSERT_EQUAL(int32_t(0), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(-0.1));
+    CPPUNIT_ASSERT_EQUAL(int32_t(0), ml::maths::CAnomalyFactorCalculator::fromDistributionProb(1.1));
 }
 

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CTypeConversions_h
-#define INCLUDED_prelert_maths_CTypeConversions_h
+#ifndef INCLUDED_ml_maths_CTypeConversions_h
+#define INCLUDED_ml_maths_CTypeConversions_h
 
 #include <maths/CDoublePrecisionStorage.h>
 #include <maths/CFloatStorage.h>
@@ -22,7 +22,7 @@
 
 #include <boost/type_traits/is_floating_point.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -245,4 +245,4 @@ struct SStripped<CAnnotatedVector<VECTOR, ANNOTATION> >
 }
 }
 
-#endif // INCLUDED_prelert_maths_CTypeConversions_h
+#endif // INCLUDED_ml_maths_CTypeConversions_h

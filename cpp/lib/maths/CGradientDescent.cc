@@ -18,7 +18,7 @@
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

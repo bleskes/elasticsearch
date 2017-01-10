@@ -27,7 +27,7 @@
 #include <vector>
 #include <utility>
 
-using namespace prelert;
+using namespace ml;
 using namespace core;
 
 void CContainerPrinterTest::testAll(void)

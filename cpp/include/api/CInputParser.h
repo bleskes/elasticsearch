@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CInputParser_h
-#define INCLUDED_prelert_api_CInputParser_h
+#ifndef INCLUDED_ml_api_CInputParser_h
+#define INCLUDED_ml_api_CInputParser_h
 
 #include <core/CNonCopyable.h>
 
@@ -28,7 +28,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -130,5 +130,5 @@ class API_EXPORT CInputParser : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_api_CInputParser_h
+#endif // INCLUDED_ml_api_CInputParser_h
 

@@ -68,9 +68,9 @@ void CContainerThroughputTest::testVector(void)
     TContentVec testVec;
     testVec.reserve(FILL_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting vector throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     size_t count(0);
     while (count < FILL_SIZE)
@@ -86,9 +86,9 @@ void CContainerThroughputTest::testVector(void)
         testVec.push_back(SContent(count));
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished vector throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(FILL_SIZE, testVec.size());
 
@@ -102,9 +102,9 @@ void CContainerThroughputTest::testList(void)
     typedef std::list<SContent> TContentList;
     TContentList testList;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting list throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     size_t count(0);
     while (count < FILL_SIZE)
@@ -120,9 +120,9 @@ void CContainerThroughputTest::testList(void)
         testList.push_back(SContent(count));
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished list throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(FILL_SIZE, testList.size());
 
@@ -136,9 +136,9 @@ void CContainerThroughputTest::testDeque(void)
     typedef std::deque<SContent> TContentDeque;
     TContentDeque testDeque;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting deque throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     size_t count(0);
     while (count < FILL_SIZE)
@@ -154,9 +154,9 @@ void CContainerThroughputTest::testDeque(void)
         testDeque.push_back(SContent(count));
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished deque throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(FILL_SIZE, testDeque.size());
 
@@ -170,9 +170,9 @@ void CContainerThroughputTest::testMap(void)
     typedef std::map<size_t, SContent> TSizeContentMap;
     TSizeContentMap testMap;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting map throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     size_t count(0);
     while (count < FILL_SIZE)
@@ -188,9 +188,9 @@ void CContainerThroughputTest::testMap(void)
         testMap.insert(TSizeContentMap::value_type(count, SContent(count)));
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished map throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(FILL_SIZE, testMap.size());
 
@@ -204,9 +204,9 @@ void CContainerThroughputTest::testCircBuf(void)
     typedef boost::circular_buffer<SContent> TContentCircBuf;
     TContentCircBuf testCircBuf(FILL_SIZE);
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting circular buffer throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     size_t count(0);
     while (count < FILL_SIZE)
@@ -222,9 +222,9 @@ void CContainerThroughputTest::testCircBuf(void)
         testCircBuf.push_back(SContent(count));
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished circular buffer throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(FILL_SIZE, testCircBuf.size());
 
@@ -245,9 +245,9 @@ void CContainerThroughputTest::testMultiIndex(void)
     > TContentMIndex;
     TContentMIndex testMultiIndex;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting multi-index throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     size_t count(0);
     while (count < FILL_SIZE)
@@ -263,9 +263,9 @@ void CContainerThroughputTest::testMultiIndex(void)
         testMultiIndex.insert(SContent(count));
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished multi-index throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(FILL_SIZE, testMultiIndex.size());
 

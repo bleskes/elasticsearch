@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CModelFactory_h
-#define INCLUDED_prelert_model_CModelFactory_h
+#ifndef INCLUDED_ml_model_CModelFactory_h
+#define INCLUDED_ml_model_CModelFactory_h
 
 #include <core/CoreTypes.h>
 #include <core/CNonCopyable.h>
@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -391,7 +391,7 @@ class MODEL_EXPORT CModelFactory
         //! Get the function used for converting extra data on restoration.
         const model_t::TAnyRestoreFunc &extraDataRestoreFunc(void) const;
 
-        //! \name Customization by prelertmodel.conf
+        //! \name Customization by mlmodel.conf
         //@{
         //! Set the learn rate used for initializing models.
         void learnRate(double learnRate);
@@ -496,5 +496,5 @@ class MODEL_EXPORT CModelFactory
 }
 }
 
-#endif // INCLUDED_prelert_model_CModelFactory_h
+#endif // INCLUDED_ml_model_CModelFactory_h
 

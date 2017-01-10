@@ -20,7 +20,7 @@
 #include <maths/CEqualWithTolerance.h>
 #include <maths/CLinearAlgebra.h>
 
-using namespace prelert;
+using namespace ml;
 
 void CEqualWithToleranceTest::testScalar(void)
 {

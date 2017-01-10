@@ -45,7 +45,7 @@ namespace
 
 typedef std::vector<std::string> TStrVec;
 
-void reportPersistComplete(prelert::core_t::TTime /*snapshotTimestamp*/,
+void reportPersistComplete(ml::core_t::TTime /*snapshotTimestamp*/,
                            const std::string &description,
                            const std::string &snapshotIdIn,
                            size_t numDocsIn,
@@ -74,24 +74,24 @@ CppUnit::Test *CBackgroundPersisterTest::suite()
 
 void CBackgroundPersisterTest::testDetectorPersistBy(void)
 {
-    this->foregroundBackgroundComp("testfiles/new_prelertfields.conf");
+    this->foregroundBackgroundComp("testfiles/new_mlfields.conf");
 }
 
 void CBackgroundPersisterTest::testDetectorPersistOver(void)
 {
-    this->foregroundBackgroundComp("testfiles/new_prelertfields_over.conf");
+    this->foregroundBackgroundComp("testfiles/new_mlfields_over.conf");
 }
 
 void CBackgroundPersisterTest::testDetectorPersistPartition(void)
 {
-    this->foregroundBackgroundComp("testfiles/new_prelertfields_partition.conf");
+    this->foregroundBackgroundComp("testfiles/new_mlfields_partition.conf");
 }
 
 void CBackgroundPersisterTest::foregroundBackgroundComp(const std::string &configFileName)
 {
     // Start by creating a detector with non-trivial state
 
-    static const prelert::core_t::TTime BUCKET_SIZE(3600);
+    static const ml::core_t::TTime BUCKET_SIZE(3600);
 
     std::string inputFilename("testfiles/big_ascending.txt");
 
@@ -99,21 +99,21 @@ void CBackgroundPersisterTest::foregroundBackgroundComp(const std::string &confi
     std::ifstream inputStrm(inputFilename.c_str());
     CPPUNIT_ASSERT(inputStrm.is_open());
 
-    std::ofstream outputStrm(prelert::core::COsFileFuncs::NULL_FILENAME);
+    std::ofstream outputStrm(ml::core::COsFileFuncs::NULL_FILENAME);
     CPPUNIT_ASSERT(outputStrm.is_open());
 
-    prelert::model::CLimits limits;
-    prelert::api::CFieldConfig fieldConfig;
+    ml::model::CLimits limits;
+    ml::api::CFieldConfig fieldConfig;
     CPPUNIT_ASSERT(fieldConfig.initFromFile(configFileName));
 
-    prelert::model::CModelConfig modelConfig =
-            prelert::model::CModelConfig::defaultConfig(BUCKET_SIZE);
+    ml::model::CModelConfig modelConfig =
+            ml::model::CModelConfig::defaultConfig(BUCKET_SIZE);
 
-    prelert::api::CJsonOutputWriter outputWriter("job", outputStrm);
+    ml::api::CJsonOutputWriter outputWriter("job", outputStrm);
 
     std::string snapshotId;
     std::size_t numDocs(0);
-    prelert::api::CAnomalyDetector detector("job",
+    ml::api::CAnomalyDetector detector("job",
                                             limits,
                                             fieldConfig,
                                             modelConfig,
@@ -126,23 +126,23 @@ void CBackgroundPersisterTest::foregroundBackgroundComp(const std::string &confi
                                                         boost::ref(snapshotId),
                                                         boost::ref(numDocs));
 
-    prelert::api::CCsvInputParser parser(inputStrm);
+    ml::api::CCsvInputParser parser(inputStrm);
 
     CPPUNIT_ASSERT(parser.readStream(false,
-                                     boost::bind(&prelert::api::CAnomalyDetector::handleSettings,
+                                     boost::bind(&ml::api::CAnomalyDetector::handleSettings,
                                                  &detector,
                                                  _1),
-                                     boost::bind(&prelert::api::CAnomalyDetector::handleRecord,
+                                     boost::bind(&ml::api::CAnomalyDetector::handleRecord,
                                                  &detector,
                                                  _1,
                                                  _2,
                                                  _3)));
 
     // Persist the detector state to files in the background
-    std::string baseBackgroundOutputFilename(prelert::test::CTestTmpDir::tmpDir() + "/background");
+    std::string baseBackgroundOutputFilename(ml::test::CTestTmpDir::tmpDir() + "/background");
     {
-        prelert::api::CMultiFileDataAdder filePersister(baseBackgroundOutputFilename);
-        prelert::api::CBackgroundPersister backgroundPersister(filePersister);
+        ml::api::CMultiFileDataAdder filePersister(baseBackgroundOutputFilename);
+        ml::api::CBackgroundPersister backgroundPersister(filePersister);
         CPPUNIT_ASSERT(detector.backgroundPersistState(backgroundPersister));
 
         // Wait for the background persist to complete
@@ -156,12 +156,12 @@ void CBackgroundPersisterTest::foregroundBackgroundComp(const std::string &confi
     {
         std::string expectedBackgroundFilename(baseBackgroundOutputFilename);
         expectedBackgroundFilename += '/';
-        expectedBackgroundFilename += prelert::api::CAnomalyDetector::STATE_TYPE;
+        expectedBackgroundFilename += ml::api::CAnomalyDetector::STATE_TYPE;
         expectedBackgroundFilename += '/';
         expectedBackgroundFilename += snapshotId;
         expectedBackgroundFilename += '_';
-        expectedBackgroundFilename += prelert::core::CStringUtils::typeToString(1 + index);
-        expectedBackgroundFilename += prelert::api::CMultiFileDataAdder::JSON_FILE_EXT;
+        expectedBackgroundFilename += ml::core::CStringUtils::typeToString(1 + index);
+        expectedBackgroundFilename += ml::api::CMultiFileDataAdder::JSON_FILE_EXT;
         LOG_DEBUG("Trying to open file: " << expectedBackgroundFilename);
         std::ifstream backgroundFile(expectedBackgroundFilename.c_str());
         CPPUNIT_ASSERT(backgroundFile.is_open());
@@ -171,9 +171,9 @@ void CBackgroundPersisterTest::foregroundBackgroundComp(const std::string &confi
     }
 
     // Now persist the detector in the foreground
-    std::string baseForegroundOutputFilename(prelert::test::CTestTmpDir::tmpDir() + "/foreground");
+    std::string baseForegroundOutputFilename(ml::test::CTestTmpDir::tmpDir() + "/foreground");
     {
-        prelert::api::CMultiFileDataAdder filePersister(baseForegroundOutputFilename);
+        ml::api::CMultiFileDataAdder filePersister(baseForegroundOutputFilename);
         CPPUNIT_ASSERT(detector.persistState(filePersister));
     }
 
@@ -183,12 +183,12 @@ void CBackgroundPersisterTest::foregroundBackgroundComp(const std::string &confi
     {
         std::string expectedForegroundFilename(baseForegroundOutputFilename);
         expectedForegroundFilename += '/';
-        expectedForegroundFilename += prelert::api::CAnomalyDetector::STATE_TYPE;
+        expectedForegroundFilename += ml::api::CAnomalyDetector::STATE_TYPE;
         expectedForegroundFilename += '/';
         expectedForegroundFilename += snapshotId;
         expectedForegroundFilename += '_';
-        expectedForegroundFilename += prelert::core::CStringUtils::typeToString(1 + index);
-        expectedForegroundFilename += prelert::api::CMultiFileDataAdder::JSON_FILE_EXT;
+        expectedForegroundFilename += ml::core::CStringUtils::typeToString(1 + index);
+        expectedForegroundFilename += ml::api::CMultiFileDataAdder::JSON_FILE_EXT;
         std::ifstream foregroundFile(expectedForegroundFilename.c_str());
         CPPUNIT_ASSERT(foregroundFile.is_open());
         std::string state((std::istreambuf_iterator<char>(foregroundFile)),

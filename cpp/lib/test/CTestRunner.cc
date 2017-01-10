@@ -44,7 +44,7 @@ namespace
 // Windows, by buffering it.  The file scope variable ensures the setvbuf() gets
 // called to set the buffer size during the static initialisation phase of the
 // program, before main() is called.  By putting this in the libPreTest library,
-// STDERR remains in its standard unbuffered state in Prelert non-test programs.
+// STDERR remains in its standard unbuffered state in Ml non-test programs.
 // (Note that Linux always uses a 1024 byte buffer size for line-buffered files,
 // i.e. ignores the 16384 specified in this call, and Windows treats a request
 // for line buffering as a request for full buffering, so this doesn't do what
@@ -58,7 +58,7 @@ const std::string UNKNOWN_DIR("unknown");
 }
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {

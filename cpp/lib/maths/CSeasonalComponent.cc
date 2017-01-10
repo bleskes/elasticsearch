@@ -32,7 +32,7 @@
 #include <ios>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

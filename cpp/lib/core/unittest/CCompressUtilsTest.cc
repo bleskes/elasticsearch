@@ -41,13 +41,13 @@ CppUnit::Test *CCompressUtilsTest::suite()
 
 void CCompressUtilsTest::testEmptyAdd(void)
 {
-    prelert::core::CCompressUtils compressor(false);
+    ml::core::CCompressUtils compressor(false);
 
     std::string str;
 
     CPPUNIT_ASSERT(compressor.addString(str));
 
-    prelert::core::CCompressUtils::TByteVec output;
+    ml::core::CCompressUtils::TByteVec output;
     size_t length(0);
 
     CPPUNIT_ASSERT(compressor.compressedData(true, output));
@@ -61,13 +61,13 @@ void CCompressUtilsTest::testEmptyAdd(void)
 
 void CCompressUtilsTest::testOneAdd(void)
 {
-    prelert::core::CCompressUtils compressor(false);
+    ml::core::CCompressUtils compressor(false);
 
     std::string str("1234567890");
 
     CPPUNIT_ASSERT(compressor.addString(str));
 
-    prelert::core::CCompressUtils::TByteVec output;
+    ml::core::CCompressUtils::TByteVec output;
     size_t length(0);
 
     CPPUNIT_ASSERT(compressor.compressedData(true, output));
@@ -81,7 +81,7 @@ void CCompressUtilsTest::testOneAdd(void)
 
 void CCompressUtilsTest::testManyAdds(void)
 {
-    prelert::core::CCompressUtils compressorMulti(false);
+    ml::core::CCompressUtils compressorMulti(false);
 
     std::string str1("1234567890");
     std::string str2("qwertyuiopa1234sdfghjklzxcvbnm");
@@ -91,7 +91,7 @@ void CCompressUtilsTest::testManyAdds(void)
     CPPUNIT_ASSERT(compressorMulti.addString(str2));
     CPPUNIT_ASSERT(compressorMulti.addString(str3));
 
-    prelert::core::CCompressUtils::TByteVec outputMulti;
+    ml::core::CCompressUtils::TByteVec outputMulti;
     size_t lengthMulti(0);
 
     CPPUNIT_ASSERT(compressorMulti.compressedData(true, outputMulti));
@@ -103,11 +103,11 @@ void CCompressUtilsTest::testManyAdds(void)
     CPPUNIT_ASSERT(lengthMulti > 0);
     CPPUNIT_ASSERT_EQUAL(lengthMulti, outputMulti.size());
 
-    prelert::core::CCompressUtils compressorSingle(false);
+    ml::core::CCompressUtils compressorSingle(false);
 
     CPPUNIT_ASSERT(compressorSingle.addString(str1 + str2 + str3));
 
-    prelert::core::CCompressUtils::TByteVec outputSingle;
+    ml::core::CCompressUtils::TByteVec outputSingle;
     size_t lengthSingle(0);
 
     CPPUNIT_ASSERT(compressorSingle.compressedData(true, outputSingle));
@@ -120,7 +120,7 @@ void CCompressUtilsTest::testManyAdds(void)
 
 void CCompressUtilsTest::testLengthOnly(void)
 {
-    prelert::core::CCompressUtils compressorFull(false);
+    ml::core::CCompressUtils compressorFull(false);
 
     std::string str("qwertyuiopa1234sdfghjklzxcvbnm");
 
@@ -128,7 +128,7 @@ void CCompressUtilsTest::testLengthOnly(void)
     CPPUNIT_ASSERT(compressorFull.addString(str));
     CPPUNIT_ASSERT(compressorFull.addString(str));
 
-    prelert::core::CCompressUtils::TByteVec outputFull;
+    ml::core::CCompressUtils::TByteVec outputFull;
     size_t lengthFull(0);
 
     CPPUNIT_ASSERT(compressorFull.compressedData(true, outputFull));
@@ -140,13 +140,13 @@ void CCompressUtilsTest::testLengthOnly(void)
     CPPUNIT_ASSERT(lengthFull > 0);
     CPPUNIT_ASSERT_EQUAL(lengthFull, outputFull.size());
 
-    prelert::core::CCompressUtils compressorLengthOnly(true);
+    ml::core::CCompressUtils compressorLengthOnly(true);
 
     CPPUNIT_ASSERT(compressorLengthOnly.addString(str));
     CPPUNIT_ASSERT(compressorLengthOnly.addString(str));
     CPPUNIT_ASSERT(compressorLengthOnly.addString(str));
 
-    prelert::core::CCompressUtils::TByteVec outputLengthOnly;
+    ml::core::CCompressUtils::TByteVec outputLengthOnly;
     size_t lengthLengthOnly(0);
 
     // Should NOT be possible to get the full compressed data in this case

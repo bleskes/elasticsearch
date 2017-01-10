@@ -15,7 +15,7 @@
 #include <core/CSetMode.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

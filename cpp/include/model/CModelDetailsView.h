@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CModelDetailsView_h
-#define INCLUDED_prelert_model_CModelDetailsView_h
+#ifndef INCLUDED_ml_model_CModelDetailsView_h
+#define INCLUDED_ml_model_CModelDetailsView_h
 
 #include <model/CBoxPlotData.h>
 #include <model/CModel.h>
@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -406,4 +406,4 @@ class MODEL_EXPORT CMetricPopulationModelDetailsView : public CModelDetailsView
 }
 }
 
-#endif // INCLUDED_prelert_model_CModelDetailsView_h
+#endif // INCLUDED_ml_model_CModelDetailsView_h

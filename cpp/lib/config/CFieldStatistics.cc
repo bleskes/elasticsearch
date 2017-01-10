@@ -20,7 +20,7 @@
 #include <config/CAutoconfigurerParams.h>
 #include <config/CPenalty.h>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

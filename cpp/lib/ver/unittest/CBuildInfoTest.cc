@@ -35,10 +35,10 @@ CppUnit::Test *CBuildInfoTest::suite()
 
 void CBuildInfoTest::testFullInfo(void)
 {
-    std::string fullInfo(prelert::ver::CBuildInfo::fullInfo());
+    std::string fullInfo(ml::ver::CBuildInfo::fullInfo());
     LOG_DEBUG(fullInfo);
 
-    std::string currentYear(prelert::core::CTimeUtils::toIso8601(prelert::core::CTimeUtils::now()), 0, 4);
+    std::string currentYear(ml::core::CTimeUtils::toIso8601(ml::core::CTimeUtils::now()), 0, 4);
     LOG_DEBUG("Current year is " << currentYear);
 
     CPPUNIT_ASSERT(fullInfo.find("pre_test") != std::string::npos);

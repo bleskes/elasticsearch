@@ -38,11 +38,11 @@ namespace
 // program.  Of course, the locale may already be constructed before this if
 // another static object has used it.
 const std::locale &DO_NOT_USE_THIS_VARIABLE =
-                                          prelert::core::CStringUtils::locale();
+                                          ml::core::CStringUtils::locale();
 }
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

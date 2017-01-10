@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CTools_h
-#define INCLUDED_prelert_maths_CTools_h
+#ifndef INCLUDED_ml_maths_CTools_h
+#define INCLUDED_ml_maths_CTools_h
 
 #include <core/CoreTypes.h>
 #include <core/CIEEE754.h>
@@ -53,7 +53,7 @@
 
 #include <string.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1124,4 +1124,4 @@ class MATHS_EXPORT CTools : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_maths_CTools_h
+#endif // INCLUDED_ml_maths_CTools_h

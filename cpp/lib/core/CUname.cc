@@ -21,7 +21,7 @@
 #include <string.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -86,7 +86,7 @@ std::string CUname::all(void)
     return all;
 }
 
-std::string CUname::prelertPlatform(void)
+std::string CUname::mlPlatform(void)
 {
     struct utsname name;
     ::uname(&name);
@@ -119,7 +119,7 @@ std::string CUname::prelertPlatform(void)
     return os + '-' + machine;
 }
 
-std::string CUname::prelertOsVer(void)
+std::string CUname::mlOsVer(void)
 {
     return CUname::release();
 }

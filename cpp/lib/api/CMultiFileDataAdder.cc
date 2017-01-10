@@ -24,7 +24,7 @@
 #include <fstream>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

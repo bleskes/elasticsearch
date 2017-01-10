@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CRuleCondition_h
-#define INCLUDED_prelert_model_CRuleCondition_h
+#ifndef INCLUDED_ml_model_CRuleCondition_h
+#define INCLUDED_ml_model_CRuleCondition_h
 
 #include <model/CModel.h>
 #include <model/ImportExport.h>
@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -140,4 +140,4 @@ class MODEL_EXPORT CRuleCondition
 }
 }
 
-#endif // INCLUDED_prelert_model_CRuleCondition_h
+#endif // INCLUDED_ml_model_CRuleCondition_h

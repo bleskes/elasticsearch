@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateComponent_h
-#define INCLUDED_prelert_maths_CMultivariateComponent_h
+#ifndef INCLUDED_ml_maths_CMultivariateComponent_h
+#define INCLUDED_ml_maths_CMultivariateComponent_h
 
 #include <core/CSmallVector.h>
 
@@ -26,7 +26,7 @@
 #include <string>
 #include <utility>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -242,4 +242,4 @@ class MATHS_EXPORT CMultivariateComponent
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultivariateComponent_h
+#endif // INCLUDED_ml_maths_CMultivariateComponent_h

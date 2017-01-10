@@ -15,7 +15,7 @@
 
 #include <maths/CDistributionRestoreParams.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

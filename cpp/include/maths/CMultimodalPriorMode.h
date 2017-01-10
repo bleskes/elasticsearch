@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_SMultimodalPriorMode_h
-#define INCLUDED_prelert_maths_SMultimodalPriorMode_h
+#ifndef INCLUDED_ml_maths_SMultimodalPriorMode_h
+#define INCLUDED_ml_maths_SMultimodalPriorMode_h
 
 #include <core/CMemory.h>
 #include <core/CStatePersistInserter.h>
@@ -26,7 +26,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -113,4 +113,4 @@ const std::string SMultimodalPriorMode<PRIOR>::PRIOR_TAG("b");
 
 
 
-#endif // INCLUDED_prelert_maths_SMultimodalPriorMode_h
+#endif // INCLUDED_ml_maths_SMultimodalPriorMode_h

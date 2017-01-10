@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_TestUtils_h
-#define INCLUDED_prelert_TestUtils_h
+#ifndef INCLUDED_ml_TestUtils_h
+#define INCLUDED_ml_TestUtils_h
 
 #include <core/CSmallVector.h>
 
@@ -25,7 +25,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace handy_typedefs
 {
@@ -353,4 +353,4 @@ handy_typedefs::TDouble10Vec4Vec1Vec CCovarianceKernel<N>::SINGLE_UNIT(1, handy_
 
 }
 
-#endif // INCLUDED_prelert_TestUtils_h
+#endif // INCLUDED_ml_TestUtils_h

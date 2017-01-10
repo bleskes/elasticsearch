@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CFieldDataTyper_h
-#define INCLUDED_prelert_api_CFieldDataTyper_h
+#ifndef INCLUDED_ml_api_CFieldDataTyper_h
+#define INCLUDED_ml_api_CFieldDataTyper_h
 
 #include <core/CoreTypes.h>
 #include <core/CRegexFilter.h>
@@ -30,7 +30,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -54,7 +54,7 @@ class COutputHandler;
 //! Assign categorisation fields to input records
 //!
 //! DESCRIPTION:\n
-//! Adds a new field called prelertcategory and assigns to it
+//! Adds a new field called mlcategory and assigns to it
 //! integers that correspond to the various cateogories
 //!
 class API_EXPORT CFieldDataTyper : public CDataProcessor
@@ -63,7 +63,7 @@ class API_EXPORT CFieldDataTyper : public CDataProcessor
         //! The index where state is stored
         static const std::string   ML_STATE_INDEX;
         //! The name of the field where the category is going to be written
-        static const std::string   PRELERTCATEGORY_NAME;
+        static const std::string   MLCATEGORY_NAME;
 
         static const double        SIMILARITY_THRESHOLD;
 
@@ -202,5 +202,5 @@ class API_EXPORT CFieldDataTyper : public CDataProcessor
 }
 }
 
-#endif // INCLUDED_prelert_api_CFieldDataTyper_h
+#endif // INCLUDED_ml_api_CFieldDataTyper_h
 

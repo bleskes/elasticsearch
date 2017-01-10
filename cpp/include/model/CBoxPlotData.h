@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CBoxPlotData_h
-#define INCLUDED_prelert_model_CBoxPlotData_h
+#ifndef INCLUDED_ml_model_CBoxPlotData_h
+#define INCLUDED_ml_model_CBoxPlotData_h
 
 #include <model/CModel.h>
 #include <model/ImportExport.h>
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -98,4 +98,4 @@ class MODEL_EXPORT CBoxPlotData
 }
 }
 
-#endif // INCLUDED_prelert_model_CBoxPlotData_h
+#endif // INCLUDED_ml_model_CBoxPlotData_h

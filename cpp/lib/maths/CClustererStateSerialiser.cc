@@ -20,7 +20,7 @@
 #include <maths/CKMeansOnline1d.h>
 #include <maths/CXMeansOnline1d.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

@@ -15,7 +15,7 @@
 
 #include <model/FrequencyPredicates.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

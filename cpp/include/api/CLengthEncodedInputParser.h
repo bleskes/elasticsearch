@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CLengthEncodedInputParser_h
-#define INCLUDED_prelert_api_CLengthEncodedInputParser_h
+#ifndef INCLUDED_ml_api_CLengthEncodedInputParser_h
+#define INCLUDED_ml_api_CLengthEncodedInputParser_h
 
 
 #include <api/CInputParser.h>
@@ -27,7 +27,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -164,5 +164,5 @@ class API_EXPORT CLengthEncodedInputParser : public CInputParser
 }
 }
 
-#endif // INCLUDED_prelert_api_CLengthEncodedInputParser_h
+#endif // INCLUDED_ml_api_CLengthEncodedInputParser_h
 

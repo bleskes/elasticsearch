@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_core_CContainerPrinter_h
-#define INCLUDED_prelert_core_CContainerPrinter_h
+#ifndef INCLUDED_ml_core_CContainerPrinter_h
+#define INCLUDED_ml_core_CContainerPrinter_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/CStringUtils.h>
@@ -31,7 +31,7 @@
 #include <sstream>
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -424,4 +424,4 @@ class CORE_EXPORT CContainerPrinter : private CNonInstantiatable
 
 }
 }
-#endif // INCLUDED_prelert_core_CContainerPrinter_h
+#endif // INCLUDED_ml_core_CContainerPrinter_h

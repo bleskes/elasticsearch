@@ -15,7 +15,7 @@
 
 #include <maths/Constants.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

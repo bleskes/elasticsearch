@@ -37,7 +37,7 @@
 
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 typedef std::vector<double> TDoubleVec;
 

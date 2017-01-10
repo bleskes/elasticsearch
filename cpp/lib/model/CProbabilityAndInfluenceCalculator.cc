@@ -27,7 +27,7 @@
 #include <model/CAnnotatedProbabilityBuilder.h>
 #include <model/CStringStore.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

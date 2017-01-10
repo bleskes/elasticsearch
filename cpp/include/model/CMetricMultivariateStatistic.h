@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CMetricMultivariateStatistic_h
-#define INCLUDED_prelert_model_CMetricMultivariateStatistic_h
+#ifndef INCLUDED_ml_model_CMetricMultivariateStatistic_h
+#define INCLUDED_ml_model_CMetricMultivariateStatistic_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -193,4 +193,4 @@ std::ostream &operator<<(std::ostream &o,
 }
 }
 
-#endif // INCLUDED_prelert_model_CMetricMultivariateStatistic_h
+#endif // INCLUDED_ml_model_CMetricMultivariateStatistic_h

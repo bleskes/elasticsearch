@@ -16,7 +16,7 @@
 
 #include <api/CTokenListReverseSearchCreator.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace api;
 
 CppUnit::Test *CTokenListReverseSearchCreatorTest::suite()

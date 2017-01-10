@@ -21,7 +21,7 @@
 #include <boost/ref.hpp>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -185,4 +185,4 @@ size_t CStateCompressor::CChunkFilter::numCompressedDocs(void) const
 }
 
 } // core
-} // prelert
+} // ml

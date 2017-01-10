@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CDetectorEqualizer_h
-#define INCLUDED_prelert_model_CDetectorEqualizer_h
+#ifndef INCLUDED_ml_model_CDetectorEqualizer_h
+#define INCLUDED_ml_model_CDetectorEqualizer_h
 
 #include <maths/CQuantileSketch.h>
 
@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -99,4 +99,4 @@ class MODEL_EXPORT CDetectorEqualizer
 }
 }
 
-#endif // INCLUDED_prelert_model_CDetectorEqualizer_h
+#endif // INCLUDED_ml_model_CDetectorEqualizer_h

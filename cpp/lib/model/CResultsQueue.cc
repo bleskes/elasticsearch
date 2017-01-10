@@ -19,7 +19,7 @@
 
 #include <model/CHierarchicalResults.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -199,4 +199,4 @@ bool CResultsQueue::acceptRestoreTraverser(core::CStateRestoreTraverser &travers
 
 
 } // model
-} // prelert
+} // ml

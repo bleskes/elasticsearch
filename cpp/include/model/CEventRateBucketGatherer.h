@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CEventRateBucketGatherer_h
-#define INCLUDED_prelert_model_CEventRateBucketGatherer_h
+#ifndef INCLUDED_ml_model_CEventRateBucketGatherer_h
+#define INCLUDED_ml_model_CEventRateBucketGatherer_h
 
 #include <core/CMemory.h>
 #include <core/CCompressedDictionary.h>
@@ -36,7 +36,7 @@
 #include <vector>
 #include <set>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -523,8 +523,8 @@ namespace std
 
 //! Overload pair swap so that we use efficient swap of the feature data
 //! when sorting.
-inline void swap(prelert::model::CEventRateBucketGatherer::TSizeFeatureDataPr &lhs,
-                 prelert::model::CEventRateBucketGatherer::TSizeFeatureDataPr &rhs)
+inline void swap(ml::model::CEventRateBucketGatherer::TSizeFeatureDataPr &lhs,
+                 ml::model::CEventRateBucketGatherer::TSizeFeatureDataPr &rhs)
 {
     swap(lhs.first, rhs.first);
     lhs.second.swap(rhs.second);
@@ -532,8 +532,8 @@ inline void swap(prelert::model::CEventRateBucketGatherer::TSizeFeatureDataPr &l
 
 //! Overload pair swap so that we use efficient swap of the feature data
 //! when sorting.
-inline void swap(prelert::model::CEventRateBucketGatherer::TSizeSizePrFeatureDataPr &lhs,
-                 prelert::model::CEventRateBucketGatherer::TSizeSizePrFeatureDataPr &rhs)
+inline void swap(ml::model::CEventRateBucketGatherer::TSizeSizePrFeatureDataPr &lhs,
+                 ml::model::CEventRateBucketGatherer::TSizeSizePrFeatureDataPr &rhs)
 {
     swap(lhs.first, rhs.first);
     lhs.second.swap(rhs.second);
@@ -541,4 +541,4 @@ inline void swap(prelert::model::CEventRateBucketGatherer::TSizeSizePrFeatureDat
 
 }
 
-#endif // INCLUDED_prelert_model_CEventRateBucketGatherer_h
+#endif // INCLUDED_ml_model_CEventRateBucketGatherer_h

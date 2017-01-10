@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CGathererTools_h
-#define INCLUDED_prelert_model_CGathererTools_h
+#ifndef INCLUDED_ml_model_CGathererTools_h
+#define INCLUDED_ml_model_CGathererTools_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -40,7 +40,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -344,4 +344,4 @@ class MODEL_EXPORT CGathererTools
 }
 }
 
-#endif // INCLUDED_prelert_model_CGathererTools_h
+#endif // INCLUDED_ml_model_CGathererTools_h

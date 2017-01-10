@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CMutex_h
-#define INCLUDED_prelert_core_CMutex_h
+#ifndef INCLUDED_ml_core_CMutex_h
+#define INCLUDED_ml_core_CMutex_h
 
 #include <core/CNonCopyable.h>
 #include <core/ImportExport.h>
@@ -24,7 +24,7 @@
 #endif
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -71,5 +71,5 @@ class CORE_EXPORT CMutex : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CMutex_h
+#endif // INCLUDED_ml_core_CMutex_h
 

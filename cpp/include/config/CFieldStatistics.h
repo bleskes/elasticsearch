@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CFieldStatistics_h
-#define INCLUDED_prelert_config_CFieldStatistics_h
+#ifndef INCLUDED_ml_config_CFieldStatistics_h
+#define INCLUDED_ml_config_CFieldStatistics_h
 
 #include <config/CDataSemantics.h>
 #include <config/CDataSummaryStatistics.h>
@@ -27,7 +27,7 @@
 #include <boost/ref.hpp>
 #include <boost/variant.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -112,4 +112,4 @@ class CONFIG_EXPORT CFieldStatistics
 }
 }
 
-#endif // INCLUDED_prelert_config_CFieldStatistics_h
+#endif // INCLUDED_ml_config_CFieldStatistics_h

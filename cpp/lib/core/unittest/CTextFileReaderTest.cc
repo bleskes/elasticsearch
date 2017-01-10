@@ -40,7 +40,7 @@ void CTextFileReaderTest::testRead(void)
 
     // Here we're telling the file reader to translate CRLF to simply \n as
     // is the convention for strings stored within C/C++ programs
-    prelert::core::CTextFileReader fileReader(true);
+    ml::core::CTextFileReader fileReader(true);
     CPPUNIT_ASSERT(fileReader.readFileToText(
                         "testfiles/CTextFileReaderTest.txt", actual));
 
@@ -69,7 +69,7 @@ void CTextFileReaderTest::testReadBinary(void)
 
     // Here we're telling the file reader NOT to translate CRLF when it reads
     // the file
-    prelert::core::CTextFileReader fileReader(false);
+    ml::core::CTextFileReader fileReader(false);
     CPPUNIT_ASSERT(fileReader.readFileToText(
                         "testfiles/CTextFileReaderTest.txt", actual));
 
@@ -81,7 +81,7 @@ void CTextFileReaderTest::testReadBinary(void)
     while (std::getline(ifs, line))
     {
         expected += line;
-        expected += prelert::core_t::LINE_ENDING;
+        expected += ml::core_t::LINE_ENDING;
     }
 
     CPPUNIT_ASSERT_EQUAL(expected, actual);

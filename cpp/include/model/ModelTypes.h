@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_t_ModelTypes_h
-#define INCLUDED_prelert_model_t_ModelTypes_h
+#ifndef INCLUDED_ml_model_t_ModelTypes_h
+#define INCLUDED_ml_model_t_ModelTypes_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -33,7 +33,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -891,4 +891,4 @@ const std::size_t INDIVIDUAL_ANALYSIS_ATTRIBUTE_ID = 0u;
 }
 }
 
-#endif // INCLUDED_prelert_model_t_ModelTypes_h
+#endif // INCLUDED_ml_model_t_ModelTypes_h

@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CRegex_h
-#define INCLUDED_prelert_core_CRegex_h
+#ifndef INCLUDED_ml_core_CRegex_h
+#define INCLUDED_ml_core_CRegex_h
 
 #include <core/ImportExport.h>
 
@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -96,4 +96,4 @@ class CORE_EXPORT CRegex
 }
 }
 
-#endif // INCLUDED_prelert_core_CRegex_h
+#endif // INCLUDED_ml_core_CRegex_h

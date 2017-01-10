@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CDataGatherer_h
-#define INCLUDED_prelert_model_CDataGatherer_h
+#ifndef INCLUDED_ml_model_CDataGatherer_h
+#define INCLUDED_ml_model_CDataGatherer_h
 
 #include <core/CLogger.h>
 #include <core/CMemory.h>
@@ -41,7 +41,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -804,4 +804,4 @@ class MODEL_EXPORT CDataGatherer
 }
 }
 
-#endif // INCLUDED_prelert_model_CDataGatherer_h
+#endif // INCLUDED_ml_model_CDataGatherer_h

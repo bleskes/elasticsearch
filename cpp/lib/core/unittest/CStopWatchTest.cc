@@ -34,13 +34,13 @@ CppUnit::Test *CStopWatchTest::suite()
 
 void CStopWatchTest::testStopWatch(void)
 {
-    prelert::core::CStopWatch stopWatch;
+    ml::core::CStopWatch stopWatch;
 
     LOG_DEBUG("About to start stop watch test");
 
     stopWatch.start();
 
-    prelert::core::CSleep::sleep(5500);
+    ml::core::CSleep::sleep(5500);
 
     uint64_t elapsed(stopWatch.lap());
 
@@ -51,7 +51,7 @@ void CStopWatchTest::testStopWatch(void)
     CPPUNIT_ASSERT(elapsed >= 5400);
     CPPUNIT_ASSERT(elapsed <= 5600);
 
-    prelert::core::CSleep::sleep(3500);
+    ml::core::CSleep::sleep(3500);
 
     elapsed = stopWatch.stop();
 
@@ -63,11 +63,11 @@ void CStopWatchTest::testStopWatch(void)
     CPPUNIT_ASSERT(elapsed <= 9100);
 
     // The stop watch should not count this time, as it's stopped
-    prelert::core::CSleep::sleep(2000);
+    ml::core::CSleep::sleep(2000);
 
     stopWatch.start();
 
-    prelert::core::CSleep::sleep(500);
+    ml::core::CSleep::sleep(500);
 
     elapsed = stopWatch.stop();
 

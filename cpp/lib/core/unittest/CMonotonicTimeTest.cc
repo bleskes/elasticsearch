@@ -35,11 +35,11 @@ CppUnit::Test *CMonotonicTimeTest::suite()
 
 void CMonotonicTimeTest::testMilliseconds(void)
 {
-    prelert::core::CMonotonicTime monoTime;
+    ml::core::CMonotonicTime monoTime;
 
     uint64_t start(monoTime.milliseconds());
 
-    prelert::core::CSleep::sleep(1000);
+    ml::core::CSleep::sleep(1000);
 
     uint64_t end(monoTime.milliseconds());
 
@@ -54,11 +54,11 @@ void CMonotonicTimeTest::testMilliseconds(void)
 
 void CMonotonicTimeTest::testNanoseconds(void)
 {
-    prelert::core::CMonotonicTime monoTime;
+    ml::core::CMonotonicTime monoTime;
 
     uint64_t start(monoTime.nanoseconds());
 
-    prelert::core::CSleep::sleep(1000);
+    ml::core::CSleep::sleep(1000);
 
     uint64_t end(monoTime.nanoseconds());
 

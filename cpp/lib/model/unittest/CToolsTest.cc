@@ -22,7 +22,7 @@
 
 #include <boost/range.hpp>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 void CToolsTest::testDataGatherers(void)

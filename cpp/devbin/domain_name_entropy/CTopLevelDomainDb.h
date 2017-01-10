@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_domain_name_entropy_CTopLevelDomainDb_h
-#define INCLUDED_prelert_domain_name_entropy_CTopLevelDomainDb_h
+#ifndef INCLUDED_ml_domain_name_entropy_CTopLevelDomainDb_h
+#define INCLUDED_ml_domain_name_entropy_CTopLevelDomainDb_h
 
 #include <set>
 #include <string>
@@ -21,7 +21,7 @@
 
 #include <core/CNonCopyable.h>
 
-namespace prelert
+namespace ml
 {
 namespace domain_name_entropy
 {
@@ -166,4 +166,4 @@ class CTopLevelDomainDb : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_domain_name_entropy_CTopLevelDomainDb_h
+#endif // INCLUDED_ml_domain_name_entropy_CTopLevelDomainDb_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CSampleCounts_h
-#define INCLUDED_prelert_model_CSampleCounts_h
+#ifndef INCLUDED_ml_model_CSampleCounts_h
+#define INCLUDED_ml_model_CSampleCounts_h
 
 #include <core/CMemory.h>
 #include <core/CoreTypes.h>
@@ -27,7 +27,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -144,6 +144,6 @@ class MODEL_EXPORT CSampleCounts
 };
 
 } // model
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_model_CSampleCounts_h
+#endif // INCLUDED_ml_model_CSampleCounts_h

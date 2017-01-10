@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     size_t iterations = static_cast<size_t>(atoi(argv[3]));
 
 #ifdef NO_STD_CHRONO
-    prelert::core::CMonotonicTime clock;
+    ml::core::CMonotonicTime clock;
     uint64_t startTimeNs = clock.nanoseconds();
 #else
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();

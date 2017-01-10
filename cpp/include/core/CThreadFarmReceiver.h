@@ -12,13 +12,13 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CThreadFarmReceiver_h
-#define INCLUDED_prelert_core_CThreadFarmReceiver_h
+#ifndef INCLUDED_ml_core_CThreadFarmReceiver_h
+#define INCLUDED_ml_core_CThreadFarmReceiver_h
 
 #include <core/CLogger.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -67,5 +67,5 @@ class CThreadFarmReceiver
 }
 }
 
-#endif // INCLUDED_prelert_core_CThreadFarmReceiver_h
+#endif // INCLUDED_ml_core_CThreadFarmReceiver_h
 

@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CRuntimeLoadedLibrary_h
-#define INCLUDED_prelert_core_CRuntimeLoadedLibrary_h
+#ifndef INCLUDED_ml_core_CRuntimeLoadedLibrary_h
+#define INCLUDED_ml_core_CRuntimeLoadedLibrary_h
 
 #include <core/CNonCopyable.h>
 #include <core/ImportExport.h>
@@ -24,7 +24,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -72,8 +72,8 @@ class CORE_EXPORT CRuntimeLoadedLibrary : private CNonCopyable
         //! to, and do the cast.
         intptr_t funcAddr(const std::string &funcName) const;
 
-        //! Get the default library directory for Prelert libraries.
-        static std::string prelertLibDir(void);
+        //! Get the default library directory for Ml libraries.
+        static std::string mlLibDir(void);
 
     private:
         //! Handle to the loaded library
@@ -91,5 +91,5 @@ class CORE_EXPORT CRuntimeLoadedLibrary : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CRuntimeLoadedLibrary_h
+#endif // INCLUDED_ml_core_CRuntimeLoadedLibrary_h
 

@@ -24,7 +24,7 @@
 #include <limits>
 
 
-namespace prelert
+namespace ml
 {
 
 namespace model
@@ -371,5 +371,5 @@ bool CResourceMonitor::haveNoLimit(void) const
 }
 
 } // model
-} // prelert
+} // ml
 

@@ -35,14 +35,14 @@ void CEuclideanDistanceTest::testDistances(void)
     // 1D test
     // Obviously the distance from 0 to 10 is 10
     {
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates1;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates1;
         coordinates1.push_back(0.0);
 
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates2;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates2;
         coordinates2.push_back(10.0);
 
         double distance = 0.0;
-        CPPUNIT_ASSERT(prelert::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
+        CPPUNIT_ASSERT(ml::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
                                                                              coordinates1.end(),
                                                                              coordinates2.begin(),
                                                                              coordinates2.end(),
@@ -55,16 +55,16 @@ void CEuclideanDistanceTest::testDistances(void)
     // By Pythagorous's theorem, the distance from (0, 0) to a point with
     // co-ordinates (3, 4) should be 5
     {
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates1;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates1;
         coordinates1.push_back(0.0);
         coordinates1.push_back(0.0);
 
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates2;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates2;
         coordinates2.push_back(3.0);
         coordinates2.push_back(4.0);
 
         double distance = 0.0;
-        CPPUNIT_ASSERT(prelert::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
+        CPPUNIT_ASSERT(ml::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
                                                                              coordinates1.end(),
                                                                              coordinates2.begin(),
                                                                              coordinates2.end(),
@@ -77,18 +77,18 @@ void CEuclideanDistanceTest::testDistances(void)
     // By Pythagorous's theorem applied twice, the distance from (0, 0, 0) to a
     // point with co-ordinates (3, 4, 12) should be 13
     {
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates1;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates1;
         coordinates1.push_back(0.0);
         coordinates1.push_back(0.0);
         coordinates1.push_back(0.0);
 
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates2;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates2;
         coordinates2.push_back(3.0);
         coordinates2.push_back(4.0);
         coordinates2.push_back(12.0);
 
         double distance = 0.0;
-        CPPUNIT_ASSERT(prelert::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
+        CPPUNIT_ASSERT(ml::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
                                                                              coordinates1.end(),
                                                                              coordinates2.begin(),
                                                                              coordinates2.end(),
@@ -100,14 +100,14 @@ void CEuclideanDistanceTest::testDistances(void)
     // Now the same 3 tests again, but with an offset applied to each of the
     // coordinates - the distances should be the same as before
     {
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates1;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates1;
         coordinates1.push_back(7.3);
 
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates2;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates2;
         coordinates2.push_back(17.3);
 
         double distance = 0.0;
-        CPPUNIT_ASSERT(prelert::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
+        CPPUNIT_ASSERT(ml::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
                                                                              coordinates1.end(),
                                                                              coordinates2.begin(),
                                                                              coordinates2.end(),
@@ -117,16 +117,16 @@ void CEuclideanDistanceTest::testDistances(void)
     }
 
     {
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates1;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates1;
         coordinates1.push_back(4.2);
         coordinates1.push_back(-80.0);
 
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates2;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates2;
         coordinates2.push_back(7.2);
         coordinates2.push_back(-76.0);
 
         double distance = 0.0;
-        CPPUNIT_ASSERT(prelert::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
+        CPPUNIT_ASSERT(ml::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
                                                                              coordinates1.end(),
                                                                              coordinates2.begin(),
                                                                              coordinates2.end(),
@@ -136,18 +136,18 @@ void CEuclideanDistanceTest::testDistances(void)
     }
 
     {
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates1;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates1;
         coordinates1.push_back(-0.5);
         coordinates1.push_back(100000.0);
         coordinates1.push_back(-12.0);
 
-        prelert::maths::CEuclideanDistance::TDoubleVec coordinates2;
+        ml::maths::CEuclideanDistance::TDoubleVec coordinates2;
         coordinates2.push_back(2.5);
         coordinates2.push_back(100004.0);
         coordinates2.push_back(0.0);
 
         double distance = 0.0;
-        CPPUNIT_ASSERT(prelert::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
+        CPPUNIT_ASSERT(ml::maths::CEuclideanDistance::euclideanDistance(coordinates1.begin(),
                                                                              coordinates1.end(),
                                                                              coordinates2.begin(),
                                                                              coordinates2.end(),

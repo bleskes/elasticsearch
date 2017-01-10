@@ -38,17 +38,17 @@ CppUnit::Test *CResourceLocatorTest::suite()
 
 void CResourceLocatorTest::testResourceDir(void)
 {
-    std::string resourceDir(prelert::core::CResourceLocator::resourceDir());
+    std::string resourceDir(ml::core::CResourceLocator::resourceDir());
     LOG_DEBUG("Resource directory is " << resourceDir);
 
-    // It should contain the file prelert-en.dict
-    prelert::core::COsFileFuncs::TStat buf;
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat((resourceDir + "/prelert-en.dict").c_str(), &buf));
+    // It should contain the file ml-en.dict
+    ml::core::COsFileFuncs::TStat buf;
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat((resourceDir + "/ml-en.dict").c_str(), &buf));
 }
 
 void CResourceLocatorTest::testLogDir(void)
 {
-    std::string logDir(prelert::core::CResourceLocator::logDir());
+    std::string logDir(ml::core::CResourceLocator::logDir());
     LOG_DEBUG("Log directory is " << logDir);
 
     // Don't assert on this as it will be non-essential once
@@ -57,11 +57,11 @@ void CResourceLocatorTest::testLogDir(void)
 
 void CResourceLocatorTest::testSrcRootDir(void)
 {
-    std::string cppRootDir(prelert::core::CResourceLocator::cppRootDir());
+    std::string cppRootDir(ml::core::CResourceLocator::cppRootDir());
     LOG_DEBUG("C++ root directory is " << cppRootDir);
 
     // It should contain the file set_env.sh
-    prelert::core::COsFileFuncs::TStat buf;
-    CPPUNIT_ASSERT_EQUAL(0, prelert::core::COsFileFuncs::stat((cppRootDir + "/set_env.sh").c_str(), &buf));
+    ml::core::COsFileFuncs::TStat buf;
+    CPPUNIT_ASSERT_EQUAL(0, ml::core::COsFileFuncs::stat((cppRootDir + "/set_env.sh").c_str(), &buf));
 }
 

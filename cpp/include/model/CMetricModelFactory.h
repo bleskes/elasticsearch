@@ -13,13 +13,13 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CMetricModelFactory_h
-#define INCLUDED_prelert_model_CMetricModelFactory_h
+#ifndef INCLUDED_ml_model_CMetricModelFactory_h
+#define INCLUDED_ml_model_CMetricModelFactory_h
 
 #include <model/CModelFactory.h>
 #include <model/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -234,4 +234,4 @@ class MODEL_EXPORT CMetricModelFactory : public CModelFactory
 }
 }
 
-#endif // INCLUDED_prelert_model_CMetricModelFactory_h
+#endif // INCLUDED_ml_model_CMetricModelFactory_h

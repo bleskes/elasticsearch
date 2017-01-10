@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CDelimiter_h
-#define INCLUDED_prelert_core_CDelimiter_h
+#ifndef INCLUDED_ml_core_CDelimiter_h
+#define INCLUDED_ml_core_CDelimiter_h
 
 #include <core/ImportExport.h>
 #include <core/CRegex.h>
@@ -23,7 +23,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -153,5 +153,5 @@ CORE_EXPORT std::ostream &operator<<(std::ostream &strm,
 }
 }
 
-#endif // INCLUDED_prelert_core_CDelimiter_h
+#endif // INCLUDED_ml_core_CDelimiter_h
 

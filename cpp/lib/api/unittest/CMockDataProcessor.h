@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CMockDataProcessor_h
-#define INCLUDED_prelert_api_CMockDataProcessor_h
+#ifndef INCLUDED_ml_api_CMockDataProcessor_h
+#define INCLUDED_ml_api_CMockDataProcessor_h
 
 #include <core/CoreTypes.h>
 
@@ -24,7 +24,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -41,10 +41,10 @@ class COutputHandler;
 //! IMPLEMENTATION DECISIONS:\n
 //! Only the minimal set of required functions are implemented.
 //!
-class CMockDataProcessor : public prelert::api::CDataProcessor
+class CMockDataProcessor : public ml::api::CDataProcessor
 {
     public:
-        CMockDataProcessor(prelert::api::COutputHandler &outputHandler);
+        CMockDataProcessor(ml::api::COutputHandler &outputHandler);
 
         //! We're going to be writing to a new output stream
         virtual void newOutputStream(void);
@@ -58,20 +58,20 @@ class CMockDataProcessor : public prelert::api::CDataProcessor
         virtual void finalise(void);
 
         //! Restore previously saved state
-        virtual bool restoreState(prelert::core::CDataSearcher &restoreSearcher,
-                                  prelert::core_t::TTime &completeToTime);
+        virtual bool restoreState(ml::core::CDataSearcher &restoreSearcher,
+                                  ml::core_t::TTime &completeToTime);
 
         //! Persist current state
-        virtual bool persistState(prelert::core::CDataAdder &persister);
+        virtual bool persistState(ml::core::CDataAdder &persister);
 
         //! How many records did we handle?
         virtual uint64_t numRecordsHandled(void) const;
 
         //! Access the output handler
-        virtual prelert::api::COutputHandler &outputHandler(void);
+        virtual ml::api::COutputHandler &outputHandler(void);
 
     private:
-        prelert::api::COutputHandler &m_OutputHandler;
+        ml::api::COutputHandler &m_OutputHandler;
 
         //! Empty field overrides
         TStrStrUMap                  m_FieldOverrides;
@@ -82,5 +82,5 @@ class CMockDataProcessor : public prelert::api::CDataProcessor
 };
 
 
-#endif // INCLUDED_prelert_api_CMockDataProcessor_h
+#endif // INCLUDED_ml_api_CMockDataProcessor_h
 

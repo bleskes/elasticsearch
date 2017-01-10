@@ -15,7 +15,7 @@
 #include <core/CStrFTime.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

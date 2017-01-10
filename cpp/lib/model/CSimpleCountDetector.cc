@@ -20,7 +20,7 @@
 #include <model/CModelConfig.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

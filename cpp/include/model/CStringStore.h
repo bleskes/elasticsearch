@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_model_CStringStore_h
-#define INCLUDED_prelert_model_CStringStore_h
+#ifndef INCLUDED_ml_model_CStringStore_h
+#define INCLUDED_ml_model_CStringStore_h
 
 #include <core/AtomicTypes.h>
 #include <core/CMemory.h>
@@ -30,7 +30,7 @@
 
 class CStringStoreTest;
 
-namespace prelert
+namespace ml
 {
 
 namespace core
@@ -156,6 +156,6 @@ class MODEL_EXPORT CStringStore : private core::CNonCopyable
 
 
 } // model
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_model_CStringStore_h
+#endif // INCLUDED_ml_model_CStringStore_h

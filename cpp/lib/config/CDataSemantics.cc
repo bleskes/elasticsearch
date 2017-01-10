@@ -23,7 +23,7 @@
 
 #include <boost/math/distributions/normal.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

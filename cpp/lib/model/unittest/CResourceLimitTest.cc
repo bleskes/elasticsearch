@@ -39,12 +39,12 @@
 
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 using namespace model;
 
 typedef std::vector<std::string> TStrVec;
 
-class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
+class CResultWriter : public ml::model::CHierarchicalResultsVisitor
 {
     public:
         typedef boost::tuple<core_t::TTime,
@@ -78,8 +78,8 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
             results.bottomUpBreadthFirst(*this);
         }
 
-        virtual void visit(const prelert::model::CHierarchicalResults &results,
-                           const prelert::model::CHierarchicalResults::TNode &node,
+        virtual void visit(const ml::model::CHierarchicalResults &results,
+                           const ml::model::CHierarchicalResults::TNode &node,
                            bool pivot)
         {
             if (pivot)
@@ -102,7 +102,7 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
             LOG_DEBUG("Got anomaly @ " << node.s_BucketStartTime
                       << ": " << node.probability());
 
-            prelert::model::SAnnotatedProbability::TAttributeProbability1Vec &attributes =
+            ml::model::SAnnotatedProbability::TAttributeProbability1Vec &attributes =
                 node.s_AnnotatedProbability.s_AttributeProbabilities;
 
             m_Results.push_back(TResultsTp(node.s_BucketStartTime,
@@ -112,8 +112,8 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
                                            *node.s_Spec.s_PartitionFieldValue));
         }
 
-        bool operator()(prelert::core_t::TTime time,
-                       const prelert::model::CHierarchicalResults::TNode &node,
+        bool operator()(ml::core_t::TTime time,
+                       const ml::model::CHierarchicalResults::TNode &node,
                        bool isBucketInfluencer)
         {
             LOG_DEBUG((isBucketInfluencer ? "BucketInfluencer" :  "Influencer ")
@@ -338,7 +338,7 @@ namespace
 
 //! A test wrapper around a real model that tracks calls to createNewModels
 //! and simulates taking lots of memory
-class CMockEventRateModel : public prelert::model::CEventRateModel
+class CMockEventRateModel : public ml::model::CEventRateModel
 {
     public:
         CMockEventRateModel(const SModelParams &params,
@@ -427,7 +427,7 @@ class CMockEventRateModel : public prelert::model::CEventRateModel
 
 //! A test wrapper around a real model that tracks calls to createNewModels
 //! and simulates taking lots of memory
-class CMockMetricModel : public prelert::model::CMetricModel
+class CMockMetricModel : public ml::model::CMetricModel
 {
     public:
         CMockMetricModel(const SModelParams &params,

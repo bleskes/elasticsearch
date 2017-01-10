@@ -42,7 +42,7 @@
 #include <iostream>
 #include <string>
 
-using namespace prelert;
+using namespace ml;
 using namespace domain_name_entropy;
 
 int main(int argc, char **argv)
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 
     // This must be done from the program, and NOT a shared library, as each
     // program statically links its own version library.
-    LOG_INFO(prelert::ver::CBuildInfo::fullInfo());
+    LOG_INFO(ml::ver::CBuildInfo::fullInfo());
 
     // Start 
     CTopLevelDomainDb tldDb("./effective_tld_names.txt");

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CLinearAlgebra_h
-#define INCLUDED_prelert_maths_CLinearAlgebra_h
+#ifndef INCLUDED_ml_maths_CLinearAlgebra_h
+#define INCLUDED_ml_maths_CLinearAlgebra_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -51,7 +51,7 @@
 
 BOOST_GEOMETRY_REGISTER_BOOST_ARRAY_CS(cs::cartesian)
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1540,7 +1540,7 @@ struct SFabs<MatrixTag>
 //! DESCRIPTION:\n
 //! This implements a stack based mathematical vector object. The idea
 //! is to provide utility functions and operators which mean that it
-//! works with other prelert::maths:: classes, such as the symmetric
+//! works with other ml::maths:: classes, such as the symmetric
 //! matrix object and the sample (co)variance accumulators, and keep the
 //! memory footprint as small as possible. This is not meant to be an
 //! alternative to a good linear analysis package implementation. For
@@ -1944,7 +1944,7 @@ CSymmetricMatrixNxN<T, N>::CSymmetricMatrixNxN(ESymmetricMatrixType type,
 //! DESCRIPTION:\n
 //! This implements a heap based mathematical vector object. The idea
 //! is to provide utility functions and operators which mean that it
-//! works with other prelert::maths:: classes, such as the symmetric
+//! works with other ml::maths:: classes, such as the symmetric
 //! matrix object and the sample (co)variance accumulators, and keep the
 //! memory footprint as small as possible. This is not meant to be an
 //! alternative to a good linear analysis package implementation. For
@@ -2716,4 +2716,4 @@ CSymmetricMatrix<T> fabs(const CSymmetricMatrix<T> &m)
 }
 }
 
-#endif // INCLUDED_prelert_maths_CLinearAlgebra_h
+#endif // INCLUDED_ml_maths_CLinearAlgebra_h

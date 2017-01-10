@@ -29,7 +29,7 @@
 
 #include <math.h>
 
-using namespace prelert;
+using namespace ml;
 using namespace maths;
 
 namespace
@@ -163,7 +163,7 @@ void CCounterTest::testPersist(void)
         LOG_DEBUG("Counter XML representation:\n" << origXml);
 
         // Restore the XML into a new counter
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origXml));
         core::CRapidXmlStateRestoreTraverser traverser(parser);
 
@@ -172,7 +172,7 @@ void CCounterTest::testPersist(void)
         // The XML representation of the new counter should be the same as the original
         std::string newXml;
         {
-            prelert::core::CRapidXmlStatePersistInserter inserter("root");
+            ml::core::CRapidXmlStatePersistInserter inserter("root");
             restoredCounter.acceptPersistInserter(inserter);
             inserter.toXml(newXml);
         }
@@ -198,7 +198,7 @@ void CCounterTest::testPersist(void)
         LOG_DEBUG("Counter with history XML representation:\n" << origXml);
 
         // Restore the XML into a new counter
-        prelert::core::CRapidXmlParser parser;
+        ml::core::CRapidXmlParser parser;
         CPPUNIT_ASSERT(parser.parseStringIgnoreCdata(origXml));
         core::CRapidXmlStateRestoreTraverser traverser(parser);
 
@@ -208,7 +208,7 @@ void CCounterTest::testPersist(void)
         // The XML representation of the new counter should be the same as the original
         std::string newXml;
         {
-            prelert::core::CRapidXmlStatePersistInserter inserter("root");
+            ml::core::CRapidXmlStatePersistInserter inserter("root");
             restoredCounter.acceptPersistInserter(inserter);
             inserter.toXml(newXml);
         }

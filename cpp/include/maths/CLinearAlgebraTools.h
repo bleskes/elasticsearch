@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CLinearAlgebraTools_h
-#define INCLUDED_prelert_maths_CLinearAlgebraTools_h
+#ifndef INCLUDED_ml_maths_CLinearAlgebraTools_h
+#define INCLUDED_ml_maths_CLinearAlgebraTools_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -29,7 +29,7 @@
 #include <limits>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -363,4 +363,4 @@ inline Eigen::Matrix<double, Eigen::Dynamic, 1>
 }
 }
 
-#endif // INCLUDED_prelert_maths_CLinearAlgebraTools_h
+#endif // INCLUDED_ml_maths_CLinearAlgebraTools_h

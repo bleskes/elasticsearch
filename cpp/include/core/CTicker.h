@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CTicker_h
-#define INCLUDED_prelert_core_CTicker_h
+#ifndef INCLUDED_ml_core_CTicker_h
+#define INCLUDED_ml_core_CTicker_h
 
 #include <core/CCondition.h>
 #include <core/CMutex.h>
@@ -22,7 +22,7 @@
 #include <core/ImportExport.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -105,5 +105,5 @@ class CTicker : public CThread
 }
 }
 
-#endif // INCLUDED_prelert_core_CTicker_h
+#endif // INCLUDED_ml_core_CTicker_h
 

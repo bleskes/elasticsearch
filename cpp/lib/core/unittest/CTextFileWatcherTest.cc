@@ -102,11 +102,11 @@ class CVisitor
 
 void CTextFileWatcherTest::testInitStart(void)
 {
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest1.txt",
-                                prelert::core_t::LINE_ENDING,
-                                prelert::core::CTextFileWatcher::E_Start));
+                                ml::core_t::LINE_ENDING,
+                                ml::core::CTextFileWatcher::E_Start));
     CVisitor v;
 
     CPPUNIT_ASSERT(watcher.changes(boost::bind(&CVisitor::visit, &v, _1)));
@@ -133,7 +133,7 @@ void CTextFileWatcherTest::testInitStart(void)
     }
 
     // What delimiter did we actually see?
-    CPPUNIT_ASSERT_EQUAL(std::string(prelert::core_t::LINE_ENDING), watcher.exampleDelimiter());
+    CPPUNIT_ASSERT_EQUAL(std::string(ml::core_t::LINE_ENDING), watcher.exampleDelimiter());
 }
 
 void CTextFileWatcherTest::testInitEnd1(void)
@@ -149,11 +149,11 @@ void CTextFileWatcherTest::testInitEnd1(void)
     }
 
     // Watcher should pick up nothing
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest2.txt",
                                 "<END>\r?\n",
-                                prelert::core::CTextFileWatcher::E_End));
+                                ml::core::CTextFileWatcher::E_End));
     CVisitor v;
     {
         CPPUNIT_ASSERT(watcher.changes(boost::bind(&CVisitor::visit, &v, _1)));
@@ -223,7 +223,7 @@ void CTextFileWatcherTest::testInitEnd1(void)
     }
 
     // What delimiter did we actually see?
-    CPPUNIT_ASSERT_EQUAL(std::string("<END>") + prelert::core_t::LINE_ENDING, watcher.exampleDelimiter());
+    CPPUNIT_ASSERT_EQUAL(std::string("<END>") + ml::core_t::LINE_ENDING, watcher.exampleDelimiter());
 }
 
 void CTextFileWatcherTest::testInitEnd2(void)
@@ -238,11 +238,11 @@ void CTextFileWatcherTest::testInitEnd2(void)
         fs << "Message " << i << std::endl;
     }
 
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest5.txt",
                                 "\r?\n",
-                                prelert::core::CTextFileWatcher::E_End));
+                                ml::core::CTextFileWatcher::E_End));
 
     CVisitor v;
 
@@ -294,18 +294,18 @@ void CTextFileWatcherTest::testInitEnd2(void)
     }
 
     // What delimiter did we actually see?
-    CPPUNIT_ASSERT_EQUAL(std::string(prelert::core_t::LINE_ENDING), watcher.exampleDelimiter());
+    CPPUNIT_ASSERT_EQUAL(std::string(ml::core_t::LINE_ENDING), watcher.exampleDelimiter());
 }
 
 void CTextFileWatcherTest::testReadAllLines1(void)
 {
 
 {
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest1.txt",
                                 "\r?\n",
-                                prelert::core::CTextFileWatcher::E_Start));
+                                ml::core::CTextFileWatcher::E_Start));
     CVisitor v;
 
     std::string remainder;
@@ -325,9 +325,9 @@ void CTextFileWatcherTest::testReadAllLines1(void)
         file += '\n';
     }
 
-    prelert::core::CStringUtils::TStrVec expected;
+    ml::core::CStringUtils::TStrVec expected;
 
-    prelert::core::CStringUtils::tokenise("\n", file, expected, remainder);
+    ml::core::CStringUtils::tokenise("\n", file, expected, remainder);
 
     CPPUNIT_ASSERT(remainder.empty());
 
@@ -352,11 +352,11 @@ void CTextFileWatcherTest::testReadAllLines1(void)
     }
 }
 {
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest1.txt",
                                 "\r?\n",
-                                prelert::core::CTextFileWatcher::E_End));
+                                ml::core::CTextFileWatcher::E_End));
     CVisitor v;
 
     std::string remainder;
@@ -383,23 +383,23 @@ void CTextFileWatcherTest::testReadAllLines1(void)
     }
 
     // What delimiter did we actually see?
-    CPPUNIT_ASSERT_EQUAL(std::string(prelert::core_t::LINE_ENDING), watcher.exampleDelimiter());
+    CPPUNIT_ASSERT_EQUAL(std::string(ml::core_t::LINE_ENDING), watcher.exampleDelimiter());
 }
 
 }
 
 void CTextFileWatcherTest::testReadAllLines2(void)
 {
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest3.txt",
                                 "<END>",
-                                prelert::core::CTextFileWatcher::E_Start));
+                                ml::core::CTextFileWatcher::E_Start));
     CVisitor v;
 
     std::string remainder;
     CPPUNIT_ASSERT(watcher.readAllLines(boost::bind(&CVisitor::visit, &v, _1), remainder));
-    CPPUNIT_ASSERT_EQUAL(std::string(prelert::core_t::LINE_ENDING), remainder);
+    CPPUNIT_ASSERT_EQUAL(std::string(ml::core_t::LINE_ENDING), remainder);
 
     const TStrVec &actual = v.strings();
 
@@ -411,14 +411,14 @@ void CTextFileWatcherTest::testReadAllLines2(void)
     while (std::getline(ifs, line))
     {
         file += line;
-        file += prelert::core_t::LINE_ENDING;
+        file += ml::core_t::LINE_ENDING;
     }
 
-    prelert::core::CStringUtils::TStrVec expected;
+    ml::core::CStringUtils::TStrVec expected;
 
-    prelert::core::CStringUtils::tokenise("<END>", file, expected, remainder);
+    ml::core::CStringUtils::tokenise("<END>", file, expected, remainder);
 
-    CPPUNIT_ASSERT_EQUAL(std::string(prelert::core_t::LINE_ENDING), remainder);
+    CPPUNIT_ASSERT_EQUAL(std::string(ml::core_t::LINE_ENDING), remainder);
 
     CPPUNIT_ASSERT_EQUAL(expected.size(), actual.size());
 
@@ -436,14 +436,14 @@ void CTextFileWatcherTest::testReadAllLines2(void)
 
 void CTextFileWatcherTest::testMultiLineMessages(void)
 {
-    prelert::core::CTextFileWatcher watcher;
+    ml::core::CTextFileWatcher watcher;
 
     // All messages begin with a date formatted along the lines of
     //
     //          Oct 11, 2008 3:11:51 PM
     //
     // so the regex that must follow a delimiter is based on that
-    prelert::core::CDelimiter delimiter("\n", "\\w+\\s+\\d+,\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+\\w+", true);
+    ml::core::CDelimiter delimiter("\n", "\\w+\\s+\\d+,\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+\\w+", true);
 
     // There are 2373 lines in the file, making up 1106 messages.
     // Each message is spread over at least 2 lines, but some messages spread
@@ -451,7 +451,7 @@ void CTextFileWatcherTest::testMultiLineMessages(void)
     const size_t totalMessages = 1106;
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest4.txt",
                                 delimiter,
-                                prelert::core::CTextFileWatcher::E_Start));
+                                ml::core::CTextFileWatcher::E_Start));
 
     // The first time we ask what's changed in the file, we should get all but
     // the last message, because the regex doesn't follow the last message, and
@@ -510,11 +510,11 @@ void CTextFileWatcherTest::testFileRename(void)
 
     // Watcher should pick up nothing
     // Use 3 retries if the file is not available after a rename
-    prelert::core::CTextFileWatcher watcher(3);
+    ml::core::CTextFileWatcher watcher(3);
 
     CPPUNIT_ASSERT(watcher.init("testfiles/CTextFileWatcherTest6.txt",
                                 "<END>\r?\n",
-                                prelert::core::CTextFileWatcher::E_End));
+                                ml::core::CTextFileWatcher::E_End));
     CVisitor v;
     {
         CPPUNIT_ASSERT(watcher.changes(boost::bind(&CVisitor::visit, &v, _1)));
@@ -604,7 +604,7 @@ void CTextFileWatcherTest::testFileRename(void)
     CPPUNIT_ASSERT(!watcher.changes(boost::bind(&CVisitor::visit, &v, _1)));
 
     // What delimiter did we actually see?
-    CPPUNIT_ASSERT_EQUAL(std::string("<END>") + prelert::core_t::LINE_ENDING, watcher.exampleDelimiter());
+    CPPUNIT_ASSERT_EQUAL(std::string("<END>") + ml::core_t::LINE_ENDING, watcher.exampleDelimiter());
 
     // Assuming all the assertions were OK, clean up the renamed files
     ::remove("testfiles/CTextFileWatcherTest6.txt.1");

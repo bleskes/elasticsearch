@@ -12,14 +12,14 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CUnSetEnv_h
-#define INCLUDED_prelert_core_CUnSetEnv_h
+#ifndef INCLUDED_ml_core_CUnSetEnv_h
+#define INCLUDED_ml_core_CUnSetEnv_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/ImportExport.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -47,5 +47,5 @@ class CORE_EXPORT CUnSetEnv : private CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_core_CUnSetEnv_h
+#endif // INCLUDED_ml_core_CUnSetEnv_h
 

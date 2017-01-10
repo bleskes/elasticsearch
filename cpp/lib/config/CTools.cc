@@ -22,7 +22,7 @@
 #include <cstddef>
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {

@@ -17,7 +17,7 @@
 #include <core/CLogger.h>
 #include <core/CStringUtils.h>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

@@ -15,7 +15,7 @@
 #include <api/CSingleStreamSearcher.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

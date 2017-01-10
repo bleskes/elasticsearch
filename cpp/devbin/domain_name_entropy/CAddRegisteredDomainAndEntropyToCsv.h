@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_domain_name_entropy_CAddRegisteredDomainAndEntropyToCsv_h
-#define INCLUDED_prelert_domain_name_entropy_CAddRegisteredDomainAndEntropyToCsv_h
+#ifndef INCLUDED_ml_domain_name_entropy_CAddRegisteredDomainAndEntropyToCsv_h
+#define INCLUDED_ml_domain_name_entropy_CAddRegisteredDomainAndEntropyToCsv_h
 
 #include <map>
 #include <set>
@@ -26,7 +26,7 @@
 
 #include "CCompressUtils.h"
 
-namespace prelert
+namespace ml
 {
 namespace domain_name_entropy
 {
@@ -80,4 +80,4 @@ class CAddRegisteredDomainAndEntropyToCsv : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_domain_name_entropy_CAddRegisteredDomainAndEntropyToCsv_h
+#endif // INCLUDED_ml_domain_name_entropy_CAddRegisteredDomainAndEntropyToCsv_h

@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CMessageQueue_h
-#define INCLUDED_prelert_core_CMessageQueue_h
+#ifndef INCLUDED_ml_core_CMessageQueue_h
+#define INCLUDED_ml_core_CMessageQueue_h
 
 #include <core/CCondition.h>
 #include <core/CLogger.h>
@@ -29,7 +29,7 @@
 #include <queue>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -349,5 +349,5 @@ class CMessageQueue
 }
 }
 
-#endif // INCLUDED_prelert_core_CMessageQueue_h
+#endif // INCLUDED_ml_core_CMessageQueue_h
 

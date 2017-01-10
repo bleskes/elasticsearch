@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CCopulaMargin_h
-#define INCLUDED_prelert_maths_CCopulaMargin_h
+#ifndef INCLUDED_ml_maths_CCopulaMargin_h
+#define INCLUDED_ml_maths_CCopulaMargin_h
 
 #include <maths/CMultivariateComponent.h>
 #include <maths/ImportExport.h>
 
 #include <boost/shared_ptr.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -212,4 +212,4 @@ class MATHS_EXPORT CCopulaMargin : public CMultivariateComponent
 }
 }
 
-#endif // INCLUDED_prelert_maths_CCopulaMargin_h
+#endif // INCLUDED_ml_maths_CCopulaMargin_h

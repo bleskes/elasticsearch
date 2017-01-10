@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CAnomalyDetectorUtils_h
-#define INCLUDED_prelert_api_CAnomalyDetectorUtils_h
+#ifndef INCLUDED_ml_api_CAnomalyDetectorUtils_h
+#define INCLUDED_ml_api_CAnomalyDetectorUtils_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/CoreTypes.h>
@@ -30,7 +30,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -130,5 +130,5 @@ class API_EXPORT CAnomalyDetectorUtils : private core::CNonInstantiatable
 }
 }
 
-#endif // INCLUDED_prelert_api_CAnomalyDetectorUtils_h
+#endif // INCLUDED_ml_api_CAnomalyDetectorUtils_h
 

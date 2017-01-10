@@ -37,7 +37,7 @@ CppUnit::Test *CThreadMutexConditionTest::suite()
 
 void CThreadMutexConditionTest::testThread(void)
 {
-    class CThread : public prelert::core::CThread
+    class CThread : public ml::core::CThread
     {
         public:
             CThread(void) : m_Running(false)
@@ -83,7 +83,7 @@ void CThreadMutexConditionTest::testThread(void)
             }
 
         private:
-            prelert::core::CMutex m_Mutex;
+            ml::core::CMutex m_Mutex;
             bool                  m_Running;
     };
 
@@ -95,7 +95,7 @@ void CThreadMutexConditionTest::testThread(void)
     CPPUNIT_ASSERT(thread.start());
 
     // Wait for thread to initialise
-    prelert::core::CSleep::sleep(1000);
+    ml::core::CSleep::sleep(1000);
 
     CPPUNIT_ASSERT(thread.isRunning() == true);
 
@@ -106,7 +106,7 @@ void CThreadMutexConditionTest::testThread(void)
 
 void CThreadMutexConditionTest::testThreadCondition(void)
 {
-    class CThread : public prelert::core::CThread
+    class CThread : public ml::core::CThread
     {
         public:
             CThread(void) : m_Condition(m_Mutex)
@@ -160,8 +160,8 @@ void CThreadMutexConditionTest::testThreadCondition(void)
             }
 
         private:
-            prelert::core::CMutex     m_Mutex;
-            prelert::core::CCondition m_Condition;
+            ml::core::CMutex     m_Mutex;
+            ml::core::CCondition m_Condition;
     };
 
     CThread thread;

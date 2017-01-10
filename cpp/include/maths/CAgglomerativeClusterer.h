@@ -13,15 +13,15 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CAgglomerativeClusterer_h
-#define INCLUDED_prelert_maths_CAgglomerativeClusterer_h
+#ifndef INCLUDED_ml_maths_CAgglomerativeClusterer_h
+#define INCLUDED_ml_maths_CAgglomerativeClusterer_h
 
 #include <maths/ImportExport.h>
 
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -145,4 +145,4 @@ class MATHS_EXPORT CAgglomerativeClusterer
 }
 }
 
-#endif // INCLUDED_prelert_maths_CAgglomerativeClusterer_h
+#endif // INCLUDED_ml_maths_CAgglomerativeClusterer_h

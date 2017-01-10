@@ -18,7 +18,7 @@
 #include <core/CStringUtils.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -53,7 +53,7 @@ bool CLoadableModule::loadModule(void)
 
 std::string CLoadableModule::createPath(const std::string &moduleName)
 {
-    std::string path(CRuntimeLoadedLibrary::prelertLibDir());
+    std::string path(CRuntimeLoadedLibrary::mlLibDir());
     path += "/lib";
     path += moduleName;
     path += STRINGIFY_MACRO(DYNAMIC_LIB_EXT);

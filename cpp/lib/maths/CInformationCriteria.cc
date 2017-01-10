@@ -19,7 +19,7 @@
 
 #include <boost/math/distributions/chi_squared.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

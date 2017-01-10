@@ -38,7 +38,7 @@ void CWordExtractorTest::testWordExtract(void)
         std::string message("2011-01-25 02:10:03,551 ERROR [com.wf.fx.fxcore.tradefeedtracker.MessageLoggerService] Failed to Rollback");
         std::string words;
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(message, words);
 
         LOG_DEBUG("Message: " << message);
         LOG_DEBUG("Words: " << words);
@@ -49,7 +49,7 @@ void CWordExtractorTest::testWordExtract(void)
         std::string message("2011-01-25 14:20:49,646 INFO  [com.wf.fx.fxcore.settlement.synchronization.tomidasplus.NonFXInstructionToMidasPlusSyncImpl] Found corresponding outgoingPaymentFlow :: OutGoingPaymentFlow.id = 1007480");
         std::string words;
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(message, words);
 
         LOG_DEBUG("Message: " << message);
         LOG_DEBUG("Words: " << words);
@@ -60,7 +60,7 @@ void CWordExtractorTest::testWordExtract(void)
         std::string message("]\", which is more than the configured time (StuckThreadMaxTime) of \"600\" seconds. Stack trace:");
         std::string words;
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(message, words);
 
         LOG_DEBUG("Message: " << message);
         LOG_DEBUG("Words: " << words);
@@ -75,7 +75,7 @@ void CWordExtractorTest::testMinConsecutive(void)
         std::string message("2011-01-25 02:10:03,551 ERROR [com.wf.fx.fxcore.tradefeedtracker.MessageLoggerService] Failed to Rollback");
         std::string words;
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(2, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(2, message, words);
 
         LOG_DEBUG("Min consecutive: 2");
         LOG_DEBUG("Message: " << message);
@@ -83,7 +83,7 @@ void CWordExtractorTest::testMinConsecutive(void)
 
         CPPUNIT_ASSERT_EQUAL(std::string("Failed to Rollback"), words);
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(3, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(3, message, words);
 
         LOG_DEBUG("Min consecutive: 3");
         LOG_DEBUG("Message: " << message);
@@ -91,7 +91,7 @@ void CWordExtractorTest::testMinConsecutive(void)
 
         CPPUNIT_ASSERT_EQUAL(std::string("Failed to Rollback"), words);
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(4, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(4, message, words);
 
         LOG_DEBUG("Min consecutive: 4");
         LOG_DEBUG("Message: " << message);
@@ -103,7 +103,7 @@ void CWordExtractorTest::testMinConsecutive(void)
         std::string message("]\", which is more than the configured time (StuckThreadMaxTime) of \"600\" seconds. Stack trace:");
         std::string words;
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(2, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(2, message, words);
 
         LOG_DEBUG("Min consecutive: 2");
         LOG_DEBUG("Message: " << message);
@@ -111,7 +111,7 @@ void CWordExtractorTest::testMinConsecutive(void)
 
         CPPUNIT_ASSERT_EQUAL(std::string("which is more than the configured time seconds Stack trace"), words);
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(3, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(3, message, words);
 
         LOG_DEBUG("Min consecutive: 3");
         LOG_DEBUG("Message: " << message);
@@ -119,7 +119,7 @@ void CWordExtractorTest::testMinConsecutive(void)
 
         CPPUNIT_ASSERT_EQUAL(std::string("which is more than the configured time seconds Stack trace"), words);
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(4, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(4, message, words);
 
         LOG_DEBUG("Min consecutive: 4");
         LOG_DEBUG("Message: " << message);
@@ -131,7 +131,7 @@ void CWordExtractorTest::testMinConsecutive(void)
         std::string message("<lnl00m-8253.1.p2ps: Warning: > Output threshold breached for: indexarblon at position 162.26.156.136/net using application 263 on channel 13.<END>");
         std::string words;
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(2, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(2, message, words);
 
         LOG_DEBUG("Min consecutive: 2");
         LOG_DEBUG("Message: " << message);
@@ -139,7 +139,7 @@ void CWordExtractorTest::testMinConsecutive(void)
 
         CPPUNIT_ASSERT_EQUAL(std::string("Output threshold breached for at position using application on channel"), words);
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(3, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(3, message, words);
 
         LOG_DEBUG("Min consecutive: 3");
         LOG_DEBUG("Message: " << message);
@@ -147,7 +147,7 @@ void CWordExtractorTest::testMinConsecutive(void)
 
         CPPUNIT_ASSERT_EQUAL(std::string("Output threshold breached for"), words);
 
-        prelert::core::CWordExtractor::extractWordsFromMessage(4, message, words);
+        ml::core::CWordExtractor::extractWordsFromMessage(4, message, words);
 
         LOG_DEBUG("Min consecutive: 4");
         LOG_DEBUG("Message: " << message);

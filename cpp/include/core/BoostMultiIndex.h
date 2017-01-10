@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_BoostMultiIndex_h
-#define INCLUDED_prelert_core_BoostMultiIndex_h
+#ifndef INCLUDED_ml_core_BoostMultiIndex_h
+#define INCLUDED_ml_core_BoostMultiIndex_h
 
 //! \brief
 //! Boost headers + extra MACRO for boost multi-index objects
@@ -32,5 +32,5 @@
 #define BOOST_MULTI_INDEX_CONST_TYPE_CONST_MEM_FUN(Class,Type,MemberFunName) \
 ::boost::multi_index::const_mem_fun< Class, const Type &, &Class::MemberFunName >
 
-#endif // INCLUDED_prelert_core_BoostMultiIndex_h
+#endif // INCLUDED_ml_core_BoostMultiIndex_h
 

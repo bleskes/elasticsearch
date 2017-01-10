@@ -17,7 +17,7 @@
 
 #include <maths/CMultimodalPriorUtils.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

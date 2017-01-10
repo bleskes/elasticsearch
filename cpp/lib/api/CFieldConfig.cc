@@ -40,7 +40,7 @@
 #include <utility>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -451,7 +451,7 @@ bool CFieldConfig::findLastByOverTokens(const TStrVec &copyTokens,
         {
             if (!m_AllowPopulationConfigs)
             {
-                LOG_ERROR("This Prelert command does not support "
+                LOG_ERROR("This Ml command does not support "
                           "population modeling (the '" <<
                           copyTokens[index] <<
                           "' token implies population modeling)");
@@ -2120,10 +2120,10 @@ std::ostream &CFieldConfig::CFieldOptions::appendConfigSegment(int configKeyOver
     this->appendConfigClause(strm);
     if (!categorizatationFieldName.empty())
     {
-        if (m_FieldName == CFieldDataTyper::PRELERTCATEGORY_NAME ||
-            m_ByFieldName == CFieldDataTyper::PRELERTCATEGORY_NAME ||
-            m_OverFieldName == CFieldDataTyper::PRELERTCATEGORY_NAME ||
-            m_PartitionFieldName == CFieldDataTyper::PRELERTCATEGORY_NAME)
+        if (m_FieldName == CFieldDataTyper::MLCATEGORY_NAME ||
+            m_ByFieldName == CFieldDataTyper::MLCATEGORY_NAME ||
+            m_OverFieldName == CFieldDataTyper::MLCATEGORY_NAME ||
+            m_PartitionFieldName == CFieldDataTyper::MLCATEGORY_NAME)
         {
             strm << ' ' << CATEGORIZATION_FIELD_OPTION << '=' << CTermQuoter::doubleQuote(categorizatationFieldName);
         }

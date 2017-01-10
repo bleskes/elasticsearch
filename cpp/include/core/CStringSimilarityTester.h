@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CStringSimilarityTester_h
-#define INCLUDED_prelert_core_CStringSimilarityTester_h
+#ifndef INCLUDED_ml_core_CStringSimilarityTester_h
+#define INCLUDED_ml_core_CStringSimilarityTester_h
 
 #include <core/CCompressUtils.h>
 #include <core/CLogger.h>
@@ -32,7 +32,7 @@
 class CStringSimilarityTesterTest;
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -527,5 +527,5 @@ class CORE_EXPORT CStringSimilarityTester : private CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_core_CStringSimilarityTester_h
+#endif // INCLUDED_ml_core_CStringSimilarityTester_h
 

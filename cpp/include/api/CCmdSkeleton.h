@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CCmdSkeleton_h
-#define INCLUDED_prelert_api_CCmdSkeleton_h
+#ifndef INCLUDED_ml_api_CCmdSkeleton_h
+#define INCLUDED_ml_api_CCmdSkeleton_h
 
 #include <core/CNonCopyable.h>
 
@@ -22,7 +22,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -79,5 +79,5 @@ class API_EXPORT CCmdSkeleton : private core::CNonCopyable
 }
 }
 
-#endif // INCLUDED_prelert_api_CCmdSkeleton_h
+#endif // INCLUDED_ml_api_CCmdSkeleton_h
 

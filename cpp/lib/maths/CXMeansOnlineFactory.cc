@@ -19,7 +19,7 @@
 
 #include <maths/CXMeansOnline.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

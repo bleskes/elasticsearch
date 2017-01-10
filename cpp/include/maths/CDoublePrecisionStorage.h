@@ -12,12 +12,12 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_maths_CDoublePrecisionStorage_h
-#define INCLUDED_prelert_maths_CDoublePrecisionStorage_h
+#ifndef INCLUDED_ml_maths_CDoublePrecisionStorage_h
+#define INCLUDED_ml_maths_CDoublePrecisionStorage_h
 
 #include <maths/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -66,6 +66,6 @@ class CDoublePrecisionStorage
 };
 
 } // maths
-} // prelert
+} // ml
 
-#endif // INCLUDED_prelert_maths_CDoublePrecisionStorage_h
+#endif // INCLUDED_ml_maths_CDoublePrecisionStorage_h

@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <ostream>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {

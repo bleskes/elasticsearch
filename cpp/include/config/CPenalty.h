@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CPenalty_h
-#define INCLUDED_prelert_config_CPenalty_h
+#ifndef INCLUDED_ml_config_CPenalty_h
+#define INCLUDED_ml_config_CPenalty_h
 
 #include <core/CoreTypes.h>
 
@@ -28,7 +28,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -184,4 +184,4 @@ CPenalty::CClosure operator*(const CPenalty &lhs, CPenalty::CClosure rhs);
 }
 }
 
-#endif // INCLUDED_prelert_config_CPenalty_h
+#endif // INCLUDED_ml_config_CPenalty_h

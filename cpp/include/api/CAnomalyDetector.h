@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CAnomalyDetector_h
-#define INCLUDED_prelert_api_CAnomalyDetector_h
+#ifndef INCLUDED_ml_api_CAnomalyDetector_h
+#define INCLUDED_ml_api_CAnomalyDetector_h
 
 #include <core/CoreTypes.h>
 #include <core/CStopWatch.h>
@@ -45,7 +45,7 @@
 class CBackgroundPersisterTest;
 class CAnomalyDetectorTest;
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -66,7 +66,7 @@ class CFieldConfig;
 class CJsonOutputWriter;
 
 //! \brief
-//! The Prelert anomaly detector.
+//! The Ml anomaly detector.
 //!
 //! DESCRIPTION:\n
 //! Take a stream of input records and read those records
@@ -518,5 +518,5 @@ class API_EXPORT CAnomalyDetector : public CDataProcessor
 }
 }
 
-#endif // INCLUDED_prelert_api_CAnomalyDetector_h
+#endif // INCLUDED_ml_api_CAnomalyDetector_h
 

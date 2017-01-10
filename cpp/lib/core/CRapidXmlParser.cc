@@ -26,7 +26,7 @@
 #include <string.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

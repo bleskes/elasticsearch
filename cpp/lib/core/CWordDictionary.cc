@@ -25,7 +25,7 @@
 #include <ctype.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -86,7 +86,7 @@ CWordDictionary::EPartOfSpeech partOfSpeechFromCode(char partOfSpeechCode)
 }
 
 
-const char *CWordDictionary::DICTIONARY_FILE("prelert-en.dict");
+const char *CWordDictionary::DICTIONARY_FILE("ml-en.dict");
 
 CFastMutex               CWordDictionary::ms_LoadMutex;
 volatile CWordDictionary *CWordDictionary::ms_Instance(0);

@@ -15,7 +15,7 @@
 
 #include <core/CBase64Filter.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -37,4 +37,4 @@ CBase64Decoder::~CBase64Decoder()
 }
 
 } // core
-} // prelert
+} // ml

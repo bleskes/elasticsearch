@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 
-using namespace prelert;
+using namespace ml;
 
 
 int main(int argc, char **argv)

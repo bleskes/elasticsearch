@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_test_CRandomNumbers_h
-#define INCLUDED_prelert_test_CRandomNumbers_h
+#ifndef INCLUDED_ml_test_CRandomNumbers_h
+#define INCLUDED_ml_test_CRandomNumbers_h
 
 #include <test/ImportExport.h>
 
@@ -32,7 +32,7 @@
 #include <math.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace test
 {
@@ -281,5 +281,5 @@ class TEST_EXPORT CRandomNumbers
 }
 }
 
-#endif // INCLUDED_prelert_test_CRandomNumbers_h
+#endif // INCLUDED_ml_test_CRandomNumbers_h
 

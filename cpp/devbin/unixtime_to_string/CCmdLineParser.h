@@ -12,13 +12,13 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_date_time_tester_CCmdLineParser_h
-#define INCLUDED_prelert_date_time_tester_CCmdLineParser_h
+#ifndef INCLUDED_ml_date_time_tester_CCmdLineParser_h
+#define INCLUDED_ml_date_time_tester_CCmdLineParser_h
 
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace syslogparsertester
 {
@@ -52,5 +52,5 @@ class CCmdLineParser
 }
 }
 
-#endif // INCLUDED_prelert_date_time_tester_CCmdLineParser_h
+#endif // INCLUDED_ml_date_time_tester_CCmdLineParser_h
 

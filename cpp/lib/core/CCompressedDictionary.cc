@@ -15,7 +15,7 @@
 
 #include <core/CCompressedDictionary.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CTimeSeriesDecompositionStateSerialiser_h
-#define INCLUDED_prelert_maths_CTimeSeriesDecompositionStateSerialiser_h
+#ifndef INCLUDED_ml_maths_CTimeSeriesDecompositionStateSerialiser_h
+#define INCLUDED_ml_maths_CTimeSeriesDecompositionStateSerialiser_h
 
 #include <core/CNonInstantiatable.h>
 #include <core/CoreTypes.h>
@@ -25,7 +25,7 @@
 #include <boost/shared_ptr.hpp>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -81,5 +81,5 @@ class MATHS_EXPORT CTimeSeriesDecompositionStateSerialiser : private core::CNonI
 }
 }
 
-#endif // INCLUDED_prelert_maths_CTimeSeriesDecompositionStateSerialiser_h
+#endif // INCLUDED_ml_maths_CTimeSeriesDecompositionStateSerialiser_h
 

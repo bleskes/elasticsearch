@@ -37,7 +37,7 @@ const char     *TEST_PIPE_NAME = "\\\\.\\pipe\\testpipe";
 const char     *TEST_PIPE_NAME = "testfiles/testpipe";
 #endif
 
-class CThreadDataWriter : public prelert::core::CThread
+class CThreadDataWriter : public ml::core::CThread
 {
     public:
         CThreadDataWriter(const std::string &fileName, size_t size)
@@ -50,7 +50,7 @@ class CThreadDataWriter : public prelert::core::CThread
         virtual void run(void)
         {
             // Wait for the file to exist
-            prelert::core::CSleep::sleep(SLEEP_TIME_MS);
+            ml::core::CSleep::sleep(SLEEP_TIME_MS);
 
             std::ofstream strm(m_FileName.c_str());
             for (size_t i = 0; i < m_Size && strm.good(); ++i)
@@ -68,7 +68,7 @@ class CThreadDataWriter : public prelert::core::CThread
         size_t      m_Size;
 };
 
-class CThreadDataReader : public prelert::core::CThread
+class CThreadDataReader : public ml::core::CThread
 {
     public:
         CThreadDataReader(const std::string &fileName)
@@ -94,7 +94,7 @@ class CThreadDataReader : public prelert::core::CThread
             do
             {
                 CPPUNIT_ASSERT(attempt++ <= MAX_ATTEMPTS);
-                prelert::core::CSleep::sleep(PAUSE_TIME_MS);
+                ml::core::CSleep::sleep(PAUSE_TIME_MS);
                 strm.open(m_FileName.c_str());
             }
             while (!strm.is_open());
@@ -112,7 +112,7 @@ class CThreadDataReader : public prelert::core::CThread
                     const char *copyFrom = buffer;
                     size_t copyLen = static_cast<size_t>(strm.gcount());
                     if (m_Data.empty() &&
-                        *buffer == prelert::core::CNamedPipeFactory::TEST_CHAR)
+                        *buffer == ml::core::CNamedPipeFactory::TEST_CHAR)
                     {
                         ++copyFrom;
                         --copyLen;
@@ -134,10 +134,10 @@ class CThreadDataReader : public prelert::core::CThread
         std::string m_Data;
 };
 
-class CThreadBlockCanceller : public prelert::core::CThread
+class CThreadBlockCanceller : public ml::core::CThread
 {
     public:
-        CThreadBlockCanceller(prelert::core::CThread::TThreadId threadId)
+        CThreadBlockCanceller(ml::core::CThread::TThreadId threadId)
             : m_ThreadId(threadId)
         {
         }
@@ -146,10 +146,10 @@ class CThreadBlockCanceller : public prelert::core::CThread
         virtual void run(void)
         {
             // Wait for the file to exist
-            prelert::core::CSleep::sleep(SLEEP_TIME_MS);
+            ml::core::CSleep::sleep(SLEEP_TIME_MS);
 
             // Cancel the open() or read() operation on the file
-            CPPUNIT_ASSERT(prelert::core::CThread::cancelBlockedIo(m_ThreadId));
+            CPPUNIT_ASSERT(ml::core::CThread::cancelBlockedIo(m_ThreadId));
         }
 
         virtual void shutdown(void)
@@ -157,7 +157,7 @@ class CThreadBlockCanceller : public prelert::core::CThread
         }
 
     private:
-        prelert::core::CThread::TThreadId m_ThreadId;
+        ml::core::CThread::TThreadId m_ThreadId;
 };
 
 }
@@ -190,7 +190,7 @@ void CNamedPipeFactoryTest::testServerIsCppReader(void)
     CThreadDataWriter threadWriter(TEST_PIPE_NAME, TEST_SIZE);
     CPPUNIT_ASSERT(threadWriter.start());
 
-    prelert::core::CNamedPipeFactory::TIStreamP strm = prelert::core::CNamedPipeFactory::openPipeStreamRead(TEST_PIPE_NAME);
+    ml::core::CNamedPipeFactory::TIStreamP strm = ml::core::CNamedPipeFactory::openPipeStreamRead(TEST_PIPE_NAME);
     CPPUNIT_ASSERT(strm);
 
     static const std::streamsize BUF_SIZE = 512;
@@ -220,7 +220,7 @@ void CNamedPipeFactoryTest::testServerIsCReader(void)
     CThreadDataWriter threadWriter(TEST_PIPE_NAME, TEST_SIZE);
     CPPUNIT_ASSERT(threadWriter.start());
 
-    prelert::core::CNamedPipeFactory::TFileP file = prelert::core::CNamedPipeFactory::openPipeFileRead(TEST_PIPE_NAME);
+    ml::core::CNamedPipeFactory::TFileP file = ml::core::CNamedPipeFactory::openPipeFileRead(TEST_PIPE_NAME);
     CPPUNIT_ASSERT(file);
 
     static const size_t BUF_SIZE = 512;
@@ -250,7 +250,7 @@ void CNamedPipeFactoryTest::testServerIsCppWriter(void)
     CThreadDataReader threadReader(TEST_PIPE_NAME);
     CPPUNIT_ASSERT(threadReader.start());
 
-    prelert::core::CNamedPipeFactory::TOStreamP strm = prelert::core::CNamedPipeFactory::openPipeStreamWrite(TEST_PIPE_NAME);
+    ml::core::CNamedPipeFactory::TOStreamP strm = ml::core::CNamedPipeFactory::openPipeStreamWrite(TEST_PIPE_NAME);
     CPPUNIT_ASSERT(strm);
 
     size_t charsLeft(TEST_SIZE);
@@ -279,7 +279,7 @@ void CNamedPipeFactoryTest::testServerIsCWriter(void)
     CThreadDataReader threadReader(TEST_PIPE_NAME);
     CPPUNIT_ASSERT(threadReader.start());
 
-    prelert::core::CNamedPipeFactory::TFileP file = prelert::core::CNamedPipeFactory::openPipeFileWrite(TEST_PIPE_NAME);
+    ml::core::CNamedPipeFactory::TFileP file = ml::core::CNamedPipeFactory::openPipeFileWrite(TEST_PIPE_NAME);
     CPPUNIT_ASSERT(file);
 
     size_t charsLeft(TEST_SIZE);
@@ -304,10 +304,10 @@ void CNamedPipeFactoryTest::testServerIsCWriter(void)
 
 void CNamedPipeFactoryTest::testCancelBlock(void)
 {
-    CThreadBlockCanceller cancellerThread(prelert::core::CThread::currentThreadId());
+    CThreadBlockCanceller cancellerThread(ml::core::CThread::currentThreadId());
     CPPUNIT_ASSERT(cancellerThread.start());
 
-    prelert::core::CNamedPipeFactory::TOStreamP strm = prelert::core::CNamedPipeFactory::openPipeStreamWrite(TEST_PIPE_NAME);
+    ml::core::CNamedPipeFactory::TOStreamP strm = ml::core::CNamedPipeFactory::openPipeStreamWrite(TEST_PIPE_NAME);
     CPPUNIT_ASSERT(strm == 0);
 
     CPPUNIT_ASSERT(cancellerThread.stop());

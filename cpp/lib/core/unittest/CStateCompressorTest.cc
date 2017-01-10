@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-using namespace prelert;
+using namespace ml;
 using namespace core;
 
 typedef boost::mt19937 TRandom;
@@ -43,15 +43,15 @@ typedef TSizeStrMap::const_iterator TSizeStrMapCItr;
 typedef core::CDataAdder::TOStreamP TOStreamP;
 typedef core::CDataSearcher::TIStreamP TIStreamP;
 
-void insert3rdLevel(prelert::core::CStatePersistInserter &inserter)
+void insert3rdLevel(ml::core::CStatePersistInserter &inserter)
 {
-    inserter.insertValue("ssdrgad", 99999, prelert::core::CIEEE754::E_SinglePrecision);
+    inserter.insertValue("ssdrgad", 99999, ml::core::CIEEE754::E_SinglePrecision);
     inserter.insertValue("bbvczcvbdfb", "rrtw");
 }
 
-void insert2ndLevel(prelert::core::CStatePersistInserter &inserter)
+void insert2ndLevel(ml::core::CStatePersistInserter &inserter)
 {
-    inserter.insertValue("eerwq_dsf_dfsgh_h5dafg", 3.14, prelert::core::CIEEE754::E_SinglePrecision);
+    inserter.insertValue("eerwq_dsf_dfsgh_h5dafg", 3.14, ml::core::CIEEE754::E_SinglePrecision);
     inserter.insertValue("level2B", 'z');
     for (std::size_t i = 0; i < 50; i++)
     {
@@ -59,7 +59,7 @@ void insert2ndLevel(prelert::core::CStatePersistInserter &inserter)
     }
 }
 
-void insert1stLevel(prelert::core::CStatePersistInserter &inserter, std::size_t n)
+void insert1stLevel(ml::core::CStatePersistInserter &inserter, std::size_t n)
 {
     inserter.insertValue("theFirstThing", "a");
     inserter.insertValue("anItemThatComesNext", 25);
@@ -69,7 +69,7 @@ void insert1stLevel(prelert::core::CStatePersistInserter &inserter, std::size_t 
     }
 }
 
-class CMockDataAdder : public prelert::core::CDataAdder
+class CMockDataAdder : public ml::core::CDataAdder
 {
     public:
         CMockDataAdder(std::size_t maxDocSize)
@@ -116,7 +116,7 @@ class CMockDataAdder : public prelert::core::CDataAdder
         std::size_t m_MaxDocumentSize;
 };
 
-class CMockDataSearcher : public prelert::core::CDataSearcher
+class CMockDataSearcher : public ml::core::CDataSearcher
 {
     public:
         CMockDataSearcher(CMockDataAdder &adder) : m_Adder(adder), m_AskedFor(0)
@@ -171,7 +171,7 @@ void CStateCompressorTest::testForApiNoKey(void)
     std::ostringstream referenceStream;
     ::CMockDataAdder mockKvAdder(3000);
     {
-        prelert::core::CStateCompressor compressor(mockKvAdder);
+        ml::core::CStateCompressor compressor(mockKvAdder);
 
         TOStreamP strm = compressor.addStreamed("1", "", "");
         {
@@ -189,7 +189,7 @@ void CStateCompressorTest::testForApiNoKey(void)
     {
         LOG_DEBUG("Restoring data");
         CMockDataSearcher mockKvSearcher(mockKvAdder);
-        prelert::core::CStateDecompressor decompressor(mockKvSearcher);
+        ml::core::CStateDecompressor decompressor(mockKvSearcher);
         decompressor.setStateRestoreSearch("1", "", "");
         TIStreamP istrm = decompressor.search(1, 1);
 
@@ -213,7 +213,7 @@ void CStateCompressorTest::testStreaming(void)
     ::CMockDataAdder mockKvAdder(3000);
     {
         // Add lots of data to the mock datastore (compressed on the way)
-        prelert::core::CStateCompressor compressor(mockKvAdder);
+        ml::core::CStateCompressor compressor(mockKvAdder);
 
         TOStreamP strm = compressor.addStreamed("1", "", "");
         {
@@ -230,7 +230,7 @@ void CStateCompressorTest::testStreaming(void)
         std::size_t lastAskedFor = 0;
         ::CMockDataSearcher mockKvSearcher(mockKvAdder);
         LOG_TRACE("After compression, there are " << mockKvSearcher.totalDocs() << " docs, asked for " << mockKvSearcher.askedFor());
-        prelert::core::CStateDecompressor decompressor(mockKvSearcher);
+        ml::core::CStateDecompressor decompressor(mockKvSearcher);
         decompressor.setStateRestoreSearch("1", "", "");
         TIStreamP istrm = decompressor.search(1, 1);
 
@@ -296,8 +296,8 @@ void CStateCompressorTest::testChunking(void)
             try
             {
                 {
-                    prelert::core::CStateCompressor compressor(adder);
-                    prelert::core::CDataAdder::TOStreamP strm = compressor.addStreamed("1", "", "");
+                    ml::core::CStateCompressor compressor(adder);
+                    ml::core::CDataAdder::TOStreamP strm = compressor.addStreamed("1", "", "");
                     for (std::size_t k = 0; k < j; k++)
                     {
                         char c = char(*randItr++);
@@ -307,9 +307,9 @@ void CStateCompressorTest::testChunking(void)
                 }
                 {
                     CMockDataSearcher searcher(adder);
-                    prelert::core::CStateDecompressor decompressor(searcher);
+                    ml::core::CStateDecompressor decompressor(searcher);
                     decompressor.setStateRestoreSearch("1", "", "");
-                    prelert::core::CDataSearcher::TIStreamP strm = decompressor.search(1, 1);
+                    ml::core::CDataSearcher::TIStreamP strm = decompressor.search(1, 1);
                     std::istreambuf_iterator<char> eos;
                     decompressed.assign(std::istreambuf_iterator<char>(*strm), eos);
                 }
@@ -333,8 +333,8 @@ void CStateCompressorTest::testChunking(void)
         try
         {
             {
-                prelert::core::CStateCompressor compressor(adder);
-                prelert::core::CDataAdder::TOStreamP strm = compressor.addStreamed("1", "", "");
+                ml::core::CStateCompressor compressor(adder);
+                ml::core::CDataAdder::TOStreamP strm = compressor.addStreamed("1", "", "");
                 for (std::size_t k = 0; k < 100000000; k++)
                 {
                     char c = char(*randItr++);
@@ -344,9 +344,9 @@ void CStateCompressorTest::testChunking(void)
             }
             {
                 CMockDataSearcher searcher(adder);
-                prelert::core::CStateDecompressor decompressor(searcher);
+                ml::core::CStateDecompressor decompressor(searcher);
                 decompressor.setStateRestoreSearch("1", "", "");
-                prelert::core::CDataSearcher::TIStreamP strm = decompressor.search(1, 1);
+                ml::core::CDataSearcher::TIStreamP strm = decompressor.search(1, 1);
                 std::istreambuf_iterator<char> eos;
                 decompressed.assign(std::istreambuf_iterator<char>(*strm), eos);
             }
@@ -367,15 +367,15 @@ void CStateCompressorTest::testFile(void)
     CMockDataAdder adder(std::numeric_limits<std::size_t>::max());
     {
         std::ifstream file("testfiles/rawdata");
-        prelert::core::CStateCompressor compressor(adder);
-        prelert::core::CDataAdder::TOStreamP strm = compressor.addStreamed("1", "", "");
+        ml::core::CStateCompressor compressor(adder);
+        ml::core::CDataAdder::TOStreamP strm = compressor.addStreamed("1", "", "");
         (*strm) << file.rdbuf();
     }
     {
         CMockDataSearcher searcher(adder);
-        prelert::core::CStateDecompressor decompressor(searcher);
+        ml::core::CStateDecompressor decompressor(searcher);
         decompressor.setStateRestoreSearch("1", "", "");
-        prelert::core::CDataSearcher::TIStreamP strm = decompressor.search(1, 1);
+        ml::core::CDataSearcher::TIStreamP strm = decompressor.search(1, 1);
         std::istreambuf_iterator<char> eos;
         std::ostringstream ssd;
         ssd << strm->rdbuf();

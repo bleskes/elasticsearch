@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateMultimodalPriorFactory_h
-#define INCLUDED_prelert_maths_CMultivariateMultimodalPriorFactory_h
+#ifndef INCLUDED_ml_maths_CMultivariateMultimodalPriorFactory_h
+#define INCLUDED_ml_maths_CMultivariateMultimodalPriorFactory_h
 
 #include <maths/ImportExport.h>
 #include <maths/MathsTypes.h>
@@ -23,7 +23,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -62,4 +62,4 @@ class MATHS_EXPORT CMultivariateMultimodalPriorFactory
 }
 }
 
-#endif // INCLUDED_prelert_maths_CPriorStateSerialiserMultivariateNormal_h
+#endif // INCLUDED_ml_maths_CPriorStateSerialiserMultivariateNormal_h

@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CFlatPrefixTree_h
-#define INCLUDED_prelert_model_CFlatPrefixTree_h
+#ifndef INCLUDED_ml_model_CFlatPrefixTree_h
+#define INCLUDED_ml_model_CFlatPrefixTree_h
 
 #include <core/ImportExport.h>
 
@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -157,4 +157,4 @@ class CORE_EXPORT CFlatPrefixTree
 }
 }
 
-#endif // INCLUDED_prelert_model_CFlatPrefixTree_h
+#endif // INCLUDED_ml_model_CFlatPrefixTree_h

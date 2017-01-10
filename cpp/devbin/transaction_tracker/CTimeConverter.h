@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_devbin_CTimeConverter_h
-#define INCLUDED_prelert_devbin_CTimeConverter_h
+#ifndef INCLUDED_ml_devbin_CTimeConverter_h
+#define INCLUDED_ml_devbin_CTimeConverter_h
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -21,7 +21,7 @@
 #include <sstream>
 
 
-namespace prelert
+namespace ml
 {
 namespace devbin
 {
@@ -56,4 +56,4 @@ class CTimeConverter
 }
 }
 
-#endif // INCLUDED_prelert_devbin_CTimeConverter_h
+#endif // INCLUDED_ml_devbin_CTimeConverter_h

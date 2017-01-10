@@ -21,7 +21,7 @@ OPTCPUFLAGS=-xarch=sse3 -xchip=sandybridge -nofstore
 CC=cc
 CXX=CC -std=c++11
 
-ifndef PRELERT_DEBUG
+ifndef ML_DEBUG
 OPTCFLAGS=-fsimple=1 -O4 -xbuiltin=%all -xlibmil -xlibmopt $(OPTCPUFLAGS)
 OPTCPPFLAGS=-DNDEBUG
 endif

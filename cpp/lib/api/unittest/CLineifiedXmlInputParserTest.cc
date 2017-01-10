@@ -63,15 +63,15 @@ class CSetupVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CCsvInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             return false;
         }
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CCsvInputParser::TStrVec &/*fieldNames*/,
-                        const prelert::api::CCsvInputParser::TStrStrUMap &dataRowFields)
+                        const ml::api::CCsvInputParser::TStrVec &/*fieldNames*/,
+                        const ml::api::CCsvInputParser::TStrStrUMap &dataRowFields)
         {
             if (!isDryRun)
             {
@@ -108,7 +108,7 @@ class CSetupVisitor
 
     private:
         size_t                                  m_RecordsPerBlock;
-        prelert::api::CLineifiedXmlOutputWriter m_OutputWriter;
+        ml::api::CLineifiedXmlOutputWriter m_OutputWriter;
 };
 
 class CVisitor
@@ -121,7 +121,7 @@ class CVisitor
         }
 
         //! Handle settings
-        bool operator()(const prelert::api::CLineifiedXmlInputParser::TStrStrUMap &/*splunkSettings*/)
+        bool operator()(const ml::api::CLineifiedXmlInputParser::TStrStrUMap &/*splunkSettings*/)
         {
             m_SeenSettings = true;
 
@@ -133,8 +133,8 @@ class CVisitor
 
         //! Handle a record
         bool operator()(bool isDryRun,
-                        const prelert::api::CLineifiedXmlInputParser::TStrVec &/*fieldNames*/,
-                        const prelert::api::CLineifiedXmlInputParser::TStrStrUMap &/*dataRowFields*/)
+                        const ml::api::CLineifiedXmlInputParser::TStrVec &/*fieldNames*/,
+                        const ml::api::CLineifiedXmlInputParser::TStrStrUMap &/*dataRowFields*/)
         {
             if (!isDryRun)
             {
@@ -165,25 +165,25 @@ class CVisitor
 void CLineifiedXmlInputParserTest::testThroughputArbitraryConformant(void)
 {
     LOG_INFO("Testing using a standards-conformant XML parser assuming arbitrary fields in XML documents");
-    this->runTest<prelert::core::CXmlParser>(false);
+    this->runTest<ml::core::CXmlParser>(false);
 }
 
 void CLineifiedXmlInputParserTest::testThroughputCommonConformant(void)
 {
     LOG_INFO("Testing using a standards-conformant XML parser assuming all XML documents have the same fields");
-    this->runTest<prelert::core::CXmlParser>(true);
+    this->runTest<ml::core::CXmlParser>(true);
 }
 
 void CLineifiedXmlInputParserTest::testThroughputArbitraryRapid(void)
 {
     LOG_INFO("Testing using a rapid XML parser assuming arbitrary fields in XML documents");
-    this->runTest<prelert::core::CRapidXmlParser>(false);
+    this->runTest<ml::core::CRapidXmlParser>(false);
 }
 
 void CLineifiedXmlInputParserTest::testThroughputCommonRapid(void)
 {
     LOG_INFO("Testing using a rapid XML parser assuming all XML documents have the same fields");
-    this->runTest<prelert::core::CRapidXmlParser>(true);
+    this->runTest<ml::core::CRapidXmlParser>(true);
 }
 
 template <typename PARSER>
@@ -199,7 +199,7 @@ void CLineifiedXmlInputParserTest::runTest(bool allDocsSameStructure)
 
     CSetupVisitor setupVisitor;
 
-    prelert::api::CCsvInputParser setupParser(ifs);
+    ml::api::CCsvInputParser setupParser(ifs);
 
     CPPUNIT_ASSERT(setupParser.readStream(false,
                                           boost::ref(setupVisitor),
@@ -210,23 +210,23 @@ void CLineifiedXmlInputParserTest::runTest(bool allDocsSameStructure)
     std::istringstream input(setupVisitor.input(TEST_SIZE));
 
     PARSER underlyingParser;
-    prelert::api::CLineifiedXmlInputParser parser(underlyingParser,
+    ml::api::CLineifiedXmlInputParser parser(underlyingParser,
                                                   input,
                                                   allDocsSameStructure);
 
     CVisitor visitor;
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     CPPUNIT_ASSERT(parser.readStream(false,
                                      boost::ref(visitor),
                                      boost::ref(visitor)));
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished throughput test at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     CPPUNIT_ASSERT_EQUAL(setupVisitor.recordsPerBlock() * TEST_SIZE, visitor.recordCount());
 

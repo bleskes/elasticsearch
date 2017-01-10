@@ -294,26 +294,26 @@
     </content>
   </entry>
   <entry>
-    <title>prelert</title>
-    <id>https://localhost:8089/servicesNS/nobody/system/apps/local/prelert</id>
+    <title>ml</title>
+    <id>https://localhost:8089/servicesNS/nobody/system/apps/local/ml</id>
     <updated>2013-06-03T15:51:44+01:00</updated>
-    <link href="/servicesNS/nobody/system/apps/local/prelert" rel="alternate"/>
+    <link href="/servicesNS/nobody/system/apps/local/ml" rel="alternate"/>
     <author>
       <name>nobody</name>
     </author>
-    <link href="/servicesNS/nobody/system/apps/local/prelert" rel="list"/>
-    <link href="/servicesNS/nobody/system/apps/local/prelert/_reload" rel="_reload"/>
-    <link href="/servicesNS/nobody/system/apps/local/prelert" rel="edit"/>
-    <link href="/servicesNS/nobody/system/apps/local/prelert" rel="remove"/>
-    <link href="/servicesNS/nobody/system/apps/local/prelert/disable" rel="disable"/>
-    <link href="/servicesNS/nobody/system/apps/local/prelert/package" rel="package"/>
+    <link href="/servicesNS/nobody/system/apps/local/ml" rel="list"/>
+    <link href="/servicesNS/nobody/system/apps/local/ml/_reload" rel="_reload"/>
+    <link href="/servicesNS/nobody/system/apps/local/ml" rel="edit"/>
+    <link href="/servicesNS/nobody/system/apps/local/ml" rel="remove"/>
+    <link href="/servicesNS/nobody/system/apps/local/ml/disable" rel="disable"/>
+    <link href="/servicesNS/nobody/system/apps/local/ml/package" rel="package"/>
     <content type="text/xml">
       <s:dict>
-        <s:key name="author">Prelert</s:key>
+        <s:key name="author">Ml</s:key>
         <s:key name="check_for_updates">1</s:key>
         <s:key name="configured">0</s:key>
         <s:key name="description"><![CDATA[Anomaly Detective extends Splunk with highly advanced, machine learning analytics that automatically baseline event and metric data and identifies causal changes behind performance and security issues. Use Anomaly Detective to detect anomalies in real-time, quickly diagnose issues, troubleshoot unfamiliar sourcetypes or solve problems that span multiple sourcetypes - all while eliminating your dependence on difficult to set and maintain static thresholds.]]></s:key>
-        <s:key name="details">https://splunkbase.splunk.com/apps/id/prelert</s:key>
+        <s:key name="details">https://splunkbase.splunk.com/apps/id/ml</s:key>
         <s:key name="disabled">1</s:key>
         <s:key name="eai:acl">
           <s:dict>
@@ -345,7 +345,7 @@
             <s:key name="sharing">global</s:key>
           </s:dict>
         </s:key>
-        <s:key name="label">Prelert Anomaly Detective</s:key>
+        <s:key name="label">Ml Anomaly Detective</s:key>
         <s:key name="manageable">1</s:key>
         <s:key name="state_change_requires_restart">0</s:key>
         <s:key name="version">2.1.3</s:key>

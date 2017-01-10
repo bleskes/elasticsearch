@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CMemoryUsage_h
-#define INCLUDED_prelert_core_CMemoryUsage_h
+#ifndef INCLUDED_ml_core_CMemoryUsage_h
+#define INCLUDED_ml_core_CMemoryUsage_h
 
 #include <core/ImportExport.h>
 
@@ -23,7 +23,7 @@
 #include <vector>
 #include <list>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -140,8 +140,8 @@ class CORE_EXPORT CMemoryUsage
 
 } // core
 
-} // prelert
+} // ml
 
 
 
-#endif // INCLUDED_prelert_core_CMemoryUsage_h
+#endif // INCLUDED_ml_core_CMemoryUsage_h

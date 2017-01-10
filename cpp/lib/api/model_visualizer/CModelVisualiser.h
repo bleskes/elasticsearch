@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_visualiser_CModelVisualiser_h
-#define INCLUDED_prelert_model_visualiser_CModelVisualiser_h
+#ifndef INCLUDED_ml_model_visualiser_CModelVisualiser_h
+#define INCLUDED_ml_model_visualiser_CModelVisualiser_h
 
 #include <core/CoreTypes.h>
 
@@ -22,7 +22,7 @@
 
 #include <string>
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -60,4 +60,4 @@ class CModelVisualiser : private api::CAnomalyDetector
 }
 }
 
-#endif // INCLUDED_prelert_model_visualiser_CModelVisualiser_h
+#endif // INCLUDED_ml_model_visualiser_CModelVisualiser_h

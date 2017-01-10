@@ -12,19 +12,19 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_t_CoreTypes_h
-#define INCLUDED_prelert_core_t_CoreTypes_h
+#ifndef INCLUDED_ml_core_t_CoreTypes_h
+#define INCLUDED_ml_core_t_CoreTypes_h
 
 #include <time.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core_t
 {
 
 
-//! For now just use seconds as the prelert time granularity
+//! For now just use seconds as the ml time granularity
 //! This is a UTC value
 typedef time_t TTime;
 
@@ -48,5 +48,5 @@ static const char *LINE_ENDING = "\n";
 }
 }
 
-#endif // INCLUDED_prelert_core_t_CoreTypes_h
+#endif // INCLUDED_ml_core_t_CoreTypes_h
 

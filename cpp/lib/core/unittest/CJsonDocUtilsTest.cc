@@ -66,69 +66,69 @@ void CJsonDocUtilsTest::testAddFields(void)
     rapidjson::Document doc;
     doc.SetObject();
 
-    prelert::core::CJsonDocUtils::addStringFieldToObj(STR_NAME,
+    ml::core::CJsonDocUtils::addStringFieldToObj(STR_NAME,
                                                       "hello",
                                                       doc,
                                                       allocator);
 
-    prelert::core::CJsonDocUtils::addStringFieldToObj(EMPTY1_NAME,
+    ml::core::CJsonDocUtils::addStringFieldToObj(EMPTY1_NAME,
                                                       "",
                                                       doc,
                                                       allocator);
 
-    prelert::core::CJsonDocUtils::addStringFieldToObj(EMPTY2_NAME,
+    ml::core::CJsonDocUtils::addStringFieldToObj(EMPTY2_NAME,
                                                       "",
                                                       doc,
                                                       allocator,
                                                       true);
 
-    prelert::core::CJsonDocUtils::addDoubleFieldToObj(DOUBLE_NAME,
+    ml::core::CJsonDocUtils::addDoubleFieldToObj(DOUBLE_NAME,
                                                       1.77e-156,
                                                       doc,
                                                       allocator);
 
-    prelert::core::CJsonDocUtils::addDoubleFieldToObj(NAN_NAME,
+    ml::core::CJsonDocUtils::addDoubleFieldToObj(NAN_NAME,
                                                       std::numeric_limits<double>::quiet_NaN(),
                                                       doc,
                                                       allocator);
 
-    prelert::core::CJsonDocUtils::addDoubleFieldToObj(INFINITY_NAME,
+    ml::core::CJsonDocUtils::addDoubleFieldToObj(INFINITY_NAME,
                                                       std::numeric_limits<double>::infinity(),
                                                       doc,
                                                       allocator);
 
-    prelert::core::CJsonDocUtils::addBoolFieldToObj(BOOL_NAME,
+    ml::core::CJsonDocUtils::addBoolFieldToObj(BOOL_NAME,
                                                     false,
                                                     doc,
                                                     allocator);
 
-    prelert::core::CJsonDocUtils::addIntFieldToObj(INT_NAME,
+    ml::core::CJsonDocUtils::addIntFieldToObj(INT_NAME,
                                                    -9,
                                                    doc,
                                                    allocator);
 
-    prelert::core::CJsonDocUtils::addUIntFieldToObj(UINT_NAME,
+    ml::core::CJsonDocUtils::addUIntFieldToObj(UINT_NAME,
                                                     999999999999999ull,
                                                     doc,
                                                     allocator);
 
-    prelert::core::CJsonDocUtils::addStringArrayFieldToObj(STR_ARRAY_NAME,
-                                                           prelert::core::CJsonDocUtils::TStrVec(3, "blah"),
+    ml::core::CJsonDocUtils::addStringArrayFieldToObj(STR_ARRAY_NAME,
+                                                           ml::core::CJsonDocUtils::TStrVec(3, "blah"),
                                                            doc,
                                                            allocator);
 
-    prelert::core::CJsonDocUtils::addDoubleArrayFieldToObj(DOUBLE_ARRAY_NAME,
-                                                           prelert::core::CJsonDocUtils::TDoubleVec(10, 1.5),
+    ml::core::CJsonDocUtils::addDoubleArrayFieldToObj(DOUBLE_ARRAY_NAME,
+                                                           ml::core::CJsonDocUtils::TDoubleVec(10, 1.5),
                                                            doc,
                                                            allocator);
 
-    prelert::core::CJsonDocUtils::addDoubleArrayFieldToObj(NAN_ARRAY_NAME,
-                                                           prelert::core::CJsonDocUtils::TDoubleVec(2, std::numeric_limits<double>::quiet_NaN()),
+    ml::core::CJsonDocUtils::addDoubleArrayFieldToObj(NAN_ARRAY_NAME,
+                                                           ml::core::CJsonDocUtils::TDoubleVec(2, std::numeric_limits<double>::quiet_NaN()),
                                                            doc,
                                                            allocator);
 
-    prelert::core::CJsonDocUtils::addTimeArrayFieldToObj(TTIME_ARRAY_NAME,
-                                                         prelert::core::CJsonDocUtils::TTimeVec(2, 1421421421),
+    ml::core::CJsonDocUtils::addTimeArrayFieldToObj(TTIME_ARRAY_NAME,
+                                                         ml::core::CJsonDocUtils::TTimeVec(2, 1421421421),
                                                          doc,
                                                          allocator);
 
@@ -139,7 +139,7 @@ void CJsonDocUtilsTest::testAddFields(void)
     doc.Accept(writer);
 
     std::string printedDoc(strm.str());
-    prelert::core::CStringUtils::trimWhitespace(printedDoc);
+    ml::core::CStringUtils::trimWhitespace(printedDoc);
 
     LOG_DEBUG("Printed doc is: " << printedDoc);
 
@@ -168,12 +168,12 @@ void CJsonDocUtilsTest::testRemoveMemberIfPresent(void)
     rapidjson::Document::AllocatorType &allocator = doc.GetAllocator();
     std::string foo("foo");
 
-    prelert::core::CJsonDocUtils::addStringFieldToObj(foo, "42", doc, allocator);
+    ml::core::CJsonDocUtils::addStringFieldToObj(foo, "42", doc, allocator);
     CPPUNIT_ASSERT(doc.HasMember(foo.c_str()));
 
-    prelert::core::CJsonDocUtils::removeMemberIfPresent(foo, doc);
+    ml::core::CJsonDocUtils::removeMemberIfPresent(foo, doc);
     CPPUNIT_ASSERT(doc.HasMember(foo.c_str()) == false);
 
-    prelert::core::CJsonDocUtils::removeMemberIfPresent(foo, doc);
+    ml::core::CJsonDocUtils::removeMemberIfPresent(foo, doc);
     CPPUNIT_ASSERT(doc.HasMember(foo.c_str()) == false);
 }

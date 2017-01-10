@@ -24,7 +24,7 @@
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

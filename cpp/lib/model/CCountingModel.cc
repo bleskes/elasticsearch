@@ -23,7 +23,7 @@
 #include <model/CDataGatherer.h>
 #include <model/CModelDetailsView.h>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

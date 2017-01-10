@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CLineifiedInputParser_h
-#define INCLUDED_prelert_api_CLineifiedInputParser_h
+#ifndef INCLUDED_ml_api_CLineifiedInputParser_h
+#define INCLUDED_ml_api_CLineifiedInputParser_h
 
 #include <api/CInputParser.h>
 #include <api/ImportExport.h>
@@ -24,7 +24,7 @@
 #include <utility>
 
 
-namespace prelert
+namespace ml
 {
 namespace api
 {
@@ -103,5 +103,5 @@ class API_EXPORT CLineifiedInputParser : public CInputParser
 }
 }
 
-#endif // INCLUDED_prelert_api_CLineifiedJsonInputParser_h
+#endif // INCLUDED_ml_api_CLineifiedJsonInputParser_h
 

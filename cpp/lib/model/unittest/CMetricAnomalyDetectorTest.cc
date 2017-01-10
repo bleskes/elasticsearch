@@ -42,7 +42,7 @@
 #include <string>
 #include <vector>
 
-using namespace prelert;
+using namespace ml;
 
 namespace
 {
@@ -56,7 +56,7 @@ bool doIntersect(const TTimeTimePr &i1, const TTimeTimePr &i2)
     return !(i2.second <= i1.first || i1.second <= i2.first);
 }
 
-class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
+class CResultWriter : public ml::model::CHierarchicalResultsVisitor
 {
     public:
         static const double HIGH_ANOMALY_SCORE;
@@ -69,25 +69,25 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
                 m_BucketLength(bucketLength)
         {}
 
-        void operator()(prelert::model::CAnomalyDetector &detector,
-                        prelert::core_t::TTime start,
-                        prelert::core_t::TTime end)
+        void operator()(ml::model::CAnomalyDetector &detector,
+                        ml::core_t::TTime start,
+                        ml::core_t::TTime end)
         {
-            prelert::model::CHierarchicalResults results;
+            ml::model::CHierarchicalResults results;
             detector.buildResults(start, end, results);
             results.buildHierarchy();
-            prelert::model::CHierarchicalResultsAggregator aggregator(m_ModelConfig);
+            ml::model::CHierarchicalResultsAggregator aggregator(m_ModelConfig);
             results.bottomUpBreadthFirst(aggregator);
-            prelert::model::CHierarchicalResultsProbabilityFinalizer finalizer;
+            ml::model::CHierarchicalResultsProbabilityFinalizer finalizer;
             results.bottomUpBreadthFirst(finalizer);
-            prelert::model::CHierarchicalResultsPopulator populator(m_Limits);
+            ml::model::CHierarchicalResultsPopulator populator(m_Limits);
             results.bottomUpBreadthFirst(populator);
             results.bottomUpBreadthFirst(*this);
         }
 
                 //! Visit a node.
-        virtual void visit(const prelert::model::CHierarchicalResults &results,
-                           const prelert::model::CHierarchicalResults::TNode &node,
+        virtual void visit(const ml::model::CHierarchicalResults &results,
+                           const ml::model::CHierarchicalResults::TNode &node,
                            bool pivot)
         {
             if (pivot)
@@ -128,8 +128,8 @@ class CResultWriter : public prelert::model::CHierarchicalResultsVisitor
             }
         }
 
-        bool operator()(prelert::core_t::TTime time,
-                        const prelert::model::CHierarchicalResults::TNode &node,
+        bool operator()(ml::core_t::TTime time,
+                        const ml::model::CHierarchicalResults::TNode &node,
                         bool isBucketInfluencer)
         {
             LOG_DEBUG((isBucketInfluencer ? "BucketInfluencer" :  "Influencer ")

@@ -38,7 +38,7 @@
 #include <sstream>
 #include <string>
 
-typedef prelert::core::CSmallVector<double, 1> TDouble1Vec;
+typedef ml::core::CSmallVector<double, 1> TDouble1Vec;
 
 CppUnit::Test *CJsonOutputWriterTest::suite()
 {
@@ -92,7 +92,7 @@ void CJsonOutputWriterTest::testSimpleWrite(void)
 {
     // Data isn't grouped by bucket/detector record it
     // is written straight through and everything is a string
-    prelert::api::CJsonOutputWriter::TStrStrUMap dataFields;
+    ml::api::CJsonOutputWriter::TStrStrUMap dataFields;
 
     dataFields["anomalyFactor"] = "2.24";
     dataFields["by_field_name"] = "airline";
@@ -102,13 +102,13 @@ void CJsonOutputWriterTest::testSimpleWrite(void)
     dataFields["probability"] = "0";
     dataFields["field_name"] = "responsetime";
 
-    prelert::api::CJsonOutputWriter::TStrStrUMap emptyFields;
+    ml::api::CJsonOutputWriter::TStrStrUMap emptyFields;
 
     std::ostringstream sstream;
 
     // The output writer won't close the JSON structures until is is destroyed
     {
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
         writer.writeRow(false, emptyFields, dataFields);
 
         dataFields["by_field_name"] = "busroute";
@@ -162,10 +162,10 @@ void CJsonOutputWriterTest::testWriteNonAnomalousBucket(void)
     std::string function("mean");
     std::string functionDescription("mean(responsetime)");
     std::string emptyString;
-    prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
-    prelert::api::CJsonOutputWriter writer("job", sstream);
+    ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
+    ml::api::CJsonOutputWriter writer("job", sstream);
 
-    prelert::api::CHierarchicalResultsWriter::SResults result(false,
+    ml::api::CHierarchicalResultsWriter::SResults result(false,
                                                       false,
                                                       emptyString,
                                                       emptyString,
@@ -229,7 +229,7 @@ void CJsonOutputWriterTest::testFlush(void)
     std::ostringstream sstream;
 
     {
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
 
         writer.acknowledgeFlush(testId);
     }
@@ -271,7 +271,7 @@ void CJsonOutputWriterTest::testWriteCategoryDefinition(void)
     std::ostringstream sstream;
 
     {
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
 
         writer.writeCategoryDefinition(categoryId, terms, regex, maxMatchingLength, examples);
     }
@@ -343,7 +343,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
 
     // The output writer won't close the JSON structures until is is destroyed
     {
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
 
         std::string partitionFieldName("tfn");
         std::string partitionFieldValue("");
@@ -356,10 +356,10 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
         std::string function("mean");
         std::string functionDescription("mean(responsetime)");
         std::string emptyString;
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
 
         {
-            prelert::api::CHierarchicalResultsWriter::SResults result11(false,
+            ml::api::CHierarchicalResultsWriter::SResults result11(false,
                                                                 false,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
@@ -384,7 +384,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 1,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result112(false,
+            ml::api::CHierarchicalResultsWriter::SResults result112(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -409,8 +409,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                  1,
                                                                  100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result12(
-                                                                prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result12(
+                                                                ml::api::CHierarchicalResultsWriter::E_Result,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -433,8 +433,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 2,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result13(
-                                                                prelert::api::CHierarchicalResultsWriter::E_SimpleCountResult,
+            ml::api::CHierarchicalResultsWriter::SResults result13(
+                                                                ml::api::CHierarchicalResultsWriter::E_SimpleCountResult,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -457,8 +457,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 3,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result14(
-                                                                prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result14(
+                                                                ml::api::CHierarchicalResultsWriter::E_Result,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -497,7 +497,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
         }
 
         {
-            prelert::api::CHierarchicalResultsWriter::SResults result21(false,
+            ml::api::CHierarchicalResultsWriter::SResults result21(false,
                                                                 false,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
@@ -522,7 +522,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 1,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result212(false,
+            ml::api::CHierarchicalResultsWriter::SResults result212(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -547,8 +547,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                  1,
                                                                  100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result22(
-                                                                prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result22(
+                                                                ml::api::CHierarchicalResultsWriter::E_Result,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -571,8 +571,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 2,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result23(
-                                                                prelert::api::CHierarchicalResultsWriter::E_SimpleCountResult,
+            ml::api::CHierarchicalResultsWriter::SResults result23(
+                                                                ml::api::CHierarchicalResultsWriter::E_SimpleCountResult,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -595,7 +595,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 3,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result24(prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result24(ml::api::CHierarchicalResultsWriter::E_Result,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -632,7 +632,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
         }
 
         {
-            prelert::api::CHierarchicalResultsWriter::SResults result31(false,
+            ml::api::CHierarchicalResultsWriter::SResults result31(false,
                                                                 false,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
@@ -657,7 +657,7 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 1,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result312(false,
+            ml::api::CHierarchicalResultsWriter::SResults result312(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -682,8 +682,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                  1,
                                                                  100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result32(
-                                                                prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result32(
+                                                                ml::api::CHierarchicalResultsWriter::E_Result,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -706,8 +706,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 2,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result33(
-                                                                prelert::api::CHierarchicalResultsWriter::E_SimpleCountResult,
+            ml::api::CHierarchicalResultsWriter::SResults result33(
+                                                                ml::api::CHierarchicalResultsWriter::E_SimpleCountResult,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -730,8 +730,8 @@ void CJsonOutputWriterTest::testBucketWriteHelper(bool isInterim)
                                                                 3,
                                                                 100);
 
-            prelert::api::CHierarchicalResultsWriter::SResults result34(
-                                                                prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result34(
+                                                                ml::api::CHierarchicalResultsWriter::E_Result,
                                                                 partitionFieldName,
                                                                 partitionFieldValue,
                                                                 byFieldName,
@@ -1046,7 +1046,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
 
     // The output writer won't close the JSON structures until is is destroyed
     {
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
         writer.limitNumberRecords(2);
 
         std::string partitionFieldName("tfn");
@@ -1059,12 +1059,12 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
         std::string function("mean");
         std::string functionDescription("mean(responsetime)");
         std::string emptyString;
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
 
         {
             // 1st bucket
-            prelert::api::CHierarchicalResultsWriter::SResults result111(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result111(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1088,8 +1088,8 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result111));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result112(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result112(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1113,8 +1113,8 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result112));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result113(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result113(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1138,8 +1138,8 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result113));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result114(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result114(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1167,7 +1167,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             overFieldName = "ofn";
             overFieldValue = "ofv";
 
-            prelert::api::CHierarchicalResultsWriter::SResults result121(false,
+            ml::api::CHierarchicalResultsWriter::SResults result121(false,
                                                                  false,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1193,7 +1193,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result121));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result122(false,
+            ml::api::CHierarchicalResultsWriter::SResults result122(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1219,7 +1219,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result122));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result123(false,
+            ml::api::CHierarchicalResultsWriter::SResults result123(false,
                                                                  false,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1245,7 +1245,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result123));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result124(false,
+            ml::api::CHierarchicalResultsWriter::SResults result124(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1271,7 +1271,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result124));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result125(false,
+            ml::api::CHierarchicalResultsWriter::SResults result125(false,
                                                                  false,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1297,7 +1297,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result125));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result126(false,
+            ml::api::CHierarchicalResultsWriter::SResults result126(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1329,8 +1329,8 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             overFieldName.clear();
             overFieldValue.clear();
 
-            prelert::api::CHierarchicalResultsWriter::SResults result211(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result211(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1354,8 +1354,8 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result211));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result212(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result212(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1379,8 +1379,8 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result212));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result213(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result213(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1408,7 +1408,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             overFieldName = "ofn";
             overFieldValue = "ofv";
 
-            prelert::api::CHierarchicalResultsWriter::SResults result221(false,
+            ml::api::CHierarchicalResultsWriter::SResults result221(false,
                                                                  false,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1435,7 +1435,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             CPPUNIT_ASSERT(writer.acceptResult(result221));
             CPPUNIT_ASSERT(writer.acceptResult(result221));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result222(false,
+            ml::api::CHierarchicalResultsWriter::SResults result222(false,
                                                                  false,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1461,7 +1461,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result222));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result223(false,
+            ml::api::CHierarchicalResultsWriter::SResults result223(false,
                                                                  false,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1487,7 +1487,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result223));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result224(false,
+            ml::api::CHierarchicalResultsWriter::SResults result224(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1519,8 +1519,8 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             overFieldName.clear();
             overFieldValue.clear();
 
-            prelert::api::CHierarchicalResultsWriter::SResults result311(
-                                                                 prelert::api::CHierarchicalResultsWriter::E_Result,
+            ml::api::CHierarchicalResultsWriter::SResults result311(
+                                                                 ml::api::CHierarchicalResultsWriter::E_Result,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
                                                                  byFieldName,
@@ -1547,7 +1547,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
             overFieldName = "ofn";
             overFieldValue = "ofv";
 
-            prelert::api::CHierarchicalResultsWriter::SResults result321(false,
+            ml::api::CHierarchicalResultsWriter::SResults result321(false,
                                                                  false,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1573,7 +1573,7 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
                                                                  100);
             CPPUNIT_ASSERT(writer.acceptResult(result321));
 
-            prelert::api::CHierarchicalResultsWriter::SResults result322(false,
+            ml::api::CHierarchicalResultsWriter::SResults result322(false,
                                                                  true,
                                                                  partitionFieldName,
                                                                  partitionFieldValue,
@@ -1778,16 +1778,16 @@ void CJsonOutputWriterTest::testLimitedRecordsWriteHelper(bool isInterim)
     }
 }
 
-prelert::model::CHierarchicalResults::TNode createInfluencerNode(const std::string &personName,
+ml::model::CHierarchicalResults::TNode createInfluencerNode(const std::string &personName,
                                                             const std::string &personValue,
                                                             double probability,
                                                             double normalisedAnomalyScore)
 {
-    prelert::model::CHierarchicalResults::TResultSpec spec;
+    ml::model::CHierarchicalResults::TResultSpec spec;
     spec.s_PersonFieldName = boost::make_shared<std::string>(personName);
     spec.s_PersonFieldValue = boost::make_shared<std::string>(personValue);
 
-    prelert::model::CHierarchicalResults::TNode node;
+    ml::model::CHierarchicalResults::TNode node;
     node.s_AnnotatedProbability.s_Probability = probability;
     node.s_NormalizedAnomalyScore = normalisedAnomalyScore;
     node.s_Spec = spec;
@@ -1795,16 +1795,16 @@ prelert::model::CHierarchicalResults::TNode createInfluencerNode(const std::stri
     return node;
 }
 
-prelert::model::CHierarchicalResults::TNode createBucketInfluencerNode(
+ml::model::CHierarchicalResults::TNode createBucketInfluencerNode(
                                                             const std::string &personName,
                                                             double probability,
                                                             double normalisedAnomalyScore,
                                                             double rawAnomalyScore)
 {
-    prelert::model::CHierarchicalResults::TResultSpec spec;
+    ml::model::CHierarchicalResults::TResultSpec spec;
     spec.s_PersonFieldName = boost::make_shared<std::string>(personName);
 
-    prelert::model::CHierarchicalResults::TNode node;
+    ml::model::CHierarchicalResults::TNode node;
     node.s_AnnotatedProbability.s_Probability = probability;
     node.s_NormalizedAnomalyScore = normalisedAnomalyScore;
     node.s_RawAnomalyScore = rawAnomalyScore;
@@ -1823,14 +1823,14 @@ void CJsonOutputWriterTest::testWriteInfluencers(void)
         std::string jim("jim");
 
 
-        prelert::model::CHierarchicalResults::TNode node1 =
+        ml::model::CHierarchicalResults::TNode node1 =
                                 createInfluencerNode(user, daisy, 0.5, 10.0);
-        prelert::model::CHierarchicalResults::TNode node2 =
+        ml::model::CHierarchicalResults::TNode node2 =
                                 createInfluencerNode(user, jim, 0.9, 100.0);
 
-        prelert::api::CJsonOutputWriter writer("job", sstream);
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(42), node1, false));
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(42), node2, false));
+        ml::api::CJsonOutputWriter writer("job", sstream);
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(42), node1, false));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(42), node2, false));
 
         // Finished adding results
         CPPUNIT_ASSERT(writer.endOutputBatch(true, 1U));
@@ -1895,34 +1895,34 @@ void CJsonOutputWriterTest::testWriteInfluencersWithLimit(void)
         std::string bob("bob");
         std::string laptop("laptop");
 
-        prelert::model::CHierarchicalResults::TNode node1 =
+        ml::model::CHierarchicalResults::TNode node1 =
                                 createInfluencerNode(user, daisy, 0.5, 10.0);
-        prelert::model::CHierarchicalResults::TNode node2 =
+        ml::model::CHierarchicalResults::TNode node2 =
                                 createInfluencerNode(user, jim, 0.9, 100.0);
-        prelert::model::CHierarchicalResults::TNode node3 =
+        ml::model::CHierarchicalResults::TNode node3 =
                                 createInfluencerNode(user, bob, 0.3, 9.0);
-        prelert::model::CHierarchicalResults::TNode node4 =
+        ml::model::CHierarchicalResults::TNode node4 =
                                 createInfluencerNode(computer, laptop, 0.3, 12.0);
 
-        prelert::model::CHierarchicalResults::TNode bnode1 =
+        ml::model::CHierarchicalResults::TNode bnode1 =
                                 createBucketInfluencerNode(user, 0.5, 10.0, 1.0);
-        prelert::model::CHierarchicalResults::TNode bnode2 =
+        ml::model::CHierarchicalResults::TNode bnode2 =
                                 createBucketInfluencerNode(computer, 0.9, 100.0, 10.0);
-        prelert::model::CHierarchicalResults::TNode bnode3 =
+        ml::model::CHierarchicalResults::TNode bnode3 =
                                 createBucketInfluencerNode(monitor, 0.3, 9.0, 0.9);
 
 
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
         writer.limitNumberRecords(2);
 
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(0), node1, false));
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(0), node2, false));
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(0), node3, false));
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(0), node4, false));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(0), node1, false));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(0), node2, false));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(0), node3, false));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(0), node4, false));
 
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(0), bnode1, true));
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(0), bnode2, true));
-        CPPUNIT_ASSERT(writer.acceptInfluencer(prelert::core_t::TTime(0), bnode3, true));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(0), bnode1, true));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(0), bnode2, true));
+        CPPUNIT_ASSERT(writer.acceptInfluencer(ml::core_t::TTime(0), bnode3, true));
 
 
         // can't add a bucket influencer unless a result has been added
@@ -1934,9 +1934,9 @@ void CJsonOutputWriterTest::testWriteInfluencersWithLimit(void)
         std::string fund("function_description");
         std::string fn("field_name");
         std::string emptyStr;
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
-        prelert::api::CHierarchicalResultsWriter::SResults result(
-                                                          prelert::api::CHierarchicalResultsWriter::E_Result,
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
+        ml::api::CHierarchicalResultsWriter::SResults result(
+                                                          ml::api::CHierarchicalResultsWriter::E_Result,
                                                           pfn,
                                                           pfv,
                                                           bfn,
@@ -1961,7 +1961,7 @@ void CJsonOutputWriterTest::testWriteInfluencersWithLimit(void)
         CPPUNIT_ASSERT(writer.acceptResult(result));
 
 
-        writer.acceptBucketTimeInfluencer(prelert::core_t::TTime(0), 0.6, 1.0, 10.0);
+        writer.acceptBucketTimeInfluencer(ml::core_t::TTime(0), 0.6, 1.0, 10.0);
 
         // Finished adding results
         CPPUNIT_ASSERT(writer.endOutputBatch(false, 1U));
@@ -2049,7 +2049,7 @@ void CJsonOutputWriterTest::testWriteWithInfluences(void)
         std::string function("mean");
         std::string functionDescription("mean(responsetime)");
         std::string emptyString;
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
 
         std::string user("user");
         std::string dave("dave");
@@ -2060,39 +2060,39 @@ void CJsonOutputWriterTest::testWriteWithInfluences(void)
         std::string webserver("web-server");
 
 
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr field1 =
-                    prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr field1 =
+                    ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
                                     boost::make_shared<std::string>(user),
                                     boost::make_shared<std::string>(dave));
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr field2 =
-                    prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr field2 =
+                    ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
                                     boost::make_shared<std::string>(user),
                                     boost::make_shared<std::string>(cat));
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr field3 =
-                    prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr field3 =
+                    ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
                                     boost::make_shared<std::string>(user),
                                     boost::make_shared<std::string>(jo));
 
 
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr hostField1 =
-                    prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr hostField1 =
+                    ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
                                     boost::make_shared<std::string>(host),
                                     boost::make_shared<std::string>(localhost));
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr hostField2 =
-                    prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr hostField2 =
+                    ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPr(
                                     boost::make_shared<std::string>(host),
                                     boost::make_shared<std::string>(webserver));
 
 
-        influences.push_back(prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(field1, 0.4));
-        influences.push_back(prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(field2, 1.0));
-        influences.push_back(prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(hostField1, 0.7));
-        influences.push_back(prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(field3, 0.1));
-        influences.push_back(prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(hostField2, 0.8));
+        influences.push_back(ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(field1, 0.4));
+        influences.push_back(ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(field2, 1.0));
+        influences.push_back(ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(hostField1, 0.7));
+        influences.push_back(ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(field3, 0.1));
+        influences.push_back(ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePr(hostField2, 0.8));
 
         // The output writer won't close the JSON structures until is is destroyed
 
-        prelert::api::CHierarchicalResultsWriter::SResults result(prelert::api::CHierarchicalResultsWriter::E_Result,
+        ml::api::CHierarchicalResultsWriter::SResults result(ml::api::CHierarchicalResultsWriter::E_Result,
                                                           partitionFieldName,
                                                           partitionFieldValue,
                                                           byFieldName,
@@ -2116,7 +2116,7 @@ void CJsonOutputWriterTest::testWriteWithInfluences(void)
                                                           100);
 
 
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
         CPPUNIT_ASSERT(writer.acceptResult(result));
 
         // Finished adding results
@@ -2186,14 +2186,14 @@ void CJsonOutputWriterTest::testWriteWithInfluences(void)
 
 void CJsonOutputWriterTest::testPersistNormalizer(void)
 {
-    prelert::model::CModelConfig modelConfig = prelert::model::CModelConfig::defaultConfig();
+    ml::model::CModelConfig modelConfig = ml::model::CModelConfig::defaultConfig();
 
     {
         std::ostringstream sstream;
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
 
-        prelert::model::CHierarchicalResultsNormalizer normalizer(modelConfig);
-        prelert::core_t::TTime persistTime(1);
+        ml::model::CHierarchicalResultsNormalizer normalizer(modelConfig);
+        ml::core_t::TTime persistTime(1);
 
         writer.persistNormalizer(normalizer, persistTime);
         writer.finalise();
@@ -2201,8 +2201,8 @@ void CJsonOutputWriterTest::testPersistNormalizer(void)
         rapidjson::Document doc;
         doc.Parse<rapidjson::kParseDefaultFlags>(sstream.str().c_str());
 
-        CPPUNIT_ASSERT(persistTime <= prelert::core::CTimeUtils::now());
-        CPPUNIT_ASSERT(persistTime > prelert::core::CTimeUtils::now() - 10);
+        CPPUNIT_ASSERT(persistTime <= ml::core::CTimeUtils::now());
+        CPPUNIT_ASSERT(persistTime > ml::core::CTimeUtils::now() - 10);
 
         CPPUNIT_ASSERT(doc.IsArray());
 
@@ -2218,14 +2218,14 @@ void CJsonOutputWriterTest::testPersistNormalizer(void)
 
 void CJsonOutputWriterTest::testPartitionScores(void)
 {
-    prelert::model::CModelConfig modelConfig = prelert::model::CModelConfig::defaultConfig();
+    ml::model::CModelConfig modelConfig = ml::model::CModelConfig::defaultConfig();
 
     std::ostringstream sstream;
     {
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
 
         std::string emptyString;
-        prelert::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
+        ml::api::CHierarchicalResultsWriter::TStrPtrStrPtrPrDoublePrVec influences;
 
         std::string partitionFieldName("part1");
 
@@ -2235,10 +2235,10 @@ void CJsonOutputWriterTest::testPartitionScores(void)
             std::string partitionFieldValue;
             if (i > 0)
             {
-                partitionFieldValue = 'p' + prelert::core::CStringUtils::typeToString(i);
+                partitionFieldValue = 'p' + ml::core::CStringUtils::typeToString(i);
             }
-            prelert::api::CHierarchicalResultsWriter::SResults result(
-                                                          prelert::api::CHierarchicalResultsWriter::E_PartitionResult,
+            ml::api::CHierarchicalResultsWriter::SResults result(
+                                                          ml::api::CHierarchicalResultsWriter::E_PartitionResult,
                                                           partitionFieldName,
                                                           partitionFieldValue,
                                                           emptyString,
@@ -2297,7 +2297,7 @@ void CJsonOutputWriterTest::testPartitionScores(void)
         std::string fieldValue;
         if (i > 0)
         {
-            fieldValue = 'p' + prelert::core::CStringUtils::typeToString(i);
+            fieldValue = 'p' + ml::core::CStringUtils::typeToString(i);
         }
         CPPUNIT_ASSERT(pDoc.HasMember("partition_field_value"));
         CPPUNIT_ASSERT_EQUAL(fieldValue, std::string(pDoc["partition_field_value"].GetString()));
@@ -2308,15 +2308,15 @@ void CJsonOutputWriterTest::testReportMemoryUsage(void)
 {
     std::ostringstream sstream;
     {
-        prelert::api::CJsonOutputWriter writer("job", sstream);
+        ml::api::CJsonOutputWriter writer("job", sstream);
 
-        prelert::model::CResourceMonitor::SResults resourceUsage;
+        ml::model::CResourceMonitor::SResults resourceUsage;
         resourceUsage.s_Usage = 1;
         resourceUsage.s_ByFields = 2;
         resourceUsage.s_PartitionFields = 3;
         resourceUsage.s_OverFields = 4;
         resourceUsage.s_AllocationFailures = 5;
-        resourceUsage.s_MemoryStatus = prelert::model_t::E_MemoryStatusHardLimit;
+        resourceUsage.s_MemoryStatus = ml::model_t::E_MemoryStatusHardLimit;
         resourceUsage.s_BucketStartTime = 6;
 
         writer.reportMemoryUsage(resourceUsage);
@@ -2349,7 +2349,7 @@ void CJsonOutputWriterTest::testReportMemoryUsage(void)
     CPPUNIT_ASSERT(sizeStats.HasMember("memory_status"));
     CPPUNIT_ASSERT_EQUAL(std::string("hard_limit"), std::string(sizeStats["memory_status"].GetString()));
     CPPUNIT_ASSERT(sizeStats.HasMember("log_time"));
-    int64_t nowMs = prelert::core::CTimeUtils::now() * 1000ll;
+    int64_t nowMs = ml::core::CTimeUtils::now() * 1000ll;
     CPPUNIT_ASSERT(nowMs >= sizeStats["log_time"].GetInt64());
     CPPUNIT_ASSERT(nowMs + 1000ll >= sizeStats["log_time"].GetInt64());
 }

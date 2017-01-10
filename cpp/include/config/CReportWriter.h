@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_config_CReportWriter_h
-#define INCLUDED_prelert_config_CReportWriter_h
+#ifndef INCLUDED_ml_config_CReportWriter_h
+#define INCLUDED_ml_config_CReportWriter_h
 
 #include <api/COutputHandler.h>
 
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace config
 {
@@ -180,4 +180,4 @@ class CONFIG_EXPORT CReportWriter : public api::COutputHandler
 }
 }
 
-#endif // INCLUDED_prelert_config_CReportWriter_h
+#endif // INCLUDED_ml_config_CReportWriter_h

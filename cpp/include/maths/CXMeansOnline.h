@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CXMeansOnline_h
-#define INCLUDED_prelert_maths_CXMeansOnline_h
+#ifndef INCLUDED_ml_maths_CXMeansOnline_h
+#define INCLUDED_ml_maths_CXMeansOnline_h
 
 #include <core/CLogger.h>
 #include <core/CMemory.h>
@@ -40,7 +40,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1490,4 +1490,4 @@ const double CXMeansOnline<T, N>::HARD_ASSIGNMENT_THRESHOLD(0.01);
 }
 }
 
-#endif // INCLUDED_prelert_maths_CXMeansOnline_h
+#endif // INCLUDED_ml_maths_CXMeansOnline_h

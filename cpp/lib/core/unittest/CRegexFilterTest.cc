@@ -47,14 +47,14 @@ void CRegexFilterTest::testConfigure_GivenInvalidRegex(void)
     regexVector.push_back(std::string(".*"));
     regexVector.push_back(std::string("("));
 
-    prelert::core::CRegexFilter filter;
+    ml::core::CRegexFilter filter;
     CPPUNIT_ASSERT(filter.configure(regexVector) == false);
     CPPUNIT_ASSERT(filter.empty());
 }
 
 void CRegexFilterTest::testApply_GivenEmptyFilter(void)
 {
-    prelert::core::CRegexFilter filter;
+    ml::core::CRegexFilter filter;
     CPPUNIT_ASSERT(filter.empty());
 
     CPPUNIT_ASSERT_EQUAL(std::string("foo"), filter.apply(std::string("foo")));
@@ -65,7 +65,7 @@ void CRegexFilterTest::testApply_GivenSingleMatchAllRegex(void)
     std::vector<std::string> regexVector;
     regexVector.push_back(std::string(".*"));
 
-    prelert::core::CRegexFilter filter;
+    ml::core::CRegexFilter filter;
     CPPUNIT_ASSERT(filter.configure(regexVector));
 
     CPPUNIT_ASSERT_EQUAL(std::string(), filter.apply(std::string("foo")));
@@ -76,7 +76,7 @@ void CRegexFilterTest::testApply_GivenSingleRegex(void)
     std::vector<std::string> regexVector;
     regexVector.push_back(std::string("f"));
 
-    prelert::core::CRegexFilter filter;
+    ml::core::CRegexFilter filter;
     CPPUNIT_ASSERT(filter.configure(regexVector));
 
     CPPUNIT_ASSERT_EQUAL(std::string("a"), filter.apply(std::string("fffa")));
@@ -89,7 +89,7 @@ void CRegexFilterTest::testApply_GivenMultipleRegex(void)
     regexVector.push_back(std::string("bar"));
     regexVector.push_back(std::string(" "));
 
-    prelert::core::CRegexFilter filter;
+    ml::core::CRegexFilter filter;
     CPPUNIT_ASSERT(filter.configure(regexVector));
 
     CPPUNIT_ASSERT_EQUAL(std::string("a"), filter.apply(std::string("foo bar fooooobar a")));

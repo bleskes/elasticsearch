@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_api_CDataTyper_h
-#define INCLUDED_prelert_api_CDataTyper_h
+#ifndef INCLUDED_ml_api_CDataTyper_h
+#define INCLUDED_ml_api_CDataTyper_h
 
 #include <core/CoreTypes.h>
 
@@ -25,7 +25,7 @@
 #include <string>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -126,5 +126,5 @@ class API_EXPORT CDataTyper
 }
 }
 
-#endif // INCLUDED_prelert_api_CDataTyper_h
+#endif // INCLUDED_ml_api_CDataTyper_h
 

@@ -26,7 +26,7 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/uniform_01.hpp>
 
-using namespace prelert;
+using namespace ml;
 
 void CPRNGTest::testSplitMix64(void)
 {

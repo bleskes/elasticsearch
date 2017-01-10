@@ -18,9 +18,9 @@
 //! DESCRIPTION:\n
 //! A benchmarker for the Splunk app processor
 //!
-//! Data from Splunk dumped in JSON format (via prelertdump)
-//! is feed into the Prelert analysis methods.  The results
-//! of the Prelert analysis is then compared with manually
+//! Data from Splunk dumped in JSON format (via mldump)
+//! is feed into the Ml analysis methods.  The results
+//! of the Ml analysis is then compared with manually
 //! determined categories defined by mutally exclusive
 //! regular expressions.
 //!
@@ -49,7 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-using namespace prelert;
+using namespace ml;
 
 typedef boost::scoped_array<char> TScopedCharArray;
 

@@ -28,7 +28,7 @@
 #include <sstream>
 
 
-using namespace prelert;
+using namespace ml;
 using namespace api;
 
 namespace
@@ -164,7 +164,7 @@ class CTestDataAdder : public core::CDataAdder
 void CFieldDataTyperTest::testAll(void)
 {
     model::CLimits limits;
-    CFieldConfig config("count", "prelertcategory");
+    CFieldConfig config("count", "mlcategory");
     CTestOutputHandler handler;
     CJsonOutputWriter writer("job");
 

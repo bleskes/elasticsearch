@@ -21,7 +21,7 @@
 
 #include <boost/math/constants/constants.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

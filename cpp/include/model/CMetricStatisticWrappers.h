@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CMetricStatisticWrappers_h
-#define INCLUDED_prelert_model_CMetricStatisticWrappers_h
+#ifndef INCLUDED_ml_model_CMetricStatisticWrappers_h
+#define INCLUDED_ml_model_CMetricStatisticWrappers_h
 
 #include <core/CSmallVector.h>
 
@@ -28,7 +28,7 @@
 
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -267,4 +267,4 @@ struct MODEL_EXPORT CMetricStatisticWrappers
 }
 }
 
-#endif // INCLUDED_prelert_model_CMetricStatisticWrappers_h
+#endif // INCLUDED_ml_model_CMetricStatisticWrappers_h

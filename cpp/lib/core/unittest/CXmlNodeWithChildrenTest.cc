@@ -43,25 +43,25 @@ CppUnit::Test *CXmlNodeWithChildrenTest::suite()
 
 void CXmlNodeWithChildrenTest::testNodeHierarchyToXml(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
-    prelert::core::CXmlNodeWithChildren twoDeepA("twoDeepA", "Element A");
-    prelert::core::CXmlNodeWithChildren twoDeepB("twoDeepB", "Element B");
-    prelert::core::CXmlNodeWithChildren twoDeepC("twoDeepC", "Element C");
+    ml::core::CXmlNodeWithChildren twoDeepA("twoDeepA", "Element A");
+    ml::core::CXmlNodeWithChildren twoDeepB("twoDeepB", "Element B");
+    ml::core::CXmlNodeWithChildren twoDeepC("twoDeepC", "Element C");
     twoDeepC.attribute("type", "letter", true);
     twoDeepC.attribute("case", "upper", true);
     LOG_DEBUG(twoDeepC.dump());
 
-    prelert::core::CXmlNodeWithChildren oneDeep1("oneDeep1", "");
+    ml::core::CXmlNodeWithChildren oneDeep1("oneDeep1", "");
     oneDeep1.addChild(twoDeepA);
     oneDeep1.addChild(twoDeepC);
 
-    prelert::core::CXmlNodeWithChildren oneDeep2("oneDeep2", "");
+    ml::core::CXmlNodeWithChildren oneDeep2("oneDeep2", "");
     oneDeep2.attribute("type", "number", true);
     oneDeep2.attribute("value", 2, true);
     oneDeep2.addChild(twoDeepB);
 
-    prelert::core::CXmlNodeWithChildren root("root", "The root element");
+    ml::core::CXmlNodeWithChildren root("root", "The root element");
     root.addChild(oneDeep1);
     root.addChild(oneDeep2);
 
@@ -91,7 +91,7 @@ void CXmlNodeWithChildrenTest::testNodeHierarchyToXml(void)
     CPPUNIT_ASSERT(strRep.find("twoDeepC") < strRep.find("twoDeepB"));
 
     std::string xml;
-    prelert::core::CXmlParser::convert(root, xml);
+    ml::core::CXmlParser::convert(root, xml);
     LOG_DEBUG("XML representation of XML node hierarchy is:\n" << xml);
 
     CPPUNIT_ASSERT(xml.find("root") != std::string::npos);
@@ -119,7 +119,7 @@ void CXmlNodeWithChildrenTest::testNodeHierarchyToXml(void)
 
 void CXmlNodeWithChildrenTest::testParserToNodeHierarchy(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     std::string xml = "\
 <root> \
@@ -134,7 +134,7 @@ void CXmlNodeWithChildrenTest::testParserToNodeHierarchy(void)
 
     CPPUNIT_ASSERT(parser.parseString(xml));
 
-    prelert::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
+    ml::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
 
     CPPUNIT_ASSERT(parser.toNodeHierarchy(rootNodePtr));
 
@@ -163,25 +163,25 @@ void CXmlNodeWithChildrenTest::testParserToNodeHierarchy(void)
 
 void CXmlNodeWithChildrenTest::testPerformanceNoPool(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseFile("testfiles/p2psmon.xml"));
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting node hierarchy performance test with no pool at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
     static const size_t TEST_SIZE(20000);
     for (size_t count = 0; count < TEST_SIZE; ++count)
     {
-        prelert::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
+        ml::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
         CPPUNIT_ASSERT(parser.toNodeHierarchy(rootNodePtr));
         CPPUNIT_ASSERT(rootNodePtr != 0);
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished node hierarchy performance test with no pool at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Node hierarchy performance test of size " << TEST_SIZE <<
              " with no pool took " << (end - start) << " seconds");
@@ -189,28 +189,28 @@ void CXmlNodeWithChildrenTest::testPerformanceNoPool(void)
 
 void CXmlNodeWithChildrenTest::testPerformanceWithPool(void)
 {
-    prelert::core::CXmlParser parser;
+    ml::core::CXmlParser parser;
 
     CPPUNIT_ASSERT(parser.parseFile("testfiles/p2psmon.xml"));
 
-    prelert::core_t::TTime start(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime start(ml::core::CTimeUtils::now());
     LOG_INFO("Starting node hierarchy performance test with pool at " <<
-             prelert::core::CTimeUtils::toTimeString(start));
+             ml::core::CTimeUtils::toTimeString(start));
 
-    prelert::core::CXmlNodeWithChildrenPool pool;
+    ml::core::CXmlNodeWithChildrenPool pool;
 
     static const size_t TEST_SIZE(20000);
     for (size_t count = 0; count < TEST_SIZE; ++count)
     {
-        prelert::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
+        ml::core::CXmlNodeWithChildren::TXmlNodeWithChildrenP rootNodePtr;
         CPPUNIT_ASSERT(parser.toNodeHierarchy(pool, rootNodePtr));
         CPPUNIT_ASSERT(rootNodePtr != 0);
         pool.recycle(rootNodePtr);
     }
 
-    prelert::core_t::TTime end(prelert::core::CTimeUtils::now());
+    ml::core_t::TTime end(ml::core::CTimeUtils::now());
     LOG_INFO("Finished node hierarchy performance test with pool at " <<
-             prelert::core::CTimeUtils::toTimeString(end));
+             ml::core::CTimeUtils::toTimeString(end));
 
     LOG_INFO("Node hierarchy performance test of size " << TEST_SIZE <<
              " with pool took " << (end - start) << " seconds");

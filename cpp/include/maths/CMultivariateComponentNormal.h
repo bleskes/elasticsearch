@@ -13,14 +13,14 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateComponentNormal_h
-#define INCLUDED_prelert_maths_CMultivariateComponentNormal_h
+#ifndef INCLUDED_ml_maths_CMultivariateComponentNormal_h
+#define INCLUDED_ml_maths_CMultivariateComponentNormal_h
 
 #include <maths/CMultivariateComponent.h>
 #include <maths/CNormalMeanPrecConjugate.h>
 #include <maths/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -211,4 +211,4 @@ class MATHS_EXPORT CMultivariateComponentNormal : public CMultivariateComponent
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultivariateComponentNormal_h
+#endif // INCLUDED_ml_maths_CMultivariateComponentNormal_h

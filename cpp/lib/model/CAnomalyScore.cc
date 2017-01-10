@@ -36,7 +36,7 @@
 #include <numeric>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {
@@ -98,10 +98,10 @@ const std::string MISSING_VERSION_XML_VERSION("1");
 
 }
 
-const std::string CAnomalyScore::PRELERTCUE_ATTRIBUTE("prelertcue");
-const std::string CAnomalyScore::PRELERTKEY_ATTRIBUTE("prelertkey");
-const std::string CAnomalyScore::PRELERTQUANTILESDESCRIPTION_ATTRIBUTE("prelertquantilesdescription");
-const std::string CAnomalyScore::PRELERTVERSION_ATTRIBUTE("prelertversion");
+const std::string CAnomalyScore::MLCUE_ATTRIBUTE("mlcue");
+const std::string CAnomalyScore::MLKEY_ATTRIBUTE("mlkey");
+const std::string CAnomalyScore::MLQUANTILESDESCRIPTION_ATTRIBUTE("mlquantilesdescription");
+const std::string CAnomalyScore::MLVERSION_ATTRIBUTE("mlversion");
 const std::string CAnomalyScore::TIME_ATTRIBUTE("time");
 const std::string CAnomalyScore::KEY("_key");
 
@@ -1098,7 +1098,7 @@ bool CAnomalyScore::normalizerFromJson(core::CStateRestoreTraverser &traverser,
     {
         const std::string &name = traverser.name();
 
-        if (name == PRELERTVERSION_ATTRIBUTE)
+        if (name == MLVERSION_ATTRIBUTE)
         {
             restoredVersion = traverser.value();
             if (restoredVersion != CURRENT_XML_VERSION)
@@ -1168,10 +1168,10 @@ void CAnomalyScore::normalizerToJson(const CNormalizer &normalizer,
         // Important: Even though some of these fields appear to be unnecessary,
         // the CHierarchicalResultsNormalizer requires them to exist in this
         // order.  Do not change the fields or the ordering.
-        inserter.insertValue(PRELERTCUE_ATTRIBUTE, cue);
-        inserter.insertValue(PRELERTKEY_ATTRIBUTE, searchKey);
-        inserter.insertValue(PRELERTQUANTILESDESCRIPTION_ATTRIBUTE, description);
-        inserter.insertValue(PRELERTVERSION_ATTRIBUTE, CURRENT_XML_VERSION);
+        inserter.insertValue(MLCUE_ATTRIBUTE, cue);
+        inserter.insertValue(MLKEY_ATTRIBUTE, searchKey);
+        inserter.insertValue(MLQUANTILESDESCRIPTION_ATTRIBUTE, description);
+        inserter.insertValue(MLVERSION_ATTRIBUTE, CURRENT_XML_VERSION);
         inserter.insertValue(TIME_ATTRIBUTE, core::CStringUtils::typeToString(time));
 
         inserter.insertLevel(NORMALIZER_TAG,

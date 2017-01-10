@@ -24,7 +24,7 @@
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -249,7 +249,7 @@ std::string CUname::all(void)
     return all;
 }
 
-std::string CUname::prelertPlatform(void)
+std::string CUname::mlPlatform(void)
 {
     // Determine the current platform name, in the format used by Kibana
     // downloads.  For Windows this is either "windows-x86" or "windows-x86_64".
@@ -261,7 +261,7 @@ std::string CUname::prelertPlatform(void)
     return "windows-x86";
 }
 
-std::string CUname::prelertOsVer(void)
+std::string CUname::mlOsVer(void)
 {
     uint16_t major(0);
     uint16_t minor(0);

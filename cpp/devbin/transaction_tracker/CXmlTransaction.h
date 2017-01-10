@@ -12,14 +12,14 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_devbin_CXmlTransaction_h
-#define INCLUDED_prelert_devbin_CXmlTransaction_h
+#ifndef INCLUDED_ml_devbin_CXmlTransaction_h
+#define INCLUDED_ml_devbin_CXmlTransaction_h
 
 #include <core/CXmlNodeWithChildren.h>
 
 #include "CXmlOperation.h"
 
-namespace prelert
+namespace ml
 {
 namespace devbin
 {
@@ -61,4 +61,4 @@ class CXmlTransaction
 }
 }
 
-#endif // INCLUDED_prelert_devbin_CXmlTransaction_h
+#endif // INCLUDED_ml_devbin_CXmlTransaction_h

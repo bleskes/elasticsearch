@@ -39,7 +39,7 @@
 #include <typeinfo>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

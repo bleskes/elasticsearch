@@ -15,7 +15,7 @@
 #include <core/CJsonDocUtils.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {

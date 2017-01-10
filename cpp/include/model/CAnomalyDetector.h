@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_model_CAnomalyDetector_h
-#define INCLUDED_prelert_model_CAnomalyDetector_h
+#ifndef INCLUDED_ml_model_CAnomalyDetector_h
+#define INCLUDED_ml_model_CAnomalyDetector_h
 
 #include <core/CNonCopyable.h>
 #include <core/CoreTypes.h>
@@ -41,7 +41,7 @@
 #include <stdint.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -72,7 +72,7 @@ class CSearchKey;
 //! If the field values mean that more than a configurable amount
 //! of memory is consumed by the models, for example if the number
 //! of by field values is too high such as using "by _cd". (The
-//! limit is controlled by prelertlimits.conf.)
+//! limit is controlled by mllimits.conf.)
 //!
 //! The different methods used for anomaly detection are largely
 //! encapsulated by the CModel class hierarchy.  This means it is
@@ -388,4 +388,4 @@ class MODEL_EXPORT CModelView
 }
 }
 
-#endif // INCLUDED_prelert_model_CAnomalyDetector_h
+#endif // INCLUDED_ml_model_CAnomalyDetector_h

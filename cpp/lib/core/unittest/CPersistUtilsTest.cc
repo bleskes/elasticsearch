@@ -31,7 +31,7 @@
 
 #include <math.h>
 
-using namespace prelert;
+using namespace ml;
 
 typedef std::vector<double> TDoubleVec;
 typedef std::pair<std::size_t, double> TSizeDoublePr;

@@ -19,7 +19,7 @@
 
 int main(int argc, const char **argv)
 {
-    prelert::test::CTestRunner runner(argc, argv);
+    ml::test::CTestRunner runner(argc, argv);
 
     runner.addTest( CBuildInfoTest::suite() );
 

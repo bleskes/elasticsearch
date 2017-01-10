@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CFloatStorage_h
-#define INCLUDED_prelert_maths_CFloatStorage_h
+#ifndef INCLUDED_ml_maths_CFloatStorage_h
+#define INCLUDED_ml_maths_CFloatStorage_h
 
 #include <core/CLogger.h>
 #include <core/CStringUtils.h>
@@ -26,7 +26,7 @@
 #include <math.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -222,4 +222,4 @@ class MATHS_EXPORT CFloatStorage
 }
 }
 
-#endif // INCLUDED_prelert_maths_CFloatStorage_h
+#endif // INCLUDED_ml_maths_CFloatStorage_h

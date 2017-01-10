@@ -32,7 +32,7 @@
 
 #include <numeric>
 
-namespace prelert
+namespace ml
 {
 namespace test
 {

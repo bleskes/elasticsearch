@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CKdTree_h
-#define INCLUDED_prelert_maths_CKdTree_h
+#ifndef INCLUDED_ml_maths_CKdTree_h
+#define INCLUDED_ml_maths_CKdTree_h
 
 #include <core/CLogger.h>
 
@@ -28,7 +28,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -436,4 +436,4 @@ class CKdTree
 }
 }
 
-#endif // INCLUDED_prelert_maths_CKdTree_h
+#endif // INCLUDED_ml_maths_CKdTree_h

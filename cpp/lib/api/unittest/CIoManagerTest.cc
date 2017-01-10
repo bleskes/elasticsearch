@@ -50,7 +50,7 @@ const char     *BAD_OUTPUT_FILE_NAME = "can't_create_a_file_here/bad_output_file
 const char     *BAD_INPUT_PIPE_NAME = "can't_create_a_pipe_here/bad_input_pipe";
 const char     *BAD_OUTPUT_PIPE_NAME = "can't_create_a_pipe_here/bad_output_pipe";
 
-class CThreadDataWriter : public prelert::core::CThread
+class CThreadDataWriter : public ml::core::CThread
 {
     public:
         CThreadDataWriter(const std::string &fileName, size_t size)
@@ -63,7 +63,7 @@ class CThreadDataWriter : public prelert::core::CThread
         virtual void run(void)
         {
             // Wait for the file to exist
-            prelert::core::CSleep::sleep(SLEEP_TIME_MS);
+            ml::core::CSleep::sleep(SLEEP_TIME_MS);
 
             std::ofstream strm(m_FileName.c_str());
             for (size_t i = 0; i < m_Size && strm.good(); ++i)
@@ -81,7 +81,7 @@ class CThreadDataWriter : public prelert::core::CThread
         size_t      m_Size;
 };
 
-class CThreadDataReader : public prelert::core::CThread
+class CThreadDataReader : public ml::core::CThread
 {
     public:
         CThreadDataReader(const std::string &fileName)
@@ -95,7 +95,7 @@ class CThreadDataReader : public prelert::core::CThread
             // The memory barriers associated with the mutex lock should ensure
             // the thread calling this method has as up-to-date view of m_Data's
             // member variables as the thread that updated it
-            prelert::core::CScopedLock lock(m_Mutex);
+            ml::core::CScopedLock lock(m_Mutex);
             return m_Data;
         }
 
@@ -116,7 +116,7 @@ class CThreadDataReader : public prelert::core::CThread
                     return;
                 }
                 CPPUNIT_ASSERT(attempt++ <= MAX_ATTEMPTS);
-                prelert::core::CSleep::sleep(PAUSE_TIME_MS);
+                ml::core::CSleep::sleep(PAUSE_TIME_MS);
                 strm.open(m_FileName.c_str());
             }
             while (!strm.is_open());
@@ -133,13 +133,13 @@ class CThreadDataReader : public prelert::core::CThread
                 CPPUNIT_ASSERT(!strm.bad());
                 if (strm.gcount() > 0)
                 {
-                    prelert::core::CScopedLock lock(m_Mutex);
+                    ml::core::CScopedLock lock(m_Mutex);
                     // This code deals with the test character we write to
                     // detect the short-lived connection problem on Windows
                     const char *copyFrom = buffer;
                     size_t copyLen = static_cast<size_t>(strm.gcount());
                     if (m_Data.empty() &&
-                        *buffer == prelert::core::CNamedPipeFactory::TEST_CHAR)
+                        *buffer == ml::core::CNamedPipeFactory::TEST_CHAR)
                     {
                         ++copyFrom;
                         --copyLen;
@@ -158,7 +158,7 @@ class CThreadDataReader : public prelert::core::CThread
         }
 
     private:
-        mutable prelert::core::CMutex m_Mutex;
+        mutable ml::core::CMutex m_Mutex;
         std::string                   m_FileName;
         std::string                   m_Data;
         volatile bool                 m_Shutdown;
@@ -191,7 +191,7 @@ CppUnit::Test *CIoManagerTest::suite()
 
 void CIoManagerTest::testStdinStdout(void)
 {
-    prelert::api::CIoManager ioMgr("", false, "", false);
+    ml::api::CIoManager ioMgr("", false, "", false);
     CPPUNIT_ASSERT(ioMgr.initIo());
 
     // Assign to a different pointer in case of "this" pointer manipulation due
@@ -273,7 +273,7 @@ void CIoManagerTest::testCommon(const std::string &inputFileName,
     std::string processedData;
 
     {
-        prelert::api::CIoManager ioMgr(inputFileName,
+        ml::api::CIoManager ioMgr(inputFileName,
                                        isInputFileNamedPipe,
                                        outputFileName,
                                        isOutputFileNamedPipe);

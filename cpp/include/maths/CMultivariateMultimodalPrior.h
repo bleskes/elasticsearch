@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateMultimodalPrior_h
-#define INCLUDED_prelert_maths_CMultivariateMultimodalPrior_h
+#ifndef INCLUDED_ml_maths_CMultivariateMultimodalPrior_h
+#define INCLUDED_ml_maths_CMultivariateMultimodalPrior_h
 
 #include <core/CContainerPrinter.h>
 #include <core/CLogger.h>
@@ -49,7 +49,7 @@
 #include <utility>
 #include <vector>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -1290,4 +1290,4 @@ const std::size_t CMultivariateMultimodalPrior<N>::CModeMergeCallback::MODE_MERG
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultivariateMultimodalPrior_h
+#endif // INCLUDED_ml_maths_CMultivariateMultimodalPrior_h

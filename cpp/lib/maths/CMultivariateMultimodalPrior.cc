@@ -20,7 +20,7 @@
 
 #include <maths/CSampling.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

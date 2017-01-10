@@ -77,10 +77,10 @@ void CCommandProcessorTest::testStartPermitted(void)
     // check the return code as this will usually fail
     ::remove(OUTPUT_FILE.c_str());
 
-    prelert::controller::CCommandProcessor::TStrVec permittedPaths(1, PROCESS_PATH);
-    prelert::controller::CCommandProcessor processor(permittedPaths);
+    ml::controller::CCommandProcessor::TStrVec permittedPaths(1, PROCESS_PATH);
+    ml::controller::CCommandProcessor processor(permittedPaths);
 
-    std::string command(prelert::controller::CCommandProcessor::START);
+    std::string command(ml::controller::CCommandProcessor::START);
     command += '\t';
     command += PROCESS_PATH;
     for (size_t index = 0; index < boost::size(PROCESS_ARGS1); ++index)
@@ -93,7 +93,7 @@ void CCommandProcessorTest::testStartPermitted(void)
     processor.processCommands(commandStream);
 
     // Expect the copy to complete in less than 1 second
-    prelert::core::CSleep::sleep(1000);
+    ml::core::CSleep::sleep(1000);
 
     std::ifstream ifs(OUTPUT_FILE.c_str());
     CPPUNIT_ASSERT(ifs.is_open());
@@ -108,10 +108,10 @@ void CCommandProcessorTest::testStartPermitted(void)
 
 void CCommandProcessorTest::testStartNonPermitted(void)
 {
-    prelert::controller::CCommandProcessor::TStrVec permittedPaths(1, "some other process");
-    prelert::controller::CCommandProcessor processor(permittedPaths);
+    ml::controller::CCommandProcessor::TStrVec permittedPaths(1, "some other process");
+    ml::controller::CCommandProcessor processor(permittedPaths);
 
-    std::string command(prelert::controller::CCommandProcessor::START);
+    std::string command(ml::controller::CCommandProcessor::START);
     command += '\t';
     command += PROCESS_PATH;
     for (size_t index = 0; index < boost::size(PROCESS_ARGS2); ++index)
@@ -137,10 +137,10 @@ void CCommandProcessorTest::testStartNonPermitted(void)
 
 void CCommandProcessorTest::testStartNonExistent(void)
 {
-    prelert::controller::CCommandProcessor::TStrVec permittedPaths(1, "some other process");
-    prelert::controller::CCommandProcessor processor(permittedPaths);
+    ml::controller::CCommandProcessor::TStrVec permittedPaths(1, "some other process");
+    ml::controller::CCommandProcessor processor(permittedPaths);
 
-    std::string command(prelert::controller::CCommandProcessor::START);
+    std::string command(ml::controller::CCommandProcessor::START);
     command += "\tsome other process";
 
     CPPUNIT_ASSERT(!processor.handleCommand(command));
@@ -148,8 +148,8 @@ void CCommandProcessorTest::testStartNonExistent(void)
 
 void CCommandProcessorTest::testInvalidVerb(void)
 {
-    prelert::controller::CCommandProcessor::TStrVec permittedPaths(1, "some other process");
-    prelert::controller::CCommandProcessor processor(permittedPaths);
+    ml::controller::CCommandProcessor::TStrVec permittedPaths(1, "some other process");
+    ml::controller::CCommandProcessor processor(permittedPaths);
 
     std::string command("drive");
     command += "\tsome other process";

@@ -21,7 +21,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {

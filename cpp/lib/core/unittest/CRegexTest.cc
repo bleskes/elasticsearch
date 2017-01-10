@@ -52,21 +52,21 @@ void CRegexTest::testInit(void)
     {
         std::string regexStr = "[[:digit: ] )";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(!regex.init(regexStr));
     }
     {
         std::string regexStr = "*[[:digit:]]a*[a-z]";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(!regex.init(regexStr));
     }
     {
         std::string regexStr = "[[:digit:]]a*[a-z]";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -76,7 +76,7 @@ void CRegexTest::testInit(void)
         // Test init twice
         std::string regexStr1 = "\\d+";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr1));
         CPPUNIT_ASSERT(regex.matches("6371"));
@@ -91,7 +91,7 @@ void CRegexTest::testInit(void)
     {
         std::string regexStr = "<.*";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -101,7 +101,7 @@ void CRegexTest::testInit(void)
     {
         // Uninitialised
         std::string regexStr = "<.*";
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         CPPUNIT_ASSERT(!regex.matches("<Jan 19, 2011 1:58:42 PM EST> <Notice> <WebLogicServer> <BEA-000365> <Server state changed to STARTING>"));
     }
 }
@@ -110,12 +110,12 @@ void CRegexTest::testSearch(void)
 {
     {
         // Uninitialised
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         CPPUNIT_ASSERT_EQUAL(std::string(""), regex.str());
     }
     {
         // Uninitialised
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         size_t position(0);
         size_t length(0);
 
@@ -124,7 +124,7 @@ void CRegexTest::testSearch(void)
     {
         std::string regexStr = "\\d+";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         size_t position(0);
         size_t length(0);
 
@@ -147,7 +147,7 @@ void CRegexTest::testSearch(void)
     {
         std::string regexStr = "(\\d+\\s+\\w+\\s+\\d+\\s+\\d+:\\d+:\\d+,\\d+)";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         size_t position(0);
 
         CPPUNIT_ASSERT(regex.init(regexStr));
@@ -172,8 +172,8 @@ void CRegexTest::testTokenise1(void)
         // Uninitialised
         std::string regexStr;
         regexStr += "((.+?) )+";
-        prelert::core::CRegex regex;
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex regex;
+        ml::core::CRegex::TStrVec tokens;
         CPPUNIT_ASSERT(!regex.tokenise(str1, tokens));
     }
     {
@@ -182,11 +182,11 @@ void CRegexTest::testTokenise1(void)
 
         regexStr += "((.+?) )+";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex::TStrVec tokens;
 
         CPPUNIT_ASSERT(!regex.matches(str1));
         CPPUNIT_ASSERT(!regex.tokenise(str1, tokens));
@@ -201,16 +201,16 @@ void CRegexTest::testTokenise1(void)
         regexStr += ".+?node\\s+(0x\\d+|\\d+)";
         regexStr += ".*$";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex::TStrVec tokens;
 
         CPPUNIT_ASSERT(regex.matches(str1));
         CPPUNIT_ASSERT(regex.tokenise(str1, tokens));
 
-        for (prelert::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
+        for (ml::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
         {
             LOG_DEBUG("'" << *itr << "'");
         }
@@ -228,16 +228,16 @@ void CRegexTest::testTokenise1(void)
         regexStr += ".+?node\\s+(0x\\d+|\\d+)";
         regexStr += ".*$";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex::TStrVec tokens;
 
         CPPUNIT_ASSERT(regex.matches(str2));
         CPPUNIT_ASSERT(regex.tokenise(str2, tokens));
 
-        for (prelert::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
+        for (ml::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
         {
             LOG_DEBUG("'" << *itr << "'");
         }
@@ -251,16 +251,16 @@ void CRegexTest::testTokenise1(void)
     {
         std::string regexStr("(\\w+\\s+\\d+,\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+\\w+)\\s*([[:alnum:].]+)\\s*(\\w+)\\r?\\n(INFO|WARNING|SEVERE|DEBUG|FATAL): Parameters: Invalid chunk ignored\\.\\s*");
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex::TStrVec tokens;
 
         CPPUNIT_ASSERT(regex.matches(str3));
         CPPUNIT_ASSERT(regex.tokenise(str3, tokens));
 
-        for (prelert::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
+        for (ml::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
         {
             LOG_DEBUG("'" << *itr << "'");
         }
@@ -271,16 +271,16 @@ void CRegexTest::testTokenise1(void)
     {
         std::string regexStr(".*dataview\\[\\(@name=\"(.*)\"\\)\\]/rows/row\\[\\(@name=\"(.*)\"\\)\\]/cell\\[\\(@column=\"(.*)\"\\)\\].*");
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex::TStrVec tokens;
 
         CPPUNIT_ASSERT(regex.matches(str4));
         CPPUNIT_ASSERT(regex.tokenise(str4, tokens));
 
-        for (prelert::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
+        for (ml::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
         {
             LOG_DEBUG("'" << *itr << "'");
         }
@@ -291,11 +291,11 @@ void CRegexTest::testTokenise2(void)
 {
     std::string regexStr("(.+?)(?:\\((.*?)\\))?");
 
-    prelert::core::CRegex regex;
+    ml::core::CRegex regex;
 
     CPPUNIT_ASSERT(regex.init(regexStr));
 
-    prelert::core::CRegex::TStrVec tokens;
+    ml::core::CRegex::TStrVec tokens;
 
     CPPUNIT_ASSERT(regex.tokenise("count", tokens));
     CPPUNIT_ASSERT(tokens.size() == 2);
@@ -333,8 +333,8 @@ void CRegexTest::testSplit(void)
         // Uninitialised
         std::string regexStr;
         regexStr += "\\s+";
-        prelert::core::CRegex regex;
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex regex;
+        ml::core::CRegex::TStrVec tokens;
         CPPUNIT_ASSERT(!regex.split(str1, tokens));
     }
     {
@@ -342,15 +342,15 @@ void CRegexTest::testSplit(void)
 
         regexStr += "\\s+";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
-        prelert::core::CRegex::TStrVec tokens;
+        ml::core::CRegex::TStrVec tokens;
 
         CPPUNIT_ASSERT(regex.split(str1, tokens));
 
-        for (prelert::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
+        for (ml::core::CRegex::TStrVec::iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
         {
             LOG_DEBUG("'" << *itr << "'");
         }
@@ -359,23 +359,23 @@ void CRegexTest::testSplit(void)
 
 void CRegexTest::testEscape(void)
 {
-    CPPUNIT_ASSERT_EQUAL(std::string("\\.\\.\\."), prelert::core::CRegex::escapeRegexSpecial("..."));
-    CPPUNIT_ASSERT_EQUAL(std::string("hello"), prelert::core::CRegex::escapeRegexSpecial("hello"));
-    CPPUNIT_ASSERT_EQUAL(std::string("\\)hello\\(\\n\\^"), prelert::core::CRegex::escapeRegexSpecial(")hello(\n^"));
-    CPPUNIT_ASSERT_EQUAL(std::string("\\)hello\\(\\r?\\n\\^"), prelert::core::CRegex::escapeRegexSpecial(")hello(\r\n^"));
+    CPPUNIT_ASSERT_EQUAL(std::string("\\.\\.\\."), ml::core::CRegex::escapeRegexSpecial("..."));
+    CPPUNIT_ASSERT_EQUAL(std::string("hello"), ml::core::CRegex::escapeRegexSpecial("hello"));
+    CPPUNIT_ASSERT_EQUAL(std::string("\\)hello\\(\\n\\^"), ml::core::CRegex::escapeRegexSpecial(")hello(\n^"));
+    CPPUNIT_ASSERT_EQUAL(std::string("\\)hello\\(\\r?\\n\\^"), ml::core::CRegex::escapeRegexSpecial(")hello(\r\n^"));
 }
 
 void CRegexTest::testLiteralCount(void)
 {
     {
         // Uninitialised
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
         CPPUNIT_ASSERT_EQUAL(size_t(0), regex.literalCount());
     }
     {
         std::string regexStr = "[[:digit:]]a*[a-z]";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -384,7 +384,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "hello";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -393,7 +393,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "hello.*";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -402,7 +402,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "(hello.*|goodbye.*)my friend";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -411,7 +411,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "number\\s+(\\d+,\\d+\\.\\d+|\\d+\\.\\d+)";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
         CPPUNIT_ASSERT_EQUAL(size_t(7), regex.literalCount());
@@ -419,7 +419,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "(cpu\\d+)";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -428,7 +428,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "ip = (\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -437,7 +437,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "[[:space:][:alpha:]_]+(\\d+)";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -446,7 +446,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "[[:space:][:alpha:]_]+(abc|\\*)";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 
@@ -455,7 +455,7 @@ void CRegexTest::testLiteralCount(void)
     {
         std::string regexStr = "[[:space:][:alpha:]_]+(\\d+|\\*)";
 
-        prelert::core::CRegex regex;
+        ml::core::CRegex regex;
 
         CPPUNIT_ASSERT(regex.init(regexStr));
 

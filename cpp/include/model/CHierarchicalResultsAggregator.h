@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_model_CHierarchicalResultsAggregator_h
-#define INCLUDED_prelert_model_CHierarchicalResultsAggregator_h
+#ifndef INCLUDED_ml_model_CHierarchicalResultsAggregator_h
+#define INCLUDED_ml_model_CHierarchicalResultsAggregator_h
 
 #include <maths/CQuantileSketch.h>
 
@@ -25,7 +25,7 @@
 
 #include <cstddef>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -129,4 +129,4 @@ class MODEL_EXPORT CHierarchicalResultsAggregator : public CHierarchicalResultsL
 }
 }
 
-#endif // INCLUDED_prelert_model_CHierarchicalResultsAggregator_h
+#endif // INCLUDED_ml_model_CHierarchicalResultsAggregator_h

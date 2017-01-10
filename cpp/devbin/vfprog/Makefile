@@ -20,15 +20,15 @@ INSTALL_DIR=$(CPP_PLATFORM_HOME)/devbin
 
 INCLUDE_PATH=-I$(CPP_SRC_HOME)/devinclude
 
-PRELERT_LIBS=$(LIB_PRE_CORE)
+ML_LIBS=$(LIB_PRE_CORE)
 
 ifeq ($(OS),Windows)
-PRELERT_LIBS+= libVf.lib
+ML_LIBS+= libVf.lib
 else
-PRELERT_LIBS+= -lVf
+ML_LIBS+= -lVf
 endif
 
-LIBS=$(PRELERT_LIBS)
+LIBS=$(ML_LIBS)
 
 all: build
 

@@ -12,15 +12,15 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_maths_CEuclideanDistance_h
-#define INCLUDED_prelert_maths_CEuclideanDistance_h
+#ifndef INCLUDED_ml_maths_CEuclideanDistance_h
+#define INCLUDED_ml_maths_CEuclideanDistance_h
 
 #include <maths/ImportExport.h>
 
 #include <vector>
 
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -60,5 +60,5 @@ class MATHS_EXPORT CEuclideanDistance
 }
 }
 
-#endif // INCLUDED_prelert_maths_CEuclideanDistance_h
+#endif // INCLUDED_ml_maths_CEuclideanDistance_h
 

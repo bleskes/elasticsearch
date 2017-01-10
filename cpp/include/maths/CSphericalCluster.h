@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CSphericalCluster_h
-#define INCLUDED_prelert_maths_CSphericalCluster_h
+#ifndef INCLUDED_ml_maths_CSphericalCluster_h
+#define INCLUDED_ml_maths_CSphericalCluster_h
 
 #include <maths/CAnnotatedVector.h>
 #include <maths/CBasicStatistics.h>
@@ -26,7 +26,7 @@
 
 #include <math.h>
 
-namespace prelert
+namespace ml
 {
 namespace maths
 {
@@ -203,4 +203,4 @@ std::ostream &operator<<(std::ostream &o,
 }
 }
 
-#endif // INCLUDED_prelert_maths_CSphericalCluster_h
+#endif // INCLUDED_ml_maths_CSphericalCluster_h

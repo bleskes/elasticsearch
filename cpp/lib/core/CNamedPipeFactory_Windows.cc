@@ -42,7 +42,7 @@ const std::string PIPE_PREFIX("\\\\.\\pipe\\");
 
 }
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -153,7 +153,7 @@ CNamedPipeFactory::TPipeHandle CNamedPipeFactory::initPipeHandle(const std::stri
     // call has started.  In this case there is no short-lived connection.  To
     // cope with this we wait a short time after a connection and then try to
     // write to the pipe to check whether it's still open on the remote side.
-    // This means that all Java code that reads from Prelert named pipes must
+    // This means that all Java code that reads from Ml named pipes must
     // tolerate a test character appearing at the beginning of the data it
     // receives.  We use a newline character, as the named pipes carry lineified
     // JSON and it's easy to make them tolerate blank lines.

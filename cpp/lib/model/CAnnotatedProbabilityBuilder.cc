@@ -22,7 +22,7 @@
 
 #include <utility>
 
-namespace prelert
+namespace ml
 {
 namespace model
 {

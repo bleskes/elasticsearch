@@ -13,8 +13,8 @@
  * strictly prohibited.
  */
 
-#ifndef INCLUDED_prelert_maths_CMultivariateConstantPrior_h
-#define INCLUDED_prelert_maths_CMultivariateConstantPrior_h
+#ifndef INCLUDED_ml_maths_CMultivariateConstantPrior_h
+#define INCLUDED_ml_maths_CMultivariateConstantPrior_h
 
 #include <core/CMemory.h>
 
@@ -22,7 +22,7 @@
 
 #include <maths/ImportExport.h>
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -170,4 +170,4 @@ class MATHS_EXPORT CMultivariateConstantPrior : public CMultivariatePrior
 }
 }
 
-#endif // INCLUDED_prelert_maths_CMultivariateConstantPrior_h
+#endif // INCLUDED_ml_maths_CMultivariateConstantPrior_h

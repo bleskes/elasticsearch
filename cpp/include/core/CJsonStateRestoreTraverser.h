@@ -12,8 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-#ifndef INCLUDED_prelert_core_CJsonStateRestoreTraverser_h
-#define INCLUDED_prelert_core_CJsonStateRestoreTraverser_h
+#ifndef INCLUDED_ml_core_CJsonStateRestoreTraverser_h
+#define INCLUDED_ml_core_CJsonStateRestoreTraverser_h
 
 #include <core/CNonCopyable.h>
 #include <core/CStateRestoreTraverser.h>
@@ -25,7 +25,7 @@
 #include <iosfwd>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
@@ -151,5 +151,5 @@ class CORE_EXPORT CJsonStateRestoreTraverser : public CStateRestoreTraverser
 }
 }
 
-#endif // INCLUDED_prelert_core_CJsonStateRestoreTraverser_h
+#endif // INCLUDED_ml_core_CJsonStateRestoreTraverser_h
 

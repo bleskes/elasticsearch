@@ -22,7 +22,7 @@
 #include <sys/time.h>
 
 
-namespace prelert
+namespace ml
 {
 namespace core
 {
