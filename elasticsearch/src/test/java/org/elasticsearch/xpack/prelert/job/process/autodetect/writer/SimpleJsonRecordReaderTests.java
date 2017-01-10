@@ -14,15 +14,14 @@
  */
 package org.elasticsearch.xpack.prelert.job.process.autodetect.writer;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.prelert.job.status.CountingInputStream;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,7 +39,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
 
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];
@@ -67,7 +66,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         fieldMap.put("b", 1);
         fieldMap.put("c.e", 2);
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
 
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];
@@ -89,7 +88,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         fieldMap.put("b", 1);
         fieldMap.put("c.e", 2);
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
 
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];
@@ -111,7 +110,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         fieldMap.put("g", 1);
         fieldMap.put("c.e", 2);
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
 
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];
@@ -136,7 +135,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
 
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];
@@ -158,7 +157,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
 
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];
@@ -186,7 +185,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         JsonParser parser = createParser(builder.toString());
         Map<String, Integer> fieldMap = createFieldMap();
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
         ESTestCase.expectThrows(ElasticsearchParseException.class, () -> readUntilError(reader));
     }
 
@@ -200,34 +199,6 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         }
     }
 
-
-    public void testRead_GivenDataEmbeddedInSource() throws Exception {
-        String data = "{\"took\": 1,\"hits\":{\"total\":1,\"hits\":["
-                + "{\"_index\":\"foo\",\"_source\":{\"a\":1,\"b\":2,\"c\":3}},"
-                + "{\"_index\":\"foo\",\"_source\":{\"a\":4,\"b\":5,\"c\":6}}"
-                + "]}}\n";
-        JsonParser parser = createParser(data);
-        Map<String, Integer> fieldMap = createFieldMap();
-
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "_source", mock(Logger.class));
-
-        String record[] = new String[3];
-        boolean gotFields[] = new boolean[3];
-
-        assertEquals(3, reader.read(record, gotFields));
-        assertEquals("1", record[0]);
-        assertEquals("2", record[1]);
-        assertEquals("3", record[2]);
-
-        assertEquals(3, reader.read(record, gotFields));
-        assertEquals("4", record[0]);
-        assertEquals("5", record[1]);
-        assertEquals("6", record[2]);
-
-        assertEquals(-1, reader.read(record, gotFields));
-    }
-
-
     public void testRead_givenControlCharacterInData() throws Exception {
         char controlChar = '\u0002';
 
@@ -238,7 +209,7 @@ public class SimpleJsonRecordReaderTests extends ESTestCase {
         JsonParser parser = createParser(data);
         Map<String, Integer> fieldMap = createFieldMap();
 
-        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, "", mock(Logger.class));
+        SimpleJsonRecordReader reader = new SimpleJsonRecordReader(parser, fieldMap, mock(Logger.class));
 
         String record[] = new String[3];
         boolean gotFields[] = new boolean[3];

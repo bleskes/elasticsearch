@@ -12,11 +12,8 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.prelert.job.extraction;
-
-import org.elasticsearch.xpack.prelert.job.Job;
-import org.elasticsearch.xpack.prelert.scheduler.SchedulerConfig;
+package org.elasticsearch.xpack.prelert.scheduler.extractor;
 
 public interface DataExtractorFactory {
-    DataExtractor newExtractor(SchedulerConfig schedulerConfig, Job job);
+    DataExtractor newExtractor(long start, long end);
 }

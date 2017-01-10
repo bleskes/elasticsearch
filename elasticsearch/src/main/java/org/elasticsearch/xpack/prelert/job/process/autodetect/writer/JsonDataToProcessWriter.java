@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.xpack.prelert.job.AnalysisConfig;
 import org.elasticsearch.xpack.prelert.job.DataCounts;
 import org.elasticsearch.xpack.prelert.job.DataDescription;
-import org.elasticsearch.xpack.prelert.job.DataDescription.DataFormat;
 import org.elasticsearch.xpack.prelert.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.prelert.job.status.StatusReporter;
 import org.elasticsearch.xpack.prelert.job.transform.TransformConfigs;
@@ -41,7 +40,6 @@ import java.util.function.Supplier;
  * detailed description.
  */
 class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
-    private static final String ELASTICSEARCH_SOURCE_FIELD = "_source";
 
     public JsonDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess, DataDescription dataDescription,
                                    AnalysisConfig analysisConfig, TransformConfigs transforms, StatusReporter statusReporter,
@@ -82,7 +80,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
         // We never expect to get the control field
         boolean[] gotFields = new boolean[analysisFields.size()];
 
-        JsonRecordReader recordReader = new SimpleJsonRecordReader(parser, inFieldIndexes, getRecordHoldingField(), logger);
+        JsonRecordReader recordReader = new SimpleJsonRecordReader(parser, inFieldIndexes, logger);
         long inputFieldCount = recordReader.read(input, gotFields);
         while (inputFieldCount >= 0) {
             Arrays.fill(record, "");
@@ -103,13 +101,6 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
 
             inputFieldCount = recordReader.read(input, gotFields);
         }
-    }
-
-    private String getRecordHoldingField() {
-        if (dataDescription.getFormat().equals(DataFormat.ELASTICSEARCH)) {
-            return ELASTICSEARCH_SOURCE_FIELD;
-        }
-        return "";
     }
 
     /**

@@ -35,13 +35,11 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
      *            The JSON parser
      * @param fieldMap
      *            Map to field name to record array index position
-     * @param recordHoldingField
-     *            record field
      * @param logger
      *            logger
      */
-    SimpleJsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, String recordHoldingField, Logger logger) {
-        super(parser, fieldMap, recordHoldingField, logger);
+    SimpleJsonRecordReader(JsonParser parser, Map<String, Integer> fieldMap, Logger logger) {
+        super(parser, fieldMap, logger);
     }
 
     /**
@@ -66,7 +64,6 @@ class SimpleJsonRecordReader extends AbstractJsonRecordReader {
         initArrays(record, gotFields);
         fieldCount = 0;
         clearNestedLevel();
-        consumeToRecordHoldingField();
 
         JsonToken token = tryNextTokenOrReadToEndOnError();
         while (!(token == JsonToken.END_OBJECT && nestedLevel == 0)) {
