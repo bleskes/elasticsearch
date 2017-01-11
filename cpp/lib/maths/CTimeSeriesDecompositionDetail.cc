@@ -141,349 +141,24 @@ void decompose(const TTrendCRef &trend,
     {
         z = static_cast<double>(n + 1);
         decomposition[0] = (decomposition[0] - xhat) / z;
-        double lastShift = 0.0;
+        double lastDelta = 0.0;
         for (std::size_t i = 0u; i < n; ++i)
         {
-            double shift = deltas[i] * (x[i] - components[i]->meanValue());
-            double d = shift - lastShift;
-            lastShift = shift;
+            double d = deltas[i] - lastDelta;
+            lastDelta = deltas[i];
             decomposition[i + 1] = (decomposition[i + 1] - xhat) / z + d;
         }
     }
     else
     {
         decomposition[0] = x0 + (decomposition[0] - xhat) * ::fabs(x0) / z;
-        double lastShift = 0.0;
+        double lastDelta = 0.0;
         for (std::size_t i = 0u; i < n; ++i)
         {
-            double shift = deltas[i] * (x[i] - components[i]->meanValue());
-            double d = shift - lastShift;
-            lastShift = shift;
+            double d = deltas[i] - lastDelta;
+            lastDelta = deltas[i];
             decomposition[i + 1] = x[i] + (decomposition[i + 1] - xhat) * ::fabs(x[i]) / z + d;
         }
-    }
-}
-
-//! \brief Compute the intersection of two seasonal components.
-//!
-//! DESCRIPTION:\n
-//! This is defined as the smallest set of intervals which, via
-//! unions, are able to reconstruct the spline intervals for the
-//! two components, i.e. effectively a basis for the two sets of
-//! intervals. This can be used to efficiently compute arithmetic
-//! on the splines, such as their difference or slope of their
-//! difference.
-class CIntersection : private core::CNonCopyable
-{
-    public:
-        typedef std::pair<std::size_t, std::size_t> TSizeSizePr;
-        typedef std::vector<TSizeSizePr> TSizeSizePrVec;
-
-    public:
-        CIntersection(const CSeasonalComponent &next,
-                      const CSeasonalComponent &current)
-        {
-            CSeasonalComponent::TSplineCRef s1 = next.valueSpline();
-            s1.coefficients(&m_A1, &m_B1, &m_C1);
-            m_Knots1.assign(s1.knots().begin(), s1.knots().end());
-            std::size_t n1 = m_Knots1.size();
-            m_P1 = m_Knots1[n1-1] - m_Knots1[0];
-
-            CSeasonalComponent::TSplineCRef s2 = current.valueSpline();
-            s2.coefficients(&m_A2, &m_B2, &m_C2);
-            m_Knots2.assign(s2.knots().begin(), s2.knots().end());
-            std::size_t n2 = m_Knots2.size();
-            m_P2 = m_Knots2[n2-1] - m_Knots2[0];
-
-            std::size_t repeats = static_cast<std::size_t>(m_P1 / m_P2);
-            m_Knots.reserve(n1 + repeats*(n2-1));
-            m_Mapping.reserve(n1 + repeats*(n2-1) - 1);
-
-            LOG_TRACE("n1 = " << n1 << ", n2 = " << n2);
-            LOG_TRACE("p1 = " << m_P1 << ", p2 = " << m_P2);
-            LOG_TRACE("repeats = " << repeats);
-            LOG_TRACE("knots1 = " << core::CContainerPrinter::print(m_Knots1));
-            LOG_TRACE("knots2 = " << core::CContainerPrinter::print(m_Knots2));
-
-            double offset = 0.0;
-            m_Knots.push_back(0.0);
-            for (std::size_t j = 1u; j < n1; offset += m_P2)
-            {
-                for (std::size_t k = 1u; j < n1 && k < n2; /**/)
-                {
-                    m_Mapping.push_back(TSizeSizePr(j-1,k-1));
-                    if (offset + m_Knots2[k] < m_Knots1[j])
-                    {
-                        m_Knots.push_back(offset + m_Knots2[k++]);
-                    }
-                    else if (m_Knots1[j] < offset + m_Knots2[k])
-                    {
-                        m_Knots.push_back(m_Knots1[j++]);
-                    }
-                    else
-                    {
-                        m_Knots.push_back(m_Knots1[j++]); ++k;
-                    }
-                }
-            }
-            LOG_TRACE("mapping = " << core::CContainerPrinter::print(m_Mapping));
-            LOG_TRACE("knots = " << core::CContainerPrinter::print(m_Knots));
-        }
-
-        //! Compute the mean absolute slope of the spline difference.
-        //!
-        //! This is defined as
-        //! <pre class="fragment">
-        //!   \f$\frac{1}{|b-a|}\int_{[a,b]}{\left|\frac{df(s)}{ds}\right|}ds\f$
-        //! </pre>
-        //!
-        //! Here, \f$f(.)\f$ is defined as the difference of the first
-        //! spline and \p delta times the second spline, i.e.
-        //! <pre class="fragment">
-        //!   \f$f(t) = g(t) - \delta h(t)\f$
-        //! </pre>
-        double absSlope(double delta) const
-        {
-            double result = 0.0;
-            std::size_t n = m_Knots.size();
-            for (std::size_t i = 1u; i < n; ++i)
-            {
-                double a = m_Knots[i-1];
-                double b = m_Knots[i];
-
-                std::size_t j = m_Mapping[i-1].first;
-                std::size_t k = m_Mapping[i-1].second;
-                double a1 = m_A1[j];
-                double b1 = m_B1[j];
-                double c1 = m_C1[j];
-                double x1 = m_Knots1[j];
-                double a2 = delta * m_A2[k];
-                double b2 = delta * m_B2[k];
-                double c2 = delta * m_C2[k];
-                double x2 = ::floor(a / m_P2) * m_P2 + m_Knots2[k];
-
-                // Compute the roots of the difference equation.
-                double qa =   3.0 * (a1 - a2);
-                double qb =  -2.0 * (3.0 * (a1 * x1 - a2 * x2) + b2 - b1);
-                double qc =   3.0 * (a1 * x1 * x1 - a2 * x2 * x2)
-                            + 2.0 * (b2 * x2 - b1 * x1)
-                            + c1 - c2;
-
-                // Check if the slope can change sign in the interval.
-                double descriminant = qb * qb - 4.0 * qa * qc;
-                if (descriminant <= 0.0)
-                {
-                    result += absSlope(a, b, a1, b1, c1, x1, a2, b2, c2, x2);
-                    continue;
-                }
-
-                // Split the interval by the roots of the slope and
-                // compute the contribution from each subinterval.
-                double rl = CTools::truncate((-qb - ::sqrt(descriminant)) / 2.0 / qa, a, b);
-                double rr = CTools::truncate((-qb + ::sqrt(descriminant)) / 2.0 / qa, a, b);
-                if (rl > rr)
-                {
-                    std::swap(rl, rr);
-                }
-                result +=   absSlope(a,  rl, a1, b1, c1, x1, a2, b2, c2, x2)
-                          + absSlope(rl, rr, a1, b1, c1, x1, a2, b2, c2, x2)
-                          + absSlope(rr,  b, a1, b1, c1, x1, a2, b2, c2, x2);
-
-            }
-            return result / (m_Knots[n-1] - m_Knots[0]);
-        }
-
-    private:
-        //! Compute on the absolute slope of the spline difference
-        //! on the interval [\p a, \p b].
-        double absSlope(double a, double b,
-                        double a1, double b1, double c1, double x1,
-                        double a2, double b2, double c2, double x2) const
-        {
-            if (a == b)
-            {
-                return 0.0;
-            }
-            double h  = b - a;
-            double m  = a + b;
-            double y1 = x1 - m / 2.0;
-            double y2 = x2 - m / 2.0;
-            return h * ::fabs(  (  a1 * (h * h / 4.0 + 3.0 * y1 * y1)
-                                 - a2 * (h * h / 4.0 + 3.0 * y2 * y2))
-                              + (  b1 * (m - 2.0 * x1)
-                                 - b2 * (m - 2.0 * x2))
-                              + (c1 - c2));
-
-        }
-
-    private:
-        double m_P1;
-        TDoubleVec m_A1, m_B1, m_C1, m_Knots1;
-        double m_P2;
-        TDoubleVec m_A2, m_B2, m_C2, m_Knots2;
-        TDoubleVec m_Knots;
-        TSizeSizePrVec m_Mapping;
-};
-
-//! \brief Function object wrapper for an CIntersection absSlope function.
-//!
-//! \see CIntersection::absSlope for more details.
-class CAbsSlope
-{
-    public:
-        CAbsSlope(const CIntersection &intersection) : m_Intersection(&intersection) {}
-
-        double operator()(double delta) const
-        {
-            return m_Intersection->absSlope(delta);
-        }
-
-    private:
-        const CIntersection *m_Intersection;
-};
-
-//! Minimize the r.m.s. slope in the longer components by setting
-//! the deltas to apply to in decomposition.
-//!
-//! \param[in] components The seasonal components to work on.
-//! \param[out] deltas Filled in with the delta offsets to apply
-//! to the difference between each component value and its mean
-//! when decomposing, used to minimize slope in the longer periods.
-void minimizeAbsSlope(const TComponentVec &components, TDoubleVec &deltas)
-{
-    typedef std::map<core_t::TTime, TSizeVec> TTimeSizeVecMap;
-    typedef TTimeSizeVecMap::const_iterator TTimeSizeVecMapCItr;
-
-    TTimeSizeVecMap counts;
-    for (std::size_t i = 0u; i < components.size(); ++i)
-    {
-        if (components[i].initialized())
-        {
-            counts[components[i].time().window()].push_back(i);
-        }
-    }
-
-    for (TTimeSizeVecMapCItr i = counts.begin(); i != counts.end(); ++i)
-    {
-        const TSizeVec &indexes = i->second;
-        if (indexes.size() < 2)
-        {
-            // No degeneracy.
-            continue;
-        }
-
-        // For a decomposition of the form f(t) = Sum_i( f_i(t) )
-        // there is an obvious degeneracy in the choice of f_i(.).
-        // In particular, for any pair (f_i, f_j) and for any
-        // constant c set f_i' = f_i + c and f_j' = f_j - c and
-        // f is unmodified.
-        //
-        // From our perspective not all choices of the component
-        // functions are equally desirable because one ideally
-        // wants to minimize the total slope of the components with
-        // longer period. This means that we can use the buckets
-        // more efficiently.
-        //
-        // To be concrete, for a set of functions {f_1, f_2, ..., f_n}
-        // ordered by increasing periodicity we'd like to minimize
-        // the function:
-        //   Sum_{i>1}( r.m.s. curvature of f_i )
-        //
-        // Clearly, adding a constant to any function doesn't affect
-        // its slope. However, we can add a scaling, i.e. c * f_i(t)
-        // and then subtract c * f_i((t + T_i) mod T_{i+1}) from
-        // f_{i+1}, and alter the r.m.s. slope of both functions.
-        //
-        // Since the r.m.s. curvature is relatively expensive to
-        // to compute and the objective is a summation it suggests
-        // optimization via stochastic gradient descent. We cycle
-        // through the periods in increasing order. We update c by
-        // increment and measure the r.m.s. slope. As soon as we've
-        // bracketed a minimum we switch to Brent's method for
-        // minimization. It should be pretty clear that this scheme
-        // necessarily eventually converges (to a local minimum)
-        // since the r.m.s. slope is positive.
-
-        LOG_TRACE("minimizing |slope|");
-
-        static const std::size_t MAX_ITERATIONS = 20u;
-        static const double STEP = 0.05;
-        static const double TOLERANCE = 0.001;
-        static const double MINIMUM_DECREASE = 0.005;
-
-        for (std::size_t j = 0u, k = 0u;
-             j < MAX_ITERATIONS && k+1 < indexes.size();
-             ++k)
-        {
-            const CSeasonalComponent &current = components[indexes[j]];
-            const CSeasonalComponent &next = components[indexes[j+1]];
-
-            double slope = next.valueSpline().absSlope();
-            LOG_TRACE("|slope| = " << slope);
-
-            CIntersection intersection(next, current);
-
-            double a = 0.0;
-            double fa = intersection.absSlope(0.0);
-            double f0 = fa;
-            double b = STEP;
-            double fb = intersection.absSlope(b);
-            if (fa < fb)
-            {
-                std::swap(a, b);
-                std::swap(fa, fb);
-            }
-            j += 2;
-            LOG_TRACE("deltas = (" << a << "," << b << ")"
-                      << ", |slopes| = (" << fa << "," << fb << ")");
-
-            double delta = 0.0;
-            for (/**/; j < MAX_ITERATIONS; ++j)
-            {
-                double c = b + (b - a);
-                double fc = intersection.absSlope(c);
-                LOG_TRACE("delta = " << c << " |slope| = " << fc);
-
-                if (fc > fb)
-                {
-                    // a and c bracket a (local) minimum.
-
-                    if (c < a)
-                    {
-                        std::swap(a, c);
-                        std::swap(fa, fc);
-                    }
-
-                    LOG_TRACE("minimize in [" << a << "," << c << "]");
-
-                    double x, fx;
-                    std::size_t iterations = MAX_ITERATIONS - j;
-                    CSolvers::minimize(a, c, fa, fc,
-                                       CAbsSlope(intersection),
-                                       TOLERANCE, iterations,
-                                       x, fx);
-                    j += iterations;
-                    LOG_TRACE("x = " << x << ", |slope| = " << fx);
-                    if (fx < (1.0 - MINIMUM_DECREASE) * f0)
-                    {
-                        delta = x;
-                    }
-                    break;
-                }
-
-                a = b; fa = fb;
-                b = c; fb = fc;
-                if (fc < (1.0 - MINIMUM_DECREASE) * f0)
-                {
-                    delta = c;
-                }
-            }
-
-            LOG_TRACE("delta = " << delta);
-            deltas[indexes[k]] = delta;
-        }
-
-        LOG_TRACE("deltas = " << core::CContainerPrinter::print(deltas))
     }
 }
 
@@ -682,7 +357,6 @@ const std::string REGRESSION_TAG("h");
 const std::string VARIANCE_TAG("i");
 const std::string TIME_ORIGIN_TAG("j");
 const std::string HISTORY_LENGTH_TAG("k");
-const std::string DELTA_TAG("l");
 
 const core_t::TTime FORECASTING_INTERPOLATE_INTERVAL(core::constants::HOUR);
 const core_t::TTime FORECASTING_PROPAGATION_FORWARDS_BY_TIME_INTERVAL(core::constants::HOUR);
@@ -1510,21 +1184,9 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SAddValueMessage 
 
             TComponentPtrVec componentsToUpdate;
             TDoubleVec deltas;
-
             if (m_Seasonal)
             {
-                TComponentVec &components = m_Seasonal->s_Components;
-                componentsToUpdate.reserve(components.size());
-                deltas.reserve(components.size());
-                for (std::size_t i = 0u; i < components.size(); ++i)
-                {
-                    CSeasonalComponent *component = &components[i];
-                    if (component->time().inWindow(time))
-                    {
-                        componentsToUpdate.push_back(component);
-                        deltas.push_back(m_Seasonal->s_Deltas[i]);
-                    }
-                }
+                m_Seasonal->componentsAndDeltas(time, componentsToUpdate, deltas);
             }
 
             double weight = maths_t::countForUpdate(weightStyles, weights);
@@ -1641,9 +1303,7 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodic
         core_t::TTime startOfWeek = periods.startOfPartition();
         m_Seasonal.reset(new SSeasonal);
         TComponentVec &components = m_Seasonal->s_Components;
-        TDoubleVec &deltas = m_Seasonal->s_Deltas;
         components.clear();
-        deltas.clear();
 
         LOG_DEBUG("Detected " << CTrendTests::printDailyAndWeekly(periods));
         LOG_DEBUG("Start of week " << startOfWeek);
@@ -1681,7 +1341,6 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodic
                 }
             }
         }
-        deltas.resize(components.size(), 0.0);
 
         this->apply(SC_ADDED_COMPONENTS, message);
 
@@ -1703,7 +1362,6 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
     {
         TTimeVec periods = message.s_Test.periods();
         TComponentVec &components = m_Seasonal->s_Components;
-        TDoubleVec &deltas = m_Seasonal->s_Deltas;
 
         std::size_t last = 0u;
         double shift = 0.0;
@@ -1713,7 +1371,6 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
             if (last != i)
             {
                 components[i].swap(components[last]);
-                std::swap(deltas[i], deltas[last]);
             }
             if (!std::binary_search(periods.begin(), periods.end(), components[i].time().period()))
             {
@@ -1733,7 +1390,6 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
         else
         {
             components.erase(components.begin() + last, components.end());
-            deltas.erase(deltas.begin() + last, deltas.end());
         }
 
         if (m_Trend)
@@ -1742,7 +1398,7 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
         }
         else if (m_Seasonal)
         {
-            m_Seasonal->shift(shift);
+            m_Seasonal->shiftValue(shift);
         }
     }
 }
@@ -1766,20 +1422,11 @@ void CTimeSeriesDecompositionDetail::CComponents::interpolate(const SMessage &me
 
             if (m_Trend)
             {
-                m_Trend->refresh(m_NextInterpolateTime);
+                m_Trend->shiftTime(m_NextInterpolateTime);
             }
             if (m_Seasonal)
             {
-                TComponentVec &components = m_Seasonal->s_Components;
-                TDoubleVec &deltas = m_Seasonal->s_Deltas;
-
-                for (std::size_t i = 0u; i < components.size(); ++i)
-                {
-                    CSeasonalComponent &component = components[i];
-                    component.interpolate(m_LastInterpolatedTime, !this->forecasting());
-                }
-
-                minimizeAbsSlope(components, deltas);
+                m_Seasonal->interpolate(m_LastInterpolatedTime, !this->forecasting());
             }
 
             this->apply(SC_INTERPOLATED, message);
@@ -1797,12 +1444,10 @@ void CTimeSeriesDecompositionDetail::CComponents::interpolate(const SMessage &me
 void CTimeSeriesDecompositionDetail::CComponents::decayRate(double decayRate)
 {
     m_DecayRate = decayRate;
+    // TODO should we control LTT decay rate?
     if (m_Seasonal)
     {
-        for (std::size_t i = 0u; i < m_Seasonal->s_Components.size(); ++i)
-        {
-            m_Seasonal->s_Components[i].decayRate(decayRate);
-        }
+        m_Seasonal->decayRate(decayRate);
     }
 }
 
@@ -1813,19 +1458,14 @@ void CTimeSeriesDecompositionDetail::CComponents::propagateForwards(core_t::TTim
     double time =  static_cast<double>(end - start)
                  / static_cast<double>(this->propagationForwardsByTimeInterval());
 
-    double factor = ::exp(-m_DecayRate * time);
-
     if (m_Trend)
     {
+        double factor = ::exp(-m_DecayRate * time);
         m_Trend->s_Regression.age(factor);
     }
     if (m_Seasonal)
     {
-        for (std::size_t i = 0u; i < m_Seasonal->s_Components.size(); ++i)
-        {
-            CSeasonalComponent &component = m_Seasonal->s_Components[i];
-            component.propagateForwardsByTime(time);
-        }
+        m_Seasonal->propagateForwardsByTime(time);
     }
 }
 
@@ -1841,19 +1481,7 @@ void CTimeSeriesDecompositionDetail::CComponents::forecast(void)
 
 bool CTimeSeriesDecompositionDetail::CComponents::initialized(void) const
 {
-    if (m_Trend)
-    {
-        return true;
-    }
-    const TComponentVec &components = this->seasonal();
-    for (std::size_t i = 0u; components.size(); ++i)
-    {
-        if (components[i].initialized())
-        {
-            return true;
-        }
-    }
-    return false;
+    return m_Trend ? true : (m_Seasonal ? m_Seasonal->initialized() : false);
 }
 
 TTrendCRef CTimeSeriesDecompositionDetail::CComponents::trend(void) const
@@ -2035,7 +1663,7 @@ void CTimeSeriesDecompositionDetail::CComponents::STrend::acceptPersistInserter(
     inserter.insertValue(TIME_ORIGIN_TAG, s_TimeOrigin);
 }
 
-void CTimeSeriesDecompositionDetail::CComponents::STrend::refresh(core_t::TTime time)
+void CTimeSeriesDecompositionDetail::CComponents::STrend::shiftTime(core_t::TTime time)
 {
     if (time - 3 * WEEK >= s_TimeOrigin)
     {
@@ -2061,10 +1689,6 @@ bool CTimeSeriesDecompositionDetail::CComponents::SSeasonal::acceptRestoreTraver
         const std::string &name = traverser.name();
         RESTORE_NO_ERROR(COMPONENT_TAG, s_Components.push_back(
                 CSeasonalComponent(decayRate, static_cast<double>(bucketLength), traverser)))
-        RESTORE_SETUP_TEARDOWN(DELTA_TAG,
-                               double delta,
-                               core::CStringUtils::stringToType(traverser.value(), delta),
-                               s_Deltas.push_back(delta))
     }
     while (traverser.next());
     return true;
@@ -2074,12 +1698,73 @@ void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::acceptPersistInsert
 {
     for (std::size_t i = 0u; i < s_Components.size(); ++i)
     {
-        inserter.insertLevel(COMPONENT_TAG, boost::bind(&CSeasonalComponent::acceptPersistInserter, &s_Components[i], _1));
-        inserter.insertValue(DELTA_TAG, s_Deltas[i], core::CIEEE754::E_SinglePrecision);
+        inserter.insertLevel(COMPONENT_TAG, boost::bind(
+                &CSeasonalComponent::acceptPersistInserter, &s_Components[i], _1));
     }
 }
 
-void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::shift(double shift)
+void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::decayRate(double decayRate)
+{
+    for (std::size_t i = 0u; i < s_Components.size(); ++i)
+    {
+        s_Components[i].decayRate(decayRate);
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::propagateForwardsByTime(double time)
+{
+    for (std::size_t i = 0u; i < s_Components.size(); ++i)
+    {
+        CSeasonalComponent &component = s_Components[i];
+        component.propagateForwardsByTime(time);
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::componentsAndDeltas(core_t::TTime time,
+                                                                                 TComponentPtrVec &components,
+                                                                                 TDoubleVec &deltas)
+{
+    components.clear();
+    components.reserve(s_Components.size());
+    deltas.clear();
+    deltas.reserve(s_Components.size());
+
+    for (std::size_t i = 0u; i < s_Components.size(); ++i)
+    {
+        if (s_Components[i].time().inWindow(time))
+        {
+            components.push_back(&s_Components[i]);
+        }
+    }
+
+    deltas.resize(s_Components.size(), 0.0);
+    for (std::size_t i = 1u; i < components.size(); ++i)
+    {
+        deltas[i-1] = 0.2 * components[i]->differenceFromMean(time, s_Components[i-1].time().period());
+    }
+}
+
+void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::interpolate(core_t::TTime time, bool refine)
+{
+    for (std::size_t i = 0u; i < s_Components.size(); ++i)
+    {
+        s_Components[i].interpolate(time, refine);
+    }
+}
+
+bool CTimeSeriesDecompositionDetail::CComponents::SSeasonal::initialized(void) const
+{
+    for (std::size_t i = 0u; s_Components.size(); ++i)
+    {
+        if (s_Components[i].initialized())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::shiftValue(double shift)
 {
     typedef boost::container::flat_set<TTimeTimePr> TTimeTimePrFSet;
 
@@ -2097,20 +1782,18 @@ void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::shift(double shift)
 
 uint64_t CTimeSeriesDecompositionDetail::CComponents::SSeasonal::checksum(uint64_t seed) const
 {
-    seed = CChecksum::calculate(seed, s_Components);
-    return CChecksum::calculate(seed, s_Deltas);
+    return CChecksum::calculate(seed, s_Components);
 }
 
 void CTimeSeriesDecompositionDetail::CComponents::SSeasonal::debugMemoryUsage(core::CMemoryUsage::TMemoryUsagePtr mem) const
 {
     mem->setName("SSeasonal");
     core::CMemoryDebug::dynamicSize("s_Components", s_Components, mem);
-    core::CMemoryDebug::dynamicSize("s_Deltas", s_Deltas, mem);
 }
 
 std::size_t CTimeSeriesDecompositionDetail::CComponents::SSeasonal::memoryUsage(void) const
 {
-    return core::CMemory::dynamicSize(s_Components) + core::CMemory::dynamicSize(s_Deltas);
+    return core::CMemory::dynamicSize(s_Components);
 }
 
 }

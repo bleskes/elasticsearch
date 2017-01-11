@@ -284,26 +284,32 @@ TDoubleDoublePr CSeasonalComponent::value(core_t::TTime time, double confidence)
     return TDoubleDoublePr(m_MeanValue, m_MeanValue);
 }
 
-bool CSeasonalComponent::covariances(core_t::TTime time, TMatrix &result) const
-{
-    result = TMatrix(0.0);
-
-    if (!this->initialized())
-    {
-        return false;
-    }
-
-    if (const CSeasonalComponentAdaptiveBucketing::TRegression *r = m_Bucketing.regression(time))
-    {
-        double variance = CBasicStatistics::mean(this->variance(time, 0.0));
-        return r->covariances(variance, result);
-    }
-    return false;
-}
-
 double CSeasonalComponent::meanValue(void) const
 {
     return m_MeanValue;
+}
+
+double CSeasonalComponent::differenceFromMean(core_t::TTime time, core_t::TTime shortPeriod) const
+{
+    typedef CBasicStatistics::COrderStatisticsStack<double, 1> TMinAccumulator;
+    typedef CBasicStatistics::COrderStatisticsStack<double, 1, std::greater<double> > TMaxAccumulator;
+
+    core_t::TTime longPeriod = this->time().period();
+
+    if (longPeriod > shortPeriod && longPeriod % shortPeriod == 0)
+    {
+        TMinAccumulator min;
+        TMaxAccumulator max;
+        for (core_t::TTime t = time; t < time + longPeriod; t += shortPeriod)
+        {
+            double difference = CBasicStatistics::mean(this->value(t, 0.0)) - m_MeanValue;
+            min.add(difference);
+            max.add(difference);
+        }
+        return max[0] * min[0] > 0.0 ? (max[0] < 0.0 ? max[0] : min[0]) : 0.0;
+    }
+
+    return 0.0;
 }
 
 TDoubleDoublePr CSeasonalComponent::variance(core_t::TTime time, double confidence) const
@@ -339,6 +345,23 @@ TDoubleDoublePr CSeasonalComponent::variance(core_t::TTime time, double confiden
 double CSeasonalComponent::meanVariance(void) const
 {
     return m_MeanVariance;
+}
+
+bool CSeasonalComponent::covariances(core_t::TTime time, TMatrix &result) const
+{
+    result = TMatrix(0.0);
+
+    if (!this->initialized())
+    {
+        return false;
+    }
+
+    if (const CSeasonalComponentAdaptiveBucketing::TRegression *r = m_Bucketing.regression(time))
+    {
+        double variance = CBasicStatistics::mean(this->variance(time, 0.0));
+        return r->covariances(variance, result);
+    }
+    return false;
 }
 
 CSeasonalComponent::TSplineCRef CSeasonalComponent::valueSpline(void) const

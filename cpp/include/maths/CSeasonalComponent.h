@@ -155,15 +155,19 @@ class MATHS_EXPORT CSeasonalComponent
         //! as a percentage.
         TDoubleDoublePr value(core_t::TTime time, double confidence) const;
 
-        //! Get the covariance matrix of the regression parameters' at \p time.
-        //!
-        //! \param[in] time The time of interest.
-        //! \param[out] result Filled in with the regression parameters'
-        //! covariance matrix.
-        bool covariances(core_t::TTime time, TMatrix &result) const;
-
         //! Get the mean value of the function.
         double meanValue(void) const;
+
+        //! Get the difference from the mean of repeats at \p period.
+        //!
+        //! This computes the quantity:
+        //! <pre class="fragment">
+        //!    \f$\sum_i f(t + p i)\f$
+        //! </pre>
+        //!
+        //! where \f$t\f$ is \p time and \f$p\f$ is \p period and must divide
+        //! this component's period \f$P\f$. The sum ranges over \f$[P/p]\f$.
+        double differenceFromMean(core_t::TTime time, core_t::TTime period) const;
 
         //! Get the variance of the residual about the function at \p time.
         //!
@@ -174,6 +178,13 @@ class MATHS_EXPORT CSeasonalComponent
 
         //! Get the mean variance of the function residuals.
         double meanVariance(void) const;
+
+        //! Get the covariance matrix of the regression parameters' at \p time.
+        //!
+        //! \param[in] time The time of interest.
+        //! \param[out] result Filled in with the regression parameters'
+        //! covariance matrix.
+        bool covariances(core_t::TTime time, TMatrix &result) const;
 
         //! Get the value spline.
         TSplineCRef valueSpline(void) const;

@@ -31,7 +31,7 @@ class CTimeSeriesDecompositionTest : public CppUnit::TestFixture
     public:
         void testSuperpositionOfSines(void);
         void testBlueCoat(void);
-        void testMinimizeSlope(void);
+        void testMinimizeLongComponents(void);
         void testWeekend(void);
         void testSinglePeriodicity(void);
         void testSeasonalOnset(void);

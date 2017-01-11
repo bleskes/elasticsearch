@@ -137,9 +137,9 @@ void CTimeSeriesDecompositionTest::testSuperpositionOfSines(void)
 
             if (time >= 2 * week)
             {
-                CPPUNIT_ASSERT(sumResidual < 0.065 * sumValue);
-                CPPUNIT_ASSERT(maxResidual < 0.090 * maxValue);
-                CPPUNIT_ASSERT(percentileError < 0.051 * sumValue);
+                CPPUNIT_ASSERT(sumResidual < 0.046 * sumValue);
+                CPPUNIT_ASSERT(maxResidual < 0.066 * maxValue);
+                CPPUNIT_ASSERT(percentileError < 0.035 * sumValue);
 
                 totalSumResidual += sumResidual;
                 totalMaxResidual += maxResidual;
@@ -158,8 +158,8 @@ void CTimeSeriesDecompositionTest::testSuperpositionOfSines(void)
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.041 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.057 * totalMaxValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.039 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.052 * totalMaxValue);
     CPPUNIT_ASSERT(totalPercentileError < 0.026 * totalSumValue);
 
     //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
@@ -351,11 +351,11 @@ void CTimeSeriesDecompositionTest::testBlueCoat(void)
     CPPUNIT_ASSERT(totalPercentileError < 0.06 * totalSumValue);
 }
 
-void CTimeSeriesDecompositionTest::testMinimizeSlope(void)
+void CTimeSeriesDecompositionTest::testMinimizeLongComponents(void)
 {
-    LOG_DEBUG("+---------------------------------------------------+");
-    LOG_DEBUG("|  CTimeSeriesDecompositionTest::testMinimizeSlope  |");
-    LOG_DEBUG("+---------------------------------------------------+");
+    LOG_DEBUG("+------------------------------------------------------------+");
+    LOG_DEBUG("|  CTimeSeriesDecompositionTest::testMinimizeLongComponents  |");
+    LOG_DEBUG("+------------------------------------------------------------+");
 
     const core_t::TTime halfHour = 1800;
     const core_t::TTime day = 86400;
@@ -468,9 +468,9 @@ void CTimeSeriesDecompositionTest::testMinimizeSlope(void)
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.09 * totalSumValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.08 * totalSumValue);
     CPPUNIT_ASSERT(totalMaxResidual < 0.18 * totalMaxValue);
-    CPPUNIT_ASSERT(totalPercentileError < 0.06 * totalSumValue);
+    CPPUNIT_ASSERT(totalPercentileError < 0.04 * totalSumValue);
 
     meanSlope /= refinements;
     LOG_DEBUG("mean weekly |slope| = " << meanSlope);
@@ -851,9 +851,9 @@ void CTimeSeriesDecompositionTest::testSeasonalOnset(void)
     LOG_DEBUG("total 'sum residual' / 'sum value' = " << totalSumResidual / totalSumValue);
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
-    CPPUNIT_ASSERT(totalSumResidual < 0.1 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.13 * totalMaxValue);
-    CPPUNIT_ASSERT(totalPercentileError < 0.05 * totalSumValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.11 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.12 * totalMaxValue);
+    CPPUNIT_ASSERT(totalPercentileError < 0.06 * totalSumValue);
 
     //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
     //file << "r = " << core::CContainerPrinter::print(r) << ";\n";
@@ -1225,7 +1225,7 @@ void CTimeSeriesDecompositionTest::testBlueCoatProblemCase(void)
             LOG_DEBUG("'max residual' / 'max value' = " << maxResidual / maxValue);
             LOG_DEBUG("70% error = " << percentileError / sumValue);
 
-            if (time >= startTime + 3 * week)
+            if (time >= startTime + 2 * week)
             {
                 totalSumResidual += sumResidual;
                 totalMaxResidual += maxResidual;
@@ -1252,9 +1252,9 @@ void CTimeSeriesDecompositionTest::testBlueCoatProblemCase(void)
               << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.22 * totalSumValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.28 * totalSumValue);
     CPPUNIT_ASSERT(totalMaxResidual < 0.71 * totalMaxValue);
-    CPPUNIT_ASSERT(totalPercentileError < 0.14 * totalSumValue);
+    CPPUNIT_ASSERT(totalPercentileError < 0.18 * totalSumValue);
 
     //file << "hold on;\n";
     //file << "t = " << core::CContainerPrinter::print(times) << ";\n";
@@ -1356,7 +1356,7 @@ void CTimeSeriesDecompositionTest::testUMichProblemCase(void)
                       << (maxResidual == 0.0 ? 0.0 : maxResidual / maxValue));
             LOG_DEBUG("70% error = " << percentileError / sumValue);
 
-            if (time >= startTime + 3 * week)
+            if (time >= startTime + 2 * week)
             {
                 totalSumResidual += sumResidual;
                 totalMaxResidual += maxResidual;
@@ -1381,8 +1381,8 @@ void CTimeSeriesDecompositionTest::testUMichProblemCase(void)
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
-    CPPUNIT_ASSERT(totalSumResidual < 0.17 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.51 * totalMaxValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.18 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.53 * totalMaxValue);
     CPPUNIT_ASSERT(totalPercentileError < 0.08 * totalSumValue);
 
     //file << "hold on;\n";
@@ -1864,8 +1864,8 @@ CppUnit::Test *CTimeSeriesDecompositionTest::suite(void)
                                    "CTimeSeriesDecompositionTest::testBlueCoat",
                                    &CTimeSeriesDecompositionTest::testBlueCoat) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTimeSeriesDecompositionTest>(
-                                   "CTimeSeriesDecompositionTest::testMinimizeSlope",
-                                   &CTimeSeriesDecompositionTest::testMinimizeSlope) );
+                                   "CTimeSeriesDecompositionTest::testMinimizeLongComponents",
+                                   &CTimeSeriesDecompositionTest::testMinimizeLongComponents) );
     suiteOfTests->addTest( new CppUnit::TestCaller<CTimeSeriesDecompositionTest>(
                                    "CTimeSeriesDecompositionTest::testWeekend",
                                    &CTimeSeriesDecompositionTest::testWeekend) );

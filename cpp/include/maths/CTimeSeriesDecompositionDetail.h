@@ -475,6 +475,7 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
             private:
                 typedef boost::optional<double> TOptionalDouble;
                 typedef CBasicStatistics::SSampleMeanVar<double>::TAccumulator TMeanVarAccumulator;
+                typedef std::vector<CSeasonalComponent*> TComponentPtrVec;
 
                 //! \brief The long term trend.
                 struct MATHS_EXPORT STrend
@@ -487,8 +488,8 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                     //! Persist state by passing information to the supplied inserter.
                     void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
 
-                    //! Refresh the current trend.
-                    void refresh(core_t::TTime time);
+                    //! Maybe shift the current trend start time.
+                    void shiftTime(core_t::TTime time);
 
                     //! Get a checksum for this object.
                     uint64_t checksum(uint64_t seed = 0) const;
@@ -516,8 +517,25 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
                     //! Persist state by passing information to the supplied inserter.
                     void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
 
-                    //! Shift the components by \p shift.
-                    void shift(double shift);
+                    //! Set the decay rate.
+                    void decayRate(double decayRate);
+
+                    //! Update the components to account for \p time elapsed.
+                    void propagateForwardsByTime(double time);
+
+                    //! Compute the deltas apply at \p time.
+                    void componentsAndDeltas(core_t::TTime time,
+                                             TComponentPtrVec &components,
+                                             TDoubleVec &deltas);
+
+                    //! Interpolate the components at \p time.
+                    void interpolate(core_t::TTime time, bool refine);
+
+                    //! Check if any of the components has been initialized.
+                    bool initialized(void) const;
+
+                    //! Shift the components' values by \p shift.
+                    void shiftValue(double shift);
 
                     //! Get a checksum for this object.
                     uint64_t checksum(uint64_t seed = 0) const;
@@ -530,11 +548,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionDetail : virtual public CTimeSeriesDe
 
                     //! The seasonal components.
                     TComponentVec s_Components;
-
-                    //! The delta offset to apply to the difference between each
-                    //! component value and its mean which are used to minimize
-                    //! slope in the longer periods.
-                    TDoubleVec s_Deltas;
                 };
 
                 typedef boost::shared_ptr<SSeasonal> TSeasonalPtr;
