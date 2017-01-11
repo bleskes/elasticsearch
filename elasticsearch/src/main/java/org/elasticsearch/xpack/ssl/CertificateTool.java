@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.ssl;
 
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
-
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
@@ -31,11 +30,8 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.cli.EnvironmentAwareCommand;
 import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcher;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.network.InetAddresses;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
@@ -43,9 +39,9 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
 import org.elasticsearch.xpack.XPackPlugin;
 
+import javax.security.auth.x500.X500Principal;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -74,8 +70,6 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.security.auth.x500.X500Principal;
-
 /**
  * CLI tool to make generation of certificates or certificate requests easier for users
  */
@@ -92,9 +86,9 @@ public class CertificateTool extends EnvironmentAwareCommand {
             Pattern.compile("[a-zA-Z0-9!@#$%^&{}\\[\\]()_+\\-=,.~'` ]{1," + MAX_FILENAME_LENGTH + "}");
     private static final int DEFAULT_KEY_SIZE = 2048;
 
-    private static final ObjectParser<List<CertificateInformation>, CertInfoParseContext> PARSER = new ObjectParser<>("certgen");
+    private static final ObjectParser<List<CertificateInformation>, Void> PARSER = new ObjectParser<>("certgen");
     static {
-        ConstructingObjectParser<CertificateInformation, CertInfoParseContext> instanceParser =
+        ConstructingObjectParser<CertificateInformation, Void> instanceParser =
                 new ConstructingObjectParser<>("instances",
                         a -> new CertificateInformation((String) a[0], (String) (a[1] == null ? a[0] : a[1]),
                                 (List<String>) a[2], (List<String>) a[3]));
@@ -260,7 +254,7 @@ public class CertificateTool extends EnvironmentAwareCommand {
         try (Reader reader = Files.newBufferedReader(file)) {
             // EMPTY is safe here because we never use namedObject
             XContentParser xContentParser = XContentType.YAML.xContent().createParser(NamedXContentRegistry.EMPTY, reader);
-            return PARSER.parse(xContentParser, new ArrayList<>(), new CertInfoParseContext());
+            return PARSER.parse(xContentParser, new ArrayList<>(), null);
         }
     }
 
@@ -641,20 +635,6 @@ public class CertificateTool extends EnvironmentAwareCommand {
             this.privateKey = privateKey;
             this.generated = generated;
             this.password = password;
-        }
-    }
-
-    private static class CertInfoParseContext implements ParseFieldMatcherSupplier {
-
-        private final ParseFieldMatcher parseFieldMatcher;
-
-        CertInfoParseContext() {
-            this.parseFieldMatcher = ParseFieldMatcher.EMPTY;
-        }
-
-        @Override
-        public ParseFieldMatcher getParseFieldMatcher() {
-            return parseFieldMatcher;
         }
     }
 
