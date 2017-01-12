@@ -21,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -105,8 +104,7 @@ public class SearchTransform implements Transform {
     public static SearchTransform parse(Logger transformLogger, String watchId,
                                         XContentParser parser,
                                         boolean upgradeTransformSource,
-                                        String defaultLegacyScriptLanguage,
-                                        ParseFieldMatcher parseFieldMatcher) throws IOException {
+                                        String defaultLegacyScriptLanguage) throws IOException {
         WatcherSearchTemplateRequest request = null;
         TimeValue timeout = null;
         DateTimeZone dynamicNameTimeZone = null;
@@ -120,8 +118,7 @@ public class SearchTransform implements Transform {
                 try {
                     request = WatcherSearchTemplateRequest.fromXContent(
                             transformLogger, parser, ExecutableSearchTransform.DEFAULT_SEARCH_TYPE, upgradeTransformSource,
-                            defaultLegacyScriptLanguage, parseFieldMatcher
-                    );
+                            defaultLegacyScriptLanguage);
                 } catch (ElasticsearchParseException srpe) {
                     throw new ElasticsearchParseException("could not parse [{}] transform for watch [{}]. failed to parse [{}]", srpe,
                             TYPE, watchId, currentFieldName);

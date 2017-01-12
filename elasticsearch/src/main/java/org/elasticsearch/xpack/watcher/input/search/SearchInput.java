@@ -21,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -121,8 +120,7 @@ public class SearchInput implements Input {
 
     public static SearchInput parse(Logger inputLogger, String watchId, XContentParser parser,
                                     boolean upgradeInputSource,
-                                    String defaultLegacyScriptLanguage,
-                                    ParseFieldMatcher parseFieldMatcher) throws IOException {
+                                    String defaultLegacyScriptLanguage) throws IOException {
         WatcherSearchTemplateRequest request = null;
         Set<String> extract = null;
         TimeValue timeout = null;
@@ -136,7 +134,7 @@ public class SearchInput implements Input {
             } else if (Field.REQUEST.match(currentFieldName)) {
                 try {
                     request = WatcherSearchTemplateRequest.fromXContent(inputLogger, parser, ExecutableSearchInput.DEFAULT_SEARCH_TYPE,
-                            upgradeInputSource, defaultLegacyScriptLanguage, parseFieldMatcher);
+                            upgradeInputSource, defaultLegacyScriptLanguage);
                 } catch (ElasticsearchParseException srpe) {
                     throw new ElasticsearchParseException("could not parse [{}] input for watch [{}]. failed to parse [{}]", srpe, TYPE,
                             watchId, currentFieldName);

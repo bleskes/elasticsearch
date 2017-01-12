@@ -133,8 +133,7 @@ public class WatcherUtilsTests extends ESTestCase {
         request.toXContent(builder, ToXContent.EMPTY_PARAMS);
         XContentParser parser = createParser(builder);
         assertThat(parser.nextToken(), equalTo(XContentParser.Token.START_OBJECT));
-        WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(logger, parser, DEFAULT_SEARCH_TYPE,
-                false, null, null);
+        WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(logger, parser, DEFAULT_SEARCH_TYPE, false, null);
 
         assertThat(result.getIndices(), arrayContainingInAnyOrder(expectedIndices != null ? expectedIndices : new String[0]));
         assertThat(result.getTypes(), arrayContainingInAnyOrder(expectedTypes != null ? expectedTypes : new String[0]));
@@ -223,8 +222,7 @@ public class WatcherUtilsTests extends ESTestCase {
 
         XContentParser parser = createParser(builder);
         assertThat(parser.nextToken(), equalTo(XContentParser.Token.START_OBJECT));
-        WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(logger, parser, DEFAULT_SEARCH_TYPE,
-                false, null, null);
+        WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(logger, parser, DEFAULT_SEARCH_TYPE, false, null);
 
         assertThat(result.getIndices(), arrayContainingInAnyOrder(indices));
         assertThat(result.getTypes(), arrayContainingInAnyOrder(types));

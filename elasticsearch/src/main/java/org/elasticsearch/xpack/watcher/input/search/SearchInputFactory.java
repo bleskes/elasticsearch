@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.watcher.input.search;
 
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
@@ -38,7 +37,6 @@ public class SearchInputFactory extends InputFactory<SearchInput, SearchInput.Re
     private final Settings settings;
     private final WatcherClientProxy client;
     private final TimeValue defaultTimeout;
-    private final ParseFieldMatcher parseFieldMatcher;
     private final WatcherSearchTemplateService searchTemplateService;
 
     @Inject
@@ -51,7 +49,6 @@ public class SearchInputFactory extends InputFactory<SearchInput, SearchInput.Re
             ScriptService scriptService) {
         super(Loggers.getLogger(ExecutableSimpleInput.class, settings));
         this.settings = settings;
-        this.parseFieldMatcher = new ParseFieldMatcher(settings);
         this.client = client;
         this.defaultTimeout = settings.getAsTime("xpack.watcher.input.search.default_timeout", null);
         this.searchTemplateService = new WatcherSearchTemplateService(settings, scriptService, xContentRegistry);
@@ -65,8 +62,7 @@ public class SearchInputFactory extends InputFactory<SearchInput, SearchInput.Re
     @Override
     public SearchInput parseInput(String watchId, XContentParser parser, boolean upgradeInputSource) throws IOException {
         String defaultLegacyScriptLanguage = ScriptSettings.getLegacyDefaultLang(settings);
-        return SearchInput.parse(inputLogger, watchId, parser, upgradeInputSource, defaultLegacyScriptLanguage,
-                parseFieldMatcher);
+        return SearchInput.parse(inputLogger, watchId, parser, upgradeInputSource, defaultLegacyScriptLanguage);
     }
 
     @Override

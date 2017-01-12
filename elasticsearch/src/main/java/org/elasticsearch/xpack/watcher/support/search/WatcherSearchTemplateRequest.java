@@ -23,7 +23,6 @@ import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.ToXContentObject;
@@ -178,8 +177,7 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
     public static WatcherSearchTemplateRequest fromXContent(Logger logger, XContentParser parser,
                                                             SearchType searchType,
                                                             boolean upgradeSearchSource,
-                                                            String defaultLegacyScriptLanguage,
-                                                            ParseFieldMatcher parseFieldMatcher) throws IOException {
+                                                            String defaultLegacyScriptLanguage) throws IOException {
         List<String> indices = new ArrayList<>();
         List<String> types = new ArrayList<>();
         IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;
@@ -221,8 +219,7 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
                         searchSource = builder.bytes();
                         if (upgradeSearchSource) {
                             XContentParser searchSourceParser = XContentHelper.createParser(parser.getXContentRegistry(), searchSource);
-                            QueryParseContext context =  new QueryParseContext(defaultLegacyScriptLanguage,
-                                    searchSourceParser, parseFieldMatcher);
+                            QueryParseContext context =  new QueryParseContext(defaultLegacyScriptLanguage, searchSourceParser);
                             try (XContentBuilder upgradeBuilder = XContentBuilder.builder(parser.contentType().xContent())) {
                                 SearchSourceBuilder sourceBuilder = SearchSourceBuilder.fromXContent(context);
                                 upgradeBuilder.value(sourceBuilder);

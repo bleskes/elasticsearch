@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.watcher.support.search;
 
 import org.elasticsearch.action.search.SearchType;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -53,7 +52,7 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
             parser.nextToken();
 
             WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(
-                    logger, parser, randomFrom(SearchType.values()), false, null, null);
+                    logger, parser, randomFrom(SearchType.values()), false, null);
             assertNotNull(result.getTemplate());
             assertThat(result.getTemplate().getIdOrCode(), equalTo(expectedScript));
             assertThat(result.getTemplate().getLang(), equalTo(expectedLang));
@@ -100,7 +99,7 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
         parser.nextToken();
 
         WatcherSearchTemplateRequest result = WatcherSearchTemplateRequest.fromXContent(
-                logger, parser, SearchType.DEFAULT, true, "your_legacy_lang", ParseFieldMatcher.STRICT);
+                logger, parser, SearchType.DEFAULT, true, "your_legacy_lang");
         Map<String, Object> parsedResult = XContentHelper.convertToMap(result.getSearchSource(), true).v2();
         // after upgrading the language must be equal to legacy language, because no language was defined explicitly in these scripts:
         assertThat(XContentMapValues.extractValue("query.script.script.lang", parsedResult), equalTo("your_legacy_lang"));
