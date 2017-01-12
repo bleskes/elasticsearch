@@ -30,7 +30,7 @@
 
 #ifdef Windows
 
-#ifdef BUILDING_libPreConfig
+#ifdef BUILDING_libMlConfig
 // We're building the config library
 #define CONFIG_EXPORT __declspec(dllexport)
 #else

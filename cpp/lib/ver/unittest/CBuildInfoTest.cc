@@ -41,7 +41,7 @@ void CBuildInfoTest::testFullInfo(void)
     std::string currentYear(ml::core::CTimeUtils::toIso8601(ml::core::CTimeUtils::now()), 0, 4);
     LOG_DEBUG("Current year is " << currentYear);
 
-    CPPUNIT_ASSERT(fullInfo.find("pre_test") != std::string::npos);
+    CPPUNIT_ASSERT(fullInfo.find("ml_test") != std::string::npos);
     CPPUNIT_ASSERT(fullInfo.find("Version") != std::string::npos);
     CPPUNIT_ASSERT(fullInfo.find("Build") != std::string::npos);
     CPPUNIT_ASSERT(fullInfo.find("Copyright") != std::string::npos);

@@ -39,7 +39,7 @@ void CProgNameTest::testProgName(void)
 
     LOG_DEBUG("Current program name is " << progName);
 
-    CPPUNIT_ASSERT_EQUAL(std::string("pre_test"), progName);
+    CPPUNIT_ASSERT_EQUAL(std::string("ml_test"), progName);
 }
 
 void CProgNameTest::testProgDir(void)

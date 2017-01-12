@@ -14,14 +14,14 @@
 #
 include $(CPP_SRC_HOME)/mk/defines.mk
 
-TARGET=pre_test$(EXE_EXT)
+TARGET=ml_test$(EXE_EXT)
 
 USE_XML=1
 USE_BOOST=1
 USE_BOOST_DATETIME_LIBS=1
 USE_BOOST_THREAD_LIBS=1
 
-LIBS:=$(LIB_PRE_MATHS)
+LIBS:=$(LIB_ML_MATHS)
 
 all: build
 

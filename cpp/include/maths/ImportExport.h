@@ -29,7 +29,7 @@
 
 #ifdef Windows
 
-#ifdef BUILDING_libPreMaths
+#ifdef BUILDING_libMlMaths
 // We're building the maths library
 #define MATHS_EXPORT __declspec(dllexport)
 #else

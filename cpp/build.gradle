@@ -44,7 +44,7 @@ def zipSpec = copySpec {
     // Don't copy Windows import libraries
     exclude "**/*.lib"
     // Don't copy the test support library
-    exclude "**/libPreTest.*"
+    exclude "**/libMlTest.*"
     includeEmptyDirs = false
   }
 }

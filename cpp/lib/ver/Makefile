@@ -14,7 +14,7 @@
 #
 include $(CPP_SRC_HOME)/mk/defines.mk
 
-TARGET=$(OBJS_DIR)/libPreVer$(STATIC_LIB_EXT)
+TARGET=$(OBJS_DIR)/libMlVer$(STATIC_LIB_EXT)
 
 USE_BOOST=1
 

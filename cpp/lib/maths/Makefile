@@ -14,11 +14,11 @@
 #
 include $(CPP_SRC_HOME)/mk/defines.mk
 
-TARGET=$(OBJS_DIR)/libPreMaths$(DYNAMIC_LIB_EXT)
+TARGET=$(OBJS_DIR)/libMlMaths$(DYNAMIC_LIB_EXT)
 
 USE_BOOST=1
 
-LIBS:=$(LIB_PRE_CORE)
+LIBS:=$(LIB_ML_CORE)
 
 all: build
 

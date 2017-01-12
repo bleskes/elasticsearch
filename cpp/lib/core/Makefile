@@ -14,7 +14,7 @@
 #
 include $(CPP_SRC_HOME)/mk/defines.mk
 
-TARGET=$(OBJS_DIR)/libPreCore$(DYNAMIC_LIB_EXT)
+TARGET=$(OBJS_DIR)/libMlCore$(DYNAMIC_LIB_EXT)
 
 USE_BOOST=1
 USE_BOOST_REGEX_LIBS=1

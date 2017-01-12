@@ -29,7 +29,7 @@
 
 #ifdef Windows
 
-#ifdef BUILDING_libPreModel
+#ifdef BUILDING_libMlModel
 // We're building the model library
 #define MODEL_EXPORT __declspec(dllexport)
 #else

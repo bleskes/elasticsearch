@@ -43,7 +43,7 @@ namespace
 // Since the unit tests log to STDERR, we can improve performance, especially on
 // Windows, by buffering it.  The file scope variable ensures the setvbuf() gets
 // called to set the buffer size during the static initialisation phase of the
-// program, before main() is called.  By putting this in the libPreTest library,
+// program, before main() is called.  By putting this in the libMlTest library,
 // STDERR remains in its standard unbuffered state in Ml non-test programs.
 // (Note that Linux always uses a 1024 byte buffer size for line-buffered files,
 // i.e. ignores the 16384 specified in this call, and Windows treats a request

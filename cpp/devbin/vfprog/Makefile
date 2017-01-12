@@ -20,7 +20,7 @@ INSTALL_DIR=$(CPP_PLATFORM_HOME)/devbin
 
 INCLUDE_PATH=-I$(CPP_SRC_HOME)/devinclude
 
-ML_LIBS=$(LIB_PRE_CORE)
+ML_LIBS=$(LIB_ML_CORE)
 
 ifeq ($(OS),Windows)
 ML_LIBS+= libVf.lib

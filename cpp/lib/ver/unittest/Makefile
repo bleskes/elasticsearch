@@ -14,7 +14,7 @@
 #
 include $(CPP_SRC_HOME)/mk/defines.mk
 
-TARGET=pre_test$(EXE_EXT)
+TARGET=ml_test$(EXE_EXT)
 
 USE_BOOST=1
 

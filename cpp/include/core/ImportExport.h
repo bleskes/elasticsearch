@@ -29,7 +29,7 @@
 
 #ifdef Windows
 
-#ifdef BUILDING_libPreCore
+#ifdef BUILDING_libMlCore
 // We're building the core library
 #define CORE_EXPORT __declspec(dllexport)
 #else

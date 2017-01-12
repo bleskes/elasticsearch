@@ -19,12 +19,12 @@ include $(CPP_SRC_HOME)/mk/stdtest.mk
 # We keep the dependancies in here to a minimum so we can test
 # libraries in isolation. Otherwise All libraries would be needed before
 # we could test any.
-REQUIRED_LIBS=$(LIB_PRE_TEST) $(LIB_PRE_CORE) $(LIB_PRE_VER) $(CPPUNITLIBS)
+REQUIRED_LIBS=$(LIB_ML_TEST) $(LIB_ML_CORE) $(LIB_ML_VER) $(CPPUNITLIBS)
 
 LIBS:=$(LOCALLIBS) $(filter-out $(REQUIRED_LIBS), $(LIBS)) $(REQUIRED_LIBS)
 
 CPPFLAGS+=$(INCLUDE_PATH)
-LDFLAGS:=$(UTLDFLAGS) $(LDFLAGS) $(LIB_PATH) $(PRE_VER_LDFLAGS)
+LDFLAGS:=$(UTLDFLAGS) $(LDFLAGS) $(LIB_PATH) $(ML_VER_LDFLAGS)
 
 $(TARGET): $(OBJS) $(RESOURCE_FILE)
 	$(CXX) $(LINK_OUT_FLAG)$@ $(PDB_FLAGS) $(OBJS) $(RESOURCE_FILE) $(LDFLAGS) $(LIBS)

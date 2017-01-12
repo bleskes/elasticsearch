@@ -68,14 +68,14 @@ DYNAMIC_LIB_DIR=lib
 STATIC_LIB_EXT=.a
 SHELL_SCRIPT_EXT=.sh
 UT_TMP_DIR=/tmp/$(LOGNAME)
-LIB_PRE_CORE=-lPreCore
-LIB_PRE_VER=-lPreVer
-PRE_VER_LDFLAGS=-L$(CPP_SRC_HOME)/lib/ver/.objs
-LIB_PRE_API=-lPreApi
-LIB_PRE_MATHS=-lPreMaths
-LIB_PRE_CONFIG=-lPreConfig
-LIB_PRE_MODEL=-lPreModel
-LIB_PRE_TEST=-lPreTest
+LIB_ML_CORE=-lMlCore
+LIB_ML_VER=-lMlVer
+ML_VER_LDFLAGS=-L$(CPP_SRC_HOME)/lib/ver/.objs
+LIB_ML_API=-lMlApi
+LIB_ML_MATHS=-lMlMaths
+LIB_ML_CONFIG=-lMlConfig
+LIB_ML_MODEL=-lMlModel
+LIB_ML_TEST=-lMlTest
 
 LIB_PATH+=-L/usr/local/gcc62/lib
 

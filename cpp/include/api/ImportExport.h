@@ -29,7 +29,7 @@
 
 #ifdef Windows
 
-#ifdef BUILDING_libPreApi
+#ifdef BUILDING_libMlApi
 // We're building the api library
 #define API_EXPORT __declspec(dllexport)
 #else

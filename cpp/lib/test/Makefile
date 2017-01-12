@@ -19,7 +19,7 @@ USE_BOOST=1
 USE_BOOST_FILESYSTEM_LIBS=1
 USE_CPPUNIT=1
 
-LIBS:=$(LIB_PRE_CORE) $(LIB_PRE_MATHS)
+LIBS:=$(LIB_ML_CORE) $(LIB_ML_MATHS)
 
 PLATFORM_SRCS= \
     CShellCmdEscape.cc \
@@ -32,7 +32,7 @@ SRCS= \
     CTestTimer.cc \
     CTimingXmlOutputterHook.cc \
 
-TARGET=$(OBJS_DIR)/libPreTest$(DYNAMIC_LIB_EXT)
+TARGET=$(OBJS_DIR)/libMlTest$(DYNAMIC_LIB_EXT)
 
 all: build
 

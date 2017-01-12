@@ -29,7 +29,7 @@
 
 #ifdef Windows
 
-#ifdef BUILDING_libPreTest
+#ifdef BUILDING_libMlTest
 // We're building the test library
 #define TEST_EXPORT __declspec(dllexport)
 #else

@@ -2,7 +2,7 @@ To run: install syslog install files
 
 run (as root)
 
-../pre_test &
+../ml_test &
 ./syslog_generator
 logadm -f ./logadm.conf
 ./syslog_generator

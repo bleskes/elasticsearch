@@ -97,8 +97,8 @@ void CDetachedProcessSpawnerTest::testPermitted(void)
     ml::core::CDetachedProcessSpawner::TStrVec permittedPaths(1, PROCESS_PATH);
     ml::core::CDetachedProcessSpawner spawner(permittedPaths);
 
-    // Should fail as pre_test is not on the permitted processes list
-    CPPUNIT_ASSERT(!spawner.spawn("./pre_test", ml::core::CDetachedProcessSpawner::TStrVec()));
+    // Should fail as ml_test is not on the permitted processes list
+    CPPUNIT_ASSERT(!spawner.spawn("./ml_test", ml::core::CDetachedProcessSpawner::TStrVec()));
 }
 
 void CDetachedProcessSpawnerTest::testNonExistent(void)
