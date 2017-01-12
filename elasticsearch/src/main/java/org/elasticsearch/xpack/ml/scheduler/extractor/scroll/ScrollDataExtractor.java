@@ -20,7 +20,6 @@ import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollAction;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.unit.TimeValue;
@@ -114,7 +113,6 @@ class ScrollDataExtractor implements DataExtractor {
     private SearchRequestBuilder buildSearchRequest() {
         SearchRequestBuilder searchRequestBuilder = SearchAction.INSTANCE.newRequestBuilder(client)
                 .setScroll(SCROLL_TIMEOUT)
-                .setSearchType(SearchType.QUERY_AND_FETCH)
                 .addSort(context.timeField, SortOrder.ASC)
                 .setIndices(context.indexes)
                 .setTypes(context.types)
