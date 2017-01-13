@@ -71,7 +71,7 @@ public class TransportSetEnabledActionTests extends ESTestCase {
         when(authentication.getRunAsUser()).thenReturn(user);
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportSetEnabledAction action = new TransportSetEnabledAction(settings, threadPool, transportService, mock(ActionFilters.class),
                 mock(IndexNameExpressionResolver.class), usersStore);
 
@@ -109,7 +109,7 @@ public class TransportSetEnabledActionTests extends ESTestCase {
         when(authentication.getRunAsUser()).thenReturn(user);
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportSetEnabledAction action = new TransportSetEnabledAction(Settings.EMPTY, threadPool, transportService,
                 mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore);
 
@@ -163,7 +163,7 @@ public class TransportSetEnabledActionTests extends ESTestCase {
         }).when(usersStore)
                 .setEnabled(eq(user.principal()), eq(request.enabled()), eq(request.getRefreshPolicy()), any(ActionListener.class));
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportSetEnabledAction action = new TransportSetEnabledAction(Settings.EMPTY, threadPool, transportService,
                 mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore);
 
@@ -215,7 +215,7 @@ public class TransportSetEnabledActionTests extends ESTestCase {
         }).when(usersStore)
                 .setEnabled(eq(user.principal()), eq(request.enabled()), eq(request.getRefreshPolicy()), any(ActionListener.class));
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportSetEnabledAction action = new TransportSetEnabledAction(Settings.EMPTY, threadPool, transportService,
                 mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore);
 
@@ -255,7 +255,7 @@ public class TransportSetEnabledActionTests extends ESTestCase {
         request.enabled(randomBoolean());
         request.setRefreshPolicy(randomFrom(RefreshPolicy.values()));
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportSetEnabledAction action = new TransportSetEnabledAction(Settings.EMPTY, threadPool, transportService,
                 mock(ActionFilters.class), mock(IndexNameExpressionResolver.class), usersStore);
 

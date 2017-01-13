@@ -66,7 +66,7 @@ public class TransportPutUserActionTests extends ESTestCase {
         final AnonymousUser anonymousUser = new AnonymousUser(settings);
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportPutUserAction action = new TransportPutUserAction(settings, mock(ThreadPool.class), mock(ActionFilters.class),
                 mock(IndexNameExpressionResolver.class), usersStore, transportService);
 
@@ -96,7 +96,7 @@ public class TransportPutUserActionTests extends ESTestCase {
     public void testSystemUser() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportPutUserAction action = new TransportPutUserAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
                 mock(IndexNameExpressionResolver.class), usersStore, transportService);
 
@@ -133,7 +133,7 @@ public class TransportPutUserActionTests extends ESTestCase {
         reservedRealm.users(userFuture);
         final User reserved = randomFrom(userFuture.actionGet().toArray(new User[0]));
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportPutUserAction action = new TransportPutUserAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
                 mock(IndexNameExpressionResolver.class), usersStore, transportService);
 
@@ -164,7 +164,7 @@ public class TransportPutUserActionTests extends ESTestCase {
         final User user = new User("joe");
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportPutUserAction action = new TransportPutUserAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
                 mock(IndexNameExpressionResolver.class), usersStore, transportService);
 
@@ -210,7 +210,7 @@ public class TransportPutUserActionTests extends ESTestCase {
         final User user = new User("joe");
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         TransportService transportService = new TransportService(Settings.EMPTY, null, null, TransportService.NOOP_TRANSPORT_INTERCEPTOR,
-                null);
+                x -> null, null);
         TransportPutUserAction action = new TransportPutUserAction(Settings.EMPTY, mock(ThreadPool.class), mock(ActionFilters.class),
                 mock(IndexNameExpressionResolver.class), usersStore, transportService);
 
