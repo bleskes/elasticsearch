@@ -26,7 +26,6 @@ import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -75,7 +74,7 @@ UpdateModelSnapshotAction.RequestBuilder> {
 
     public static class Request extends ActionRequest implements ToXContent {
 
-        private static final ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
+        private static final ObjectParser<Request, Void> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
             PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
@@ -83,9 +82,8 @@ UpdateModelSnapshotAction.RequestBuilder> {
             PARSER.declareString((request, description) -> request.description = description, ModelSnapshot.DESCRIPTION);
         }
 
-        public static Request parseRequest(String jobId, String snapshotId, XContentParser parser,
-                ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
-            Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
+        public static Request parseRequest(String jobId, String snapshotId, XContentParser parser) {
+            Request request = PARSER.apply(parser, null);
             if (jobId != null) {
                 request.jobId = jobId;
             }

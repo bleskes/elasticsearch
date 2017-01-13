@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.job.audit;
 
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.support.AbstractSerializingTestCase;
@@ -78,8 +77,8 @@ public class AuditMessageTests extends AbstractSerializingTestCase<AuditMessage>
     }
 
     @Override
-    protected AuditMessage parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return AuditMessage.PARSER.apply(parser, () -> matcher);
+    protected AuditMessage parseInstance(XContentParser parser) {
+        return AuditMessage.PARSER.apply(parser, null);
     }
 
     @Override

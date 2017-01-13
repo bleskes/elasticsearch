@@ -18,7 +18,6 @@ import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -124,7 +123,7 @@ public class AuditorTests extends ESTestCase {
         try {
             String json = jsonCaptor.getValue().string();
             XContentParser parser = XContentFactory.xContent(json).createParser(NamedXContentRegistry.EMPTY, json);
-            return AuditMessage.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
+            return AuditMessage.PARSER.apply(parser, null);
         } catch (IOException e) {
             return new AuditMessage();
         }
@@ -134,7 +133,7 @@ public class AuditorTests extends ESTestCase {
         try {
             String json = jsonCaptor.getValue().string();
             XContentParser parser = XContentFactory.xContent(json).createParser(NamedXContentRegistry.EMPTY, json);
-            return AuditActivity.PARSER.apply(parser, () -> ParseFieldMatcher.STRICT);
+            return AuditActivity.PARSER.apply(parser, null);
         } catch (IOException e) {
             return new AuditActivity();
         }

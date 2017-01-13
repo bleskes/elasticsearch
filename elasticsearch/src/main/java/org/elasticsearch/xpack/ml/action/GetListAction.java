@@ -294,7 +294,7 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
                             BytesReference docSource = getDocResponse.getSourceAsBytesRef();
                             XContentParser parser =
                                     XContentFactory.xContent(docSource).createParser(NamedXContentRegistry.EMPTY, docSource);
-                            ListDocument listDocument = ListDocument.PARSER.apply(parser, () -> parseFieldMatcher);
+                            ListDocument listDocument = ListDocument.PARSER.apply(parser, null);
                             responseBody = new QueryPage<>(Collections.singletonList(listDocument), 1, ListDocument.RESULTS_FIELD);
 
                             Response listResponse = new Response(responseBody);
@@ -333,7 +333,7 @@ public class GetListAction extends Action<GetListAction.Request, GetListAction.R
                             BytesReference docSource = hit.sourceRef();
                             XContentParser parser =
                                     XContentFactory.xContent(docSource).createParser(NamedXContentRegistry.EMPTY, docSource);
-                            docs.add(ListDocument.PARSER.apply(parser, () -> parseFieldMatcher));
+                            docs.add(ListDocument.PARSER.apply(parser, null));
                         }
 
                         Response listResponse = new Response(new QueryPage<>(docs, docs.size(), ListDocument.RESULTS_FIELD));

@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.action;
 
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.action.RevertModelSnapshotAction.Request;
 import org.elasticsearch.xpack.ml.support.AbstractStreamableXContentTestCase;
@@ -45,8 +44,8 @@ public class RevertModelSnapshotActionRequestTests extends AbstractStreamableXCo
     }
 
     @Override
-    protected Request parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return RevertModelSnapshotAction.Request.parseRequest(null, parser, () -> matcher);
+    protected Request parseInstance(XContentParser parser) {
+        return RevertModelSnapshotAction.Request.parseRequest(null, parser);
     }
 
 }

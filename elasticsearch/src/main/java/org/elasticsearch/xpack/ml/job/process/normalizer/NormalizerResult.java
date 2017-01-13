@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.ml.job.process.normalizer;
 
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -41,7 +40,7 @@ public class NormalizerResult extends ToXContentToBytes implements Writeable {
     static final ParseField PROBABILITY_FIELD = new ParseField("probability");
     static final ParseField NORMALIZED_SCORE_FIELD = new ParseField("normalized_score");
 
-    public static final ObjectParser<NormalizerResult, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(
+    public static final ObjectParser<NormalizerResult, Void> PARSER = new ObjectParser<>(
             LEVEL_FIELD.getPreferredName(), NormalizerResult::new);
 
     static {

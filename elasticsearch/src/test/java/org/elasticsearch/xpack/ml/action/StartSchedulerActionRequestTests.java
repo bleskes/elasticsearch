@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.action;
 
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.action.StartSchedulerAction.Request;
 import org.elasticsearch.xpack.ml.support.AbstractStreamableXContentTestCase;
@@ -36,8 +35,8 @@ public class StartSchedulerActionRequestTests extends AbstractStreamableXContent
     }
 
     @Override
-    protected Request parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return Request.parseRequest(null, parser, () -> matcher);
+    protected Request parseInstance(XContentParser parser) {
+        return Request.parseRequest(null, parser);
     }
 
 }

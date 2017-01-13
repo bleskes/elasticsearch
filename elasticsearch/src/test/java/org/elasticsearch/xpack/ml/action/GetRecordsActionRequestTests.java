@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.action;
 
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.action.GetRecordsAction.Request;
 import org.elasticsearch.xpack.ml.job.results.PageParams;
@@ -23,8 +22,8 @@ import org.elasticsearch.xpack.ml.support.AbstractStreamableXContentTestCase;
 public class GetRecordsActionRequestTests extends AbstractStreamableXContentTestCase<GetRecordsAction.Request> {
 
     @Override
-    protected Request parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return GetRecordsAction.Request.parseRequest(null, parser, () -> matcher);
+    protected Request parseInstance(XContentParser parser) {
+        return GetRecordsAction.Request.parseRequest(null, parser);
     }
 
     @Override

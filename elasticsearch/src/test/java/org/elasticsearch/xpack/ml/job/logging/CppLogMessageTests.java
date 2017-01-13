@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.job.logging;
 
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.support.AbstractSerializingTestCase;
@@ -56,7 +55,7 @@ public class CppLogMessageTests extends AbstractSerializingTestCase<CppLogMessag
     }
 
     @Override
-    protected CppLogMessage parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return CppLogMessage.PARSER.apply(parser, () -> matcher);
+    protected CppLogMessage parseInstance(XContentParser parser) {
+        return CppLogMessage.PARSER.apply(parser, null);
     }
 }

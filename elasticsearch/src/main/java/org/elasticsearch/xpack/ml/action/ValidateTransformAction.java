@@ -14,9 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.action;
 
-import java.io.IOException;
-import java.util.Objects;
-
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -28,7 +25,6 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -40,6 +36,9 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.ml.job.transform.TransformConfig;
 import org.elasticsearch.xpack.ml.job.transform.verification.TransformConfigVerifier;
+
+import java.io.IOException;
+import java.util.Objects;
 
 public class ValidateTransformAction
 extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response, ValidateTransformAction.RequestBuilder> {
@@ -73,8 +72,8 @@ extends Action<ValidateTransformAction.Request, ValidateTransformAction.Response
 
         private TransformConfig transform;
 
-        public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
-            TransformConfig transform = TransformConfig.PARSER.apply(parser, parseFieldMatcherSupplier);
+        public static Request parseRequest(XContentParser parser) {
+            TransformConfig transform = TransformConfig.PARSER.apply(parser, null);
             return new Request(transform);
         }
 

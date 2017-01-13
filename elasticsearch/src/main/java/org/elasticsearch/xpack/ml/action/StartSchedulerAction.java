@@ -25,7 +25,6 @@ import org.elasticsearch.action.support.HandledTransportAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -39,8 +38,8 @@ import org.elasticsearch.tasks.Task;
 import org.elasticsearch.tasks.TaskId;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.ml.scheduler.SchedulerConfig;
 import org.elasticsearch.xpack.ml.scheduler.ScheduledJobRunner;
+import org.elasticsearch.xpack.ml.scheduler.SchedulerConfig;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -71,7 +70,7 @@ public class StartSchedulerAction
 
     public static class Request extends ActionRequest implements ToXContent {
 
-        public static ObjectParser<Request, ParseFieldMatcherSupplier> PARSER = new ObjectParser<>(NAME, Request::new);
+        public static ObjectParser<Request, Void> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
             PARSER.declareString((request, schedulerId) -> request.schedulerId = schedulerId, SchedulerConfig.ID);
@@ -79,8 +78,8 @@ public class StartSchedulerAction
             PARSER.declareLong(Request::setEndTime, END_TIME);
         }
 
-        public static Request parseRequest(String schedulerId, XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
-            Request request = PARSER.apply(parser, parseFieldMatcherSupplier);
+        public static Request parseRequest(String schedulerId, XContentParser parser) {
+            Request request = PARSER.apply(parser, null);
             if (schedulerId != null) {
                 request.schedulerId = schedulerId;
             }

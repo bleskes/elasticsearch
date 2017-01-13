@@ -14,9 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.action;
 
-import java.io.IOException;
-import java.util.Objects;
-
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -28,7 +25,6 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.ParseFieldMatcherSupplier;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -39,6 +35,9 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.ml.job.Detector;
+
+import java.io.IOException;
+import java.util.Objects;
 
 public class ValidateDetectorAction
 extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, ValidateDetectorAction.RequestBuilder> {
@@ -74,8 +73,8 @@ extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, 
 
         // NORELEASE this needs to change so the body is not directly the
         // detector but and object that contains a field for the detector
-        public static Request parseRequest(XContentParser parser, ParseFieldMatcherSupplier parseFieldMatcherSupplier) {
-            Detector detector = Detector.PARSER.apply(parser, parseFieldMatcherSupplier).build();
+        public static Request parseRequest(XContentParser parser) {
+            Detector detector = Detector.PARSER.apply(parser, null).build();
             return new Request(detector);
         }
 

@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.ml.job.persistence;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -27,9 +26,8 @@ import org.elasticsearch.xpack.ml.job.results.Influencer;
 import java.io.IOException;
 
 class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedResultsIterator<Influencer> {
-    public ElasticsearchBatchedInfluencersIterator(Client client, String jobId,
-                                                   ParseFieldMatcher parserFieldMatcher) {
-        super(client, jobId, Influencer.RESULT_TYPE_VALUE, parserFieldMatcher);
+    public ElasticsearchBatchedInfluencersIterator(Client client, String jobId) {
+        super(client, jobId, Influencer.RESULT_TYPE_VALUE);
     }
 
     @Override
@@ -42,6 +40,6 @@ class ElasticsearchBatchedInfluencersIterator extends ElasticsearchBatchedResult
             throw new ElasticsearchParseException("failed to parser influencer", e);
         }
 
-        return Influencer.PARSER.apply(parser, () -> parseFieldMatcher);
+        return Influencer.PARSER.apply(parser, null);
     }
 }

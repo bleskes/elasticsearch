@@ -11,7 +11,6 @@
  */
 package org.elasticsearch.xpack.ml.job.results;
 
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.job.ModelSizeStats;
@@ -27,8 +26,8 @@ import java.util.List;
 public class AutodetectResultTests extends AbstractSerializingTestCase<AutodetectResult> {
 
     @Override
-    protected AutodetectResult parseInstance(XContentParser parser, ParseFieldMatcher matcher) {
-        return AutodetectResult.PARSER.apply(parser, () -> matcher);
+    protected AutodetectResult parseInstance(XContentParser parser) {
+        return AutodetectResult.PARSER.apply(parser, null);
     }
 
     @Override

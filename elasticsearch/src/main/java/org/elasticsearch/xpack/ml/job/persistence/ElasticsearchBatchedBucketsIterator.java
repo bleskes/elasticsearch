@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.ml.job.persistence;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.ParseFieldMatcher;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -28,8 +27,8 @@ import java.io.IOException;
 
 class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedResultsIterator<Bucket> {
 
-    public ElasticsearchBatchedBucketsIterator(Client client, String jobId, ParseFieldMatcher parseFieldMatcher) {
-        super(client, jobId, Bucket.RESULT_TYPE_VALUE, parseFieldMatcher);
+    public ElasticsearchBatchedBucketsIterator(Client client, String jobId) {
+        super(client, jobId, Bucket.RESULT_TYPE_VALUE);
     }
 
     @Override
@@ -41,6 +40,6 @@ class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedResultsIte
         } catch (IOException e) {
             throw new ElasticsearchParseException("failed to parse bucket", e);
         }
-        return Bucket.PARSER.apply(parser, () -> parseFieldMatcher);
+        return Bucket.PARSER.apply(parser, null);
     }
 }
