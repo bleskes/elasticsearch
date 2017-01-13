@@ -121,6 +121,9 @@ class MATHS_EXPORT CNormalMeanPrecConjugate : public CPrior
 
         //! \name Prior Contract
         //@{
+        //! Get the type of this prior.
+        virtual EPrior type(void) const;
+
         //! Create a copy of the prior.
         //!
         //! \return A pointer to a newly allocated clone of this prior.

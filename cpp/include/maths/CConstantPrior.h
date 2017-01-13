@@ -59,6 +59,9 @@ class MATHS_EXPORT CConstantPrior : public CPrior
 
         //! \name Prior Contract
         //@{
+        //! Get the type of this prior.
+        virtual EPrior type(void) const;
+
         //! Create a copy of the prior.
         //!
         //! \warning Caller owns returned object.

@@ -1372,13 +1372,13 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDiscardPeriodicM
             {
                 components[i].swap(components[last]);
             }
-            if (!std::binary_search(periods.begin(), periods.end(), components[i].time().period()))
+            if (!std::binary_search(periods.begin(), periods.end(), components[last].time().period()))
             {
                 ++last;
             }
             else if (m_Watcher)
             {
-                shift += components[i].meanValue();
+                shift += components[last].meanValue();
                 *m_Watcher = true;
             }
         }

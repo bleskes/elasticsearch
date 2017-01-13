@@ -120,6 +120,9 @@ class MATHS_EXPORT COneOfNPrior : public CPrior
 
         //! \name Prior Contract
         //@{
+        //! Get the type of this prior.
+        virtual EPrior type(void) const;
+
         //! Create a copy of the prior.
         //!
         //! \return A pointer to a newly allocated clone of this model.
@@ -134,6 +137,9 @@ class MATHS_EXPORT COneOfNPrior : public CPrior
 
         //! Reset the prior to non-informative.
         virtual void setToNonInformative(double offset = 0.0, double decayRate = 0.0);
+
+        //! Remove models marked by \p filter.
+        virtual void removeModels(CModelFilter &filter);
 
         //! Check if any of the models needs an offset to be applied.
         virtual bool needsOffset(void) const;

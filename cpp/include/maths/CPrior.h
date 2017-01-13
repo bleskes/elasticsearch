@@ -73,6 +73,36 @@ class MATHS_EXPORT CPrior
             TDouble1Vec s_Ordinates;
         };
 
+        //! Enumeration of prior types.
+        enum EPrior
+        {
+            E_Constant    = 0x1,
+            E_Gamma       = 0x2,
+            E_LogNormal   = 0x4,
+            E_Multimodal  = 0x8,
+            E_Multinomial = 0x10,
+            E_Normal      = 0x20,
+            E_OneOfN      = 0x40,
+            E_Poisson     = 0x80
+        };
+
+        //! \brief Defines a filter for removing models from selection.
+        class CModelFilter
+        {
+            public:
+                CModelFilter(void);
+
+                //! Mark a model to be removed.
+                CModelFilter &remove(EPrior model);
+
+                //! Check of \p model should be removed.
+                bool operator()(EPrior model) const;
+
+            private:
+                //! A binary representation of the filter.
+                int m_Filter;
+        };
+
     public:
         //! The value of the decay rate to fall back to using if the input
         //! value is inappropriate.
@@ -112,6 +142,9 @@ class MATHS_EXPORT CPrior
 
         //! \name Prior Contract
         //@{
+        //! Get the type of this prior.
+        virtual EPrior type(void) const = 0;
+
         //! Create a copy of the prior.
         //!
         //! \warning Caller owns returned object.
@@ -136,6 +169,9 @@ class MATHS_EXPORT CPrior
         //! Reset the prior to non-informative.
         virtual void setToNonInformative(double offset = 0.0,
                                          double decayRate = 0.0) = 0;
+
+        //! Remove models marked by \p filter.
+        virtual void removeModels(CModelFilter &filter);
 
         //! Check if the prior needs an offset to be applied.
         virtual bool needsOffset(void) const = 0;

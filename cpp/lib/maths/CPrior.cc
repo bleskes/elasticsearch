@@ -130,6 +130,10 @@ double CPrior::offsetMargin(void) const
     return 0.2;
 }
 
+void CPrior::removeModels(CModelFilter &/*filter*/)
+{
+}
+
 void CPrior::addSamples(const TWeightStyleVec &weightStyles,
                         const TDouble1Vec &samples,
                         const TDouble4Vec1Vec &weights)
@@ -200,11 +204,6 @@ uint64_t CPrior::checksum(uint64_t seed) const
     seed = CChecksum::calculate(seed, m_NumberSamples);
     seed = CChecksum::calculate(seed, m_Minimum);
     return CChecksum::calculate(seed, m_Maximum);
-}
-
-std::string CPrior::debug(void) const
-{
-    return std::string();
 }
 
 double CPrior::numberSamples(void) const
@@ -361,8 +360,29 @@ CPrior::TMaxAccumulator &CPrior::maximum(void)
     return m_Maximum;
 }
 
+std::string CPrior::debug(void) const
+{
+    return std::string();
+}
+
 const double CPrior::FALLBACK_DECAY_RATE = 0.001;
 const std::size_t CPrior::ADJUST_OFFSET_SAMPLE_SIZE = 50u;
+
+
+////////// CPrior::COffsetParameters Implementation //////////
+
+CPrior::CModelFilter::CModelFilter(void) : m_Filter(0) {}
+
+CPrior::CModelFilter &CPrior::CModelFilter::remove(EPrior model)
+{
+    m_Filter = m_Filter | model;
+    return *this;
+}
+
+bool CPrior::CModelFilter::operator()(EPrior model) const
+{
+    return m_Filter & model;
+}
 
 
 ////////// CPrior::COffsetParameters Implementation //////////

@@ -757,8 +757,7 @@ CLogNormalMeanPrecConjugate::CLogNormalMeanPrecConjugate(maths_t::EDataType data
         m_GaussianPrecision(gaussianPrecision),
         m_GammaShape(gammaShape),
         m_GammaRate(gammaRate)
-{
-}
+{}
 
 CLogNormalMeanPrecConjugate::CLogNormalMeanPrecConjugate(const SDistributionRestoreParams &params,
                                                          core::CStateRestoreTraverser &traverser) :
@@ -808,6 +807,11 @@ CLogNormalMeanPrecConjugate CLogNormalMeanPrecConjugate::nonInformativePrior(mat
                                        NON_INFORMATIVE_SHAPE,
                                        NON_INFORMATIVE_RATE,
                                        decayRate);
+}
+
+CLogNormalMeanPrecConjugate::EPrior CLogNormalMeanPrecConjugate::type(void) const
+{
+    return E_LogNormal;
 }
 
 CLogNormalMeanPrecConjugate *CLogNormalMeanPrecConjugate::clone(void) const

@@ -22,6 +22,7 @@
 class COneOfNPriorTest : public CppUnit::TestFixture
 {
     public:
+        void testFilter(void);
         void testMultipleUpdate(void);
         void testWeights(void);
         void testModels(void);

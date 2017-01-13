@@ -938,6 +938,11 @@ CGammaRateConjugate CGammaRateConjugate::nonInformativePrior(maths_t::EDataType 
                                decayRate);
 }
 
+CGammaRateConjugate::EPrior CGammaRateConjugate::type(void) const
+{
+    return E_Gamma;
+}
+
 CGammaRateConjugate *CGammaRateConjugate::clone(void) const
 {
     return new CGammaRateConjugate(*this);

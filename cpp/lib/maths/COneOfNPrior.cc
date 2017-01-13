@@ -212,6 +212,11 @@ void COneOfNPrior::swap(COneOfNPrior &other)
     m_Models.swap(other.m_Models);
 }
 
+COneOfNPrior::EPrior COneOfNPrior::type(void) const
+{
+    return E_OneOfN;
+}
+
 COneOfNPrior *COneOfNPrior::clone(void) const
 {
     return new COneOfNPrior(*this);
@@ -244,6 +249,25 @@ void COneOfNPrior::setToNonInformative(double offset, double decayRate)
     }
     this->decayRate(decayRate);
     this->numberSamples(0.0);
+}
+
+void COneOfNPrior::removeModels(CModelFilter &filter)
+{
+    CScopeNormalizeWeights<TPriorPtr> normalizer(m_Models);
+
+    std::size_t last = 0u;
+    for (std::size_t i = 0u; i < m_Models.size(); ++i)
+    {
+        if (last != i)
+        {
+            std::swap(m_Models[last], m_Models[i]);
+        }
+        if (!filter(m_Models[last].second->type()))
+        {
+            ++last;
+        }
+    }
+    m_Models.erase(m_Models.begin() + last, m_Models.end());
 }
 
 bool COneOfNPrior::needsOffset(void) const

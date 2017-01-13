@@ -220,6 +220,12 @@ class MATHS_EXPORT CArbitraryPeriodTime : public CSeasonalTime
         virtual core_t::TTime repeat(void) const;
 };
 
+//! \brief Convert CSeasonalTime sub-classes to/from text representations.
+//!
+//! DESCRIPTION:\n
+//! Encapsulate the conversion of arbitrary CSeasonalTime sub-classes to/from
+//! textual state. In particular, the field name associated with each type of
+//! CSeasonalTime is then in one file.
 class MATHS_EXPORT CSeasonalTimeStateSerializer
 {
     public:

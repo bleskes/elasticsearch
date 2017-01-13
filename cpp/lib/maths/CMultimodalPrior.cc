@@ -225,6 +225,11 @@ void CMultimodalPrior::swap(CMultimodalPrior &other)
     m_Modes.swap(other.m_Modes);
 }
 
+CMultimodalPrior::EPrior CMultimodalPrior::type(void) const
+{
+    return E_Multimodal;
+}
+
 CMultimodalPrior *CMultimodalPrior::clone(void) const
 {
     return new CMultimodalPrior(*this);

@@ -160,7 +160,7 @@ void CTimeSeriesDecompositionTest::testSuperpositionOfSines(void)
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
 
     CPPUNIT_ASSERT(totalSumResidual < 0.039 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.052 * totalMaxValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.053 * totalMaxValue);
     CPPUNIT_ASSERT(totalPercentileError < 0.026 * totalSumValue);
 
     //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";
@@ -852,8 +852,8 @@ void CTimeSeriesDecompositionTest::testSeasonalOnset(void)
     LOG_DEBUG("total 'sum residual' / 'sum value' = " << totalSumResidual / totalSumValue);
     LOG_DEBUG("total 'max residual' / 'max value' = " << totalMaxResidual / totalMaxValue);
     LOG_DEBUG("total 70% error = " << totalPercentileError / totalSumValue);
-    CPPUNIT_ASSERT(totalSumResidual < 0.11 * totalSumValue);
-    CPPUNIT_ASSERT(totalMaxResidual < 0.12 * totalMaxValue);
+    CPPUNIT_ASSERT(totalSumResidual < 0.115 * totalSumValue);
+    CPPUNIT_ASSERT(totalMaxResidual < 0.125 * totalMaxValue);
     CPPUNIT_ASSERT(totalPercentileError < 0.06 * totalSumValue);
 
     //file << "fe = " << core::CContainerPrinter::print(f) << ";\n";

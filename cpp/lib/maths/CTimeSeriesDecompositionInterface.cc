@@ -89,6 +89,7 @@ bool initializePrior(core_t::TTime bucketLength,
     // supports of all priors.
     double offset = std::max(-samples[0] + 0.01 * sd, prior.offsetMargin());
     prior.setToNonInformative(offset, prior.decayRate());
+    prior.removeModels(CPrior::CModelFilter().remove(CPrior::E_Poisson));
 
     LOG_DEBUG("sd = " << sd << ", offset = " << offset << ", weight = " << weight);
 

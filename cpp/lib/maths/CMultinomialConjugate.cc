@@ -412,6 +412,11 @@ CMultinomialConjugate::nonInformativePrior(std::size_t maximumNumberOfCategories
                                  decayRate);
 }
 
+CMultinomialConjugate::EPrior CMultinomialConjugate::type(void) const
+{
+    return E_Multinomial;
+}
+
 CMultinomialConjugate *CMultinomialConjugate::clone(void) const
 {
     return new CMultinomialConjugate(*this);

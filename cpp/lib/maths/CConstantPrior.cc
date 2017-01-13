@@ -95,6 +95,11 @@ bool CConstantPrior::acceptRestoreTraverser(core::CStateRestoreTraverser &traver
     return true;
 }
 
+CConstantPrior::EPrior CConstantPrior::type(void) const
+{
+    return E_Constant;
+}
+
 CConstantPrior *CConstantPrior::clone(void) const
 {
     return new CConstantPrior(*this);

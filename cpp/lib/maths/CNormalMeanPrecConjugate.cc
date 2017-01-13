@@ -644,6 +644,11 @@ CNormalMeanPrecConjugate CNormalMeanPrecConjugate::nonInformativePrior(maths_t::
                                     decayRate);
 }
 
+CNormalMeanPrecConjugate::EPrior CNormalMeanPrecConjugate::type(void) const
+{
+    return E_Normal;
+}
+
 CNormalMeanPrecConjugate *CNormalMeanPrecConjugate::clone(void) const
 {
     return new CNormalMeanPrecConjugate(*this);

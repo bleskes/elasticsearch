@@ -43,18 +43,6 @@ class CTimeSeriesDecompositionInterface;
 //! Encapsulate the conversion of arbitrary CTimeSeriesDecompositionInterface
 //! sub-classes to/from textual state. In particular, the field name associated
 //! with each type of decomposition is then in one file.
-//!
-//! IMPLEMENTATION DECISIONS:\n
-//! The serialisation format must be a hierarchical format that supports
-//! name/value pairs where the value may be a nested set of name/value
-//! pairs. Text format is used instead of binary because the format needs
-//! to be storable in Splunk, Elasticsearch and potentially other data stores
-//! that deal with text. This also makes it easier to provide backwards/
-//! forwards compatibility in the future as the classes evolve.
-//!
-//! The field names given to each decomposition class are deliberately
-//! terse and uninformative to avoid giving away details of our analytics
-//! to potential competitors.
 class MATHS_EXPORT CTimeSeriesDecompositionStateSerialiser : private core::CNonInstantiatable
 {
     public:

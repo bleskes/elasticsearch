@@ -97,6 +97,47 @@ using maths_t::E_IntegerData;
 
 }
 
+void COneOfNPriorTest::testFilter(void)
+{
+    LOG_DEBUG("+--------------------------------+");
+    LOG_DEBUG("|  COneOfNPriorTest::testFilter  |");
+    LOG_DEBUG("+--------------------------------+");
+
+    TPriorPtrVec models;
+    models.push_back(TPriorPtr(maths::CGammaRateConjugate::nonInformativePrior(E_IntegerData).clone()));
+    models.push_back(TPriorPtr(maths::CLogNormalMeanPrecConjugate::nonInformativePrior(E_IntegerData).clone()));
+    models.push_back(TPriorPtr(maths::CNormalMeanPrecConjugate::nonInformativePrior(E_IntegerData).clone()));
+    models.push_back(TPriorPtr(maths::CPoissonMeanConjugate::nonInformativePrior().clone()));
+
+    COneOfNPrior filter(maths::COneOfNPrior(clone(models), E_ContinuousData));
+
+    test::CRandomNumbers rng;
+
+    TDoubleVec samples;
+    rng.generateNormalSamples(10.0, 3.0, 20, samples);
+
+    // Make sure we don't have negative values.
+    truncateUpTo(0.0, samples);
+
+    for (std::size_t i = 0u; i < samples.size(); ++i)
+    {
+        filter.addSamples(TDouble1Vec(1, samples[i]));
+    }
+
+    filter.removeModels(maths::CPrior::CModelFilter().remove(maths::CPrior::E_Constant));
+
+    CPPUNIT_ASSERT_EQUAL(std::size_t(4), filter.models().size());
+
+    filter.removeModels(maths::CPrior::CModelFilter().remove(maths::CPrior::E_Poisson)
+                                                     .remove(maths::CPrior::E_Gamma));
+
+    CPPUNIT_ASSERT_EQUAL(std::size_t(2), filter.models().size());
+    CPPUNIT_ASSERT_EQUAL(maths::CPrior::E_LogNormal, filter.models()[0]->type());
+    CPPUNIT_ASSERT_EQUAL(maths::CPrior::E_Normal, filter.models()[1]->type());
+    TDoubleVec weights = filter.weights();
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, std::accumulate(weights.begin(), weights.end(), 0.0), 1e-6);
+}
+
 void COneOfNPriorTest::testMultipleUpdate(void)
 {
     LOG_DEBUG("+----------------------------------------+");
@@ -109,7 +150,7 @@ void COneOfNPriorTest::testMultipleUpdate(void)
     typedef maths::CEqualWithTolerance<double> TEqual;
 
     TPriorPtrVec models;
-    models.push_back(TPriorPtr(CPoissonMeanConjugate::nonInformativePrior().clone()));
+    models.push_back(TPriorPtr(maths::CPoissonMeanConjugate::nonInformativePrior().clone()));
     models.push_back(TPriorPtr(maths::CNormalMeanPrecConjugate::nonInformativePrior(E_ContinuousData).clone()));
 
     const double mean = 10.0;
@@ -1309,6 +1350,9 @@ CppUnit::Test *COneOfNPriorTest::suite(void)
 {
     CppUnit::TestSuite *suiteOfTests = new CppUnit::TestSuite("COneOfNPriorTest");
 
+    suiteOfTests->addTest( new CppUnit::TestCaller<COneOfNPriorTest>(
+                                   "COneOfNPriorTest::testFilter",
+                                   &COneOfNPriorTest::testFilter) );
     suiteOfTests->addTest( new CppUnit::TestCaller<COneOfNPriorTest>(
                                    "COneOfNPriorTest::testMultipleUpdate",
                                    &COneOfNPriorTest::testMultipleUpdate) );

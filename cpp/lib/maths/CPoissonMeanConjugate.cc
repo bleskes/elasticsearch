@@ -271,6 +271,11 @@ CPoissonMeanConjugate CPoissonMeanConjugate::nonInformativePrior(double offset, 
     return CPoissonMeanConjugate(offset, NON_INFORMATIVE_SHAPE, NON_INFORMATIVE_RATE, decayRate);
 }
 
+CPoissonMeanConjugate::EPrior CPoissonMeanConjugate::type(void) const
+{
+    return E_Poisson;
+}
+
 CPoissonMeanConjugate *CPoissonMeanConjugate::clone(void) const
 {
     return new CPoissonMeanConjugate(*this);
