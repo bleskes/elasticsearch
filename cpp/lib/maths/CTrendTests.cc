@@ -2152,7 +2152,7 @@ CTrendTests::CScanningPeriodicity::TPeriodicityResultPr CTrendTests::CScanningPe
     typedef std::pair<double, std::size_t> TDoubleSizePr;
     typedef CBasicStatistics::COrderStatisticsStack<TDoubleSizePr, 5, std::greater<TDoubleSizePr> > TMaxAccumulator;
 
-    // Compute the linear autocorrelations padding to the maximum offset
+    // Compute the serial autocorrelations padding to the maximum offset
     // to avoid windowing effects.
 
     std::size_t n = m_BucketValues.size();
@@ -2165,7 +2165,7 @@ CTrendTests::CScanningPeriodicity::TPeriodicityResultPr CTrendTests::CScanningPe
     autocorrelations(values, correlations);
     values.resize(n);
 
-    // We retain the top 5 linear autocorrelations, averaging over offsets
+    // We retain the top 5 serial autocorrelations, averaging over offsets
     // which are integer multiples of the period since these should have
     // high autocorrelation if the signal is periodic, so we have a high
     // chance of finding the highest cyclic autocorrelation.

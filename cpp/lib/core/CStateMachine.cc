@@ -87,17 +87,16 @@ CStateMachine CStateMachine::create(const TStrVec &alphabet,
     // because of iterator invalidation on insert.
 
     SLookupMachine machine(alphabet, states, transitionFunction);
-    std::size_t m = find(0, ms_Machines.size(), machine);
-    if (   m == ms_Machines.size()
-        || !ms_Machines[m].s_Ready.load(atomic_t::memory_order_acquire)
-        || machine != ms_Machines[m])
+    std::size_t size = ms_NumberMachines.load(atomic_t::memory_order_acquire);
+    std::size_t m    = find(0, size, machine);
+    if (m == size || machine != ms_Machines[m])
     {
         CScopedFastLock lock(mutex);
         m = find(0, ms_Machines.size(), machine);
         if (m == ms_Machines.size())
         {
             ms_Machines.push_back(SMachine(alphabet, states, transitionFunction));
-            ms_Machines.back().s_Ready.store(atomic_t::memory_order_release);
+            ms_NumberMachines.store(ms_Machines.size(), atomic_t::memory_order_release);
         }
     }
 
@@ -213,15 +212,13 @@ CStateMachine::SMachine::SMachine(const TStrVec &alphabet,
                                   const TSizeVecVec &transitionFunction) :
         s_Alphabet(alphabet),
         s_States(states),
-        s_TransitionFunction(transitionFunction),
-        s_Ready(false)
+        s_TransitionFunction(transitionFunction)
 {}
 
 CStateMachine::SMachine::SMachine(const SMachine &other) :
         s_Alphabet(other.s_Alphabet),
         s_States(other.s_States),
-        s_TransitionFunction(other.s_TransitionFunction),
-        s_Ready(false)
+        s_TransitionFunction(other.s_TransitionFunction)
 {}
 
 CStateMachine::SLookupMachine::SLookupMachine(const TStrVec &alphabet,
@@ -240,6 +237,7 @@ bool CStateMachine::SLookupMachine::operator==(const SMachine &rhs) const
 }
 
 CStateMachine::TMachineDeque CStateMachine::ms_Machines;
+atomic_t::atomic<std::size_t> CStateMachine::ms_NumberMachines(0);
 
 }
 }

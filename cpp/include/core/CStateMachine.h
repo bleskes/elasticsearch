@@ -133,9 +133,6 @@ class CORE_EXPORT CStateMachine
             TStrVec s_States;
             //! The transition table \f$\delta : \Sigma \times S \rightarrow S\f$.
             TSizeVecVec s_TransitionFunction;
-            //! Used to pass a message to other threads when the machine is ready
-            //! to be used.
-            atomic_t::atomic<bool> s_Ready;
         };
 
         //! \brief A lightweight object to lookup a single machine.
@@ -174,6 +171,8 @@ class CORE_EXPORT CStateMachine
         std::size_t m_State;
         //! A complete list of available machines.
         static TMachineDeque ms_Machines;
+        //! Get the number of available machines.
+        static atomic_t::atomic<std::size_t> ms_NumberMachines;
 };
 
 }
