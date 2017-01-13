@@ -24,6 +24,7 @@
 
 #include <maths/CIntegerTools.h>
 #include <maths/CNormalMeanPrecConjugate.h>
+#include <maths/CSeasonalTime.h>
 #include <maths/CTimeSeriesDecomposition.h>
 #include <maths/CTimeSeriesTestData.h>
 

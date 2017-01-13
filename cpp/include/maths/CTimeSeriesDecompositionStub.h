@@ -49,9 +49,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionStub : public CTimeSeriesDecompositio
         //! Returns false.
         virtual bool initialized(void) const;
 
-        //! Returns zero.
-        virtual core_t::TTime startOfWeek(void) const;
-
         //! Returns maximum core_t::TTime.
         virtual core_t::TTime period(void) const;
 

@@ -63,7 +63,6 @@ class MATHS_EXPORT CSeasonalComponent
         typedef std::pair<TTimeTimePr, TMeanVarAccumulator> TTimeTimePrMeanVarPr;
         typedef std::vector<TTimeTimePrMeanVarPr> TTimeTimePrMeanVarPrVec;
         typedef std::vector<CFloatStorage> TFloatVec;
-        typedef CSeasonalComponentAdaptiveBucketing::CTime TTime;
         typedef CSymmetricMatrixNxN<double, 2> TMatrix;
         typedef CSpline<boost::reference_wrapper<const TFloatVec>,
                         boost::reference_wrapper<const TFloatVec>,
@@ -86,7 +85,7 @@ class MATHS_EXPORT CSeasonalComponent
         //! computing values.
         //! \param[in] varianceInterpolationType The style of interpolation to use for
         //! computing variances.
-        CSeasonalComponent(const TTime &time,
+        CSeasonalComponent(const CSeasonalTime &time,
                            std::size_t space,
                            double decayRate = 0.0,
                            double minimumBucketLength = 0.0,
@@ -146,7 +145,7 @@ class MATHS_EXPORT CSeasonalComponent
         void propagateForwardsByTime(double time, bool meanRevert = false);
 
         //! Get the time provider.
-        const TTime &time(void) const;
+        const CSeasonalTime &time(void) const;
 
         //! Interpolate the function at \p time.
         //!

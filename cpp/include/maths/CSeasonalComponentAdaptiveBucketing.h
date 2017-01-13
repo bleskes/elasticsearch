@@ -29,7 +29,6 @@
 
 #include <stdint.h>
 
-
 namespace ml
 {
 namespace core
@@ -39,6 +38,7 @@ class CStateRestoreTraverser;
 }
 namespace maths
 {
+class CSeasonalTime;
 
 //! \brief An adaptive bucketing of the value of a periodic function.
 //!
@@ -104,95 +104,22 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
         typedef CBasicStatistics::SSampleMeanVar<double>::TAccumulator TDoubleMeanVarAccumulator;
         typedef std::pair<TTimeTimePr, TDoubleMeanVarAccumulator> TTimeTimePrMeanVarPr;
         typedef std::vector<TTimeTimePrMeanVarPr> TTimeTimePrMeanVarPrVec;
-
-        //! \brief Provides times to the adaptive bucketing
-        class MATHS_EXPORT CTime
-        {
-            public:
-                CTime(void);
-                CTime(core_t::TTime startOfWeek,
-                      core_t::TTime windowStart,
-                      core_t::TTime windowEnd,
-                      core_t::TTime period);
-
-                //! Initialize from a string created by persist.
-                bool restore(const std::string &value);
-
-                //! Convert to a string.
-                std::string persist(void) const;
-
-                //! Extract the time of \p time in the current period.
-                double periodic(core_t::TTime time) const;
-
-                //! Extract the time of \p time in the current regression.
-                double regression(core_t::TTime time) const;
-
-                //! Get the start of the week.
-                core_t::TTime weekStart(void) const;
-
-                //! Get the start of the week containing \p time.
-                core_t::TTime startOfWeek(core_t::TTime time) const;
-
-                //! Check if \p time is in the window.
-                bool inWindow(core_t::TTime time) const;
-
-                //! Get the window.
-                core_t::TTime window(void) const;
-
-                //! Get the start of the window.
-                core_t::TTime windowStart(void) const;
-
-                //! Get the end of the window.
-                core_t::TTime windowEnd(void) const;
-
-                //! Get the start of the window containing \p time.
-                core_t::TTime startOfWindow(core_t::TTime time) const;
-
-                //! Get the period.
-                core_t::TTime period(void) const;
-
-                //! Get the origin of the time coordinates.
-                core_t::TTime regressionOrigin(void) const;
-
-                //! Set the origin of the time coordinates.
-                void regressionOrigin(core_t::TTime time);
-
-                //! Get the decay rate scaled from \p fromPeriod period to
-                //! \p toPeriod period.
-                //!
-                //! \param[in] decayRate The decay rate for \p fromPeriod.
-                //! \param[in] fromPeriod The period of \p decayRate.
-                //! \param[in] toPeriod The desired period decay rate.
-                static double scaleDecayRate(double decayRate,
-                                             core_t::TTime fromPeriod,
-                                             core_t::TTime toPeriod);
-
-                //! Get a checksum for this object.
-                uint64_t checksum(uint64_t seed = 0) const;
-
-            private:
-                //! The start of the week.
-                core_t::TTime m_StartOfWeek;
-                //! The start of the window.
-                core_t::TTime m_WindowStart;
-                //! The end of the window.
-                core_t::TTime m_WindowEnd;
-                //! The periodic repeat.
-                core_t::TTime m_Period;
-                //! The origin of the time coordinates used to maintain
-                //! a reasonably conditioned Gramian of the design matrix.
-                core_t::TTime m_RegressionOrigin;
-        };
+        typedef boost::shared_ptr<CSeasonalTime> TSeasonalTimePtr;
 
     public:
-        CSeasonalComponentAdaptiveBucketing(const CTime &time,
-                                            double decayRate = 0.0,
-                                            double minimumBucketLength = 0.0);
+        CSeasonalComponentAdaptiveBucketing(void);
+        explicit CSeasonalComponentAdaptiveBucketing(const CSeasonalTime &time,
+                                                     double decayRate = 0.0,
+                                                     double minimumBucketLength = 0.0);
+        CSeasonalComponentAdaptiveBucketing(const CSeasonalComponentAdaptiveBucketing &other);
 
-        //! Construct by traversing a state document
+        //! Construct by traversing a state document.
         CSeasonalComponentAdaptiveBucketing(double decayRate,
                                             double minimumBucketLength,
                                             core::CStateRestoreTraverser &traverser);
+
+        //! Copy from \p rhs.
+        const CSeasonalComponentAdaptiveBucketing &operator=(const CSeasonalComponentAdaptiveBucketing &rhs);
 
         //! Persist by passing information to the supplied inserter.
         void acceptPersistInserter(core::CStatePersistInserter &inserter) const;
@@ -245,7 +172,7 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
         void add(core_t::TTime time, double value, double weight = 1.0);
 
         //! Get the time provider.
-        const CTime &time(void) const;
+        const CSeasonalTime &time(void) const;
 
         //! Set the rate at which the bucketing loses information.
         void decayRate(double value);
@@ -336,7 +263,7 @@ class MATHS_EXPORT CSeasonalComponentAdaptiveBucketing
 
     private:
         //! The time provider.
-        CTime m_Time;
+        TSeasonalTimePtr m_Time;
 
         //! The time that the bucketing was initialized.
         core_t::TTime m_InitialTime;

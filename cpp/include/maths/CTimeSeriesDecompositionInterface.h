@@ -84,9 +84,6 @@ class MATHS_EXPORT CTimeSeriesDecompositionInterface : virtual public CTimeSerie
         //! Check if this is initialized.
         virtual bool initialized(void) const = 0;
 
-        //! Get the start of the week.
-        virtual core_t::TTime startOfWeek(void) const = 0;
-
         //! Get the period.
         virtual core_t::TTime period(void) const = 0;
 

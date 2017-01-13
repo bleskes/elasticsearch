@@ -24,6 +24,7 @@
 
 #include <maths/CChecksum.h>
 #include <maths/CIntegerTools.h>
+#include <maths/CSeasonalTime.h>
 
 #include <boost/bind.hpp>
 #include <boost/math/distributions/chi_squared.hpp>
@@ -57,7 +58,7 @@ const std::string EMPTY_STRING;
 
 }
 
-CSeasonalComponent::CSeasonalComponent(const TTime &time,
+CSeasonalComponent::CSeasonalComponent(const CSeasonalTime &time,
                                        std::size_t space,
                                        double decayRate,
                                        double minimumBucketLength,
@@ -82,7 +83,6 @@ CSeasonalComponent::CSeasonalComponent(double decayRate,
                                        CSplineTypes::EType valueInterpolationType,
                                        CSplineTypes::EType varianceInterpolationType) :
         m_Space(0),
-        m_Bucketing(TTime(), decayRate, minimumBucketLength),
         m_BoundaryCondition(CSplineTypes::E_Periodic),
         m_Splines(valueInterpolationType, varianceInterpolationType),
         m_MeanValue(0.0),
@@ -233,7 +233,7 @@ void CSeasonalComponent::propagateForwardsByTime(double time, bool meanRevert)
     m_Bucketing.propagateForwardsByTime(time, meanRevert);
 }
 
-const CSeasonalComponent::TTime &CSeasonalComponent::time(void) const
+const CSeasonalTime &CSeasonalComponent::time(void) const
 {
     return m_Bucketing.time();
 }

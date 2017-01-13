@@ -23,6 +23,7 @@
 #include <maths/CIntegerTools.h>
 #include <maths/COrderings.h>
 #include <maths/CSeasonalComponent.h>
+#include <maths/CSeasonalTime.h>
 #include <maths/CTools.h>
 
 #include <test/CRandomNumbers.h>
@@ -63,7 +64,7 @@ class CTestSeasonalComponent : public maths::CSeasonalComponent
                                maths::CSplineTypes::EBoundaryCondition boundaryCondition = maths::CSplineTypes::E_Periodic,
                                maths::CSplineTypes::EType valueInterpolationType = maths::CSplineTypes::E_Cubic,
                                maths::CSplineTypes::EType varianceInterpolationType = maths::CSplineTypes::E_Linear) :
-                maths::CSeasonalComponent(maths::CSeasonalComponent::TTime(0, 0, window, period),
+                maths::CSeasonalComponent(maths::CDiurnalTime(0, 0, window, period),
                                           space,
                                           decayRate,
                                           minimumBucketLength,

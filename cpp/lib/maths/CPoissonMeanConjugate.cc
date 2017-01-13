@@ -987,10 +987,8 @@ void CPoissonMeanConjugate::print(const std::string &indent,
         result += "non-informative";
         return;
     }
-    result += "mean = " + core::CStringUtils::typeToStringPretty(this->priorMean())
-             + " sd = " + core::CStringUtils::typeToStringPretty(::sqrt(this->priorMean()
-                                                                 + m_Offset
-                                                                 + this->priorVariance()));
+    result += "mean = " + core::CStringUtils::typeToStringPretty(this->marginalLikelihoodMean())
+             + " sd = " + core::CStringUtils::typeToStringPretty(::sqrt(this->marginalLikelihoodVariance()));
 }
 
 std::string CPoissonMeanConjugate::printJointDensityFunction(void) const

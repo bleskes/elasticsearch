@@ -26,6 +26,7 @@
 #include <maths/CChecksum.h>
 #include <maths/CIntegerTools.h>
 #include <maths/CSeasonalComponentAdaptiveBucketing.h>
+#include <maths/CSeasonalTime.h>
 #include <maths/CTools.h>
 
 #include <boost/config.hpp>
@@ -166,8 +167,7 @@ void decompose(const TTrendCRef &trend,
 //! periodicity test decay rate.
 double regularTestDecayRate(double decayRate)
 {
-    return CSeasonalComponent::TTime::scaleDecayRate(
-               decayRate, CSeasonalComponentAdaptiveBucketing::timescale(), WEEK);
+    return CSeasonalTime::scaleDecayRate(decayRate, CSeasonalComponentAdaptiveBucketing::timescale(), WEEK);
 }
 
 //! Get the time of \p time suitable for use in a trend regression model.
@@ -1334,7 +1334,7 @@ void CTimeSeriesDecompositionDetail::CComponents::handle(const SDetectedPeriodic
                 {
                     std::size_t index = periods.index(SELECT_PARTITION[j], SELECT_PERIOD[i]);
                     components.push_back(CSeasonalComponent(
-                            CSeasonalComponent::TTime(startOfWeek, WINDOWS[j][0], WINDOWS[j][1], PERIODS[i]),
+                            CDiurnalTime(startOfWeek, WINDOWS[j][0], WINDOWS[j][1], PERIODS[i]),
                             sizes[j][i], m_DecayRate, bucketLength, CSplineTypes::E_Natural));
                     components.back().initialize(times[j][i], time, trends[index]);
                     m_LongestPeriod = std::max(m_LongestPeriod, PERIODS[i]);

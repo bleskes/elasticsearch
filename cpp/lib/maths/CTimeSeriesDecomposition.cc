@@ -25,6 +25,7 @@
 #include <maths/CBasicStatistics.h>
 #include <maths/CChecksum.h>
 #include <maths/CIntegerTools.h>
+#include <maths/CSeasonalTime.h>
 #include <maths/CTools.h>
 
 #include <boost/bind.hpp>
@@ -209,12 +210,6 @@ void CTimeSeriesDecomposition::forecast(void)
 bool CTimeSeriesDecomposition::initialized(void) const
 {
     return m_Components.initialized();
-}
-
-core_t::TTime CTimeSeriesDecomposition::startOfWeek(void) const
-{
-    const TComponentVec &components = m_Components.seasonal();
-    return !components.empty() ? components.front().time().weekStart() : 0;
 }
 
 core_t::TTime CTimeSeriesDecomposition::period(void) const
@@ -475,7 +470,7 @@ TDoubleDoublePr CTimeSeriesDecomposition::smoothing(core_t::TTime time, double c
             continue;
         }
 
-        const CSeasonalComponent::TTime &times = component.time();
+        const CSeasonalTime &times = component.time();
 
         if (times.inWindow(time - SMOOTHING_INTERVAL))
         {

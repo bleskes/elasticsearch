@@ -46,11 +46,6 @@ bool CTimeSeriesDecompositionStub::initialized(void) const
     return false;
 }
 
-core_t::TTime CTimeSeriesDecompositionStub::startOfWeek(void) const
-{
-    return 0;
-}
-
 core_t::TTime CTimeSeriesDecompositionStub::period(void) const
 {
     return std::numeric_limits<core_t::TTime>::max();

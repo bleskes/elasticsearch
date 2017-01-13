@@ -88,6 +88,7 @@ CRegression.cc \
 CSampling.cc \
 CSeasonalComponent.cc \
 CSeasonalComponentAdaptiveBucketing.cc \
+CSeasonalTime.cc \
 CSignal.cc \
 CSpline.cc \
 CStatisticalTests.cc \

@@ -113,9 +113,6 @@ class MATHS_EXPORT CTimeSeriesDecomposition : public CTimeSeriesDecompositionInt
         //! Check if the decomposition has any initialized components.
         virtual bool initialized(void) const;
 
-        //! Get the start of the week.
-        virtual core_t::TTime startOfWeek(void) const;
-
         //! Get the period.
         virtual core_t::TTime period(void) const;
 

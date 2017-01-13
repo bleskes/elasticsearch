@@ -73,11 +73,8 @@ bool CTimeSeriesDecompositionStateSerialiser::acceptRestoreTraverser(double deca
         }
         else
         {
-            // Due to the way we divide large state into multiple
-            // Splunk events this is not necessarily a problem -
-            // the unexpected element may be marking the start of
-            // a new chunk.
-            LOG_WARN("No decomposition corresponds to name " << traverser.name());
+            LOG_ERROR("No decomposition corresponds to name " << traverser.name());
+            return false;
         }
     }
     while (traverser.next());
@@ -111,7 +108,6 @@ void CTimeSeriesDecompositionStateSerialiser::acceptPersistInserter(const CTimeS
         LOG_ERROR("Decomposition with type " << typeid(decomposition).name()
                   << " has no defined name");
     }
-
 }
 
 }
