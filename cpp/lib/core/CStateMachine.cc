@@ -185,6 +185,7 @@ std::size_t CStateMachine::numberMachines(void)
 void CStateMachine::clear(void)
 {
     CScopedFastLock lock(mutex);
+    ms_NumberMachines.store(0);
     ms_Machines.clear();
 }
 
