@@ -2,15 +2,16 @@ description = 'Builds the Ml Engine native binaries'
 
 import org.elastic.gradle.UploadS3Task
 
-String artifact_name = 'ml-cpp' +
-    (project.isWindows ? "-windows-x86_64" : (project.isMacOsX ? "-darwin-x86_64" :
-    (project.isLinux ? "-linux-x86_64" : "-sunos-x86_64")))
+String artifact_name = 'ml-cpp-' +
+    (project.isWindows ? "windows-x86_64" : ((project.isMacOsX || project.cppCrossCompile == 'macosx') ? "darwin-x86_64" :
+    (project.isLinux ? "linux-x86_64" : "sunos-x86_64")))
 
 project.ext.make = (project.isMacOsX || project.isWindows) ? "gnumake" : (project.isLinux ? "make" : "gmake")
 project.ext.numCpus = Runtime.runtime.availableProcessors()
 
 task clean(type: Exec) {
     enabled = project.cppEnabled
+    environment 'CPP_CROSS_COMPILE', project.cppCrossCompile
     commandLine bash
     args '-c', 'source ./set_env.sh && rm -rf ../cppdistribution && rm -rf build && ' + make + ' clean'
     workingDir "${projectDir}"
@@ -18,6 +19,7 @@ task clean(type: Exec) {
 
 task compile(type: Exec) {
     enabled = project.cppEnabled
+    environment 'CPP_CROSS_COMPILE', project.cppCrossCompile
     commandLine bash
     args '-c', 'source ./set_env.sh && ' + make + ' -j' + numCpus + ' objcompile'
     workingDir "${projectDir}"
@@ -25,6 +27,7 @@ task compile(type: Exec) {
 
 task make(type: Exec) {
     enabled = project.cppEnabled
+    environment 'CPP_CROSS_COMPILE', project.cppCrossCompile
     commandLine bash
     args '-c', 'source ./set_env.sh && ' + make + ' -j' + numCpus
     workingDir "${projectDir}"
@@ -33,6 +36,7 @@ task make(type: Exec) {
 
 task strip(type: Exec) {
     enabled = project.cppEnabled
+    environment 'CPP_CROSS_COMPILE', project.cppCrossCompile
     commandLine bash
     args '-c', 'source ./set_env.sh && ./strip_binaries.sh'
     workingDir "${projectDir}"
@@ -67,6 +71,7 @@ artifacts {
 
 task test(type: Exec) {
     enabled = project.cppEnabled
+    environment 'CPP_CROSS_COMPILE', project.cppCrossCompile
     commandLine bash
     args '-c', 'source ./set_env.sh && ' + make + ' -j' + numCpus + ' test'
     workingDir "${projectDir}"

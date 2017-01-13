@@ -43,8 +43,11 @@ endif
 
 # Detect Linux
 ifeq ($(OS),$(linuxOS))
+ifdef CPP_CROSS_COMPILE
+include $(CPP_SRC_HOME)/mk/linux_crosscompile_$(CPP_CROSS_COMPILE).mk
+else
 include $(CPP_SRC_HOME)/mk/linux.mk
-PLATFORM=Linux
+endif
 endif
 
 # Detect MacOSX

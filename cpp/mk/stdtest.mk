@@ -25,9 +25,13 @@ endif
 endif # ifndef DEFAULT_TEST_CMDS
 
 
+ifdef CPP_CROSS_COMPILE
+TEST_CMDS=@ echo 'WARNING!!!! CANNOT RUN UNIT TESTS WHEN CROSS COMPILING'
+else
 #if we haven't defined a specific test just run it
 ifndef TEST_CMDS
 TEST_CMDS=$(DEFAULT_TEST_CMDS)
+endif
 endif
 
 ifndef PRE_TEST_CMDS
