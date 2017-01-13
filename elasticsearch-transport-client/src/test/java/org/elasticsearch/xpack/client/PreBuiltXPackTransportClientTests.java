@@ -32,7 +32,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class PreBuiltXPackTransportClientTests extends RandomizedTest {
 
-    @Test
     public void testPluginInstalled() {
         try (TransportClient client = new PreBuiltXPackTransportClient(Settings.EMPTY)) {
             Settings settings = client.settings();
@@ -40,9 +39,4 @@ public class PreBuiltXPackTransportClientTests extends RandomizedTest {
         }
     }
 
-    // dummy test so that the tests pass on JDK9 as the only test in this module is disabled on JDK9
-    @Test
-    public void testDummy() {
-
-    }
 }
