@@ -87,7 +87,7 @@ class MATHS_EXPORT CPrior
         };
 
         //! \brief Defines a filter for removing models from selection.
-        class CModelFilter
+        class MATHS_EXPORT CModelFilter
         {
             public:
                 CModelFilter(void);
