@@ -27,9 +27,7 @@ import org.elasticsearch.cli.EnvironmentAwareCommand;
 import org.elasticsearch.cli.Terminal;
 import org.elasticsearch.cli.UserException;
 import org.elasticsearch.common.io.FileSystemUtils;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +39,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Comparator;
