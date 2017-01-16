@@ -32,7 +32,6 @@ import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptService;
-import org.elasticsearch.tasks.TaskManager;
 import org.elasticsearch.threadpool.ExecutorBuilder;
 import org.elasticsearch.threadpool.FixedExecutorBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -211,7 +210,6 @@ public class MlPlugin extends Plugin implements ActionPlugin {
                 autodetectProcessFactory, normalizerFactory);
         ScheduledJobRunner scheduledJobRunner = new ScheduledJobRunner(threadPool, client, clusterService, jobProvider,
                 System::currentTimeMillis);
-        TaskManager taskManager = new TaskManager(settings);
 
         JobLifeCycleService jobLifeCycleService =
                 new JobLifeCycleService(settings, client, clusterService, dataProcessor, threadPool.generic());
@@ -236,8 +234,7 @@ public class MlPlugin extends Plugin implements ActionPlugin {
                 dataProcessor,
                 new MlInitializationService(settings, threadPool, clusterService, jobProvider),
                 jobDataCountsPersister,
-                scheduledJobRunner,
-                taskManager
+                scheduledJobRunner
                 );
     }
 
