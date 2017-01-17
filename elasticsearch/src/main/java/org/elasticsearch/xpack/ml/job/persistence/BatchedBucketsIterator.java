@@ -25,9 +25,9 @@ import org.elasticsearch.xpack.ml.job.results.Bucket;
 
 import java.io.IOException;
 
-class ElasticsearchBatchedBucketsIterator extends ElasticsearchBatchedResultsIterator<Bucket> {
+class BatchedBucketsIterator extends BatchedResultsIterator<Bucket> {
 
-    public ElasticsearchBatchedBucketsIterator(Client client, String jobId) {
+    public BatchedBucketsIterator(Client client, String jobId) {
         super(client, jobId, Bucket.RESULT_TYPE_VALUE);
     }
 
