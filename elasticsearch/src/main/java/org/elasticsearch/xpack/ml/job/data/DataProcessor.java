@@ -19,7 +19,7 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.InterimResultsParams;
 
 import java.io.InputStream;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
 
 public interface DataProcessor {
 
@@ -39,10 +39,9 @@ public interface DataProcessor {
      * @param jobId     the jobId
      * @param input     Data input stream
      * @param params    Data processing parameters
-     * @param cancelled Whether the data processing has been cancelled
      * @return Count of records, fields, bytes, etc written
      */
-    DataCounts processData(String jobId, InputStream input, DataLoadParams params, Supplier<Boolean> cancelled);
+    DataCounts processData(String jobId, InputStream input, DataLoadParams params);
 
     /**
      * Flush the running job, ensuring that the native process has had the
@@ -55,7 +54,7 @@ public interface DataProcessor {
      */
     void flushJob(String jobId, InterimResultsParams interimResultsParams);
 
-    void openJob(String jobId, boolean ignoreDowntime);
+    void openJob(String jobId, boolean ignoreDowntime, Consumer<Exception> handler);
 
     /**
      * Stop the running job and mark it as finished.<br>

@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
-import org.elasticsearch.tasks.TaskCancelledException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.job.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.DataDescription;
@@ -39,12 +38,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -89,33 +85,6 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         analysisConfig = new AnalysisConfig.Builder(Arrays.asList(detector)).build();
     }
 
-    public void testWrite_cancel() throws Exception {
-        InputStream inputStream = endLessStream("", "{\"time\":1}");
-        JsonDataToProcessWriter writer = createWriter();
-        writer.writeHeader();
-
-        AtomicBoolean cancel = new AtomicBoolean(false);
-        AtomicReference<Exception> exception = new AtomicReference<>();
-        Thread t = new Thread(() -> {
-            try {
-                writer.write(inputStream, cancel::get);
-            } catch (Exception e) {
-                exception.set(e);
-            }
-        });
-        t.start();
-        try {
-            assertBusy(() -> verify(statusReporter, atLeastOnce()).reportRecordWritten(anyLong(), anyLong()));
-        } finally {
-            cancel.set(true);
-            t.join();
-        }
-
-        assertNotNull(exception.get());
-        assertEquals(TaskCancelledException.class, exception.get().getClass());
-        assertEquals("cancelled", exception.get().getMessage());
-    }
-
     public void testWrite_GivenTimeFormatIsEpochAndDataIsValid() throws Exception {
         StringBuilder input = new StringBuilder();
         input.append("{\"time\":\"1\", \"metric\":\"foo\", \"value\":\"1.0\"}");
@@ -123,7 +92,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -145,7 +114,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -174,7 +143,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -203,7 +172,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -232,7 +201,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -259,7 +228,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
 
-        ESTestCase.expectThrows(ElasticsearchParseException.class, () -> writer.write(inputStream, () -> false));
+        ESTestCase.expectThrows(ElasticsearchParseException.class, () -> writer.write(inputStream));
     }
 
     public void testWrite_GivenJsonWithArrayField()
@@ -274,7 +243,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -303,7 +272,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -345,7 +314,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         input.append("{\"date\":\"1970-01-01\", \"time-of-day\":\"00:00:02Z\", \"value\":\"6.0\"}");
         InputStream inputStream = createInputStream(input.toString());
 
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -382,7 +351,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, () -> false);
+        writer.write(inputStream);
         verify(statusReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -411,30 +380,4 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         }
     }
 
-    static InputStream endLessStream(String firstLine, String repeatLine) {
-        return new InputStream() {
-
-            int pos = 0;
-            boolean firstLineRead = false;
-            final byte[] first = firstLine.getBytes(StandardCharsets.UTF_8);
-            final byte[] repeat = repeatLine.getBytes(StandardCharsets.UTF_8);
-
-            @Override
-            public int read() throws IOException {
-                if (firstLineRead == false) {
-                    if (pos == first.length) {
-                        pos = 0;
-                        firstLineRead = true;
-                    } else {
-                        return first[pos++];
-                    }
-                }
-
-                if (pos == repeat.length) {
-                    pos = 0;
-                }
-                return repeat[pos++];
-            }
-        };
-    }
 }

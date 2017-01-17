@@ -60,7 +60,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -87,9 +86,10 @@ public class JobProviderTests extends ESTestCase {
         Client client = getMockedClient(getResponse);
         JobProvider provider = createProvider(client);
 
-        Optional<Quantiles> quantiles = provider.getQuantiles(JOB_ID);
-
-        assertFalse(quantiles.isPresent());
+        Quantiles[] holder = new Quantiles[1];
+        provider.getQuantiles(JOB_ID, quantiles -> holder[0] = quantiles, RuntimeException::new);
+        Quantiles quantiles = holder[0];
+        assertNull(quantiles);
     }
 
     public void testGetQuantiles_GivenQuantilesHaveNonEmptyState() throws Exception {
@@ -102,10 +102,11 @@ public class JobProviderTests extends ESTestCase {
         Client client = getMockedClient(getResponse);
         JobProvider provider = createProvider(client);
 
-        Optional<Quantiles> quantiles = provider.getQuantiles(JOB_ID);
-
-        assertTrue(quantiles.isPresent());
-        assertEquals("state", quantiles.get().getQuantileState());
+        Quantiles[] holder = new Quantiles[1];
+        provider.getQuantiles(JOB_ID, quantiles -> holder[0] = quantiles, RuntimeException::new);
+        Quantiles quantiles = holder[0];
+        assertNotNull(quantiles);
+        assertEquals("state", quantiles.getQuantileState());
     }
 
     public void testGetQuantiles_GivenQuantilesHaveEmptyState() throws Exception {
@@ -118,10 +119,11 @@ public class JobProviderTests extends ESTestCase {
         Client client = getMockedClient(getResponse);
         JobProvider provider = createProvider(client);
 
-        Optional<Quantiles> quantiles = provider.getQuantiles(JOB_ID);
-
-        assertTrue(quantiles.isPresent());
-        assertEquals("", quantiles.get().getQuantileState());
+        Quantiles[] holder = new Quantiles[1];
+        provider.getQuantiles(JOB_ID, quantiles -> holder[0] = quantiles, RuntimeException::new);
+        Quantiles quantiles = holder[0];
+        assertNotNull(quantiles);
+        assertEquals("", quantiles.getQuantileState());
     }
 
     public void testCreateUsageMetering() throws InterruptedException, ExecutionException {
@@ -921,7 +923,10 @@ public class JobProviderTests extends ESTestCase {
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
-        QueryPage<ModelSnapshot> page = provider.modelSnapshots(jobId, from, size);
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        QueryPage<ModelSnapshot>[] holder = new QueryPage[1];
+        provider.modelSnapshots(jobId, from, size, r -> holder[0] = r, RuntimeException::new);
+        QueryPage<ModelSnapshot> page = holder[0];
         assertEquals(2L, page.count());
         List<ModelSnapshot> snapshots = page.results();
 
@@ -1183,6 +1188,13 @@ public class JobProviderTests extends ESTestCase {
         ActionFuture<GetResponse> actionFuture = mock(ActionFuture.class);
         when(client.get(any())).thenReturn(actionFuture);
         when(actionFuture.actionGet()).thenReturn(response);
+
+        doAnswer(invocationOnMock -> {
+            @SuppressWarnings("unchecked")
+            ActionListener<GetResponse> actionListener = (ActionListener<GetResponse>) invocationOnMock.getArguments()[1];
+            actionListener.onResponse(response);
+            return null;
+        }).when(client).get(any(), any());
         return client;
     }
 }

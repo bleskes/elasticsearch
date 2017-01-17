@@ -16,36 +16,31 @@ package org.elasticsearch.xpack.ml.action;
 
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestBuilder;
-import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.HandledTransportAction;
+import org.elasticsearch.action.support.tasks.BaseTasksResponse;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.StatusToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.tasks.CancellableTask;
-import org.elasticsearch.tasks.Task;
-import org.elasticsearch.tasks.TaskId;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.ml.MlPlugin;
 import org.elasticsearch.xpack.ml.job.DataCounts;
 import org.elasticsearch.xpack.ml.job.DataDescription;
-import org.elasticsearch.xpack.ml.job.Job;
 import org.elasticsearch.xpack.ml.job.manager.AutodetectProcessManager;
+import org.elasticsearch.xpack.ml.job.manager.JobManager;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.TimeRange;
-import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -77,7 +72,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         }
     }
 
-    public static class Response extends ActionResponse implements StatusToXContentObject {
+    public static class Response extends BaseTasksResponse implements StatusToXContentObject, Writeable {
 
         private DataCounts dataCounts;
 
@@ -89,6 +84,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         }
 
         public Response(DataCounts counts) {
+            super(null, null);
             this.dataCounts = counts;
         }
 
@@ -141,25 +137,12 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         }
     }
 
-    static class PostDataTask extends CancellableTask {
-
-        PostDataTask(long id, String type, String action, TaskId parentTaskId, String jobId) {
-            super(id, type, action, jobId + "_post_data", parentTaskId);
-        }
-
-        @Override
-        public boolean shouldCancelChildrenOnCancellation() {
-            return true;
-        }
-    }
-
-    public static class Request extends ActionRequest {
+    public static class Request extends TransportJobTaskAction.JobTaskRequest<Request> {
 
         public static final ParseField IGNORE_DOWNTIME = new ParseField("ignore_downtime");
         public static final ParseField RESET_START = new ParseField("reset_start");
         public static final ParseField RESET_END = new ParseField("reset_end");
 
-        private String jobId;
         private boolean ignoreDowntime = false;
         private String resetStart = "";
         private String resetEnd = "";
@@ -170,8 +153,7 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         }
 
         public Request(String jobId) {
-            ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
-            this.jobId = jobId;
+            super(jobId);
         }
 
         public String getJobId() {
@@ -217,19 +199,8 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         }
 
         @Override
-        public Task createTask(long id, String type, String action, TaskId parentTaskId) {
-            return new PostDataTask(id, type, action, parentTaskId, jobId);
-        }
-
-        @Override
-        public ActionRequestValidationException validate() {
-            return null;
-        }
-
-        @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            jobId = in.readString();
             ignoreDowntime = in.readBoolean();
             resetStart = in.readOptionalString();
             resetEnd = in.readOptionalString();
@@ -240,7 +211,6 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeString(jobId);
             out.writeBoolean(ignoreDowntime);
             out.writeOptionalString(resetStart);
             out.writeOptionalString(resetEnd);
@@ -274,28 +244,31 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
     }
 
 
-    public static class TransportAction extends HandledTransportAction<Request, Response> {
-
-        private final AutodetectProcessManager processManager;
+    public static class TransportAction extends TransportJobTaskAction<InternalOpenJobAction.JobTask, Request, Response> {
 
         @Inject
-        public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ActionFilters actionFilters,
-                IndexNameExpressionResolver indexNameExpressionResolver, AutodetectProcessManager processManager) {
-            super(settings, PostDataAction.NAME, false, threadPool, transportService, actionFilters,
-                    indexNameExpressionResolver, Request::new);
-            this.processManager = processManager;
+        public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ClusterService clusterService,
+                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                               JobManager jobManager, AutodetectProcessManager processManager) {
+            super(settings, PostDataAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
+                    Request::new, Response::new, MlPlugin.THREAD_POOL_NAME, jobManager, processManager, Request::getJobId);
         }
 
         @Override
-        protected void doExecute(Task task, Request request, ActionListener<Response> listener) {
-            PostDataTask postDataTask = (PostDataTask) task;
+        protected Response readTaskResponse(StreamInput in) throws IOException {
+            Response response = new Response();
+            response.readFrom(in);
+            return response;
+        }
+
+        @Override
+        protected void taskOperation(Request request, InternalOpenJobAction.JobTask task, ActionListener<Response> listener) {
             TimeRange timeRange = TimeRange.builder().startTime(request.getResetStart()).endTime(request.getResetEnd()).build();
             DataLoadParams params = new DataLoadParams(timeRange, request.isIgnoreDowntime(),
                     Optional.ofNullable(request.getDataDescription()));
             threadPool.executor(MlPlugin.THREAD_POOL_NAME).execute(() -> {
                 try {
-                    DataCounts dataCounts = processManager.processData(request.getJobId(), request.content.streamInput(), params,
-                            postDataTask::isCancelled);
+                    DataCounts dataCounts = processManager.processData(request.getJobId(), request.content.streamInput(), params);
                     listener.onResponse(new Response(dataCounts));
                 } catch (Exception e) {
                     listener.onFailure(e);
@@ -303,9 +276,5 @@ public class PostDataAction extends Action<PostDataAction.Request, PostDataActio
             });
         }
 
-        @Override
-        protected final void doExecute(Request request, ActionListener<Response> listener) {
-            throw new UnsupportedOperationException("the task parameter is required");
-        }
     }
 }
