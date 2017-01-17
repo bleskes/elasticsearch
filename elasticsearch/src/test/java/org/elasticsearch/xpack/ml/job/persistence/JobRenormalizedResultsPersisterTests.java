@@ -24,6 +24,8 @@ import org.elasticsearch.xpack.ml.job.results.BucketInfluencer;
 
 import java.util.Date;
 
+import static org.hamcrest.Matchers.containsString;
+
 public class JobRenormalizedResultsPersisterTests extends ESTestCase {
 
     public void testUpdateBucket() {
@@ -38,7 +40,7 @@ public class JobRenormalizedResultsPersisterTests extends ESTestCase {
         persister.updateBucket(bn);
 
         assertEquals(3, persister.getBulkRequest().numberOfActions());
-        assertEquals("foo-index", persister.getBulkRequest().requests().get(0).index());
+        assertThat(persister.getBulkRequest().requests().get(0).toString(), containsString("foo-index"));
     }
 
     private JobRenormalizedResultsPersister createJobRenormalizedResultsPersister() {
