@@ -30,13 +30,9 @@ import java.io.IOException;
 
 public class RestStopSchedulerAction extends BaseRestHandler {
 
-    private final StopSchedulerAction.TransportAction transportJobSchedulerAction;
-
     @Inject
-    public RestStopSchedulerAction(Settings settings, RestController controller,
-                                   StopSchedulerAction.TransportAction transportJobSchedulerAction) {
+    public RestStopSchedulerAction(Settings settings, RestController controller) {
         super(settings);
-        this.transportJobSchedulerAction = transportJobSchedulerAction;
         controller.registerHandler(RestRequest.Method.POST, MlPlugin.BASE_PATH + "schedulers/{"
                 + SchedulerConfig.ID.getPreferredName() + "}/_stop", this);
     }
@@ -48,6 +44,6 @@ public class RestStopSchedulerAction extends BaseRestHandler {
         if (restRequest.hasParam("stop_timeout")) {
             jobSchedulerRequest.setStopTimeout(TimeValue.parseTimeValue(restRequest.param("stop_timeout"), "stop_timeout"));
         }
-        return channel -> transportJobSchedulerAction.execute(jobSchedulerRequest, new AcknowledgedRestListener<>(channel));
+        return channel -> client.execute(StopSchedulerAction.INSTANCE, jobSchedulerRequest, new AcknowledgedRestListener<>(channel));
     }
 }

@@ -32,12 +32,9 @@ import java.io.IOException;
 
 public class RestGetRecordsAction extends BaseRestHandler {
 
-    private final GetRecordsAction.TransportAction transportAction;
-
     @Inject
-    public RestGetRecordsAction(Settings settings, RestController controller, GetRecordsAction.TransportAction transportAction) {
+    public RestGetRecordsAction(Settings settings, RestController controller) {
         super(settings);
-        this.transportAction = transportAction;
         controller.registerHandler(RestRequest.Method.GET, MlPlugin.BASE_PATH + "anomaly_detectors/{"
                 + Job.ID.getPreferredName() + "}/results/records", this);
         controller.registerHandler(RestRequest.Method.POST, MlPlugin.BASE_PATH + "anomaly_detectors/{"
@@ -72,6 +69,6 @@ public class RestGetRecordsAction extends BaseRestHandler {
             }
         }
 
-        return channel -> transportAction.execute(request, new RestToXContentListener<>(channel));
+        return channel -> client.execute(GetRecordsAction.INSTANCE, request, new RestToXContentListener<>(channel));
     }
 }

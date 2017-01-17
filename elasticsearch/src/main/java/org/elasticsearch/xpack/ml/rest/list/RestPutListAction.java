@@ -29,12 +29,9 @@ import java.io.IOException;
 
 public class RestPutListAction extends BaseRestHandler {
 
-    private final PutListAction.TransportAction transportCreateListAction;
-
     @Inject
-    public RestPutListAction(Settings settings, RestController controller, PutListAction.TransportAction transportCreateListAction) {
+    public RestPutListAction(Settings settings, RestController controller) {
         super(settings);
-        this.transportCreateListAction = transportCreateListAction;
         controller.registerHandler(RestRequest.Method.PUT, MlPlugin.BASE_PATH + "lists", this);
     }
 
@@ -42,7 +39,7 @@ public class RestPutListAction extends BaseRestHandler {
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         XContentParser parser = restRequest.contentOrSourceParamParser();
         PutListAction.Request putListRequest = PutListAction.Request.parseRequest(parser);
-        return channel -> transportCreateListAction.execute(putListRequest, new AcknowledgedRestListener<>(channel));
+        return channel -> client.execute(PutListAction.INSTANCE, putListRequest, new AcknowledgedRestListener<>(channel));
     }
 
 }
