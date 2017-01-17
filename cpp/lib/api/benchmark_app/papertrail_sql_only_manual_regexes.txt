@@ -1,5 +1,0 @@
-failed to lookup.*in time for message from.*Statement cancelled due to timeout or client request
-UnableToExecuteStatementException.*Statement cancelled due to timeout or client request
-failed to lookup.*in time for message from.*Query execution was interrupted
-MySQLQueryInterruptedException.*Query execution was interrupted
-The last packet sent successfully to the server was.*milliseconds ago. The driver has not received any packets from the server.

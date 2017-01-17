@@ -1,8 +1,0 @@
-To run: install syslog install files
-
-run (as root)
-
-../ml_test &
-./syslog_generator
-logadm -f ./logadm.conf
-./syslog_generator
