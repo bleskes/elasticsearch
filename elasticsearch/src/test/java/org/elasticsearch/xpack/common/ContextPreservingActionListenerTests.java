@@ -35,7 +35,7 @@ public class ContextPreservingActionListenerTests extends ESTestCase {
             ContextPreservingActionListener<Void> actionListener;
             try (ThreadContext.StoredContext ignore = threadContext.stashContext()) {
                 threadContext.putHeader("foo", "bar");
-                actionListener = new ContextPreservingActionListener<>(threadContext, threadContext.newStoredContext(),
+                actionListener = new ContextPreservingActionListener<>(threadContext.newRestorableContext(true),
                         new ActionListener<Void>() {
                     @Override
                     public void onResponse(Void aVoid) {
@@ -69,7 +69,7 @@ public class ContextPreservingActionListenerTests extends ESTestCase {
             ContextPreservingActionListener<Void> actionListener;
             try (ThreadContext.StoredContext ignore = threadContext.stashContext()) {
                 threadContext.putHeader("foo", "bar");
-                actionListener = new ContextPreservingActionListener<>(threadContext, threadContext.newStoredContext(),
+                actionListener = new ContextPreservingActionListener<>(threadContext.newRestorableContext(true),
                         new ActionListener<Void>() {
                             @Override
                             public void onResponse(Void aVoid) {
@@ -103,7 +103,7 @@ public class ContextPreservingActionListenerTests extends ESTestCase {
             ContextPreservingActionListener<Void> actionListener;
             try (ThreadContext.StoredContext ignore = threadContext.stashContext()) {
                 threadContext.putHeader("foo", "bar");
-                actionListener = new ContextPreservingActionListener<>(threadContext, threadContext.newStoredContext(),
+                actionListener = new ContextPreservingActionListener<>(threadContext.newRestorableContext(true),
                         new ActionListener<Void>() {
                             @Override
                             public void onResponse(Void aVoid) {
