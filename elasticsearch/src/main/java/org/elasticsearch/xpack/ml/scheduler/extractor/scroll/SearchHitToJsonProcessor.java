@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.ml.scheduler.extractor;
+package org.elasticsearch.xpack.ml.scheduler.extractor.scroll;
 
 import org.elasticsearch.common.lease.Releasable;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -21,21 +21,22 @@ import org.elasticsearch.search.SearchHit;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 
-public class SearchHitToJsonProcessor implements Releasable {
+class SearchHitToJsonProcessor implements Releasable {
 
-    private final String[] fields;
+    private final ExtractedFields fields;
     private final XContentBuilder jsonBuilder;
 
-    public SearchHitToJsonProcessor(String[] fields, OutputStream outputStream) throws IOException {
-        this.fields = fields;
-        jsonBuilder = new XContentBuilder(JsonXContent.jsonXContent, outputStream);
+    public SearchHitToJsonProcessor(ExtractedFields fields, OutputStream outputStream) throws IOException {
+        this.fields = Objects.requireNonNull(fields);
+        this.jsonBuilder = new XContentBuilder(JsonXContent.jsonXContent, outputStream);
     }
 
     public void process(SearchHit hit) throws IOException {
         jsonBuilder.startObject();
-        for (String field : fields) {
-            writeKeyValue(field, SearchHitFieldExtractor.extractField(hit, field));
+        for (ExtractedField field : fields.getAllFields()) {
+            writeKeyValue(field.getName(), field.value(hit));
         }
         jsonBuilder.endObject();
     }

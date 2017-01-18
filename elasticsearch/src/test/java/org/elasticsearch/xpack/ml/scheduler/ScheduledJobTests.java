@@ -20,6 +20,7 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.action.FlushJobAction;
 import org.elasticsearch.xpack.ml.action.PostDataAction;
 import org.elasticsearch.xpack.ml.job.DataCounts;
+import org.elasticsearch.xpack.ml.job.DataDescription;
 import org.elasticsearch.xpack.ml.job.audit.Auditor;
 import org.elasticsearch.xpack.ml.scheduler.extractor.DataExtractor;
 import org.elasticsearch.xpack.ml.scheduler.extractor.DataExtractorFactory;
@@ -49,6 +50,7 @@ public class ScheduledJobTests extends ESTestCase {
     private DataExtractorFactory dataExtractorFactory;
     private DataExtractor dataExtractor;
     private Client client;
+    private DataDescription.Builder dataDescription;
     private ActionFuture<FlushJobAction.Response> flushJobFuture;
 
     private long currentTime;
@@ -61,6 +63,8 @@ public class ScheduledJobTests extends ESTestCase {
         dataExtractor = mock(DataExtractor.class);
         when(dataExtractorFactory.newExtractor(anyLong(), anyLong())).thenReturn(dataExtractor);
         client = mock(Client.class);
+        dataDescription = new DataDescription.Builder();
+        dataDescription.setFormat(DataDescription.DataFormat.JSON);
         ActionFuture<PostDataAction.Response> jobDataFuture = mock(ActionFuture.class);
         flushJobFuture = mock(ActionFuture.class);
         currentTime = 0;
@@ -69,7 +73,10 @@ public class ScheduledJobTests extends ESTestCase {
         InputStream inputStream = new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8));
         when(dataExtractor.next()).thenReturn(Optional.of(inputStream));
         DataCounts dataCounts = new DataCounts("_job_id", 1, 0, 0, 0, 0, 0, 0, new Date(0), new Date(0));
-        when(client.execute(same(PostDataAction.INSTANCE), eq(new PostDataAction.Request("_job_id")))).thenReturn(jobDataFuture);
+
+        PostDataAction.Request expectedRequest = new PostDataAction.Request("_job_id");
+        expectedRequest.setDataDescription(dataDescription.build());
+        when(client.execute(same(PostDataAction.INSTANCE), eq(expectedRequest))).thenReturn(jobDataFuture);
         when(client.execute(same(FlushJobAction.INSTANCE), any())).thenReturn(flushJobFuture);
         when(jobDataFuture.get()).thenReturn(new PostDataAction.Response(dataCounts));
     }
@@ -185,7 +192,7 @@ public class ScheduledJobTests extends ESTestCase {
     private ScheduledJob createScheduledJob(long frequencyMs, long queryDelayMs, long latestFinalBucketEndTimeMs,
                                             long latestRecordTimeMs) {
         Supplier<Long> currentTimeSupplier = () -> currentTime;
-        return new ScheduledJob("_job_id", frequencyMs, queryDelayMs, dataExtractorFactory, client, auditor,
+        return new ScheduledJob("_job_id", dataDescription.build(), frequencyMs, queryDelayMs, dataExtractorFactory, client, auditor,
                 currentTimeSupplier, latestFinalBucketEndTimeMs, latestRecordTimeMs);
     }
 

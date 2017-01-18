@@ -70,6 +70,9 @@ public class SchedulerConfigTests extends AbstractSerializingTestCase<SchedulerC
         if (randomBoolean()) {
             builder.setQueryDelay(randomPositiveLong());
         }
+        if (randomBoolean()) {
+            builder.setSource(randomBoolean());
+        }
         return builder.build();
     }
 

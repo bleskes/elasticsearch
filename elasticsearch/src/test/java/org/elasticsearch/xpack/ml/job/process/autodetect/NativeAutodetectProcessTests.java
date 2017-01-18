@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
@@ -114,7 +115,7 @@ public class NativeAutodetectProcessTests extends ESTestCase {
                 bos, Mockito.mock(InputStream.class), Mockito.mock(InputStream.class),
                 NUMBER_ANALYSIS_FIELDS, Collections.emptyList(), EsExecutors.newDirectExecutorService())) {
 
-            DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1").endTime("86400").build(), true);
+            DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1").endTime("86400").build(), true, Optional.empty());
             process.writeResetBucketsControlMessage(params);
             process.flushStream();
 

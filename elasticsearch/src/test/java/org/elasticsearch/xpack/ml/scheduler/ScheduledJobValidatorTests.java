@@ -18,7 +18,6 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.job.AnalysisConfig;
-import org.elasticsearch.xpack.ml.job.DataDescription;
 import org.elasticsearch.xpack.ml.job.Detector;
 import org.elasticsearch.xpack.ml.job.Job;
 import org.elasticsearch.xpack.ml.job.messages.Messages;
@@ -48,9 +47,6 @@ public class ScheduledJobValidatorTests extends ESTestCase {
 
     public void testVerify_GivenZeroLatency() {
         Job.Builder builder = buildJobBuilder("foo");
-        DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
-        builder.setDataDescription(dataDescription);
         AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         ac.setLatency(0L);
@@ -63,9 +59,6 @@ public class ScheduledJobValidatorTests extends ESTestCase {
 
     public void testVerify_GivenNoLatency() {
         Job.Builder builder = buildJobBuilder("foo");
-        DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
-        builder.setDataDescription(dataDescription);
         AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBatchSpan(1800L);
         ac.setBucketSpan(100L);
@@ -78,9 +71,6 @@ public class ScheduledJobValidatorTests extends ESTestCase {
 
     public void testVerify_GivenAggsAndCorrectSummaryCountField() throws IOException {
         Job.Builder builder = buildJobBuilder("foo");
-        DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
-        builder.setDataDescription(dataDescription);
         AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         ac.setSummaryCountFieldName("doc_count");
@@ -95,9 +85,6 @@ public class ScheduledJobValidatorTests extends ESTestCase {
         String errorMessage = Messages.getMessage(Messages.SCHEDULER_AGGREGATIONS_REQUIRES_JOB_WITH_SUMMARY_COUNT_FIELD,
                 SchedulerConfig.DOC_COUNT);
         Job.Builder builder = buildJobBuilder("foo");
-        DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
-        builder.setDataDescription(dataDescription);
         AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         builder.setAnalysisConfig(ac);
@@ -114,9 +101,6 @@ public class ScheduledJobValidatorTests extends ESTestCase {
         String errorMessage = Messages.getMessage(
                 Messages.SCHEDULER_AGGREGATIONS_REQUIRES_JOB_WITH_SUMMARY_COUNT_FIELD, SchedulerConfig.DOC_COUNT);
         Job.Builder builder = buildJobBuilder("foo");
-        DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.ELASTICSEARCH);
-        builder.setDataDescription(dataDescription);
         AnalysisConfig.Builder ac = createAnalysisConfig();
         ac.setBucketSpan(1800L);
         ac.setSummaryCountFieldName("wrong");
@@ -134,9 +118,7 @@ public class ScheduledJobValidatorTests extends ESTestCase {
         Job.Builder builder = new Job.Builder(id);
         builder.setCreateTime(new Date());
         AnalysisConfig.Builder ac = createAnalysisConfig();
-        DataDescription.Builder dc = new DataDescription.Builder();
         builder.setAnalysisConfig(ac);
-        builder.setDataDescription(dc);
         return builder;
     }
 
