@@ -103,6 +103,11 @@ public class InternalStartSchedulerAction extends
                 holder.stop(null);
             }
         }
+
+        @Override
+        public boolean shouldCancelChildrenOnCancellation() {
+            return true;
+        }
     }
 
     public static class TransportAction extends HandledTransportAction<Request, Response> {
