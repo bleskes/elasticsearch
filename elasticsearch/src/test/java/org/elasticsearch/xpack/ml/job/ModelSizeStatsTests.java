@@ -25,7 +25,6 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
     public void testDefaultConstructor() {
         ModelSizeStats stats = new ModelSizeStats.Builder("foo").build();
-        assertEquals("model_size_stats", stats.getId());
         assertEquals(0, stats.getModelBytes());
         assertEquals(0, stats.getTotalByFieldCount());
         assertEquals(0, stats.getTotalOverFieldCount());
@@ -34,15 +33,9 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
         assertEquals(MemoryStatus.OK, stats.getMemoryStatus());
     }
 
-
-    public void testSetId() {
-        ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
-
-        stats.setId("bar");
-
-        assertEquals("bar", stats.build().getId());
+    public void testDocumentId() {
+        assertEquals("foo-model_size_stats", ModelSizeStats.documentId("foo"));
     }
-
 
     public void testSetMemoryStatus_GivenNull() {
         ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
@@ -51,7 +44,6 @@ public class ModelSizeStatsTests extends AbstractSerializingTestCase<ModelSizeSt
 
         assertEquals("[memory_status] must not be null", ex.getMessage());
     }
-
 
     public void testSetMemoryStatus_GivenSoftLimit() {
         ModelSizeStats.Builder stats = new ModelSizeStats.Builder("foo");
