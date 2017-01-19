@@ -71,6 +71,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
 
     public static class Request extends ActionRequest implements ToXContent {
 
+        public static final ParseField SNAPSHOT_ID = new ParseField("snapshot_id");
         public static final ParseField SORT = new ParseField("sort");
         public static final ParseField DESCRIPTION = new ParseField("description");
         public static final ParseField START = new ParseField("start");
@@ -81,6 +82,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
 
         static {
             PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
+            PARSER.declareString((request, snapshotId) -> request.snapshotId = snapshotId, SNAPSHOT_ID);
             PARSER.declareString(Request::setDescriptionString, DESCRIPTION);
             PARSER.declareString(Request::setStart, START);
             PARSER.declareString(Request::setEnd, END);
@@ -89,15 +91,19 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
             PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
         }
 
-        public static Request parseRequest(String jobId, XContentParser parser) {
+        public static Request parseRequest(String jobId, String snapshotId, XContentParser parser) {
             Request request = PARSER.apply(parser, null);
             if (jobId != null) {
                 request.jobId = jobId;
+            }
+            if (snapshotId != null) {
+                request.snapshotId = snapshotId;
             }
             return request;
         }
 
         private String jobId;
+        private String snapshotId;
         private String sort;
         private String description;
         private String start;
@@ -108,12 +114,18 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         Request() {
         }
 
-        public Request(String jobId) {
+        public Request(String jobId, String snapshotId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
+            this.snapshotId = snapshotId;
         }
 
         public String getJobId() {
             return jobId;
+        }
+
+        @Nullable
+        public String getSnapshotId() {
+            return snapshotId;
         }
 
         @Nullable
@@ -177,6 +189,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
             jobId = in.readString();
+            snapshotId = in.readOptionalString();
             sort = in.readOptionalString();
             description = in.readOptionalString();
             start = in.readOptionalString();
@@ -189,6 +202,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeString(jobId);
+            out.writeOptionalString(snapshotId);
             out.writeOptionalString(sort);
             out.writeOptionalString(description);
             out.writeOptionalString(start);
@@ -201,6 +215,9 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
             builder.field(Job.ID.getPreferredName(), jobId);
+            if (snapshotId != null) {
+                builder.field(SNAPSHOT_ID.getPreferredName(), snapshotId);
+            }
             if (description != null) {
                 builder.field(DESCRIPTION.getPreferredName(), description);
             }
@@ -221,7 +238,7 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId, description, start, end, sort, desc);
+            return Objects.hash(jobId, snapshotId, description, start, end, sort, desc);
         }
 
         @Override
@@ -233,9 +250,9 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
                 return false;
             }
             Request other = (Request) obj;
-            return Objects.equals(jobId, other.jobId) && Objects.equals(description, other.description)
-                    && Objects.equals(start, other.start) && Objects.equals(end, other.end) && Objects.equals(sort, other.sort)
-                    && Objects.equals(desc, other.desc);
+            return Objects.equals(jobId, other.jobId) && Objects.equals(snapshotId, other.snapshotId)
+                    && Objects.equals(description, other.description) && Objects.equals(start, other.start)
+                    && Objects.equals(end, other.end) && Objects.equals(sort, other.sort) && Objects.equals(desc, other.desc);
         }
     }
 
@@ -328,14 +345,14 @@ extends Action<GetModelSnapshotsAction.Request, GetModelSnapshotsAction.Response
 
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
-            logger.debug(String.format(Locale.ROOT,
-                    "Get model snapshots for job %s. from = %d, size = %d"
-                            + " start = '%s', end='%s', sort=%s descending=%b, description filter=%s",
-                    request.getJobId(), request.pageParams.getFrom(), request.pageParams.getSize(), request.getStart(), request.getEnd(),
-                    request.getSort(), request.getDescOrder(), request.getDescriptionString()));
+            logger.debug("Get model snapshots for job {} snapshot ID {}. from = {}, size = {}"
+                    + " start = '{}', end='{}', sort={} descending={}, description filter={}",
+                    request.getJobId(), request.getSnapshotId(), request.pageParams.getFrom(), request.pageParams.getSize(),
+                    request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(), request.getDescriptionString());
 
             jobProvider.modelSnapshots(request.getJobId(), request.pageParams.getFrom(), request.pageParams.getSize(),
-                    request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(), null, request.getDescriptionString(),
+                    request.getStart(), request.getEnd(), request.getSort(), request.getDescOrder(), request.getSnapshotId(),
+                    request.getDescriptionString(),
                     page -> {
                         clearQuantiles(page);
                         listener.onResponse(new Response(page));

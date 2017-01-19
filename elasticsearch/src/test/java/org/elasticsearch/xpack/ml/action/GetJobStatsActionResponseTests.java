@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-public class GetJobsStatsActionResponseTests extends AbstractStreamableTestCase<Response> {
+public class GetJobStatsActionResponseTests extends AbstractStreamableTestCase<Response> {
 
     @Override
     protected Response createTestInstance() {
