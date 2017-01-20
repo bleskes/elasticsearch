@@ -17,7 +17,6 @@
 
 package org.elasticsearch.license;
 
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -36,8 +35,6 @@ import static org.elasticsearch.rest.RestRequest.Method.POST;
 import static org.elasticsearch.rest.RestRequest.Method.PUT;
 
 public class RestPutLicenseAction extends XPackRestHandler {
-
-    @Inject
     public RestPutLicenseAction(Settings settings, RestController controller) {
         super(settings);
         // @deprecated Remove deprecations in 6.0

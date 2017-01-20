@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.security.rest.action.user;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -41,8 +40,6 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
  * Rest endpoint to add a User to the security index
  */
 public class RestPutUserAction extends BaseRestHandler {
-
-    @Inject
     public RestPutUserAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(POST, "/_xpack/security/user/{username}", this);

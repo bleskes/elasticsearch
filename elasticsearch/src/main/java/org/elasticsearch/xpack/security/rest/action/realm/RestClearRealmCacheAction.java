@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.security.rest.action.realm;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
@@ -32,8 +31,6 @@ import java.io.IOException;
 import static org.elasticsearch.rest.RestRequest.Method.POST;
 
 public class RestClearRealmCacheAction extends BaseRestHandler {
-
-    @Inject
     public RestClearRealmCacheAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(POST, "/_xpack/security/realm/{realms}/_clear_cache", this);
