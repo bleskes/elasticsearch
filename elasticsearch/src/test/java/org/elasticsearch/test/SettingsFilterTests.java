@@ -17,6 +17,7 @@
 
 package org.elasticsearch.test;
 
+import org.elasticsearch.common.Booleans;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Injector;
@@ -33,8 +34,10 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.is;
@@ -45,13 +48,18 @@ public class SettingsFilterTests extends ESTestCase {
     private Map<String, Matcher> settingsMatcherMap = new HashMap<>();
 
     public void testFiltering() throws IOException {
+        Set<String> expectedWarnings = new HashSet<>();
         configureUnfilteredSetting("xpack.security.authc.realms.file.type", "file");
 
         // ldap realm filtering
         configureUnfilteredSetting("xpack.security.authc.realms.ldap1.type", "ldap");
         configureUnfilteredSetting("xpack.security.authc.realms.ldap1.enabled", "false");
         configureUnfilteredSetting("xpack.security.authc.realms.ldap1.url", "ldap://host.domain");
-        configureFilteredSetting("xpack.security.authc.realms.ldap1.hostname_verification", randomBooleanSetting());
+        String ldap1HostNameVerification = randomBooleanSetting();
+        if (Booleans.isStrictlyBoolean(ldap1HostNameVerification) == false) {
+            expectedWarnings.add("Expected a boolean for setting [hostname_verification] but got [" + ldap1HostNameVerification + "]");
+        }
+        configureFilteredSetting("xpack.security.authc.realms.ldap1.hostname_verification", ldap1HostNameVerification);
         configureFilteredSetting("xpack.security.authc.realms.ldap1.bind_dn", randomAsciiOfLength(5));
         configureFilteredSetting("xpack.security.authc.realms.ldap1.bind_password", randomAsciiOfLength(5));
 
@@ -59,7 +67,11 @@ public class SettingsFilterTests extends ESTestCase {
         configureUnfilteredSetting("xpack.security.authc.realms.ad1.type", "active_directory");
         configureUnfilteredSetting("xpack.security.authc.realms.ad1.enabled", "false");
         configureUnfilteredSetting("xpack.security.authc.realms.ad1.url", "ldap://host.domain");
-        configureFilteredSetting("xpack.security.authc.realms.ad1.hostname_verification", randomBooleanSetting());
+        String ad1HostNameVerification = randomBooleanSetting();
+        if (Booleans.isStrictlyBoolean(ad1HostNameVerification) == false) {
+            expectedWarnings.add("Expected a boolean for setting [hostname_verification] but got [" + ad1HostNameVerification + "]");
+        }
+        configureFilteredSetting("xpack.security.authc.realms.ad1.hostname_verification", ad1HostNameVerification);
 
         // pki filtering
         configureUnfilteredSetting("xpack.security.authc.realms.pki1.type", "pki");
@@ -124,6 +136,9 @@ public class SettingsFilterTests extends ESTestCase {
         Settings filteredSettings = settingsFilter.filter(settings);
         for (Map.Entry<String, Matcher> entry : settingsMatcherMap.entrySet()) {
             assertThat(filteredSettings.get(entry.getKey()), entry.getValue());
+        }
+        if (expectedWarnings.isEmpty() == false) {
+            assertWarnings(expectedWarnings.toArray(new String[0]));
         }
     }
 

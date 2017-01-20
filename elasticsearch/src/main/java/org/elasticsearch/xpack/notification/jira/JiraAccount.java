@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.notification.jira;
 
-import org.elasticsearch.common.Booleans;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsException;
@@ -65,7 +64,7 @@ public class JiraAccount {
         try {
             URI uri = new URI(url);
             Scheme protocol = Scheme.parse(uri.getScheme());
-            if ((protocol == Scheme.HTTP) && (Booleans.isExplicitTrue(settings.get(ALLOW_HTTP_SETTING)) == false)) {
+            if ((protocol == Scheme.HTTP) && (settings.getAsBoolean(ALLOW_HTTP_SETTING, false) == false)) {
                 throw new SettingsException("invalid jira [" + name + "] account settings. unsecure scheme [" + protocol + "]");
             }
             this.url = uri;

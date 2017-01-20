@@ -28,6 +28,7 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
+import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.logging.LoggerMessageFormat;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.regex.Regex;
@@ -158,6 +159,8 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
     public static final ScriptContext SCRIPT_CONTEXT = SCRIPT_PLUGIN::getKey;
 
     private static final Logger logger = Loggers.getLogger(XPackPlugin.class);
+
+    private static final DeprecationLogger DEPRECATION_LOGGER = new DeprecationLogger(logger);
 
     public List<NamedWriteableRegistry.Entry> getNamedWriteables() {
         List<NamedWriteableRegistry.Entry> entries = new ArrayList<>();
@@ -343,10 +346,16 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
                 " restrictive. disable [action.auto_create_index] or set it to " +
                 "[{}, {}, {}*]", (Object) value, WatchStore.INDEX, TriggeredWatchStore.INDEX_NAME, HistoryStore.INDEX_PREFIX);
         if (Booleans.isExplicitFalse(value)) {
+            if (Booleans.isStrictlyBoolean(value) == false) {
+                DEPRECATION_LOGGER.deprecated("Expected [false] for setting [action.auto_create_index] but got [{}]", value);
+            }
             throw new IllegalArgumentException(errorMessage);
         }
 
         if (Booleans.isExplicitTrue(value)) {
+            if (Booleans.isStrictlyBoolean(value) == false) {
+                DEPRECATION_LOGGER.deprecated("Expected [true] for setting [action.auto_create_index] but got [{}]", value);
+            }
             return;
         }
 
