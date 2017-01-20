@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.security.rest.action.user;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.BytesRestResponse;
@@ -30,8 +31,11 @@ import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.security.action.user.PutUserRequestBuilder;
 import org.elasticsearch.xpack.security.action.user.PutUserResponse;
 import org.elasticsearch.xpack.security.client.SecurityClient;
+import org.elasticsearch.xpack.security.rest.RestRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.elasticsearch.rest.RestRequest.Method.POST;
 import static org.elasticsearch.rest.RestRequest.Method.PUT;
@@ -39,7 +43,8 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
 /**
  * Rest endpoint to add a User to the security index
  */
-public class RestPutUserAction extends BaseRestHandler {
+public class RestPutUserAction extends BaseRestHandler implements RestRequestFilter {
+
     public RestPutUserAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(POST, "/_xpack/security/user/{username}", this);
@@ -69,5 +74,12 @@ public class RestPutUserAction extends BaseRestHandler {
                                 .endObject());
             }
         });
+    }
+
+    private static final Set<String> FILTERED_FIELDS = Collections.unmodifiableSet(Sets.newHashSet("password", "passwordHash"));
+
+    @Override
+    public Set<String> getFilteredFields() {
+        return FILTERED_FIELDS;
     }
 }
