@@ -88,7 +88,7 @@ if [ -z ${USE_EXISTING_ES:+x} ]; then
         exit 1
     fi
     BRANCH=${PR_SOURCE_BRANCH:-${GIT_BRANCH#*/}} # GIT_BRANCH starts with the repo, i.e., origin/master
-    BRANCH=${BRANCH:-master} # fall back to CI branch if not testing a PR
+    BRANCH=${BRANCH:-5.x} # fall back to CI branch if not testing a PR
     echo "Checking if branch '$BRANCH' has elasticsearch sibling..."
     ES_REPO_URL="https://github.com/elastic/elasticsearch.git"
     if [ -z ${USE_SSH:+x} ]; then
