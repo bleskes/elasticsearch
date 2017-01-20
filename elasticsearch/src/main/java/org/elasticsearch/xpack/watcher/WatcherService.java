@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.watcher;
 
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.cluster.ClusterState;
@@ -40,7 +41,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalArgument;
 import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalState;
 import static org.elasticsearch.xpack.watcher.support.Exceptions.ioException;
 
@@ -171,7 +171,7 @@ public class WatcherService extends AbstractComponent {
         }
         Watch watch = watchStore.get(id);
         if (watch == null) {
-            throw illegalArgument("watch [{}] does not exist", id);
+            throw new ResourceNotFoundException("watch [{}] does not exist", id);
         }
         // we need to create a safe copy of the status
         if (watch.ack(clock.now(DateTimeZone.UTC), actionIds)) {
@@ -211,7 +211,7 @@ public class WatcherService extends AbstractComponent {
 
         Watch watch = watchStore.get(id);
         if (watch == null) {
-            throw illegalArgument("watch [{}] does not exist", id);
+            throw new ResourceNotFoundException("watch [{}] does not exist", id);
         }
         if (watch.setState(active, clock.nowUTC())) {
             try {
