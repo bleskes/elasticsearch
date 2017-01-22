@@ -1058,12 +1058,16 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
         // TODO: do we want to force a new thread if we actively removed the master? this is to give a full pinging cycle
         // before a decision is made.
         joinThreadControl.startNewThreadIfNotRunning();
-        // remove block if it already exists before adding new one
-        assert clusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock().id()) == false :
-            "NO_MASTER_BLOCK should only be added by DiscoveryService";
-        ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(clusterState.blocks())
-            .addGlobalBlock(discoverySettings.getNoMasterBlock())
-            .build();
+        // remove block if it already exists before adding new one. we may already have the block if this rejoin
+        // is called at the end of an election process that failed.
+        final ClusterBlocks clusterBlocks;
+        if (clusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock()) == false) {
+             clusterBlocks = ClusterBlocks.builder().blocks(clusterState.blocks())
+                .addGlobalBlock(discoverySettings.getNoMasterBlock())
+                .build();
+        } else {
+            clusterBlocks = clusterState.blocks();
+        }
 
         DiscoveryNodes discoveryNodes = new DiscoveryNodes.Builder(clusterState.nodes()).masterNodeId(null).build();
         return LocalClusterUpdateTask.newState(ClusterState.builder(clusterState)
