@@ -96,7 +96,8 @@ public class NoneDiscovery extends AbstractLifecycleComponent implements Discove
     }
 
     @Override
-    public synchronized <T> void submitStateUpdateTasks(String source, Map<T, ClusterStateTaskListener> tasks, ClusterStateTaskConfig config, ClusterStateTaskExecutor<T> executor) {
+    public synchronized <T> void submitStateUpdateTasks(String source, Map<T, ClusterStateTaskListener> tasks,
+                                                        ClusterStateTaskConfig config, ClusterStateTaskExecutor<T> executor) {
         throw new UnsupportedOperationException();
     }
 

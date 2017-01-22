@@ -69,7 +69,12 @@ public class DiscoveryModuleTests extends ESTestCase {
         Map<String, Supplier<Discovery>> impl();
 
         @Override
-        default Map<String, Supplier<Discovery>> getDiscoveryTypes(ThreadPool threadPool, TransportService transportService, NamedWriteableRegistry namedWriteableRegistry, ClusterSettings clusterSettings, Supplier<ClusterState> lastAppliedClusterState, BiConsumer<String, LocalClusterUpdateTask> onClusterStateFromMaster, UnicastHostsProvider hostsProvider) {
+        default Map<String, Supplier<Discovery>> getDiscoveryTypes(ThreadPool threadPool, TransportService transportService,
+                                                                   NamedWriteableRegistry namedWriteableRegistry,
+                                                                   ClusterSettings clusterSettings,
+                                                                   Supplier<ClusterState> lastAppliedClusterState,
+                                                                   BiConsumer<String, LocalClusterUpdateTask> onClusterStateFromMaster,
+                                                                   UnicastHostsProvider hostsProvider) {
             return impl();
         }
     }

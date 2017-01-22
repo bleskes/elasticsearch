@@ -65,7 +65,8 @@ public interface DiscoveryPlugin {
      */
     default Map<String, Supplier<Discovery>> getDiscoveryTypes(ThreadPool threadPool, TransportService transportService,
                                                                NamedWriteableRegistry namedWriteableRegistry,
-                                                               ClusterSettings clusterSettings, Supplier<ClusterState> lastAppliedClusterState,
+                                                               ClusterSettings clusterSettings,
+                                                               Supplier<ClusterState> lastAppliedClusterState,
                                                                BiConsumer<String, LocalClusterUpdateTask> onClusterStateFromMaster,
                                                                UnicastHostsProvider hostsProvider) {
         return Collections.emptyMap();

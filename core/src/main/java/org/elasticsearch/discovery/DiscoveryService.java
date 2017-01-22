@@ -61,7 +61,7 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
 
     public static final String DISCOVERY_UPDATE_THREAD_NAME = "discoveryService#updateTask";
 
-    final private BiConsumer<ClusterChangedEvent, Discovery.AckListener> clusterStatePublisher;
+    private final BiConsumer<ClusterChangedEvent, Discovery.AckListener> clusterStatePublisher;
 
     private TimeValue slowTaskLoggingThreshold;
 

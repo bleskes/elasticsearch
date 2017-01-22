@@ -1341,21 +1341,22 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
     private static class MasterServiceWrapper {
         private DiscoveryService masterService;
 
-        synchronized public void set(Supplier<DiscoveryService> masterServiceFactory) {
+        public synchronized void set(Supplier<DiscoveryService> masterServiceFactory) {
             set(masterServiceFactory.get());
         }
-        synchronized public void set(DiscoveryService newMasterService) {
+
+        public synchronized void set(DiscoveryService newMasterService) {
             assert masterService == null;
             masterService = newMasterService;
         }
 
-        synchronized public void reset() {
+        public synchronized void reset() {
             if (masterService != null) {
                 masterService.close();
             }
             masterService = null;
         }
-        synchronized public DiscoveryService get() {
+        public synchronized DiscoveryService get() {
             return masterService;
         }
     }
