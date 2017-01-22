@@ -126,6 +126,7 @@ public class ClusterServiceUtils {
                 // skip
             }
         });
+        clusterService.setDiscovery(new NoopDiscovery());
         clusterService.start();
         final DiscoveryNodes.Builder nodes = DiscoveryNodes.builder(clusterService.state().nodes());
         nodes.masterNodeId(clusterService.localNode().getId());
