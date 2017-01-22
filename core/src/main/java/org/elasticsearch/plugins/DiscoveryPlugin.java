@@ -58,8 +58,8 @@ public interface DiscoveryPlugin {
      * the value is a supplier to construct the {@link Discovery}.
      *  @param threadPool Use to schedule ping actions
      * @param transportService Use to communicate with other nodes
-     * @param clusterSettings
-     * @param lastAppliedClusterState the last cluster state that was applied using by calling `onClusterStateFromMaster`
+     * @param clusterSettings the {@link ClusterSettings} of this node
+     * @param lastAppliedClusterState supplies the last cluster state that was applied using by calling `onClusterStateFromMaster`
      * @param onClusterStateFromMaster a callback to apply a cluster state that was received from master
      * @param hostsProvider Use to find configured hosts which should be pinged for initial discovery
      */
