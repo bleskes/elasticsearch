@@ -105,7 +105,7 @@ public class Ec2DiscoveryPlugin extends Plugin implements DiscoveryPlugin, Close
                                                               DiscoveryService discoveryService, UnicastHostsProvider hostsProvider) {
         // this is for backcompat with pre 5.1, where users would set discovery.type to use ec2 hosts provider
         return Collections.singletonMap(EC2, () ->
-            new ZenDiscovery(settings, threadPool, transportService, namedWriteableRegistry, discoveryService, hostsProvider));
+            new ZenDiscovery(settings, threadPool, transportService, namedWriteableRegistry, discoveryService, hostsProvider, lastAppliedClusterState, onClusterStateFromMaster));
     }
 
     @Override

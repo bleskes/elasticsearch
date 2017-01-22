@@ -373,12 +373,7 @@ public class TribeService extends AbstractLifecycleComponent {
         }
 
         @Override
-        public boolean runOnlyOnMaster() {
-            return false;
-        }
-
-        @Override
-        public boolean isDiscoveryServiceTask() {
+        public boolean isMasterTask() {
             return false;
         }
 

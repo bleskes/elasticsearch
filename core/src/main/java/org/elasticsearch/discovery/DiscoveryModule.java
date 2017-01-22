@@ -19,8 +19,12 @@
 
 package org.elasticsearch.discovery;
 
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.LocalClusterUpdateTask;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.network.NetworkService;
+import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
@@ -36,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -52,8 +57,8 @@ public class DiscoveryModule {
     private final Discovery discovery;
 
     public DiscoveryModule(Settings settings, ThreadPool threadPool, TransportService transportService,
-                           NamedWriteableRegistry namedWriteableRegistry, NetworkService networkService, DiscoveryService discoveryService,
-                           List<DiscoveryPlugin> plugins) {
+                           NamedWriteableRegistry namedWriteableRegistry, NetworkService networkService,
+                           ClusterSettings clusterSettings, ClusterService clusterService, List<DiscoveryPlugin> plugins) {
         final UnicastHostsProvider hostsProvider;
 
         Map<String, Supplier<UnicastHostsProvider>> hostProviders = new HashMap<>();
@@ -76,12 +81,15 @@ public class DiscoveryModule {
         }
 
         Map<String, Supplier<Discovery>> discoveryTypes = new HashMap<>();
+        Supplier<ClusterState> lastAppliedClusterState = clusterService::state;
+        BiConsumer<String, LocalClusterUpdateTask> onClusterStateFromMaster = clusterService::submitStateUpdateTask;
         discoveryTypes.put("zen",
-            () -> new ZenDiscovery(settings, threadPool, transportService, namedWriteableRegistry, discoveryService, hostsProvider));
-        discoveryTypes.put("none", () -> new NoneDiscovery(settings, discoveryService, discoveryService.getClusterSettings()));
+            () -> new ZenDiscovery(settings, threadPool, transportService, namedWriteableRegistry, clusterSettings, hostsProvider,
+                lastAppliedClusterState, onClusterStateFromMaster));
+        discoveryTypes.put("none", () -> new NoneDiscovery(settings, clusterSettings, lastAppliedClusterState));
         for (DiscoveryPlugin plugin : plugins) {
-            plugin.getDiscoveryTypes(threadPool, transportService, namedWriteableRegistry,
-                discoveryService, hostsProvider).entrySet().forEach(entry -> {
+            plugin.getDiscoveryTypes(threadPool, transportService, namedWriteableRegistry, clusterSettings,
+                lastAppliedClusterState, onClusterStateFromMaster, hostsProvider).entrySet().forEach(entry -> {
                 if (discoveryTypes.put(entry.getKey(), entry.getValue()) != null) {
                     throw new IllegalArgumentException("Cannot register discovery type [" + entry.getKey() + "] twice");
                 }

@@ -29,18 +29,13 @@ import org.elasticsearch.cluster.ClusterState.Builder;
 import org.elasticsearch.cluster.ClusterStateTaskExecutor;
 import org.elasticsearch.cluster.ClusterStateTaskExecutor.ClusterTasksResult;
 import org.elasticsearch.cluster.ClusterStateTaskListener;
-import org.elasticsearch.cluster.NodeConnectionsService;
-import org.elasticsearch.cluster.block.ClusterBlock;
-import org.elasticsearch.cluster.block.ClusterBlocks;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.service.AbstractClusterTaskExecutor;
-import org.elasticsearch.cluster.service.ClusterApplier;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.CountDown;
@@ -58,7 +53,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.UnaryOperator;
 
 import static org.elasticsearch.cluster.service.ClusterService.CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING;
 import static org.elasticsearch.common.util.concurrent.EsExecutors.daemonThreadFactory;
@@ -67,93 +61,34 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
 
     public static final String DISCOVERY_UPDATE_THREAD_NAME = "discoveryService#updateTask";
 
-    private BiConsumer<ClusterChangedEvent, Discovery.AckListener> clusterStatePublisher;
+    final private BiConsumer<ClusterChangedEvent, Discovery.AckListener> clusterStatePublisher;
 
     private TimeValue slowTaskLoggingThreshold;
 
-    private final AtomicReference<ClusterState> state;
+    private final AtomicReference<ClusterState> lastCommittedState;
 
-    private final ClusterBlocks.Builder initialBlocks;
+    private final DiscoverySettings discoverySettings;
 
-    private NodeConnectionsService nodeConnectionsService;
+    public DiscoveryService(Settings settings, ThreadPool threadPool,
+                                ClusterState initialState, BiConsumer<ClusterChangedEvent, Discovery.AckListener> clusterStatePublisher,
+                                DiscoverySettings discoverySettings) {
+        super(settings, threadPool);
+        Objects.requireNonNull(clusterStatePublisher, "please set a cluster state publisher before starting");
+        Objects.requireNonNull(discoverySettings, "please set discovery settings before starting");
 
-    private DiscoverySettings discoverySettings;
-
-    private final ClusterApplier clusterApplier;
-
-    private final java.util.function.Supplier<DiscoveryNode> localNodeSupplier;
-
-    public DiscoveryService(Settings settings, ClusterSettings clusterSettings, ThreadPool threadPool,
-                            java.util.function.Supplier<DiscoveryNode> localNodeSupplier, ClusterApplier clusterApplier) {
-        super(settings, clusterSettings, threadPool);
-        this.localNodeSupplier = localNodeSupplier;
-        this.clusterApplier = clusterApplier;
-        // will be replaced on doStart.
-        this.state = new AtomicReference<>(ClusterState.builder(clusterName).build());
+        this.lastCommittedState = new AtomicReference<>(initialState);
         this.slowTaskLoggingThreshold = CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING.get(settings);
+        this.clusterStatePublisher = clusterStatePublisher;
+        this.discoverySettings = discoverySettings;
+        this.threadExecutor = EsExecutors.newSinglePrioritizing(DISCOVERY_UPDATE_THREAD_NAME,
+            daemonThreadFactory(settings, DISCOVERY_UPDATE_THREAD_NAME), threadPool.getThreadContext());
 
-        initialBlocks = ClusterBlocks.builder();
     }
 
     public void setSlowTaskLoggingThreshold(TimeValue slowTaskLoggingThreshold) {
         this.slowTaskLoggingThreshold = slowTaskLoggingThreshold;
     }
 
-    public synchronized void setClusterStatePublisher(BiConsumer<ClusterChangedEvent, Discovery.AckListener> publisher) {
-        clusterStatePublisher = publisher;
-    }
-
-    private void updateState(UnaryOperator<ClusterState> updateFunction) {
-        this.state.getAndUpdate(updateFunction);
-    }
-
-    public synchronized void setNodeConnectionsService(NodeConnectionsService nodeConnectionsService) {
-        assert this.nodeConnectionsService == null : "nodeConnectionsService is already set";
-        this.nodeConnectionsService = nodeConnectionsService;
-    }
-
-    /**
-     * Adds an initial block to be set on the first cluster state created.
-     */
-    public synchronized void addInitialStateBlock(ClusterBlock block) throws IllegalStateException {
-        if (lifecycle.started()) {
-            throw new IllegalStateException("can't set initial block when started");
-        }
-        initialBlocks.addGlobalBlock(block);
-    }
-
-    /**
-     * Remove an initial block to be set on the first cluster state created.
-     */
-    public synchronized void removeInitialStateBlock(ClusterBlock block) throws IllegalStateException {
-        removeInitialStateBlock(block.id());
-    }
-
-    /**
-     * Remove an initial block to be set on the first cluster state created.
-     */
-    public synchronized void removeInitialStateBlock(int blockId) throws IllegalStateException {
-        if (lifecycle.started()) {
-            throw new IllegalStateException("can't set initial block when started");
-        }
-        initialBlocks.removeGlobalBlock(blockId);
-    }
-
-    @Override
-    protected synchronized void doStart() {
-        Objects.requireNonNull(clusterStatePublisher, "please set a cluster state publisher before starting");
-        Objects.requireNonNull(nodeConnectionsService, "please set the node connection service before starting");
-        Objects.requireNonNull(discoverySettings, "please set discovery settings before starting");
-        DiscoveryNode localNode = localNodeSupplier.get();
-        assert localNode != null;
-        updateState(state -> {
-            assert state.nodes().getLocalNodeId() == null : "local node is already set";
-            DiscoveryNodes nodes = DiscoveryNodes.builder(state.nodes()).add(localNode).localNodeId(localNode.getId()).build();
-            return ClusterState.builder(state).nodes(nodes).blocks(initialBlocks).build();
-        });
-        this.threadExecutor = EsExecutors.newSinglePrioritizing(DISCOVERY_UPDATE_THREAD_NAME,
-            daemonThreadFactory(settings, DISCOVERY_UPDATE_THREAD_NAME), threadPool.getThreadContext());
-    }
 
     @Override
     protected synchronized void doStop() {
@@ -163,27 +98,11 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
     @Override
     protected synchronized void doClose() {
     }
-
-    /**
-     * The local node.
-     */
-    public DiscoveryNode localNode() {
-        DiscoveryNode localNode = state().getNodes().getLocalNode();
-        if (localNode == null) {
-            throw new IllegalStateException("No local node found. Is the node started?");
-        }
-        return localNode;
-    }
-
     /**
      * The current cluster state.
      */
     public ClusterState state() {
-        return this.state.get();
-    }
-
-    public ClusterApplier getClusterApplier() {
-        return clusterApplier;
+        return this.lastCommittedState.get();
     }
 
     public static boolean assertDiscoveryUpdateThread() {
@@ -199,25 +118,16 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
         return true;
     }
 
-    public void setDiscoverySettings(DiscoverySettings discoverySettings) {
-        this.discoverySettings = discoverySettings;
-    }
-
     @Override
     protected void runTasks(TaskInputs taskInputs) {
         if (!lifecycle.started()) {
-            logger.debug("processing [{}]: ignoring, cluster service not started", taskInputs.summary);
+            logger.debug("failing [{}]: local node is no longer master", taskInputs.summary);
+            taskInputs.onNoLongerMaster();
             return;
         }
 
         logger.debug("processing [{}]: execute", taskInputs.summary);
         final ClusterState previousClusterState = state();
-
-        if (!previousClusterState.nodes().isLocalNodeElectedMaster() && taskInputs.runOnlyOnMaster()) {
-            logger.debug("failing [{}]: local node is no longer master", taskInputs.summary);
-            taskInputs.onNoLongerMaster();
-            return;
-        }
 
         long startTimeNS = currentTimeInNanos();
         TaskOutputs taskOutputs = calculateTaskOutputs(taskInputs, previousClusterState, startTimeNS);
@@ -235,35 +145,10 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
             } else if (logger.isDebugEnabled()) {
                 logger.debug("cluster state updated, version [{}], source [{}]", newClusterState.version(), taskInputs.summary);
             }
+            assert newClusterState.nodes().isLocalNodeElectedMaster() :
+                "new cluster state indicate local node as master :" + newClusterState;
             try {
-                if (newClusterState.nodes().isLocalNodeElectedMaster()) {
-                    publishChanges(taskInputs, taskOutputs);
-                } else {
-                    state.set(newClusterState);
-                    CountDownLatch latch = new CountDownLatch(1);
-                    clusterApplier.submitStateUpdateTask("apply-unpublished-state", newClusterState, new ClusterStateTaskListener() {
-                        @Override
-                        public void onFailure(String source, Exception e) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
-                            latch.countDown();
-                        }
-                    });
-
-                    try {
-                        latch.await();
-                    } catch (InterruptedException e) {
-                        logger.warn(
-                            (Supplier<?>) () -> new ParameterizedMessage(
-                                "interrupted while applying cluster state locally [{}]",
-                                taskInputs.summary),
-                            e);
-                    }
-                    taskOutputs.processedDifferentClusterState(previousClusterState, newClusterState);
-                }
+                publishChangesAndWaitForLocalAck(taskInputs, taskOutputs);
                 TimeValue executionTime = TimeValue.timeValueMillis(Math.max(0, TimeValue.nsecToMSec(currentTimeInNanos() - startTimeNS)));
                 logger.debug("processing [{}]: took [{}] done publishing updated cluster_state (version: {}, uuid: {})", taskInputs.summary,
                     executionTime, newClusterState.version(),
@@ -290,33 +175,18 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
 
     public TaskOutputs calculateTaskOutputs(TaskInputs taskInputs, ClusterState previousClusterState, long startTimeNS) {
         ClusterTasksResult<Object> clusterTasksResult = executeTasks(taskInputs, startTimeNS, previousClusterState);
-        ClusterState newClusterState = patchVersionsAndNoMasterBlocks(taskInputs, previousClusterState, clusterTasksResult);
+        ClusterState newClusterState = patchVersions(previousClusterState, clusterTasksResult);
         List<UpdateTask> nonFailedTasks = getNonFailedTasks(taskInputs, clusterTasksResult);
         return new TaskOutputs(taskInputs, previousClusterState, newClusterState, nonFailedTasks, clusterTasksResult.executionResults);
     }
 
-    private ClusterState patchVersionsAndNoMasterBlocks(TaskInputs taskInputs, ClusterState previousClusterState,
-                                                        ClusterTasksResult<Object> executionResult) {
+    private ClusterState patchVersions(ClusterState previousClusterState, ClusterTasksResult<Object> executionResult) {
         ClusterState newClusterState = executionResult.resultingState;
+        assert newClusterState.nodes().isLocalNodeElectedMaster();
+        assert newClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock().id()) == false :
+            "cluster state with master node must not have NO_MASTER_BLOCK";
 
-        if (executionResult.noMaster) {
-            assert newClusterState == previousClusterState : "state can only be changed by DiscoveryService when noMaster = true";
-            if (previousClusterState.nodes().getMasterNodeId() != null) {
-                // remove block if it already exists before adding new one
-                assert previousClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock().id()) == false :
-                    "NO_MASTER_BLOCK should only be added by DiscoveryService";
-                ClusterBlocks clusterBlocks = ClusterBlocks.builder().blocks(previousClusterState.blocks())
-                    .addGlobalBlock(discoverySettings.getNoMasterBlock())
-                    .build();
-
-                DiscoveryNodes discoveryNodes = new DiscoveryNodes.Builder(previousClusterState.nodes()).masterNodeId(null).build();
-                newClusterState = ClusterState.builder(previousClusterState)
-                    .blocks(clusterBlocks)
-                    .nodes(discoveryNodes)
-                    .build();
-            }
-        } else if (newClusterState.nodes().isLocalNodeElectedMaster() && taskInputs.isPublishingTask() &&
-            previousClusterState != newClusterState) {
+        if (previousClusterState != newClusterState) {
             // only the master controls the version numbers
             Builder builder = ClusterState.builder(newClusterState).incrementVersion();
             if (previousClusterState.routingTable() != newClusterState.routingTable()) {
@@ -326,24 +196,13 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
             if (previousClusterState.metaData() != newClusterState.metaData()) {
                 builder.metaData(MetaData.builder(newClusterState.metaData()).version(newClusterState.metaData().version() + 1));
             }
-
-            // remove the no master block, if it exists
-            if (newClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock().id())) {
-                builder.blocks(ClusterBlocks.builder().blocks(newClusterState.blocks())
-                    .removeGlobalBlock(discoverySettings.getNoMasterBlock().id()));
-            }
-
             newClusterState = builder.build();
         }
-
-        assert newClusterState.nodes().getMasterNodeId() == null ||
-            newClusterState.blocks().hasGlobalBlock(discoverySettings.getNoMasterBlock().id()) == false :
-            "cluster state with master node must not have NO_MASTER_BLOCK";
 
         return newClusterState;
     }
 
-    private void publishChanges(TaskInputs taskInputs, TaskOutputs taskOutputs) {
+    private void publishChangesAndWaitForLocalAck(TaskInputs taskInputs, TaskOutputs taskOutputs) {
         ClusterState previousClusterState = taskOutputs.previousClusterState;
         ClusterState newClusterState = taskOutputs.newClusterState;
 
@@ -357,11 +216,7 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
             }
         }
 
-        final Discovery.AckListener ackListener = newClusterState.nodes().isLocalNodeElectedMaster() ?
-            taskOutputs.createAckListener(threadPool, newClusterState) :
-            null;
-
-        nodeConnectionsService.connectToNodes(newClusterState.nodes());
+        final MasterAwareDelegetingAckListener ackListener = taskOutputs.createAckListener(threadPool, newClusterState);
 
         logger.debug("publishing cluster state version [{}]", newClusterState.version());
         try {
@@ -372,14 +227,18 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
                 (Supplier<?>) () -> new ParameterizedMessage(
                     "failing [{}]: failed to commit cluster state version [{}]", taskInputs.summary, version),
                 t);
-            // ensure that list of connected nodes in NodeConnectionsService is in-sync with the nodes of the current cluster state
-            nodeConnectionsService.connectToNodes(previousClusterState.nodes());
-            nodeConnectionsService.disconnectFromNodesExcept(previousClusterState.nodes());
             taskOutputs.publishingFailed(t);
             return;
         }
 
-        state.set(newClusterState);
+        try {
+            // TODO: remove indefinite wait
+            ackListener.waitForMasterAck();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        lastCommittedState.set(newClusterState);
 
         taskOutputs.processedDifferentClusterState(previousClusterState, newClusterState);
 
@@ -426,7 +285,7 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
             taskInputs.executor.clusterStatePublished(clusterChangedEvent);
         }
 
-        public Discovery.AckListener createAckListener(ThreadPool threadPool, ClusterState newClusterState) {
+        public MasterAwareDelegetingAckListener createAckListener(ThreadPool threadPool, ClusterState newClusterState) {
             ArrayList<Discovery.AckListener> ackListeners = new ArrayList<>();
 
             //timeout straightaway, otherwise we could wait forever as the timeout thread has not started
@@ -448,7 +307,7 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
                 }
             });
 
-            return new DelegetingAckListener(ackListeners);
+            return new MasterAwareDelegetingAckListener(ackListeners, newClusterState.nodes().getMasterNode());
         }
 
         public boolean clusterStateUnchanged() {
@@ -581,19 +440,29 @@ public class DiscoveryService extends AbstractClusterTaskExecutor {
         }
     }
 
-    private static class DelegetingAckListener implements Discovery.AckListener {
+    private static class MasterAwareDelegetingAckListener implements Discovery.AckListener {
 
         private final List<Discovery.AckListener> listeners;
+        private final DiscoveryNode masterNode;
+        private final CountDownLatch masterAcked = new CountDownLatch(1);
 
-        private DelegetingAckListener(List<Discovery.AckListener> listeners) {
+        private MasterAwareDelegetingAckListener(List<Discovery.AckListener> listeners, DiscoveryNode masterNode) {
             this.listeners = listeners;
+            this.masterNode = masterNode;
         }
 
         @Override
         public void onNodeAck(DiscoveryNode node, @Nullable Exception e) {
+            if (node.equals(masterNode)) {
+                masterAcked.countDown();
+            }
             for (Discovery.AckListener listener : listeners) {
                 listener.onNodeAck(node, e);
             }
+        }
+
+        public void waitForMasterAck() throws InterruptedException {
+            masterAcked.await();
         }
 
         @Override

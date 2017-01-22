@@ -81,12 +81,7 @@ public abstract class ClusterStateUpdateTask implements ClusterStateTaskConfig, 
      * For local requests, use {@link LocalClusterUpdateTask} instead.
      */
     @Override
-    public final boolean runOnlyOnMaster() {
-        return true;
-    }
-
-    @Override
-    public final boolean isDiscoveryServiceTask() {
+    public final boolean isMasterTask() {
         return true;
     }
 }

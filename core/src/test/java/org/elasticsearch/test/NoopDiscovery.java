@@ -19,13 +19,21 @@
 package org.elasticsearch.test;
 
 import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.elasticsearch.cluster.ClusterStateTaskConfig;
+import org.elasticsearch.cluster.ClusterStateTaskExecutor;
+import org.elasticsearch.cluster.ClusterStateTaskListener;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
+import org.elasticsearch.cluster.service.PendingClusterTask;
 import org.elasticsearch.common.component.Lifecycle;
 import org.elasticsearch.common.component.LifecycleListener;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.discovery.DiscoverySettings;
 import org.elasticsearch.discovery.DiscoveryStats;
+
+import java.util.List;
+import java.util.Map;
 
 public class NoopDiscovery implements Discovery {
 
@@ -68,6 +76,27 @@ public class NoopDiscovery implements Discovery {
     @Override
     public int getMinimumMasterNodes() {
         return -1;
+    }
+
+    @Override
+    public <T> void submitStateUpdateTasks(String source, Map<T, ClusterStateTaskListener> tasks, ClusterStateTaskConfig config,
+                                           ClusterStateTaskExecutor<T> executor) {
+
+    }
+
+    @Override
+    public List<PendingClusterTask> pendingTasks() {
+        return null;
+    }
+
+    @Override
+    public int numberOfPendingTasks() {
+        return 0;
+    }
+
+    @Override
+    public TimeValue getMaxTaskWaitTime() {
+        return null;
     }
 
     @Override

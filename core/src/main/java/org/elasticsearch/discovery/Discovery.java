@@ -21,13 +21,20 @@ package org.elasticsearch.discovery;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.elasticsearch.cluster.ClusterStateTaskConfig;
+import org.elasticsearch.cluster.ClusterStateTaskExecutor;
+import org.elasticsearch.cluster.ClusterStateTaskListener;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
+import org.elasticsearch.cluster.service.PendingClusterTask;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A pluggable module allowing to implement discovery of other nodes, publishing of the cluster
@@ -94,5 +101,39 @@ public interface Discovery extends LifecycleComponent {
      * @return the current value of minimum master nodes, or -1 for not set
      */
     int getMinimumMasterNodes();
+
+    /**
+     * Submits a batch of cluster state update tasks; submitted updates are guaranteed to be processed together,
+     * potentially with more tasks of the same executor.
+     *
+     * @param source   the source of the cluster state update task
+     * @param tasks    a map of update tasks and their corresponding listeners
+     * @param config   the cluster state update task configuration
+     * @param executor the cluster state update task executor; tasks
+     *                 that share the same executor will be executed
+     *                 batches on this executor
+     * @param <T>      the type of the cluster state update task state
+     *
+     */
+    <T> void submitStateUpdateTasks(final String source,
+                                           final Map<T, ClusterStateTaskListener> tasks, final ClusterStateTaskConfig config,
+                                           final ClusterStateTaskExecutor<T> executor);
+
+    /**
+     * Returns the master tasks that are pending.
+     */
+    List<PendingClusterTask> pendingTasks();
+
+    /**
+     * Returns the number of currently pending tasks.
+     */
+    int numberOfPendingTasks();
+
+    /**
+     * Returns the maximum wait time for tasks in the queue
+     *
+     * @return A zero time value if the queue is empty, otherwise the time value oldest task waiting in the queue
+     */
+    TimeValue getMaxTaskWaitTime();
 
 }

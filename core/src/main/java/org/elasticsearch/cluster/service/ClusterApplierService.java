@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateApplier;
 import org.elasticsearch.cluster.ClusterStateListener;
@@ -104,19 +105,20 @@ public class ClusterApplierService extends AbstractClusterTaskExecutor implement
 
     public ClusterApplierService(Settings settings, ClusterSettings clusterSettings, ThreadPool threadPool,
                                  java.util.function.Supplier<DiscoveryNode> localNodeSupplier) {
-        super(settings, clusterSettings, threadPool);
+        super(settings, threadPool);
         this.localNodeSupplier = localNodeSupplier;
         this.clusterSettings = clusterSettings;
         // will be replaced on doStart.
-        this.state = new AtomicReference<>(ClusterState.builder(clusterName).build());
+        this.state = new AtomicReference<>(ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.get(settings)).build());
         this.slowTaskLoggingThreshold = CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING.get(settings);
-
+        this.clusterSettings.addSettingsUpdateConsumer(CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING,
+            this::setSlowTaskLoggingThreshold);
         localNodeMasterListeners = new LocalNodeMasterListeners(threadPool);
 
         initialBlocks = ClusterBlocks.builder();
     }
 
-    public void setSlowTaskLoggingThreshold(TimeValue slowTaskLoggingThreshold) {
+    private void setSlowTaskLoggingThreshold(TimeValue slowTaskLoggingThreshold) {
         this.slowTaskLoggingThreshold = slowTaskLoggingThreshold;
     }
 
@@ -199,6 +201,17 @@ public class ClusterApplierService extends AbstractClusterTaskExecutor implement
     public ClusterState state() {
         assert assertNotCalledFromClusterStateApplier("the applied cluster state is not yet available");
         return this.state.get();
+    }
+
+    /**
+     * The local node.
+     */
+    public DiscoveryNode localNode() {
+        DiscoveryNode localNode = state().getNodes().getLocalNode();
+        if (localNode == null) {
+            throw new IllegalStateException("No local node found. Is the node started?");
+        }
+        return localNode;
     }
 
     /**
@@ -332,11 +345,7 @@ public class ClusterApplierService extends AbstractClusterTaskExecutor implement
             }
         }
 
-        public boolean runOnlyOnMaster() {
-            return false;
-        }
-
-        public boolean isDiscoveryServiceTask() {
+        public boolean isMasterTask() {
             return false;
         }
     }

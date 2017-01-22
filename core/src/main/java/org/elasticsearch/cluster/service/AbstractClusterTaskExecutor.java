@@ -21,7 +21,6 @@ package org.elasticsearch.cluster.service;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
-import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateTaskConfig;
 import org.elasticsearch.cluster.ClusterStateTaskExecutor;
@@ -30,7 +29,6 @@ import org.elasticsearch.cluster.ClusterStateTaskListener;
 import org.elasticsearch.cluster.metadata.ProcessClusterEventTimeoutException;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
-import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
@@ -53,16 +51,12 @@ import java.util.stream.Collectors;
 public abstract class AbstractClusterTaskExecutor extends AbstractLifecycleComponent {
 
     protected final ThreadPool threadPool;
-    protected final ClusterSettings clusterSettings;
     final Map<ClusterStateTaskExecutor, LinkedHashSet<UpdateTask>> updateTasksPerExecutor = new HashMap<>();
-    protected final ClusterName clusterName;
     protected volatile PrioritizedEsThreadPoolExecutor threadExecutor;
 
-    protected AbstractClusterTaskExecutor(Settings settings, ClusterSettings clusterSettings, ThreadPool threadPool) {
+    protected AbstractClusterTaskExecutor(Settings settings, ThreadPool threadPool) {
         super(settings);
         this.threadPool = threadPool;
-        this.clusterSettings = clusterSettings;
-        this.clusterName = ClusterName.CLUSTER_NAME_SETTING.get(settings);
     }
 
     @Override
@@ -73,14 +67,6 @@ public abstract class AbstractClusterTaskExecutor extends AbstractLifecycleCompo
     @Override
     protected void doStop() {
 
-    }
-
-    public ClusterName getClusterName() {
-        return clusterName;
-    }
-
-    public ClusterSettings getClusterSettings() {
-        return clusterSettings;
     }
 
     public Settings getSettings() {
@@ -409,16 +395,8 @@ public abstract class AbstractClusterTaskExecutor extends AbstractLifecycleCompo
             this.updateTasks = updateTasks;
         }
 
-        public boolean runOnlyOnMaster() {
-            return executor.runOnlyOnMaster();
-        }
-
-        public boolean isPublishingTask() {
-            return executor.isDiscoveryServiceTask();
-        }
-
         public void onNoLongerMaster() {
-            updateTasks.stream().forEach(task -> task.listener.onNoLongerMaster(task.source()));
+            updateTasks.forEach(task -> task.listener.onNoLongerMaster(task.source()));
         }
     }
 

@@ -26,10 +26,10 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.master.TransportMasterNodeReadAction;
-import org.elasticsearch.cluster.LocalClusterUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
+import org.elasticsearch.cluster.LocalClusterUpdateTask;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
@@ -39,6 +39,7 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.gateway.GatewayAllocator;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.tasks.Task;
@@ -50,14 +51,17 @@ import java.util.function.Predicate;
 public class TransportClusterHealthAction extends TransportMasterNodeReadAction<ClusterHealthRequest, ClusterHealthResponse> {
 
     private final GatewayAllocator gatewayAllocator;
+    private final Discovery discovery;
 
     @Inject
     public TransportClusterHealthAction(Settings settings, TransportService transportService, ClusterService clusterService,
                                         ThreadPool threadPool, ActionFilters actionFilters,
-                                        IndexNameExpressionResolver indexNameExpressionResolver, GatewayAllocator gatewayAllocator) {
+                                        IndexNameExpressionResolver indexNameExpressionResolver, GatewayAllocator gatewayAllocator,
+                                        Discovery discovery) {
         super(settings, ClusterHealthAction.NAME, false, transportService, clusterService, threadPool, actionFilters,
             indexNameExpressionResolver, ClusterHealthRequest::new);
         this.gatewayAllocator = gatewayAllocator;
+        this.discovery = discovery;
     }
 
     @Override
@@ -194,14 +198,14 @@ public class TransportClusterHealthAction extends TransportMasterNodeReadAction<
     }
 
     private boolean validateRequest(final ClusterHealthRequest request, ClusterState clusterState, final int waitFor) {
-        ClusterHealthResponse response = clusterHealth(request, clusterState, clusterService.numberOfPendingTasks(),
-                gatewayAllocator.getNumberOfInFlightFetch(), clusterService.getMaxTaskWaitTime());
+        ClusterHealthResponse response = clusterHealth(request, clusterState, discovery.numberOfPendingTasks(),
+                gatewayAllocator.getNumberOfInFlightFetch(), discovery.getMaxTaskWaitTime());
         return prepareResponse(request, response, clusterState, waitFor);
     }
 
     private ClusterHealthResponse getResponse(final ClusterHealthRequest request, ClusterState clusterState, final int waitFor, boolean timedOut) {
-        ClusterHealthResponse response = clusterHealth(request, clusterState, clusterService.numberOfPendingTasks(),
-                gatewayAllocator.getNumberOfInFlightFetch(), clusterService.getMaxTaskWaitTime());
+        ClusterHealthResponse response = clusterHealth(request, clusterState, discovery.numberOfPendingTasks(),
+                gatewayAllocator.getNumberOfInFlightFetch(), discovery.getMaxTaskWaitTime());
         boolean valid = prepareResponse(request, response, clusterState, waitFor);
         assert valid || timedOut;
         // we check for a timeout here since this method might be called from the wait_for_events

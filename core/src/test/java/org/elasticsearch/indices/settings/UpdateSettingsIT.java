@@ -35,6 +35,7 @@ import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.MergePolicyConfig;
@@ -302,7 +303,10 @@ public class UpdateSettingsIT extends ESIntegTestCase {
             // these log messages will race with the stopping of the appender so we wait to ensure these tasks are done processing
             assertBusy(() -> {
                 for (final ClusterService service : internalCluster().getInstances(ClusterService.class)) {
-                    assertThat(service.numberOfPendingTasks(), equalTo(0));
+                    assertThat(service.getClusterApplierService().numberOfPendingTasks(), equalTo(0));
+                }
+                for (final Discovery discovery : internalCluster().getInstances(Discovery.class)) {
+                    assertThat(discovery.numberOfPendingTasks(), equalTo(0));
                 }
             });
 
@@ -403,7 +407,10 @@ public class UpdateSettingsIT extends ESIntegTestCase {
             // these log messages will race with the stopping of the appender so we wait to ensure these tasks are done processing
             assertBusy(() -> {
                 for (final ClusterService service : internalCluster().getInstances(ClusterService.class)) {
-                    assertThat(service.numberOfPendingTasks(), equalTo(0));
+                    assertThat(service.getClusterApplierService().numberOfPendingTasks(), equalTo(0));
+                }
+                for (final Discovery discovery : internalCluster().getInstances(Discovery.class)) {
+                    assertThat(discovery.numberOfPendingTasks(), equalTo(0));
                 }
             });
 

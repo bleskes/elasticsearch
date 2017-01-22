@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * This class processes incoming join request (passed zia {@link ZenDiscovery}). Incoming nodes
@@ -54,7 +55,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class NodeJoinController extends AbstractComponent {
 
-    private final DiscoveryService discoveryService;
+    //private final DiscoveryService discoveryService;
+    private final Supplier<DiscoveryService> masterServiceSupplier;
+    private final MasterServiceInitializer masterServiceInitializer;
     private final AllocationService allocationService;
     private final ElectMasterService electMaster;
     private final JoinTaskExecutor joinTaskExecutor = new JoinTaskExecutor();
@@ -64,12 +67,14 @@ public class NodeJoinController extends AbstractComponent {
     private ElectionContext electionContext = null;
 
 
-    public NodeJoinController(DiscoveryService discoveryService, AllocationService allocationService, ElectMasterService electMaster,
-                              Settings settings) {
+    public NodeJoinController(AllocationService allocationService, ElectMasterService electMaster,
+                              Settings settings, Supplier<DiscoveryService> masterServiceSupplier,
+                              MasterServiceInitializer masterServiceInitializer) {
         super(settings);
-        this.discoveryService = discoveryService;
+        this.masterServiceSupplier = masterServiceSupplier;
         this.allocationService = allocationService;
         this.electMaster = electMaster;
+        this.masterServiceInitializer = masterServiceInitializer;
     }
 
     /**
@@ -175,9 +180,14 @@ public class NodeJoinController extends AbstractComponent {
             electionContext.addIncomingJoin(node, callback);
             checkPendingJoinsAndElectIfNeeded();
         } else {
-            discoveryService.submitStateUpdateTask("zen-disco-node-join",
-                node, ClusterStateTaskConfig.build(Priority.URGENT),
-                joinTaskExecutor, new JoinTaskListener(callback, logger));
+            DiscoveryService masterService = masterServiceSupplier.get();
+            if (masterService == null) {
+                callback.onFailure(new NotMasterException("no master service. source: [zen-disco-node-join]"));
+            } else {
+                masterService.submitStateUpdateTask("zen-disco-node-join",
+                    node, ClusterStateTaskConfig.build(Priority.URGENT),
+                    joinTaskExecutor, new JoinTaskListener(callback, logger));
+            }
         }
     }
 
@@ -278,15 +288,18 @@ public class NodeJoinController extends AbstractComponent {
 
             tasks.put(BECOME_MASTER_TASK, (source1, e) -> {}); // noop listener, the election finished listener determines result
             tasks.put(FINISH_ELECTION_TASK, electionFinishedListener);
-            discoveryService.submitStateUpdateTasks(source, tasks, ClusterStateTaskConfig.build(Priority.URGENT), joinTaskExecutor);
+            masterServiceInitializer.onElectedAsMaster(newMasterService ->
+                newMasterService.submitStateUpdateTasks(source, tasks, ClusterStateTaskConfig.build(Priority.URGENT), joinTaskExecutor)
+            );
         }
 
         public synchronized void closeAndProcessPending(String reason) {
             innerClose();
             Map<DiscoveryNode, ClusterStateTaskListener> tasks = getPendingAsTasks();
             final String source = "zen-disco-election-stop [" + reason + "]";
-            tasks.put(FINISH_ELECTION_TASK, electionFinishedListener);
-            discoveryService.submitStateUpdateTasks(source, tasks, ClusterStateTaskConfig.build(Priority.URGENT), joinTaskExecutor);
+            assert masterServiceSupplier.get() == null;
+            tasks.values().forEach(listener -> listener.onNoLongerMaster(source));
+            electionFinishedListener.onNoLongerMaster("election stopped");
         }
 
         private void innerClose() {
@@ -306,7 +319,6 @@ public class NodeJoinController extends AbstractComponent {
         }
 
         private void onElectedAsMaster(ClusterState state) {
-            assert DiscoveryService.assertDiscoveryUpdateThread();
             assert state.nodes().isLocalNodeElectedMaster() : "onElectedAsMaster called but local node is not master";
             ElectionCallback callback = getCallback(); // get under lock
             if (callback != null) {
@@ -315,7 +327,6 @@ public class NodeJoinController extends AbstractComponent {
         }
 
         private void onFailure(Throwable t) {
-            assert DiscoveryService.assertDiscoveryUpdateThread();
             ElectionCallback callback = getCallback(); // get under lock
             if (callback != null) {
                 callback.onFailure(t);
@@ -420,10 +431,9 @@ public class NodeJoinController extends AbstractComponent {
                 // during the cluster state publishing guarantees that we have enough
                 newState = becomeMasterAndTrimConflictingNodes(currentState, joiningNodes);
                 nodesChanged = true;
-            } else if (currentNodes.isLocalNodeElectedMaster() == false) {
-                logger.trace("processing node joins, but we are not the master. current master: {}", currentNodes.getMasterNode());
-                throw new NotMasterException("Node [" + currentNodes.getLocalNode() + "] not master for join request");
             } else {
+                assert currentNodes.isLocalNodeElectedMaster() :
+                    "processing node joins, but we are not the master. current nodes: " + currentNodes;
                 newState = ClusterState.builder(currentState);
             }
 
@@ -491,14 +501,15 @@ public class NodeJoinController extends AbstractComponent {
         }
 
         @Override
-        public boolean runOnlyOnMaster() {
-            // we validate that we are allowed to change the cluster state during cluster state processing
-            return false;
-        }
-
-        @Override
         public void clusterStatePublished(ClusterChangedEvent event) {
             NodeJoinController.this.electMaster.logMinimumMasterNodesWarningIfNecessary(event.previousState(), event.state());
         }
+    }
+
+
+    @FunctionalInterface
+    public interface MasterServiceInitializer {
+
+        void onElectedAsMaster(Consumer<DiscoveryService> initialTasksSetter);
     }
 }

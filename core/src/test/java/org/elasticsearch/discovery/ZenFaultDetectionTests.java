@@ -66,7 +66,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 public class ZenFaultDetectionTests extends ESTestCase {
-    protected ThreadPool threadPool;
+        protected ThreadPool threadPool;
     protected DiscoveryService clusterServiceA;
     protected DiscoveryService clusterServiceB;
     private CircuitBreakerService circuitBreakerService;
@@ -230,8 +230,8 @@ public class ZenFaultDetectionTests extends ESTestCase {
 
         final ClusterState state = ClusterState.builder(clusterName).nodes(buildNodesForA(false)).build();
         setState(clusterServiceA, state);
-        MasterFaultDetection masterFD = new MasterFaultDetection(settings.build(), threadPool, serviceA,
-            clusterServiceA);
+        MasterFaultDetection masterFD = new MasterFaultDetection(settings.build(), threadPool, serviceA, clusterName,
+            () -> clusterServiceA, () -> clusterServiceA.state().nodes().getLocalNode());
         masterFD.start(nodeB, "test");
 
         final String[] failureReason = new String[1];
@@ -277,15 +277,15 @@ public class ZenFaultDetectionTests extends ESTestCase {
         serviceA.addTracer(pingProbeA);
         serviceB.addTracer(pingProbeB);
 
-        MasterFaultDetection masterFDNodeA = new MasterFaultDetection(settings.build(), threadPool, serviceA,
-            clusterServiceA);
+        MasterFaultDetection masterFDNodeA = new MasterFaultDetection(settings.build(), threadPool, serviceA, clusterName,
+            () -> clusterServiceA, () -> clusterServiceA.state().nodes().getLocalNode());
         masterFDNodeA.start(nodeB, "test");
 
         final ClusterState stateNodeB = ClusterState.builder(clusterName).nodes(buildNodesForB(true)).build();
         setState(clusterServiceB, stateNodeB);
 
-        MasterFaultDetection masterFDNodeB = new MasterFaultDetection(settings.build(), threadPool, serviceB,
-            clusterServiceB);
+        MasterFaultDetection masterFDNodeB = new MasterFaultDetection(settings.build(), threadPool, serviceB, clusterName,
+            () -> clusterServiceB, () -> clusterServiceB.state().nodes().getLocalNode());
         masterFDNodeB.start(nodeB, "test");
 
         // let's do a few pings

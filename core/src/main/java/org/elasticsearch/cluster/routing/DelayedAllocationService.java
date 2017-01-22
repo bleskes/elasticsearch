@@ -25,6 +25,7 @@ import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
+import org.elasticsearch.cluster.service.ClusterApplierService;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -179,7 +180,7 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
      * Figure out if an existing scheduled reroute is good enough or whether we need to cancel and reschedule.
      */
     private synchronized void scheduleIfNeeded(long currentNanoTime, ClusterState state) {
-        assertClusterOrDiscoveryStateThread();
+        assertClusterStateThread();
         long nextDelayNanos = UnassignedInfo.findNextDelayedAllocation(currentNanoTime, state);
         if (nextDelayNanos < 0) {
             logger.trace("no need to schedule reroute - no delayed unassigned shards");
@@ -214,7 +215,7 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
     }
 
     // protected so that it can be overridden (and disabled) by unit tests
-    protected void assertClusterOrDiscoveryStateThread() {
-        ClusterService.assertClusterOrDiscoveryStateThread();
+    protected void assertClusterStateThread() {
+        ClusterApplierService.assertClusterStateThread();
     }
 }

@@ -19,13 +19,23 @@
 package org.elasticsearch.discovery;
 
 import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.ClusterStateTaskConfig;
+import org.elasticsearch.cluster.ClusterStateTaskExecutor;
+import org.elasticsearch.cluster.ClusterStateTaskListener;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
+import org.elasticsearch.cluster.service.PendingClusterTask;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.discovery.zen.ElectMasterService;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * A {@link Discovery} implementation that is used by {@link org.elasticsearch.tribe.TribeService}. This implementation
@@ -34,24 +44,25 @@ import org.elasticsearch.discovery.zen.ElectMasterService;
  */
 public class NoneDiscovery extends AbstractLifecycleComponent implements Discovery {
 
-    private final DiscoveryService discoveryService;
     private final DiscoverySettings discoverySettings;
+    private Supplier<ClusterState> lastAppliedClusterState;
 
-    @Inject
-    public NoneDiscovery(Settings settings, DiscoveryService discoveryService, ClusterSettings clusterSettings) {
+
+    public NoneDiscovery(Settings settings, ClusterSettings clusterSettings, Supplier<ClusterState> lastAppliedClusterState) {
         super(settings);
-        this.discoveryService = discoveryService;
+        this.lastAppliedClusterState = lastAppliedClusterState;
         this.discoverySettings = new DiscoverySettings(settings, clusterSettings);
     }
 
     @Override
     public DiscoveryNode localNode() {
-        return discoveryService.localNode();
+        return lastAppliedClusterState.get().nodes().getLocalNode();
     }
 
     @Override
     public String nodeDescription() {
-        return discoveryService.getClusterName().value() + "/" + discoveryService.localNode().getId();
+        final ClusterState state = lastAppliedClusterState.get();
+        return state.getClusterName().value() + "/" + state.nodes().getLocalNodeId();
     }
 
     @Override
@@ -82,6 +93,26 @@ public class NoneDiscovery extends AbstractLifecycleComponent implements Discove
     @Override
     public int getMinimumMasterNodes() {
         return ElectMasterService.DISCOVERY_ZEN_MINIMUM_MASTER_NODES_SETTING.get(settings);
+    }
+
+    @Override
+    public synchronized <T> void submitStateUpdateTasks(String source, Map<T, ClusterStateTaskListener> tasks, ClusterStateTaskConfig config, ClusterStateTaskExecutor<T> executor) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<PendingClusterTask> pendingTasks() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public int numberOfPendingTasks() {
+        return 0;
+    }
+
+    @Override
+    public TimeValue getMaxTaskWaitTime() {
+        return TimeValue.ZERO;
     }
 
     @Override

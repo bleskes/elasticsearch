@@ -33,7 +33,6 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.service.ClusterApplier;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Randomness;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
@@ -810,8 +809,7 @@ public class PublishClusterStateActionTests extends ESTestCase {
                                              ClusterState previousState, int minMasterNodes) throws InterruptedException {
         AssertingAckListener assertingAckListener = new AssertingAckListener(state.nodes().getSize() - 1);
         ClusterChangedEvent changedEvent = new ClusterChangedEvent("test update", state, previousState);
-        ClusterApplier applier = (s, c, l) -> l.clusterStateProcessed(s, null, null);
-        action.publish(changedEvent, minMasterNodes, applier, assertingAckListener);
+        action.publish(changedEvent, minMasterNodes, assertingAckListener);
         return assertingAckListener;
     }
 

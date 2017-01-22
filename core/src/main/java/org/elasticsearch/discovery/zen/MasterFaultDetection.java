@@ -28,13 +28,13 @@ import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.NotMasterException;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
+import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.ConnectTransportException;
 import org.elasticsearch.transport.TransportChannel;
@@ -64,7 +64,8 @@ public class MasterFaultDetection extends FaultDetection {
 
     }
 
-    private final DiscoveryService discoveryService;
+    private final Supplier<DiscoveryService> masterServiceSupplier;
+    private final Supplier<DiscoveryNode> localNodeSupplier;
     private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
 
     private volatile MasterPinger masterPinger;
@@ -78,9 +79,11 @@ public class MasterFaultDetection extends FaultDetection {
     private final AtomicBoolean notifiedMasterFailure = new AtomicBoolean();
 
     public MasterFaultDetection(Settings settings, ThreadPool threadPool, TransportService transportService,
-                                DiscoveryService discoveryService) {
-        super(settings, threadPool, transportService, discoveryService.getClusterName());
-        this.discoveryService = discoveryService;
+                                ClusterName clusterName, Supplier<DiscoveryService> masterServiceSupplier,
+                                Supplier<DiscoveryNode> localNodeSupplier) {
+        super(settings, threadPool, transportService, clusterName);
+        this.masterServiceSupplier = masterServiceSupplier;
+        this.localNodeSupplier = localNodeSupplier;
 
         logger.debug("[master] uses ping_interval [{}], ping_timeout [{}], ping_retries [{}]", pingInterval, pingRetryTimeout,
             pingRetryCount);
@@ -233,7 +236,7 @@ public class MasterFaultDetection extends FaultDetection {
                 return;
             }
 
-            final MasterPingRequest request = new MasterPingRequest(discoveryService.localNode(), masterToPing, clusterName);
+            final MasterPingRequest request = new MasterPingRequest(localNodeSupplier.get(), masterToPing, clusterName);
             final TransportRequestOptions options = TransportRequestOptions.builder().withType(TransportRequestOptions.Type.PING)
                 .withTimeout(pingRetryTimeout).build();
             transportService.sendRequest(masterToPing, MASTER_PING_ACTION_NAME, request, options,
@@ -341,20 +344,14 @@ public class MasterFaultDetection extends FaultDetection {
 
         @Override
         public void messageReceived(final MasterPingRequest request, final TransportChannel channel) throws Exception {
-            final DiscoveryNodes nodes = discoveryService.state().nodes();
+            DiscoveryService masterService = masterServiceSupplier.get();
             // check if we are really the same master as the one we seemed to be think we are
             // this can happen if the master got "kill -9" and then another node started using the same port
-            if (!request.masterNode.equals(nodes.getLocalNode())) {
+            if (masterService == null || !request.masterNode.equals(localNodeSupplier.get())) {
                 throw new ThisIsNotTheMasterYouAreLookingForException();
             }
 
-            // ping from nodes of version < 1.4.0 will have the clustername set to null
-            if (request.clusterName != null && !request.clusterName.equals(clusterName)) {
-                logger.trace("master fault detection ping request is targeted for a different [{}] cluster then us [{}]",
-                    request.clusterName, clusterName);
-                throw new ThisIsNotTheMasterYouAreLookingForException("master fault detection ping request is targeted for a different ["
-                    + request.clusterName + "] cluster then us [" + clusterName + "]");
-            }
+            final DiscoveryNodes nodes = masterService.state().nodes();
 
             // when we are elected as master or when a node joins, we use a cluster state update thread
             // to incorporate that information in the cluster state. That cluster state is published
@@ -364,9 +361,9 @@ public class MasterFaultDetection extends FaultDetection {
             // all processing is finished.
             //
 
-            if (!nodes.isLocalNodeElectedMaster() || !nodes.nodeExists(request.sourceNode)) {
+            if (nodes.nodeExists(request.sourceNode) == false) {
                 logger.trace("checking ping from {} under a cluster state thread", request.sourceNode);
-                discoveryService.submitStateUpdateTask("master ping (from: " + request.sourceNode + ")", new ClusterStateUpdateTask() {
+                masterService.submitStateUpdateTask("master ping (from: " + request.sourceNode + ")", new ClusterStateUpdateTask() {
 
                     @Override
                     public ClusterState execute(ClusterState currentState) throws Exception {

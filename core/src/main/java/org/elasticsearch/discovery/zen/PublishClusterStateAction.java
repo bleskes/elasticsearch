@@ -25,12 +25,10 @@ import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.ClusterStateTaskListener;
 import org.elasticsearch.cluster.Diff;
 import org.elasticsearch.cluster.IncompatibleClusterStateVersionException;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.cluster.service.ClusterApplier;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.compress.Compressor;
@@ -124,7 +122,7 @@ public class PublishClusterStateAction extends AbstractComponent {
      * if the change is not committed and should be rejected.
      * Any other exception signals the something wrong happened but the change is committed.
      */
-    public void publish(final ClusterChangedEvent clusterChangedEvent, final int minMasterNodes, ClusterApplier clusterApplier,
+    public void publish(final ClusterChangedEvent clusterChangedEvent, final int minMasterNodes,
                         final Discovery.AckListener ackListener) throws Discovery.FailedToCommitClusterStateException {
         final DiscoveryNodes nodes;
         final SendingController sendingController;
@@ -159,8 +157,7 @@ public class PublishClusterStateAction extends AbstractComponent {
         }
 
         try {
-            innerPublish(clusterChangedEvent, nodesToPublishTo, sendingController, clusterApplier,
-                sendFullVersion, serializedStates, serializedDiffs);
+            innerPublish(clusterChangedEvent, nodesToPublishTo, sendingController, sendFullVersion, serializedStates, serializedDiffs);
         } catch (Discovery.FailedToCommitClusterStateException t) {
             throw t;
         } catch (Exception e) {
@@ -175,7 +172,7 @@ public class PublishClusterStateAction extends AbstractComponent {
     }
 
     private void innerPublish(final ClusterChangedEvent clusterChangedEvent, final Set<DiscoveryNode> nodesToPublishTo,
-                              final SendingController sendingController, ClusterApplier clusterApplier, final boolean sendFullVersion,
+                              final SendingController sendingController, final boolean sendFullVersion,
                               final Map<Version, BytesReference> serializedStates, final Map<Version, BytesReference> serializedDiffs) {
 
         final ClusterState clusterState = clusterChangedEvent.state();
@@ -184,13 +181,7 @@ public class PublishClusterStateAction extends AbstractComponent {
 
         final long publishingStartInNanos = System.nanoTime();
 
-        DiscoveryNode localNode = clusterChangedEvent.state().nodes().getLocalNode();
-
         for (final DiscoveryNode node : nodesToPublishTo) {
-            if (node.equals(localNode)) {
-                // don't serialize cluster state when applying it locally, it's applied a few lines below
-                continue;
-            }
             // try and serialize the cluster state once (or per version), so we don't serialize it
             // per node when we send it over the wire, compress it while we are at it...
             // we don't send full version if node didn't exist in the previous version of cluster state
@@ -201,28 +192,11 @@ public class PublishClusterStateAction extends AbstractComponent {
             }
         }
 
-        sendingController.onNodeSendAck(localNode); // local node can ack right away
         sendingController.waitForCommit(discoverySettings.getCommitTimeout());
 
         try {
             long timeLeftInNanos = Math.max(0, publishTimeout.nanos() - (System.nanoTime() - publishingStartInNanos));
             final BlockingClusterStatePublishResponseHandler publishResponseHandler = sendingController.getPublishResponseHandler();
-
-            // publish to itself
-            CountDownLatch latch = new CountDownLatch(1);
-            clusterApplier.submitStateUpdateTask("apply-locally-on-master", clusterChangedEvent.state(), new ClusterStateTaskListener() {
-                @Override
-                public void onFailure(String source, Exception e) {
-                    sendingController.getPublishResponseHandler().onFailure(localNode, e);
-                    latch.countDown();
-                }
-
-                @Override
-                public void clusterStateProcessed(String source, ClusterState oldState, ClusterState newState) {
-                    sendingController.getPublishResponseHandler().onResponse(localNode);
-                    latch.countDown();
-                }
-            });
 
             sendingController.setPublishingTimedOut(!publishResponseHandler.awaitAllNodes(TimeValue.timeValueNanos(timeLeftInNanos)));
             if (sendingController.getPublishingTimedOut()) {
@@ -232,16 +206,6 @@ public class PublishClusterStateAction extends AbstractComponent {
                     logger.warn("timed out waiting for all nodes to process published state [{}] (timeout [{}], pending nodes: {})",
                         clusterState.version(), publishTimeout, pendingNodes);
                 }
-            }
-
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                logger.warn(
-                    (org.apache.logging.log4j.util.Supplier<?>) () -> new ParameterizedMessage(
-                        "interrupted while applying cluster state locally [{}]",
-                        clusterChangedEvent.source()),
-                    e);
             }
         } catch (InterruptedException e) {
             // ignore & restore interrupt
@@ -254,10 +218,6 @@ public class PublishClusterStateAction extends AbstractComponent {
                                              Map<Version, BytesReference> serializedDiffs) {
         Diff<ClusterState> diff = null;
         for (final DiscoveryNode node : nodesToPublishTo) {
-            if (node.equals(clusterState.nodes().getLocalNode())) {
-                // the state is applied un-serialized to the local node
-                continue;
-            }
             try {
                 if (sendFullVersion || !previousState.nodes().nodeExists(node)) {
                     // will send a full reference
@@ -558,7 +518,6 @@ public class PublishClusterStateAction extends AbstractComponent {
     class SendingController {
 
         private final ClusterState clusterState;
-        private final DiscoveryNode localNode;
 
         public BlockingClusterStatePublishResponseHandler getPublishResponseHandler() {
             return publishResponseHandler;
@@ -579,7 +538,6 @@ public class PublishClusterStateAction extends AbstractComponent {
         private SendingController(ClusterState clusterState, int minMasterNodes, int totalMasterNodes,
                                   BlockingClusterStatePublishResponseHandler publishResponseHandler) {
             this.clusterState = clusterState;
-            this.localNode = clusterState.nodes().getLocalNode();
             this.publishResponseHandler = publishResponseHandler;
             this.neededMastersToCommit = Math.max(1, minMasterNodes);
             this.pendingMasterNodes = totalMasterNodes;
@@ -615,9 +573,7 @@ public class PublishClusterStateAction extends AbstractComponent {
         public synchronized void onNodeSendAck(DiscoveryNode node) {
             if (committed) {
                 assert sendAckedBeforeCommit.isEmpty();
-                if (node.equals(localNode) == false) {
-                    sendCommitToNode(node, clusterState, this);
-                }
+                sendCommitToNode(node, clusterState, this);
             } else if (committedOrFailed()) {
                 logger.trace("ignoring ack from [{}] for cluster state version [{}]. already failed", node, clusterState.version());
             } else {
@@ -644,9 +600,7 @@ public class PublishClusterStateAction extends AbstractComponent {
             if (neededMastersToCommit == 0) {
                 if (markAsCommitted()) {
                     for (DiscoveryNode nodeToCommit : sendAckedBeforeCommit) {
-                        if (nodeToCommit.equals(localNode) == false) {
-                            sendCommitToNode(nodeToCommit, clusterState, this);
-                        }
+                        sendCommitToNode(nodeToCommit, clusterState, this);
                     }
                     sendAckedBeforeCommit.clear();
                 }

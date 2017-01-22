@@ -19,7 +19,7 @@
 
 package org.elasticsearch.cluster.service;
 
-import org.elasticsearch.cluster.ClusterChangedEvent;
+import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateApplier;
@@ -41,18 +41,13 @@ import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.discovery.Discovery;
-import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public class ClusterService extends AbstractLifecycleComponent {
-
-    private final DiscoveryService discoveryService;
 
     private final ClusterApplierService clusterApplierService;
 
@@ -66,25 +61,22 @@ public class ClusterService extends AbstractLifecycleComponent {
 
     private final ClusterSettings clusterSettings;
 
+    private final SetOnce<Discovery> discovery = new SetOnce<>();
+
     public ClusterService(Settings settings,
                           ClusterSettings clusterSettings, ThreadPool threadPool, Supplier<DiscoveryNode> localNodeSupplier) {
         super(settings);
         this.clusterApplierService = new ClusterApplierService(settings, clusterSettings, threadPool, localNodeSupplier);
-        this.discoveryService = new DiscoveryService(settings, clusterSettings, threadPool, localNodeSupplier, clusterApplierService);
         this.operationRouting = new OperationRouting(settings, clusterSettings);
         this.clusterSettings = clusterSettings;
         this.clusterName = ClusterName.CLUSTER_NAME_SETTING.get(settings);
-        this.clusterSettings.addSettingsUpdateConsumer(CLUSTER_SERVICE_SLOW_TASK_LOGGING_THRESHOLD_SETTING,
-            this::setSlowTaskLoggingThreshold);
     }
 
-    public void setSlowTaskLoggingThreshold(TimeValue slowTaskLoggingThreshold) {
-        discoveryService.setSlowTaskLoggingThreshold(slowTaskLoggingThreshold);
-        clusterApplierService.setSlowTaskLoggingThreshold(slowTaskLoggingThreshold);
+    public synchronized void setDiscovery(Discovery discovery) {
+        this.discovery.set(discovery);
     }
 
     public synchronized void setNodeConnectionsService(NodeConnectionsService nodeConnectionsService) {
-        discoveryService.setNodeConnectionsService(nodeConnectionsService);
         clusterApplierService.setNodeConnectionsService(nodeConnectionsService);
     }
 
@@ -95,7 +87,6 @@ public class ClusterService extends AbstractLifecycleComponent {
         if (lifecycle.started()) {
             throw new IllegalStateException("can't set initial block when started");
         }
-        discoveryService.addInitialStateBlock(block);
         clusterApplierService.addInitialStateBlock(block);
     }
 
@@ -113,25 +104,22 @@ public class ClusterService extends AbstractLifecycleComponent {
         if (lifecycle.started()) {
             throw new IllegalStateException("can't set initial block when started");
         }
-        discoveryService.removeInitialStateBlock(blockId);
         clusterApplierService.removeInitialStateBlock(blockId);
     }
 
     @Override
     protected synchronized void doStart() {
+        assert discovery.get() != null : "discovery not set";
         clusterApplierService.start();
-        discoveryService.start();
     }
 
     @Override
     protected synchronized void doStop() {
-        discoveryService.stop();
         clusterApplierService.stop();
     }
 
     @Override
     protected synchronized void doClose() {
-        discoveryService.close();
         clusterApplierService.close();
     }
 
@@ -139,7 +127,7 @@ public class ClusterService extends AbstractLifecycleComponent {
      * The local node.
      */
     public DiscoveryNode localNode() {
-        return discoveryService.localNode();
+        return clusterApplierService.localNode();
     }
 
     public OperationRouting operationRouting() {
@@ -286,49 +274,15 @@ public class ClusterService extends AbstractLifecycleComponent {
         if (!lifecycle.started()) {
             return;
         }
-        if (executor.isDiscoveryServiceTask()) {
-            discoveryService.submitStateUpdateTasks(source, tasks, config, executor);
+        if (executor.isMasterTask()) {
+            discovery.get().submitStateUpdateTasks(source, tasks, config, executor);
         } else {
             clusterApplierService.submitStateUpdateTasks(source, tasks, config, executor);
         }
     }
 
-    public DiscoveryService getDiscoveryService() {
-        return discoveryService;
-    }
-
     public ClusterApplierService getClusterApplierService() {
         return clusterApplierService;
-    }
-
-    /**
-     * Returns the tasks that are pending.
-     */
-    public List<PendingClusterTask> pendingTasks() {
-        return discoveryService.pendingTasks();
-    }
-
-    /**
-     * Returns the number of currently pending tasks.
-     */
-    public int numberOfPendingTasks() {
-        return discoveryService.numberOfPendingTasks();
-    }
-
-    /**
-     * Returns the maximum wait time for tasks in the queue
-     *
-     * @return A zero time value if the queue is empty, otherwise the time value oldest task waiting in the queue
-     */
-    public TimeValue getMaxTaskWaitTime() {
-        return discoveryService.getMaxTaskWaitTime();
-    }
-
-    public static boolean assertClusterOrDiscoveryStateThread() {
-        assert Thread.currentThread().getName().contains(ClusterApplierService.CLUSTER_UPDATE_THREAD_NAME) ||
-            Thread.currentThread().getName().contains(DiscoveryService.DISCOVERY_UPDATE_THREAD_NAME) :
-            "not called from the master/cluster state update thread";
-        return true;
     }
 
     public ClusterName getClusterName() {

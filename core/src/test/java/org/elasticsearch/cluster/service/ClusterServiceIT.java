@@ -28,6 +28,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
@@ -337,6 +338,7 @@ public class ClusterServiceIT extends ESIntegTestCase {
         internalCluster().startCoordinatingOnlyNode(Settings.EMPTY);
 
         final ClusterService clusterService = internalCluster().getInstance(ClusterService.class, node_0);
+        final Discovery discovery = internalCluster().getInstance(Discovery.class, node_0);
         final CountDownLatch block1 = new CountDownLatch(1);
         final CountDownLatch invoked1 = new CountDownLatch(1);
         clusterService.submitStateUpdateTask("1", new ClusterStateUpdateTask() {
@@ -382,7 +384,7 @@ public class ClusterServiceIT extends ESIntegTestCase {
 
         // The tasks can be re-ordered, so we need to check out-of-order
         Set<String> controlSources = new HashSet<>(Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
-        List<PendingClusterTask> pendingClusterTasks = clusterService.pendingTasks();
+        List<PendingClusterTask> pendingClusterTasks = discovery.pendingTasks();
         assertThat(pendingClusterTasks.size(), greaterThanOrEqualTo(10));
         assertThat(pendingClusterTasks.get(0).getSource().string(), equalTo("1"));
         assertThat(pendingClusterTasks.get(0).isExecuting(), equalTo(true));
@@ -404,7 +406,7 @@ public class ClusterServiceIT extends ESIntegTestCase {
         invoked2.await();
 
         // whenever we test for no tasks, we need to awaitBusy since this is a live node
-        assertTrue(awaitBusy(() -> clusterService.pendingTasks().isEmpty()));
+        assertTrue(awaitBusy(() -> discovery.pendingTasks().isEmpty()));
         waitNoPendingTasksOnAll();
 
         final CountDownLatch block2 = new CountDownLatch(1);
@@ -444,7 +446,7 @@ public class ClusterServiceIT extends ESIntegTestCase {
         }
         Thread.sleep(100);
 
-        pendingClusterTasks = clusterService.pendingTasks();
+        pendingClusterTasks = discovery.pendingTasks();
         assertThat(pendingClusterTasks.size(), greaterThanOrEqualTo(5));
         controlSources = new HashSet<>(Arrays.asList("1", "2", "3", "4", "5"));
         for (PendingClusterTask task : pendingClusterTasks) {

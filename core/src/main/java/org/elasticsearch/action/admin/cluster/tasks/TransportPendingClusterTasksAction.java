@@ -30,6 +30,7 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.cluster.service.PendingClusterTask;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
@@ -37,13 +38,14 @@ import java.util.List;
 
 public class TransportPendingClusterTasksAction extends TransportMasterNodeReadAction<PendingClusterTasksRequest, PendingClusterTasksResponse> {
 
-    private final ClusterService clusterService;
+    private final Discovery discovery;
 
     @Inject
     public TransportPendingClusterTasksAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                                              ThreadPool threadPool, ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
+                                              ThreadPool threadPool, ActionFilters actionFilters, Discovery discovery,
+                                              IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, PendingClusterTasksAction.NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, PendingClusterTasksRequest::new);
-        this.clusterService = clusterService;
+        this.discovery = discovery;
     }
 
     @Override
@@ -65,7 +67,7 @@ public class TransportPendingClusterTasksAction extends TransportMasterNodeReadA
     @Override
     protected void masterOperation(PendingClusterTasksRequest request, ClusterState state, ActionListener<PendingClusterTasksResponse> listener) {
         logger.trace("fetching pending tasks from cluster service");
-        final List<PendingClusterTask> pendingTasks = clusterService.pendingTasks();
+        final List<PendingClusterTask> pendingTasks = discovery.pendingTasks();
         logger.trace("done fetching pending tasks from cluster service");
         listener.onResponse(new PendingClusterTasksResponse(pendingTasks));
     }

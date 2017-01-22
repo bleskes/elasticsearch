@@ -20,6 +20,9 @@ package org.elasticsearch.discovery;
 
 import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.Version;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.LocalClusterUpdateTask;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.ClusterSettings;
@@ -41,16 +44,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class DiscoveryModuleTests extends ESTestCase {
 
     private TransportService transportService;
     private NamedWriteableRegistry namedWriteableRegistry;
-    private DiscoveryService discoveryService;
+    private ClusterService clusterService;
     private ThreadPool threadPool;
 
     public interface DummyHostsProviderPlugin extends DiscoveryPlugin {
@@ -64,10 +67,9 @@ public class DiscoveryModuleTests extends ESTestCase {
 
     public interface DummyDiscoveryPlugin extends DiscoveryPlugin {
         Map<String, Supplier<Discovery>> impl();
+
         @Override
-        default Map<String, Supplier<Discovery>> getDiscoveryTypes(ThreadPool threadPool, TransportService transportService,
-                                                                   NamedWriteableRegistry namedWriteableRegistry,
-                                                                   DiscoveryService discoveryService, UnicastHostsProvider hostsProvider) {
+        default Map<String, Supplier<Discovery>> getDiscoveryTypes(ThreadPool threadPool, TransportService transportService, NamedWriteableRegistry namedWriteableRegistry, ClusterSettings clusterSettings, Supplier<ClusterState> lastAppliedClusterState, BiConsumer<String, LocalClusterUpdateTask> onClusterStateFromMaster, UnicastHostsProvider hostsProvider) {
             return impl();
         }
     }
@@ -75,10 +77,8 @@ public class DiscoveryModuleTests extends ESTestCase {
     @Before
     public void setupDummyServices() {
         transportService = MockTransportService.createNewService(Settings.EMPTY, Version.CURRENT, null, null);
-        discoveryService = mock(DiscoveryService.class);
+        clusterService = mock(ClusterService.class);
         namedWriteableRegistry = new NamedWriteableRegistry(Collections.emptyList());
-        ClusterSettings clusterSettings = new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS);
-        when(discoveryService.getClusterSettings()).thenReturn(clusterSettings);
         threadPool = mock(ThreadPool.class);
     }
 
@@ -88,7 +88,8 @@ public class DiscoveryModuleTests extends ESTestCase {
     }
 
     private DiscoveryModule newModule(Settings settings, List<DiscoveryPlugin> plugins) {
-        return new DiscoveryModule(settings, threadPool, transportService, namedWriteableRegistry, null, discoveryService, plugins);
+        return new DiscoveryModule(settings, threadPool, transportService, namedWriteableRegistry, null,
+            new ClusterSettings(settings, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS), clusterService, plugins);
     }
 
     public void testDefaults() {

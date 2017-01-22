@@ -19,18 +19,21 @@
 
 package org.elasticsearch.plugins;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.function.Supplier;
-
-import org.elasticsearch.discovery.DiscoveryService;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.LocalClusterUpdateTask;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.network.NetworkService;
+import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.discovery.zen.UnicastHostsProvider;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
  * An additional extension point for {@link Plugin}s that extends Elasticsearch's discovery functionality. To add an additional
@@ -53,15 +56,18 @@ public interface DiscoveryPlugin {
      * The key of the returned map is the name of the discovery implementation
      * (see {@link org.elasticsearch.discovery.DiscoveryModule#DISCOVERY_TYPE_SETTING}, and
      * the value is a supplier to construct the {@link Discovery}.
-     *
-     * @param threadPool Use to schedule ping actions
+     *  @param threadPool Use to schedule ping actions
      * @param transportService Use to communicate with other nodes
-     * @param discoveryService Use to find current nodes in the cluster
+     * @param clusterSettings
+     * @param lastAppliedClusterState the last cluster state that was applied using by calling `onClusterStateFromMaster`
+     * @param onClusterStateFromMaster a callback to apply a cluster state that was received from master
      * @param hostsProvider Use to find configured hosts which should be pinged for initial discovery
      */
     default Map<String, Supplier<Discovery>> getDiscoveryTypes(ThreadPool threadPool, TransportService transportService,
                                                                NamedWriteableRegistry namedWriteableRegistry,
-                                                               DiscoveryService discoveryService, UnicastHostsProvider hostsProvider) {
+                                                               ClusterSettings clusterSettings, Supplier<ClusterState> lastAppliedClusterState,
+                                                               BiConsumer<String, LocalClusterUpdateTask> onClusterStateFromMaster,
+                                                               UnicastHostsProvider hostsProvider) {
         return Collections.emptyMap();
     }
 
