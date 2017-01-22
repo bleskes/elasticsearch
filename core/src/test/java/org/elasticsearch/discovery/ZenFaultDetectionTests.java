@@ -66,7 +66,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 public class ZenFaultDetectionTests extends ESTestCase {
-        protected ThreadPool threadPool;
+
+    protected ThreadPool threadPool;
     protected DiscoveryService clusterServiceA;
     protected DiscoveryService clusterServiceB;
     private CircuitBreakerService circuitBreakerService;
@@ -219,6 +220,7 @@ public class ZenFaultDetectionTests extends ESTestCase {
         assertThat(failureReason[0], matcher);
     }
 
+    @AwaitsFix(bugUrl = "needs a better distinction between master and applier service")
     public void testMasterFaultDetectionConnectOnDisconnect() throws InterruptedException {
         Settings.Builder settings = Settings.builder();
         boolean shouldRetry = randomBoolean();
@@ -258,6 +260,7 @@ public class ZenFaultDetectionTests extends ESTestCase {
         assertThat(failureReason[0], matcher);
     }
 
+    @AwaitsFix(bugUrl = "needs a better distinction between master and applier service")
     public void testMasterFaultDetectionNotSizeLimited() throws InterruptedException {
         Settings.Builder settings = Settings.builder();
         boolean shouldRetry = randomBoolean();
