@@ -29,11 +29,9 @@ import org.elasticsearch.cluster.ClusterStateTaskConfig;
 import org.elasticsearch.cluster.ClusterStateTaskExecutor;
 import org.elasticsearch.cluster.ClusterStateTaskListener;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
-import org.elasticsearch.cluster.LocalClusterUpdateTask;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.service.AbstractClusterTaskExecutorTestCase;
-import org.elasticsearch.cluster.service.ClusterApplier;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.logging.Loggers;
@@ -70,66 +68,19 @@ public class DiscoveryServiceTests extends AbstractClusterTaskExecutorTestCase<D
 
     @Override
     protected TimedDiscoveryService createClusterTaskExecutor() throws InterruptedException {
-        return createTimedClusterService(true);
-    }
-
-    TimedDiscoveryService createTimedClusterService(boolean makeMaster) throws InterruptedException {
-        ClusterApplier applier = (s, c, l) -> l.clusterStateProcessed(s, c, c);
         DiscoveryNode localNode = new DiscoveryNode("node1", buildNewFakeTransportAddress(), emptyMap(),
             emptySet(), Version.CURRENT);
         final Settings settings = Settings.builder().put("cluster.name", DiscoveryServiceTests.class.getSimpleName()).build();
         final DiscoveryNodes.Builder nodes = DiscoveryNodes.builder().add(localNode);
         nodes.masterNodeId(localNode.getId());
+        nodes.localNodeId(localNode.getId());
         final ClusterState initialState = ClusterState.builder(ClusterName.CLUSTER_NAME_SETTING.get(settings)).nodes(nodes).build();
         TimedDiscoveryService timedDiscoveryService = new TimedDiscoveryService(
-            settings, threadPool, initialState, (clusterChangedEvent, ackListener) -> {},
-            new DiscoverySettings(settings, new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS)));
+            settings, threadPool, initialState, (clusterChangedEvent, ackListener) ->
+            ackListener.onNodeAck(clusterChangedEvent.state().nodes().getLocalNode(), null)
+            , new DiscoverySettings(settings, new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS)));
         timedDiscoveryService.start();
         return timedDiscoveryService;
-    }
-
-    public void testMasterAwareExecution() throws Exception {
-        TimedDiscoveryService nonMaster = createTimedClusterService(false);
-
-        final boolean[] taskFailed = {false};
-        final CountDownLatch latch1 = new CountDownLatch(1);
-        nonMaster.submitStateUpdateTask("test", new ClusterStateUpdateTask() {
-            @Override
-            public ClusterState execute(ClusterState currentState) throws Exception {
-                latch1.countDown();
-                return currentState;
-            }
-
-            @Override
-            public void onFailure(String source, Exception e) {
-                taskFailed[0] = true;
-                latch1.countDown();
-            }
-        });
-
-        latch1.await();
-        assertTrue("cluster state update task was executed on a non-master", taskFailed[0]);
-
-        taskFailed[0] = true;
-        final CountDownLatch latch2 = new CountDownLatch(1);
-        nonMaster.submitStateUpdateTask("test", new LocalClusterUpdateTask() {
-            @Override
-            public ClusterTasksResult<LocalClusterUpdateTask> execute(ClusterState currentState) throws Exception {
-                taskFailed[0] = false;
-                latch2.countDown();
-                return unchanged();
-            }
-
-            @Override
-            public void onFailure(String source, Exception e) {
-                taskFailed[0] = true;
-                latch2.countDown();
-            }
-        });
-        latch2.await();
-        assertFalse("non-master cluster state update task was not executed", taskFailed[0]);
-
-        nonMaster.close();
     }
 
     /*
