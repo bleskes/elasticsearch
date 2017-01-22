@@ -468,10 +468,6 @@ public class ZenDiscovery extends AbstractLifecycleComponent implements Discover
                             localClusterStateUpdater.accept("zen-disco-end-join-as-master", new LocalClusterUpdateTask() {
                                 @Override
                                 public ClusterTasksResult<LocalClusterUpdateTask> execute(ClusterState currentState) throws Exception {
-                                    // clean the pending cluster queue - we are currently master, so any pending cluster state should be failed
-                                    // note that we also clean the queue on master failure (see handleMasterGone) but a delayed cluster state publish
-                                    // from a stale master can still make it in the queue during the election (but not be committed)
-                                    publishClusterState.pendingStatesQueue().failAllStatesAndClear(new ElasticsearchException("elected as master"));
                                     joinThreadControl.markThreadAsDone(currentThread);
                                     return LocalClusterUpdateTask.unchanged();
                                 }
