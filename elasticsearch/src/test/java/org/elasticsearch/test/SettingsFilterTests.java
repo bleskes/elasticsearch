@@ -138,7 +138,7 @@ public class SettingsFilterTests extends ESTestCase {
             assertThat(filteredSettings.get(entry.getKey()), entry.getValue());
         }
         if (expectedWarnings.isEmpty() == false) {
-            assertWarnings(expectedWarnings.toArray(new String[0]));
+            assertWarnings(expectedWarnings.toArray(Strings.EMPTY_ARRAY));
         }
     }
 

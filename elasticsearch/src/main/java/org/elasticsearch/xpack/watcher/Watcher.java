@@ -154,6 +154,7 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
             Setting.boolSetting("xpack.watcher.encrypt_sensitive_data", false, Setting.Property.NodeScope);
     public static final Setting<TimeValue> MAX_STOP_TIMEOUT_SETTING =
         Setting.timeSetting("xpack.watcher.stop.timeout", TimeValue.timeValueSeconds(30), Setting.Property.NodeScope);
+    private static final String SETTING_KEY_AUTO_CREATE_INDEX = "action.auto_create_index";
 
     private static final ScriptContext.Plugin SCRIPT_PLUGIN = new ScriptContext.Plugin("xpack", "watch");
     public static final ScriptContext SCRIPT_CONTEXT = SCRIPT_PLUGIN::getKey;
@@ -337,24 +338,24 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
     }
 
     static void validAutoCreateIndex(Settings settings) {
-        String value = settings.get("action.auto_create_index");
+        String value = settings.get(SETTING_KEY_AUTO_CREATE_INDEX);
         if (value == null) {
             return;
         }
 
-        String errorMessage = LoggerMessageFormat.format("the [action.auto_create_index] setting value [{}] is too" +
-                " restrictive. disable [action.auto_create_index] or set it to " +
-                "[{}, {}, {}*]", (Object) value, WatchStore.INDEX, TriggeredWatchStore.INDEX_NAME, HistoryStore.INDEX_PREFIX);
+        String errorMessage = LoggerMessageFormat.format("the [{}] setting value [{}] is too restrictive. disable [{}] or " +
+                "set it to [{}, {}, {}*]", (Object) SETTING_KEY_AUTO_CREATE_INDEX, value, SETTING_KEY_AUTO_CREATE_INDEX, WatchStore.INDEX,
+                TriggeredWatchStore.INDEX_NAME, HistoryStore.INDEX_PREFIX);
         if (Booleans.isExplicitFalse(value)) {
             if (Booleans.isStrictlyBoolean(value) == false) {
-                DEPRECATION_LOGGER.deprecated("Expected [false] for setting [action.auto_create_index] but got [{}]", value);
+                DEPRECATION_LOGGER.deprecated("Expected [false] for setting [{}] but got [{}]", SETTING_KEY_AUTO_CREATE_INDEX, value);
             }
             throw new IllegalArgumentException(errorMessage);
         }
 
         if (Booleans.isExplicitTrue(value)) {
             if (Booleans.isStrictlyBoolean(value) == false) {
-                DEPRECATION_LOGGER.deprecated("Expected [true] for setting [action.auto_create_index] but got [{}]", value);
+                DEPRECATION_LOGGER.deprecated("Expected [true] for setting [{}] but got [{}]", SETTING_KEY_AUTO_CREATE_INDEX, value);
             }
             return;
         }
