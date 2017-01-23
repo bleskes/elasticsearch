@@ -17,10 +17,12 @@
 
 package org.elasticsearch.xpack.security.transport;
 
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.DestructiveOperations;
 import org.elasticsearch.common.CheckedConsumer;
+import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
@@ -50,8 +52,6 @@ import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
 import org.elasticsearch.xpack.ssl.SSLService;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,7 +60,7 @@ import java.util.concurrent.Executor;
 import static org.elasticsearch.xpack.XPackSettings.TRANSPORT_SSL_ENABLED;
 import static org.elasticsearch.xpack.security.Security.setting;
 
-public class SecurityServerTransportInterceptor implements TransportInterceptor {
+public class SecurityServerTransportInterceptor extends AbstractComponent implements TransportInterceptor {
 
     private static final String SETTING_NAME = "xpack.security.type";
 
@@ -82,6 +82,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
                                               SSLService sslService,
                                               SecurityContext securityContext,
                                               DestructiveOperations destructiveOperations) {
+        super(settings);
         this.settings = settings;
         this.threadPool = threadPool;
         this.authcService = authcService;
@@ -143,7 +144,7 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
     public <T extends TransportRequest> TransportRequestHandler<T> interceptHandler(String action, String executor,
                                                                                     boolean forceExecution,
                                                                                     TransportRequestHandler<T> actualHandler) {
-        return new ProfileSecuredRequestHandler<>(action, forceExecution, executor, actualHandler, profileFilters,
+        return new ProfileSecuredRequestHandler<>(logger, action, forceExecution, executor, actualHandler, profileFilters,
                 licenseState, threadPool);
     }
 
@@ -189,18 +190,20 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
 
     public static class ProfileSecuredRequestHandler<T extends TransportRequest> implements TransportRequestHandler<T> {
 
-        protected final String action;
-        protected final TransportRequestHandler<T> handler;
+        private final String action;
+        private final TransportRequestHandler<T> handler;
         private final Map<String, ServerTransportFilter> profileFilters;
         private final XPackLicenseState licenseState;
         private final ThreadContext threadContext;
         private final String executorName;
         private final ThreadPool threadPool;
         private final boolean forceExecution;
+        private final Logger logger;
 
-        ProfileSecuredRequestHandler(String action, boolean forceExecution, String executorName, TransportRequestHandler<T> handler,
-                                     Map<String, ServerTransportFilter> profileFilters, XPackLicenseState licenseState,
-                                     ThreadPool threadPool) {
+        ProfileSecuredRequestHandler(Logger logger, String action, boolean forceExecution, String executorName,
+                                     TransportRequestHandler<T> handler, Map<String, ServerTransportFilter> profileFilters,
+                                     XPackLicenseState licenseState, ThreadPool threadPool) {
+            this.logger = logger;
             this.action = action;
             this.executorName = executorName;
             this.handler = handler;
@@ -222,8 +225,9 @@ public class SecurityServerTransportInterceptor implements TransportInterceptor 
                 public void onFailure(Exception e) {
                     try {
                         channel.sendResponse(e);
-                    } catch (IOException e1) {
-                        throw new UncheckedIOException(e1);
+                    } catch (Exception e1) {
+                        e1.addSuppressed(e);
+                        logger.warn("failed to send exception response for action [" + action + "]", e1);
                     }
                 }
 
