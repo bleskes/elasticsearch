@@ -17,15 +17,15 @@ package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.ml.job.AnalysisConfig;
-import org.elasticsearch.xpack.ml.job.DataDescription;
-import org.elasticsearch.xpack.ml.job.DataDescription.DataFormat;
-import org.elasticsearch.xpack.ml.job.Detector;
+import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
+import org.elasticsearch.xpack.ml.job.config.DataDescription;
+import org.elasticsearch.xpack.ml.job.config.DataDescription.DataFormat;
+import org.elasticsearch.xpack.ml.job.config.Detector;
 import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.ml.job.status.StatusReporter;
-import org.elasticsearch.xpack.ml.job.transform.TransformConfig;
-import org.elasticsearch.xpack.ml.job.transform.TransformConfigs;
-import org.elasticsearch.xpack.ml.job.transform.TransformType;
+import org.elasticsearch.xpack.ml.job.process.DataCountsReporter;
+import org.elasticsearch.xpack.ml.job.config.transform.TransformConfig;
+import org.elasticsearch.xpack.ml.job.config.transform.TransformConfigs;
+import org.elasticsearch.xpack.ml.job.config.transform.TransformType;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -49,7 +49,7 @@ import static org.mockito.Mockito.verify;
 public class JsonDataToProcessWriterTests extends ESTestCase {
 
     private AutodetectProcess autodetectProcess;
-    private StatusReporter statusReporter;
+    private DataCountsReporter dataCountsReporter;
     private Logger logger;
 
     private List<TransformConfig> transforms;
@@ -61,7 +61,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     @Before
     public void setUpMocks() throws IOException {
         autodetectProcess = Mockito.mock(AutodetectProcess.class);
-        statusReporter = Mockito.mock(StatusReporter.class);
+        dataCountsReporter = Mockito.mock(DataCountsReporter.class);
         logger = Mockito.mock(Logger.class);
 
         writtenRecords = new ArrayList<>();
@@ -93,7 +93,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -102,7 +102,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"2", "2.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndTimestampsAreOutOfOrder()
@@ -115,7 +115,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -123,9 +123,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"3", "3.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter, times(2)).reportOutOfOrderRecord(2);
-        verify(statusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter, times(2)).reportOutOfOrderRecord(2);
+        verify(dataCountsReporter, never()).reportLatestTimeIncrementalStats(anyLong());
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
@@ -154,9 +154,9 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"4", "4.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter, times(1)).reportOutOfOrderRecord(2);
-        verify(statusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter, times(1)).reportOutOfOrderRecord(2);
+        verify(dataCountsReporter, never()).reportLatestTimeIncrementalStats(anyLong());
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenMalformedJsonWithoutNestedLevels()
@@ -173,7 +173,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -183,8 +183,8 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"3", "3.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).reportMissingFields(1);
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).reportMissingFields(1);
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenMalformedJsonWithNestedLevels()
@@ -202,7 +202,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -212,7 +212,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"3", "3.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenMalformedJsonThatNeverRecovers()
@@ -244,7 +244,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -253,7 +253,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"2", "2.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenJsonWithMissingFields()
@@ -273,7 +273,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -284,13 +284,13 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"4", "3.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter, times(1)).reportMissingFields(1L);
-        verify(statusReporter, times(1)).reportRecordWritten(2, 1000);
-        verify(statusReporter, times(1)).reportRecordWritten(1, 2000);
-        verify(statusReporter, times(1)).reportRecordWritten(1, 3000);
-        verify(statusReporter, times(1)).reportRecordWritten(1, 4000);
-        verify(statusReporter, times(1)).reportDateParseError(0);
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter, times(1)).reportMissingFields(1L);
+        verify(dataCountsReporter, times(1)).reportRecordWritten(2, 1000);
+        verify(dataCountsReporter, times(1)).reportRecordWritten(1, 2000);
+        verify(dataCountsReporter, times(1)).reportRecordWritten(1, 3000);
+        verify(dataCountsReporter, times(1)).reportRecordWritten(1, 4000);
+        verify(dataCountsReporter, times(1)).reportDateParseError(0);
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenDateTimeFieldIsOutputOfTransform() throws Exception {
@@ -315,7 +315,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
 
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -324,7 +324,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"2", "6.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenChainedTransforms_SortsByDependencies() throws Exception {
@@ -352,7 +352,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -361,7 +361,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"2", "WWW.BAR.COM", "2.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
 
@@ -371,7 +371,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
     private JsonDataToProcessWriter createWriter() {
         return new JsonDataToProcessWriter(true, autodetectProcess, dataDescription.build(), analysisConfig,
-                new TransformConfigs(transforms), statusReporter, logger);
+                new TransformConfigs(transforms), dataCountsReporter, logger);
     }
 
     private void assertWrittenRecordsEqualTo(List<String[]> expectedRecords) {

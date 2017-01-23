@@ -14,7 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.job.process.autodetect.params;
 
-import org.elasticsearch.xpack.ml.job.DataDescription;
+import org.elasticsearch.xpack.ml.job.config.DataDescription;
 
 import java.util.Objects;
 import java.util.Optional;

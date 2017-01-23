@@ -15,7 +15,7 @@
 package org.elasticsearch.xpack.ml.action;
 
 import org.elasticsearch.xpack.ml.action.UpdateJobStatusAction.Request;
-import org.elasticsearch.xpack.ml.job.JobStatus;
+import org.elasticsearch.xpack.ml.job.config.JobStatus;
 import org.elasticsearch.xpack.ml.support.AbstractStreamableTestCase;
 
 public class UpdateJobStatusRequestTests extends AbstractStreamableTestCase<Request> {

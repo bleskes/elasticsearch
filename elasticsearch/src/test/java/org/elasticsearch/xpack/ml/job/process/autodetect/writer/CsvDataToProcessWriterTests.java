@@ -16,16 +16,16 @@ package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.ml.job.AnalysisConfig;
-import org.elasticsearch.xpack.ml.job.DataCounts;
-import org.elasticsearch.xpack.ml.job.DataDescription;
-import org.elasticsearch.xpack.ml.job.DataDescription.DataFormat;
-import org.elasticsearch.xpack.ml.job.Detector;
+import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
+import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
+import org.elasticsearch.xpack.ml.job.config.DataDescription;
+import org.elasticsearch.xpack.ml.job.config.DataDescription.DataFormat;
+import org.elasticsearch.xpack.ml.job.config.Detector;
 import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcess;
-import org.elasticsearch.xpack.ml.job.status.StatusReporter;
-import org.elasticsearch.xpack.ml.job.transform.TransformConfig;
-import org.elasticsearch.xpack.ml.job.transform.TransformConfigs;
-import org.elasticsearch.xpack.ml.job.transform.TransformType;
+import org.elasticsearch.xpack.ml.job.process.DataCountsReporter;
+import org.elasticsearch.xpack.ml.job.config.transform.TransformConfig;
+import org.elasticsearch.xpack.ml.job.config.transform.TransformConfigs;
+import org.elasticsearch.xpack.ml.job.config.transform.TransformType;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -55,7 +55,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     private List<TransformConfig> transforms;
     private DataDescription.Builder dataDescription;
     private AnalysisConfig analysisConfig;
-    private StatusReporter statusReporter;
+    private DataCountsReporter dataCountsReporter;
     private Logger jobLogger;
 
     private List<String[]> writtenRecords;
@@ -63,7 +63,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
     @Before
     public void setUpMocks() throws IOException {
         autodetectProcess = Mockito.mock(AutodetectProcess.class);
-        statusReporter = Mockito.mock(StatusReporter.class);
+        dataCountsReporter = Mockito.mock(DataCountsReporter.class);
         jobLogger = Mockito.mock(Logger.class);
 
         writtenRecords = new ArrayList<>();
@@ -98,7 +98,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -107,7 +107,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[] { "2", "2.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenTransformAndEmptyField()
@@ -130,7 +130,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -139,7 +139,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[] { "2", "", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndTimestampsAreOutOfOrder()
@@ -153,7 +153,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -161,9 +161,9 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[] { "3", "3.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter, times(2)).reportOutOfOrderRecord(2);
-        verify(statusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter, times(2)).reportOutOfOrderRecord(2);
+        verify(dataCountsReporter, never()).reportLatestTimeIncrementalStats(anyLong());
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndAllRecordsAreOutOfOrder()
@@ -174,21 +174,21 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         input.append("2,bar,2.0\n");
         InputStream inputStream = createInputStream(input.toString());
 
-        when(statusReporter.getLatestRecordTime()).thenReturn(new Date(5000L));
+        when(dataCountsReporter.getLatestRecordTime()).thenReturn(new Date(5000L));
         CsvDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
         expectedRecords.add(new String[] { "time", "value", "." });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter, times(2)).reportOutOfOrderRecord(2);
-        verify(statusReporter, times(2)).reportLatestTimeIncrementalStats(anyLong());
-        verify(statusReporter, never()).reportRecordWritten(anyLong(), anyLong());
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter, times(2)).reportOutOfOrderRecord(2);
+        verify(dataCountsReporter, times(2)).reportLatestTimeIncrementalStats(anyLong());
+        verify(dataCountsReporter, never()).reportRecordWritten(anyLong(), anyLong());
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
@@ -209,7 +209,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -220,9 +220,9 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[] { "4", "4.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter, times(1)).reportOutOfOrderRecord(2);
-        verify(statusReporter, never()).reportLatestTimeIncrementalStats(anyLong());
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter, times(1)).reportOutOfOrderRecord(2);
+        verify(dataCountsReporter, never()).reportLatestTimeIncrementalStats(anyLong());
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_NullByte()
@@ -243,7 +243,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -254,13 +254,13 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[] { "4", "4.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter, times(1)).reportMissingField();
-        verify(statusReporter, times(1)).reportRecordWritten(2, 1000);
-        verify(statusReporter, times(1)).reportRecordWritten(2, 2000);
-        verify(statusReporter, times(1)).reportRecordWritten(2, 3000);
-        verify(statusReporter, times(1)).reportRecordWritten(2, 4000);
-        verify(statusReporter, times(1)).reportDateParseError(2);
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter, times(1)).reportMissingField();
+        verify(dataCountsReporter, times(1)).reportRecordWritten(2, 1000);
+        verify(dataCountsReporter, times(1)).reportRecordWritten(2, 2000);
+        verify(dataCountsReporter, times(1)).reportRecordWritten(2, 3000);
+        verify(dataCountsReporter, times(1)).reportRecordWritten(2, 4000);
+        verify(dataCountsReporter, times(1)).reportDateParseError(2);
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_EmptyInput() throws IOException {
@@ -268,7 +268,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         builder.setLatency(0L);
         analysisConfig = builder.build();
 
-        when(statusReporter.incrementalStats()).thenReturn(new DataCounts("foo"));
+        when(dataCountsReporter.incrementalStats()).thenReturn(new DataCounts("foo"));
 
         InputStream inputStream = createInputStream("");
         CsvDataToProcessWriter writer = createWriter();
@@ -303,7 +303,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
 
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -312,7 +312,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[] { "2", "6.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenChainedTransforms_SortsByDependencies()
@@ -342,7 +342,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         CsvDataToProcessWriter writer = createWriter();
         writer.writeHeader();
         writer.write(inputStream);
-        verify(statusReporter, times(1)).startNewIncrementalCount();
+        verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -351,7 +351,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[] { "2", "WWW.BAR.COM", "2.0", "" });
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(statusReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting();
     }
 
     public void testWrite_GivenMisplacedQuoteMakesRecordExtendOverTooManyLines()
@@ -381,7 +381,7 @@ public class CsvDataToProcessWriterTests extends ESTestCase {
 
     private CsvDataToProcessWriter createWriter() {
         return new CsvDataToProcessWriter(true, autodetectProcess, dataDescription.build(), analysisConfig,
-                new TransformConfigs(transforms),statusReporter, jobLogger);
+                new TransformConfigs(transforms), dataCountsReporter, jobLogger);
     }
 
     private void assertWrittenRecordsEqualTo(List<String[]> expectedRecords) {

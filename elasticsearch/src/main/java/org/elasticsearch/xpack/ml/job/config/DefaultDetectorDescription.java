@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.ml.job.config;
 
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.xpack.ml.job.Detector;
 import org.elasticsearch.xpack.ml.utils.MlStrings;
 
 
