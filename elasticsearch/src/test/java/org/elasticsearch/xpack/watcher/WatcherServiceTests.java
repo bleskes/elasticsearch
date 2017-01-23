@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.watcher;
 
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -328,7 +329,7 @@ public class WatcherServiceTests extends ESTestCase {
         try {
             watcherService.ackWatch("_id", Strings.EMPTY_ARRAY);
             fail();
-        } catch (IllegalArgumentException iae) {
+        } catch (ResourceNotFoundException iae) {
             // expected
         }
 

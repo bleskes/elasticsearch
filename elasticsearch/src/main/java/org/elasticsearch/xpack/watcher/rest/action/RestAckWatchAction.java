@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.watcher.rest.action;
 
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.BytesRestResponse;
@@ -42,8 +41,6 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
  * The rest action to ack a watch
  */
 public class RestAckWatchAction extends WatcherRestHandler {
-
-    @Inject
     public RestAckWatchAction(Settings settings, RestController controller) {
         super(settings);
         // @deprecated Remove deprecations in 6.0

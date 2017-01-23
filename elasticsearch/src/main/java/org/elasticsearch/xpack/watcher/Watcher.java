@@ -22,7 +22,9 @@ import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.NamedDiff;
+import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.Booleans;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
@@ -32,14 +34,18 @@ import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.logging.LoggerMessageFormat;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.regex.Regex;
+import org.elasticsearch.common.settings.ClusterSettings;
+import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.ScriptPlugin;
+import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptService;
@@ -140,6 +146,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -317,19 +324,22 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
     }
 
     @Override
-    public List<Class<? extends RestHandler>> getRestHandlers() {
+    public List<RestHandler> getRestHandlers(Settings settings, RestController restController, ClusterSettings clusterSettings,
+            IndexScopedSettings indexScopedSettings, SettingsFilter settingsFilter, IndexNameExpressionResolver indexNameExpressionResolver,
+            Supplier<DiscoveryNodes> nodesInCluster) {
         if (false == enabled) {
             return emptyList();
         }
-        return Arrays.asList(RestPutWatchAction.class,
-                RestDeleteWatchAction.class,
-                RestWatcherStatsAction.class,
-                RestGetWatchAction.class,
-                RestWatchServiceAction.class,
-                RestAckWatchAction.class,
-                RestActivateWatchAction.class,
-                RestExecuteWatchAction.class,
-                RestHijackOperationAction.class);
+        return Arrays.asList(
+                new RestPutWatchAction(settings, restController),
+                new RestDeleteWatchAction(settings, restController),
+                new RestWatcherStatsAction(settings, restController),
+                new RestGetWatchAction(settings, restController),
+                new RestWatchServiceAction(settings, restController),
+                new RestAckWatchAction(settings, restController),
+                new RestActivateWatchAction(settings, restController),
+                new RestExecuteWatchAction(settings, restController),
+                new RestHijackOperationAction(settings, restController));
     }
 
     @Override
