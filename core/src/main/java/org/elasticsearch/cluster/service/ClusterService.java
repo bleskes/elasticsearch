@@ -41,6 +41,7 @@ import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.discovery.Discovery;
+import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.Collections;
@@ -295,5 +296,12 @@ public class ClusterService extends AbstractLifecycleComponent {
 
     public Settings getSettings() {
         return settings;
+    }
+
+    public static boolean assertClusterOrDiscoveryStateThread() {
+        assert Thread.currentThread().getName().contains(ClusterApplierService.CLUSTER_UPDATE_THREAD_NAME) ||
+            Thread.currentThread().getName().contains(DiscoveryService.DISCOVERY_UPDATE_THREAD_NAME) :
+            "not called from the master/cluster state update thread. current thread: " + Thread.currentThread().getName();
+        return true;
     }
 }

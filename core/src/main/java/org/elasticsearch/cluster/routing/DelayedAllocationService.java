@@ -32,7 +32,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.FutureUtils;
-import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.concurrent.ScheduledFuture;
@@ -216,6 +215,7 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
 
     // protected so that it can be overridden (and disabled) by unit tests
     protected void assertClusterStateThread() {
-        DiscoveryService.assertDiscoveryUpdateThread();
+        // norelease - this should really live on the master thread, not the application thread.
+        ClusterService.assertClusterOrDiscoveryStateThread();
     }
 }
