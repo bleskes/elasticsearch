@@ -25,7 +25,6 @@ import org.elasticsearch.cluster.ClusterStateListener;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
-import org.elasticsearch.cluster.service.ClusterApplierService;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -33,6 +32,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.FutureUtils;
+import org.elasticsearch.discovery.DiscoveryService;
 import org.elasticsearch.threadpool.ThreadPool;
 
 import java.util.concurrent.ScheduledFuture;
@@ -216,6 +216,6 @@ public class DelayedAllocationService extends AbstractLifecycleComponent impleme
 
     // protected so that it can be overridden (and disabled) by unit tests
     protected void assertClusterStateThread() {
-        ClusterApplierService.assertClusterStateThread();
+        DiscoveryService.assertDiscoveryUpdateThread();
     }
 }
