@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.ml.rest.modelsnapshots;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
@@ -30,7 +29,6 @@ import java.io.IOException;
 
 public class RestDeleteModelSnapshotAction extends BaseRestHandler {
 
-    @Inject
     public RestDeleteModelSnapshotAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(RestRequest.Method.DELETE, MlPlugin.BASE_PATH + "anomaly_detectors/{"

@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.ml.rest.job;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -30,7 +29,6 @@ import java.io.IOException;
 
 public class RestCloseJobAction extends BaseRestHandler {
 
-    @Inject
     public RestCloseJobAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(RestRequest.Method.POST, MlPlugin.BASE_PATH

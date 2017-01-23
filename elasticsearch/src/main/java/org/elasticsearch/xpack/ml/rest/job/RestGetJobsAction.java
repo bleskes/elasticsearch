@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.ml.rest.job;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
@@ -30,7 +29,6 @@ import java.io.IOException;
 
 public class RestGetJobsAction extends BaseRestHandler {
 
-    @Inject
     public RestGetJobsAction(Settings settings, RestController controller) {
         super(settings);
 

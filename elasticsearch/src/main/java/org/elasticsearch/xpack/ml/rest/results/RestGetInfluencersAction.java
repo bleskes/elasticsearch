@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.ml.rest.results;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -32,7 +31,6 @@ import java.io.IOException;
 
 public class RestGetInfluencersAction extends BaseRestHandler {
 
-    @Inject
     public RestGetInfluencersAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(RestRequest.Method.GET,
