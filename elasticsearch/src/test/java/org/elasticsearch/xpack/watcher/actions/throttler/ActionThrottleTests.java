@@ -95,7 +95,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTestCase {
         ctx = getManualExecutionContext(new TimeValue(0, TimeUnit.SECONDS));
         watchRecord = executionService().execute(ctx);
         if (ack) {
-            assertThat(watchRecord.result().actionsResults().get("test_id").action().status(), equalTo(Action.Result.Status.THROTTLED));
+            assertThat(watchRecord.result().actionsResults().get("test_id").action().status(), equalTo(Action.Result.Status.ACKNOWLEDGED));
         } else {
             assertThat(watchRecord.result().actionsResults().get("test_id").action().status(), equalTo(Action.Result.Status.SIMULATED));
         }
@@ -141,7 +141,7 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTestCase {
         WatchRecord watchRecord = executionService().execute(ctx);
         for (ActionWrapper.Result result : watchRecord.result().actionsResults().values()) {
             if (ackingActions.contains(result.id())) {
-                assertThat(result.action().status(), equalTo(Action.Result.Status.THROTTLED));
+                assertThat(result.action().status(), equalTo(Action.Result.Status.ACKNOWLEDGED));
             } else {
                 assertThat(result.action().status(), equalTo(Action.Result.Status.SIMULATED));
             }

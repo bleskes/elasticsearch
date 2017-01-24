@@ -36,6 +36,7 @@ public interface Action extends ToXContentObject {
             SUCCESS,
             FAILURE,
             PARTIAL_FAILURE,
+            ACKNOWLEDGED,
             THROTTLED,
             CONDITION_FAILED,
             SIMULATED;
@@ -108,6 +109,17 @@ public interface Action extends ToXContentObject {
                 super(type, Status.THROTTLED, reason);
             }
 
+        }
+
+        /**
+         * {@code Acknowledged} is a {@link StoppedResult} with a status of {@link Status#ACKNOWLEDGED} for actions that
+         * have been throttled.
+         */
+        public static class Acknowledged extends StoppedResult {
+
+            public Acknowledged(String type, String reason) {
+                super(type, Status.ACKNOWLEDGED, reason);
+            }
         }
 
         /**

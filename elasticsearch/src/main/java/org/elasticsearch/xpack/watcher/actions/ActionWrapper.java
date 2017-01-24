@@ -41,6 +41,7 @@ import org.elasticsearch.xpack.watcher.watch.Payload;
 import org.elasticsearch.xpack.watcher.watch.Watch;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 
@@ -111,7 +112,11 @@ public class ActionWrapper implements ToXContentObject {
         if (!ctx.skipThrottling(id)) {
             Throttler.Result throttleResult = throttler.throttle(id, ctx);
             if (throttleResult.throttle()) {
-                return new ActionWrapper.Result(id, new Action.Result.Throttled(action.type(), throttleResult.reason()));
+                if (throttleResult.type() == Throttler.Type.ACK) {
+                    return new ActionWrapper.Result(id, new Action.Result.Acknowledged(action.type(), throttleResult.reason()));
+                } else {
+                    return new ActionWrapper.Result(id, new Action.Result.Throttled(action.type(), throttleResult.reason()));
+                }
             }
         }
         Condition.Result conditionResult = null;
@@ -296,19 +301,15 @@ public class ActionWrapper implements ToXContentObject {
 
             Result result = (Result) o;
 
-            if (!id.equals(result.id)) return false;
-            if (condition != null ? !condition.equals(result.condition) : result.condition != null) return false;
-            if (transform != null ? !transform.equals(result.transform) : result.transform != null) return false;
-            return action.equals(result.action);
+            return Objects.equals(id, result.id) &&
+                    Objects.equals(condition, result.condition) &&
+                    Objects.equals(transform, result.transform) &&
+                    Objects.equals(action, result.action);
         }
 
         @Override
         public int hashCode() {
-            int result = id.hashCode();
-            result = 31 * result + (condition != null ? condition.hashCode() : 0);
-            result = 31 * result + (transform != null ? transform.hashCode() : 0);
-            result = 31 * result + action.hashCode();
-            return result;
+            return Objects.hash(id, condition, transform, action);
         }
 
         @Override

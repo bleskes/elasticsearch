@@ -50,6 +50,7 @@ public class AckThrottlerTests extends ESTestCase {
         Throttler.Result result = throttler.throttle("_action", ctx);
         assertThat(result.throttle(), is(true));
         assertThat(result.reason(), is("action [_action] was acked at [" + formatDate(timestamp) + "]"));
+        assertThat(result.type(), is(Throttler.Type.ACK));
     }
 
     public void testThrottleWhenAwaitsSuccessfulExecution() throws Exception {

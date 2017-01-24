@@ -24,6 +24,8 @@ import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.joda.time.PeriodType;
 
+import static org.elasticsearch.xpack.watcher.actions.throttler.Throttler.Type.PERIOD;
+
 /**
  * This throttler throttles the action based on its last <b>successful</b> execution time. If the time passed since
  * the last successful execution is lower than the given period, the aciton will be throttled.
@@ -65,7 +67,7 @@ public class PeriodThrottler implements Throttler {
         }
         TimeValue timeElapsed = clock.timeElapsedSince(status.lastSuccessfulExecution().timestamp());
         if (timeElapsed.getMillis() <= period.getMillis()) {
-            return Result.throttle("throttling interval is set to [{}] but time elapsed since last execution is [{}]",
+            return Result.throttle(PERIOD, "throttling interval is set to [{}] but time elapsed since last execution is [{}]",
                     period.format(periodType), timeElapsed.format(periodType));
         }
         return Result.NO;
