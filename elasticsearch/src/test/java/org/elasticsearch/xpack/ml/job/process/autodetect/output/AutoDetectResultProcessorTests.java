@@ -15,11 +15,11 @@
 package org.elasticsearch.xpack.ml.job.process.autodetect.output;
 
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.ml.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSizeStats;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
-import org.elasticsearch.xpack.ml.job.persistence.JobResultsPersister;
-import org.elasticsearch.xpack.ml.job.process.normalizer.Renormalizer;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.Quantiles;
+import org.elasticsearch.xpack.ml.job.process.normalizer.Renormalizer;
 import org.elasticsearch.xpack.ml.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.ml.job.results.AutodetectResult;
 import org.elasticsearch.xpack.ml.job.results.Bucket;
@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -63,8 +63,8 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
 
         Renormalizer renormalizer = mock(Renormalizer.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, parser);
-        processor.process(JOB_ID, mock(InputStream.class), randomBoolean());
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, parser);
+        processor.process(mock(InputStream.class), randomBoolean());
         verify(renormalizer, times(1)).waitUntilIdle();
         assertEquals(0, processor.completionLatch.getCount());
     }
@@ -75,7 +75,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
         when(bulkBuilder.persistBucket(any(Bucket.class))).thenReturn(bulkBuilder);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -97,7 +97,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
         when(bulkBuilder.persistBucket(any(Bucket.class))).thenReturn(bulkBuilder);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = true;
@@ -119,7 +119,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("foo", false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -140,7 +140,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context("foo", true, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -164,7 +164,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -185,7 +185,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -205,7 +205,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         when(persister.bulkPersisterBuilder(JOB_ID)).thenReturn(bulkBuilder);
         FlushListener flushListener = mock(FlushListener.class);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null, flushListener);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null, flushListener);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -227,7 +227,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
         FlushListener flushListener = mock(FlushListener.class);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null, flushListener);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null, flushListener);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -253,7 +253,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         Renormalizer renormalizer = mock(Renormalizer.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -270,7 +270,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         Renormalizer renormalizer = mock(Renormalizer.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -281,14 +281,14 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
 
         verify(persister, times(1)).persistModelSizeStats(modelSizeStats);
         verifyNoMoreInteractions(persister);
-        assertEquals(modelSizeStats, processor.modelSizeStats().get());
+        assertEquals(modelSizeStats, processor.modelSizeStats());
     }
 
     public void testProcessResult_modelSnapshot() {
         Renormalizer renormalizer = mock(Renormalizer.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
@@ -305,7 +305,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         Renormalizer renormalizer = mock(Renormalizer.class);
         JobResultsPersister persister = mock(JobResultsPersister.class);
         JobResultsPersister.Builder bulkBuilder = mock(JobResultsPersister.Builder.class);
-        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(renormalizer, persister, null);
+        AutoDetectResultProcessor processor = new AutoDetectResultProcessor(JOB_ID, renormalizer, persister, null);
 
         AutoDetectResultProcessor.Context context = new AutoDetectResultProcessor.Context(JOB_ID, false, bulkBuilder);
         context.deleteInterimRequired = false;
