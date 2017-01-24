@@ -18,13 +18,13 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.index.TransportIndexAction;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.delete.TransportDeleteAction;
 import org.elasticsearch.action.support.ActionFilters;
+import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
-import org.elasticsearch.action.support.master.MasterNodeReadRequest;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.ClusterState;
@@ -32,29 +32,33 @@ import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-import org.elasticsearch.xpack.ml.job.config.ListDocument;
+import org.elasticsearch.xpack.ml.job.config.Detector;
+import org.elasticsearch.xpack.ml.job.config.Job;
+import org.elasticsearch.xpack.ml.job.metadata.MlMetadata;
+import org.elasticsearch.xpack.ml.job.config.MlFilter;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 
-public class PutListAction extends Action<PutListAction.Request, PutListAction.Response, PutListAction.RequestBuilder> {
+public class DeleteFilterAction extends Action<DeleteFilterAction.Request, DeleteFilterAction.Response, DeleteFilterAction.RequestBuilder> {
 
-    public static final PutListAction INSTANCE = new PutListAction();
-    public static final String NAME = "cluster:admin/ml/list/put";
+    public static final DeleteFilterAction INSTANCE = new DeleteFilterAction();
+    public static final String NAME = "cluster:admin/ml/filter/delete";
 
-    private PutListAction() {
+    private DeleteFilterAction() {
         super(NAME);
     }
 
@@ -68,25 +72,22 @@ public class PutListAction extends Action<PutListAction.Request, PutListAction.R
         return new Response();
     }
 
-    public static class Request extends MasterNodeReadRequest<Request> implements ToXContent {
+    public static class Request extends AcknowledgedRequest<Request> {
 
-        public static Request parseRequest(XContentParser parser) {
-            ListDocument listDocument = ListDocument.PARSER.apply(parser, null);
-            return new Request(listDocument);
-        }
+        public static final ParseField FILTER_ID = new ParseField("filter_id");
 
-        private ListDocument listDocument;
+        private String filterId;
 
         Request() {
 
         }
 
-        public Request(ListDocument listDocument) {
-            this.listDocument = ExceptionsHelper.requireNonNull(listDocument, "list_document");
+        public Request(String filterId) {
+            this.filterId = ExceptionsHelper.requireNonNull(filterId, FILTER_ID.getPreferredName());
         }
 
-        public ListDocument getListDocument() {
-            return this.listDocument;
+        public String getFilterId() {
+            return filterId;
         }
 
         @Override
@@ -97,50 +98,44 @@ public class PutListAction extends Action<PutListAction.Request, PutListAction.R
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            listDocument = new ListDocument(in);
+            filterId = in.readString();
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            listDocument.writeTo(out);
-        }
-
-        @Override
-        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            listDocument.toXContent(builder, params);
-            return builder;
+            out.writeString(filterId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(listDocument);
+            return Objects.hash(filterId);
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
+            if (obj == null || getClass() != obj.getClass()) {
                 return false;
             }
             Request other = (Request) obj;
-            return Objects.equals(listDocument, other.listDocument);
+            return Objects.equals(filterId, other.filterId);
         }
     }
 
     public static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, PutListAction action) {
+        public RequestBuilder(ElasticsearchClient client, DeleteFilterAction action) {
             super(client, action, new Request());
         }
     }
+
     public static class Response extends AcknowledgedResponse {
 
-        public Response() {
-            super(true);
+        public Response(boolean acknowledged) {
+            super(acknowledged);
         }
+
+        private Response() {}
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
@@ -153,25 +148,23 @@ public class PutListAction extends Action<PutListAction.Request, PutListAction.R
             super.writeTo(out);
             writeAcknowledged(out);
         }
-
     }
 
-    // extends TransportMasterNodeAction, because we will store in cluster state.
     public static class TransportAction extends TransportMasterNodeAction<Request, Response> {
 
-        private final TransportIndexAction transportIndexAction;
+        private final TransportDeleteAction transportAction;
 
         // TODO these need to be moved to a settings object later. See #20
         private static final String ML_INFO_INDEX = "ml-int";
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ClusterService clusterService,
-                ThreadPool threadPool, ActionFilters actionFilters,
-                IndexNameExpressionResolver indexNameExpressionResolver,
-                TransportIndexAction transportIndexAction) {
-            super(settings, PutListAction.NAME, transportService, clusterService, threadPool, actionFilters,
+                               ThreadPool threadPool, ActionFilters actionFilters,
+                               IndexNameExpressionResolver indexNameExpressionResolver,
+                               TransportDeleteAction transportAction) {
+            super(settings, DeleteFilterAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
-            this.transportIndexAction = transportIndexAction;
+            this.transportAction = transportAction;
         }
 
         @Override
@@ -186,21 +179,41 @@ public class PutListAction extends Action<PutListAction.Request, PutListAction.R
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            ListDocument listDocument = request.getListDocument();
-            final String listId = listDocument.getId();
-            IndexRequest indexRequest = new IndexRequest(ML_INFO_INDEX, ListDocument.TYPE.getPreferredName(), listId);
-            XContentBuilder builder = XContentFactory.jsonBuilder();
-            indexRequest.source(listDocument.toXContent(builder, ToXContent.EMPTY_PARAMS));
-            transportIndexAction.execute(indexRequest, new ActionListener<IndexResponse>() {
+
+            final String filterId = request.getFilterId();
+            MlMetadata currentMlMetadata = state.metaData().custom(MlMetadata.TYPE);
+            Map<String, Job> jobs = currentMlMetadata.getJobs();
+            List<String> currentlyUsedBy = new ArrayList<>();
+            for (Job job : jobs.values()) {
+                List<Detector> detectors = job.getAnalysisConfig().getDetectors();
+                for (Detector detector : detectors) {
+                    if (detector.extractReferencedFilters().contains(filterId)) {
+                        currentlyUsedBy.add(job.getId());
+                        break;
+                    }
+                }
+            }
+            if (!currentlyUsedBy.isEmpty()) {
+                throw ExceptionsHelper.conflictStatusException("Cannot delete filter, currently used by jobs: "
+                        + currentlyUsedBy);
+            }
+
+            DeleteRequest deleteRequest = new DeleteRequest(ML_INFO_INDEX, MlFilter.TYPE.getPreferredName(), filterId);
+            transportAction.execute(deleteRequest, new ActionListener<DeleteResponse>() {
                 @Override
-                public void onResponse(IndexResponse indexResponse) {
-                    listener.onResponse(new Response());
+                public void onResponse(DeleteResponse deleteResponse) {
+                    if (deleteResponse.status().equals(RestStatus.NOT_FOUND)) {
+                        listener.onFailure(new ResourceNotFoundException("Could not delete filter with ID [" + filterId
+                                + "] because it does not exist"));
+                    } else {
+                        listener.onResponse(new Response(true));
+                    }
                 }
 
                 @Override
                 public void onFailure(Exception e) {
-                    logger.error("Could not create list with ID [" + listId + "]", e);
-                    throw new ResourceNotFoundException("Could not create list with ID [" + listId + "]", e);
+                    logger.error("Could not delete filter with ID [" + filterId + "]", e);
+                    listener.onFailure(new IllegalStateException("Could not delete filter with ID [" + filterId + "]", e));
                 }
             });
         }

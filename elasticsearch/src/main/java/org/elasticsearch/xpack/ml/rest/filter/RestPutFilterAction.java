@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.ml.rest.list;
+package org.elasticsearch.xpack.ml.rest.filter;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
@@ -22,22 +22,22 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.ml.MlPlugin;
-import org.elasticsearch.xpack.ml.action.PutListAction;
+import org.elasticsearch.xpack.ml.action.PutFilterAction;
 
 import java.io.IOException;
 
-public class RestPutListAction extends BaseRestHandler {
+public class RestPutFilterAction extends BaseRestHandler {
 
-    public RestPutListAction(Settings settings, RestController controller) {
+    public RestPutFilterAction(Settings settings, RestController controller) {
         super(settings);
-        controller.registerHandler(RestRequest.Method.PUT, MlPlugin.BASE_PATH + "lists", this);
+        controller.registerHandler(RestRequest.Method.PUT, MlPlugin.BASE_PATH + "filters", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         XContentParser parser = restRequest.contentOrSourceParamParser();
-        PutListAction.Request putListRequest = PutListAction.Request.parseRequest(parser);
-        return channel -> client.execute(PutListAction.INSTANCE, putListRequest, new AcknowledgedRestListener<>(channel));
+        PutFilterAction.Request putListRequest = PutFilterAction.Request.parseRequest(parser);
+        return channel -> client.execute(PutFilterAction.INSTANCE, putListRequest, new AcknowledgedRestListener<>(channel));
     }
 
 }

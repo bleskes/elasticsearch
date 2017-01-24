@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.ml.rest.list;
+package org.elasticsearch.xpack.ml.rest.filter;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
@@ -21,23 +21,23 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.ml.MlPlugin;
-import org.elasticsearch.xpack.ml.action.DeleteListAction;
-import org.elasticsearch.xpack.ml.action.DeleteListAction.Request;
+import org.elasticsearch.xpack.ml.action.DeleteFilterAction;
+import org.elasticsearch.xpack.ml.action.DeleteFilterAction.Request;
 
 import java.io.IOException;
 
-public class RestDeleteListAction extends BaseRestHandler {
+public class RestDeleteFilterAction extends BaseRestHandler {
 
-    public RestDeleteListAction(Settings settings, RestController controller) {
+    public RestDeleteFilterAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(RestRequest.Method.DELETE,
-                MlPlugin.BASE_PATH + "lists/{" + Request.LIST_ID.getPreferredName() + "}", this);
+                MlPlugin.BASE_PATH + "filters/{" + Request.FILTER_ID.getPreferredName() + "}", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
-        Request request = new Request(restRequest.param(Request.LIST_ID.getPreferredName()));
-        return channel -> client.execute(DeleteListAction.INSTANCE, request, new AcknowledgedRestListener<>(channel));
+        Request request = new Request(restRequest.param(Request.FILTER_ID.getPreferredName()));
+        return channel -> client.execute(DeleteFilterAction.INSTANCE, request, new AcknowledgedRestListener<>(channel));
     }
 
 }
