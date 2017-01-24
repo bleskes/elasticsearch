@@ -19,6 +19,7 @@ package org.elasticsearch.test;
 
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.license.LicenseUtils;
 import org.elasticsearch.rest.RestStatus;
 import org.hamcrest.Matcher;
 
@@ -42,7 +43,7 @@ public class SecurityTestsUtils {
     public static void assertAuthenticationException(ElasticsearchSecurityException e) {
         assertThat(e.status(), is(RestStatus.UNAUTHORIZED));
         // making sure it's not a license expired exception
-        assertThat(e.getHeader("es.license.expired.feature"), nullValue());
+        assertThat(e.getMetadata(LicenseUtils.EXPIRED_FEATURE_METADATA), nullValue());
         assertContainsWWWAuthenticateHeader(e);
     }
 
