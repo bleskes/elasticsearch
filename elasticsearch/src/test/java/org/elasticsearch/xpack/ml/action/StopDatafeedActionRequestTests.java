@@ -34,7 +34,7 @@ public class StopDatafeedActionRequestTests extends AbstractStreamableTestCase<S
     protected Request createTestInstance() {
         Request r = new Request(randomAsciiOfLengthBetween(1, 20));
         if (randomBoolean()) {
-            r.setStopTimeout(TimeValue.timeValueMillis(randomNonNegativeLong()));
+            r.setStopTimeout(TimeValue.timeValueMillis(randomPositiveLong()));
         }
         return r;
     }

@@ -24,7 +24,7 @@ public class OpenJobActionRequestTests extends AbstractStreamableTestCase<Reques
     protected Request createTestInstance() {
         Request request = new Request(randomAsciiOfLengthBetween(1, 20));
         if (randomBoolean()) {
-            request.setOpenTimeout(TimeValue.timeValueMillis(randomNonNegativeLong()));
+            request.setOpenTimeout(TimeValue.timeValueMillis(randomPositiveLong()));
         }
         return request;
     }

@@ -28,7 +28,7 @@ public class StartDatafeedActionRequestTests extends AbstractStreamableXContentT
             request.setEndTime(randomPositiveLong());
         }
         if (randomBoolean()) {
-            request.setStartTimeout(TimeValue.timeValueMillis(randomNonNegativeLong()));
+            request.setStartTimeout(TimeValue.timeValueMillis(randomPositiveLong()));
         }
         return request;
     }

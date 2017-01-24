@@ -24,7 +24,7 @@ public class CloseJobActionRequestTests extends AbstractStreamableTestCase<Reque
     protected Request createTestInstance() {
         Request request = new Request(randomAsciiOfLengthBetween(1, 20));
         if (randomBoolean()) {
-            request.setCloseTimeout(TimeValue.timeValueMillis(randomNonNegativeLong()));
+            request.setCloseTimeout(TimeValue.timeValueMillis(randomPositiveLong()));
         }
         return request;
     }
