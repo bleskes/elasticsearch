@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
+ * Copyright (c) 2017 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -12,11 +12,11 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.ml.transforms;
+package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 
-public abstract class TransformException extends Exception {
+public class CannotParseTimestampException extends Exception {
 
-    public TransformException(String message) {
-        super(message);
+    public CannotParseTimestampException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
