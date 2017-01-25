@@ -49,6 +49,8 @@ import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalState;
 
 public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
 
+    public static final String ID_FIELD = "_id";
+
     private final WatcherClientProxy client;
     private final TimeValue timeout;
 
@@ -77,14 +79,30 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
             }
         }
 
+        String docId = action.docId;
+
+        // prevent double-setting id
+        if (data.containsKey(ID_FIELD)) {
+            if (docId != null) {
+                throw illegalState("could not execute action [{}] of watch [{}]. " +
+                        "[ctx.payload.{}] or [ctx.payload._doc.{}] were set with [doc_id]. Only set [{}] or [doc_id]",
+                        actionId, ctx.watch().id(), ID_FIELD, ID_FIELD, ID_FIELD);
+            }
+
+            data = mutableMap(data);
+            docId = data.remove(ID_FIELD).toString();
+        }
+
         IndexRequest indexRequest = new IndexRequest();
         indexRequest.index(action.index);
         indexRequest.type(action.docType);
+        indexRequest.id(docId);
+
         data = addTimestampToDocument(data, ctx.executionTime());
         indexRequest.source(jsonBuilder().prettyPrint().map(data));
 
         if (ctx.simulateAction(actionId)) {
-            return new IndexAction.Simulated(indexRequest.index(), action.docType, new XContentSource(indexRequest.source(),
+            return new IndexAction.Simulated(indexRequest.index(), action.docType, docId, new XContentSource(indexRequest.source(),
                     XContentType.JSON));
         }
 
@@ -96,6 +114,10 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
     }
 
     Action.Result indexBulk(Iterable list, String actionId, WatchExecutionContext ctx) throws Exception {
+        if (action.docId != null) {
+            throw illegalState("could not execute action [{}] of watch [{}]. [doc_id] cannot be used with bulk [_doc] indexing");
+        }
+
         BulkRequest bulkRequest = new BulkRequest();
         for (Object item : list) {
             if (!(item instanceof Map)) {
@@ -106,6 +128,10 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
             IndexRequest indexRequest = new IndexRequest();
             indexRequest.index(action.index);
             indexRequest.type(action.docType);
+            if (doc.containsKey(ID_FIELD)) {
+                doc = mutableMap(doc);
+                indexRequest.id(doc.remove(ID_FIELD).toString());
+            }
             doc = addTimestampToDocument(doc, ctx.executionTime());
             indexRequest.source(jsonBuilder().prettyPrint().map(doc));
             bulkRequest.add(indexRequest);
@@ -130,12 +156,21 @@ public class ExecutableIndexAction extends ExecutableAction<IndexAction> {
 
     private Map<String, Object> addTimestampToDocument(Map<String, Object> data, DateTime executionTime) {
         if (action.executionTimeField != null) {
-            if (!(data instanceof HashMap)) {
-                data = new HashMap<>(data); // ensuring mutability
-            }
+            data = mutableMap(data);
             data.put(action.executionTimeField, WatcherDateTimeUtils.formatDate(executionTime));
         }
         return data;
+    }
+
+    /**
+     * Guarantees that the {@code data} is mutable for any code that needs to modify the {@linkplain Map} before using it (e.g., from
+     * singleton, immutable {@code Map}s).
+     *
+     * @param data The map to make mutable
+     * @return Always a {@linkplain HashMap}
+     */
+    private Map<String, Object> mutableMap(Map<String, Object> data) {
+        return data instanceof HashMap ? data : new HashMap<>(data);
     }
 
     static void itemResponseToXContent(XContentBuilder builder, BulkItemResponse item) throws IOException {

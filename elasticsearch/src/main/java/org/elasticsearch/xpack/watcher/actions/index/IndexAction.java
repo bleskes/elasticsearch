@@ -42,14 +42,17 @@ public class IndexAction implements Action {
 
     final String index;
     final String docType;
+    @Nullable final String docId;
     @Nullable final String executionTimeField;
     @Nullable final TimeValue timeout;
     @Nullable final DateTimeZone dynamicNameTimeZone;
 
-    public IndexAction(String index, String docType, @Nullable String executionTimeField,
+    public IndexAction(String index, String docType, @Nullable String docId,
+                       @Nullable String executionTimeField,
                        @Nullable TimeValue timeout, @Nullable DateTimeZone dynamicNameTimeZone) {
         this.index = index;
         this.docType = docType;
+        this.docId = docId;
         this.executionTimeField = executionTimeField;
         this.timeout = timeout;
         this.dynamicNameTimeZone = dynamicNameTimeZone;
@@ -68,6 +71,10 @@ public class IndexAction implements Action {
         return docType;
     }
 
+    public String getDocId() {
+        return docId;
+    }
+
     public String getExecutionTimeField() {
         return executionTimeField;
     }
@@ -83,7 +90,7 @@ public class IndexAction implements Action {
 
         IndexAction that = (IndexAction) o;
 
-        return Objects.equals(index, that.index) && Objects.equals(docType, that.docType)
+        return Objects.equals(index, that.index) && Objects.equals(docType, that.docType) && Objects.equals(docId, that.docId)
                 && Objects.equals(executionTimeField, that.executionTimeField)
                 && Objects.equals(timeout, that.timeout)
                 && Objects.equals(dynamicNameTimeZone, that.dynamicNameTimeZone);
@@ -91,7 +98,7 @@ public class IndexAction implements Action {
 
     @Override
     public int hashCode() {
-        return Objects.hash(index, docType, executionTimeField, timeout, dynamicNameTimeZone);
+        return Objects.hash(index, docType, docId, executionTimeField, timeout, dynamicNameTimeZone);
     }
 
     @Override
@@ -99,6 +106,9 @@ public class IndexAction implements Action {
         builder.startObject();
         builder.field(Field.INDEX.getPreferredName(), index);
         builder.field(Field.DOC_TYPE.getPreferredName(), docType);
+        if (docId != null) {
+            builder.field(Field.DOC_ID.getPreferredName(), docId);
+        }
         if (executionTimeField != null) {
             builder.field(Field.EXECUTION_TIME_FIELD.getPreferredName(), executionTimeField);
         }
@@ -114,6 +124,7 @@ public class IndexAction implements Action {
     public static IndexAction parse(String watchId, String actionId, XContentParser parser) throws IOException {
         String index = null;
         String docType = null;
+        String docId = null;
         String executionTimeField = null;
         TimeValue timeout = null;
         DateTimeZone dynamicNameTimeZone = null;
@@ -140,6 +151,8 @@ public class IndexAction implements Action {
             } else if (token == XContentParser.Token.VALUE_STRING) {
                 if (Field.DOC_TYPE.match(currentFieldName)) {
                     docType = parser.text();
+                } else if (Field.DOC_ID.match(currentFieldName)) {
+                    docId = parser.text();
                 } else if (Field.EXECUTION_TIME_FIELD.match(currentFieldName)) {
                     executionTimeField = parser.text();
                 } else if (Field.TIMEOUT_HUMAN.match(currentFieldName)) {
@@ -172,7 +185,7 @@ public class IndexAction implements Action {
                     actionId, Field.DOC_TYPE.getPreferredName());
         }
 
-        return new IndexAction(index, docType, executionTimeField, timeout, dynamicNameTimeZone);
+        return new IndexAction(index, docType, docId, executionTimeField, timeout, dynamicNameTimeZone);
     }
 
     public static Builder builder(String index, String docType) {
@@ -204,12 +217,15 @@ public class IndexAction implements Action {
 
         private final String index;
         private final String docType;
+        @Nullable
+        private final String docId;
         private final XContentSource source;
 
-        protected Simulated(String index, String docType, XContentSource source) {
+        protected Simulated(String index, String docType, @Nullable String docId, XContentSource source) {
             super(TYPE, Status.SIMULATED);
             this.index = index;
             this.docType = docType;
+            this.docId = docId;
             this.source = source;
         }
 
@@ -221,19 +237,28 @@ public class IndexAction implements Action {
             return docType;
         }
 
+        public String docId() {
+            return docId;
+        }
+
         public XContentSource source() {
             return source;
         }
 
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-            return builder.startObject(type)
-                    .startObject(Field.REQUEST.getPreferredName())
-                        .field(Field.INDEX.getPreferredName(), index)
-                        .field(Field.DOC_TYPE.getPreferredName(), docType)
-                        .field(Field.SOURCE.getPreferredName(), source, params)
-                    .endObject()
-                    .endObject();
+            builder.startObject(type)
+                       .startObject(Field.REQUEST.getPreferredName())
+                            .field(Field.INDEX.getPreferredName(), index)
+                            .field(Field.DOC_TYPE.getPreferredName(), docType);
+
+            if (docId != null) {
+                builder.field(Field.DOC_ID.getPreferredName(), docId);
+            }
+
+            return builder.field(Field.SOURCE.getPreferredName(), source, params)
+                       .endObject()
+                   .endObject();
         }
     }
 
@@ -241,6 +266,7 @@ public class IndexAction implements Action {
 
         final String index;
         final String docType;
+        String docId;
         String executionTimeField;
         TimeValue timeout;
         DateTimeZone dynamicNameTimeZone;
@@ -250,30 +276,36 @@ public class IndexAction implements Action {
             this.docType = docType;
         }
 
+        public Builder setDocId(String docId) {
+            this.docId = docId;
+            return this;
+        }
+
         public Builder setExecutionTimeField(String executionTimeField) {
             this.executionTimeField = executionTimeField;
             return this;
         }
 
-        public Builder timeout(TimeValue writeTimeout) {
+        public Builder setTimeout(TimeValue writeTimeout) {
             this.timeout = writeTimeout;
             return this;
         }
 
-        public Builder dynamicNameTimeZone(DateTimeZone dynamicNameTimeZone) {
+        public Builder setDynamicNameTimeZone(DateTimeZone dynamicNameTimeZone) {
             this.dynamicNameTimeZone = dynamicNameTimeZone;
             return this;
         }
 
         @Override
         public IndexAction build() {
-            return new IndexAction(index, docType, executionTimeField, timeout, dynamicNameTimeZone);
+            return new IndexAction(index, docType, docId, executionTimeField, timeout, dynamicNameTimeZone);
         }
     }
 
     interface Field extends Action.Field {
         ParseField INDEX = new ParseField("index");
         ParseField DOC_TYPE = new ParseField("doc_type");
+        ParseField DOC_ID = new ParseField("doc_id");
         ParseField EXECUTION_TIME_FIELD = new ParseField("execution_time_field");
         ParseField SOURCE = new ParseField("source");
         ParseField RESPONSE = new ParseField("response");
