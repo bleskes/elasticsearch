@@ -96,7 +96,7 @@ public class StartDatafeedAction
         private String datafeedId;
         private long startTime;
         private Long endTime;
-        private TimeValue startTimeout = TimeValue.timeValueSeconds(30);
+        private TimeValue startTimeout = TimeValue.timeValueSeconds(20);
 
         public Request(String datafeedId, long startTime) {
             this.datafeedId = ExceptionsHelper.requireNonNull(datafeedId, DatafeedConfig.ID.getPreferredName());
@@ -267,7 +267,6 @@ public class StartDatafeedAction
                 } else {
                     listener.onResponse(new Response(true));
                 }
-
             });
         }
     }

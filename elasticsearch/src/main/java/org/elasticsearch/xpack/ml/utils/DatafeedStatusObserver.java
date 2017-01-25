@@ -43,6 +43,7 @@ public class DatafeedStatusObserver {
     public void waitForStatus(String datafeedId, TimeValue waitTimeout, DatafeedStatus expectedStatus, Consumer<Exception> handler) {
         ClusterStateObserver observer =
                 new ClusterStateObserver(clusterService, LOGGER, threadPool.getThreadContext());
+        DatafeedPredicate datafeedPredicate = new DatafeedPredicate(datafeedId, expectedStatus);
         observer.waitForNextChange(new ClusterStateObserver.Listener() {
             @Override
             public void onNewClusterState(ClusterState state) {
@@ -58,11 +59,15 @@ public class DatafeedStatusObserver {
 
             @Override
             public void onTimeout(TimeValue timeout) {
-                Exception e = new IllegalArgumentException("Timeout expired while waiting for datafeed status to change to ["
-                        + expectedStatus + "]");
-                handler.accept(e);
+                if (datafeedPredicate.test(clusterService.state())) {
+                    handler.accept(null);
+                } else {
+                    Exception e = new IllegalArgumentException("Timeout expired while waiting for datafeed status to change to ["
+                            + expectedStatus + "]");
+                    handler.accept(e);
+                }
             }
-        }, new DatafeedPredicate(datafeedId, expectedStatus), waitTimeout);
+        }, datafeedPredicate, waitTimeout);
     }
 
     private static class DatafeedPredicate implements Predicate<ClusterState> {
