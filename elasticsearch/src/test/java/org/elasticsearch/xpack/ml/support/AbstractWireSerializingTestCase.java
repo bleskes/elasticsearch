@@ -96,9 +96,13 @@ public abstract class AbstractWireSerializingTestCase<T extends ToXContent & Wri
     private T copyInstance(T instance) throws IOException {
         try (BytesStreamOutput output = new BytesStreamOutput()) {
             instance.writeTo(output);
-            try (StreamInput in = new NamedWriteableAwareStreamInput(output.bytes().streamInput(), NAMED_WRITEABLE_REGISTRY)) {
+            try (StreamInput in = new NamedWriteableAwareStreamInput(output.bytes().streamInput(), getNamedWriteableRegistry())) {
                 return instanceReader().read(in);
             }
         }
+    }
+
+    protected NamedWriteableRegistry getNamedWriteableRegistry() {
+        return NAMED_WRITEABLE_REGISTRY;
     }
 }
