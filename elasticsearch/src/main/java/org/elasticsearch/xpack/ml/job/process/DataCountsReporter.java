@@ -24,7 +24,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 import org.elasticsearch.xpack.ml.job.persistence.JobDataCountsPersister;
-import org.elasticsearch.xpack.ml.job.usage.UsageReporter;
 
 import java.io.Closeable;
 import java.util.Date;
@@ -69,7 +68,6 @@ public class DataCountsReporter extends AbstractComponent implements Closeable {
     private static final TimeValue PERSIST_INTERVAL = TimeValue.timeValueMillis(10_000L);
 
     private final String jobId;
-    private final UsageReporter usageReporter;
     private final JobDataCountsPersister dataCountsPersister;
 
     private final DataCounts totalRecordStats;
@@ -89,13 +87,12 @@ public class DataCountsReporter extends AbstractComponent implements Closeable {
     private volatile boolean persistDataCountsOnNextRecord;
     private final ThreadPool.Cancellable persistDataCountsDatafeedAction;
 
-    public DataCountsReporter(ThreadPool threadPool, Settings settings, String jobId, DataCounts counts, UsageReporter usageReporter,
-                              JobDataCountsPersister dataCountsPersister) {
+    public DataCountsReporter(ThreadPool threadPool, Settings settings, String jobId, DataCounts counts,
+                          JobDataCountsPersister dataCountsPersister) {
 
         super(settings);
 
         this.jobId = jobId;
-        this.usageReporter = usageReporter;
         this.dataCountsPersister = dataCountsPersister;
 
         totalRecordStats = counts;
@@ -121,8 +118,6 @@ public class DataCountsReporter extends AbstractComponent implements Closeable {
      *                        in milliseconds from the epoch.
      */
     public void reportRecordWritten(long inputFieldCount, long recordTimeMs) {
-        usageReporter.addFieldsRecordsRead(inputFieldCount);
-
         Date recordDate = new Date(recordTimeMs);
 
         totalRecordStats.incrementInputFieldCount(inputFieldCount);
@@ -170,8 +165,6 @@ public class DataCountsReporter extends AbstractComponent implements Closeable {
 
         incrementalRecordStats.incrementInvalidDateCount(1);
         incrementalRecordStats.incrementInputFieldCount(inputFieldCount);
-
-        usageReporter.addFieldsRecordsRead(inputFieldCount);
     }
 
     /**
@@ -194,7 +187,6 @@ public class DataCountsReporter extends AbstractComponent implements Closeable {
     public void reportBytesRead(long newBytes) {
         totalRecordStats.incrementInputBytes(newBytes);
         incrementalRecordStats.incrementInputBytes(newBytes);
-        usageReporter.addBytesRead(newBytes);
     }
 
     /**
@@ -206,8 +198,6 @@ public class DataCountsReporter extends AbstractComponent implements Closeable {
 
         incrementalRecordStats.incrementOutOfOrderTimeStampCount(1);
         incrementalRecordStats.incrementInputFieldCount(inputFieldCount);
-
-        usageReporter.addFieldsRecordsRead(inputFieldCount);
     }
 
     /**
@@ -275,7 +265,6 @@ public class DataCountsReporter extends AbstractComponent implements Closeable {
      * not we are at a reporting boundary.
      */
     public void finishReporting() {
-        usageReporter.reportUsage();
         dataCountsPersister.persistDataCounts(jobId, runningTotalStats(), new LoggingActionListener());
     }
 
