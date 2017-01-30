@@ -361,8 +361,6 @@ public class IndexPrivilegeTests extends AbstractPrivilegeTestCase {
         assertAccessIsDenied("u11",
                 "GET", "/" + randomIndex() + "/foo/_msearch", "{}\n{ \"query\" : { \"match_all\" : {} } }\n");
         assertAccessIsDenied("u11", "POST", "/" + randomIndex() + "/foo/_mget", "{ \"ids\" : [ \"1\", \"2\" ] } ");
-        assertAccessIsDenied("u11", "PUT",
-                "/" + randomIndex() + "/foo/_bulk", "{ \"index\" : { \"_id\" : \"123\" } }\n{ \"foo\" : \"bar\" }\n");
         assertAccessIsDenied("u11",
                 "GET", "/" + randomIndex() + "/foo/_mtermvectors", "{ \"docs\" : [ { \"_id\": \"1\" }, { \"_id\": \"2\" } ] }");
     }
@@ -400,8 +398,6 @@ public class IndexPrivilegeTests extends AbstractPrivilegeTestCase {
         assertAccessIsAllowed("u13",
                 "GET", "/" + randomIndex() + "/foo/_msearch", "{}\n{ \"query\" : { \"match_all\" : {} } }\n");
         assertAccessIsAllowed("u13", "POST", "/" + randomIndex() + "/foo/_mget", "{ \"ids\" : [ \"1\", \"2\" ] } ");
-        assertAccessIsDenied("u13", "PUT",
-                "/" + randomIndex() + "/foo/_bulk", "{ \"index\" : { \"_id\" : \"123\" } }\n{ \"foo\" : \"bar\" }\n");
         assertAccessIsAllowed("u13",
                 "GET", "/" + randomIndex() + "/foo/_mtermvectors", "{ \"docs\" : [ { \"_id\": \"1\" }, { \"_id\": \"2\" } ] }");
     }
