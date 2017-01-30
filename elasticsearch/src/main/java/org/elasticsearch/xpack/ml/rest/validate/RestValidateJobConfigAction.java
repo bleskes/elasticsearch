@@ -1,7 +1,7 @@
 /*
  * ELASTICSEARCH CONFIDENTIAL
  *
- * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
+ * Copyright (c) 2017 Elasticsearch BV. All Rights Reserved.
  *
  * Notice: this software, and all information contained
  * therein, is the exclusive property of Elasticsearch BV
@@ -22,23 +22,23 @@ import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.AcknowledgedRestListener;
 import org.elasticsearch.xpack.ml.MlPlugin;
-import org.elasticsearch.xpack.ml.action.ValidateDetectorAction;
+import org.elasticsearch.xpack.ml.action.ValidateJobConfigAction;
 
 import java.io.IOException;
 
-public class RestValidateDetectorAction extends BaseRestHandler {
+public class RestValidateJobConfigAction extends BaseRestHandler {
 
-    public RestValidateDetectorAction(Settings settings, RestController controller) {
+    public RestValidateJobConfigAction(Settings settings, RestController controller) {
         super(settings);
-        controller.registerHandler(RestRequest.Method.POST, MlPlugin.BASE_PATH + "anomaly_detectors/_validate/detector", this);
+        controller.registerHandler(RestRequest.Method.POST, MlPlugin.BASE_PATH + "anomaly_detectors/_validate", this);
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         XContentParser parser = restRequest.contentOrSourceParamParser();
-        ValidateDetectorAction.Request validateDetectorRequest = ValidateDetectorAction.Request.parseRequest(parser);
+        ValidateJobConfigAction.Request validateConfigRequest = ValidateJobConfigAction.Request.parseRequest(parser);
         return channel ->
-                client.execute(ValidateDetectorAction.INSTANCE, validateDetectorRequest, new AcknowledgedRestListener<>(channel));
+                client.execute(ValidateJobConfigAction.INSTANCE, validateConfigRequest, new AcknowledgedRestListener<>(channel));
     }
 
 }
