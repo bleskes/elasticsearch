@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.ml.rest.datafeeds;
 
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
@@ -39,9 +38,6 @@ public class RestStopDatafeedAction extends BaseRestHandler {
     protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
         StopDatafeedAction.Request jobDatafeedRequest = new StopDatafeedAction.Request(
                 restRequest.param(DatafeedConfig.ID.getPreferredName()));
-        if (restRequest.hasParam("stop_timeout")) {
-            jobDatafeedRequest.setStopTimeout(TimeValue.parseTimeValue(restRequest.param("stop_timeout"), "stop_timeout"));
-        }
         return channel -> client.execute(StopDatafeedAction.INSTANCE, jobDatafeedRequest, new AcknowledgedRestListener<>(channel));
     }
 }

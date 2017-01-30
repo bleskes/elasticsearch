@@ -108,7 +108,7 @@ public class RemovePersistentTaskAction extends Action<RemovePersistentTaskActio
     }
 
     public static class Response extends AcknowledgedResponse {
-        protected Response() {
+        public Response() {
             super();
         }
 
