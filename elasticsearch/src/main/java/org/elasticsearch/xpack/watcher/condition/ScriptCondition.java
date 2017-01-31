@@ -56,7 +56,7 @@ public final class ScriptCondition extends Condition {
         this.scriptService = scriptService;
         this.script = script;
         // try to compile so we catch syntax errors early
-        scriptService.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap());
+        scriptService.compile(script, Watcher.SCRIPT_CONTEXT);
     }
 
     public Script getScript() {
@@ -89,7 +89,7 @@ public final class ScriptCondition extends Condition {
         if (script.getParams() != null && !script.getParams().isEmpty()) {
             parameters.putAll(script.getParams());
         }
-        CompiledScript compiledScript = scriptService.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap());
+        CompiledScript compiledScript = scriptService.compile(script, Watcher.SCRIPT_CONTEXT);
         ExecutableScript executable = scriptService.executable(compiledScript, parameters);
         Object value = executable.run();
         if (value instanceof Boolean) {

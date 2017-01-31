@@ -24,6 +24,7 @@ import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.GeneralScriptException;
 import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptException;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.test.ESTestCase;
@@ -53,6 +54,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,7 +74,7 @@ public class ScriptTransformTests extends ESTestCase {
         Map<String, Object> params = Collections.emptyMap();
         Script script = new Script(type, "_lang", "_script", params);
         CompiledScript compiledScript = mock(CompiledScript.class);
-        when(service.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap())).thenReturn(compiledScript);
+        when(service.compile(script, Watcher.SCRIPT_CONTEXT)).thenReturn(compiledScript);
         ExecutableScriptTransform transform = new ExecutableScriptTransform(new ScriptTransform(script), logger, service);
 
         WatchExecutionContext ctx = mockExecutionContext("_name", EMPTY_PAYLOAD);
@@ -99,7 +102,7 @@ public class ScriptTransformTests extends ESTestCase {
         Map<String, Object> params = Collections.emptyMap();
         Script script = new Script(type, "_lang", "_script", params);
         CompiledScript compiledScript = mock(CompiledScript.class);
-        when(service.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap())).thenReturn(compiledScript);
+        when(service.compile(script, Watcher.SCRIPT_CONTEXT)).thenReturn(compiledScript);
         ExecutableScriptTransform transform = new ExecutableScriptTransform(new ScriptTransform(script), logger, service);
 
         WatchExecutionContext ctx = mockExecutionContext("_name", EMPTY_PAYLOAD);
@@ -125,7 +128,7 @@ public class ScriptTransformTests extends ESTestCase {
         Map<String, Object> params = Collections.emptyMap();
         Script script = new Script(type, "_lang", "_script", params);
         CompiledScript compiledScript = mock(CompiledScript.class);
-        when(service.compile(script, Watcher.SCRIPT_CONTEXT, Collections.emptyMap())).thenReturn(compiledScript);
+        when(service.compile(script, Watcher.SCRIPT_CONTEXT)).thenReturn(compiledScript);
         ExecutableScriptTransform transform = new ExecutableScriptTransform(new ScriptTransform(script), logger, service);
 
         WatchExecutionContext ctx = mockExecutionContext("_name", EMPTY_PAYLOAD);
@@ -151,14 +154,17 @@ public class ScriptTransformTests extends ESTestCase {
         ScriptType type = randomFrom(ScriptType.values());
         XContentBuilder builder = jsonBuilder().startObject();
         builder.field(scriptTypeField(type), "_script");
-        builder.field("lang", "_lang");
+        if (type != ScriptType.STORED) {
+            builder.field("lang", "_lang");
+        }
         builder.startObject("params").field("key", "value").endObject();
         builder.endObject();
 
         XContentParser parser = createParser(builder);
         parser.nextToken();
+
         ExecutableScriptTransform transform = new ScriptTransformFactory(Settings.EMPTY, service).parseExecutable("_id", parser, false);
-        Script script = new Script(type, "_lang", "_script", singletonMap("key", "value"));
+        Script script = new Script(type, type == ScriptType.STORED ? null : "_lang", "_script", singletonMap("key", "value"));
         assertThat(transform.transform().getScript(), equalTo(script));
     }
 
@@ -173,21 +179,16 @@ public class ScriptTransformTests extends ESTestCase {
     }
 
     public void testScriptConditionParserBadScript() throws Exception {
-        ScriptTransformFactory transformFactory = new ScriptTransformFactory(Settings.builder().build(), createScriptService(tp));
-        ScriptType scriptType = randomFrom(ScriptType.values());
-        String script;
-        switch (scriptType) {
-            case STORED:
-            case FILE:
-                script = "nonExisting_script";
-                break;
-            case INLINE:
-            default:
-                script = "foo = = 1";
-        }
+        ScriptService scriptService = mock(ScriptService.class);
+        String errorMessage = "expected error message";
+        ScriptException scriptException = new ScriptException(errorMessage, new RuntimeException("foo"),
+                Collections.emptyList(), "whatever", "whatever");
+        when(scriptService.compile(anyObject(), eq(Watcher.SCRIPT_CONTEXT))).thenThrow(scriptException);
 
+        ScriptTransformFactory transformFactory = new ScriptTransformFactory(Settings.builder().build(), scriptService);
+        ScriptType scriptType = randomFrom(ScriptType.values());
         XContentBuilder builder = jsonBuilder().startObject()
-                .field(scriptTypeField(scriptType), script)
+                .field(scriptTypeField(scriptType), "whatever")
                 .field("lang", "groovy")
                 .startObject("params").field("key", "value").endObject()
                 .endObject();
@@ -200,7 +201,12 @@ public class ScriptTransformTests extends ESTestCase {
             fail("expected a transform validation exception trying to create an executable with a bad or missing script");
         } catch (GeneralScriptException e) {
             // I don't think this is what this test intended to check!
-            assertThat(e.getMessage(), containsString("script_lang not supported [groovy]"));
+            assertThat(e.getMessage(), containsString("expected error message"));
+        }
+
+        if (scriptType == ScriptType.STORED) {
+            assertWarnings("specifying the field [lang] for executing stored scripts is deprecated;" +
+                    " use only the field [stored] to specify an <id>");
         }
     }
 
@@ -217,11 +223,14 @@ public class ScriptTransformTests extends ESTestCase {
 
         XContentParser parser = createParser(builder);
         parser.nextToken();
+
         ScriptTransform scriptCondition = transformFactory.parseTransform("_watch", parser, false);
-        try {
-            transformFactory.createExecutable(scriptCondition);
-            fail("expected a transform validation exception trying to create an executable with an invalid language");
-        } catch (GeneralScriptException e) {
+        Exception e = expectThrows(GeneralScriptException.class, () -> transformFactory.createExecutable(scriptCondition));
+        if (scriptType == ScriptType.STORED) {
+            assertThat(e.getMessage(), containsString("unable to get stored script with unsupported lang [not_a_valid_lang]"));
+            assertWarnings("specifying the field [lang] for executing stored scripts is deprecated;" +
+                    " use only the field [stored] to specify an <id>");
+        } else {
             assertThat(e.getMessage(), containsString("script_lang not supported [not_a_valid_lang]"));
         }
     }

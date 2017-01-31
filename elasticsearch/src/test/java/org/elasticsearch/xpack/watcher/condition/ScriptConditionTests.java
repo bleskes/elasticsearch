@@ -163,10 +163,9 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testScriptConditionParserBadScript() throws Exception {
-        ScriptType scriptType = randomFrom(ScriptType.values());
+        ScriptType scriptType = randomFrom(ScriptType.INLINE, ScriptType.FILE);
         String script;
         switch (scriptType) {
-            case STORED:
             case FILE:
                 script = "nonExisting_script";
                 break;
@@ -177,7 +176,7 @@ public class ScriptConditionTests extends ESTestCase {
         XContentBuilder builder = createConditionContent(script, "groovy", scriptType);
         XContentParser parser = createParser(builder);
         parser.nextToken();
-        expectThrows(IllegalArgumentException.class,
+        Exception e = expectThrows(IllegalArgumentException.class,
                 () -> ScriptCondition.parse(scriptService, "_watch", parser, false, defaultScriptLang));
     }
 
@@ -237,7 +236,7 @@ public class ScriptConditionTests extends ESTestCase {
             default:
                 throw illegalArgument("unsupported script type [{}]", scriptType);
         }
-        if (scriptLang != null) {
+        if (scriptLang != null && scriptType != ScriptType.STORED) {
             builder.field("lang", scriptLang);
         }
         return builder.endObject();
