@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.ml.job.process.autodetect;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.ElasticsearchStatusException;
-import org.elasticsearch.common.CheckedSupplier;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
@@ -170,12 +169,12 @@ public class AutodetectCommunicator implements Closeable {
         return dataCountsReporter.runningTotalStats();
     }
 
-    private <T> T checkAndRun(Supplier<String> errorMessage, CheckedSupplier<T, IOException> callback, boolean wait) throws IOException {
+    private <T> T checkAndRun(Supplier<String> errorMessage, Callback<T> callback, boolean wait) throws IOException {
         CountDownLatch latch = new CountDownLatch(1);
         if (inUse.compareAndSet(null, latch)) {
             try {
                 checkProcessIsAlive();
-                return callback.get();
+                return callback.run();
             } finally {
                 latch.countDown();
                 inUse.set(null);
@@ -192,11 +191,17 @@ public class AutodetectCommunicator implements Closeable {
                     }
                 }
                 checkProcessIsAlive();
-                return callback.get();
+                return callback.run();
             } else {
                 throw new ElasticsearchStatusException(errorMessage.get(), RestStatus.TOO_MANY_REQUESTS);
             }
         }
+    }
+
+    private interface Callback<T> {
+
+        T run() throws IOException;
+
     }
 
 }
