@@ -26,10 +26,6 @@ import org.elasticsearch.xpack.ml.job.results.AutodetectResult;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 
 /**
@@ -44,7 +40,7 @@ public class AutodetectResultsParser extends AbstractComponent {
         super(settings);
     }
 
-    public Stream<AutodetectResult> parseResults(InputStream in) throws ElasticsearchParseException {
+    public Iterator<AutodetectResult> parseResults(InputStream in) throws ElasticsearchParseException {
         try {
             XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(NamedXContentRegistry.EMPTY, in);
             XContentParser.Token token = parser.nextToken();
@@ -52,9 +48,7 @@ public class AutodetectResultsParser extends AbstractComponent {
             if (token != XContentParser.Token.START_ARRAY) {
                 throw new ElasticsearchParseException("unexpected token [" + token + "]");
             }
-            Spliterator<AutodetectResult> spliterator = Spliterators.spliterator(new AutodetectResultIterator(parser), Long.MAX_VALUE, 0);
-            return StreamSupport.stream(spliterator, false)
-                    .onClose(() -> consumeAndCloseStream(in));
+            return new AutodetectResultIterator(in, parser);
         } catch (IOException e) {
             consumeAndCloseStream(in);
             throw new ElasticsearchParseException(e.getMessage(), e);
@@ -79,10 +73,12 @@ public class AutodetectResultsParser extends AbstractComponent {
 
     private class AutodetectResultIterator implements Iterator<AutodetectResult> {
 
+        private final InputStream in;
         private final XContentParser parser;
         private XContentParser.Token token;
 
-        private AutodetectResultIterator(XContentParser parser) {
+        private AutodetectResultIterator(InputStream in, XContentParser parser) {
+            this.in = in;
             this.parser = parser;
             token = parser.currentToken();
         }
@@ -95,6 +91,7 @@ public class AutodetectResultsParser extends AbstractComponent {
                 throw new ElasticsearchParseException(e.getMessage(), e);
             }
             if (token == XContentParser.Token.END_ARRAY) {
+                consumeAndCloseStream(in);
                 return false;
             } else if (token != XContentParser.Token.START_OBJECT) {
                 logger.error("Expecting Json Field name token after the Start Object token");
