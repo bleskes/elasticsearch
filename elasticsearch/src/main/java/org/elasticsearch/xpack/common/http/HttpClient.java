@@ -24,6 +24,8 @@ import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.common.http.auth.ApplicableHttpAuth;
 import org.elasticsearch.xpack.common.http.auth.HttpAuthRegistry;
 import org.elasticsearch.xpack.ssl.SSLService;
@@ -146,6 +148,15 @@ public class HttpClient extends AbstractComponent {
                 urlConnection.setRequestProperty(entry.getKey(), entry.getValue());
             }
         }
+
+        // BWC - hack for input requests made to elasticsearch that do not provide the right content-type header!
+        if (request.hasBody() && request.headers().containsKey("Content-Type") == false) {
+            XContentType xContentType = XContentFactory.xContentType(request.body());
+            if (xContentType != null) {
+                urlConnection.setRequestProperty("Content-Type", xContentType.mediaType());
+            }
+        }
+
         if (request.auth() != null) {
             logger.trace("applying auth headers");
             ApplicableHttpAuth applicableAuth = httpAuthRegistry.createApplicable(request.auth);

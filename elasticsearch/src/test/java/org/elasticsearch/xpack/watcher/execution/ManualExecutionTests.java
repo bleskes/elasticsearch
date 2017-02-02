@@ -150,7 +150,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
             //If we are persisting the state we need to use the exact watch that is in memory
             ctxBuilder = ManualExecutionContext.builder(watchService().getWatch("_id"), true, triggerEvent, timeValueSeconds(5));
         } else {
-            parsedWatch = watchParser().parse("_id", false, watchBuilder.buildAsBytes(XContentType.JSON));
+            parsedWatch = watchParser().parse("_id", false, watchBuilder.buildAsBytes(XContentType.JSON), XContentType.JSON);
             ctxBuilder = ManualExecutionContext.builder(parsedWatch, false, triggerEvent, timeValueSeconds(5));
         }
 
@@ -368,7 +368,7 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
                 .condition(new ScriptCondition(script))
                 .addAction("log", loggingAction("foobar"));
 
-        Watch watch = watchParser().parse("_id", false, watchBuilder.buildAsBytes(XContentType.JSON));
+        Watch watch = watchParser().parse("_id", false, watchBuilder.buildAsBytes(XContentType.JSON), XContentType.JSON);
         ManualExecutionContext.Builder ctxBuilder = ManualExecutionContext.builder(watch, false, new ManualTriggerEvent("_id",
                         new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))),
                 new TimeValue(1, TimeUnit.HOURS));

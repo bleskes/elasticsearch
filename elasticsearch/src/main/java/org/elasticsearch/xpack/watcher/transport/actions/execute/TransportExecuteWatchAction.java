@@ -108,7 +108,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
                 knownWatch = true;
             } else if (request.getWatchSource() != null) {
                 assert !request.isRecordExecution();
-                watch = watchParser.parse(ExecuteWatchRequest.INLINE_WATCH_ID, false, request.getWatchSource());
+                watch = watchParser.parse(ExecuteWatchRequest.INLINE_WATCH_ID, false, request.getWatchSource(), request.getXContentType());
                 knownWatch = false;
             } else {
                 throw illegalArgument("no watch provided");

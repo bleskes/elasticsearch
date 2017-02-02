@@ -41,6 +41,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.DocumentMissingException;
@@ -324,7 +325,9 @@ public class WatchStore extends AbstractComponent {
                 for (SearchHit hit : response.getHits()) {
                     String id = hit.getId();
                     try {
-                        Watch watch = watchParser.parse(id, true, hit.getSourceRef(), true);
+                        final BytesReference source = hit.getSourceRef();
+                        Watch watch =
+                                watchParser.parse(id, true, source, XContentFactory.xContentType(source), true);
                         watch.status().version(hit.version());
                         watch.version(hit.version());
                         watches.put(id, watch);

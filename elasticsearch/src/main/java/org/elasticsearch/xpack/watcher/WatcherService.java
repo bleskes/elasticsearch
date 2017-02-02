@@ -28,6 +28,11 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.xpack.support.clock.Clock;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.xpack.watcher.execution.ExecutionService;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.watcher.trigger.TriggerService;
@@ -117,10 +122,10 @@ public class WatcherService extends AbstractComponent {
         return delete;
     }
 
-    public IndexResponse putWatch(String id, BytesReference watchSource, boolean active) throws IOException {
+    public IndexResponse putWatch(String id, BytesReference watchSource, XContentType xContentType, boolean active) throws IOException {
         ensureStarted();
         DateTime now = clock.nowUTC();
-        Watch watch = watchParser.parseWithSecrets(id, false, watchSource, now);
+        Watch watch = watchParser.parseWithSecrets(id, false, watchSource, now, xContentType);
         watch.setState(active, now);
         WatchStore.WatchPut result = watchStore.put(watch);
 

@@ -29,7 +29,6 @@ import org.elasticsearch.rest.RestRequest;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -44,7 +43,7 @@ public interface RestRequestFilter {
     default RestRequest getFilteredRequest(RestRequest restRequest) throws IOException {
         Set<String> fields = getFilteredFields();
         if (restRequest.hasContent() && fields.isEmpty() == false) {
-            return new RestRequest(restRequest.getXContentRegistry(), restRequest.params(), restRequest.path()) {
+            return new RestRequest(restRequest.getXContentRegistry(), restRequest.params(), restRequest.path(), restRequest.getHeaders()) {
 
                 private BytesReference filteredBytes = null;
 
@@ -78,16 +77,6 @@ public interface RestRequestFilter {
                         }
                     }
                     return filteredBytes;
-                }
-
-                @Override
-                public String header(String name) {
-                    return restRequest.header(name);
-                }
-
-                @Override
-                public Iterable<Entry<String, String>> headers() {
-                    return restRequest.headers();
                 }
             };
         } else {

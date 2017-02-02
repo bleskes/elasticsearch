@@ -21,6 +21,7 @@ import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.security.action.realm.ClearRealmCacheAction;
 import org.elasticsearch.xpack.security.action.realm.ClearRealmCacheRequest;
 import org.elasticsearch.xpack.security.action.realm.ClearRealmCacheRequestBuilder;
@@ -155,8 +156,8 @@ public class SecurityClient {
         client.execute(DeleteUserAction.INSTANCE, request, listener);
     }
 
-    public PutUserRequestBuilder preparePutUser(String username, BytesReference source) throws IOException {
-        return new PutUserRequestBuilder(client).source(username, source);
+    public PutUserRequestBuilder preparePutUser(String username, BytesReference source, XContentType xContentType) throws IOException {
+        return new PutUserRequestBuilder(client).source(username, source, xContentType);
     }
 
     public PutUserRequestBuilder preparePutUser(String username, char[] password, String... roles) {
@@ -171,8 +172,9 @@ public class SecurityClient {
         return new ChangePasswordRequestBuilder(client).username(username).password(password);
     }
 
-    public ChangePasswordRequestBuilder prepareChangePassword(String username, BytesReference source) throws IOException {
-        return new ChangePasswordRequestBuilder(client).username(username).source(source);
+    public ChangePasswordRequestBuilder prepareChangePassword(String username, BytesReference source, XContentType xContentType)
+            throws IOException {
+        return new ChangePasswordRequestBuilder(client).username(username).source(source, xContentType);
     }
 
     public void changePassword(ChangePasswordRequest request, ActionListener<ChangePasswordResponse> listener) {
@@ -209,8 +211,8 @@ public class SecurityClient {
         return new PutRoleRequestBuilder(client).name(name);
     }
 
-    public PutRoleRequestBuilder preparePutRole(String name, BytesReference source) throws IOException {
-        return new PutRoleRequestBuilder(client).source(name, source);
+    public PutRoleRequestBuilder preparePutRole(String name, BytesReference source, XContentType xContentType) throws IOException {
+        return new PutRoleRequestBuilder(client).source(name, source, xContentType);
     }
 
     public void putRole(PutRoleRequest request, ActionListener<PutRoleResponse> listener) {

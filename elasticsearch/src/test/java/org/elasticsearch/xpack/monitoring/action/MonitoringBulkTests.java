@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.monitoring.action;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.xpack.monitoring.MonitoredSystem;
 import org.elasticsearch.xpack.monitoring.exporter.MonitoringTemplateUtils;
@@ -55,7 +56,7 @@ public class MonitoringBulkTests extends MonitoringIntegTestCase {
         for (int i = 0; i < numDocs; i++) {
             MonitoringBulkDoc doc = new MonitoringBulkDoc(MonitoredSystem.KIBANA.getSystem(), MonitoringTemplateUtils.TEMPLATE_VERSION);
             doc.setType(randomFrom(types));
-            doc.setSource(jsonBuilder().startObject().field("num", numDocs).endObject().bytes());
+            doc.setSource(jsonBuilder().startObject().field("num", numDocs).endObject().bytes(), XContentType.JSON);
             requestBuilder.add(doc);
         }
 
@@ -108,7 +109,7 @@ public class MonitoringBulkTests extends MonitoringIntegTestCase {
                             MonitoringBulkDoc doc =
                                     new MonitoringBulkDoc(MonitoredSystem.KIBANA.getSystem(), MonitoringTemplateUtils.TEMPLATE_VERSION);
                             doc.setType("concurrent");
-                            doc.setSource(jsonBuilder().startObject().field("num", k).endObject().bytes());
+                            doc.setSource(jsonBuilder().startObject().field("num", k).endObject().bytes(), XContentType.JSON);
                             requestBuilder.add(doc);
                         }
 
@@ -150,7 +151,7 @@ public class MonitoringBulkTests extends MonitoringIntegTestCase {
                 doc = new MonitoringBulkDoc(MonitoredSystem.KIBANA.getSystem(), MonitoringTemplateUtils.TEMPLATE_VERSION);
             }
             doc.setType(randomFrom(types));
-            doc.setSource(jsonBuilder().startObject().field("num", i).endObject().bytes());
+            doc.setSource(jsonBuilder().startObject().field("num", i).endObject().bytes(), XContentType.JSON);
             requestBuilder.add(doc);
         }
 

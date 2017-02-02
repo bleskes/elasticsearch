@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.security.action.user;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.ESTestCase;
 
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class PutUserRequestBuilderTests extends ESTestCase {
                 "}";
 
         PutUserRequestBuilder builder = new PutUserRequestBuilder(mock(Client.class));
-        builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)));
+        builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)), XContentType.JSON);
 
         PutUserRequest request = builder.request();
         assertThat(request.username(), is("kibana4"));
@@ -64,7 +65,7 @@ public class PutUserRequestBuilderTests extends ESTestCase {
                 "}";
 
         PutUserRequestBuilder builder = new PutUserRequestBuilder(mock(Client.class));
-        builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)));
+        builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)), XContentType.JSON);
 
         PutUserRequest request = builder.request();
         assertThat(request.username(), is("kibana4"));
@@ -85,7 +86,7 @@ public class PutUserRequestBuilderTests extends ESTestCase {
                 "}";
 
         PutUserRequestBuilder builder = new PutUserRequestBuilder(mock(Client.class));
-        builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)));
+        builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)), XContentType.JSON);
 
         PutUserRequest request = builder.request();
         assertThat(request.username(), is("kibana4"));
@@ -107,7 +108,7 @@ public class PutUserRequestBuilderTests extends ESTestCase {
 
         PutUserRequestBuilder builder = new PutUserRequestBuilder(mock(Client.class));
         ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
-                () -> builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8))));
+                () -> builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)), XContentType.JSON));
         assertThat(e.getMessage(), containsString("expected field [full_name] to be of type string"));
     }
 
@@ -123,7 +124,7 @@ public class PutUserRequestBuilderTests extends ESTestCase {
 
         PutUserRequestBuilder builder = new PutUserRequestBuilder(mock(Client.class));
         ElasticsearchParseException e = expectThrows(ElasticsearchParseException.class,
-                () -> builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8))));
+                () -> builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)), XContentType.JSON));
         assertThat(e.getMessage(), containsString("expected field [email] to be of type string"));
     }
 
@@ -139,7 +140,8 @@ public class PutUserRequestBuilderTests extends ESTestCase {
                 "}";
 
         PutUserRequestBuilder builder = new PutUserRequestBuilder(mock(Client.class));
-        PutUserRequest request = builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8))).request();
+        PutUserRequest request =
+                builder.source("kibana4", new BytesArray(json.getBytes(StandardCharsets.UTF_8)), XContentType.JSON).request();
         assertFalse(request.enabled());
     }
 }

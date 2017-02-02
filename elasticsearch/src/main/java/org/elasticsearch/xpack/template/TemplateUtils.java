@@ -23,10 +23,12 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.compress.NotXContentException;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 /**
@@ -71,7 +73,7 @@ public class TemplateUtils {
         }
 
         try {
-            XContentHelper.convertToMap(source, false).v2();
+            XContentHelper.convertToMap(source, false, XContentType.JSON).v2();
         } catch (NotXContentException e) {
             throw new ElasticsearchParseException("Template must not be empty");
         } catch (Exception e) {

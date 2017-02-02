@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.watcher.transport.actions.execute;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ValidateActions;
 import org.elasticsearch.action.support.master.MasterNodeReadRequest;
@@ -24,6 +25,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.xpack.watcher.execution.ActionExecutionMode;
@@ -48,6 +50,7 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
     @Nullable private Map<String, Object> alternativeInput = null;
     private Map<String, ActionExecutionMode> actionModes = new HashMap<>();
     private BytesReference watchSource;
+    private XContentType xContentType = XContentType.JSON;
 
     private boolean debug = false;
 
@@ -145,11 +148,26 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
         return watchSource;
     }
 
+    public XContentType getXContentType() {
+        return xContentType;
+    }
+
+    /**
+     * @param watchSource instead of using an existing watch use this non persisted watch
+     * @deprecated use {@link #setWatchSource(BytesReference, XContentType)}
+     */
+    @Deprecated
+    public void setWatchSource(BytesReference watchSource) {
+        this.watchSource = watchSource;
+        this.xContentType = XContentFactory.xContentType(watchSource);
+    }
+
     /**
      * @param watchSource instead of using an existing watch use this non persisted watch
      */
-    public void setWatchSource(BytesReference watchSource) {
+    public void setWatchSource(BytesReference watchSource, XContentType xContentType) {
         this.watchSource = watchSource;
+        this.xContentType = xContentType;
     }
 
     /**
@@ -157,6 +175,7 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
      */
     public void setWatchSource(WatchSourceBuilder watchSource) {
         this.watchSource = watchSource.buildAsBytes(XContentType.JSON);
+        this.xContentType = XContentType.JSON;
     }
 
     /**
@@ -241,6 +260,11 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
         }
         if (in.readBoolean()) {
             watchSource = in.readBytesReference();
+            if (in.getVersion().onOrAfter(Version.V_5_3_0_UNRELEASED)) {
+                xContentType = XContentType.readFrom(in);
+            } else {
+                xContentType = XContentFactory.xContentType(watchSource);
+            }
         }
         debug = in.readBoolean();
     }
@@ -268,6 +292,9 @@ public class ExecuteWatchRequest extends MasterNodeReadRequest<ExecuteWatchReque
         out.writeBoolean(watchSource != null);
         if (watchSource != null) {
             out.writeBytesReference(watchSource);
+            if (out.getVersion().onOrAfter(Version.V_5_3_0_UNRELEASED)) {
+                xContentType.writeTo(out);
+            }
         }
         out.writeBoolean(debug);
     }

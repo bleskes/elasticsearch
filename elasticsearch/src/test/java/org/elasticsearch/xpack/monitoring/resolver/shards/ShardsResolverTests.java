@@ -82,7 +82,7 @@ public class ShardsResolverTests extends MonitoringIndexNameResolverTestCase<Sha
                         "shard.node",
                         "shard.relocating_node",
                         "shard.shard",
-                        "shard.index"));
+                        "shard.index"), XContentType.JSON);
 
         final String index = "test-" + randomIntBetween(0, 100);
         final int shardId = randomIntBetween(0, 500);
@@ -114,7 +114,7 @@ public class ShardsResolverTests extends MonitoringIndexNameResolverTestCase<Sha
                         "shard.node",
                         "shard.relocating_node",
                         "shard.shard",
-                        "shard.index"));
+                        "shard.index"), XContentType.JSON);
     }
 
     public void testShardId() {

@@ -25,6 +25,7 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.support.clock.ClockMock;
@@ -104,10 +105,10 @@ public class WatcherServiceTests extends ESTestCase {
         when(watchPut.indexResponse()).thenReturn(indexResponse);
         when(watchPut.current()).thenReturn(newWatch);
 
-        when(watchParser.parseWithSecrets(any(String.class), eq(false), any(BytesReference.class), any(DateTime.class)))
-                .thenReturn(newWatch);
+        when(watchParser.parseWithSecrets(any(String.class), eq(false), any(BytesReference.class), any(DateTime.class),
+                any(XContentType.class))).thenReturn(newWatch);
         when(watchStore.put(newWatch)).thenReturn(watchPut);
-        IndexResponse response = watcherService.putWatch("_id", new BytesArray("{}"), activeByDefault);
+        IndexResponse response = watcherService.putWatch("_id", new BytesArray("{}"), XContentType.JSON, activeByDefault);
         assertThat(response, sameInstance(indexResponse));
 
         verify(newWatch, times(1)).setState(activeByDefault, clock.nowUTC());
@@ -142,10 +143,11 @@ public class WatcherServiceTests extends ESTestCase {
         when(previousWatch.trigger()).thenReturn(trigger);
         when(watchPut.previous()).thenReturn(previousWatch);
 
-        when(watchParser.parseWithSecrets(any(String.class), eq(false), any(BytesReference.class), eq(clock.nowUTC()))).thenReturn(watch);
+        when(watchParser.parseWithSecrets(any(String.class), eq(false), any(BytesReference.class), eq(clock.nowUTC()),
+                any(XContentType.class))).thenReturn(watch);
         when(watchStore.put(watch)).thenReturn(watchPut);
 
-        IndexResponse response = watcherService.putWatch("_id", new BytesArray("{}"), active);
+        IndexResponse response = watcherService.putWatch("_id", new BytesArray("{}"), XContentType.JSON, active);
         assertThat(response, sameInstance(indexResponse));
 
         if (!active) {

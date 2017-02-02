@@ -52,6 +52,7 @@ import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.gateway.GatewayService;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.rest.RestRequest;
@@ -863,7 +864,7 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Streams.copy(is, out);
             final byte[] template = out.toByteArray();
-            final PutIndexTemplateRequest request = new PutIndexTemplateRequest(INDEX_TEMPLATE_NAME).source(template);
+            final PutIndexTemplateRequest request = new PutIndexTemplateRequest(INDEX_TEMPLATE_NAME).source(template, XContentType.JSON);
             if (customSettings != null && customSettings.names().size() > 0) {
                 Settings updatedSettings = Settings.builder()
                         .put(request.settings())
@@ -907,10 +908,10 @@ public class IndexAuditTrail extends AbstractComponent implements AuditTrail, Cl
     }
 
     private void putAuditIndexMappings(String index, PutIndexTemplateRequest request, ActionListener<Void> listener) {
+        String mappings = request.mappings().get(DOC_TYPE);
         client.admin().indices().preparePutMapping(index)
                 .setType(DOC_TYPE)
-                .setSource(request.mappings()
-                .get(DOC_TYPE))
+                .setSource(mappings, XContentType.JSON)
                 .execute(ActionListener.wrap((response) -> {
                     if (response.isAcknowledged()) {
                         listener.onResponse(null);

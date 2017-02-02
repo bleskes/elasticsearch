@@ -29,7 +29,9 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.common.secret.Secret;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.support.clock.Clock;
@@ -63,6 +65,7 @@ import static org.elasticsearch.common.unit.TimeValue.timeValueMillis;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.common.xcontent.XContentHelper.createParser;
 import static org.elasticsearch.xpack.watcher.support.Exceptions.ioException;
+import static org.joda.time.DateTimeZone.UTC;
 
 public class Watch implements TriggerEngine.Job, ToXContentObject {
 
@@ -237,16 +240,18 @@ public class Watch implements TriggerEngine.Job, ToXContentObject {
             this.clock = clock;
         }
 
-        public Watch parse(String name, boolean includeStatus, BytesReference source) throws IOException {
-            return parse(name, includeStatus, false, source, clock.nowUTC(), false);
+        public Watch parse(String name, boolean includeStatus, BytesReference source, XContentType xContentType) throws IOException {
+            return parse(name, includeStatus, false, source, new DateTime(clock.millis(), UTC), xContentType, false);
         }
 
-        public Watch parse(String name, boolean includeStatus, BytesReference source, boolean upgradeSource) throws IOException {
-            return parse(name, includeStatus, false, source, clock.nowUTC(), upgradeSource);
+        public Watch parse(String name, boolean includeStatus, BytesReference source, XContentType xContentType,
+                           boolean upgradeSource) throws IOException {
+            return parse(name, includeStatus, false, source, new DateTime(clock.millis(), UTC), xContentType, upgradeSource);
         }
 
-        public Watch parse(String name, boolean includeStatus, BytesReference source, DateTime now) throws IOException {
-            return parse(name, includeStatus, false, source, now, false);
+        public Watch parse(String name, boolean includeStatus, BytesReference source, DateTime now,
+                           XContentType xContentType) throws IOException {
+            return parse(name, includeStatus, false, source, now, xContentType, false);
         }
 
         /**
@@ -259,22 +264,23 @@ public class Watch implements TriggerEngine.Job, ToXContentObject {
          * This method is only called once - when the user adds a new watch. From that moment on, all representations
          * of the watch in the system will be use secrets for sensitive data.
          *
-         * @see org.elasticsearch.xpack.watcher.WatcherService#putWatch(String, BytesReference, boolean)
+         * @see org.elasticsearch.xpack.watcher.WatcherService#putWatch(String, BytesReference, XContentType, boolean)
          */
-        public Watch parseWithSecrets(String id, boolean includeStatus, BytesReference source, DateTime now) throws IOException {
-            return parse(id, includeStatus, true, source, now, false);
+        public Watch parseWithSecrets(String id, boolean includeStatus, BytesReference source, DateTime now, XContentType xContentType)
+                throws IOException {
+            return parse(id, includeStatus, true, source, now, xContentType, false);
         }
 
         private Watch parse(String id, boolean includeStatus, boolean withSecrets, BytesReference source, DateTime now,
-                            boolean upgradeSource) throws IOException {
+                            XContentType xContentType, boolean upgradeSource) throws IOException {
             if (logger.isTraceEnabled()) {
                 logger.trace("parsing watch [{}] ", source.utf8ToString());
             }
             XContentParser parser = null;
             try {
                 // EMPTY is safe here because we never use namedObject
-                parser = new WatcherXContentParser(createParser(xContentRegistry, source), new HaltedClock(now),
-                        withSecrets ? cryptoService : null);
+                parser = new WatcherXContentParser(xContentType.xContent().createParser(xContentRegistry, source),
+                        new HaltedClock(now), withSecrets ? cryptoService : null);
                 parser.nextToken();
                 return parse(id, includeStatus, parser, upgradeSource);
             } catch (IOException ioe) {

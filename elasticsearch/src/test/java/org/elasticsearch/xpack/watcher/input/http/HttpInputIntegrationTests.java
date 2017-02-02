@@ -22,6 +22,7 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.transport.Netty3Plugin;
@@ -74,7 +75,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
     @TestLogging("org.elasticsearch.watcher.support.http:TRACE")
     public void testHttpInput() throws Exception {
         createIndex("index");
-        client().prepareIndex("index", "type", "id").setSource("{}").setRefreshPolicy(IMMEDIATE).get();
+        client().prepareIndex("index", "type", "id").setSource("{}", XContentType.JSON).setRefreshPolicy(IMMEDIATE).get();
 
         InetSocketAddress address = internalCluster().httpAddresses()[0];
         watcherClient().preparePutWatch("_name")
@@ -83,6 +84,7 @@ public class HttpInputIntegrationTests extends AbstractWatcherIntegrationTestCas
                         .input(httpInput(HttpRequestTemplate.builder(address.getHostString(), address.getPort())
                                 .path("/index/_search")
                                 .body(jsonBuilder().startObject().field("size", 1).endObject().string())
+                                .putHeader("Content-Type", new TextTemplate("application/json"))
                                 .auth(securityEnabled() ? new BasicAuth("test", "changeme".toCharArray()) : null)))
                         .condition(new CompareCondition("ctx.payload.hits.total", CompareCondition.Op.EQ, 1L))
                         .addAction("_id", loggingAction("watch [{{ctx.watch_id}}] matched")))

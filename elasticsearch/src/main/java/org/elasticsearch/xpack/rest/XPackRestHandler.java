@@ -39,5 +39,4 @@ public abstract class XPackRestHandler extends BaseRestHandler {
     }
 
     protected abstract RestChannelConsumer doPrepareRequest(RestRequest request, XPackClient client) throws IOException;
-
 }

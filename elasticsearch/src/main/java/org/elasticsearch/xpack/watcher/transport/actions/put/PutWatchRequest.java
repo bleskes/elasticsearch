@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.watcher.transport.actions.put;
 
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ValidateActions;
 import org.elasticsearch.action.support.master.MasterNodeRequest;
@@ -25,6 +26,7 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.xpack.watcher.support.validation.Validation;
@@ -42,17 +44,24 @@ public class PutWatchRequest extends MasterNodeRequest<PutWatchRequest> {
     private String id;
     private BytesReference source;
     private boolean active = true;
+    private XContentType xContentType = XContentType.JSON;
 
     public PutWatchRequest() {
     }
 
     public PutWatchRequest(String id, WatchSourceBuilder source) {
-        this(id, source.buildAsBytes(XContentType.JSON));
+        this(id, source.buildAsBytes(XContentType.JSON), XContentType.JSON);
     }
 
+    @Deprecated
     public PutWatchRequest(String id, BytesReference source) {
+        this(id, source, source != null ? XContentFactory.xContentType(source) : null);
+    }
+
+    public PutWatchRequest(String id, BytesReference source, XContentType xContentType) {
         this.id = id;
         this.source = source;
+        this.xContentType = xContentType;
         masterNodeTimeout(DEFAULT_TIMEOUT);
     }
 
@@ -81,14 +90,25 @@ public class PutWatchRequest extends MasterNodeRequest<PutWatchRequest> {
      * Set the source of the watch
      */
     public void setSource(WatchSourceBuilder source) {
-        setSource(source.buildAsBytes(XContentType.JSON));
+        setSource(source.buildAsBytes(XContentType.JSON), XContentType.JSON);
+    }
+
+    /**
+     * Set the source of the watch
+     * @deprecated use {@link #setSource(BytesReference, XContentType)}
+     */
+    @Deprecated
+    public void setSource(BytesReference source) {
+        this.source = source;
+        this.xContentType = XContentFactory.xContentType(source);
     }
 
     /**
      * Set the source of the watch
      */
-    public void setSource(BytesReference source) {
+    public void setSource(BytesReference source, XContentType xContentType) {
         this.source = source;
+        this.xContentType = xContentType;
     }
 
     /**
@@ -103,6 +123,13 @@ public class PutWatchRequest extends MasterNodeRequest<PutWatchRequest> {
      */
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    /**
+     * Get the content type for the source
+     */
+    public XContentType xContentType() {
+        return xContentType;
     }
 
     @Override
@@ -127,6 +154,11 @@ public class PutWatchRequest extends MasterNodeRequest<PutWatchRequest> {
         id = in.readString();
         source = in.readBytesReference();
         active = in.readBoolean();
+        if (in.getVersion().onOrAfter(Version.V_5_3_0_UNRELEASED)) {
+            xContentType = XContentType.readFrom(in);
+        } else {
+            xContentType = XContentFactory.xContentType(source);
+        }
     }
 
     @Override
@@ -135,6 +167,9 @@ public class PutWatchRequest extends MasterNodeRequest<PutWatchRequest> {
         out.writeString(id);
         out.writeBytesReference(source);
         out.writeBoolean(active);
+        if (out.getVersion().onOrAfter(Version.V_5_3_0_UNRELEASED)) {
+            xContentType.writeTo(out);
+        }
     }
 
 }

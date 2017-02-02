@@ -30,6 +30,9 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.LicenseUtils;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
@@ -73,7 +76,8 @@ public class TransportPutWatchAction extends WatcherTransportAction<PutWatchRequ
         }
 
         try {
-            IndexResponse indexResponse = watcherService.putWatch(request.getId(), request.getSource(), request.isActive());
+            IndexResponse indexResponse = watcherService.putWatch(request.getId(), request.getSource(), request.xContentType(),
+                    request.isActive());
             boolean created = indexResponse.getResult() == DocWriteResponse.Result.CREATED;
             listener.onResponse(new PutWatchResponse(indexResponse.getId(), indexResponse.getVersion(), created));
         } catch (Exception e) {
