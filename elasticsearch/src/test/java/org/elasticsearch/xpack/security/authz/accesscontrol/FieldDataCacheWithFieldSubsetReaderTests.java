@@ -27,6 +27,8 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NoMergePolicy;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.automaton.Automata;
+import org.apache.lucene.util.automaton.CharacterRunAutomaton;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.lucene.index.ElasticsearchDirectoryReader;
@@ -47,8 +49,6 @@ import org.elasticsearch.indices.breaker.NoneCircuitBreakerService;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.After;
 import org.junit.Before;
-
-import java.util.Collections;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -109,7 +109,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(numDocs));
         assertThat(indexFieldDataCache.topLevelBuilds, equalTo(1));
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, new CharacterRunAutomaton(Automata.makeEmpty()));
         global = sortedSetDVOrdinalsIndexFieldData.loadGlobal(ir);
         atomic = global.load(ir.leaves().get(0));
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));
@@ -122,7 +122,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
             assertThat(atomic.getOrdinalsValues().getValueCount(), greaterThanOrEqualTo(1L));
         }
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, new CharacterRunAutomaton(Automata.makeEmpty()));
         for (LeafReaderContext context : ir.leaves()) {
             AtomicOrdinalsFieldData atomic = sortedSetDVOrdinalsIndexFieldData.load(context);
             assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));
@@ -138,7 +138,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(numDocs));
         assertThat(indexFieldDataCache.topLevelBuilds, equalTo(1));
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, new CharacterRunAutomaton(Automata.makeEmpty()));
         global = pagedBytesIndexFieldData.loadGlobal(ir);
         atomic = global.load(ir.leaves().get(0));
         assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));
@@ -153,7 +153,7 @@ public class FieldDataCacheWithFieldSubsetReaderTests extends ESTestCase {
         }
         assertThat(indexFieldDataCache.leafLevelBuilds, equalTo(ir.leaves().size()));
 
-        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, Collections.<String>emptySet());
+        DirectoryReader ir = FieldSubsetReader.wrap(this.ir, new CharacterRunAutomaton(Automata.makeEmpty()));
         for (LeafReaderContext context : ir.leaves()) {
             AtomicOrdinalsFieldData atomic = pagedBytesIndexFieldData.load(context);
             assertThat(atomic.getOrdinalsValues().getValueCount(), equalTo(0L));
