@@ -32,7 +32,7 @@ class ChunkedDataExtractorContext {
     final long end;
     final Long chunkSpan;
 
-    public ChunkedDataExtractorContext(String jobId, String timeField, List<String> indexes, List<String> types,
+    ChunkedDataExtractorContext(String jobId, String timeField, List<String> indexes, List<String> types,
                                        QueryBuilder query, int scrollSize, long start, long end, @Nullable Long chunkSpan) {
         this.jobId = Objects.requireNonNull(jobId);
         this.timeField = Objects.requireNonNull(timeField);

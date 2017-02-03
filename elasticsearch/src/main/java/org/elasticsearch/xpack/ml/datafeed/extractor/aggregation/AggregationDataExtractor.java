@@ -47,7 +47,7 @@ class AggregationDataExtractor implements DataExtractor {
     private boolean hasNext;
     private boolean isCancelled;
 
-    public AggregationDataExtractor(Client client, AggregationDataExtractorContext dataExtractorContext) {
+    AggregationDataExtractor(Client client, AggregationDataExtractorContext dataExtractorContext) {
         this.client = Objects.requireNonNull(client);
         this.context = Objects.requireNonNull(dataExtractorContext);
         this.hasNext = true;

@@ -44,7 +44,7 @@ class ProblemTracker {
 
     private volatile int emptyDataCount;
 
-    public ProblemTracker(Supplier<Auditor> auditor) {
+    ProblemTracker(Supplier<Auditor> auditor) {
         this.auditor = Objects.requireNonNull(auditor);
     }
 

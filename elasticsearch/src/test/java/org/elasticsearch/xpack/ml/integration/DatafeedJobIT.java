@@ -275,7 +275,7 @@ public class DatafeedJobIT extends ESRestTestCase {
         private boolean shouldSucceedInput;
         private boolean shouldSucceedProcessing;
 
-        public LookbackOnlyTestHelper(String jobId, String dataIndex) {
+        LookbackOnlyTestHelper(String jobId, String dataIndex) {
             this.jobId = jobId;
             this.dataIndex = dataIndex;
             this.shouldSucceedInput = true;

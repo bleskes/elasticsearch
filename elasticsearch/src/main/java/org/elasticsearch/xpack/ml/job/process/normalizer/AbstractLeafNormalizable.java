@@ -19,7 +19,7 @@ import java.util.List;
 
 abstract class AbstractLeafNormalizable extends Normalizable {
 
-    public AbstractLeafNormalizable(String indexName) {
+    AbstractLeafNormalizable(String indexName) {
         super(indexName);
     }
 

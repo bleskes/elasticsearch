@@ -28,7 +28,7 @@ class DummyDataCountsReporter extends DataCountsReporter {
 
     int logStatusCallCount = 0;
 
-    public DummyDataCountsReporter() {
+    DummyDataCountsReporter() {
         super(mock(ThreadPool.class), Settings.EMPTY, "DummyJobId", new DataCounts("DummyJobId"),
                 mock(JobDataCountsPersister.class));
     }

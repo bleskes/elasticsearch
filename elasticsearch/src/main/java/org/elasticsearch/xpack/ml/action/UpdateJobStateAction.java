@@ -141,7 +141,7 @@ public class UpdateJobStateAction
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
 
-        public RequestBuilder(ElasticsearchClient client, UpdateJobStateAction action) {
+        RequestBuilder(ElasticsearchClient client, UpdateJobStateAction action) {
             super(client, action, new Request());
         }
     }
