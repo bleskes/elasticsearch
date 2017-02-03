@@ -338,7 +338,7 @@ public class DatafeedJobIT extends ESRestTestCase {
             try {
                 Response datafeedStatsResponse = client().performRequest("get",
                         MlPlugin.BASE_PATH + "datafeeds/" + datafeedId + "/_stats");
-                assertThat(responseEntityToString(datafeedStatsResponse), containsString("\"state\":\"STOPPED\""));
+                assertThat(responseEntityToString(datafeedStatsResponse), containsString("\"state\":\"stopped\""));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

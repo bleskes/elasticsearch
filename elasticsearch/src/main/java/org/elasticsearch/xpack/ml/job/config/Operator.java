@@ -31,37 +31,37 @@ import java.util.regex.Pattern;
  * Enum representing logical comparisons on doubles
  */
 public enum Operator implements Writeable {
-    EQ("eq") {
+    EQ {
         @Override
         public boolean test(double lhs, double rhs) {
             return Double.compare(lhs, rhs) == 0;
         }
     },
-    GT("gt") {
+    GT {
         @Override
         public boolean test(double lhs, double rhs) {
             return Double.compare(lhs, rhs) > 0;
         }
     },
-    GTE("gte") {
+    GTE {
         @Override
         public boolean test(double lhs, double rhs) {
             return Double.compare(lhs, rhs) >= 0;
         }
     },
-    LT("lt") {
+    LT {
         @Override
         public boolean test(double lhs, double rhs) {
             return Double.compare(lhs, rhs) < 0;
         }
     },
-    LTE("lte") {
+    LTE {
         @Override
         public boolean test(double lhs, double rhs) {
             return Double.compare(lhs, rhs) <= 0;
         }
     },
-    MATCH("match") {
+    MATCH {
         @Override
         public boolean match(Pattern pattern, String field) {
             Matcher match = pattern.matcher(field);
@@ -75,15 +75,6 @@ public enum Operator implements Writeable {
     };
 
     public static final ParseField OPERATOR_FIELD = new ParseField("operator");
-    private final String name;
-
-    private Operator(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
 
     public boolean test(double lhs, double rhs) {
         return false;
@@ -98,15 +89,7 @@ public enum Operator implements Writeable {
     }
 
     public static Operator fromString(String name) {
-        Set<Operator> all = EnumSet.allOf(Operator.class);
-
-        String ucName = name.toUpperCase(Locale.ROOT);
-        for (Operator type : all) {
-            if (type.toString().equals(ucName)) {
-                return type;
-            }
-        }
-        throw new IllegalArgumentException(Messages.getMessage(Messages.JOB_CONFIG_CONDITION_UNKNOWN_OPERATOR, name));
+        return valueOf(name.trim().toUpperCase(Locale.ROOT));
     }
 
     public static Operator readFromStream(StreamInput in) throws IOException {
@@ -120,5 +103,10 @@ public enum Operator implements Writeable {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(ordinal());
+    }
+
+    @Override
+    public String toString() {
+        return name().toLowerCase(Locale.ROOT);
     }
 }

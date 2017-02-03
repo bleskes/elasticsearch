@@ -22,18 +22,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 
 public enum Connective implements Writeable {
-    OR("or"),
-    AND("and");
-
-    private String name;
-
-    private Connective(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
+    OR, AND;
 
     /**
      * Case-insensitive from string method.
@@ -57,5 +46,10 @@ public enum Connective implements Writeable {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(ordinal());
+    }
+
+    @Override
+    public String toString() {
+        return name().toLowerCase(Locale.ROOT);
     }
 }

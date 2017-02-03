@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class DataFormatTests extends ESTestCase {
 
-    public void testDataFormatForString() {
+    public void testFromString() {
         assertEquals(DataFormat.DELIMITED, DataFormat.forString("delineated"));
         assertEquals(DataFormat.DELIMITED, DataFormat.forString("DELINEATED"));
         assertEquals(DataFormat.DELIMITED, DataFormat.forString("delimited"));
@@ -34,6 +34,11 @@ public class DataFormatTests extends ESTestCase {
 
         assertEquals(DataFormat.JSON, DataFormat.forString("json"));
         assertEquals(DataFormat.JSON, DataFormat.forString("JSON"));
+    }
+
+    public void testToString() {
+        assertEquals("delimited", DataFormat.DELIMITED.toString());
+        assertEquals("json", DataFormat.JSON.toString());
     }
 
     public void testValidOrdinals() {

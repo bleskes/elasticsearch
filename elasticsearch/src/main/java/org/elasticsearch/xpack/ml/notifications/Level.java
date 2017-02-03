@@ -22,17 +22,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 public enum Level implements Writeable {
-    INFO("info"), ACTIVITY("activity"), WARNING("warning"), ERROR("error");
-
-    private String name;
-
-    private Level(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
+    INFO, ACTIVITY, WARNING, ERROR;
 
     /**
      * Case-insensitive from string method.
@@ -41,7 +31,7 @@ public enum Level implements Writeable {
      *            String representation
      * @return The condition type
      */
-    public static Level forString(String value) {
+    public static Level fromString(String value) {
         return Level.valueOf(value.toUpperCase(Locale.ROOT));
     }
 
@@ -56,5 +46,10 @@ public enum Level implements Writeable {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(ordinal());
+    }
+
+    @Override
+    public String toString() {
+        return name().toLowerCase(Locale.ROOT);
     }
 }

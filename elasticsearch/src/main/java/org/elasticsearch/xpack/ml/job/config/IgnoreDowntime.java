@@ -57,4 +57,9 @@ public enum IgnoreDowntime implements Writeable {
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(ordinal());
     }
+
+    @Override
+    public String toString() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 }
