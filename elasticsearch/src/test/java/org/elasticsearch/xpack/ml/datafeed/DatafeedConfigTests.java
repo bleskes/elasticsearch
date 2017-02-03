@@ -76,6 +76,9 @@ public class DatafeedConfigTests extends AbstractSerializingTestCase<DatafeedCon
         if (randomBoolean()) {
             builder.setSource(randomBoolean());
         }
+        if (randomBoolean()) {
+            builder.setChunkingConfig(ChunkingConfigTests.createRandomizedChunk());
+        }
         return builder.build();
     }
 
