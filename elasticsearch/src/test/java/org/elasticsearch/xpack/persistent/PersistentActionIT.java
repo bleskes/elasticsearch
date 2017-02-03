@@ -21,6 +21,7 @@ import org.elasticsearch.tasks.TaskInfo;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.xpack.persistent.TestPersistentActionPlugin.TestPersistentAction;
 import org.elasticsearch.xpack.persistent.TestPersistentActionPlugin.TestTasksRequestBuilder;
+import org.junit.After;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -60,6 +61,11 @@ public class PersistentActionIT extends ESIntegTestCase {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .build();
+    }
+
+    @After
+    public void cleanup() throws Exception {
+        assertNoRunningTasks();
     }
 
     public void testPersistentActionRestart() throws Exception {
@@ -129,8 +135,6 @@ public class PersistentActionIT extends ESIntegTestCase {
                     .get().getTasks().size(), equalTo(1));
 
         }
-
-        assertNoRunningTasks();
     }
 
     public void testPersistentActionWithNoAvailableNode() throws Exception {
@@ -175,8 +179,8 @@ public class PersistentActionIT extends ESIntegTestCase {
                 .get().getTasks().get(0);
 
         PersistentTasksInProgress tasksInProgress = internalCluster().clusterService().state().custom(PersistentTasksInProgress.TYPE);
-        assertThat(tasksInProgress.entries().size(), equalTo(1));
-        assertThat(tasksInProgress.entries().get(0).getStatus(), nullValue());
+        assertThat(tasksInProgress.tasks().size(), equalTo(1));
+        assertThat(tasksInProgress.tasks().iterator().next().getStatus(), nullValue());
 
         int numberOfUpdates = randomIntBetween(1, 10);
         for (int i = 0; i < numberOfUpdates; i++) {
@@ -188,9 +192,9 @@ public class PersistentActionIT extends ESIntegTestCase {
             int finalI = i;
             assertBusy(() -> {
                 PersistentTasksInProgress tasks = internalCluster().clusterService().state().custom(PersistentTasksInProgress.TYPE);
-                assertThat(tasks.entries().size(), equalTo(1));
-                assertThat(tasks.entries().get(0).getStatus(), notNullValue());
-                assertThat(tasks.entries().get(0).getStatus().toString(), equalTo("{\"phase\":\"phase " + (finalI + 1) + "\"}"));
+                assertThat(tasks.tasks().size(), equalTo(1));
+                assertThat(tasks.tasks().iterator().next().getStatus(), notNullValue());
+                assertThat(tasks.tasks().iterator().next().getStatus().toString(), equalTo("{\"phase\":\"phase " + (finalI + 1) + "\"}"));
             });
 
         }
@@ -199,8 +203,6 @@ public class PersistentActionIT extends ESIntegTestCase {
         // Complete the running task and make sure it finishes properly
         assertThat(new TestTasksRequestBuilder(client()).setOperation("finish").setTaskId(firstRunningTask.getTaskId())
                 .get().getTasks().size(), equalTo(1));
-
-        assertNoRunningTasks();
     }
 
     private void assertNoRunningTasks() throws Exception {
@@ -213,7 +215,7 @@ public class PersistentActionIT extends ESIntegTestCase {
 
             // Make sure the task is removed from the cluster state
             assertThat(((PersistentTasksInProgress) internalCluster().clusterService().state().custom(PersistentTasksInProgress.TYPE))
-                    .entries(), empty());
+                    .tasks(), empty());
         });
     }
 
