@@ -69,6 +69,7 @@ import org.elasticsearch.xpack.ml.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.ml.action.StartDatafeedAction;
 import org.elasticsearch.xpack.ml.action.StopDatafeedAction;
 import org.elasticsearch.xpack.ml.action.UpdateJobStateAction;
+import org.elasticsearch.xpack.ml.action.UpdateJobAction;
 import org.elasticsearch.xpack.ml.action.UpdateModelSnapshotAction;
 import org.elasticsearch.xpack.ml.action.ValidateDetectorAction;
 import org.elasticsearch.xpack.ml.action.ValidateJobConfigAction;
@@ -106,6 +107,7 @@ import org.elasticsearch.xpack.ml.rest.job.RestGetJobStatsAction;
 import org.elasticsearch.xpack.ml.rest.job.RestGetJobsAction;
 import org.elasticsearch.xpack.ml.rest.job.RestOpenJobAction;
 import org.elasticsearch.xpack.ml.rest.job.RestPostDataAction;
+import org.elasticsearch.xpack.ml.rest.job.RestPostJobUpdateAction;
 import org.elasticsearch.xpack.ml.rest.job.RestPutJobAction;
 import org.elasticsearch.xpack.ml.rest.modelsnapshots.RestDeleteModelSnapshotAction;
 import org.elasticsearch.xpack.ml.rest.modelsnapshots.RestGetModelSnapshotsAction;
@@ -266,6 +268,7 @@ public class MlPlugin extends Plugin implements ActionPlugin {
             new RestGetJobsAction(settings, restController),
             new RestGetJobStatsAction(settings, restController),
             new RestPutJobAction(settings, restController),
+            new RestPostJobUpdateAction(settings, restController),
             new RestDeleteJobAction(settings, restController),
             new RestOpenJobAction(settings, restController),
             new RestGetFiltersAction(settings, restController),
@@ -302,6 +305,7 @@ public class MlPlugin extends Plugin implements ActionPlugin {
                 new ActionHandler<>(GetJobsAction.INSTANCE, GetJobsAction.TransportAction.class),
                 new ActionHandler<>(GetJobsStatsAction.INSTANCE, GetJobsStatsAction.TransportAction.class),
                 new ActionHandler<>(PutJobAction.INSTANCE, PutJobAction.TransportAction.class),
+                new ActionHandler<>(UpdateJobAction.INSTANCE, UpdateJobAction.TransportAction.class),
                 new ActionHandler<>(DeleteJobAction.INSTANCE, DeleteJobAction.TransportAction.class),
                 new ActionHandler<>(OpenJobAction.INSTANCE, OpenJobAction.TransportAction.class),
                 new ActionHandler<>(InternalOpenJobAction.INSTANCE, InternalOpenJobAction.TransportAction.class),
