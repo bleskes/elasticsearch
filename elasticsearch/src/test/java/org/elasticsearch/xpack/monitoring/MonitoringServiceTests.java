@@ -135,7 +135,7 @@ public class MonitoringServiceTests extends ESTestCase {
 
         private final AtomicInteger exports = new AtomicInteger(0);
 
-        public CountingExporter() {
+        CountingExporter() {
             super(Settings.EMPTY, Collections.emptyMap(), clusterService);
         }
 

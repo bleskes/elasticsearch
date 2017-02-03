@@ -164,7 +164,7 @@ public class ScheduleEngineTriggerBenchmark {
         private final String name;
         private final ScheduleTrigger trigger;
 
-        public SimpleJob(String name, Schedule schedule) {
+        SimpleJob(String name, Schedule schedule) {
             this.name = name;
             this.trigger = new ScheduleTrigger(schedule);
         }

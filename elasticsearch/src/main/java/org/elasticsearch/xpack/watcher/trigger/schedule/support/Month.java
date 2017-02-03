@@ -45,7 +45,7 @@ public enum Month implements ToXContent {
 
     private final String cronKey;
 
-    private Month(String cronKey) {
+    Month(String cronKey) {
         this.cronKey = cronKey;
     }
 

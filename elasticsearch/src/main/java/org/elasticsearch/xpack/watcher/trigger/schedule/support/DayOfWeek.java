@@ -40,7 +40,7 @@ public enum DayOfWeek implements ToXContent {
 
     private final String cronKey;
 
-    private DayOfWeek(String cronKey) {
+    DayOfWeek(String cronKey) {
         this.cronKey = cronKey;
     }
 

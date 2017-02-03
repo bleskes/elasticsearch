@@ -169,7 +169,7 @@ public class CleanerService extends AbstractLifecycleComponent {
         /**
          * Enable automatic logging and stopping of the runnable based on the {@link #lifecycle}.
          */
-        public IndicesCleaner() {
+        IndicesCleaner() {
             super(lifecycle, logger);
         }
 

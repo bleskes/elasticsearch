@@ -271,7 +271,7 @@ public class TransportMonitoringBulkActionTests extends ESTestCase {
 
         private final Collection<MonitoringDoc> exported = ConcurrentCollections.newConcurrentSet();
 
-        public CapturingExporters() {
+        CapturingExporters() {
             super(Settings.EMPTY, Collections.emptyMap(), clusterService);
         }
 
@@ -292,7 +292,7 @@ public class TransportMonitoringBulkActionTests extends ESTestCase {
 
         private final Consumer<Collection<? extends MonitoringDoc>> consumer;
 
-        public ConsumingExporters(Consumer<Collection<? extends MonitoringDoc>> consumer) {
+        ConsumingExporters(Consumer<Collection<? extends MonitoringDoc>> consumer) {
             super(Settings.EMPTY, Collections.emptyMap(), clusterService);
             this.consumer = consumer;
         }

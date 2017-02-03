@@ -152,11 +152,11 @@ public class ChainTransformTests extends ESTestCase {
             NamedExecutableTransform.Result> {
         private static final String TYPE = "named";
 
-        public NamedExecutableTransform(String name) {
+        NamedExecutableTransform(String name) {
             this(new Transform(name));
         }
 
-        public NamedExecutableTransform(Transform transform) {
+        NamedExecutableTransform(Transform transform) {
             super(transform, Loggers.getLogger(NamedExecutableTransform.class));
         }
 
@@ -178,7 +178,7 @@ public class ChainTransformTests extends ESTestCase {
 
             private final String name;
 
-            public Transform(String name) {
+            Transform(String name) {
                 this.name = name;
             }
 
@@ -195,7 +195,7 @@ public class ChainTransformTests extends ESTestCase {
 
         public static class Result extends Transform.Result {
 
-            public Result(String type, Payload payload) {
+            Result(String type, Payload payload) {
                 super(type, payload);
             }
 
@@ -206,7 +206,7 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Factory extends TransformFactory<Transform, Result, NamedExecutableTransform> {
-            public Factory(Logger transformLogger) {
+            Factory(Logger transformLogger) {
                 super(transformLogger);
             }
 
@@ -242,7 +242,7 @@ public class ChainTransformTests extends ESTestCase {
             FailingExecutableTransform.Result> {
         private static final String TYPE = "throwing";
 
-        public FailingExecutableTransform(Logger logger) {
+        FailingExecutableTransform(Logger logger) {
             super(new Transform(), logger);
         }
 
@@ -264,7 +264,7 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Result extends Transform.Result {
-            public Result(String type) {
+            Result(String type) {
                 super(type, new Exception("_error"));
             }
 
@@ -275,7 +275,7 @@ public class ChainTransformTests extends ESTestCase {
         }
 
         public static class Factory extends TransformFactory<Transform, Result, FailingExecutableTransform> {
-            public Factory(Logger transformLogger) {
+            Factory(Logger transformLogger) {
                 super(transformLogger);
             }
 

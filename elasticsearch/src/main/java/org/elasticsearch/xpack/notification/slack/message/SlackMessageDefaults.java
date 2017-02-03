@@ -161,7 +161,7 @@ public class SlackMessageDefaults {
             public final String value;
             public final Boolean isShort;
 
-            public FieldDefaults(Settings settings) {
+            FieldDefaults(Settings settings) {
                 title = settings.get(TITLE_SETTING, null);
                 value = settings.get(VALUE_SETTING, null);
                 isShort = settings.getAsBoolean(SHORT_SETTING, null);

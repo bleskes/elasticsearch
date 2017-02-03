@@ -103,7 +103,7 @@ public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport
 
         private final Settings sslSettings;
 
-        public HttpSslChannelPipelineFactory(Netty3HttpServerTransport transport) {
+        HttpSslChannelPipelineFactory(Netty3HttpServerTransport transport) {
             super(transport, detailedErrorsEnabled, threadPool.getThreadContext());
             this.sslSettings = SSLService.getHttpTransportSSLSettings(settings);
             if (ssl && sslService.isConfigurationValidForServerUsage(sslSettings, Settings.EMPTY) == false) {

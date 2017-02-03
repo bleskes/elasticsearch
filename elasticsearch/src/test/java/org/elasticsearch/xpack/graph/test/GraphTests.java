@@ -63,7 +63,7 @@ public class GraphTests extends ESSingleNodeTestCase {
         String description;
         String decade;
 
-        public DocTemplate(int numDocs, String decade, String description, String... people) {
+        DocTemplate(int numDocs, String decade, String description, String... people) {
             super();
             this.decade = decade;
             this.numDocs = numDocs;
