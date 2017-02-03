@@ -58,6 +58,7 @@ import org.elasticsearch.xpack.watcher.transform.ExecutableTransform;
 import org.elasticsearch.xpack.watcher.transform.Transform;
 import org.elasticsearch.xpack.watcher.trigger.schedule.Schedule;
 import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTrigger;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -72,6 +73,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -499,6 +501,21 @@ public class WatchStoreTests extends ESTestCase {
         IllegalStateException exception = expectThrows(IllegalStateException.class, () -> watchStore.start(cs));
         assertThat(exception.getMessage(), is("Alias [.watches] points to more than one index"));
     }
+
+    public void testValidateStartWithClosedIndex() throws Exception {
+        ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
+        MetaData.Builder metaDataBuilder = MetaData.builder();
+        Settings indexSettings = settings(Version.CURRENT)
+                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
+                .build();
+        metaDataBuilder.put(IndexMetaData.builder(WatchStore.INDEX).state(IndexMetaData.State.CLOSE).settings(indexSettings));
+        csBuilder.metaData(metaDataBuilder);
+
+        assertThat(watchStore.validate(csBuilder.build()), Matchers.is(false));
+    }
+
+
 
     /*
      * Creates the standard cluster state metadata for the watches index

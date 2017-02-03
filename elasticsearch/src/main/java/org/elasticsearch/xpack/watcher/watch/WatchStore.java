@@ -114,17 +114,21 @@ public class WatchStore extends AbstractComponent {
     }
 
     public boolean validate(ClusterState state) {
-        IndexMetaData watchesIndexMetaData;
         try {
-            watchesIndexMetaData = WatchStoreUtils.getConcreteIndex(INDEX, state.metaData());
+            IndexMetaData indexMetaData = WatchStoreUtils.getConcreteIndex(INDEX, state.metaData());
+            if (indexMetaData.getState() == IndexMetaData.State.CLOSE) {
+                logger.debug("watch index [{}] is marked as closed, watcher cannot be started",
+                        indexMetaData.getIndex().getName());
+                return false;
+            } else {
+                return state.routingTable().index(indexMetaData.getIndex()).allPrimaryShardsActive();
+            }
         } catch (IndexNotFoundException e) {
             return true;
         } catch (IllegalStateException e) {
             logger.trace((Supplier<?>) () -> new ParameterizedMessage("error getting index meta data [{}]: ", INDEX), e);
             return false;
         }
-
-        return state.routingTable().index(watchesIndexMetaData.getIndex().getName()).allPrimaryShardsActive();
     }
 
     public boolean started() {
