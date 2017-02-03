@@ -12,33 +12,27 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.ml.job.config;
+package org.elasticsearch.xpack.ml.datafeed;
 
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Locale;
 
-/**
- * Jobs whether running or complete are in one of these states.
- * When a job is created it is initialised in to the status closed
- * i.e. it is not running.
- */
-public enum JobStatus implements Writeable {
+public enum DatafeedState implements Writeable {
 
-    CLOSING, CLOSED, OPENING, OPENED, FAILED, DELETING;
+    STARTED, STOPPED;
 
-    public static JobStatus fromString(String name) {
+    public static DatafeedState fromString(String name) {
         return valueOf(name.trim().toUpperCase(Locale.ROOT));
     }
 
-    public static JobStatus fromStream(StreamInput in) throws IOException {
+    public static DatafeedState fromStream(StreamInput in) throws IOException {
         int ordinal = in.readVInt();
         if (ordinal < 0 || ordinal >= values().length) {
-            throw new IOException("Unknown public enum JobStatus {\n ordinal [" + ordinal + "]");
+            throw new IOException("Unknown public enum DatafeedState ordinal [" + ordinal + "]");
         }
         return values()[ordinal];
     }
@@ -46,12 +40,5 @@ public enum JobStatus implements Writeable {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVInt(ordinal());
-    }
-
-    /**
-     * @return {@code true} if status matches any of the given {@code candidates}
-     */
-    public boolean isAnyOf(JobStatus... candidates) {
-        return Arrays.stream(candidates).anyMatch(candidate -> this == candidate);
     }
 }
