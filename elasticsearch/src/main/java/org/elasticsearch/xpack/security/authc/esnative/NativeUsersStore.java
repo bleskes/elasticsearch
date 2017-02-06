@@ -24,7 +24,6 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.DocWriteResponse.Result;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -405,7 +404,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
         }
 
         if (ReservedRealm.isReserved(username, settings)) {
-            setReservedUserEnabled(username, enabled, refreshPolicy, listener);
+            setReservedUserEnabled(username, enabled, refreshPolicy, true, listener);
         } else {
             setRegularUserEnabled(username, enabled, refreshPolicy, listener);
         }
@@ -443,10 +442,10 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
         }
     }
 
-    void ensureReservedUserIsDisabled(final String username, final ActionListener<Void> listener) {
+    void ensureReservedUserIsDisabled(final String username, boolean clearCache, final ActionListener<Void> listener) {
         getReservedUserInfo(username, ActionListener.wrap(userInfo -> {
             if (userInfo == null || userInfo.enabled) {
-                setReservedUserEnabled(username, false, RefreshPolicy.IMMEDIATE, listener);
+                setReservedUserEnabled(username, false, RefreshPolicy.IMMEDIATE, clearCache, listener);
             } else {
                 listener.onResponse(null);
             }
@@ -454,7 +453,7 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
     }
 
     private void setReservedUserEnabled(final String username, final boolean enabled, final RefreshPolicy refreshPolicy,
-                                        final ActionListener<Void> listener) {
+                                        boolean clearCache, final ActionListener<Void> listener) {
         try {
             client.prepareUpdate(SecurityTemplateService.SECURITY_INDEX_NAME, RESERVED_USER_DOC_TYPE, username)
                     .setDoc(User.Fields.ENABLED.getPreferredName(), enabled)
@@ -464,7 +463,11 @@ public class NativeUsersStore extends AbstractComponent implements ClusterStateL
                     .execute(new ActionListener<UpdateResponse>() {
                         @Override
                         public void onResponse(UpdateResponse updateResponse) {
-                            clearRealmCache(username, listener, null);
+                            if (clearCache) {
+                                clearRealmCache(username, listener, null);
+                            } else {
+                                listener.onResponse(null);
+                            }
                         }
 
                         @Override
