@@ -51,7 +51,6 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
 
         assertEquals("foo", job.getId());
         assertNotNull(job.getCreateTime());
-        assertEquals(600L, job.getTimeout());
         assertNotNull(job.getAnalysisConfig());
         assertNull(job.getAnalysisLimits());
         assertNull(job.getCustomSettings());
@@ -298,9 +297,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         expectThrows(IllegalArgumentException.class, builder::build);
         dc = new DataDescription.Builder();
         builder.setDataDescription(dc);
-        builder.setTimeout(-1L);
         expectThrows(IllegalArgumentException.class, builder::build);
-        builder.setTimeout(300L);
         builder.build();
     }
 
@@ -394,9 +391,6 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         }
         if (randomBoolean()) {
             builder.setLastDataTime(new Date(randomPositiveLong()));
-        }
-        if (randomBoolean()) {
-            builder.setTimeout(randomPositiveLong());
         }
         AnalysisConfig.Builder analysisConfig = createAnalysisConfig();
         analysisConfig.setBucketSpan(100L);
