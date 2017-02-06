@@ -295,7 +295,7 @@ public class LicensingTests extends SecurityIntegTestCase {
 
         PutIndexTemplateRequest putTemplateRequest = client.admin().indices()
                 .preparePutTemplate(SecurityTemplateService.SECURITY_TEMPLATE_NAME)
-                .setSource(new BytesArray(template.getBytes(StandardCharsets.UTF_8)), XContentType.JSON)
+                .setSource(template)
                 .request();
         final PutIndexTemplateResponse putTemplateResponse = client.admin().indices().putTemplate(putTemplateRequest).actionGet();
         assertThat(putTemplateResponse.isAcknowledged(), equalTo(true));
