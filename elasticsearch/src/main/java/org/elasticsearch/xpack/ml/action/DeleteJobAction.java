@@ -39,6 +39,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.JobManager;
+import org.elasticsearch.xpack.ml.job.persistence.JobStorageDeletionTask;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 
 import java.io.IOException;
@@ -88,7 +89,7 @@ public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAc
 
         @Override
         public Task createTask(long id, String type, String action, TaskId parentTaskId) {
-            return new Task(id, type, action, "delete-job-" + jobId, parentTaskId);
+            return new JobStorageDeletionTask(id, type, action, "delete-job-" + jobId, parentTaskId);
         }
 
         @Override
@@ -119,6 +120,7 @@ public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAc
             DeleteJobAction.Request other = (DeleteJobAction.Request) obj;
             return Objects.equals(jobId, other.jobId);
         }
+
     }
 
     static class RequestBuilder extends MasterNodeOperationRequestBuilder<Request, Response, RequestBuilder> {
@@ -176,7 +178,7 @@ public class DeleteJobAction extends Action<DeleteJobAction.Request, DeleteJobAc
 
         @Override
         protected void masterOperation(Task task, Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
-            jobManager.deleteJob(client, request, listener);
+            jobManager.deleteJob(request, client, (JobStorageDeletionTask) task, taskManager, listener);
         }
 
         @Override
