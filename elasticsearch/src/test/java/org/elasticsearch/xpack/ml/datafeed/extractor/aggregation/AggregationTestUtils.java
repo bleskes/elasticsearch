@@ -20,6 +20,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
+import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +47,13 @@ public final class AggregationTestUtils {
     }
 
     static Histogram.Bucket createHistogramBucket(long timestamp, long docCount) {
+        Histogram.Bucket bucket = mock(Histogram.Bucket.class);
+        when(bucket.getKey()).thenReturn(timestamp);
+        when(bucket.getDocCount()).thenReturn(docCount);
+        return bucket;
+    }
+
+    static Histogram.Bucket createDateHistogramBucket(DateTime timestamp, long docCount) {
         Histogram.Bucket bucket = mock(Histogram.Bucket.class);
         when(bucket.getKey()).thenReturn(timestamp);
         when(bucket.getDocCount()).thenReturn(docCount);
