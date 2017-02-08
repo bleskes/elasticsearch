@@ -161,6 +161,10 @@ public class JobUpdate implements Writeable, ToXContent {
         return customSettings;
     }
 
+    public boolean isAutodetectProcessUpdate() {
+        return modelDebugConfig != null || detectorUpdates != null;
+    }
+
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
