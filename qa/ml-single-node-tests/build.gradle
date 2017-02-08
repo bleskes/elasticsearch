@@ -1,0 +1,32 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ *
+ * Copyright (c) 2016 Elasticsearch BV. All Rights Reserved.
+ *
+ * Notice: this software, and all information contained
+ * therein, is the exclusive property of Elasticsearch BV
+ * and its licensors, if any, and is protected under applicable
+ * domestic and foreign law, and international treaties.
+ *
+ * Reproduction, republication or distribution without the
+ * express written consent of Elasticsearch BV is
+ * strictly prohibited.
+ */
+
+apply plugin: 'elasticsearch.standalone-rest-test'
+apply plugin: 'elasticsearch.rest-test'
+
+dependencies {
+  testCompile project(path: ':x-pack:elasticsearch', configuration: 'runtime')
+  testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.6'
+}
+
+integTest {
+  cluster {
+    setting 'xpack.security.enabled', 'false'
+        setting 'xpack.ml.enabled', 'true'
+    setting 'script.inline', 'true'
+    distribution = 'zip'
+    plugin ':x-pack:elasticsearch'
+  }
+}
