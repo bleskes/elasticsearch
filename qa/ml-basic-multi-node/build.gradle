@@ -2,14 +2,16 @@ apply plugin: 'elasticsearch.standalone-rest-test'
 apply plugin: 'elasticsearch.rest-test'
 
 dependencies {
-    testCompile project(path: ':prelert-legacy:elasticsearch', configuration: 'runtime')
+    testCompile project(path: ':x-pack:elasticsearch', configuration: 'runtime')
 }
 
 integTest {
     cluster {
+        setting 'xpack.security.enabled', 'false'
+        setting 'xpack.ml.enabled', 'true'
 //        debug = true
         numNodes = 3
         distribution = 'zip'
-        plugin ':prelert-legacy:elasticsearch'
+        plugin ':x-pack:elasticsearch'
     }
 }
