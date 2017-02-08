@@ -15,15 +15,14 @@
 package org.elasticsearch.xpack.ml.job.process.autodetect;
 
 import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.CheckedConsumer;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.ml.MlPlugin;
-import org.elasticsearch.xpack.ml.action.UpdateJobStateAction;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
 import org.elasticsearch.xpack.ml.job.JobManager;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
@@ -34,7 +33,6 @@ import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
 import org.elasticsearch.xpack.ml.job.config.MlFilter;
 import org.elasticsearch.xpack.ml.job.config.ModelDebugConfig;
-import org.elasticsearch.xpack.ml.job.metadata.Allocation;
 import org.elasticsearch.xpack.ml.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.ml.job.persistence.JobProvider;
 import org.elasticsearch.xpack.ml.job.persistence.JobResultsPersister;
@@ -45,6 +43,7 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.Quantiles;
 import org.elasticsearch.xpack.ml.job.process.normalizer.NormalizerFactory;
+import org.elasticsearch.xpack.persistent.UpdatePersistentTaskStatusAction;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -71,6 +70,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -137,11 +137,11 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         when(jobManager.getJobOrThrowIfUnknown("foo")).thenReturn(createJobDetails("foo"));
         AutodetectProcessManager manager = createManager(communicator, client);
 
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         assertEquals(1, manager.numberOfOpenJobs());
         assertTrue(manager.jobHasActiveAutodetectProcess("foo"));
-        UpdateJobStateAction.Request expectedRequest = new UpdateJobStateAction.Request("foo", JobState.OPENED);
-        verify(client).execute(eq(UpdateJobStateAction.INSTANCE), eq(expectedRequest), any());
+        UpdatePersistentTaskStatusAction.Request expectedRequest = new UpdatePersistentTaskStatusAction.Request(1L, JobState.OPENED);
+        verify(client).execute(eq(UpdatePersistentTaskStatusAction.INSTANCE), eq(expectedRequest), any());
     }
 
     public void testOpenJob_exceedMaxNumJobs() {
@@ -182,18 +182,26 @@ public class AutodetectProcessManagerTests extends ESTestCase {
             consumer.accept(dataCounts, modelSnapshot, quantiles, filters);
             return null;
         }).when(manager).gatherRequiredInformation(any(), any(), any());
+        doAnswer(invocationOnMock -> {
+            @SuppressWarnings("unchecked")
+            CheckedConsumer<Exception, IOException> consumer = (CheckedConsumer<Exception, IOException>) invocationOnMock.getArguments()[2];
+            consumer.accept(null);
+            return null;
+        }).when(manager).setJobState(anyLong(), eq(JobState.FAILED), any());
 
-        manager.openJob("foo", false, e -> {});
-        manager.openJob("bar", false, e -> {});
-        manager.openJob("baz", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
+        manager.openJob("bar", 2L, false, e -> {});
+        manager.openJob("baz", 3L, false, e -> {});
         assertEquals(3, manager.numberOfOpenJobs());
 
-        Exception e = expectThrows(ElasticsearchStatusException.class, () -> manager.openJob("foobar", false, e1 -> {}));
+        Exception[] holder = new Exception[1];
+        manager.openJob("foobar", 4L, false, e -> holder[0] = e);
+        Exception e = holder[0];
         assertEquals("max running job capacity [3] reached", e.getMessage());
 
-        manager.closeJob("baz");
+        manager.closeJob("baz", null);
         assertEquals(2, manager.numberOfOpenJobs());
-        manager.openJob("foobar", false, e1 -> {});
+        manager.openJob("foobar", 4L, false, e1 -> {});
         assertEquals(3, manager.numberOfOpenJobs());
     }
 
@@ -203,7 +211,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         assertEquals(0, manager.numberOfOpenJobs());
 
         DataLoadParams params = new DataLoadParams(TimeRange.builder().build(), Optional.empty());
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         manager.processData("foo", createInputStream(""), params);
         assertEquals(1, manager.numberOfOpenJobs());
     }
@@ -216,7 +224,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         InputStream inputStream = createInputStream("");
         doThrow(new IOException("blah")).when(communicator).writeToJob(inputStream, params);
 
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         ESTestCase.expectThrows(ElasticsearchException.class,
                 () -> manager.processData("foo", inputStream, params));
     }
@@ -226,12 +234,12 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AutodetectProcessManager manager = createManager(communicator);
         assertEquals(0, manager.numberOfOpenJobs());
 
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         manager.processData("foo", createInputStream(""), mock(DataLoadParams.class));
 
         // job is created
         assertEquals(1, manager.numberOfOpenJobs());
-        manager.closeJob("foo");
+        manager.closeJob("foo", null);
         assertEquals(0, manager.numberOfOpenJobs());
     }
 
@@ -241,7 +249,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
 
         DataLoadParams params = new DataLoadParams(TimeRange.builder().startTime("1000").endTime("2000").build(), Optional.empty());
         InputStream inputStream = createInputStream("");
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         manager.processData("foo", inputStream, params);
         verify(communicator).writeToJob(inputStream, params);
     }
@@ -251,7 +259,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AutodetectProcessManager manager = createManager(communicator);
 
         InputStream inputStream = createInputStream("");
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         manager.processData("foo", inputStream, mock(DataLoadParams.class));
 
         InterimResultsParams params = InterimResultsParams.builder().build();
@@ -292,7 +300,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AutodetectProcessManager manager = createManager(communicator);
         assertFalse(manager.jobHasActiveAutodetectProcess("foo"));
 
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         manager.processData("foo", createInputStream(""), mock(DataLoadParams.class));
 
         assertTrue(manager.jobHasActiveAutodetectProcess("foo"));
@@ -306,7 +314,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         givenAllocationWithState(JobState.OPENED);
 
         InputStream inputStream = createInputStream("");
-        manager.openJob("foo", false, e -> {});
+        manager.openJob("foo", 1L, false, e -> {});
         DataCounts dataCounts = manager.processData("foo", inputStream, mock(DataLoadParams.class));
 
         assertThat(dataCounts, equalTo(new DataCounts("foo")));
@@ -334,14 +342,12 @@ public class AutodetectProcessManagerTests extends ESTestCase {
                 jobResultsPersister, jobDataCountsPersister, autodetectProcessFactory, normalizerFactory);
 
         expectThrows(EsRejectedExecutionException.class,
-                () -> manager.create("my_id", dataCounts, modelSnapshot, quantiles, filters, false, e -> {}));
+                () -> manager.create("my_id", 1L, dataCounts, modelSnapshot, quantiles, filters, false, e -> {}));
         verify(autodetectProcess, times(1)).close();
     }
 
     private void givenAllocationWithState(JobState state) {
-        Allocation.Builder allocation = new Allocation.Builder();
-        allocation.setState(state);
-        when(jobManager.getJobAllocation("foo")).thenReturn(allocation.build());
+        when(jobManager.getJobState("foo")).thenReturn(state);
     }
 
     private AutodetectProcessManager createManager(AutodetectCommunicator communicator) {
@@ -356,13 +362,13 @@ public class AutodetectProcessManagerTests extends ESTestCase {
                 jobResultsPersister, jobDataCountsPersister, autodetectProcessFactory, normalizerFactory);
         manager = spy(manager);
         doReturn(communicator).when(manager)
-                .create(any(), eq(dataCounts), eq(modelSnapshot), eq(quantiles), eq(filters), anyBoolean(), any());
+                .create(any(), anyLong(), eq(dataCounts), eq(modelSnapshot), eq(quantiles), eq(filters), anyBoolean(), any());
         return manager;
     }
 
     private AutodetectProcessManager createManagerAndCallProcessData(AutodetectCommunicator communicator, String jobId) {
         AutodetectProcessManager manager = createManager(communicator);
-        manager.openJob(jobId, false, e -> {});
+        manager.openJob(jobId, 1L, false, e -> {});
         manager.processData(jobId, createInputStream(""), mock(DataLoadParams.class));
         return manager;
     }

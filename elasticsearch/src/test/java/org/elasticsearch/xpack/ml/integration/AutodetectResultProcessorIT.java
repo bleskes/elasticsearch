@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.ml.integration;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESSingleNodeTestCase;
@@ -51,8 +52,8 @@ import org.elasticsearch.xpack.ml.job.results.ModelDebugOutputTests;
 import org.junit.Before;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -89,7 +90,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
     public void createComponents() {
         renormalizer = new NoOpRenormalizer();
         jobResultsPersister = new JobResultsPersister(nodeSettings(), client());
-        jobProvider = new JobProvider(client(), 1);
+        jobProvider = new JobProvider(client(), 1, TimeValue.timeValueSeconds(1));
     }
 
     public void testProcessResults() throws Exception {

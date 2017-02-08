@@ -32,10 +32,12 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -125,10 +127,14 @@ public class JobProvider {
 
     private final Client client;
     private final int numberOfReplicas;
+    // Allows us in test mode to disable the delay of shard allocation, so that in tests we don't have to wait for
+    // for at least a minute for shards to get allocated.
+    private final TimeValue delayedNodeTimeOutSetting;
 
-    public JobProvider(Client client, int numberOfReplicas) {
+    public JobProvider(Client client, int numberOfReplicas, TimeValue delayedNodeTimeOutSetting) {
         this.client = Objects.requireNonNull(client);
         this.numberOfReplicas = numberOfReplicas;
+        this.delayedNodeTimeOutSetting = delayedNodeTimeOutSetting;
     }
 
     /**
@@ -181,6 +187,7 @@ public class JobProvider {
                 // least possible burden on Elasticsearch
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, numberOfReplicas)
+                .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(), delayedNodeTimeOutSetting)
                 // Sacrifice durability for performance: in the event of power
                 // failure we can lose the last 5 seconds of changes, but it's
                 // much faster
@@ -209,6 +216,7 @@ public class JobProvider {
                 // least possible burden on Elasticsearch
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, numberOfReplicas)
+                .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(), delayedNodeTimeOutSetting)
                 // Sacrifice durability for performance: in the event of power
                 // failure we can lose the last 5 seconds of changes, but it's
                 // much faster
@@ -227,6 +235,7 @@ public class JobProvider {
                 // least possible burden on Elasticsearch
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, numberOfReplicas)
+                .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(), delayedNodeTimeOutSetting)
                 // We need to allow fields not mentioned in the mappings to
                 // pick up default mappings and be used in queries
                 .put(MapperService.INDEX_MAPPER_DYNAMIC_SETTING.getKey(), true);

@@ -35,6 +35,9 @@ import org.elasticsearch.tasks.TaskManager;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportResponse.Empty;
+import org.elasticsearch.xpack.persistent.CompletionPersistentTaskAction.Response;
+import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.PersistentTaskInProgress;
+import org.elasticsearch.xpack.persistent.TestPersistentActionPlugin.TestRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -163,7 +166,7 @@ public class PersistentActionCoordinatorTests extends ESTestCase {
         ClusterService clusterService = createClusterService();
         AtomicLong capturedTaskId = new AtomicLong();
         AtomicReference<ActionListener<CancelTasksResponse>> capturedListener = new AtomicReference<>();
-        PersistentActionService persistentActionService = new PersistentActionService(Settings.EMPTY, null, null) {
+        PersistentActionService persistentActionService = new PersistentActionService(Settings.EMPTY, null, null, null) {
             @Override
             public void sendCancellation(long taskId, ActionListener<CancelTasksResponse> listener) {
                 capturedTaskId.set(taskId);
@@ -235,7 +238,8 @@ public class PersistentActionCoordinatorTests extends ESTestCase {
         AtomicLong capturedTaskId = new AtomicLong(-1L);
         AtomicReference<Exception> capturedException = new AtomicReference<>();
         AtomicReference<ActionListener<Response>> capturedListener = new AtomicReference<>();
-        PersistentActionService persistentActionService = new PersistentActionService(Settings.EMPTY, clusterService, null) {
+        PersistentActionService persistentActionService =
+                new PersistentActionService(Settings.EMPTY, mock(ThreadPool.class), clusterService, null) {
             @Override
             public void sendCompletionNotification(long taskId, Exception failure, ActionListener<Response> listener) {
                 capturedTaskId.set(taskId);

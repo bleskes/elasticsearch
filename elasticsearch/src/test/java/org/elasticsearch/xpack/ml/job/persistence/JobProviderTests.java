@@ -25,6 +25,8 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.text.Text;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -34,14 +36,12 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.action.DeleteJobAction;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
 import org.elasticsearch.xpack.ml.job.config.AnalysisLimits;
+import org.elasticsearch.xpack.ml.job.config.Job;
+import org.elasticsearch.xpack.ml.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.CategorizerState;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
-import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelState;
-import org.elasticsearch.xpack.ml.notifications.AuditActivity;
-import org.elasticsearch.xpack.ml.notifications.AuditMessage;
-import org.elasticsearch.xpack.ml.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.Quantiles;
 import org.elasticsearch.xpack.ml.job.results.AnomalyRecord;
 import org.elasticsearch.xpack.ml.job.results.Bucket;
@@ -49,6 +49,8 @@ import org.elasticsearch.xpack.ml.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.ml.job.results.Influencer;
 import org.elasticsearch.xpack.ml.job.results.PerPartitionMaxProbabilities;
 import org.elasticsearch.xpack.ml.job.results.Result;
+import org.elasticsearch.xpack.ml.notifications.AuditActivity;
+import org.elasticsearch.xpack.ml.notifications.AuditMessage;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
 import org.mockito.ArgumentCaptor;
 
@@ -1156,7 +1158,7 @@ public class JobProviderTests extends ESTestCase {
     }
 
     private JobProvider createProvider(Client client) {
-        return new JobProvider(client, 0);
+        return new JobProvider(client, 0, TimeValue.timeValueSeconds(1));
     }
 
     private static GetResponse createGetResponse(boolean exists, Map<String, Object> source) throws IOException {
@@ -1175,12 +1177,12 @@ public class JobProviderTests extends ESTestCase {
             SearchHit hit = mock(SearchHit.class);
             Map<String, Object> _source = new HashMap<>(map);
             when(hit.getSourceRef()).thenReturn(XContentFactory.jsonBuilder().map(_source).bytes());
-            when(hit.getId()).thenReturn(String.valueOf(map.hashCode()));
-            doAnswer(invocation -> {
+            when( hit .getId()).thenReturn( String.valueOf(map.hashCode()));
+                    doAnswer(invocation -> {
                 String field = (String) invocation.getArguments()[0];
                 SearchHitField shf = mock(SearchHitField.class);
                 when(shf.getValue()).thenReturn(map.get(field));
-                return shf;
+            return shf;
             }).when(hit).field(any(String.class));
             list.add(hit);
         }

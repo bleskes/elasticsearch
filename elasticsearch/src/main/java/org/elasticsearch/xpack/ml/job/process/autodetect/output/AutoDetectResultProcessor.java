@@ -182,7 +182,6 @@ public class AutoDetectResultProcessor {
             completionLatch.await();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
         }
     }
 
