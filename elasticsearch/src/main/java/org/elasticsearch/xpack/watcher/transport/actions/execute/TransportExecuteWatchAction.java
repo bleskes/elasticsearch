@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.watcher.transport.actions.execute;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.cluster.ClusterState;
@@ -102,8 +103,7 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
             if (request.getId() != null) {
                 watch = watchStore.get(request.getId());
                 if (watch == null) {
-                    //todo we need to find a better std exception for this one
-                    throw new ElasticsearchException("watch [{}] does not exist", request.getId());
+                    throw new ResourceNotFoundException("watch [{}] does not exist", request.getId());
                 }
                 knownWatch = true;
             } else if (request.getWatchSource() != null) {
