@@ -14,6 +14,9 @@
  */
 package org.elasticsearch.xpack.ml.job.persistence;
 
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.xpack.ml.job.metadata.MlMetadata;
+
 /**
  * Methods for handling index naming related functions
  */
@@ -31,6 +34,16 @@ public final class AnomalyDetectorsIndex {
      */
     public static String jobResultsIndexName(String jobId) {
         return RESULTS_INDEX_PREFIX + jobId;
+    }
+
+    /**
+     * The default index pattern for rollover index results
+     * @param jobId Job Id
+     * @return The index name
+     */
+    public static String getCurrentResultsIndex(ClusterState state, String jobId) {
+        MlMetadata meta = state.getMetaData().custom(MlMetadata.TYPE);
+        return RESULTS_INDEX_PREFIX + meta.getJobs().get(jobId).getIndexName();
     }
 
     /**
