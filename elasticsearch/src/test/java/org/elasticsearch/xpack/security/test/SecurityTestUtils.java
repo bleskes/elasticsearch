@@ -17,17 +17,26 @@
 
 package org.elasticsearch.xpack.security.test;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.UUID;
+
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.cluster.routing.IndexShardRoutingTable;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.io.FileSystemUtils;
 import org.elasticsearch.common.io.Streams;
 import org.elasticsearch.common.settings.Settings;
@@ -36,13 +45,6 @@ import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.security.SecurityTemplateService;
 import org.elasticsearch.xpack.security.authz.store.NativeRolesStoreTests;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.UUID;
 
 import static org.elasticsearch.cluster.routing.RecoverySource.StoreRecoverySource.EXISTING_STORE_INSTANCE;
 
@@ -88,7 +90,11 @@ public class SecurityTestUtils {
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
                 .build();
         MetaData metaData = MetaData.builder()
-                .put(IndexMetaData.builder(SecurityTemplateService.SECURITY_INDEX_NAME).settings(settings)).build();
+                .put(IndexMetaData.builder(SecurityTemplateService.SECURITY_INDEX_NAME).settings(settings))
+                .put(new IndexTemplateMetaData(SecurityTemplateService.SECURITY_TEMPLATE_NAME, 0, 0,
+                        "", Settings.EMPTY, ImmutableOpenMap.of(),
+                        ImmutableOpenMap.of(), ImmutableOpenMap.of()))
+                .build();
         RoutingTable routingTable = buildSecurityIndexRoutingTable();
 
         return ClusterState.builder(new ClusterName(NativeRolesStoreTests.class.getName()))

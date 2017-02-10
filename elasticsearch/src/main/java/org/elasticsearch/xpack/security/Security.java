@@ -25,6 +25,7 @@ import org.elasticsearch.action.support.ActionFilter;
 import org.elasticsearch.action.support.DestructiveOperations;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.bootstrap.BootstrapCheck;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Booleans;
 import org.elasticsearch.common.Nullable;
@@ -438,6 +439,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         AnonymousUser.addSettings(settingsList);
         RealmSettings.addSettings(settingsList, extensionsService == null ? null : extensionsService.getExtensions());
         NativeRolesStore.addSettings(settingsList);
+        ReservedRealm.addSettings(settingsList);
         AuthenticationService.addSettings(settingsList);
         AuthorizationService.addSettings(settingsList);
         settingsList.add(CompositeRolesStore.CACHE_SIZE_SETTING);
