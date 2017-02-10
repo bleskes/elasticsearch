@@ -160,7 +160,7 @@ public class SecurityIndexSearcherWrapperIntegrationTests extends ESTestCase {
             when(queryShardContext.newParseContext(anyParser())).thenReturn(queryParseContext);
             when(queryParseContext.parseInnerQueryBuilder())
                     .thenReturn(Optional.of(new TermQueryBuilder("field", values[i])));
-            when(queryShardContext.toQuery(new TermsQueryBuilder("field", values[i]))).thenReturn(parsedQuery);
+            when(queryShardContext.toFilter(new TermsQueryBuilder("field", values[i]))).thenReturn(parsedQuery);
             DirectoryReader wrappedDirectoryReader = wrapper.wrap(directoryReader);
             IndexSearcher indexSearcher = wrapper.wrap(new IndexSearcher(wrappedDirectoryReader));
 

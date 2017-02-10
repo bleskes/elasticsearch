@@ -88,7 +88,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 
 import static org.apache.lucene.search.BooleanClause.Occur.SHOULD;
@@ -155,7 +154,7 @@ public class SecurityIndexSearcherWrapper extends IndexSearcherWrapper {
                         if (queryBuilder.isPresent()) {
                             verifyRoleQuery(queryBuilder.get());
                             failIfQueryUsesClient(scriptService, queryBuilder.get(), queryShardContext);
-                            ParsedQuery parsedQuery = queryShardContext.toQuery(queryBuilder.get());
+                            ParsedQuery parsedQuery = queryShardContext.toFilter(queryBuilder.get());
                             filter.add(parsedQuery.query(), SHOULD);
                         }
                     }
