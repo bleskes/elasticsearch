@@ -28,6 +28,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.cluster.ClusterState;
@@ -168,6 +169,13 @@ public class WatchStore extends AbstractComponent {
      * Updates and persists the status of the given watch
      */
     public void updateStatus(Watch watch) throws IOException {
+        updateStatus(watch, false);
+    }
+
+    /**
+     * Updates and persists the status of the given watch
+     */
+    public void updateStatus(Watch watch, boolean refresh) throws IOException {
         ensureStarted();
         if (!watch.status().dirty()) {
             return;
@@ -177,12 +185,15 @@ public class WatchStore extends AbstractComponent {
         // so we just need to update the watch itself
         XContentBuilder source = JsonXContent.contentBuilder().
                 startObject()
-                    .field(Watch.Field.STATUS.getPreferredName(), watch.status(), ToXContent.EMPTY_PARAMS)
+                .field(Watch.Field.STATUS.getPreferredName(), watch.status(), ToXContent.EMPTY_PARAMS)
                 .endObject();
 
         UpdateRequest updateRequest = new UpdateRequest(INDEX, DOC_TYPE, watch.id());
         updateRequest.doc(source);
         updateRequest.version(watch.version());
+        if (refresh) {
+            updateRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        }
         try {
             UpdateResponse response = client.update(updateRequest);
             watch.status().version(response.getVersion());
@@ -204,6 +215,7 @@ public class WatchStore extends AbstractComponent {
         // even if the watch was not found in the watch map, we should still try to delete it
         // from the index, just to make sure we don't leave traces of it
         DeleteRequest request = new DeleteRequest(INDEX, DOC_TYPE, id);
+        request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
         DeleteResponse response = client.delete(request);
         // Another operation may hold the Watch instance, so lets set the version for consistency:
         if (watch != null) {
@@ -292,6 +304,7 @@ public class WatchStore extends AbstractComponent {
         IndexRequest indexRequest = new IndexRequest(INDEX, DOC_TYPE, id);
         indexRequest.source(BytesReference.toBytes(source));
         indexRequest.version(version);
+        indexRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
         return indexRequest;
     }
 

@@ -26,13 +26,9 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.xpack.support.clock.Clock;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.xpack.watcher.execution.ExecutionService;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.watcher.trigger.TriggerService;
@@ -181,7 +177,7 @@ public class WatcherService extends AbstractComponent {
         // we need to create a safe copy of the status
         if (watch.ack(clock.now(DateTimeZone.UTC), actionIds)) {
             try {
-                watchStore.updateStatus(watch);
+                watchStore.updateStatus(watch, true);
             } catch (IOException ioe) {
                 throw ioException("failed to update the watch [{}] on ack", ioe, watch.id());
             } catch (VersionConflictEngineException vcee) {
@@ -220,7 +216,7 @@ public class WatcherService extends AbstractComponent {
         }
         if (watch.setState(active, clock.nowUTC())) {
             try {
-                watchStore.updateStatus(watch);
+                watchStore.updateStatus(watch, true);
                 if (active) {
                     triggerService.add(watch);
                 } else {

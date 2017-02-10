@@ -198,7 +198,7 @@ public class WatcherServiceTests extends ESTestCase {
         WatchStatus result = watcherService.ackWatch("_id", Strings.EMPTY_ARRAY);
         assertThat(result, not(sameInstance(status)));
 
-        verify(watchStore, times(1)).updateStatus(watch);
+        verify(watchStore, times(1)).updateStatus(watch, true);
     }
 
     public void testActivate() throws Exception {
@@ -262,7 +262,7 @@ public class WatcherServiceTests extends ESTestCase {
         assertThat(result, not(sameInstance(status)));
 
         verify(triggerService, times(1)).add(watch);
-        verify(watchStore, times(1)).updateStatus(watch);
+        verify(watchStore, times(1)).updateStatus(watch, true);
     }
 
     public void testSetWatchStateSetInactiveOnCurrentlyActive() throws Exception {
@@ -285,7 +285,7 @@ public class WatcherServiceTests extends ESTestCase {
         assertThat(result, not(sameInstance(status)));
 
         verify(triggerService, times(1)).remove("_id");
-        verify(watchStore, times(1)).updateStatus(watch);
+        verify(watchStore, times(1)).updateStatus(watch, true);
     }
 
     public void testSetWatchStateSetInactiveOnCurrentlyInactive() throws Exception {
