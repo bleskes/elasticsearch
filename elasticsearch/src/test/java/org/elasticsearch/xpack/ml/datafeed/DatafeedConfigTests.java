@@ -34,6 +34,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 public class DatafeedConfigTests extends AbstractSerializingTestCase<DatafeedConfig> {
 
@@ -49,13 +50,17 @@ public class DatafeedConfigTests extends AbstractSerializingTestCase<DatafeedCon
         if (randomBoolean()) {
             builder.setQuery(QueryBuilders.termQuery(randomAsciiOfLength(10), randomAsciiOfLength(10)));
         }
-        int scriptsSize = randomInt(3);
-        List<SearchSourceBuilder.ScriptField> scriptFields = new ArrayList<>(scriptsSize);
-        for (int scriptIndex = 0; scriptIndex < scriptsSize; scriptIndex++) {
-            scriptFields.add(new SearchSourceBuilder.ScriptField(randomAsciiOfLength(10), new Script(randomAsciiOfLength(10)),
-                    randomBoolean()));
+        boolean addScriptFields = randomBoolean();
+        if (addScriptFields) {
+            int scriptsSize = randomInt(3);
+            List<SearchSourceBuilder.ScriptField> scriptFields = new ArrayList<>(scriptsSize);
+            for (int scriptIndex = 0; scriptIndex < scriptsSize; scriptIndex++) {
+                scriptFields.add(new SearchSourceBuilder.ScriptField(randomAsciiOfLength(10), new Script(randomAsciiOfLength(10)),
+                        randomBoolean()));
+            }
+            builder.setScriptFields(scriptFields);
         }
-        if (randomBoolean() && scriptsSize == 0) {
+        if (randomBoolean() && addScriptFields == false) {
             // can only test with a single agg as the xcontent order gets randomized by test base class and then
             // the actual xcontent isn't the same and test fail.
             // Testing with a single agg is ok as we don't have special list writeable / xconent logic
@@ -63,7 +68,6 @@ public class DatafeedConfigTests extends AbstractSerializingTestCase<DatafeedCon
             aggs.addAggregator(AggregationBuilders.avg(randomAsciiOfLength(10)).field(randomAsciiOfLength(10)));
             builder.setAggregations(aggs);
         }
-        builder.setScriptFields(scriptFields);
         if (randomBoolean()) {
             builder.setScrollSize(randomIntBetween(0, Integer.MAX_VALUE));
         }
@@ -82,7 +86,7 @@ public class DatafeedConfigTests extends AbstractSerializingTestCase<DatafeedCon
         return builder.build();
     }
 
-    private static List<String> randomStringList(int min, int max) {
+    public static List<String> randomStringList(int min, int max) {
         int size = scaledRandomIntBetween(min, max);
         List<String> list = new ArrayList<>();
         for (int i = 0; i < size; i++) {
@@ -264,6 +268,35 @@ public class DatafeedConfigTests extends AbstractSerializingTestCase<DatafeedCon
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> datafeed.build());
 
         assertThat(e.getMessage(), equalTo("script_fields cannot be used in combination with aggregations"));
+    }
+
+    public void testHasAggregations_GivenNull() {
+        DatafeedConfig.Builder builder = new DatafeedConfig.Builder("datafeed1", "job1");
+        builder.setIndexes(Arrays.asList("myIndex"));
+        builder.setTypes(Arrays.asList("myType"));
+        DatafeedConfig datafeedConfig = builder.build();
+
+        assertThat(datafeedConfig.hasAggregations(), is(false));
+    }
+
+    public void testHasAggregations_GivenEmpty() {
+        DatafeedConfig.Builder builder = new DatafeedConfig.Builder("datafeed1", "job1");
+        builder.setIndexes(Arrays.asList("myIndex"));
+        builder.setTypes(Arrays.asList("myType"));
+        builder.setAggregations(new AggregatorFactories.Builder());
+        DatafeedConfig datafeedConfig = builder.build();
+
+        assertThat(datafeedConfig.hasAggregations(), is(false));
+    }
+
+    public void testHasAggregations_NonEmpty() {
+        DatafeedConfig.Builder builder = new DatafeedConfig.Builder("datafeed1", "job1");
+        builder.setIndexes(Arrays.asList("myIndex"));
+        builder.setTypes(Arrays.asList("myType"));
+        builder.setAggregations(new AggregatorFactories.Builder().addAggregator(AggregationBuilders.avg("foo")));
+        DatafeedConfig datafeedConfig = builder.build();
+
+        assertThat(datafeedConfig.hasAggregations(), is(true));
     }
 
     public void testDomainSplitInjection() {
