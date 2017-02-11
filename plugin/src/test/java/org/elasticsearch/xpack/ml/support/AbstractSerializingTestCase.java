@@ -39,6 +39,11 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
         NAMED_X_CONTENT_REGISTRY = new NamedXContentRegistry(searchModule.getNamedXContents());
     }
 
+    @Override
+    protected NamedXContentRegistry xContentRegistry() {
+        return NAMED_X_CONTENT_REGISTRY;
+    }
+
     /**
      * Generic test that creates new instance from the test instance and checks
      * both for equality and asserts equality on the two queries.
@@ -58,7 +63,7 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
 
     private void assertParsedInstance(BytesReference queryAsBytes, T expectedInstance)
             throws IOException {
-        XContentParser parser = XContentFactory.xContent(queryAsBytes).createParser(NAMED_X_CONTENT_REGISTRY, queryAsBytes);
+        XContentParser parser = XContentFactory.xContent(queryAsBytes).createParser(xContentRegistry(), queryAsBytes);
         T newInstance = parseQuery(parser);
         assertNotSame(newInstance, expectedInstance);
         assertEquals(expectedInstance, newInstance);
@@ -71,7 +76,7 @@ public abstract class AbstractSerializingTestCase<T extends ToXContent & Writeab
         return parsedInstance;
     }
 
-    protected abstract T parseInstance(XContentParser parser);
+    protected abstract T parseInstance(XContentParser parser) throws IOException;
 
     /**
      * Subclasses can override this method and return an array of fieldnames
