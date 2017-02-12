@@ -21,8 +21,8 @@ package org.elasticsearch.cluster;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.IndexGraveyard;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
@@ -108,13 +108,13 @@ public class ClusterChangedEvent {
     /**
      * Returns the indices created in this event
      */
-    public List<String> indicesCreated() {
+    public List<Index> indicesCreated() {
         if (!metaDataChanged()) {
             return Collections.emptyList();
         }
-        List<String> created = null;
-        for (ObjectCursor<String> cursor : state.metaData().indices().keys()) {
-            String index = cursor.value;
+        List<Index> created = null;
+        for (ObjectCursor<IndexMetaData> cursor : state.metaData().indices().values()) {
+            Index index = cursor.value.getIndex();
             if (!previousState.metaData().hasIndex(index)) {
                 if (created == null) {
                     created = new ArrayList<>();
@@ -122,7 +122,7 @@ public class ClusterChangedEvent {
                 created.add(index);
             }
         }
-        return created == null ? Collections.<String>emptyList() : created;
+        return created == null ? Collections.emptyList() : created;
     }
 
     /**

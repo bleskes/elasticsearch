@@ -39,12 +39,12 @@ import org.elasticsearch.test.TestCustomMetaData;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -530,18 +530,22 @@ public class ClusterChangedEventTests extends ESTestCase {
         }
         final boolean changeClusterUUID = randomBoolean();
         final List<Index> addedIndices = addIndices(numAdd, randomAsciiOfLengthBetween(5, 10));
+        addedIndices.sort(Comparator.comparing(Index::getName));
         List<Index> delIndices;
         if (changeClusterUUID) {
             delIndices = new ArrayList<>();
         } else {
             delIndices = delIndices(numDel, stateIndices);
         }
+        delIndices.sort(Comparator.comparing(Index::getName));
         final ClusterState newState = nextState(previousState, changeClusterUUID, addedIndices, delIndices, 0);
         ClusterChangedEvent event = new ClusterChangedEvent("_na_", newState, previousState);
-        final List<String> addsFromEvent = event.indicesCreated();
-        List<Index> delsFromEvent = event.indicesDeleted();
-        assertThat(new HashSet<>(addsFromEvent), equalTo(addedIndices.stream().map(Index::getName).collect(Collectors.toSet())));
-        assertThat(new HashSet<>(delsFromEvent), equalTo(new HashSet<>(delIndices)));
+        final List<Index> addsFromEvent = event.indicesCreated();
+        final List<Index> delsFromEvent = event.indicesDeleted();
+        addsFromEvent.sort(Comparator.comparing(Index::getName));
+        delsFromEvent.sort(Comparator.comparing(Index::getName));
+        assertThat(addsFromEvent, equalTo(addedIndices));
+        assertThat(delsFromEvent, equalTo(delIndices));
         assertThat(event.metaDataChanged(), equalTo(changeClusterUUID || addedIndices.size() > 0 || delIndices.size() > 0));
         final IndexGraveyard newGraveyard = event.state().metaData().indexGraveyard();
         final IndexGraveyard oldGraveyard = event.previousState().metaData().indexGraveyard();

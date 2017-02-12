@@ -18,7 +18,7 @@
  */
 
 
-package org.elasticsearch.action.support.replication;
+package org.elasticsearch.test;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.ClusterName;
@@ -35,7 +35,6 @@ import org.elasticsearch.cluster.routing.TestShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.shard.ShardId;
-import org.elasticsearch.test.ESTestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;

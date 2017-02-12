@@ -56,12 +56,7 @@ public class IndexSettingsModule extends AbstractModule {
     }
 
     public static IndexSettings newIndexSettings(Index index, Settings indexSetting, Settings nodeSettings, Setting<?>... setting) {
-        Settings build = Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
-            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-            .put(indexSetting)
-            .build();
-        IndexMetaData metaData = IndexMetaData.builder(index.getName()).settings(build).build();
+        IndexMetaData metaData = newIndexMeta(index.getName(), indexSetting);
         Set<Setting<?>> settingSet = new HashSet<>(IndexScopedSettings.BUILT_IN_INDEX_SETTINGS);
         if (setting.length > 0) {
             settingSet.addAll(Arrays.asList(setting));
@@ -70,12 +65,7 @@ public class IndexSettingsModule extends AbstractModule {
     }
 
     public static IndexSettings newIndexSettings(Index index, Settings settings, IndexScopedSettings indexScopedSettings) {
-        Settings build = Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-                .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
-                .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
-                .put(settings)
-                .build();
-        IndexMetaData metaData = IndexMetaData.builder(index.getName()).settings(build).build();
+        IndexMetaData metaData = newIndexMeta(index.getName(), settings);
         return new IndexSettings(metaData, Settings.EMPTY, indexScopedSettings);
     }
 
@@ -86,4 +76,15 @@ public class IndexSettingsModule extends AbstractModule {
         }
         return new IndexSettings(indexMetaData, Settings.EMPTY, new IndexScopedSettings(Settings.EMPTY, settingSet));
     }
+
+    public static IndexMetaData newIndexMeta(String name, Settings indexSettings) {
+        Settings build = Settings.builder().put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+            .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
+            .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
+            .put(indexSettings)
+            .build();
+        return IndexMetaData.builder(name).settings(build).build();
+    }
+
+
 }

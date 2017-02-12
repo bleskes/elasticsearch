@@ -29,7 +29,7 @@ import org.elasticsearch.test.ESTestCase;
 import java.io.IOException;
 
 import static org.elasticsearch.common.settings.Settings.Builder.EMPTY_SETTINGS;
-import static org.elasticsearch.index.IndexSettingsTests.newIndexMeta;
+import static org.elasticsearch.test.IndexSettingsModule.newIndexMeta;
 import static org.hamcrest.Matchers.equalTo;
 
 public class MergePolicySettingsTests extends ESTestCase {

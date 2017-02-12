@@ -24,7 +24,6 @@ import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.CollectionUtil;
-import org.elasticsearch.Version;
 import org.elasticsearch.cluster.Diff;
 import org.elasticsearch.cluster.Diffable;
 import org.elasticsearch.cluster.DiffableUtils;
@@ -417,6 +416,10 @@ public class MetaData implements Iterable<IndexMetaData>, Diffable<MetaData>, To
 
     public boolean hasIndex(String index) {
         return indices.containsKey(index);
+    }
+
+    public boolean hasIndex(Index index) {
+        return index(index) != null;
     }
 
     public boolean hasConcreteIndex(String index) {
