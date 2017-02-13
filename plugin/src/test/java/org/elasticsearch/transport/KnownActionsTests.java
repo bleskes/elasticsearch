@@ -29,7 +29,7 @@ import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.test.discovery.TestZenDiscovery;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.graph.Graph;
-import org.elasticsearch.xpack.ml.MlPlugin;
+import org.elasticsearch.xpack.ml.MachineLearning;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -145,7 +145,7 @@ public class KnownActionsTests extends SecurityIntegTestCase {
         loadActions(collectSubClasses(Action.class, Graph.class), actions);
 
         // also loading all actions from the machine learning plugin
-        loadActions(collectSubClasses(Action.class, MlPlugin.class), actions);
+        loadActions(collectSubClasses(Action.class, MachineLearning.class), actions);
 
         return unmodifiableSet(actions);
     }

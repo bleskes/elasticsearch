@@ -22,7 +22,7 @@ import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.xpack.ml.MlPlugin;
+import org.elasticsearch.xpack.ml.MachineLearning;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
 import org.elasticsearch.xpack.ml.job.JobManager;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
@@ -162,7 +162,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         ThreadPool threadPool = mock(ThreadPool.class);
         ThreadPool.Cancellable cancellable = mock(ThreadPool.Cancellable.class);
         when(threadPool.scheduleWithFixedDelay(any(), any(), any())).thenReturn(cancellable);
-        when(threadPool.executor(MlPlugin.AUTODETECT_PROCESS_THREAD_POOL_NAME))
+        when(threadPool.executor(MachineLearning.AUTODETECT_PROCESS_THREAD_POOL_NAME))
                 .thenReturn(EsExecutors.newDirectExecutorService());
         AutodetectProcess autodetectProcess = mock(AutodetectProcess.class);
         when(autodetectProcess.isProcessAlive()).thenReturn(true);

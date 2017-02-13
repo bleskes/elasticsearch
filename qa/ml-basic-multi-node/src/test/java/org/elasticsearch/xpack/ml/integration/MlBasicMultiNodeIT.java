@@ -19,7 +19,7 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.test.rest.ESRestTestCase;
-import org.elasticsearch.xpack.ml.MlPlugin;
+import org.elasticsearch.xpack.ml.MachineLearning;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,14 +34,14 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
         String jobId = "foo";
         createFarequoteJob(jobId);
 
-        Response response = client().performRequest("post", MlPlugin.BASE_PATH + "anomaly_detectors/" + jobId + "/_open");
+        Response response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_open");
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertEquals(Collections.singletonMap("opened", true), responseEntityToMap(response));
 
         String postData =
                 "{\"airline\":\"AAL\",\"responsetime\":\"132.2046\",\"sourcetype\":\"farequote\",\"time\":\"1403481600\"}\n" +
                 "{\"airline\":\"JZA\",\"responsetime\":\"990.4628\",\"sourcetype\":\"farequote\",\"time\":\"1403481700\"}";
-        response = client().performRequest("post", MlPlugin.BASE_PATH + "anomaly_detectors/" + jobId + "/_data",
+        response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_data",
                 Collections.emptyMap(), new StringEntity(postData));
         assertEquals(202, response.getStatusLine().getStatusCode());
         Map<String, Object> responseBody = responseEntityToMap(response);
@@ -55,15 +55,15 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
         assertEquals(1403481600000L, responseBody.get("earliest_record_timestamp"));
         assertEquals(1403481700000L, responseBody.get("latest_record_timestamp"));
 
-        response = client().performRequest("post", MlPlugin.BASE_PATH + "anomaly_detectors/" + jobId + "/_flush");
+        response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_flush");
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertEquals(Collections.singletonMap("flushed", true), responseEntityToMap(response));
 
-        response = client().performRequest("post", MlPlugin.BASE_PATH + "anomaly_detectors/" + jobId + "/_close");
+        response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_close");
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertEquals(Collections.singletonMap("closed", true), responseEntityToMap(response));
 
-        response = client().performRequest("get", MlPlugin.BASE_PATH + "anomaly_detectors/" + jobId + "/_stats");
+        response = client().performRequest("get", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_stats");
         assertEquals(200, response.getStatusLine().getStatusCode());
         @SuppressWarnings("unchecked")
         Map<String, Object> dataCountsDoc = (Map<String, Object>)
@@ -78,7 +78,7 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
         assertEquals(1403481600000L, dataCountsDoc.get("earliest_record_timestamp"));
         assertEquals(1403481700000L, dataCountsDoc.get("latest_record_timestamp"));
 
-        response = client().performRequest("delete", MlPlugin.BASE_PATH + "anomaly_detectors/" + jobId);
+        response = client().performRequest("delete", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId);
         assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
@@ -106,7 +106,7 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
         xContentBuilder.endObject();
         xContentBuilder.endObject();
 
-        return client().performRequest("put", MlPlugin.BASE_PATH + "anomaly_detectors/" + jobId,
+        return client().performRequest("put", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId,
                 Collections.emptyMap(), new StringEntity(xContentBuilder.string()));
     }
 
