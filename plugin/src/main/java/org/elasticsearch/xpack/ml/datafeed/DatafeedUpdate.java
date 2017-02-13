@@ -53,7 +53,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         PARSER.declareLong(Builder::setQueryDelay, DatafeedConfig.QUERY_DELAY);
         PARSER.declareLong(Builder::setFrequency, DatafeedConfig.FREQUENCY);
         PARSER.declareObject(Builder::setQuery,
-                (p, c) -> new QueryParseContext(p).parseInnerQueryBuilder(), DatafeedConfig.QUERY);
+                (p, c) -> new QueryParseContext(p).parseInnerQueryBuilder().get(), DatafeedConfig.QUERY);
         PARSER.declareObject(Builder::setAggregations, (p, c) -> AggregatorFactories.parseAggregators(new QueryParseContext(p)),
                 DatafeedConfig.AGGREGATIONS);
         PARSER.declareObject(Builder::setAggregations,(p, c) -> AggregatorFactories.parseAggregators(new QueryParseContext(p)),

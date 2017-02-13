@@ -43,10 +43,10 @@ public class DatafeedUpdateTests extends AbstractSerializingTestCase<DatafeedUpd
             builder.setJobId(randomAsciiOfLength(10));
         }
         if (randomBoolean()) {
-            builder.setQueryDelay(randomNonNegativeLong());
+            builder.setQueryDelay(randomPositiveLong());
         }
         if (randomBoolean()) {
-            builder.setFrequency(randomNonNegativeLong());
+            builder.setFrequency(randomPositiveLong());
         }
         if (randomBoolean()) {
             builder.setIndexes(DatafeedConfigTests.randomStringList(1, 10));
