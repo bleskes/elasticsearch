@@ -22,6 +22,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.http.HttpTransportSettings;
+import org.elasticsearch.http.NullDispatcher;
 import org.elasticsearch.http.netty3.Netty3HttpMockUtil;
 import org.elasticsearch.xpack.ssl.SSLService;
 import org.elasticsearch.xpack.ssl.SSLClientAuth;
@@ -67,7 +68,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
@@ -83,7 +84,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
@@ -98,7 +99,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(true));
@@ -113,7 +114,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
@@ -127,7 +128,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         SSLEngine defaultEngine = factory.getPipeline().get(SslHandler.class).getEngine();
@@ -140,7 +141,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, new Environment(settings));
         transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
         factory = transport.configureServerChannelPipelineFactory();
         SSLEngine customEngine = factory.getPipeline().get(SslHandler.class).getEngine();
@@ -188,7 +189,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class, transport::configureServerChannelPipelineFactory);
         assertThat(e.getMessage(), containsString("key must be provided"));
     }
@@ -204,7 +205,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         sslService = new SSLService(settings, env);
         SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                (request, channel, threadContext) -> {});
+                new NullDispatcher());
         assertNotNull(transport.configureServerChannelPipelineFactory());
     }
 }
