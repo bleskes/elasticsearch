@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.job.persistence;
 
+import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
@@ -27,6 +28,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -58,6 +60,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -1170,30 +1173,22 @@ public class JobProviderTests extends ESTestCase {
 
     private static SearchResponse createSearchResponse(boolean exists, List<Map<String, Object>> source) throws IOException {
         SearchResponse response = mock(SearchResponse.class);
-        SearchHits hits = mock(SearchHits.class);
         List<SearchHit> list = new ArrayList<>();
 
         for (Map<String, Object> map : source) {
-            SearchHit hit = mock(SearchHit.class);
             Map<String, Object> _source = new HashMap<>(map);
-            when(hit.getSourceRef()).thenReturn(XContentFactory.jsonBuilder().map(_source).bytes());
-            when( hit .getId()).thenReturn( String.valueOf(map.hashCode()));
-                    doAnswer(invocation -> {
-                String field = (String) invocation.getArguments()[0];
-                SearchHitField shf = mock(SearchHitField.class);
-                when(shf.getValue()).thenReturn(map.get(field));
-            return shf;
-            }).when(hit).field(any(String.class));
+
+            Map<String, SearchHitField> fields = new HashMap<>();
+            fields.put("field_1", new SearchHitField("field_1", Arrays.asList("foo")));
+            fields.put("field_2", new
+            SearchHitField ("field_2", Arrays.asList("foo")));
+
+            SearchHit hit= new SearchHit(123,String.valueOf(map.hashCode()), new Text("foo"), fields)
+                .sourceRef(XContentFactory.jsonBuilder().map(_source).bytes());
             list.add(hit);
         }
+        SearchHits hits = new SearchHits(list.toArray(new SearchHit[0]), source.size(), 1);
         when(response.getHits()).thenReturn(hits);
-        when(hits.getHits()).thenReturn(list.toArray(new SearchHit[0]));
-        when(hits.getTotalHits()).thenReturn((long) source.size());
-
-        doAnswer(invocation -> {
-            Integer idx = (Integer) invocation.getArguments()[0];
-            return list.get(idx);
-        }).when(hits).getAt(any(Integer.class));
 
         return response;
     }

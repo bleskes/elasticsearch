@@ -19,6 +19,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
@@ -27,10 +28,10 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelState;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static org.elasticsearch.mock.orig.Mockito.mock;
 import static org.elasticsearch.mock.orig.Mockito.times;
 import static org.elasticsearch.mock.orig.Mockito.verify;
 import static org.mockito.Matchers.any;
@@ -115,19 +116,13 @@ public class JobDataDeleterTests extends ESTestCase {
 
     private SearchHits mockSearchHits(long totalHitCount, int hitsPerSearchResult) {
 
-        SearchHits hits = Mockito.mock(SearchHits.class);
-        when(hits.totalHits()).thenReturn(totalHitCount);
-
         List<SearchHit> hitList = new ArrayList<>();
         for (int i=0; i<20; i++) {
-            SearchHit hit = Mockito.mock(SearchHit.class);
-            when(hit.getType()).thenReturn("mockSearchHit");
-            when(hit.getId()).thenReturn("mockSeachHit-" + i);
+            SearchHit hit = new SearchHit(123, "mockSeachHit-" + i,
+                    new Text("mockSearchHit"), Collections.emptyMap());
             hitList.add(hit);
         }
-        when(hits.getHits()).thenReturn(hitList.toArray(new SearchHit[hitList.size()]));
-        when(hits.hits()).thenReturn(hitList.toArray(new SearchHit[hitList.size()]));
 
-        return hits;
+        return new SearchHits(hitList.toArray(new SearchHit[0]), totalHitCount, 1);
     }
 }
