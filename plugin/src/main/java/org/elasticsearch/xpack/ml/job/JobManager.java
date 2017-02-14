@@ -31,7 +31,6 @@ import org.elasticsearch.xpack.ml.action.DeleteJobAction;
 import org.elasticsearch.xpack.ml.action.PutJobAction;
 import org.elasticsearch.xpack.ml.action.RevertModelSnapshotAction;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
-import org.elasticsearch.xpack.ml.job.config.IgnoreDowntime;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
 import org.elasticsearch.xpack.ml.job.config.JobUpdate;
@@ -345,12 +344,6 @@ public class JobManager extends AbstractComponent {
                 Job job = getJobOrThrowIfUnknown(currentState, request.getJobId());
                 Job.Builder builder = new Job.Builder(job);
                 builder.setModelSnapshotId(modelSnapshot.getSnapshotId());
-                if (request.getDeleteInterveningResults()) {
-                    builder.setIgnoreDowntime(IgnoreDowntime.NEVER);
-                } else {
-                    builder.setIgnoreDowntime(IgnoreDowntime.ONCE);
-                }
-
                 return updateClusterState(builder.build(), true, currentState);
             }
         });

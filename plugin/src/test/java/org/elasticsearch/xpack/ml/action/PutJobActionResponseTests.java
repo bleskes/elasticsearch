@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.ml.action;
 
 import org.elasticsearch.xpack.ml.action.PutJobAction.Response;
-import org.elasticsearch.xpack.ml.job.config.IgnoreDowntime;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.support.AbstractStreamableTestCase;
 
@@ -27,7 +26,6 @@ public class PutJobActionResponseTests extends AbstractStreamableTestCase<Respon
     @Override
     protected Response createTestInstance() {
         Job.Builder builder = buildJobBuilder(randomValidJobId());
-        builder.setIgnoreDowntime(IgnoreDowntime.NEVER);
         return new Response(randomBoolean(), builder.build());
     }
 
