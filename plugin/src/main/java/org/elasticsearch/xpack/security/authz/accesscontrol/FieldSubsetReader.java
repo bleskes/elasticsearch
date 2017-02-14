@@ -172,9 +172,7 @@ public final class FieldSubsetReader extends FilterLeafReader {
 
             Object value = entry.getValue();
 
-            if (includeAutomaton.isAccept(state)) {
-                filtered.put(key, value);
-            } else if (value instanceof Map) {
+            if (value instanceof Map) {
                 state = includeAutomaton.step(state, '.');
                 if (state == -1) {
                     continue;
@@ -191,6 +189,8 @@ public final class FieldSubsetReader extends FilterLeafReader {
                 if (filteredValue.isEmpty() == false) {
                     filtered.put(key, filteredValue);
                 }
+            } else if (includeAutomaton.isAccept(state)) {
+                filtered.put(key, value);
             }
         }
         return filtered;
@@ -214,6 +214,8 @@ public final class FieldSubsetReader extends FilterLeafReader {
                 if (filteredValue.isEmpty() == false) {
                     filtered.add(filteredValue);
                 }
+            } else if (includeAutomaton.isAccept(initialState)) {
+                filtered.add(value);
             }
         }
         return filtered;
