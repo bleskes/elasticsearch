@@ -17,8 +17,6 @@ package org.elasticsearch.xpack.ml.datafeed.extractor.scroll;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
-import org.elasticsearch.search.internal.InternalSearchHit;
-import org.elasticsearch.search.internal.InternalSearchHitField;
 import org.elasticsearch.test.ESTestCase;
 
 import java.util.Arrays;
@@ -107,11 +105,11 @@ public class ExtractedFieldTests extends ESTestCase {
 
     static class SearchHitBuilder {
 
-        private final InternalSearchHit hit;
+        private final SearchHit hit;
         private final Map<String, SearchHitField> fields;
 
         SearchHitBuilder(int docId) {
-            hit = new InternalSearchHit(docId);
+            hit = new SearchHit(docId);
             fields = new HashMap<>();
         }
 
@@ -120,7 +118,7 @@ public class ExtractedFieldTests extends ESTestCase {
         }
 
         SearchHitBuilder addField(String name, List<Object> values) {
-            fields.put(name, new InternalSearchHitField(name, values));
+            fields.put(name, new SearchHitField(name, values));
             return this;
         }
 

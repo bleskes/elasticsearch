@@ -49,8 +49,6 @@ import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.internal.InternalSearchHit;
-import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.security.InternalClient;
@@ -106,7 +104,7 @@ public class NativeRealmMigratorTests extends ESTestCase {
                     public SearchHits getHits() {
                         List<SearchHit> hits = reservedUsers.entrySet().stream()
                                 .map((info) -> {
-                                    InternalSearchHit hit = new InternalSearchHit(randomInt(), info.getKey(), null, null, emptyMap());
+                                    SearchHit hit = new SearchHit(randomInt(), info.getKey(), null, null, emptyMap());
                                     try {
                                         hit.sourceRef(JsonXContent.contentBuilder().map(info.getValue()).bytes());
                                     } catch (IOException e) {
@@ -114,7 +112,7 @@ public class NativeRealmMigratorTests extends ESTestCase {
                                     }
                                     return hit;
                                 }).collect(Collectors.toList());
-                        return new InternalSearchHits(hits.toArray(new InternalSearchHit[0]), (long) reservedUsers.size(), 0.0f);
+                        return new SearchHits(hits.toArray(new SearchHit[0]), (long) reservedUsers.size(), 0.0f);
                     }
                 };
                 listener.onResponse(response);

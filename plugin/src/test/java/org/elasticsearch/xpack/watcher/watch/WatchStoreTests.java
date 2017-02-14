@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.watcher.watch;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
@@ -44,8 +43,8 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.search.SearchHitField;
-import org.elasticsearch.search.internal.InternalSearchHit;
-import org.elasticsearch.search.internal.InternalSearchHits;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.watcher.actions.ActionWrapper;
 import org.elasticsearch.xpack.watcher.actions.ExecutableAction;
@@ -74,7 +73,6 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -210,17 +208,17 @@ public class WatchStoreTests extends ESTestCase {
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
 
         BytesReference source = new BytesArray("{}");
-        InternalSearchHit hit1 = new InternalSearchHit(0, "_id1", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit1 = new SearchHit(0, "_id1", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit1.sourceRef(source);
-        InternalSearchHit hit2 = new InternalSearchHit(1, "_id2", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit2 = new SearchHit(1, "_id2", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit2.sourceRef(source);
         SearchResponse searchResponse1 = mockSearchResponse(1, 1, 2, hit1, hit2);
 
         when(clientProxy.search(any(SearchRequest.class), any(TimeValue.class))).thenReturn(searchResponse1);
 
-        InternalSearchHit hit3 = new InternalSearchHit(2, "_id3", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit3 = new SearchHit(2, "_id3", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit3.sourceRef(source);
-        InternalSearchHit hit4 = new InternalSearchHit(3, "_id4", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit4 = new SearchHit(3, "_id4", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit4.sourceRef(source);
         SearchResponse searchResponse2 = mockSearchResponse(1, 1, 2, hit3, hit4);
         SearchResponse searchResponse3 = mockSearchResponse(1, 1, 2);
@@ -264,9 +262,9 @@ public class WatchStoreTests extends ESTestCase {
         int hitCount = randomIntBetween(50, 100);
         int activeHitCount = 0;
 
-        List<InternalSearchHit> hits = new ArrayList<>();
+        List<SearchHit> hits = new ArrayList<>();
         for (int i = 0; i < hitCount; i++) {
-            InternalSearchHit hit = new InternalSearchHit(0, "_id" + i, new Text("type"), Collections.<String, SearchHitField>emptyMap());
+            SearchHit hit = new SearchHit(0, "_id" + i, new Text("type"), Collections.<String, SearchHitField>emptyMap());
             hits.add(hit.sourceRef(source));
 
             Watch watch = mock(Watch.class);
@@ -320,7 +318,7 @@ public class WatchStoreTests extends ESTestCase {
             when(parser.parse("_id" + i, true, source, XContentType.JSON, true)).thenReturn(watch);
         }
 
-        SearchResponse searchResponse = mockSearchResponse(1, 1, hitCount, hits.toArray(new InternalSearchHit[] {}));
+        SearchResponse searchResponse = mockSearchResponse(1, 1, hitCount, hits.toArray(new SearchHit[] {}));
         when(clientProxy.search(any(SearchRequest.class), any(TimeValue.class))).thenReturn(searchResponse);
         SearchResponse noHitsResponse = mockSearchResponse(1, 1, 2);
         when(clientProxy.searchScroll(anyString(), any(TimeValue.class))).thenReturn(noHitsResponse);
@@ -367,7 +365,7 @@ public class WatchStoreTests extends ESTestCase {
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
 
         BytesReference source = new BytesArray("{}");
-        InternalSearchHit hit = new InternalSearchHit(0, "_id1", new Text("type"), Collections.emptyMap());
+        SearchHit hit = new SearchHit(0, "_id1", new Text("type"), Collections.emptyMap());
         hit.sourceRef(source);
 
         SearchResponse searchResponse = mockSearchResponse(1, 1, 1, hit);
@@ -423,17 +421,17 @@ public class WatchStoreTests extends ESTestCase {
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
 
         BytesReference source = new BytesArray("{}");
-        InternalSearchHit hit1 = new InternalSearchHit(0, "_id1", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit1 = new SearchHit(0, "_id1", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit1.sourceRef(source);
-        InternalSearchHit hit2 = new InternalSearchHit(1, "_id2", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit2 = new SearchHit(1, "_id2", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit2.sourceRef(source);
         SearchResponse searchResponse1 = mockSearchResponse(1, 1, 2, hit1, hit2);
 
         when(clientProxy.search(any(SearchRequest.class), any(TimeValue.class))).thenReturn(searchResponse1);
 
-        InternalSearchHit hit3 = new InternalSearchHit(2, "_id3", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit3 = new SearchHit(2, "_id3", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit3.sourceRef(source);
-        InternalSearchHit hit4 = new InternalSearchHit(3, "_id4", new Text("type"), Collections.<String, SearchHitField>emptyMap());
+        SearchHit hit4 = new SearchHit(3, "_id4", new Text("type"), Collections.<String, SearchHitField>emptyMap());
         hit4.sourceRef(source);
         SearchResponse searchResponse2 = mockSearchResponse(1, 1, 2, hit3, hit4);
         SearchResponse searchResponse3 = mockSearchResponse(1, 1, 2);
@@ -548,12 +546,12 @@ public class WatchStoreTests extends ESTestCase {
         return refreshResponse;
     }
 
-    private SearchResponse mockSearchResponse(int total, int successful, int totalHits, InternalSearchHit... hits) {
-        InternalSearchHits internalSearchHits = new InternalSearchHits(hits, totalHits, 1f);
+    private SearchResponse mockSearchResponse(int total, int successful, int totalHits, SearchHit... hits) {
+        SearchHits searchHits = new SearchHits(hits, totalHits, 1f);
         SearchResponse searchResponse = mock(SearchResponse.class);
         when(searchResponse.getTotalShards()).thenReturn(total);
         when(searchResponse.getSuccessfulShards()).thenReturn(successful);
-        when(searchResponse.getHits()).thenReturn(internalSearchHits);
+        when(searchResponse.getHits()).thenReturn(searchHits);
         return searchResponse;
     }
 
