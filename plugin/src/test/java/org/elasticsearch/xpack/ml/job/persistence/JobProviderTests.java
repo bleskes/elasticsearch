@@ -25,11 +25,20 @@ import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
+import org.elasticsearch.cluster.ClusterName;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
@@ -39,6 +48,7 @@ import org.elasticsearch.xpack.ml.action.DeleteJobAction;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
 import org.elasticsearch.xpack.ml.job.config.AnalysisLimits;
 import org.elasticsearch.xpack.ml.job.config.Job;
+import org.elasticsearch.xpack.ml.job.metadata.MlMetadata;
 import org.elasticsearch.xpack.ml.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.CategorizerState;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
@@ -74,6 +84,7 @@ import static org.elasticsearch.xpack.ml.job.config.JobTests.buildJobBuilder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -144,6 +155,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("all_field_values", settings.get("index.query.default_field"));
     }
 
+    @SuppressWarnings("unchecked")
     public void testCreateJobResultsIndex() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
@@ -152,7 +164,18 @@ public class JobProviderTests extends ESTestCase {
         Job.Builder job = buildJobBuilder("foo");
         JobProvider provider = createProvider(clientBuilder.build());
 
-        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
+        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(ImmutableOpenMap.of())).build();
+
+        ClusterService clusterService = mock(ClusterService.class);
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
+
+        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 CreateIndexRequest request = captor.getValue();
@@ -174,6 +197,58 @@ public class JobProviderTests extends ESTestCase {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    public void testCreateJobWithExistingIndex() {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
+        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
+        clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsIndexName("foo"), AnomalyDetectorsIndex.jobResultsIndexName("foo123"));
+
+        Job.Builder job = buildJobBuilder("foo123");
+        job.setIndexName("foo");
+        JobProvider provider = createProvider(clientBuilder.build());
+
+        Index index = mock(Index.class);
+        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+        IndexMetaData indexMetaData = mock(IndexMetaData.class);
+        when(indexMetaData.getIndex()).thenReturn(index);
+
+        ImmutableOpenMap<String, AliasMetaData> aliases = ImmutableOpenMap.of();
+        when(indexMetaData.getAliases()).thenReturn(aliases);
+
+        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
+                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), indexMetaData).build();
+
+        ClusterState cs2 = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
+
+        ClusterService clusterService = mock(ClusterService.class);
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs2);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo123"), any(AckedClusterStateUpdateTask.class));
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs2);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("index-aliases"), any(AckedClusterStateUpdateTask.class));
+
+        provider.createJobResultIndex(job.build(), cs2, new ActionListener<Boolean>() {
+            @Override
+            public void onResponse(Boolean aBoolean) {
+                assertTrue(aBoolean);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                fail(e.toString());
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
     public void testCreateJobRelatedIndicies_createsAliasIfIndexNameIsSet() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
@@ -185,7 +260,28 @@ public class JobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
 
-        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
+        Index index = mock(Index.class);
+        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+        IndexMetaData indexMetaData = mock(IndexMetaData.class);
+        when(indexMetaData.getIndex()).thenReturn(index);
+        ImmutableOpenMap<String, AliasMetaData> aliases = ImmutableOpenMap.of();
+        when(indexMetaData.getAliases()).thenReturn(aliases);
+
+        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
+                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), indexMetaData).build();
+
+        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
+
+        ClusterService clusterService = mock(ClusterService.class);
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
+
+        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 verify(client.admin().indices(), times(1)).prepareAliases();
@@ -198,6 +294,7 @@ public class JobProviderTests extends ESTestCase {
         });
     }
 
+    @SuppressWarnings("unchecked")
     public void testCreateJobRelatedIndicies_doesntCreateAliasIfIndexNameIsSameAsJobId() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
@@ -208,7 +305,28 @@ public class JobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
 
-        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
+        Index index = mock(Index.class);
+        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+        IndexMetaData indexMetaData = mock(IndexMetaData.class);
+        when(indexMetaData.getIndex()).thenReturn(index);
+        ImmutableOpenMap<String, AliasMetaData> aliases = ImmutableOpenMap.of();
+        when(indexMetaData.getAliases()).thenReturn(aliases);
+
+        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
+                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), indexMetaData).build();
+
+        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
+
+        ClusterService clusterService = mock(ClusterService.class);
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
+
+        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 verify(client.admin().indices(), never()).prepareAliases();
@@ -300,6 +418,7 @@ public class JobProviderTests extends ESTestCase {
             });
     }
 
+    @SuppressWarnings("unchecked")
     public void testCreateJob() throws InterruptedException, ExecutionException {
         Job.Builder job = buildJobBuilder("marscapone");
         job.setDescription("This is a very cheesy job");
@@ -313,7 +432,29 @@ public class JobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
         AtomicReference<Boolean> resultHolder = new AtomicReference<>();
-        provider.createJobResultIndex(job.build(), new ActionListener<Boolean>() {
+
+        Index index = mock(Index.class);
+        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("marscapone"));
+        IndexMetaData indexMetaData = mock(IndexMetaData.class);
+        when(indexMetaData.getIndex()).thenReturn(index);
+        ImmutableOpenMap<String, AliasMetaData> aliases = ImmutableOpenMap.of();
+        when(indexMetaData.getAliases()).thenReturn(aliases);
+
+        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
+                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("marscapone"), indexMetaData).build();
+
+        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
+
+        ClusterService clusterService = mock(ClusterService.class);
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
+
+        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 resultHolder.set(aBoolean);
