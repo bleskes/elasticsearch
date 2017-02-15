@@ -213,8 +213,6 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
                 String scrollId = scrollRequest.scrollId();
                 if (cryptoService.isSigned(scrollId)) {
                     scrollRequest.scrollId(cryptoService.unsignAndVerify(scrollId, null));
-                } else {
-                    throw new IllegalArgumentException("tampered signed text");
                 }
             } else if (request instanceof ClearScrollRequest) {
                 ClearScrollRequest clearScrollRequest = (ClearScrollRequest) request;
@@ -226,7 +224,7 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
                         if (cryptoService.isSigned(signedId)) {
                             unsignedIds.add(cryptoService.unsignAndVerify(signedId, null));
                         } else {
-                            throw new IllegalArgumentException("tampered signed text");
+                            unsignedIds.add(signedId);
                         }
                     }
                     clearScrollRequest.scrollIds(unsignedIds);
