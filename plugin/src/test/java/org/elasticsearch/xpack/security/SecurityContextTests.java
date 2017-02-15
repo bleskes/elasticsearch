@@ -65,8 +65,7 @@ public class SecurityContextTests extends ESTestCase {
 
         assertEquals(authentication, securityContext.getAuthentication());
         assertEquals(user, securityContext.getUser());
-        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated in Elasticsearch and it will be removed in a " +
-                "future release! See the breaking changes lists in the documentation for details");
+        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated");
     }
 
     public void testSetUser() {
@@ -79,8 +78,7 @@ public class SecurityContextTests extends ESTestCase {
         IllegalStateException e = expectThrows(IllegalStateException.class,
                 () -> securityContext.setUser(randomFrom(user, SystemUser.INSTANCE), Version.CURRENT));
         assertEquals("authentication is already present in the context", e.getMessage());
-        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated in Elasticsearch and it will be removed in a " +
-                "future release! See the breaking changes lists in the documentation for details");
+        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated");
     }
 
     public void testExecuteAsUser() throws IOException {
@@ -106,7 +104,6 @@ public class SecurityContextTests extends ESTestCase {
         assertNotNull(originalContext);
         originalContext.restore();
         assertEquals(original, securityContext.getUser());
-        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated in Elasticsearch and it will be removed in a " +
-                "future release! See the breaking changes lists in the documentation for details");
+        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated");
     }
 }
