@@ -21,6 +21,7 @@ import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.test.rest.ESRestTestCase;
 import org.elasticsearch.xpack.ml.MachineLearning;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import static org.elasticsearch.common.xcontent.XContentType.JSON;
 
 public class MlBasicMultiNodeIT extends ESRestTestCase {
 
-    public void testBasics() throws Exception {
+    public void testMiniFarequote() throws Exception {
         String jobId = "foo";
         createFarequoteJob(jobId);
 
@@ -82,6 +83,83 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
         assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
+    public void testMiniFarequoteWithDatafeeder() throws Exception {
+        String mappings = "{"
+                + "  \"mappings\": {"
+                + "    \"response\": {"
+                + "      \"properties\": {"
+                + "        \"time\": { \"type\":\"date\"},"
+                + "        \"airline\": { \"type\":\"keyword\"},"
+                + "        \"responsetime\": { \"type\":\"float\"}"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        client().performRequest("put", "airline-data", Collections.emptyMap(), new StringEntity(mappings));
+        client().performRequest("put", "airline-data/response/1", Collections.emptyMap(),
+                new StringEntity("{\"time\":\"2016-06-01T00:00:00Z\",\"airline\":\"AAA\",\"responsetime\":135.22}"));
+        client().performRequest("put", "airline-data/response/2", Collections.emptyMap(),
+                new StringEntity("{\"time\":\"2016-06-01T01:59:00Z\",\"airline\":\"AAA\",\"responsetime\":541.76}"));
+
+        // Ensure all data is searchable
+        client().performRequest("post", "_refresh");
+
+        String jobId = "foo";
+        createFarequoteJob(jobId);
+        String datafeedId = "bar";
+        createDatafeed(datafeedId, jobId);
+
+        Response response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_open");
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(Collections.singletonMap("opened", true), responseEntityToMap(response));
+
+        response = client().performRequest("post", MachineLearning.BASE_PATH + "datafeeds/" + datafeedId + "/_start",
+                Collections.singletonMap("start", "0"));
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(Collections.singletonMap("started", true), responseEntityToMap(response));
+
+        assertBusy(() -> {
+            try {
+                Response statsResponse =
+                        client().performRequest("get", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_stats");
+                assertEquals(200, statsResponse.getStatusLine().getStatusCode());
+                @SuppressWarnings("unchecked")
+                Map<String, Object> dataCountsDoc = (Map<String, Object>)
+                        ((Map)((List) responseEntityToMap(statsResponse).get("jobs")).get(0)).get("data_counts");
+                assertEquals(2, dataCountsDoc.get("input_record_count"));
+                assertEquals(2, dataCountsDoc.get("processed_record_count"));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        response = client().performRequest("post", MachineLearning.BASE_PATH + "datafeeds/" + datafeedId + "/_stop");
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(Collections.singletonMap("acknowledged", true), responseEntityToMap(response));
+
+        response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_close");
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(Collections.singletonMap("closed", true), responseEntityToMap(response));
+
+        response = client().performRequest("delete", MachineLearning.BASE_PATH + "datafeeds/" + datafeedId);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        response = client().performRequest("delete", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+    }
+
+    private Response createDatafeed(String datafeedId, String jobId) throws Exception {
+        XContentBuilder xContentBuilder = jsonBuilder();
+        xContentBuilder.startObject();
+        xContentBuilder.field("job_id", jobId);
+        xContentBuilder.array("indexes", "airline-data");
+        xContentBuilder.array("types", "response");
+        xContentBuilder.field("_source", true);
+        xContentBuilder.endObject();
+        return client().performRequest("put", MachineLearning.BASE_PATH + "datafeeds/" + datafeedId,
+                Collections.emptyMap(), new StringEntity(xContentBuilder.string()));
+    }
+
     private Response createFarequoteJob(String jobId) throws Exception {
         XContentBuilder xContentBuilder = jsonBuilder();
         xContentBuilder.startObject();
@@ -110,7 +188,7 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
                 Collections.emptyMap(), new StringEntity(xContentBuilder.string()));
     }
 
-    private static Map<String, Object> responseEntityToMap(Response response) throws Exception {
+    private static Map<String, Object> responseEntityToMap(Response response) throws IOException {
         return XContentHelper.convertToMap(JSON.xContent(), response.getEntity().getContent(), false);
     }
 }
