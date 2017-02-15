@@ -22,7 +22,9 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
+import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.user.User;
 
@@ -89,7 +91,12 @@ public class Authentication {
         return version;
     }
 
-    public static Authentication readFromContext(ThreadContext ctx, CryptoService cryptoService, boolean sign)
+    /**
+     * Reads the Authentication from the context. If the Authentication was created and placed as a transient in the current
+     * {@link ThreadContext} then we can read the transient directly and return it. If not, we read the authentication header and
+     * deserialize it using the {@link Version} to ensure we deserialize it properly
+     */
+    public static Authentication readFromContext(ThreadContext ctx, CryptoService cryptoService, Settings settings, Version version)
             throws IOException, IllegalArgumentException {
         Authentication authentication = ctx.getTransient(AUTHENTICATION_KEY);
         if (authentication != null) {
@@ -101,30 +108,42 @@ public class Authentication {
         if (authenticationHeader == null) {
             return null;
         }
-        return deserializeHeaderAndPutInContext(authenticationHeader, ctx, cryptoService, sign);
+        return deserializeHeaderAndPutInContext(authenticationHeader, ctx, cryptoService, shouldSign(settings, version), version);
     }
 
     public static Authentication getAuthentication(ThreadContext context) {
         return context.getTransient(Authentication.AUTHENTICATION_KEY);
     }
 
-    static Authentication deserializeHeaderAndPutInContext(String header, ThreadContext ctx, CryptoService cryptoService, boolean sign)
-            throws IOException, IllegalArgumentException {
+    /**
+     * Reads the Authentication object from the header and places the deserialized object in the ThreadContext. The header may be signed if
+     * the message is sent from a node without ssl or a version before 5.4.0. The version is used by the CryptoService to properly read
+     * the signed string.
+     *
+     * While we serialize the version out in the bytes of this object, we do not have this information prior to verifying the data so we
+     * need the version passed in.
+     */
+    private static Authentication deserializeHeaderAndPutInContext(String header, ThreadContext ctx, CryptoService cryptoService,
+                                                                   boolean sign, Version version)
+                                                                   throws IOException, IllegalArgumentException {
         assert ctx.getTransient(AUTHENTICATION_KEY) == null;
         if (sign) {
-            header = cryptoService.unsignAndVerify(header);
+            header = cryptoService.unsignAndVerify(header, version);
         }
 
         byte[] bytes = Base64.getDecoder().decode(header);
         StreamInput input = StreamInput.wrap(bytes);
-        Version version = Version.readVersion(input);
+        final Version streamVersion = Version.readVersion(input);
+        if (streamVersion.equals(version) == false) {
+            throw new IllegalStateException("version mismatch. expected [" + version + "] but got [" + streamVersion + "]");
+        }
         input.setVersion(version);
         Authentication authentication = new Authentication(input);
         ctx.putTransient(AUTHENTICATION_KEY, authentication);
         return authentication;
     }
 
-    void writeToContextIfMissing(ThreadContext context, CryptoService cryptoService, boolean sign)
+    void writeToContextIfMissing(ThreadContext context, CryptoService cryptoService, Settings settings, Version version)
             throws IOException, IllegalArgumentException {
         if (context.getTransient(AUTHENTICATION_KEY) != null) {
             if (context.getHeader(AUTHENTICATION_KEY) == null) {
@@ -134,22 +153,28 @@ public class Authentication {
         }
 
         if (context.getHeader(AUTHENTICATION_KEY) != null) {
-            deserializeHeaderAndPutInContext(context.getHeader(AUTHENTICATION_KEY), context, cryptoService, sign);
+            final boolean shouldSign = shouldSign(settings, version);
+            deserializeHeaderAndPutInContext(context.getHeader(AUTHENTICATION_KEY), context, cryptoService, shouldSign, version);
         } else {
-            writeToContext(context, cryptoService, sign);
+            writeToContext(context, cryptoService, settings, version);
         }
+    }
+
+    public static boolean shouldSign(Settings settings, Version version) {
+        return AuthenticationService.SIGN_USER_HEADER.get(settings) && XPackSettings.TRANSPORT_SSL_ENABLED.get(settings) == false
+                && version.before(Version.V_5_4_0_UNRELEASED);
     }
 
     /**
      * Writes the authentication to the context. There must not be an existing authentication in the context and if there is an
      * {@link IllegalStateException} will be thrown
      */
-    public void writeToContext(ThreadContext ctx, CryptoService cryptoService, boolean sign)
+    public void writeToContext(ThreadContext ctx, CryptoService cryptoService, Settings settings, Version version)
             throws IOException, IllegalArgumentException {
         ensureContextDoesNotContainAuthentication(ctx);
         String header = encode();
-        if (sign) {
-            header = cryptoService.sign(header);
+        if (shouldSign(settings, version)) {
+            header = cryptoService.sign(header, version);
         }
         ctx.putTransient(AUTHENTICATION_KEY, this);
         ctx.putHeader(AUTHENTICATION_KEY, header);

@@ -27,6 +27,7 @@ import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Transport;
+import org.elasticsearch.transport.Transport.Connection;
 import org.elasticsearch.transport.TransportException;
 import org.elasticsearch.transport.TransportInterceptor.AsyncSender;
 import org.elasticsearch.transport.TransportRequest;
@@ -54,6 +55,7 @@ import java.util.function.Consumer;
 
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -111,7 +113,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
     public void testSendAsync() throws Exception {
         final User user = new User("test");
         final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, AuthenticationService.SIGN_USER_HEADER.get(settings));
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
                 mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
                 securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
@@ -136,14 +138,14 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         assertEquals(user, sendingUser.get());
         assertEquals(user, securityContext.getUser());
         verify(xPackLicenseState).isAuthAllowed();
-        verify(securityContext, never()).executeAsUser(any(User.class), any(Consumer.class));
+        verify(securityContext, never()).executeAsUser(any(User.class), any(Consumer.class), any(Version.class));
         verifyNoMoreInteractions(xPackLicenseState);
     }
 
     public void testSendAsyncSwitchToSystem() throws Exception {
         final User user = new User("test");
         final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, AuthenticationService.SIGN_USER_HEADER.get(settings));
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
         threadContext.putTransient(AuthorizationService.ORIGINATING_ACTION_KEY, "indices:foo");
 
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
@@ -163,13 +165,54 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
                 sendingUser.set(securityContext.getUser());
             }
         });
-        sender.sendRequest(null, "internal:foo", null, null, null);
+        Connection connection = mock(Connection.class);
+        when(connection.getVersion()).thenReturn(Version.CURRENT);
+        sender.sendRequest(connection, "internal:foo", null, null, null);
         assertTrue(calledWrappedSender.get());
         assertNotEquals(user, sendingUser.get());
         assertEquals(SystemUser.INSTANCE, sendingUser.get());
         assertEquals(user, securityContext.getUser());
         verify(xPackLicenseState).isAuthAllowed();
-        verify(securityContext).executeAsUser(any(User.class), any(Consumer.class));
+        verify(securityContext).executeAsUser(any(User.class), any(Consumer.class), any(Version.class));
+        verifyNoMoreInteractions(xPackLicenseState);
+    }
+
+    public void testSendAsyncToNodeThatRequiresSigning() throws Exception {
+        final User user = new User("test");
+        final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
+        // sanity check signing is off
+        assertFalse(Authentication.shouldSign(settings, Version.CURRENT));
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+        threadContext.putTransient(AuthorizationService.ORIGINATING_ACTION_KEY, "indices:foo");
+
+        SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
+                mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
+                securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
+                Collections.singleton(DestructiveOperations.REQUIRES_NAME_SETTING))));
+
+        AtomicBoolean calledWrappedSender = new AtomicBoolean(false);
+        AtomicReference<User> sendingUser = new AtomicReference<>();
+        AsyncSender sender = interceptor.interceptSender(new AsyncSender() {
+            @Override
+            public <T extends TransportResponse> void sendRequest(Transport.Connection connection, String action, TransportRequest request,
+                                                                  TransportRequestOptions options, TransportResponseHandler<T> handler) {
+                if (calledWrappedSender.compareAndSet(false, true) == false) {
+                    fail("sender called more than once!");
+                }
+                sendingUser.set(securityContext.getUser());
+            }
+        });
+        Connection connection = mock(Connection.class);
+        final Version remoteVersion = Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_4_0_ID_UNRELEASED - 100));
+        when(connection.getVersion()).thenReturn(remoteVersion);
+        // sanity check that remote node requires signing
+        assertTrue(Authentication.shouldSign(settings, remoteVersion));
+        sender.sendRequest(connection, "indices:foo", null, null, null);
+        assertTrue(calledWrappedSender.get());
+        assertEquals(user, sendingUser.get());
+        assertEquals(user, securityContext.getUser());
+        verify(xPackLicenseState).isAuthAllowed();
+        verify(securityContext).executeAsUser(eq(user), any(Consumer.class), eq(remoteVersion));
         verifyNoMoreInteractions(xPackLicenseState);
     }
 
@@ -194,14 +237,14 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         assertEquals("there should always be a user when sending a message", e.getMessage());
         assertNull(securityContext.getUser());
         verify(xPackLicenseState).isAuthAllowed();
-        verify(securityContext, never()).executeAsUser(any(User.class), any(Consumer.class));
+        verify(securityContext, never()).executeAsUser(any(User.class), any(Consumer.class), any(Version.class));
         verifyNoMoreInteractions(xPackLicenseState);
     }
 
     public void testSendWithKibanaUser() throws Exception {
         final User user = new KibanaUser(true);
         final Authentication authentication = new Authentication(user, new RealmRef("reserved", "reserved", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, AuthenticationService.SIGN_USER_HEADER.get(settings));
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
         threadContext.putTransient(AuthorizationService.ORIGINATING_ACTION_KEY, "indices:foo");
 
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
@@ -254,7 +297,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         assertEquals(user, sendingUser.get());
 
         verify(xPackLicenseState, times(3)).isAuthAllowed();
-        verify(securityContext, times(1)).executeAsUser(any(User.class), any(Consumer.class));
+        verify(securityContext, times(3)).executeAsUser(any(User.class), any(Consumer.class), any(Version.class));
         verifyNoMoreInteractions(xPackLicenseState);
     }
 

@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.security.action.filter;
 
 import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.MockIndicesRequest;
@@ -111,10 +112,11 @@ public class SecurityActionFilterTests extends ESTestCase {
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
         doAnswer((i) -> {
             ActionListener callback =
-                    (ActionListener) i.getArguments()[3];
+                    (ActionListener) i.getArguments()[4];
             callback.onResponse(authentication);
             return Void.TYPE;
-        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
         final Role empty = Role.EMPTY;
         doAnswer((i) -> {
             ActionListener callback =
@@ -137,12 +139,13 @@ public class SecurityActionFilterTests extends ESTestCase {
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
         doAnswer((i) -> {
             ActionListener callback =
-                    (ActionListener) i.getArguments()[3];
+                    (ActionListener) i.getArguments()[4];
             assertNull(threadContext.getTransient(Authentication.AUTHENTICATION_KEY));
             threadContext.putTransient(Authentication.AUTHENTICATION_KEY, authentication);
             callback.onResponse(authentication);
             return Void.TYPE;
-        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
         final Role empty = Role.EMPTY;
         doAnswer((i) -> {
             ActionListener callback =
@@ -181,15 +184,16 @@ public class SecurityActionFilterTests extends ESTestCase {
         }
         doAnswer((i) -> {
             ActionListener callback =
-                    (ActionListener) i.getArguments()[3];
+                    (ActionListener) i.getArguments()[4];
             callback.onResponse(threadContext.getTransient(Authentication.AUTHENTICATION_KEY));
             return Void.TYPE;
-        }).when(authcService).authenticate(eq(action), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
+        }).when(authcService).authenticate(eq(action), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
         doReturn(request).when(spy(filter)).unsign(user, action, request);
         doAnswer((i) -> {
             String text = (String) i.getArguments()[0];
             return text;
-        }).when(cryptoService).sign(any(String.class));
+        }).when(cryptoService).sign(any(String.class), eq(Version.CURRENT));
 
         filter.apply(task, action, request, listener, chain);
 
@@ -215,10 +219,11 @@ public class SecurityActionFilterTests extends ESTestCase {
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
         doAnswer((i) -> {
             ActionListener callback =
-                    (ActionListener) i.getArguments()[3];
+                    (ActionListener) i.getArguments()[4];
             callback.onResponse(authentication);
             return Void.TYPE;
-        }).when(authcService).authenticate(eq(action), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
+        }).when(authcService).authenticate(eq(action), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
         final Role empty = Role.EMPTY;
         doAnswer((i) -> {
             ActionListener callback =
@@ -247,10 +252,11 @@ public class SecurityActionFilterTests extends ESTestCase {
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
         doAnswer((i) -> {
             ActionListener callback =
-                    (ActionListener) i.getArguments()[3];
+                    (ActionListener) i.getArguments()[4];
             callback.onResponse(authentication);
             return Void.TYPE;
-        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
         doAnswer((i) -> {
             ActionListener callback =
                     (ActionListener) i.getArguments()[1];
@@ -273,12 +279,13 @@ public class SecurityActionFilterTests extends ESTestCase {
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
         doAnswer((i) -> {
             ActionListener callback =
-                    (ActionListener) i.getArguments()[3];
+                    (ActionListener) i.getArguments()[4];
             callback.onResponse(authentication);
             return Void.TYPE;
-        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
         when(cryptoService.isSigned("signed_scroll_id")).thenReturn(true);
-        when(cryptoService.unsignAndVerify("signed_scroll_id")).thenReturn("scroll_id");
+        when(cryptoService.unsignAndVerify("signed_scroll_id", null)).thenReturn("scroll_id");
         final Role empty = Role.EMPTY;
         doAnswer((i) -> {
             ActionListener callback =
@@ -303,12 +310,13 @@ public class SecurityActionFilterTests extends ESTestCase {
         Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
         doAnswer((i) -> {
             ActionListener callback =
-                    (ActionListener) i.getArguments()[3];
+                    (ActionListener) i.getArguments()[4];
             callback.onResponse(authentication);
             return Void.TYPE;
-        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), any(ActionListener.class));
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
         when(cryptoService.isSigned("scroll_id")).thenReturn(true);
-        doThrow(sigException).when(cryptoService).unsignAndVerify("scroll_id");
+        doThrow(sigException).when(cryptoService).unsignAndVerify("scroll_id", null);
         doAnswer((i) -> {
             ActionListener callback =
                     (ActionListener) i.getArguments()[1];

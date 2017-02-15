@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.security.authc;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
@@ -55,7 +56,7 @@ import static org.elasticsearch.xpack.security.Security.setting;
 public class AuthenticationService extends AbstractComponent {
 
     public static final Setting<Boolean> SIGN_USER_HEADER =
-            Setting.boolSetting(setting("authc.sign_user_header"), true, Property.NodeScope);
+            Setting.boolSetting(setting("authc.sign_user_header"), true, Property.NodeScope, Property.Deprecated);
     public static final Setting<Boolean> RUN_AS_ENABLED =
             Setting.boolSetting(setting("authc.run_as.enabled"), true, Property.NodeScope);
     public static final String RUN_AS_USER_HEADER = "es-security-runas-user";
@@ -67,7 +68,6 @@ public class AuthenticationService extends AbstractComponent {
     private final ThreadContext threadContext;
     private final String nodeName;
     private final AnonymousUser anonymousUser;
-    private final boolean signUserHeader;
     private final boolean runAsEnabled;
     private final boolean isAnonymousUserEnabled;
 
@@ -81,7 +81,6 @@ public class AuthenticationService extends AbstractComponent {
         this.failureHandler = failureHandler;
         this.threadContext = threadPool.getThreadContext();
         this.anonymousUser = anonymousUser;
-        this.signUserHeader = SIGN_USER_HEADER.get(settings);
         this.runAsEnabled = RUN_AS_ENABLED.get(settings);
         this.isAnonymousUserEnabled = AnonymousUser.isAnonymousEnabled(settings);
     }
@@ -110,8 +109,9 @@ public class AuthenticationService extends AbstractComponent {
      *                      authentication will be based on the whether there's an attached user to in the message and
      *                      if there is, whether its credentials are valid.
      */
-    public void authenticate(String action, TransportMessage message, User fallbackUser, ActionListener<Authentication> listener) {
-        createAuthenticator(action, message, fallbackUser, listener).authenticateAsync();
+    public void authenticate(String action, TransportMessage message, User fallbackUser, Version version,
+                             ActionListener<Authentication> listener) {
+        createAuthenticator(action, message, fallbackUser, version, listener).authenticateAsync();
     }
 
     /**
@@ -120,9 +120,9 @@ public class AuthenticationService extends AbstractComponent {
      *
      * @param user      The user to be attached if the header is missing
      */
-    void attachUserIfMissing(User user) throws IOException {
+    void attachUserIfMissing(User user, Version version) throws IOException {
         Authentication authentication = new Authentication(user, new RealmRef("__attach", "__attach", nodeName), null);
-        authentication.writeToContextIfMissing(threadContext, cryptoService, signUserHeader);
+        authentication.writeToContextIfMissing(threadContext, cryptoService, settings, version);
     }
 
     // pkg private method for testing
@@ -131,8 +131,9 @@ public class AuthenticationService extends AbstractComponent {
     }
 
     // pkg private method for testing
-    Authenticator createAuthenticator(String action, TransportMessage message, User fallbackUser, ActionListener<Authentication> listener) {
-        return new Authenticator(action, message, fallbackUser, listener);
+    Authenticator createAuthenticator(String action, TransportMessage message, User fallbackUser, Version version,
+                                      ActionListener<Authentication> listener) {
+        return new Authenticator(action, message, fallbackUser, version, listener);
     }
 
     /**
@@ -144,23 +145,28 @@ public class AuthenticationService extends AbstractComponent {
         private final AuditableRequest request;
         private final User fallbackUser;
         private final ActionListener<Authentication> listener;
+        private final Version version;
 
         private RealmRef authenticatedBy = null;
         private RealmRef lookedupBy = null;
         private AuthenticationToken authenticationToken = null;
 
         Authenticator(RestRequest request, ActionListener<Authentication> listener) {
-            this(new AuditableRestRequest(auditTrail, failureHandler, threadContext, request), null, listener);
+            this(new AuditableRestRequest(auditTrail, failureHandler, threadContext, request), null, Version.CURRENT, listener);
         }
 
-        Authenticator(String action, TransportMessage message, User fallbackUser, ActionListener<Authentication> listener) {
-            this(new AuditableTransportRequest(auditTrail, failureHandler, threadContext, action, message), fallbackUser, listener);
+        Authenticator(String action, TransportMessage message, User fallbackUser, Version version,
+                      ActionListener<Authentication> listener) {
+            this(new AuditableTransportRequest(auditTrail, failureHandler, threadContext, action, message), fallbackUser,
+                    version, listener);
         }
 
-        private Authenticator(AuditableRequest auditableRequest, User fallbackUser, ActionListener<Authentication> listener) {
+        private Authenticator(AuditableRequest auditableRequest, User fallbackUser, Version version,
+                              ActionListener<Authentication> listener) {
             this.request = auditableRequest;
             this.fallbackUser = fallbackUser;
             this.listener = listener;
+            this.version = version;
         }
 
         /**
@@ -194,7 +200,7 @@ public class AuthenticationService extends AbstractComponent {
         private void lookForExistingAuthentication(Consumer<Authentication> authenticationConsumer) {
             Runnable action;
             try {
-                final Authentication authentication = Authentication.readFromContext(threadContext, cryptoService, signUserHeader);
+                final Authentication authentication = Authentication.readFromContext(threadContext, cryptoService, settings, version);
                 if (authentication != null && request instanceof AuditableRestRequest) {
                     action = () -> listener.onFailure(request.tamperedRequest());
                 } else {
@@ -305,7 +311,7 @@ public class AuthenticationService extends AbstractComponent {
             Runnable action;
             if (authentication != null) {
                 try {
-                    authentication.writeToContext(threadContext, cryptoService, signUserHeader);
+                    authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
                     request.authenticationSuccess(authentication.getAuthenticatedBy().getName(), authentication.getUser());
                     action = () -> listener.onResponse(authentication);
                 } catch (Exception e) {
@@ -394,7 +400,7 @@ public class AuthenticationService extends AbstractComponent {
                 final Authentication finalAuth = new Authentication(finalUser, authenticatedBy, lookedupBy);
                 Runnable action = () -> listener.onResponse(finalAuth);
                 try {
-                    finalAuth.writeToContext(threadContext, cryptoService, signUserHeader);
+                    finalAuth.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
                 } catch (Exception e) {
                     action = () -> listener.onFailure(request.exceptionProcessingRequest(e, authenticationToken));
                 }
@@ -431,6 +437,7 @@ public class AuthenticationService extends AbstractComponent {
         abstract ElasticsearchSecurityException runAsDenied(User user, AuthenticationToken token);
 
         abstract void authenticationSuccess(String realm, User user);
+
     }
 
     static class AuditableTransportRequest extends AuditableRequest {

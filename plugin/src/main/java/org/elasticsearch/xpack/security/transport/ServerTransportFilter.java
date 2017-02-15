@@ -141,7 +141,8 @@ public interface ServerTransportFilter {
                 }
             }
 
-            authcService.authenticate(securityAction, request, null, ActionListener.wrap((authentication) -> {
+            authcService.authenticate(securityAction, request, null, transportChannel.getVersion(),
+                    ActionListener.wrap((authentication) -> {
                     if (reservedRealmEnabled && authentication.getVersion().before(Version.V_5_2_0_UNRELEASED)
                             && KibanaUser.NAME.equals(authentication.getUser().principal())) {
                         // the authentication came from an older node - so let's replace the user with our version
@@ -149,13 +150,8 @@ public interface ServerTransportFilter {
                         if (kibanaUser.enabled()) {
                             securityContext.executeAsUser(kibanaUser, (original) -> {
                                 final Authentication replacedUserAuth = Authentication.getAuthentication(threadContext);
-                                final AuthorizationUtils.AsyncAuthorizer asyncAuthorizer =
-                                        new AuthorizationUtils.AsyncAuthorizer(replacedUserAuth, listener, (userRoles, runAsRoles) -> {
-                                            authzService.authorize(replacedUserAuth, securityAction, request, userRoles, runAsRoles);
-                                            listener.onResponse(null);
-                                        });
-                                asyncAuthorizer.authorize(authzService);
-                            });
+                                authorizeAsync(replacedUserAuth, listener, securityAction, request);
+                            }, Version.CURRENT);
                         } else {
                             throw new IllegalStateException("a disabled user should never be sent. " + kibanaUser);
                         }
@@ -169,16 +165,27 @@ public interface ServerTransportFilter {
                                         listener.onResponse(null);
                                     });
                             asyncAuthorizer.authorize(authzService);
-                        });
+                        }, Version.CURRENT);
+                    } else if (authentication.getVersion().before(Version.CURRENT)) {
+                        // execute as the user so we can have the proper version authentication in case we send to different node
+                        securityContext.executeAsUser(authentication.getUser(), (original) -> {
+                            final Authentication replacedUserAuth = Authentication.getAuthentication(threadContext);
+                            authorizeAsync(replacedUserAuth, listener, securityAction, request);
+                        }, Version.CURRENT);
                     } else {
-                        final AuthorizationUtils.AsyncAuthorizer asyncAuthorizer =
-                                new AuthorizationUtils.AsyncAuthorizer(authentication, listener, (userRoles, runAsRoles) -> {
-                                    authzService.authorize(authentication, securityAction, request, userRoles, runAsRoles);
-                                    listener.onResponse(null);
-                                });
-                        asyncAuthorizer.authorize(authzService);
+                        authorizeAsync(authentication, listener, securityAction, request);
                     }
                 }, listener::onFailure));
+        }
+
+        private void authorizeAsync(Authentication authentication, ActionListener listener, String securityAction,
+                                    TransportRequest request) {
+            final AuthorizationUtils.AsyncAuthorizer asyncAuthorizer =
+                    new AuthorizationUtils.AsyncAuthorizer(authentication, listener, (userRoles, runAsRoles) -> {
+                        authzService.authorize(authentication, securityAction, request, userRoles, runAsRoles);
+                        listener.onResponse(null);
+                    });
+            asyncAuthorizer.authorize(authzService);
         }
 
         private void extactClientCertificates(SSLEngine sslEngine, Object channel) {

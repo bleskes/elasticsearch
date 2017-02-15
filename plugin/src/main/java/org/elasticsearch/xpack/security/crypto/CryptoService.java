@@ -42,6 +42,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Setting;
@@ -171,18 +172,86 @@ public class CryptoService extends AbstractComponent {
     /**
      * Signs the given text and returns the signed text (original text + signature)
      * @param text the string to sign
+     * @param version the version that the signed text will be sent to
      */
-    public String sign(String text) throws IOException {
-        String sigStr = signInternal(text, signingKey);
-        return "$$" + sigStr.length() + "$$" + (systemKey == signingKey ? "" : randomKeyBase64) + "$$" + sigStr + text;
+    public String sign(String text, Version version) throws IOException {
+        final String sigStr;
+        if (version.before(Version.V_5_4_0_UNRELEASED)) {
+            sigStr = signInternal(text, signingKey);
+            return "$$" + sigStr.length() + "$$" + (systemKey == signingKey ? "" : randomKeyBase64) + "$$" + sigStr + text;
+        } else if (systemKey != null) {
+            // we use the system key here only!
+            sigStr = signInternal(text, systemKey);
+            return "$$" + sigStr.length() + "$$$$" + sigStr + text;
+        } else {
+            return text;
+        }
     }
 
     /**
      * Unsigns the given signed text, verifies the original text with the attached signature and if valid returns
      * the unsigned (original) text. If signature verification fails a {@link IllegalArgumentException} is thrown.
      * @param signedText the string to unsign and verify
+     * @param version the version that the text came from
      */
-    public String unsignAndVerify(String signedText) {
+    public String unsignAndVerify(String signedText, Version version) {
+        if (version == null) {
+            // version is null - let's see if we can detect
+            String[] pieces = signedText.split("\\$\\$");
+            if (pieces.length == 4 && pieces[2].equals("") == false) {
+                // this implies the use of a randomKey, so we assume the version is before 5.4
+                return unsignAndVerifyLegacy(signedText);
+            }
+        } else if (version.before(Version.V_5_4_0_UNRELEASED)) {
+            return unsignAndVerifyLegacy(signedText);
+        }
+
+        if (systemKey == null) {
+            if (isSigned(signedText)) {
+                throw new IllegalArgumentException("tampered signed text");
+            } else {
+                return signedText;
+            }
+        } else {
+            // $$34$$$$sigtext
+            String[] pieces = signedText.split("\\$\\$");
+            if (pieces.length != 4 || pieces[0].equals("") == false || pieces[2].equals("") == false) {
+                logger.debug("received signed text [{}] with [{}] parts", signedText, pieces.length);
+                throw new IllegalArgumentException("tampered signed text");
+            }
+
+            String text;
+            String receivedSignature;
+            try {
+                int length = Integer.parseInt(pieces[1]);
+                receivedSignature = pieces[3].substring(0, length);
+                text = pieces[3].substring(length);
+            } catch (Exception e) {
+                logger.error("error occurred while parsing signed text", e);
+                throw new IllegalArgumentException("tampered signed text");
+            }
+
+            try {
+                String sig = signInternal(text, systemKey);
+                if (constantTimeEquals(sig, receivedSignature)) {
+                    return text;
+                }
+            } catch (Exception e) {
+                logger.error("error occurred while verifying signed text", e);
+                throw new IllegalStateException("error while verifying the signed text");
+            }
+        }
+
+        throw new IllegalArgumentException("tampered signed text");
+    }
+
+    /**
+     * Unsigns the given signed text, verifies the original text with the attached signature and if valid returns
+     * the unsigned (original) text. If signature verification fails a {@link IllegalArgumentException} is thrown.
+     * This method makes use of the legacy auto generated signing key
+     * @param signedText the string to unsign and verify
+     */
+    private String unsignAndVerifyLegacy(String signedText) {
         if (!signedText.startsWith("$$") || signedText.length() < 2) {
             throw new IllegalArgumentException("tampered signed text");
         }

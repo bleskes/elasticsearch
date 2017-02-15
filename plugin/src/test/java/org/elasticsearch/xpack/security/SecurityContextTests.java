@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.security;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.util.concurrent.ThreadContext.StoredContext;
@@ -35,7 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class SecurityContextTests extends ESTestCase {
 
-    private boolean signHeader;
     private Settings settings;
     private ThreadContext threadContext;
     private CryptoService cryptoService;
@@ -43,7 +43,7 @@ public class SecurityContextTests extends ESTestCase {
 
     @Before
     public void buildSecurityContext() throws IOException {
-        signHeader = randomBoolean();
+        boolean signHeader = randomBoolean();
         settings = Settings.builder()
                 .put("path.home", createTempDir())
                 .put(AuthenticationService.SIGN_USER_HEADER.getKey(), signHeader)
@@ -61,22 +61,26 @@ public class SecurityContextTests extends ESTestCase {
     public void testGetAuthenticationAndUser() throws IOException {
         final User user = new User("test");
         final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, signHeader);
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
 
         assertEquals(authentication, securityContext.getAuthentication());
         assertEquals(user, securityContext.getUser());
+        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated in Elasticsearch and it will be removed in a " +
+                "future release! See the breaking changes lists in the documentation for details");
     }
 
     public void testSetUser() {
         final User user = new User("test");
         assertNull(securityContext.getAuthentication());
         assertNull(securityContext.getUser());
-        securityContext.setUser(user);
+        securityContext.setUser(user, Version.CURRENT);
         assertEquals(user, securityContext.getUser());
 
         IllegalStateException e = expectThrows(IllegalStateException.class,
-                () -> securityContext.setUser(randomFrom(user, SystemUser.INSTANCE)));
+                () -> securityContext.setUser(randomFrom(user, SystemUser.INSTANCE), Version.CURRENT));
         assertEquals("authentication is already present in the context", e.getMessage());
+        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated in Elasticsearch and it will be removed in a " +
+                "future release! See the breaking changes lists in the documentation for details");
     }
 
     public void testExecuteAsUser() throws IOException {
@@ -84,7 +88,7 @@ public class SecurityContextTests extends ESTestCase {
         if (randomBoolean()) {
             original = new User("test");
             final Authentication authentication = new Authentication(original, new RealmRef("ldap", "foo", "node1"), null);
-            authentication.writeToContext(threadContext, cryptoService, signHeader);
+            authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
         } else {
             original = null;
         }
@@ -94,7 +98,7 @@ public class SecurityContextTests extends ESTestCase {
         securityContext.executeAsUser(executionUser, (originalCtx) -> {
             assertEquals(executionUser, securityContext.getUser());
             contextAtomicReference.set(originalCtx);
-        });
+        }, Version.CURRENT);
 
         final User userAfterExecution = securityContext.getUser();
         assertEquals(original, userAfterExecution);
@@ -102,5 +106,7 @@ public class SecurityContextTests extends ESTestCase {
         assertNotNull(originalContext);
         originalContext.restore();
         assertEquals(original, securityContext.getUser());
+        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated in Elasticsearch and it will be removed in a " +
+                "future release! See the breaking changes lists in the documentation for details");
     }
 }

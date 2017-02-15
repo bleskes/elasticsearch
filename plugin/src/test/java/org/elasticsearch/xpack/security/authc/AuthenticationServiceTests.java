@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchSecurityException;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
@@ -116,7 +117,7 @@ public class AuthenticationServiceTests extends ESTestCase {
         threadPool = mock(ThreadPool.class);
         threadContext = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext);
-        when(cryptoService.sign(any(String.class))).thenReturn("_signed_auth");
+        when(cryptoService.sign(any(String.class), any(Version.class))).thenReturn("_signed_auth");
         service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool, new AnonymousUser(settings));
     }
@@ -127,7 +128,7 @@ public class AuthenticationServiceTests extends ESTestCase {
         when(secondRealm.token(threadContext)).thenReturn(token);
 
         PlainActionFuture<Authentication> future = new PlainActionFuture<>();
-        Authenticator authenticator = service.createAuthenticator("_action", message, null, future);
+        Authenticator authenticator = service.createAuthenticator("_action", message, null, Version.CURRENT, future);
         authenticator.extractToken((result) -> {
             assertThat(result, notNullValue());
             assertThat(result, is(token));
@@ -137,7 +138,7 @@ public class AuthenticationServiceTests extends ESTestCase {
 
     public void testTokenMissing() throws Exception {
         PlainActionFuture<Authentication> future = new PlainActionFuture<>();
-        Authenticator authenticator = service.createAuthenticator("_action", message, null, future);
+        Authenticator authenticator = service.createAuthenticator("_action", message, null, Version.CURRENT, future);
         authenticator.extractToken((token) -> {
             assertThat(token, nullValue());
             authenticator.handleNullToken();
@@ -168,7 +169,6 @@ public class AuthenticationServiceTests extends ESTestCase {
         assertThat(result.getLookedUpBy(), is(nullValue()));
         assertThat(result.getAuthenticatedBy(), is(notNullValue())); // TODO implement equals
         verify(auditTrail).authenticationFailed(firstRealm.name(), token, "_action", message);
-        verify(cryptoService).sign(any(String.class));
         assertThreadContextContainsAuthentication(result);
     }
 
@@ -190,7 +190,7 @@ public class AuthenticationServiceTests extends ESTestCase {
 
     public void testAuthenticateCached() throws Exception {
         final Authentication authentication = new Authentication(new User("_username", "r1"), new RealmRef("test", "cached", "foo"), null);
-        authentication.writeToContext(threadContext, cryptoService, true);
+        authentication.writeToContext(threadContext, cryptoService, Settings.EMPTY, Version.CURRENT);
 
         Authentication result = authenticateBlocking("_action", message, null);
 
@@ -199,7 +199,6 @@ public class AuthenticationServiceTests extends ESTestCase {
         verifyZeroInteractions(auditTrail);
         verifyZeroInteractions(firstRealm);
         verifyZeroInteractions(secondRealm);
-        verify(cryptoService).sign(any(String.class));
     }
 
     public void testAuthenticateNonExistentRestRequestUserThrowsAuthenticationException() throws Exception {
@@ -365,7 +364,7 @@ public class AuthenticationServiceTests extends ESTestCase {
         service = new AuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
                 new DefaultAuthenticationFailureHandler(), threadPool, new AnonymousUser(Settings.EMPTY));
         threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
-        when(cryptoService.unsignAndVerify("_signed_auth")).thenReturn(authentication.encode());
+        when(cryptoService.unsignAndVerify("_signed_auth", Version.CURRENT)).thenReturn(authentication.encode());
 
         BytesStreamOutput output = new BytesStreamOutput();
         threadContext1.writeTo(output);
@@ -380,61 +379,12 @@ public class AuthenticationServiceTests extends ESTestCase {
         assertThat(result, notNullValue());
         assertThat(result.getUser(), equalTo(user1));
         verifyZeroInteractions(firstRealm);
-    }
-
-    public void testAuthenticateTransportContextAndHeaderNoSigning() throws Exception {
-        Settings settings = Settings.builder().put(AuthenticationService.SIGN_USER_HEADER.getKey(), false).build();
-        service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, new AnonymousUser(Settings.EMPTY));
-
-        User user1 = new User("username", "r1", "r2");
-        when(firstRealm.supports(token)).thenReturn(true);
-        when(firstRealm.token(threadContext)).thenReturn(token);
-        mockAuthenticate(firstRealm, token, user1);
-        Authentication authentication = authenticateBlocking("_action", message, SystemUser.INSTANCE);
-        assertThat(authentication, notNullValue());
-        assertThat(authentication.getUser(), sameInstance(user1));
-        assertThreadContextContainsAuthentication(authentication, false);
-        reset(firstRealm);
-
-        // checking authentication from the context
-        InternalMessage message1 = new InternalMessage();
-        ThreadContext threadContext1 = new ThreadContext(Settings.EMPTY);
-        when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new AuthenticationService(Settings.EMPTY, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, new AnonymousUser(Settings.EMPTY));
-        threadContext1.putTransient(Authentication.AUTHENTICATION_KEY, threadContext.getTransient(Authentication.AUTHENTICATION_KEY));
-        threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
-        Authentication ctxAuth = authenticateBlocking("_action", message1, SystemUser.INSTANCE);
-        assertThat(ctxAuth, sameInstance(authentication));
-        verifyZeroInteractions(firstRealm);
-        reset(firstRealm);
-
-        // checking authentication from the user header
-        threadContext1 = new ThreadContext(Settings.EMPTY);
-        threadContext1.putHeader(Authentication.AUTHENTICATION_KEY, threadContext.getHeader(Authentication.AUTHENTICATION_KEY));
-
-        BytesStreamOutput output = new BytesStreamOutput();
-        threadContext1.writeTo(output);
-        StreamInput input = output.bytes().streamInput();
-        threadContext1 = new ThreadContext(Settings.EMPTY);
-        threadContext1.readHeaders(input);
-
-        when(threadPool.getThreadContext()).thenReturn(threadContext1);
-        service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
-                new DefaultAuthenticationFailureHandler(), threadPool, new AnonymousUser(Settings.EMPTY));
-        Authentication result = authenticateBlocking("_action", new InternalMessage(), SystemUser.INSTANCE);
-        assertThat(result, notNullValue());
-        assertThat(result.getUser(), equalTo(user1));
-        verifyZeroInteractions(firstRealm);
-
-        verifyZeroInteractions(cryptoService);
     }
 
     public void testAuthenticateTamperedUser() throws Exception {
         InternalMessage message = new InternalMessage();
         threadContext.putHeader(Authentication.AUTHENTICATION_KEY, "_signed_auth");
-        when(cryptoService.unsignAndVerify("_signed_auth")).thenThrow(
+        when(cryptoService.unsignAndVerify("_signed_auth", Version.CURRENT)).thenThrow(
                 randomFrom(new RuntimeException(), new IllegalArgumentException(), new IllegalStateException()));
 
         try {
@@ -455,7 +405,7 @@ public class AuthenticationServiceTests extends ESTestCase {
         }
         assertThat(threadContext.getTransient(Authentication.AUTHENTICATION_KEY), nullValue());
         assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), nullValue());
-        service.attachUserIfMissing(user);
+        service.attachUserIfMissing(user, Version.CURRENT);
 
         Authentication authentication = threadContext.getTransient(Authentication.AUTHENTICATION_KEY);
         assertThat(authentication, notNullValue());
@@ -464,14 +414,14 @@ public class AuthenticationServiceTests extends ESTestCase {
         assertThat(authentication.getAuthenticatedBy().getName(), is("__attach"));
         assertThat(authentication.getAuthenticatedBy().getType(), is("__attach"));
         assertThat(authentication.getAuthenticatedBy().getNodeName(), is("authc_test"));
-        assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo((Object) "_signed_auth"));
+        assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo((Object) authentication.encode()));
     }
 
     public void testAttachIfMissingExists() throws Exception {
         Authentication authentication = new Authentication(new User("username", "r1", "r2"), new RealmRef("test", "test", "foo"), null);
         threadContext.putTransient(Authentication.AUTHENTICATION_KEY, authentication);
-        threadContext.putHeader(Authentication.AUTHENTICATION_KEY, "_signed_auth");
-        service.attachUserIfMissing(new User("username2", "r3", "r4"));
+        threadContext.putHeader(Authentication.AUTHENTICATION_KEY, authentication.encode());
+        service.attachUserIfMissing(new User("username2", "r3", "r4"), Version.CURRENT);
         assertThreadContextContainsAuthentication(authentication);
     }
 
@@ -794,18 +744,10 @@ public class AuthenticationServiceTests extends ESTestCase {
     }
 
     void assertThreadContextContainsAuthentication(Authentication authentication) throws IOException {
-        assertThreadContextContainsAuthentication(authentication, true);
-    }
-
-    void assertThreadContextContainsAuthentication(Authentication authentication, boolean sign) throws IOException {
         Authentication contextAuth = threadContext.getTransient(Authentication.AUTHENTICATION_KEY);
         assertThat(contextAuth, notNullValue());
         assertThat(contextAuth, is(authentication));
-        if (sign) {
-            assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo((Object) "_signed_auth"));
-        } else {
-            assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo((Object) authentication.encode()));
-        }
+        assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo((Object) authentication.encode()));
     }
 
     private void mockAuthenticate(Realm realm, AuthenticationToken token, User user) {
@@ -824,7 +766,7 @@ public class AuthenticationServiceTests extends ESTestCase {
 
     private Authentication authenticateBlocking(String action, TransportMessage message, User fallbackUser) {
         PlainActionFuture<Authentication> future = new PlainActionFuture<>();
-        service.authenticate(action, message, fallbackUser, future);
+        service.authenticate(action, message, fallbackUser, Version.CURRENT, future);
         return future.actionGet();
     }
 

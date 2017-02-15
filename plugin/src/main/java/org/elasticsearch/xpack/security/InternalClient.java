@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.security;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -38,7 +39,6 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.security.authc.Authentication;
-import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.user.XPackUser;
 
@@ -60,7 +60,6 @@ import java.util.function.Supplier;
 public class InternalClient extends FilterClient {
 
     private final CryptoService cryptoService;
-    private final boolean signUserHeader;
     private final String nodeName;
 
     /**
@@ -70,7 +69,6 @@ public class InternalClient extends FilterClient {
     public InternalClient(Settings settings, ThreadPool threadPool, Client in, CryptoService cryptoService) {
         super(settings, threadPool, in);
         this.cryptoService = cryptoService;
-        this.signUserHeader = AuthenticationService.SIGN_USER_HEADER.get(settings);
         this.nodeName = Node.NODE_NAME_SETTING.get(settings);
     }
 
@@ -98,7 +96,7 @@ public class InternalClient extends FilterClient {
         try {
             Authentication authentication = new Authentication(XPackUser.INSTANCE,
                     new Authentication.RealmRef("__attach", "__attach", nodeName), null);
-            authentication.writeToContext(threadContext, cryptoService, signUserHeader);
+            authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
         } catch (IOException ioe) {
             throw new ElasticsearchException("failed to attach internal user to request", ioe);
         }

@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.security.action.filter;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
@@ -133,7 +134,7 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
                         } catch (IOException e) {
                             listener.onFailure(e);
                         }
-                    });
+                    }, Version.CURRENT);
                 } else {
                     try (ThreadContext.StoredContext ignore = threadContext.newStoredContext(true)) {
                         applyInternal(action, request, authenticatedListener);
@@ -176,7 +177,7 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
          here if a request is not associated with any other user.
          */
         final String securityAction = actionMapper.action(action, request);
-        authcService.authenticate(securityAction, request, SystemUser.INSTANCE,
+        authcService.authenticate(securityAction, request, SystemUser.INSTANCE, Version.CURRENT,
                 ActionListener.wrap((authc) -> authorizeRequest(authc, securityAction, request, listener), listener::onFailure));
     }
 
@@ -190,10 +191,10 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
                         final User user = authentication.getUser();
                         ActionRequest unsignedRequest = unsign(user, securityAction, request);
 
-                            /*
-                             * We use a separate concept for code that needs to be run after authentication and authorization that could
-                             * affect the running of the action. This is done to make it more clear of the state of the request.
-                             */
+                        /*
+                         * We use a separate concept for code that needs to be run after authentication and authorization that could
+                         * affect the running of the action. This is done to make it more clear of the state of the request.
+                         */
                         for (RequestInterceptor interceptor : requestInterceptors) {
                             if (interceptor.supports(unsignedRequest)) {
                                 interceptor.intercept(unsignedRequest, user);
@@ -210,15 +211,23 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
             if (request instanceof SearchScrollRequest) {
                 SearchScrollRequest scrollRequest = (SearchScrollRequest) request;
                 String scrollId = scrollRequest.scrollId();
-                scrollRequest.scrollId(cryptoService.unsignAndVerify(scrollId));
+                if (cryptoService.isSigned(scrollId)) {
+                    scrollRequest.scrollId(cryptoService.unsignAndVerify(scrollId, null));
+                } else {
+                    throw new IllegalArgumentException("tampered signed text");
+                }
             } else if (request instanceof ClearScrollRequest) {
                 ClearScrollRequest clearScrollRequest = (ClearScrollRequest) request;
                 boolean isClearAllScrollRequest = clearScrollRequest.scrollIds().contains("_all");
-                if (!isClearAllScrollRequest) {
+                if (isClearAllScrollRequest == false) {
                     List<String> signedIds = clearScrollRequest.scrollIds();
                     List<String> unsignedIds = new ArrayList<>(signedIds.size());
                     for (String signedId : signedIds) {
-                        unsignedIds.add(cryptoService.unsignAndVerify(signedId));
+                        if (cryptoService.isSigned(signedId)) {
+                            unsignedIds.add(cryptoService.unsignAndVerify(signedId, null));
+                        } else {
+                            throw new IllegalArgumentException("tampered signed text");
+                        }
                     }
                     clearScrollRequest.scrollIds(unsignedIds);
                 }
@@ -234,8 +243,8 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
         if (response instanceof SearchResponse) {
             SearchResponse searchResponse = (SearchResponse) response;
             String scrollId = searchResponse.getScrollId();
-            if (scrollId != null && !cryptoService.isSigned(scrollId)) {
-                searchResponse.scrollId(cryptoService.sign(scrollId));
+            if (scrollId != null && cryptoService.isSigned(scrollId) == false) {
+                searchResponse.scrollId(cryptoService.sign(scrollId, Version.CURRENT));
             }
         }
         return response;

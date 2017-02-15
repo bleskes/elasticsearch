@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
@@ -33,7 +34,6 @@ import org.junit.Before;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -62,40 +62,51 @@ public class CryptoServiceTests extends ESTestCase {
         Settings settings = randomBoolean() ? this.settings : Settings.EMPTY;
         CryptoService service = new CryptoService(settings, env);
         String text = randomAsciiOfLength(10);
-        String signed = service.sign(text);
+        String signed = service.sign(text, Version.CURRENT);
         assertThat(service.isSigned(signed), is(true));
     }
 
     public void testSignAndUnsign() throws Exception {
         CryptoService service = new CryptoService(settings, env);
         String text = randomAsciiOfLength(10);
-        String signed = service.sign(text);
+        String signed = service.sign(text, Version.CURRENT);
         assertThat(text.equals(signed), is(false));
-        String text2 = service.unsignAndVerify(signed);
+        String text2 = service.unsignAndVerify(signed, Version.CURRENT);
         assertThat(text, equalTo(text2));
+
+        String signedOld = service.sign(text, Version.V_5_2_0_UNRELEASED);
+        assertNotEquals(text, signedOld);
+        assertEquals(signed, signedOld);
+        String unsigned = service.unsignAndVerify(signedOld, Version.V_5_2_0_UNRELEASED);
+        assertEquals(text, unsigned);
     }
 
     public void testSignAndUnsignNoKeyFile() throws Exception {
+        Files.delete(keyFile);
         CryptoService service = new CryptoService(Settings.EMPTY, env);
         final String text = randomAsciiOfLength(10);
-        String signed = service.sign(text);
-        // we always have some sort of key to sign with
-        assertThat(text, not(equalTo(signed)));
-        String unsigned = service.unsignAndVerify(signed);
-        assertThat(unsigned, equalTo(text));
+        String signed = service.sign(text, Version.CURRENT);
+        assertEquals(text, signed);
+        String unsigned = service.unsignAndVerify(signed, Version.CURRENT);
+        assertEquals(text, unsigned);
+
+        signed = service.sign(text, Version.V_5_2_0_UNRELEASED);
+        assertNotEquals(text, signed);
+        unsigned = service.unsignAndVerify(signed, Version.V_5_2_0_UNRELEASED);
+        assertEquals(text, unsigned);
     }
 
     public void testTamperedSignature() throws Exception {
         CryptoService service = new CryptoService(settings, env);
         String text = randomAsciiOfLength(10);
-        String signed = service.sign(text);
+        String signed = service.sign(text, Version.CURRENT);
         int i = signed.indexOf("$$", 2);
         int length = Integer.parseInt(signed.substring(2, i));
         String fakeSignature = randomAsciiOfLength(length);
         String fakeSignedText = "$$" + length + "$$" + fakeSignature + signed.substring(i + 2 + length);
 
         try {
-            service.unsignAndVerify(fakeSignedText);
+            service.unsignAndVerify(fakeSignedText, Version.CURRENT);
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
@@ -105,7 +116,7 @@ public class CryptoServiceTests extends ESTestCase {
     public void testTamperedSignatureOneChar() throws Exception {
         CryptoService service = new CryptoService(settings, env);
         String text = randomAsciiOfLength(10);
-        String signed = service.sign(text);
+        String signed = service.sign(text, Version.CURRENT);
         int i = signed.indexOf("$$", 2);
         int length = Integer.parseInt(signed.substring(2, i));
         StringBuilder fakeSignature = new StringBuilder(signed.substring(i + 2, i + 2 + length));
@@ -114,7 +125,7 @@ public class CryptoServiceTests extends ESTestCase {
         String fakeSignedText = "$$" + length + "$$" + fakeSignature.toString() + signed.substring(i + 2 + length);
 
         try {
-            service.unsignAndVerify(fakeSignedText);
+            service.unsignAndVerify(fakeSignedText, Version.CURRENT);
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
@@ -124,7 +135,7 @@ public class CryptoServiceTests extends ESTestCase {
     public void testTamperedSignatureLength() throws Exception {
         CryptoService service = new CryptoService(settings, env);
         String text = randomAsciiOfLength(10);
-        String signed = service.sign(text);
+        String signed = service.sign(text, Version.CURRENT);
         int i = signed.indexOf("$$", 2);
         int length = Integer.parseInt(signed.substring(2, i));
         String fakeSignature = randomAsciiOfLength(length);
@@ -133,7 +144,7 @@ public class CryptoServiceTests extends ESTestCase {
         String fakeSignedText = "$$" + randomIntBetween(0, length - 1) + "$$" + fakeSignature + signed.substring(i + 2 + length);
 
         try {
-            service.unsignAndVerify(fakeSignedText);
+            service.unsignAndVerify(fakeSignedText, Version.CURRENT);
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
         }
@@ -141,7 +152,7 @@ public class CryptoServiceTests extends ESTestCase {
         // Larger sig length
         fakeSignedText = "$$" + randomIntBetween(length + 1, Integer.MAX_VALUE) + "$$" + fakeSignature + signed.substring(i + 2 + length);
         try {
-            service.unsignAndVerify(fakeSignedText);
+            service.unsignAndVerify(fakeSignedText, Version.CURRENT);
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
