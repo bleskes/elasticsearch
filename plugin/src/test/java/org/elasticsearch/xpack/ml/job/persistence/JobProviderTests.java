@@ -19,6 +19,8 @@ import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.MultiSearchRequest;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -30,7 +32,9 @@ import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
@@ -39,6 +43,8 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.engine.Engine;
+import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
@@ -200,8 +206,17 @@ public class JobProviderTests extends ESTestCase {
     @SuppressWarnings("unchecked")
     public void testCreateJobWithExistingIndex() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
-        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
         clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsIndexName("foo"), AnomalyDetectorsIndex.jobResultsIndexName("foo123"));
+        clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
+
+        GetMappingsResponse getMappingsResponse = mock(GetMappingsResponse.class);
+        ImmutableOpenMap<String, MappingMetaData> typeMappings = ImmutableOpenMap.<String, MappingMetaData>of();
+
+        ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings =
+                ImmutableOpenMap.<String, ImmutableOpenMap<String, MappingMetaData>>builder()
+                        .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), typeMappings).build();
+        when(getMappingsResponse.mappings()).thenReturn(mappings);
+        clientBuilder.prepareGetMapping(getMappingsResponse);
 
         Job.Builder job = buildJobBuilder("foo123");
         job.setResultsIndexName("foo");
@@ -218,27 +233,28 @@ public class JobProviderTests extends ESTestCase {
         ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
                 .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), indexMetaData).build();
 
-        ClusterState cs2 = ClusterState.builder(new ClusterName("_name"))
+        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
 
         ClusterService clusterService = mock(ClusterService.class);
 
         doAnswer(invocationOnMock -> {
             AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs2);
+            task.execute(cs);
             return null;
         }).when(clusterService).submitStateUpdateTask(eq("put-job-foo123"), any(AckedClusterStateUpdateTask.class));
 
         doAnswer(invocationOnMock -> {
             AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs2);
+            task.execute(cs);
             return null;
         }).when(clusterService).submitStateUpdateTask(eq("index-aliases"), any(AckedClusterStateUpdateTask.class));
 
-        provider.createJobResultIndex(job.build(), cs2, new ActionListener<Boolean>() {
+        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 assertTrue(aBoolean);
+                verify(clientBuilder.build().admin().indices(), times(1)).preparePutMapping(any());
             }
 
             @Override
@@ -299,6 +315,15 @@ public class JobProviderTests extends ESTestCase {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
         clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
+        clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
+
+        GetMappingsResponse getMappingsResponse = mock(GetMappingsResponse.class);
+        ImmutableOpenMap<String, MappingMetaData> typeMappings = ImmutableOpenMap.of();
+        ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings =
+                ImmutableOpenMap.<String, ImmutableOpenMap<String, MappingMetaData>>builder()
+                        .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), typeMappings).build();
+        when(getMappingsResponse.mappings()).thenReturn(mappings);
+        clientBuilder.prepareGetMapping(getMappingsResponse);
 
         Job.Builder job = buildJobBuilder("foo");
         job.setResultsIndexName("foo");
@@ -330,6 +355,7 @@ public class JobProviderTests extends ESTestCase {
             @Override
             public void onResponse(Boolean aBoolean) {
                 verify(client.admin().indices(), never()).prepareAliases();
+                verify(clientBuilder.build().admin().indices(), times(1)).preparePutMapping(any());
             }
 
             @Override
@@ -433,18 +459,8 @@ public class JobProviderTests extends ESTestCase {
         JobProvider provider = createProvider(client);
         AtomicReference<Boolean> resultHolder = new AtomicReference<>();
 
-        Index index = mock(Index.class);
-        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("marscapone"));
-        IndexMetaData indexMetaData = mock(IndexMetaData.class);
-        when(indexMetaData.getIndex()).thenReturn(index);
-        ImmutableOpenMap<String, AliasMetaData> aliases = ImmutableOpenMap.of();
-        when(indexMetaData.getAliases()).thenReturn(aliases);
-
-        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
-                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("marscapone"), indexMetaData).build();
-
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
-                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
+                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA)).build();
 
         ClusterService clusterService = mock(ClusterService.class);
 
@@ -1302,7 +1318,10 @@ public class JobProviderTests extends ESTestCase {
     }
 
     private JobProvider createProvider(Client client) {
-        return new JobProvider(client, 0, TimeValue.timeValueSeconds(1));
+        Settings.Builder builder = Settings.builder()
+                .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(), TimeValue.timeValueSeconds(1))
+                .put(MapperService.INDEX_MAPPING_TOTAL_FIELDS_LIMIT_SETTING.getKey(), 1000L);
+        return new JobProvider(client, 0, builder.build());
     }
 
     private static GetResponse createGetResponse(boolean exists, Map<String, Object> source) throws IOException {
