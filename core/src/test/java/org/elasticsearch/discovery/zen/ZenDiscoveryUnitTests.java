@@ -21,7 +21,6 @@ package org.elasticsearch.discovery.zen;
 
 import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.Version;
-import org.elasticsearch.action.support.replication.ClusterStateCreationUtils;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterModule;
 import org.elasticsearch.cluster.ClusterName;
@@ -43,6 +42,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.discovery.Discovery;
 import org.elasticsearch.discovery.zen.PublishClusterStateActionTests.AssertingAckListener;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.test.ClusterStateCreationUtils;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.VersionUtils;
 import org.elasticsearch.test.transport.MockTransportService;

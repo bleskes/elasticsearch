@@ -96,12 +96,11 @@ public class GlobalCheckpointSyncActionTests extends ESTestCase {
             new ActionFilters(Collections.emptySet()),
             new IndexNameExpressionResolver(Settings.EMPTY));
         final ShardId shardId = new ShardId(index, id);
-        final GlobalCheckpointSyncAction.PrimaryRequest primaryRequest = new GlobalCheckpointSyncAction.PrimaryRequest(shardId);
+        final GlobalCheckpointSyncAction.Request request = new GlobalCheckpointSyncAction.Request(shardId);
         if (randomBoolean()) {
-            action.shardOperationOnPrimary(primaryRequest, indexShard);
+            action.shardOperationOnPrimary(request, indexShard);
         } else {
-            action.shardOperationOnReplica(
-                new GlobalCheckpointSyncAction.ReplicaRequest(primaryRequest, randomNonNegativeLong()), indexShard);
+            action.shardOperationOnReplica(request, indexShard);
         }
 
         verify(translog).sync();
