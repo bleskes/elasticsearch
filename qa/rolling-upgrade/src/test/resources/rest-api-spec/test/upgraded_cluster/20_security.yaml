@@ -46,5 +46,5 @@
         index: ".security"
         type: "reserved-user"
         id: "logstash_system"
-  - match: { _source.password: "/^\\$2a\\$10\\$[a-zA-Z0-9/.]{53}$/" }
-  - match: { _source.enabled: true }
+  - match: { _source.password: "" }
+  - match: { _source.enabled: false }

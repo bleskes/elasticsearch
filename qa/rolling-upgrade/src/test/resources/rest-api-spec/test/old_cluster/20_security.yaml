@@ -70,21 +70,3 @@
       xpack.security.get_user:
         username: "kibana"
   - match: { kibana.enabled: false }
-
-  - do:
-      xpack.security.change_password:
-        username: "logstash_system"
-        body: >
-            {
-              "password" : "changed-it"
-            }
-
-  - do:
-      xpack.security.enable_user:
-        username: "logstash_system"
-
-  - do:
-      xpack.security.get_user:
-        username: "logstash_system"
-  - match: { logstash_system.enabled: true }
-
