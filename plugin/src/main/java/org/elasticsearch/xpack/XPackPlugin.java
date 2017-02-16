@@ -236,7 +236,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         modules.addAll(watcher.nodeModules());
         modules.addAll(monitoring.nodeModules());
         modules.addAll(graph.createGuiceModules());
-        modules.addAll(machineLearning.createGuiceModules());
+        modules.addAll(machineLearning.nodeModules());
 
         if (transportClientMode) {
             modules.add(b -> b.bind(XPackLicenseState.class).toProvider(Providers.of(null)));
