@@ -17,11 +17,6 @@
 
 package org.elasticsearch.xpack.security.transport;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-
 import org.elasticsearch.common.network.NetworkAddress;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
@@ -41,7 +36,11 @@ import org.elasticsearch.xpack.security.authc.file.FileRealm;
 import org.elasticsearch.xpack.ssl.SSLClientAuth;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 
 import static java.util.Collections.singletonMap;
 import static org.elasticsearch.test.SecuritySettingsSource.getSSLSettingsForStore;
@@ -123,7 +122,7 @@ public class ServerTransportFilterIntegrationTests extends SecurityIntegTestCase
                 .build();
         try (Node node = new MockNode(nodeSettings, Arrays.asList(XPackPlugin.class, TestZenDiscovery.TestPlugin.class))) {
             node.start();
-            assertGreenClusterState(node.client());
+            ensureStableCluster(cluster().size() + 1);
         }
     }
 
