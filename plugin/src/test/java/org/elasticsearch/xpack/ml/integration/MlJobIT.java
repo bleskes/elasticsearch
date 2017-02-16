@@ -307,7 +307,7 @@ public class MlJobIT extends ESRestTestCase {
                 "  \"analysis_config\" : {\n" +
                 "        \"detectors\" :[{\"function\":\"metric\",\"field_name\":\"metric\", \"by_field_name\":\"%s\"}]\n" +
                 "    },\n" +
-                "  \"index_name\" : \"shared-index\"}";
+                "  \"results_index_name\" : \"shared-index\"}";
 
         String jobId1 = "job-1";
         String byFieldName1 = "responsetime";
