@@ -73,6 +73,7 @@ public class ElasticsearchMappings {
     static final String PROPERTIES = "properties";
     static final String TYPE = "type";
     static final String DYNAMIC = "dynamic";
+    static final String FIELDS = "fields";
 
     /**
      * Name of the custom 'all' field for results
@@ -94,6 +95,8 @@ public class ElasticsearchMappings {
     static final String KEYWORD = "keyword";
     static final String LONG = "long";
     static final String TEXT = "text";
+
+    static final String RAW = "raw";
 
     private ElasticsearchMappings() {
     }
@@ -691,6 +694,11 @@ public class ElasticsearchMappings {
                             .endObject()
                             .startObject(AuditMessage.MESSAGE.getPreferredName())
                                 .field(TYPE, TEXT)
+                                .startObject(FIELDS)
+                                    .startObject(RAW)
+                                        .field(TYPE, KEYWORD)
+                                    .endObject()
+                                .endObject()
                             .endObject()
                             .startObject(AuditMessage.TIMESTAMP.getPreferredName())
                                 .field(TYPE, DATE)
