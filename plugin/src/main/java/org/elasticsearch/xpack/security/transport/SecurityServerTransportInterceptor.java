@@ -115,7 +115,9 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
                         securityContext.executeAsUser(bwcKibanaUser, (original) -> sendWithUser(connection, action, request, options,
                                 new TransportService.ContextRestoreResponseHandler<>(threadPool.getThreadContext().wrapRestorable(original),
                                         handler), sender), connection.getVersion());
-                    } else if (Authentication.shouldSign(settings, connection.getVersion())) {
+                    } else if (Authentication.shouldSign(settings, connection.getVersion()) ||
+                            (securityContext.getAuthentication() != null &&
+                                    securityContext.getAuthentication().getVersion().equals(connection.getVersion()) == false)) {
                         securityContext.executeAsUser(securityContext.getUser(),
                                 (original) -> sendWithUser(connection, action, request, options,
                                 new TransportService.ContextRestoreResponseHandler<>(threadPool.getThreadContext().wrapRestorable(original),

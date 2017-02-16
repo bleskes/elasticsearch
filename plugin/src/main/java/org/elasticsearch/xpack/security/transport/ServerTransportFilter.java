@@ -166,12 +166,6 @@ public interface ServerTransportFilter {
                                     });
                             asyncAuthorizer.authorize(authzService);
                         }, Version.CURRENT);
-                    } else if (authentication.getVersion().before(Version.CURRENT)) {
-                        // execute as the user so we can have the proper version authentication in case we send to different node
-                        securityContext.executeAsUser(authentication.getUser(), (original) -> {
-                            final Authentication replacedUserAuth = Authentication.getAuthentication(threadContext);
-                            authorizeAsync(replacedUserAuth, listener, securityAction, request);
-                        }, Version.CURRENT);
                     } else {
                         authorizeAsync(authentication, listener, securityAction, request);
                     }

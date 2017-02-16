@@ -90,7 +90,7 @@ public class SecurityContext {
 
         try {
             Authentication authentication =
-                    new Authentication(user, new Authentication.RealmRef("__attach", "__attach", nodeName), lookedUpBy);
+                    new Authentication(user, new Authentication.RealmRef("__attach", "__attach", nodeName), lookedUpBy, version);
             authentication.writeToContext(threadContext, cryptoService, settings, version);
         } catch (IOException e) {
             throw new AssertionError("how can we have a IOException with a user we set", e);
