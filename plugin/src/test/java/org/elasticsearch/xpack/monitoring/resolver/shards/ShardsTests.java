@@ -75,7 +75,7 @@ public class ShardsTests extends MonitoringIntegTestCase {
         flush();
         refresh();
 
-        updateMonitoringInterval(3L, TimeUnit.SECONDS);
+        updateMonitoringInterval(1L, TimeUnit.SECONDS);
         waitForMonitoringIndices();
 
         awaitMonitoringDocsCount(greaterThan(0L), ShardsResolver.TYPE);
@@ -105,7 +105,7 @@ public class ShardsTests extends MonitoringIntegTestCase {
         assertAcked(prepareCreate(indexName)
                 .setSettings(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1, IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0));
 
-        updateMonitoringInterval(3L, TimeUnit.SECONDS);
+        updateMonitoringInterval(1L, TimeUnit.SECONDS);
         waitForMonitoringIndices();
 
         awaitMonitoringDocsCount(greaterThan(0L), ShardsResolver.TYPE);
@@ -125,7 +125,12 @@ public class ShardsTests extends MonitoringIntegTestCase {
 
         for (Aggregation aggregation : response.getAggregations()) {
             assertThat(aggregation, instanceOf(StringTerms.class));
-            assertThat(((StringTerms) aggregation).getBuckets().size(), equalTo(1));
+            if (aggregation.getName().equals("agg_state_uuid")) {
+                // there is a chance that multiple documents are indexed and the cluster state uuid differs...
+                assertThat(((StringTerms) aggregation).getBuckets().size(), greaterThanOrEqualTo(1));
+            } else {
+                assertThat(((StringTerms) aggregation).getBuckets().size(), equalTo(1));
+            }
         }
     }
 }
