@@ -1061,7 +1061,7 @@ public class IndexShardTests extends IndexShardTestCase {
         };
         closeShards(shard);
         IndexShard newShard = newShard(ShardRoutingHelper.reinitPrimary(shard.routingEntry()),
-            shard.shardPath(), shard.indexSettings().getIndexMetaData(), wrapper, null);
+            shard.shardPath(), shard.indexSettings().getIndexMetaData(), wrapper, null, null);
 
         recoveryShardFromStore(newShard);
 
@@ -1202,7 +1202,7 @@ public class IndexShardTests extends IndexShardTestCase {
 
         closeShards(shard);
         IndexShard newShard = newShard(ShardRoutingHelper.reinitPrimary(shard.routingEntry()),
-            shard.shardPath(), shard.indexSettings().getIndexMetaData(), wrapper, null);
+            shard.shardPath(), shard.indexSettings().getIndexMetaData(), wrapper, null, null);
 
         recoveryShardFromStore(newShard);
 
@@ -1233,9 +1233,10 @@ public class IndexShardTests extends IndexShardTestCase {
             new RecoveryTarget(shard, discoveryNode, recoveryListener, aLong -> {
             }) {
                 @Override
-                public void indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
-                    super.indexTranslogOperations(operations, totalTranslogOps);
+                public long indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
+                    long checkpoint = super.indexTranslogOperations(operations, totalTranslogOps);
                     assertFalse(replica.getTranslog().syncNeeded());
+                    return checkpoint;
                 }
             }, true);
 
@@ -1289,10 +1290,11 @@ public class IndexShardTests extends IndexShardTestCase {
                 }
 
                 @Override
-                public void indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
-                    super.indexTranslogOperations(operations, totalTranslogOps);
+                public long indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
+                    long checkpoint = super.indexTranslogOperations(operations, totalTranslogOps);
                     // Shard should now be active since we did recover:
                     assertTrue(replica.isActive());
+                    return checkpoint;
                 }
             }, false);
 

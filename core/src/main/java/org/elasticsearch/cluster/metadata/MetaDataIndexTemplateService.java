@@ -19,7 +19,6 @@
 package org.elasticsearch.cluster.metadata;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
-
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.support.master.MasterNodeRequest;
@@ -213,7 +212,7 @@ public class MetaDataIndexTemplateService extends AbstractComponent {
                 .build();
 
             final IndexMetaData tmpIndexMetadata = IndexMetaData.builder(temporaryIndexName).settings(dummySettings).build();
-            IndexService dummyIndexService = indicesService.createIndex(tmpIndexMetadata, Collections.emptyList(), shardId -> {});
+            IndexService dummyIndexService = indicesService.createIndex(tmpIndexMetadata, Collections.emptyList());
             createdIndex = dummyIndexService.index();
 
             templateBuilder.order(request.order);

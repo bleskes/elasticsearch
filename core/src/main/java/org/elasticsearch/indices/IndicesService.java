@@ -120,7 +120,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -373,7 +372,7 @@ public class IndicesService extends AbstractLifecycleComponent
      * @throws ResourceAlreadyExistsException if the index already exists.
      */
     @Override
-    public synchronized IndexService createIndex(IndexMetaData indexMetaData, List<IndexEventListener> builtInListeners, Consumer<ShardId> globalCheckpointSyncer) throws IOException {
+    public synchronized IndexService createIndex(IndexMetaData indexMetaData, List<IndexEventListener> builtInListeners) throws IOException {
         ensureChangesAllowed();
         if (indexMetaData.getIndexUUID().equals(IndexMetaData.INDEX_UUID_NA_VALUE)) {
             throw new IllegalArgumentException("index must have a real UUID found value: [" + indexMetaData.getIndexUUID() + "]");
@@ -392,13 +391,7 @@ public class IndicesService extends AbstractLifecycleComponent
         finalListeners.add(onStoreClose);
         finalListeners.add(oldShardsStats);
         final IndexService indexService =
-            createIndexService(
-                "create index",
-                indexMetaData,
-                indicesQueryCache,
-                indicesFieldDataCache,
-                finalListeners,
-                globalCheckpointSyncer,
+            createIndexService("create index", indexMetaData, indicesQueryCache, indicesFieldDataCache, finalListeners,
                 indexingMemoryController);
         boolean success = false;
         try {
@@ -420,7 +413,6 @@ public class IndicesService extends AbstractLifecycleComponent
                                                          IndexMetaData indexMetaData, IndicesQueryCache indicesQueryCache,
                                                          IndicesFieldDataCache indicesFieldDataCache,
                                                          List<IndexEventListener> builtInListeners,
-                                                         Consumer<ShardId> globalCheckpointSyncer,
                                                          IndexingOperationListener... indexingOperationListeners) throws IOException {
         final Index index = indexMetaData.getIndex();
         final IndexSettings idxSettings = new IndexSettings(indexMetaData, this.settings, indexScopeSetting);
@@ -450,7 +442,6 @@ public class IndicesService extends AbstractLifecycleComponent
             client,
             indicesQueryCache,
             mapperRegistry,
-            globalCheckpointSyncer,
             indicesFieldDataCache);
     }
 
@@ -482,7 +473,7 @@ public class IndicesService extends AbstractLifecycleComponent
             closeables.add(indicesQueryCache);
             // this will also fail if some plugin fails etc. which is nice since we can verify that early
             final IndexService service =
-                createIndexService("metadata verification", metaData, indicesQueryCache, indicesFieldDataCache, emptyList(), s -> {});
+                createIndexService("metadata verification", metaData, indicesQueryCache, indicesFieldDataCache, emptyList());
             closeables.add(() -> service.close("metadata verification", false));
             service.mapperService().merge(metaData, MapperService.MergeReason.MAPPING_RECOVERY, true);
             if (metaData.equals(metaDataUpdate) == false) {

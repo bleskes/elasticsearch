@@ -26,6 +26,7 @@ import org.apache.lucene.store.RateLimiter;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchTimeoutException;
 import org.elasticsearch.ExceptionsHelper;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateObserver;
@@ -33,6 +34,8 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.AbstractComponent;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
@@ -433,8 +436,8 @@ public class PeerRecoveryTargetService extends AbstractComponent implements Inde
                 final ClusterStateObserver observer = new ClusterStateObserver(clusterService, null, logger, threadPool.getThreadContext());
                 final RecoveryTarget recoveryTarget = recoveryRef.target();
                 try {
-                    recoveryTarget.indexTranslogOperations(request.operations(), request.totalTranslogOps());
-                    channel.sendResponse(TransportResponse.Empty.INSTANCE);
+                    long targetLocalCheckpoint = recoveryTarget.indexTranslogOperations(request.operations(), request.totalTranslogOps());
+                    channel.sendResponse(new TranslogOpsResponse(targetLocalCheckpoint));
                 } catch (TranslogRecoveryPerformer.BatchOperationException exception) {
                     MapperException mapperException = (MapperException) ExceptionsHelper.unwrap(exception, MapperException.class);
                     if (mapperException == null) {
@@ -624,4 +627,34 @@ public class PeerRecoveryTargetService extends AbstractComponent implements Inde
         }
     }
 
+    static class TranslogOpsResponse extends TransportResponse {
+
+        long targetLocalCheckpoint;
+
+        TranslogOpsResponse(long targetLocalCheckpoint) {
+            this.targetLocalCheckpoint = targetLocalCheckpoint;
+        }
+
+        TranslogOpsResponse() {
+
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            // before 6.0 we responded with empty
+            if (out.getVersion().onOrAfter(Version.V_6_0_0_alpha1_UNRELEASED)) {
+                out.writeZLong(targetLocalCheckpoint);
+            }
+        }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            // before 6.0 we responded with empty
+            if (in.getVersion().onOrAfter(Version.V_6_0_0_alpha1_UNRELEASED)) {
+                targetLocalCheckpoint = in.readZLong();
+            } else {
+                targetLocalCheckpoint = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+            }
+        }
+    }
 }

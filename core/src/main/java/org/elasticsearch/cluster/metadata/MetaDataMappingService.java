@@ -26,9 +26,9 @@ import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingClusterStateUpdateRequest;
 import org.elasticsearch.cluster.AckedClusterStateTaskListener;
-import org.elasticsearch.cluster.ClusterStateTaskExecutor;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateTaskConfig;
+import org.elasticsearch.cluster.ClusterStateTaskExecutor;
 import org.elasticsearch.cluster.ack.ClusterStateUpdateResponse;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
@@ -145,7 +145,7 @@ public class MetaDataMappingService extends AbstractComponent {
             IndexService indexService = indicesService.indexService(indexMetaData.getIndex());
             if (indexService == null) {
                 // we need to create the index here, and add the current mapping to it, so we can merge
-                indexService = indicesService.createIndex(indexMetaData, Collections.emptyList(), shardId -> {});
+                indexService = indicesService.createIndex(indexMetaData, Collections.emptyList());
                 removeIndex = true;
                 indexService.mapperService().merge(indexMetaData, MergeReason.MAPPING_RECOVERY, true);
             }

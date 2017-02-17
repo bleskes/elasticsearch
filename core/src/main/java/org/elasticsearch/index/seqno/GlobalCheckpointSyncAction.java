@@ -32,19 +32,16 @@ import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.io.stream.StreamInput;
-import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.shard.IndexEventListener;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 
-import java.io.IOException;
-
-public class GlobalCheckpointSyncAction extends TransportReplicationAction<GlobalCheckpointSyncAction.PrimaryRequest,
-    GlobalCheckpointSyncAction.ReplicaRequest, ReplicationResponse> {
+public class GlobalCheckpointSyncAction extends TransportReplicationAction<GlobalCheckpointSyncAction.Request,
+    GlobalCheckpointSyncAction.Request, ReplicationResponse> implements IndexEventListener {
 
     public static String ACTION_NAME = "indices:admin/seq_no/global_checkpoint_sync";
 
@@ -55,7 +52,7 @@ public class GlobalCheckpointSyncAction extends TransportReplicationAction<Globa
                                       ActionFilters actionFilters,
                                       IndexNameExpressionResolver indexNameExpressionResolver) {
         super(settings, ACTION_NAME, transportService, clusterService, indicesService, threadPool, shardStateAction,
-            actionFilters, indexNameExpressionResolver, PrimaryRequest::new, ReplicaRequest::new,
+            actionFilters, indexNameExpressionResolver, Request::new, Request::new,
             ThreadPool.Names.SAME);
     }
 
@@ -64,8 +61,9 @@ public class GlobalCheckpointSyncAction extends TransportReplicationAction<Globa
         return new ReplicationResponse();
     }
 
+
     @Override
-    protected void sendReplicaRequest(ConcreteShardRequest<ReplicaRequest> concreteShardRequest, DiscoveryNode node,
+    protected void sendReplicaRequest(ConcreteReplicaRequest<Request> concreteShardRequest, DiscoveryNode node,
                                       ActionListener<ReplicationOperation.ReplicaResponse> listener) {
         if (node.getVersion().onOrAfter(Version.V_6_0_0_alpha1_UNRELEASED)) {
             super.sendReplicaRequest(concreteShardRequest, node, listener);
@@ -76,21 +74,21 @@ public class GlobalCheckpointSyncAction extends TransportReplicationAction<Globa
     }
 
     @Override
-    protected PrimaryResult shardOperationOnPrimary(PrimaryRequest request, IndexShard indexShard) throws Exception {
-        long checkpoint = indexShard.getGlobalCheckpoint();
+    protected PrimaryResult<Request, ReplicationResponse> shardOperationOnPrimary(Request request, IndexShard indexShard) throws Exception {
+        // sync to persist the global checkpoint
         indexShard.getTranslog().sync();
-        return new PrimaryResult(new ReplicaRequest(request, checkpoint), new ReplicationResponse());
+        return new PrimaryResult<>(request, new ReplicationResponse());
     }
 
     @Override
-    protected ReplicaResult shardOperationOnReplica(ReplicaRequest request, IndexShard indexShard) throws Exception {
-        indexShard.updateGlobalCheckpointOnReplica(request.checkpoint);
+    protected ReplicaResult shardOperationOnReplica(Request request, IndexShard indexShard) throws Exception {
+        // persist the global checkpoint
         indexShard.getTranslog().sync();
         return new ReplicaResult();
     }
 
     public void updateCheckpointForShard(ShardId shardId) {
-        execute(new PrimaryRequest(shardId), new ActionListener<ReplicationResponse>() {
+        execute(new Request(shardId), new ActionListener<ReplicationResponse>() {
             @Override
             public void onResponse(ReplicationResponse replicationResponse) {
                 if (logger.isTraceEnabled()) {
@@ -106,57 +104,25 @@ public class GlobalCheckpointSyncAction extends TransportReplicationAction<Globa
         });
     }
 
-    public static final class PrimaryRequest extends ReplicationRequest<PrimaryRequest> {
+    @Override
+    public void onShardInactive(IndexShard indexShard) {
+        execute(new Request(indexShard.shardId()));
+    }
 
-        private PrimaryRequest() {
+    public static final class Request extends ReplicationRequest<Request> {
+
+        private Request() {
             super();
         }
 
-        public PrimaryRequest(ShardId shardId) {
+        public Request(ShardId shardId) {
             super(shardId);
         }
 
         @Override
         public String toString() {
-            return "GlobalCkpSyncPrimary{" + shardId + "}";
+            return "GlobalCkpSync{" + shardId + "}";
         }
     }
-
-    public static final class ReplicaRequest extends ReplicationRequest<GlobalCheckpointSyncAction.ReplicaRequest> {
-
-        private long checkpoint;
-
-        private ReplicaRequest() {
-        }
-
-        public ReplicaRequest(PrimaryRequest primaryRequest, long checkpoint) {
-            super(primaryRequest.shardId());
-            this.checkpoint = checkpoint;
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            checkpoint = in.readZLong();
-        }
-
-        @Override
-        public void writeTo(StreamOutput out) throws IOException {
-            super.writeTo(out);
-            out.writeZLong(checkpoint);
-        }
-
-        public long getCheckpoint() {
-            return checkpoint;
-        }
-
-        @Override
-        public String toString() {
-            return "GlobalCkpSyncReplica{" +
-                "checkpoint=" + checkpoint +
-                ", shardId=" + shardId +
-                '}';
-        }
-    }
-
 }
+

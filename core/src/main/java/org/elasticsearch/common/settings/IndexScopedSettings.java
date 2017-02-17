@@ -24,7 +24,6 @@ import org.elasticsearch.cluster.routing.allocation.decider.EnableAllocationDeci
 import org.elasticsearch.cluster.routing.allocation.decider.MaxRetryAllocationDecider;
 import org.elasticsearch.cluster.routing.allocation.decider.ShardsLimitAllocationDecider;
 import org.elasticsearch.common.settings.Setting.Property;
-import org.elasticsearch.gateway.PrimaryShardAllocator;
 import org.elasticsearch.index.IndexModule;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.IndexingSlowLog;
@@ -114,7 +113,6 @@ public final class IndexScopedSettings extends AbstractScopedSettings {
         IndexSettings.QUERY_STRING_LENIENT_SETTING,
         IndexSettings.ALLOW_UNMAPPED,
         IndexSettings.INDEX_CHECK_ON_STARTUP,
-        IndexSettings.INDEX_SEQ_NO_CHECKPOINT_SYNC_INTERVAL,
         LocalCheckpointTracker.SETTINGS_BIT_ARRAYS_SIZE,
         IndexSettings.MAX_REFRESH_LISTENERS_PER_SHARD,
         IndexSettings.MAX_SLICES_PER_SCROLL,

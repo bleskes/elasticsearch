@@ -21,6 +21,7 @@ package org.elasticsearch.indices.recovery;
 
 import org.elasticsearch.common.lease.Releasable;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.seqno.SequenceNumbersService;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.translog.Translog;
 
@@ -63,7 +64,7 @@ public class SharedFSRecoverySourceHandler extends RecoverySourceHandler {
                 }
             }
             prepareTargetForTranslog(0, maxUnsafeAutoIdTimestamp);
-            finalizeRecovery();
+            finalizeRecovery(SequenceNumbersService.UNASSIGNED_SEQ_NO);
             return response;
         } catch (Exception e) {
             if (engineClosed) {
@@ -82,9 +83,8 @@ public class SharedFSRecoverySourceHandler extends RecoverySourceHandler {
     }
 
     @Override
-    protected int sendSnapshot(final long startingSeqNo, final Translog.Snapshot snapshot) {
-        logger.trace("skipping recovery of translog snapshot on shared filesystem");
-        return 0;
+    protected long sendSnapshot(final long startingSeqNo, final Translog.Snapshot snapshot) {
+        throw new UnsupportedOperationException("shadow replicas don't send translog snapshots");
     }
 
 }

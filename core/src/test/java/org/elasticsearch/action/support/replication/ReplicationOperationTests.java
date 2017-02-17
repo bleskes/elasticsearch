@@ -128,8 +128,13 @@ public class ReplicationOperationTests extends ESTestCase {
         final int totalShards = 1 + expectedReplicas.size() + unassignedShards.size();
         assertThat(shardInfo.getTotal(), equalTo(totalShards));
 
+        assertTrue(primary.globalCheckpointUpdated);
         assertThat(primary.knownLocalCheckpoints.remove(primaryShard.allocationId().getId()), equalTo(primary.localCheckpoint));
         assertThat(primary.knownLocalCheckpoints, equalTo(replicasProxy.generatedLocalCheckpoints));
+        for (String allocId: replicasProxy.recievedGlobalCheckpoints.keySet()) {
+            assertThat(allocId + " has the received wrong checkpoint", replicasProxy.recievedGlobalCheckpoints.get(allocId),
+                equalTo(primary.globalCheckpoint()));
+        }
     }
 
 
@@ -372,12 +377,15 @@ public class ReplicationOperationTests extends ESTestCase {
         final ShardRouting routing;
         final long term;
         final long localCheckpoint;
+        final long globalCheckpoint;
         final Map<String, Long> knownLocalCheckpoints = new HashMap<>();
+        private boolean globalCheckpointUpdated;
 
         TestPrimary(ShardRouting routing, long term) {
             this.routing = routing;
             this.term = term;
-            this.localCheckpoint = random().nextLong();
+            this.localCheckpoint = randomNonNegativeLong();
+            this.globalCheckpoint = randomNonNegativeLong();
         }
 
         @Override
@@ -431,6 +439,17 @@ public class ReplicationOperationTests extends ESTestCase {
         public long localCheckpoint() {
             return localCheckpoint;
         }
+
+        @Override
+        public long globalCheckpoint() {
+            return globalCheckpoint;
+        }
+
+        @Override
+        public void updateGlobalCheckpoint() {
+            assert globalCheckpointUpdated == false;
+            globalCheckpointUpdated = true;
+        }
     }
 
     static class ReplicaResponse implements ReplicationOperation.ReplicaResponse {
@@ -461,6 +480,8 @@ public class ReplicationOperationTests extends ESTestCase {
 
         final Map<String, Long> generatedLocalCheckpoints = ConcurrentCollections.newConcurrentMap();
 
+        final Map<String, Long> recievedGlobalCheckpoints = ConcurrentCollections.newConcurrentMap();
+
         final Set<String> markedAsStaleCopies = ConcurrentCollections.newConcurrentSet();
 
         TestReplicaProxy() {
@@ -472,16 +493,19 @@ public class ReplicationOperationTests extends ESTestCase {
         }
 
         @Override
-        public void performOn(ShardRouting replica, Request request, ActionListener<ReplicationOperation.ReplicaResponse> listener) {
+        public void performOn(ShardRouting replica, Request request, long globalCheckpoint,
+                              ActionListener<ReplicationOperation.ReplicaResponse> listener) {
             assertTrue("replica request processed twice on [" + replica + "]", request.processedOnReplicas.add(replica));
             if (opFailures.containsKey(replica)) {
                 listener.onFailure(opFailures.get(replica));
             } else {
-                final long checkpoint = random().nextLong();
+                final long localCheckpoint = randomNonNegativeLong();
                 final String allocationId = replica.allocationId().getId();
-                Long existing = generatedLocalCheckpoints.put(allocationId, checkpoint);
+                Long existing = generatedLocalCheckpoints.put(allocationId, localCheckpoint);
                 assertNull(existing);
-                listener.onResponse(new ReplicaResponse(allocationId, checkpoint));
+                existing = recievedGlobalCheckpoints.put(allocationId, globalCheckpoint);
+                assertNull(existing);
+                listener.onResponse(new ReplicaResponse(allocationId, localCheckpoint));
             }
         }
 

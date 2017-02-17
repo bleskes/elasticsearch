@@ -57,7 +57,6 @@ import org.elasticsearch.discovery.zen.UnicastZenPing;
 import org.elasticsearch.discovery.zen.ZenDiscovery;
 import org.elasticsearch.discovery.zen.ZenPing;
 import org.elasticsearch.env.NodeEnvironment;
-import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.indices.store.IndicesStoreIntegrationIT;
 import org.elasticsearch.monitor.jvm.HotThreads;
 import org.elasticsearch.plugins.Plugin;
@@ -114,6 +113,7 @@ import java.util.stream.Collectors;
 import static org.elasticsearch.cluster.metadata.IndexMetaData.INDEX_NUMBER_OF_REPLICAS_SETTING;
 import static org.elasticsearch.cluster.metadata.IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.indices.IndexingMemoryController.SHARD_INACTIVE_TIME_SETTING;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -132,7 +132,9 @@ public class DiscoveryWithServiceDisruptionsIT extends ESIntegTestCase {
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder().put(discoveryConfig.nodeSettings(nodeOrdinal))
-            .put(TestZenDiscovery.USE_MOCK_PINGS.getKey(), false).build();
+            .put(TestZenDiscovery.USE_MOCK_PINGS.getKey(), false)
+            .put(SHARD_INACTIVE_TIME_SETTING.getKey(),  randomBoolean() ? "5s" : "200ms")
+            .build();
     }
 
     @Before
@@ -494,7 +496,6 @@ public class DiscoveryWithServiceDisruptionsIT extends ESIntegTestCase {
             .setSettings(Settings.builder()
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1 + randomInt(2))
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, randomInt(2))
-                .put(IndexSettings.INDEX_SEQ_NO_CHECKPOINT_SYNC_INTERVAL.getKey(),  randomBoolean() ? "5s" : "200ms")
             ));
         ensureGreen();
 

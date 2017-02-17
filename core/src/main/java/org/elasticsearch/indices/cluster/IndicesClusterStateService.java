@@ -53,8 +53,8 @@ import org.elasticsearch.index.Index;
 import org.elasticsearch.index.IndexComponent;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.IndexSettings;
-import org.elasticsearch.index.seqno.GlobalCheckpointTracker;
 import org.elasticsearch.index.seqno.GlobalCheckpointSyncAction;
+import org.elasticsearch.index.seqno.GlobalCheckpointTracker;
 import org.elasticsearch.index.shard.IndexEventListener;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardRelocatedException;
@@ -83,7 +83,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.elasticsearch.indices.cluster.IndicesClusterStateService.AllocatedIndices.IndexRemovalReason.CLOSED;
@@ -99,7 +98,6 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
     private final PeerRecoveryTargetService recoveryTargetService;
     private final ShardStateAction shardStateAction;
     private final NodeMappingRefreshAction nodeMappingRefreshAction;
-    private final Consumer<ShardId> globalCheckpointSyncer;
 
     private static final ShardStateAction.Listener SHARD_STATE_ACTION_LISTENER = new ShardStateAction.Listener() {
     };
@@ -123,10 +121,10 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
                                       SearchService searchService, SyncedFlushService syncedFlushService,
                                       PeerRecoverySourceService peerRecoverySourceService, SnapshotShardsService snapshotShardsService,
                                       GlobalCheckpointSyncAction globalCheckpointSyncAction) {
-        this(settings, indicesService,
+        this(settings, (AllocatedIndices<? extends Shard, ? extends AllocatedIndex<? extends Shard>>)indicesService,
             clusterService, threadPool, recoveryTargetService, shardStateAction,
             nodeMappingRefreshAction, repositoriesService, searchService, syncedFlushService, peerRecoverySourceService,
-            snapshotShardsService, globalCheckpointSyncAction::updateCheckpointForShard);
+            snapshotShardsService, globalCheckpointSyncAction);
     }
 
     // for tests
@@ -139,10 +137,10 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
                                RepositoriesService repositoriesService,
                                SearchService searchService, SyncedFlushService syncedFlushService,
                                PeerRecoverySourceService peerRecoverySourceService, SnapshotShardsService snapshotShardsService,
-                               Consumer<ShardId> globalCheckpointSyncer) {
+                               GlobalCheckpointSyncAction globalCheckpointSyncAction) {
         super(settings);
         this.buildInIndexListener = Arrays.asList(peerRecoverySourceService, recoveryTargetService, searchService, syncedFlushService,
-                                                  snapshotShardsService);
+                                                  snapshotShardsService, globalCheckpointSyncAction);
         this.indicesService = indicesService;
         this.clusterService = clusterService;
         this.threadPool = threadPool;
@@ -151,7 +149,6 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
         this.nodeMappingRefreshAction = nodeMappingRefreshAction;
         this.repositoriesService = repositoriesService;
         this.sendRefreshMapping = this.settings.getAsBoolean("indices.cluster.send_refresh_mapping", true);
-        this.globalCheckpointSyncer = globalCheckpointSyncer;
     }
 
     @Override
@@ -446,7 +443,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
 
             AllocatedIndex<? extends Shard> indexService = null;
             try {
-                indexService = indicesService.createIndex(indexMetaData, buildInIndexListener, globalCheckpointSyncer);
+                indexService = indicesService.createIndex(indexMetaData, buildInIndexListener);
                 if (indexService.updateMapping(indexMetaData) && sendRefreshMapping) {
                     nodeMappingRefreshAction.nodeMappingRefresh(state.nodes().getMasterNode(),
                         new NodeMappingRefreshAction.NodeMappingRefreshRequest(indexMetaData.getIndex().getName(),
@@ -783,12 +780,10 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
          * @param indexMetaData          the index metadata to create the index for
          * @param builtInIndexListener   a list of built-in lifecycle {@link IndexEventListener} that should should be used along side with
          *                               the per-index listeners
-         * @param globalCheckpointSyncer the global checkpoint syncer
          * @throws ResourceAlreadyExistsException if the index already exists.
          */
         U createIndex(IndexMetaData indexMetaData,
-                      List<IndexEventListener> builtInIndexListener,
-                      Consumer<ShardId> globalCheckpointSyncer) throws IOException;
+                      List<IndexEventListener> builtInIndexListener) throws IOException;
 
         /**
          * Verify that the contents on disk for the given index is deleted; if not, delete the contents.

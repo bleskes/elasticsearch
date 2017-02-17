@@ -48,6 +48,7 @@ import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.EngineFactory;
 import org.elasticsearch.index.mapper.Uid;
 import org.elasticsearch.index.seqno.GlobalCheckpointSyncAction;
+import org.elasticsearch.index.shard.IndexEventListener;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardTestCase;
 import org.elasticsearch.index.shard.ShardId;
@@ -112,11 +113,24 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
         private final List<IndexShard> replicas;
         private final AtomicInteger replicaId = new AtomicInteger();
         private final AtomicInteger docId = new AtomicInteger();
+        private final IndexEventListener indexEventListener;
         boolean closed = false;
 
         ReplicationGroup(final IndexMetaData indexMetaData) throws IOException {
             final ShardRouting primaryRouting = this.createShardRouting("s0", true);
-            primary = newShard(primaryRouting, indexMetaData, null, this::syncGlobalCheckpoint, getEngineFactory(primaryRouting));
+            indexEventListener = new IndexEventListener() {
+                @Override
+                public void onShardInactive(IndexShard indexShard) {
+                        PlainActionFuture<ReplicationResponse> listener = new PlainActionFuture<>();
+                        try {
+                            new GlobalCheckpointSync(listener, ReplicationGroup.this).execute();
+                            listener.get();
+                        } catch (Exception e) {
+                            throw new AssertionError(e);
+                        }
+                    }
+            };
+            primary = newShard(primaryRouting, indexMetaData, null, getEngineFactory(primaryRouting), indexEventListener);
             replicas = new ArrayList<>();
             this.indexMetaData = indexMetaData;
             updateAllocationIDsOnPrimary();
@@ -141,7 +155,8 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
                 final IndexResponse response = index(indexRequest);
                 assertEquals(DocWriteResponse.Result.CREATED, response.getResult());
             }
-            primary.updateGlobalCheckpointOnPrimary();
+            // mark as idle to trigger a global checkpoint sync
+            primary.checkIdle(0);
             return numOfDoc;
         }
 
@@ -193,7 +208,7 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
         public synchronized IndexShard addReplica() throws IOException {
             final ShardRouting replicaRouting = createShardRouting("s" + replicaId.incrementAndGet(), false);
             final IndexShard replica =
-                newShard(replicaRouting, indexMetaData, null, this::syncGlobalCheckpoint, getEngineFactory(replicaRouting));
+                newShard(replicaRouting, indexMetaData, null, getEngineFactory(replicaRouting), indexEventListener);
             replicas.add(replica);
             updateAllocationIDsOnPrimary();
             return replica;
@@ -207,7 +222,7 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
                 RecoverySource.PeerRecoverySource.INSTANCE);
 
             final IndexShard newReplica = newShard(shardRouting, shardPath, indexMetaData, null,
-                getEngineFactory(shardRouting));
+                getEngineFactory(shardRouting), indexEventListener);
             replicas.add(newReplica);
             updateAllocationIDsOnPrimary();
             return newReplica;
@@ -322,16 +337,6 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
 
         public IndexShard getPrimary() {
             return primary;
-        }
-
-        private void syncGlobalCheckpoint() {
-            PlainActionFuture<ReplicationResponse> listener = new PlainActionFuture<>();
-            try {
-                new GlobalCheckpointSync(listener, this).execute();
-                listener.get();
-            } catch (Exception e) {
-                throw new AssertionError(e);
-            }
         }
 
         private void updateAllocationIDsOnPrimary() {

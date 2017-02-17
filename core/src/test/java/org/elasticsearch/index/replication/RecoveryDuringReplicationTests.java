@@ -356,11 +356,11 @@ public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestC
         }
 
         @Override
-        public void indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
+        public long indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
             if (hasBlocked() == false) {
                 blockIfNeeded(RecoveryState.Stage.TRANSLOG);
             }
-            super.indexTranslogOperations(operations, totalTranslogOps);
+            return super.indexTranslogOperations(operations, totalTranslogOps);
         }
 
         @Override

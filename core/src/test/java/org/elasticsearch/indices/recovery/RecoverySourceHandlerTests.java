@@ -49,7 +49,6 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.SegmentsStats;
-import org.elasticsearch.index.mapper.Mapping;
 import org.elasticsearch.index.mapper.ParseContext;
 import org.elasticsearch.index.mapper.ParsedDocument;
 import org.elasticsearch.index.mapper.SeqNoFieldMapper;
@@ -179,7 +178,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             operations.add(new Translog.Index(index, new Engine.IndexResult(1, i - initialNumberOfDocs, true)));
         }
         operations.add(null);
-        int totalOperations = handler.sendSnapshot(startingSeqNo, new Translog.Snapshot() {
+        handler.sendSnapshot(startingSeqNo, new Translog.Snapshot() {
             private int counter = 0;
 
             @Override
@@ -193,9 +192,9 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             }
         });
         if (startingSeqNo == SequenceNumbersService.UNASSIGNED_SEQ_NO) {
-            assertThat(totalOperations, equalTo(initialNumberOfDocs + numberOfDocsWithValidSequenceNumbers));
+            assertThat(handler.response, equalTo(initialNumberOfDocs + numberOfDocsWithValidSequenceNumbers));
         } else {
-            assertThat(totalOperations, equalTo(Math.toIntExact(numberOfDocsWithValidSequenceNumbers - startingSeqNo)));
+            assertThat(handler.response, equalTo(Math.toIntExact(numberOfDocsWithValidSequenceNumbers - startingSeqNo)));
         }
     }
 
@@ -399,8 +398,9 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             }
 
             @Override
-            void phase2(long startingSeqNo, Translog.Snapshot snapshot) throws IOException {
+            long phase2(long startingSeqNo, Translog.Snapshot snapshot) throws IOException {
                 phase2Called.set(true);
+                return SequenceNumbersService.UNASSIGNED_SEQ_NO;
             }
 
         };
@@ -489,8 +489,9 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             }
 
             @Override
-            void phase2(long startingSeqNo, Translog.Snapshot snapshot) throws IOException {
+            long phase2(long startingSeqNo, Translog.Snapshot snapshot) throws IOException {
                 phase2Called.set(true);
+                return SequenceNumbersService.UNASSIGNED_SEQ_NO;
             }
 
         };

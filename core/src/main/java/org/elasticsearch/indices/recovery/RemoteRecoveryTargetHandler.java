@@ -28,6 +28,7 @@ import org.elasticsearch.index.store.Store;
 import org.elasticsearch.index.store.StoreFileMetaData;
 import org.elasticsearch.index.translog.Translog;
 import org.elasticsearch.transport.EmptyTransportResponseHandler;
+import org.elasticsearch.transport.FutureTransportResponseHandler;
 import org.elasticsearch.transport.TransportRequestOptions;
 import org.elasticsearch.transport.TransportService;
 
@@ -102,11 +103,12 @@ public class RemoteRecoveryTargetHandler implements RecoveryTargetHandler {
     }
 
     @Override
-    public void indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
+    public long indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
         final RecoveryTranslogOperationsRequest translogOperationsRequest = new RecoveryTranslogOperationsRequest(
                 recoveryId, shardId, operations, totalTranslogOps);
-        transportService.submitRequest(targetNode, PeerRecoveryTargetService.Actions.TRANSLOG_OPS, translogOperationsRequest,
-                translogOpsRequestOptions, EmptyTransportResponseHandler.INSTANCE_SAME).txGet();
+        return transportService.submitRequest(targetNode, PeerRecoveryTargetService.Actions.TRANSLOG_OPS, translogOperationsRequest,
+                translogOpsRequestOptions, FutureTransportResponseHandler.wrap(PeerRecoveryTargetService.TranslogOpsResponse::new))
+            .txGet().targetLocalCheckpoint;
     }
 
     @Override
@@ -118,7 +120,6 @@ public class RemoteRecoveryTargetHandler implements RecoveryTargetHandler {
         transportService.submitRequest(targetNode, PeerRecoveryTargetService.Actions.FILES_INFO, recoveryInfoFilesRequest,
                 TransportRequestOptions.builder().withTimeout(recoverySettings.internalActionTimeout()).build(),
                 EmptyTransportResponseHandler.INSTANCE_SAME).txGet();
-
     }
 
     @Override

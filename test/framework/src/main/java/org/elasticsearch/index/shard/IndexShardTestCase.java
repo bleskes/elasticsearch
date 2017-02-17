@@ -191,7 +191,7 @@ public abstract class IndexShardTestCase extends ESTestCase {
                                   @Nullable IndexSearcherWrapper searcherWrapper) throws IOException {
         ShardRouting shardRouting = TestShardRouting.newShardRouting(shardId, nodeId, primary, ShardRoutingState.INITIALIZING,
             primary ? RecoverySource.StoreRecoverySource.EMPTY_STORE_INSTANCE : RecoverySource.PeerRecoverySource.INSTANCE);
-        return newShard(shardRouting, indexMetaData, searcherWrapper, () -> {}, null);
+        return newShard(shardRouting, indexMetaData, searcherWrapper, null, null);
     }
 
     /**
@@ -203,11 +203,11 @@ public abstract class IndexShardTestCase extends ESTestCase {
      *                (ready to recover from another shard)
      */
     protected IndexShard newShard(ShardId shardId, boolean primary, String nodeId, IndexMetaData indexMetaData,
-                                  Runnable globalCheckpointSyncer,
+                                  @Nullable IndexEventListener indexEventListener,
                                   @Nullable IndexSearcherWrapper searcherWrapper) throws IOException {
         ShardRouting shardRouting = TestShardRouting.newShardRouting(shardId, nodeId, primary, ShardRoutingState.INITIALIZING,
             primary ? RecoverySource.StoreRecoverySource.EMPTY_STORE_INSTANCE : RecoverySource.PeerRecoverySource.INSTANCE);
-        return newShard(shardRouting, indexMetaData, searcherWrapper, globalCheckpointSyncer, null);
+        return newShard(shardRouting, indexMetaData, searcherWrapper, null, indexEventListener);
     }
 
 
@@ -221,7 +221,7 @@ public abstract class IndexShardTestCase extends ESTestCase {
      */
     protected IndexShard newShard(ShardRouting routing, IndexMetaData indexMetaData, IndexingOperationListener... listeners)
         throws IOException {
-        return newShard(routing, indexMetaData, null, () -> {}, null, listeners);
+        return newShard(routing, indexMetaData, null, null, null, listeners);
     }
 
     /**
@@ -231,34 +231,35 @@ public abstract class IndexShardTestCase extends ESTestCase {
      * @param routing                shard routing to use
      * @param indexMetaData          indexMetaData for the shard, including any mapping
      * @param indexSearcherWrapper   an optional wrapper to be used during searchers
-     * @param globalCheckpointSyncer an runnable to run when the global check point needs syncing
+     * @param indexEventListener     an optional {@link IndexEventListener}
      * @param listeners              an optional set of listeners to add to the shard
      */
     protected IndexShard newShard(ShardRouting routing, IndexMetaData indexMetaData,
-                                  @Nullable IndexSearcherWrapper indexSearcherWrapper, Runnable globalCheckpointSyncer,
+                                  @Nullable IndexSearcherWrapper indexSearcherWrapper,
                                   @Nullable EngineFactory engineFactory,
+                                  @Nullable IndexEventListener indexEventListener,
                                   IndexingOperationListener... listeners)
         throws IOException {
         // add node id as name to settings for popper logging
         final ShardId shardId = routing.shardId();
         final NodeEnvironment.NodePath nodePath = new NodeEnvironment.NodePath(createTempDir());
         ShardPath shardPath = new ShardPath(false, nodePath.resolve(shardId), nodePath.resolve(shardId), shardId);
-        return newShard(routing, shardPath, indexMetaData, indexSearcherWrapper, globalCheckpointSyncer, engineFactory, listeners);
+        return newShard(routing, shardPath, indexMetaData, indexSearcherWrapper, engineFactory, indexEventListener, listeners);
     }
 
     /**
      * creates a new initializing shard.
-     *
      * @param routing              shard routing to use
      * @param shardPath            path to use for shard data
      * @param indexMetaData        indexMetaData for the shard, including any mapping
      * @param indexSearcherWrapper an optional wrapper to be used during searchers
+     * @param indexEventListener     an optional {@link IndexEventListener}
      * @param listeners            an optional set of listeners to add to the shard
      */
     protected IndexShard newShard(ShardRouting routing, ShardPath shardPath, IndexMetaData indexMetaData,
                                   @Nullable IndexSearcherWrapper indexSearcherWrapper,
-                                  Runnable globalCheckpointSyncer,
                                   @Nullable EngineFactory engineFactory,
+                                  @Nullable IndexEventListener indexEventListener,
                                   IndexingOperationListener... listeners) throws IOException {
         final Settings nodeSettings = Settings.builder().put("node.name", routing.currentNodeId()).build();
         final IndexSettings indexSettings = new IndexSettings(indexMetaData, nodeSettings);
@@ -271,7 +272,7 @@ public abstract class IndexShardTestCase extends ESTestCase {
                     indexSettings.getSettings());
             mapperService.merge(indexMetaData, MapperService.MergeReason.MAPPING_RECOVERY, true);
             SimilarityService similarityService = new SimilarityService(indexSettings, Collections.emptyMap());
-            final IndexEventListener indexEventListener = new IndexEventListener() {
+            indexEventListener =  indexEventListener != null ? indexEventListener : new IndexEventListener() {
             };
             final Engine.Warmer warmer = searcher -> {
             };
@@ -281,7 +282,7 @@ public abstract class IndexShardTestCase extends ESTestCase {
                 new NoneCircuitBreakerService(), mapperService);
             indexShard = new IndexShard(routing, indexSettings, shardPath, store, indexCache, mapperService, similarityService,
                 indexFieldDataService, engineFactory, indexEventListener, indexSearcherWrapper, threadPool,
-                BigArrays.NON_RECYCLING_INSTANCE, warmer, globalCheckpointSyncer, Collections.emptyList(), Arrays.asList(listeners));
+                BigArrays.NON_RECYCLING_INSTANCE, warmer, Collections.emptyList(), Arrays.asList(listeners));
             success = true;
         } finally {
             if (success == false) {
@@ -311,8 +312,8 @@ public abstract class IndexShardTestCase extends ESTestCase {
      */
     protected IndexShard reinitShard(IndexShard current, ShardRouting routing, IndexingOperationListener... listeners) throws IOException {
         closeShards(current);
-        return newShard(routing, current.shardPath(), current.indexSettings().getIndexMetaData(), null,
-            current.getGlobalCheckpointSyncer(), current.engineFactory, listeners);
+        return newShard(routing, current.shardPath(), current.indexSettings().getIndexMetaData(), null, current.engineFactory,
+            current.getIndexEventListener(), listeners);
     }
 
     /**

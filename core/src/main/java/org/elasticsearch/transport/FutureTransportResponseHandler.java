@@ -21,6 +21,8 @@ package org.elasticsearch.transport;
 
 import org.elasticsearch.threadpool.ThreadPool;
 
+import java.util.function.Supplier;
+
 /**
  * A response handler to be used when all interaction will be done through the {@link TransportFuture}.
  */
@@ -37,5 +39,14 @@ public abstract class FutureTransportResponseHandler<T extends TransportResponse
     @Override
     public String executor() {
         return ThreadPool.Names.SAME;
+    }
+
+    public static <T extends TransportResponse> FutureTransportResponseHandler<T> wrap(Supplier<T> supplier) {
+        return new FutureTransportResponseHandler<T>() {
+            @Override
+            public T newInstance() {
+                return supplier.get();
+            }
+        };
     }
 }

@@ -58,6 +58,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
@@ -180,15 +181,17 @@ public class RecoverySourceHandler {
                 throw new IndexShardRelocatedException(request.shardId());
             }
 
+            final long targetLocalCheckpoint;
             logger.trace("snapshot translog for recovery; current size is [{}]", translogView.totalOperations());
             try {
-                phase2(isSequenceNumberBasedRecoveryPossible ? request.startingSeqNo() : SequenceNumbersService.UNASSIGNED_SEQ_NO,
+                targetLocalCheckpoint = phase2(
+                    isSequenceNumberBasedRecoveryPossible ? request.startingSeqNo() : SequenceNumbersService.UNASSIGNED_SEQ_NO,
                     translogView.snapshot());
             } catch (Exception e) {
                 throw new RecoveryEngineException(shard.shardId(), 2, "phase2 failed", e);
             }
 
-            finalizeRecovery();
+            finalizeRecovery(targetLocalCheckpoint);
         }
         return response;
     }
@@ -413,7 +416,7 @@ public class RecoverySourceHandler {
      *                      ops should be sent
      * @param snapshot      a snapshot of the translog
      */
-    void phase2(final long startingSeqNo, final Translog.Snapshot snapshot) throws IOException {
+    long phase2(final long startingSeqNo, final Translog.Snapshot snapshot) throws IOException {
         if (shard.state() == IndexShardState.CLOSED) {
             throw new IndexShardClosedException(request.shardId());
         }
@@ -424,18 +427,18 @@ public class RecoverySourceHandler {
         logger.trace("recovery [phase2]: sending transaction log operations");
 
         // send all the snapshot's translog operations to the target
-        final int totalOperations = sendSnapshot(startingSeqNo, snapshot);
+        final long targetLocalCheckpoint = sendSnapshot(startingSeqNo, snapshot);
 
         stopWatch.stop();
         logger.trace("recovery [phase2]: took [{}]", stopWatch.totalTime());
         response.phase2Time = stopWatch.totalTime().millis();
-        response.phase2Operations = totalOperations;
+        return targetLocalCheckpoint;
     }
 
     /*
      * finalizes the recovery process
      */
-    public void finalizeRecovery() {
+    public void finalizeRecovery(long targetLocalCheckpoint) {
         if (shard.state() == IndexShardState.CLOSED) {
             throw new IndexShardClosedException(request.shardId());
         }
@@ -444,6 +447,8 @@ public class RecoverySourceHandler {
         logger.trace("finalizing recovery");
         cancellableThreads.execute(() -> {
             shard.markAllocationIdAsInSync(recoveryTarget.getTargetAllocationId());
+            shard.updateLocalCheckpointForShard(recoveryTarget.getTargetAllocationId(), targetLocalCheckpoint);
+            shard.updateGlobalCheckpointOnPrimary();
             recoveryTarget.finalizeRecovery(shard.getGlobalCheckpoint());
         });
 
@@ -480,15 +485,19 @@ public class RecoverySourceHandler {
      * @return the total number of translog operations that were sent
      * @throws IOException if an I/O exception occurred reading the translog snapshot
      */
-    protected int sendSnapshot(final long startingSeqNo, final Translog.Snapshot snapshot) throws IOException {
+    protected long sendSnapshot(final long startingSeqNo, final Translog.Snapshot snapshot) throws IOException {
         int ops = 0;
         long size = 0;
         int totalOperations = 0;
+        AtomicLong targetLocalCheckpont = new AtomicLong(Long.MIN_VALUE);
         final List<Translog.Operation> operations = new ArrayList<>();
 
         if (snapshot.totalOperations() == 0) {
             logger.trace("no translog operations to send");
         }
+
+        CancellableThreads.Interruptable sendPendingOps = () ->
+            targetLocalCheckpont.set(recoveryTarget.indexTranslogOperations(operations, snapshot.totalOperations()));
 
         // send operations in batches
         Translog.Operation operation;
@@ -508,7 +517,7 @@ public class RecoverySourceHandler {
 
             // check if this request is past bytes threshold, and if so, send it off
             if (size >= chunkSizeInBytes) {
-                cancellableThreads.execute(() -> recoveryTarget.indexTranslogOperations(operations, snapshot.totalOperations()));
+                cancellableThreads.execute(sendPendingOps);
                 if (logger.isTraceEnabled()) {
                     logger.trace("sent batch of [{}][{}] (total: [{}]) translog operations", ops, new ByteSizeValue(size),
                         snapshot.totalOperations());
@@ -519,9 +528,9 @@ public class RecoverySourceHandler {
             }
         }
 
-        // send the leftover operations
-        if (!operations.isEmpty()) {
-            cancellableThreads.execute(() -> recoveryTarget.indexTranslogOperations(operations, snapshot.totalOperations()));
+        // send the leftover operations or get the local checkpoint if we don't know it
+        if (!operations.isEmpty() || targetLocalCheckpont.get() == Long.MIN_VALUE) {
+            cancellableThreads.execute(sendPendingOps);
         }
 
         if (logger.isTraceEnabled()) {
@@ -529,7 +538,8 @@ public class RecoverySourceHandler {
                 snapshot.totalOperations());
         }
 
-        return totalOperations;
+        response.phase2Operations = totalOperations;
+        return targetLocalCheckpont.get();
     }
 
     /**

@@ -40,7 +40,6 @@ import org.elasticsearch.index.shard.IndexEventListener;
 import org.elasticsearch.index.shard.IndexSearcherWrapper;
 import org.elasticsearch.index.shard.IndexingOperationListener;
 import org.elasticsearch.index.shard.SearchOperationListener;
-import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.similarity.BM25SimilarityProvider;
 import org.elasticsearch.index.similarity.SimilarityProvider;
 import org.elasticsearch.index.similarity.SimilarityService;
@@ -331,7 +330,6 @@ public final class IndexModule {
         Client client,
         IndicesQueryCache indicesQueryCache,
         MapperRegistry mapperRegistry,
-        Consumer<ShardId> globalCheckpointSyncer,
         IndicesFieldDataCache indicesFieldDataCache)
         throws IOException {
         final IndexEventListener eventListener = freeze();
@@ -366,7 +364,7 @@ public final class IndexModule {
         return new IndexService(indexSettings, environment, xContentRegistry, new SimilarityService(indexSettings, similarities),
                 shardStoreDeleter, analysisRegistry, engineFactory.get(), circuitBreakerService, bigArrays, threadPool, scriptService,
                 clusterService, client, queryCache, store, eventListener, searcherWrapperFactory, mapperRegistry,
-                indicesFieldDataCache, globalCheckpointSyncer, searchOperationListeners, indexOperationListeners);
+                indicesFieldDataCache, searchOperationListeners, indexOperationListeners);
     }
 
     /**

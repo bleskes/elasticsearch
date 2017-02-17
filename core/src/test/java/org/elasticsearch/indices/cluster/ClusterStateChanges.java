@@ -139,7 +139,7 @@ public class ClusterStateChanges extends AbstractComponent {
         try {
             @SuppressWarnings("unchecked") final List<IndexEventListener> listeners = anyList();
             @SuppressWarnings("unchecked") final Consumer<ShardId> globalCheckpointSyncer = any(Consumer.class);
-            when(indicesService.createIndex(any(IndexMetaData.class), listeners, globalCheckpointSyncer))
+            when(indicesService.createIndex(any(IndexMetaData.class), listeners))
                 .then(invocationOnMock -> {
                     IndexService indexService = mock(IndexService.class);
                     IndexMetaData indexMetaData = (IndexMetaData)invocationOnMock.getArguments()[0];

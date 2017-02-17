@@ -140,8 +140,8 @@ public class IndexLevelReplicationTests extends ESIndexLevelReplicationTestCase 
             } while (startedShards > 0);
 
             if (numDocs == 0 || randomBoolean()) {
-                // in the case we have no indexing, we simulate the background global checkpoint sync
-                shards.getPrimary().updateGlobalCheckpointOnPrimary();
+                // in the case we have no indexing, we simulate inactivity
+                shards.getPrimary().checkIdle(0);
             }
             for (IndexShard shard : shards) {
                 final SeqNoStats shardStats = shard.seqNoStats();

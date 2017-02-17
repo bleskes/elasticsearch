@@ -35,7 +35,6 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.util.set.Sets;
-import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.rest.RestStatus;
 
@@ -128,7 +127,7 @@ public class ReplicationOperation<
 
             markUnavailableShardsAsStale(replicaRequest, inSyncAllocationIds, shards);
 
-            performOnReplicas(replicaRequest, shards);
+            performOnReplicas(replicaRequest, primary.globalCheckpoint(), shards);
         }
 
         successfulShards.incrementAndGet();  // mark primary as successful
@@ -156,7 +155,7 @@ public class ReplicationOperation<
         }
     }
 
-    private void performOnReplicas(ReplicaRequest replicaRequest, List<ShardRouting> shards) {
+    private void performOnReplicas(ReplicaRequest replicaRequest, long globalCheckpoint, List<ShardRouting> shards) {
         final String localNodeId = primary.routingEntry().currentNodeId();
         // If the index gets deleted after primary operation, we skip replication
         for (final ShardRouting shard : shards) {
@@ -168,23 +167,23 @@ public class ReplicationOperation<
             }
 
             if (shard.currentNodeId().equals(localNodeId) == false) {
-                performOnReplica(shard, replicaRequest);
+                performOnReplica(shard, replicaRequest, globalCheckpoint);
             }
 
             if (shard.relocating() && shard.relocatingNodeId().equals(localNodeId) == false) {
-                performOnReplica(shard.getTargetRelocatingShard(), replicaRequest);
+                performOnReplica(shard.getTargetRelocatingShard(), replicaRequest, globalCheckpoint);
             }
         }
     }
 
-    private void performOnReplica(final ShardRouting shard, final ReplicaRequest replicaRequest) {
+    private void performOnReplica(final ShardRouting shard, final ReplicaRequest replicaRequest, long globalCheckpoint) {
         if (logger.isTraceEnabled()) {
             logger.trace("[{}] sending op [{}] to replica {} for request [{}]", shard.shardId(), opType, shard, replicaRequest);
         }
 
         totalShards.incrementAndGet();
         pendingActions.incrementAndGet();
-        replicasProxy.performOn(shard, replicaRequest, new ActionListener<ReplicaResponse>() {
+        replicasProxy.performOn(shard, replicaRequest, globalCheckpoint, new ActionListener<ReplicaResponse>() {
             @Override
             public void onResponse(ReplicaResponse response) {
                 successfulShards.incrementAndGet();
@@ -286,6 +285,7 @@ public class ReplicationOperation<
 
     private void finish() {
         if (finished.compareAndSet(false, true)) {
+            primary.updateGlobalCheckpoint();
             final ReplicationResponse.ShardInfo.Failure[] failuresArray;
             if (shardReplicaFailures.isEmpty()) {
                 failuresArray = ReplicationResponse.EMPTY;
@@ -351,6 +351,12 @@ public class ReplicationOperation<
 
         /** returns the local checkpoint of the primary shard */
         long localCheckpoint();
+
+        /** returns the global checkpoint of the primary shard */
+        long globalCheckpoint();
+
+        /** checks if the global checkpoint can be updated */
+        void updateGlobalCheckpoint();
     }
 
     /**
@@ -363,9 +369,10 @@ public class ReplicationOperation<
          *
          * @param replica        {@link ShardRouting} of the shard this request should be executed on
          * @param replicaRequest operation to perform
+         * @param globalCheckpoint global checkpoint to send to the replica
          * @param listener       a callback to call once the operation has been complicated, either successfully or with an error.
          */
-        void performOn(ShardRouting replica, RequestT replicaRequest, ActionListener<ReplicaResponse> listener);
+        void performOn(ShardRouting replica, RequestT replicaRequest,long globalCheckpoint, ActionListener<ReplicaResponse> listener);
 
         /**
          * Fail the specified shard if needed, removing it from the current set

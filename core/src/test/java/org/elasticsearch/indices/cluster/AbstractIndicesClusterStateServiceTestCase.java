@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
@@ -179,8 +178,7 @@ public abstract class AbstractIndicesClusterStateServiceTestCase extends ESTestC
         @Override
         public synchronized MockIndexService createIndex(
             IndexMetaData indexMetaData,
-            List<IndexEventListener> buildInIndexListener,
-            Consumer<ShardId> globalCheckPointSyncer) throws IOException {
+            List<IndexEventListener> buildInIndexListener) throws IOException {
             MockIndexService indexService = new MockIndexService(new IndexSettings(indexMetaData, Settings.EMPTY));
             indices = newMapBuilder(indices).put(indexMetaData.getIndexUUID(), indexService).immutableMap();
             return indexService;

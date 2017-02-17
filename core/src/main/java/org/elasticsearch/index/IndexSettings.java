@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.MergePolicy;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Setting;
@@ -99,11 +98,11 @@ public final class IndexSettings {
             Setting.intSetting("index.max_rescore_window", MAX_RESULT_WINDOW_SETTING, 1, Property.Dynamic, Property.IndexScope);
     /**
      * Index setting describing the maximum number of filters clauses that can be used
-     * in an adjacency_matrix aggregation. The max number of buckets produced by  
+     * in an adjacency_matrix aggregation. The max number of buckets produced by
      * N filters is (N*N)/2 so a limit of 100 filters is imposed by default.
      */
     public static final Setting<Integer> MAX_ADJACENCY_MATRIX_FILTERS_SETTING =
-        Setting.intSetting("index.max_adjacency_matrix_filters", 100, 2, Property.Dynamic, Property.IndexScope);    
+        Setting.intSetting("index.max_adjacency_matrix_filters", 100, 2, Property.Dynamic, Property.IndexScope);
     public static final TimeValue DEFAULT_REFRESH_INTERVAL = new TimeValue(1, TimeUnit.SECONDS);
     public static final Setting<TimeValue> INDEX_REFRESH_INTERVAL_SETTING =
         Setting.timeSetting("index.refresh_interval", DEFAULT_REFRESH_INTERVAL, new TimeValue(-1, TimeUnit.MILLISECONDS),
@@ -111,10 +110,6 @@ public final class IndexSettings {
     public static final Setting<ByteSizeValue> INDEX_TRANSLOG_FLUSH_THRESHOLD_SIZE_SETTING =
         Setting.byteSizeSetting("index.translog.flush_threshold_size", new ByteSizeValue(512, ByteSizeUnit.MB), Property.Dynamic,
             Property.IndexScope);
-
-    public static final Setting<TimeValue> INDEX_SEQ_NO_CHECKPOINT_SYNC_INTERVAL =
-        Setting.timeSetting("index.seq_no.checkpoint_sync_interval", new TimeValue(30, TimeUnit.SECONDS),
-            new TimeValue(-1, TimeUnit.MILLISECONDS), Property.Dynamic, Property.IndexScope);
 
     /**
      * Index setting to enable / disable deletes garbage collection.
@@ -154,7 +149,6 @@ public final class IndexSettings {
     private volatile Translog.Durability durability;
     private final TimeValue syncInterval;
     private volatile TimeValue refreshInterval;
-    private final TimeValue globalCheckpointInterval;
     private volatile ByteSizeValue flushThresholdSize;
     private final MergeSchedulerConfig mergeSchedulerConfig;
     private final MergePolicyConfig mergePolicyConfig;
@@ -248,7 +242,6 @@ public final class IndexSettings {
         this.durability = scopedSettings.get(INDEX_TRANSLOG_DURABILITY_SETTING);
         syncInterval = INDEX_TRANSLOG_SYNC_INTERVAL_SETTING.get(settings);
         refreshInterval = scopedSettings.get(INDEX_REFRESH_INTERVAL_SETTING);
-        globalCheckpointInterval = scopedSettings.get(INDEX_SEQ_NO_CHECKPOINT_SYNC_INTERVAL);
         flushThresholdSize = scopedSettings.get(INDEX_TRANSLOG_FLUSH_THRESHOLD_SIZE_SETTING);
         mergeSchedulerConfig = new MergeSchedulerConfig(this);
         gcDeletesInMillis = scopedSettings.get(INDEX_GC_DELETES_SETTING).getMillis();
@@ -450,13 +443,6 @@ public final class IndexSettings {
     }
 
     /**
-     * Returns this interval in which the primary shards of this index should check and advance the global checkpoint
-     */
-    public TimeValue getGlobalCheckpointInterval() {
-        return globalCheckpointInterval;
-    }
-
-    /**
      * Returns the transaction log threshold size when to forcefully flush the index and clear the transaction log.
      */
     public ByteSizeValue getFlushThresholdSize() { return flushThresholdSize; }
@@ -476,7 +462,7 @@ public final class IndexSettings {
     private void setMaxResultWindow(int maxResultWindow) {
         this.maxResultWindow = maxResultWindow;
     }
-    
+
     /**
      * Returns the max number of filters in adjacency_matrix aggregation search requests
      */
@@ -486,7 +472,7 @@ public final class IndexSettings {
 
     private void setMaxAdjacencyMatrixFilters(int maxAdjacencyFilters) {
         this.maxAdjacencyMatrixFilters = maxAdjacencyFilters;
-    }    
+    }
 
     /**
      * Returns the maximum rescore window for search requests.

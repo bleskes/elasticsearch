@@ -52,7 +52,6 @@ import org.elasticsearch.common.lease.Releasables;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
-import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.index.shard.IndexShard;
@@ -129,7 +128,7 @@ public abstract class TransportReplicationAction<
             new PrimaryOperationTransportHandler());
         // we must never reject on because of thread pool capacity on replicas
         transportService.registerRequestHandler(transportReplicaAction,
-            () -> new ConcreteShardRequest<>(replicaRequest),
+            () -> new ConcreteReplicaRequest<>(replicaRequest),
             executor, true, true,
             new ReplicaOperationTransportHandler());
 
@@ -442,17 +441,18 @@ public abstract class TransportReplicationAction<
         }
     }
 
-    class ReplicaOperationTransportHandler implements TransportRequestHandler<ConcreteShardRequest<ReplicaRequest>> {
+    class ReplicaOperationTransportHandler implements TransportRequestHandler<ConcreteReplicaRequest<ReplicaRequest>> {
         @Override
-        public void messageReceived(final ConcreteShardRequest<ReplicaRequest> request, final TransportChannel channel)
+        public void messageReceived(final ConcreteReplicaRequest<ReplicaRequest> request, final TransportChannel channel)
             throws Exception {
             throw new UnsupportedOperationException("the task parameter is required for this operation");
         }
 
         @Override
-        public void messageReceived(ConcreteShardRequest<ReplicaRequest> requestWithAID, TransportChannel channel, Task task)
+        public void messageReceived(ConcreteReplicaRequest<ReplicaRequest> requestWithAID, TransportChannel channel, Task task)
             throws Exception {
-            new AsyncReplicaAction(requestWithAID.request, requestWithAID.targetAllocationID, channel, (ReplicationTask) task).run();
+            new AsyncReplicaAction(requestWithAID.getRequest(), requestWithAID.getGlobalCheckpoint(),
+                requestWithAID.getTargetAllocationID(), channel, (ReplicationTask) task).run();
         }
     }
 
@@ -472,6 +472,7 @@ public abstract class TransportReplicationAction<
         private final ReplicaRequest request;
         // allocation id of the replica this request is meant for
         private final String targetAllocationID;
+        private final long globalCheckpoint;
         private final TransportChannel channel;
         private final IndexShard replica;
         /**
@@ -480,10 +481,13 @@ public abstract class TransportReplicationAction<
         private final ReplicationTask task;
         // important: we pass null as a timeout as failing a replica is
         // something we want to avoid at all costs
-        private final ClusterStateObserver observer = new ClusterStateObserver(clusterService, null, logger, threadPool.getThreadContext());
+        private final ClusterStateObserver observer =
+            new ClusterStateObserver(clusterService, null, logger, threadPool.getThreadContext());
 
-        AsyncReplicaAction(ReplicaRequest request, String targetAllocationID, TransportChannel channel, ReplicationTask task) {
+        AsyncReplicaAction(ReplicaRequest request, long globalCheckpoint, String targetAllocationID,
+                           TransportChannel channel, ReplicationTask task) {
             this.request = request;
+            this.globalCheckpoint = globalCheckpoint;
             this.channel = channel;
             this.task = task;
             this.targetAllocationID = targetAllocationID;
@@ -495,6 +499,7 @@ public abstract class TransportReplicationAction<
         @Override
         public void onResponse(Releasable releasable) {
             try {
+                replica.updateGlobalCheckpointOnReplica(globalCheckpoint);
                 ReplicaResult replicaResult = shardOperationOnReplica(request, replica);
                 releasable.close(); // release shard operation lock before responding to caller
                 final TransportReplicationAction.ReplicaResponse response =
@@ -983,6 +988,15 @@ public abstract class TransportReplicationAction<
             return indexShard.getLocalCheckpoint();
         }
 
+        @Override
+        public long globalCheckpoint() {
+            return indexShard.getGlobalCheckpoint();
+        }
+
+        @Override
+        public void updateGlobalCheckpoint() {
+            indexShard.updateGlobalCheckpointOnPrimary();
+        }
     }
 
 
@@ -1042,15 +1056,16 @@ public abstract class TransportReplicationAction<
     class ReplicasProxy implements ReplicationOperation.Replicas<ReplicaRequest> {
 
         @Override
-        public void performOn(ShardRouting replica, ReplicaRequest request, ActionListener<ReplicationOperation.ReplicaResponse> listener) {
+        public void performOn(ShardRouting replica, ReplicaRequest request, long globalCheckpoint,
+                              ActionListener<ReplicationOperation.ReplicaResponse> listener) {
             String nodeId = replica.currentNodeId();
             final DiscoveryNode node = clusterService.state().nodes().get(nodeId);
             if (node == null) {
                 listener.onFailure(new NoNodeAvailableException("unknown node [" + nodeId + "]"));
                 return;
             }
-            final ConcreteShardRequest<ReplicaRequest> concreteShardRequest =
-                    new ConcreteShardRequest<>(request, replica.allocationId().getId());
+            final ConcreteReplicaRequest<ReplicaRequest> concreteShardRequest =
+                new ConcreteReplicaRequest<>(request, globalCheckpoint, replica.allocationId().getId());
             sendReplicaRequest(concreteShardRequest, node, listener);
         }
 
@@ -1076,7 +1091,7 @@ public abstract class TransportReplicationAction<
     }
 
     /** sends the given replica request to the supplied nodes */
-    protected void sendReplicaRequest(ConcreteShardRequest<ReplicaRequest> concreteShardRequest, DiscoveryNode node,
+    protected void sendReplicaRequest(ConcreteReplicaRequest<ReplicaRequest> concreteShardRequest, DiscoveryNode node,
                                       ActionListener<ReplicationOperation.ReplicaResponse> listener) {
         transportService.sendRequest(node, transportReplicaAction, concreteShardRequest, transportOptions,
             // Eclipse can't handle when this is <> so we specify the type here.
@@ -1084,7 +1099,7 @@ public abstract class TransportReplicationAction<
     }
 
     /** a wrapper class to encapsulate a request when being sent to a specific allocation id **/
-    public static final class ConcreteShardRequest<R extends TransportRequest> extends TransportRequest {
+    public static class ConcreteShardRequest<R extends TransportRequest> extends TransportRequest {
 
         /** {@link AllocationId#getId()} of the shard this request is sent to **/
         private String targetAllocationID;
@@ -1151,6 +1166,46 @@ public abstract class TransportReplicationAction<
         @Override
         public String toString() {
             return "request: " + request + ", target allocation id: " + targetAllocationID;
+        }
+    }
+
+    protected static class ConcreteReplicaRequest<R extends TransportRequest> extends ConcreteShardRequest<R> {
+
+        private long globalCheckpoint;
+
+        ConcreteReplicaRequest(Supplier<R> requestSupplier) {
+            super(requestSupplier);
+        }
+
+        ConcreteReplicaRequest(R request, long globalCheckpoint, String targetAllocationID) {
+            super(request, targetAllocationID);
+            this.globalCheckpoint = globalCheckpoint;
+        }
+
+        @Override
+        public void readFrom(StreamInput in) throws IOException {
+            super.readFrom(in);
+            if (in.getVersion().onOrAfter(Version.V_6_0_0_alpha1_UNRELEASED)) {
+                globalCheckpoint = in.readZLong();
+            }
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
+            if (out.getVersion().onOrAfter(Version.V_6_0_0_alpha1_UNRELEASED)) {
+                out.writeZLong(globalCheckpoint);
+            }
+        }
+
+        public long getGlobalCheckpoint() {
+            return globalCheckpoint;
+        }
+
+        @Override
+        public String toString() {
+            return "request: " + getRequest() + "gcheckpoint: " + globalCheckpoint +
+                ", target allocation id: " + getTargetAllocationID();
         }
     }
 

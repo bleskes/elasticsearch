@@ -610,7 +610,7 @@ public class TransportReplicationActionTests extends ESTestCase {
         PlainActionFuture<ReplicaResponse> listener = new PlainActionFuture<>();
         proxy.performOn(
             TestShardRouting.newShardRouting(shardId, "NOT THERE", false, randomFrom(ShardRoutingState.values())),
-            new Request(), listener);
+            new Request(), randomNonNegativeLong(), listener);
         assertTrue(listener.isDone());
         assertListenerThrows("non existent node should throw a NoNodeAvailableException", listener, NoNodeAvailableException.class);
 
@@ -618,11 +618,16 @@ public class TransportReplicationActionTests extends ESTestCase {
         final ShardRouting replica = randomFrom(shardRoutings.replicaShards().stream()
             .filter(ShardRouting::assignedToNode).collect(Collectors.toList()));
         listener = new PlainActionFuture<>();
-        proxy.performOn(replica, new Request(), listener);
+        final long globalCheckpoint = randomNonNegativeLong();
+        proxy.performOn(replica, new Request(), globalCheckpoint, listener);
         assertFalse(listener.isDone());
 
         CapturingTransport.CapturedRequest[] captures = transport.getCapturedRequestsAndClear();
         assertThat(captures, arrayWithSize(1));
+        final TransportReplicationAction.ConcreteReplicaRequest request = (TestAction.ConcreteReplicaRequest) captures[0].request;
+        assertThat(request.getGlobalCheckpoint(), equalTo(globalCheckpoint));
+        assertThat(request.getTargetAllocationID(), equalTo(replica.allocationId().getId()));
+
         if (randomBoolean()) {
             final TransportReplicationAction.ReplicaResponse response =
                 new TransportReplicationAction.ReplicaResponse(randomAsciiOfLength(10), randomLong());
@@ -799,8 +804,8 @@ public class TransportReplicationActionTests extends ESTestCase {
         final TestAction.ReplicaOperationTransportHandler replicaOperationTransportHandler = action.new ReplicaOperationTransportHandler();
         try {
             replicaOperationTransportHandler.messageReceived(
-                new TransportReplicationAction.ConcreteShardRequest<>(
-                        new Request().setShardId(shardId), replicaRouting.allocationId().getId()),
+                new TransportReplicationAction.ConcreteReplicaRequest<>(
+                        new Request().setShardId(shardId), randomNonNegativeLong(), replicaRouting.allocationId().getId()),
                 createTransportChannel(new PlainActionFuture<>()), task);
         } catch (ElasticsearchException e) {
             assertThat(e.getMessage(), containsString("simulated"));
@@ -876,7 +881,7 @@ public class TransportReplicationActionTests extends ESTestCase {
         PlainActionFuture<TestResponse> listener = new PlainActionFuture<>();
         Request request = new Request(shardId).timeout("1ms");
         action.new ReplicaOperationTransportHandler().messageReceived(
-            new TransportReplicationAction.ConcreteShardRequest<>(request, "_not_a_valid_aid_"),
+            new TransportReplicationAction.ConcreteReplicaRequest<>(request, randomNonNegativeLong(), "_not_a_valid_aid_"),
             createTransportChannel(listener), maybeTask()
         );
         try {
@@ -920,7 +925,7 @@ public class TransportReplicationActionTests extends ESTestCase {
         final Request request = new Request().setShardId(shardId);
         request.primaryTerm(state.metaData().getIndexSafe(shardId.getIndex()).primaryTerm(shardId.id()));
         replicaOperationTransportHandler.messageReceived(
-                new TransportReplicationAction.ConcreteShardRequest<>(request, replica.allocationId().getId()),
+                new TransportReplicationAction.ConcreteReplicaRequest<>(request, randomNonNegativeLong(), replica.allocationId().getId()),
                 createTransportChannel(listener), task);
         if (listener.isDone()) {
             listener.get(); // fail with the exception if there
