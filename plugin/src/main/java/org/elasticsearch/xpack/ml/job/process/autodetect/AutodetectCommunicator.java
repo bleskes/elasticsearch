@@ -43,7 +43,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -59,7 +60,7 @@ public class AutodetectCommunicator implements Closeable {
     private final AutoDetectResultProcessor autoDetectResultProcessor;
     private final Consumer<Exception> handler;
 
-    final AtomicBoolean inUse = new AtomicBoolean(false);
+    final AtomicReference<CountDownLatch> inUse = new AtomicReference<>();
 
     public AutodetectCommunicator(long taskId, Job job, AutodetectProcess process, DataCountsReporter dataCountsReporter,
                                   AutoDetectResultProcessor autoDetectResultProcessor, Consumer<Exception> handler) {
@@ -91,7 +92,7 @@ public class AutodetectCommunicator implements Closeable {
             DataCounts results = autoDetectWriter.write(countingStream);
             autoDetectWriter.flush();
             return results;
-        });
+        }, false);
     }
 
     @Override
@@ -106,21 +107,22 @@ public class AutodetectCommunicator implements Closeable {
             autoDetectResultProcessor.awaitCompletion();
             handler.accept(errorReason != null ? new ElasticsearchException(errorReason) : null);
             return null;
-        });
+        }, true);
     }
+
 
     public void writeUpdateModelDebugMessage(ModelDebugConfig config) throws IOException {
         checkAndRun(() -> Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, job.getId()), () -> {
             autodetectProcess.writeUpdateModelDebugMessage(config);
             return null;
-        });
+        }, false);
     }
 
     public void writeUpdateDetectorRulesMessage(int detectorIndex, List<DetectionRule> rules) throws IOException {
         checkAndRun(() -> Messages.getMessage(Messages.JOB_DATA_CONCURRENT_USE_UPDATE, job.getId()), () -> {
             autodetectProcess.writeUpdateDetectorRulesMessage(detectorIndex, rules);
             return null;
-        });
+        }, false);
     }
 
     public void flushJob(InterimResultsParams params) throws IOException {
@@ -128,7 +130,7 @@ public class AutodetectCommunicator implements Closeable {
             String flushId = autodetectProcess.flushJob(params);
             waitFlushToCompletion(flushId);
             return null;
-        });
+        }, false);
     }
 
     private void waitFlushToCompletion(String flushId) throws IOException {
@@ -179,16 +181,32 @@ public class AutodetectCommunicator implements Closeable {
         return taskId;
     }
 
-    private <T> T checkAndRun(Supplier<String> errorMessage, Callback<T> callback) throws IOException {
-        if (inUse.compareAndSet(false, true)) {
+    private <T> T checkAndRun(Supplier<String> errorMessage, Callback<T> callback, boolean wait) throws IOException {
+        CountDownLatch latch = new CountDownLatch(1);
+        if (inUse.compareAndSet(null, latch)) {
             try {
                 checkProcessIsAlive();
                 return callback.run();
             } finally {
-                inUse.set(false);
+                latch.countDown();
+                inUse.set(null);
             }
         } else {
-            throw new ElasticsearchStatusException(errorMessage.get(), RestStatus.TOO_MANY_REQUESTS);
+            if (wait) {
+                latch = inUse.get();
+                if (latch != null) {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new ElasticsearchStatusException(errorMessage.get(), RestStatus.TOO_MANY_REQUESTS);
+                    }
+                }
+                checkProcessIsAlive();
+                return callback.run();
+            } else {
+                throw new ElasticsearchStatusException(errorMessage.get(), RestStatus.TOO_MANY_REQUESTS);
+            }
         }
     }
 
