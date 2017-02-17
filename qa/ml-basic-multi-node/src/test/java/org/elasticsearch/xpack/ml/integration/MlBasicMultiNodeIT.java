@@ -31,6 +31,17 @@ import static org.elasticsearch.common.xcontent.XContentType.JSON;
 
 public class MlBasicMultiNodeIT extends ESRestTestCase {
 
+    @SuppressWarnings("unchecked")
+    public void testMachineLearningInstalled() throws Exception {
+        Response response = client().performRequest("get", "/_xpack");
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        Map<String, Object> features = (Map<String, Object>) responseEntityToMap(response).get("features");
+        Map<String, Object> ml = (Map<String, Object>) features.get("ml");
+        assertNotNull(ml);
+        assertTrue((Boolean) ml.get("available"));
+        assertTrue((Boolean) ml.get("enabled"));
+    }
+
     @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/592")
     public void testMiniFarequote() throws Exception {
         String jobId = "foo1";
