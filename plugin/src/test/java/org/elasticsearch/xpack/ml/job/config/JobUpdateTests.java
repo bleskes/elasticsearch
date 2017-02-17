@@ -32,12 +32,12 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
 
     @Override
     protected JobUpdate createTestInstance() {
-        String description = null;
+        JobUpdate.Builder update = new JobUpdate.Builder();
         if (randomBoolean()) {
-            description = randomAsciiOfLength(20);
+            update.setDescription(randomAsciiOfLength(20));
         }
-        List<JobUpdate.DetectorUpdate> detectorUpdates = null;
         if (randomBoolean()) {
+            List<JobUpdate.DetectorUpdate> detectorUpdates = null;
             int size = randomInt(10);
             detectorUpdates = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
@@ -54,42 +54,34 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
                 }
                 detectorUpdates.add(new JobUpdate.DetectorUpdate(i, detectorDescription, detectionRules));
             }
+            update.setDetectorUpdates(detectorUpdates);
         }
-        ModelDebugConfig modelDebugConfig = null;
         if (randomBoolean()) {
-            modelDebugConfig = new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10));
+            update.setModelDebugConfig(new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)));
         }
-        AnalysisLimits analysisLimits = null;
         if (randomBoolean()) {
-            analysisLimits = new AnalysisLimits(randomPositiveLong(), randomPositiveLong());
+            update.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
         }
-        Long renormalizationWindowDays = null;
         if (randomBoolean()) {
-            renormalizationWindowDays = randomPositiveLong();
+            update.setRenormalizationWindowDays(randomPositiveLong());
         }
-        Long backgroundPersistInterval = null;
         if (randomBoolean()) {
-            backgroundPersistInterval = randomPositiveLong();
+            update.setBackgroundPersistInterval(randomPositiveLong());
         }
-        Long modelSnapshotRetentionDays = null;
         if (randomBoolean()) {
-            modelSnapshotRetentionDays = randomPositiveLong();
+            update.setModelSnapshotRetentionDays(randomPositiveLong());
         }
-        Long resultsRetentionDays = null;
         if (randomBoolean()) {
-            resultsRetentionDays = randomPositiveLong();
+            update.setResultsRetentionDays(randomPositiveLong());
         }
-        List<String> categorizationFilters = null;
         if (randomBoolean()) {
-            categorizationFilters = Arrays.asList(generateRandomStringArray(10, 10, false));
+            update.setCategorizationFilters(Arrays.asList(generateRandomStringArray(10, 10, false)));
         }
-        Map<String, Object> customSettings = null;
         if (randomBoolean()) {
-            customSettings = Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10));
+            update.setCustomSettings(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));
         }
 
-        return new JobUpdate(description, detectorUpdates, modelDebugConfig, analysisLimits, backgroundPersistInterval,
-                renormalizationWindowDays, resultsRetentionDays, modelSnapshotRetentionDays, categorizationFilters, customSettings);
+        return update.build();
     }
 
     @Override
@@ -99,7 +91,7 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
 
     @Override
     protected JobUpdate parseInstance(XContentParser parser) {
-        return JobUpdate.PARSER.apply(parser, null);
+        return JobUpdate.PARSER.apply(parser, null).build();
     }
 
     public void testMergeWithJob() {
@@ -118,9 +110,18 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
         List<String> categorizationFilters = Arrays.asList(generateRandomStringArray(10, 10, false));
         Map<String, Object> customSettings = Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10));
 
-        JobUpdate update = new JobUpdate("updated_description", detectorUpdates, modelDebugConfig,
-                analysisLimits, randomPositiveLong(), randomPositiveLong(), randomPositiveLong(), randomPositiveLong(),
-                categorizationFilters, customSettings);
+        JobUpdate.Builder updateBuilder = new JobUpdate.Builder();
+        updateBuilder.setDescription("updated_description");
+        updateBuilder.setDetectorUpdates(detectorUpdates);
+        updateBuilder.setModelDebugConfig(modelDebugConfig);
+        updateBuilder.setAnalysisLimits(analysisLimits);
+        updateBuilder.setBackgroundPersistInterval(randomPositiveLong());
+        updateBuilder.setResultsRetentionDays(randomPositiveLong());
+        updateBuilder.setModelSnapshotRetentionDays(randomPositiveLong());
+        updateBuilder.setRenormalizationWindowDays(randomPositiveLong());
+        updateBuilder.setCategorizationFilters(categorizationFilters);
+        updateBuilder.setCustomSettings(customSettings);
+        JobUpdate update = updateBuilder.build();
 
         Job.Builder jobBuilder = new Job.Builder("foo");
         Detector.Builder d1 = new Detector.Builder("info_content", "domain");
@@ -153,11 +154,11 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
     }
 
     public void testIsAutodetectProcessUpdate() {
-        JobUpdate update = new JobUpdate(null, null, null, null, null, null, null, null, null, null);
+        JobUpdate update = new JobUpdate.Builder().build();
         assertFalse(update.isAutodetectProcessUpdate());
-        update = new JobUpdate(null, null, new ModelDebugConfig(1.0, "ff"), null, null, null, null, null, null, null);
+        update = new JobUpdate.Builder().setModelDebugConfig(new ModelDebugConfig(1.0, "ff")).build();
         assertTrue(update.isAutodetectProcessUpdate());
-        update = new JobUpdate(null, Arrays.asList(mock(JobUpdate.DetectorUpdate.class)), null, null, null, null, null, null, null, null);
+        update = new JobUpdate.Builder().setDetectorUpdates(Arrays.asList(mock(JobUpdate.DetectorUpdate.class))).build();
         assertTrue(update.isAutodetectProcessUpdate());
     }
 }
