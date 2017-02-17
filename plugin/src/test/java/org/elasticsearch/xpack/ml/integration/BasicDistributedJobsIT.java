@@ -174,8 +174,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
             assertEquals(JobState.OPENED, task.getStatus());
         });
 
-        // stop the only running ml node
-        logger.info("!!!!");
+        logger.info("stop the only running ml node");
         internalCluster().stopRandomNode(settings -> settings.getAsBoolean(MachineLearning.ALLOCATION_ENABLED.getKey(), true));
         ensureStableCluster(2);
         assertBusy(() -> {
@@ -189,7 +188,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
             assertEquals(JobState.OPENED, task.getStatus());
         });
 
-        // start ml node
+        logger.info("start ml node");
         internalCluster().startNode(Settings.builder().put(MachineLearning.ALLOCATION_ENABLED.getKey(), true));
         ensureStableCluster(3);
         assertBusy(() -> {
@@ -206,6 +205,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
             assertEquals(expectedNodeAttr, node.getAttributes());
             assertEquals(JobState.OPENED, task.getStatus());
         });
+        cleanupWorkaround(3);
     }
 
 }
