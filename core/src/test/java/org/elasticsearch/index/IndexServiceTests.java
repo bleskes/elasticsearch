@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS;
 import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_SHARDS;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 
 /** Unit test(s) for IndexService */
 public class IndexServiceTests extends ESSingleNodeTestCase {
@@ -261,8 +262,8 @@ public class IndexServiceTests extends ESSingleNodeTestCase {
         IndexService indexService = createIndex("test", settings);
         ensureGreen("test");
         assertNull(indexService.getFsyncTask());
-        IndexMetaData metaData = IndexMetaData.builder(indexService.getMetaData()).settings(Settings.builder().put(indexService.getMetaData().getSettings()).put(IndexSettings.INDEX_TRANSLOG_DURABILITY_SETTING.getKey(), Translog.Durability.ASYNC)).build();
-        indexService.updateMetaData(metaData);
+        assertAcked(client().admin().indices().prepareUpdateSettings("test").setSettings(Settings.builder()
+            .put(IndexSettings.INDEX_TRANSLOG_DURABILITY_SETTING.getKey(), Translog.Durability.ASYNC)));
         assertNotNull(indexService.getFsyncTask());
         assertTrue(indexService.getRefreshTask().mustReschedule());
         client().prepareIndex("test", "test", "1").setSource("{\"foo\": \"bar\"}", XContentType.JSON).get();
@@ -271,12 +272,12 @@ public class IndexServiceTests extends ESSingleNodeTestCase {
             assertFalse(shard.getTranslog().syncNeeded());
         });
 
-        metaData = IndexMetaData.builder(indexService.getMetaData()).settings(Settings.builder().put(indexService.getMetaData().getSettings()).put(IndexSettings.INDEX_TRANSLOG_DURABILITY_SETTING.getKey(), Translog.Durability.REQUEST)).build();
-        indexService.updateMetaData(metaData);
+        assertAcked(client().admin().indices().prepareUpdateSettings("test").setSettings(Settings.builder()
+            .put(IndexSettings.INDEX_TRANSLOG_DURABILITY_SETTING.getKey(), Translog.Durability.REQUEST)));
         assertNull(indexService.getFsyncTask());
 
-        metaData = IndexMetaData.builder(indexService.getMetaData()).settings(Settings.builder().put(indexService.getMetaData().getSettings()).put(IndexSettings.INDEX_TRANSLOG_DURABILITY_SETTING.getKey(), Translog.Durability.ASYNC)).build();
-        indexService.updateMetaData(metaData);
+        assertAcked(client().admin().indices().prepareUpdateSettings("test").setSettings(Settings.builder()
+            .put(IndexSettings.INDEX_TRANSLOG_DURABILITY_SETTING.getKey(), Translog.Durability.ASYNC)));
         assertNotNull(indexService.getFsyncTask());
 
     }

@@ -192,9 +192,9 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             }
         });
         if (startingSeqNo == SequenceNumbersService.UNASSIGNED_SEQ_NO) {
-            assertThat(handler.response, equalTo(initialNumberOfDocs + numberOfDocsWithValidSequenceNumbers));
+            assertThat(handler.response.phase2Operations, equalTo(initialNumberOfDocs + numberOfDocsWithValidSequenceNumbers));
         } else {
-            assertThat(handler.response, equalTo(Math.toIntExact(numberOfDocsWithValidSequenceNumbers - startingSeqNo)));
+            assertThat(handler.response.phase2Operations, equalTo(Math.toIntExact(numberOfDocsWithValidSequenceNumbers - startingSeqNo)));
         }
     }
 
