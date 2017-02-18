@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.ml.action;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestBuilder;
-import org.elasticsearch.action.admin.cluster.node.tasks.list.TransportListTasksAction;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.tasks.BaseTasksResponse;
 import org.elasticsearch.client.ElasticsearchClient;
@@ -37,7 +36,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.ml.MachineLearning;
-import org.elasticsearch.xpack.ml.job.JobManager;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcessManager;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.InterimResultsParams;
@@ -101,10 +99,6 @@ public class FlushJobAction extends Action<FlushJobAction.Request, FlushJobActio
 
         public Request(String jobId) {
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
-        }
-
-        public String getJobId() {
-            return jobId;
         }
 
         public boolean getCalcInterim() {
@@ -257,10 +251,9 @@ public class FlushJobAction extends Action<FlushJobAction.Request, FlushJobActio
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ClusterService clusterService,
                 ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                AutodetectProcessManager processManager, JobManager jobManager, TransportListTasksAction listTasksAction) {
+                AutodetectProcessManager processManager) {
             super(settings, FlushJobAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
-                    FlushJobAction.Request::new, FlushJobAction.Response::new, MachineLearning.THREAD_POOL_NAME, jobManager, processManager,
-                    Request::getJobId, listTasksAction);
+                    FlushJobAction.Request::new, FlushJobAction.Response::new, MachineLearning.THREAD_POOL_NAME, processManager);
         }
 
         @Override
@@ -271,10 +264,8 @@ public class FlushJobAction extends Action<FlushJobAction.Request, FlushJobActio
         }
 
         @Override
-        protected void taskOperation(Request request, OpenJobAction.JobTask task,
+        protected void innerTaskOperation(Request request, OpenJobAction.JobTask task,
                                      ActionListener<FlushJobAction.Response> listener) {
-            jobManager.getJobOrThrowIfUnknown(request.getJobId());
-
             InterimResultsParams.Builder paramsBuilder = InterimResultsParams.builder();
             paramsBuilder.calcInterim(request.getCalcInterim());
             if (request.getAdvanceTime() != null) {
