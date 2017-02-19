@@ -28,6 +28,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.EngineConfig;
 import org.elasticsearch.index.engine.EngineFactory;
@@ -41,16 +42,17 @@ import org.elasticsearch.indices.recovery.RecoveryTarget;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 
 public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestCase {
@@ -212,55 +214,26 @@ public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestC
         IndexMetaData metaData = buildIndexMetaData(1);
 
         final int pendingDocs = randomIntBetween(1, 5);
-        final AtomicReference<Semaphore> blockIndexingOnPrimary = new AtomicReference<>();
-        final CountDownLatch blockedIndexers = new CountDownLatch(pendingDocs);
+        final BlockingEngineFactory primaryEngineFactory = new BlockingEngineFactory();
 
         try (ReplicationGroup shards = new ReplicationGroup(metaData) {
             @Override
             protected EngineFactory getEngineFactory(ShardRouting routing) {
                 if (routing.primary()) {
-                    return new EngineFactory() {
-                        @Override
-                        public Engine newReadWriteEngine(EngineConfig config) {
-                            return InternalEngineTests.createInternalEngine((directory, writerConfig) ->
-                                new IndexWriter(directory, writerConfig) {
-                                    @Override
-                                    public long addDocument(Iterable<? extends IndexableField> doc) throws IOException {
-                                        Semaphore block = blockIndexingOnPrimary.get();
-                                        if (block != null) {
-                                            blockedIndexers.countDown();
-                                            try {
-                                                block.acquire();
-                                            } catch (InterruptedException e) {
-                                                throw new AssertionError("unexpectedly interrupted", e);
-                                            }
-                                        }
-                                        return super.addDocument(doc);
-                                    }
-
-                                }, null, config);
-                        }
-
-                        @Override
-                        public Engine newReadOnlyEngine(EngineConfig config) {
-                            throw new UnsupportedOperationException();
-                        }
-                    };
+                    return primaryEngineFactory;
                 } else {
                     return null;
                 }
             }
         }) {
             shards.startAll();
-            int docs = shards.indexDocs(randomIntBetween(1,10));
+            int docs = shards.indexDocs(randomIntBetween(1, 10));
             IndexShard replica = shards.getReplicas().get(0);
             shards.removeReplica(replica);
             closeShards(replica);
 
             docs += pendingDocs;
-            final Semaphore pendingDocsSemaphore = new Semaphore(pendingDocs);
-            blockIndexingOnPrimary.set(pendingDocsSemaphore);
-            blockIndexingOnPrimary.get().acquire(pendingDocs);
+            primaryEngineFactory.blockIndexing();
             CountDownLatch pendingDocsDone = new CountDownLatch(pendingDocs);
             for (int i = 0; i < pendingDocs; i++) {
                 final String id = "pending_" + i;
@@ -276,9 +249,9 @@ public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestC
             }
 
             // wait for the pending ops to "hang"
-            blockedIndexers.await();
+            primaryEngineFactory.awaitBlocked();
 
-            blockIndexingOnPrimary.set(null);
+            primaryEngineFactory.allowFutureIndexing();
             // index some more
             docs += shards.indexDocs(randomInt(5));
 
@@ -300,11 +273,13 @@ public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestC
 
             recoveryStart.await();
 
-            for (int i = 0; i < pendingDocs; i++) {
-                assertFalse((pendingDocs - i) + " pending operations, recovery should wait", preparedForTranslog.get());
-                pendingDocsSemaphore.release();
-            }
+            // index some more
+            docs += shards.indexDocs(randomInt(5));
 
+
+            assertFalse("recovery should wait on pending docs", preparedForTranslog.get());
+
+            primaryEngineFactory.releasePendingIndexers();
             pendingDocsDone.await();
 
             // now recovery can finish
@@ -314,6 +289,87 @@ public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestC
             assertThat(newReplica.recoveryState().getTranslog().recoveredOperations(), equalTo(docs));
 
             shards.assertAllEqual(docs);
+        }
+    }
+
+    @TestLogging("_root:DEBUG,org.elasticsearch.action.bulk:TRACE,org.elasticsearch.action.get:TRACE," +
+        "org.elasticsearch.discovery:TRACE," +
+        "org.elasticsearch.cluster.service:TRACE,org.elasticsearch.indices.recovery:TRACE," +
+        "org.elasticsearch.indices.cluster:TRACE,org.elasticsearch.index.shard:TRACE," +
+        "org.elasticsearch.index.seqno:TRACE,org.elasticsearch.index.replication:TRACE"
+    )
+    public void testCheckpointsAndMarkingInSync() throws Exception {
+        IndexMetaData metaData = buildIndexMetaData(0);
+        BlockingEngineFactory replicaEngineFactory = new BlockingEngineFactory();
+        try (
+            ReplicationGroup shards = new ReplicationGroup(metaData) {
+                @Override
+                protected EngineFactory getEngineFactory(ShardRouting routing) {
+                    if (routing.primary()) {
+                        return null;
+                    } else {
+                        return replicaEngineFactory;
+                    }
+                }
+            };
+            AutoCloseable ignored = replicaEngineFactory // make sure we release indexers before closing
+        ) {
+            shards.startPrimary();
+            int docs = shards.indexDocs(randomIntBetween(1, 10));
+            final CountDownLatch pendingDocDone = new CountDownLatch(1);
+            final CountDownLatch pendingDocActiveWithExtraDocIndexed = new CountDownLatch(1);
+            IndexShard replica = shards.addReplica();
+            Future<Void> recoveryFuture = shards.asyncRecoverReplica(replica,
+                (indexShard, node) -> new RecoveryTarget(indexShard, node, recoveryListener, l -> {
+            }) {
+
+                @Override
+                public long indexTranslogOperations(List<Translog.Operation> operations, int totalTranslogOps) {
+                    // generate an operation which is not part of the snapshot, but also doesn't complete on replica
+                    replicaEngineFactory.blockIndexing();
+                    threadPool.generic().submit(() -> {
+                        try {
+                            shards.index(new IndexRequest(index.getName(), "type", "pending").source("{}", XContentType.JSON));
+                        } catch (Exception e) {
+                            throw new AssertionError(e);
+                        } finally {
+                            pendingDocDone.countDown();
+                        }
+                    });
+                    try {
+                        replicaEngineFactory.awaitBlocked();
+                        replicaEngineFactory.allowFutureIndexing();
+                        shards.index(new IndexRequest(index.getName(), "type", "completed").source("{}", XContentType.JSON));
+                        pendingDocActiveWithExtraDocIndexed.countDown();
+                    } catch (Exception e) {
+                        throw new AssertionError(e);
+                    }
+                    return super.indexTranslogOperations(operations, totalTranslogOps);
+                }
+            });
+            pendingDocActiveWithExtraDocIndexed.await();
+            assertThat(pendingDocDone.getCount(), equalTo(1L));
+            {
+                long expectedDocs = docs + 2L; // one pending and one while recovering
+                assertThat(shards.getPrimary().getLocalCheckpoint(), equalTo(expectedDocs - 1));
+                // pending doc is not done, so recovery isn't done. the primary can advance it's global checkpoint
+                assertThat(shards.getPrimary().getGlobalCheckpoint(), equalTo(expectedDocs - 1));
+                assertThat(replica.getLocalCheckpoint(), lessThan(expectedDocs - 1));
+                assertThat(replica.getGlobalCheckpoint(), lessThan(expectedDocs - 1)); // pending doc is not done, can't advance
+            }
+
+            replicaEngineFactory.releasePendingIndexers();
+            pendingDocDone.await();
+            recoveryFuture.get(); // now recovery can finish
+            {
+                long expectedDocs = docs + 2L; // one pending and one while recovering
+                assertBusy(() -> {
+                    assertThat(shards.getPrimary().getLocalCheckpoint(), equalTo(expectedDocs - 1));
+                    assertThat(shards.getPrimary().getGlobalCheckpoint(), equalTo(expectedDocs - 1));
+                    assertThat(replica.getLocalCheckpoint(), equalTo(expectedDocs - 1));
+                    assertThat(replica.getGlobalCheckpoint(), equalTo(expectedDocs - 1));
+                });
+            }
         }
     }
 
@@ -328,7 +384,8 @@ public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestC
 
         BlockingTarget(RecoveryState.Stage stageToBlock, CountDownLatch recoveryBlocked, CountDownLatch releaseRecovery, IndexShard shard,
                        DiscoveryNode sourceNode, PeerRecoveryTargetService.RecoveryListener listener, Logger logger) {
-            super(shard, sourceNode, listener, version -> {});
+            super(shard, sourceNode, listener, version -> {
+            });
             this.recoveryBlocked = recoveryBlocked;
             this.releaseRecovery = releaseRecovery;
             this.stageToBlock = stageToBlock;
@@ -381,4 +438,67 @@ public class RecoveryDuringReplicationTests extends ESIndexLevelReplicationTestC
 
     }
 
+    static class BlockingEngineFactory implements EngineFactory, AutoCloseable {
+        private final List<CountDownLatch> pendingIndexers = new ArrayList<>();
+
+        private final AtomicReference<CountDownLatch> blockReference = new AtomicReference<>();
+        private final AtomicReference<CountDownLatch> indexersBlocked = new AtomicReference<>();
+
+        public synchronized void blockIndexing() {
+            CountDownLatch block = new CountDownLatch(1);
+            pendingIndexers.add(block);
+            indexersBlocked.set(new CountDownLatch(1));
+            Object previous = blockReference.getAndSet(block);
+            assert previous == null;
+        }
+
+        public void awaitBlocked() throws InterruptedException {
+            indexersBlocked.get().await();
+        }
+
+        public synchronized void allowFutureIndexing() {
+            CountDownLatch previous = blockReference.getAndSet(null);
+            assert previous == null || pendingIndexers.contains(previous);
+        }
+
+        public synchronized void releasePendingIndexers() {
+            allowFutureIndexing();
+            pendingIndexers.forEach(CountDownLatch::countDown);
+            pendingIndexers.clear();
+        }
+
+        @Override
+        public Engine newReadWriteEngine(EngineConfig config) {
+            return InternalEngineTests.createInternalEngine((directory, writerConfig) ->
+                new IndexWriter(directory, writerConfig) {
+                    @Override
+                    public long addDocument(Iterable<? extends IndexableField> doc) throws IOException {
+                        CountDownLatch block = blockReference.get();
+                        if (block != null) {
+                            CountDownLatch latch = indexersBlocked.get();
+                            if (latch != null) {
+                                latch.countDown();
+                            }
+                            try {
+                                block.await();
+                            } catch (InterruptedException e) {
+                                throw new AssertionError("unexpectedly interrupted", e);
+                            }
+                        }
+                        return super.addDocument(doc);
+                    }
+
+                }, null, config);
+        }
+
+        @Override
+        public Engine newReadOnlyEngine(EngineConfig config) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void close() throws Exception {
+            releasePendingIndexers();
+        }
+    }
 }

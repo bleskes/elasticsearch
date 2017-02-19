@@ -1387,14 +1387,31 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     /**
-     * Marks the shard with the provided allocation ID as in-sync with the primary shard. See
-     * {@link GlobalCheckpointTracker#markAllocationIdAsInSync(String)} for additional details.
+     * Let all ongoing operation finish and marks the shard with the provided allocation ID as in-sync with the primary shard. See
+     * {@link GlobalCheckpointTracker#markAllocationIdAsInSync(String, long)} for additional details.
+     *
+     * See {@link org.elasticsearch.indices.recovery.RecoverySourceHandler#finalizeRecovery(long)} for details as to why operations
+     * need to stop.
      *
      * @param allocationId the allocation ID of the shard to mark as in-sync
+     * @param localCheckpoint the local checkpoint of the shard marked in-sync
      */
-    public void markAllocationIdAsInSync(final String allocationId) {
+    public void markAllocationIdAsInSync(final String allocationId, final long localCheckpoint) throws InterruptedException {
         verifyPrimary();
-        getEngine().seqNoService().markAllocationIdAsInSync(allocationId);
+        try {
+            indexShardOperationsLock.blockOperations(30, TimeUnit.MINUTES, () -> {
+                // no shard operation locks are being held here, move state from started to relocated
+                assert indexShardOperationsLock.getActiveOperationsCount() == 0 :
+                    "in-flight operations in progress while moving shard state to relocated";
+                getEngine().seqNoService().markAllocationIdAsInSync(allocationId, localCheckpoint);
+            });
+        } catch (TimeoutException e) {
+            logger.warn("timed out waiting for relocation hand-off to complete");
+            // This is really bad as ongoing replication operations are preventing this shard from completing relocation hand-off.
+            // Fail primary relocation source and target shards.
+            failShard("timed out waiting for relocation hand-off to complete", null);
+            throw new IndexShardClosedException(shardId(), "timed out waiting for relocation hand-off to complete");
+        }
     }
 
     /**
@@ -1426,11 +1443,17 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     /**
      * Updates the global checkpoint on a replica shard after it has been updated by the primary.
      *
-     * @param checkpoint the global checkpoint
+     * @param globalCheckpoint the global checkpoint
      */
-    public void updateGlobalCheckpointOnReplica(final long checkpoint) {
+    public void updateGlobalCheckpointOnReplica(final long globalCheckpoint) {
         verifyReplicationTarget();
-        getEngine().seqNoService().updateGlobalCheckpointOnReplica(checkpoint);
+        final SequenceNumbersService sequenceNumbersService = getEngine().seqNoService();
+        final long localCheckpoint = sequenceNumbersService.getLocalCheckpoint();
+        if (globalCheckpoint <= localCheckpoint) {
+            sequenceNumbersService.updateGlobalCheckpointOnReplica(globalCheckpoint);
+        } else {
+            assert state() == IndexShardState.RECOVERING;
+        }
     }
 
     /**

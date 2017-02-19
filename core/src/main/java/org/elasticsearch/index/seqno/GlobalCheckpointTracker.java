@@ -22,12 +22,10 @@ package org.elasticsearch.index.seqno;
 import com.carrotsearch.hppc.ObjectLongHashMap;
 import com.carrotsearch.hppc.ObjectLongMap;
 import com.carrotsearch.hppc.cursors.ObjectLongCursor;
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
 import org.elasticsearch.index.shard.ShardId;
 
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -40,23 +38,26 @@ import static org.elasticsearch.index.seqno.SequenceNumbersService.UNASSIGNED_SE
  * have received all old operations via the recovery mechanism and are kept up to date by the various replications actions. The set of
  * shards that are taken into account for the global checkpoint calculation are called the "in-sync shards".
  * <p>
- * The global checkpoint is maintained by the primary shard and is replicated to all the replicas (via {@link GlobalCheckpointSyncAction}).
+ * The global checkpoint is maintained by the primary shard and is replicated to all the replicas (during normal operations and
+ * via {@link GlobalCheckpointSyncAction}).
  */
 public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
 
-    /*
+    /**
      * This map holds the last known local checkpoint for every active shard and initializing shard copies that has been brought up to speed
      * through recovery. These shards are treated as valid copies and participate in determining the global checkpoint. This map is keyed by
      * allocation IDs. All accesses to this set are guarded by a lock on this.
      */
     private final ObjectLongMap<String> inSyncLocalCheckpoints;
 
-    /*
-     * This set holds the last set of known valid allocation ids as received by the master. This is important to make sure shard that are
-     * failed or relocated are cleaned up from {@link #inSyncLocalCheckpoints} and do not hold the global checkpoint back. All accesses to
-     * this set are guarded by a lock on this.
+    /**
+     * This map holds the last known local checkpoint for every initializing shard copy that is still undergoing recovery.
+     * These shards <strong>do not</strong> participate in determining the global checkpoint. This map is needed to make sure that when
+     * shards are promoted to {@link #inSyncLocalCheckpoints} we use the highest known checkpoint, even if we index concurrently
+     * while recovering the shard.
+     * Keyed by allocation ids
      */
-    private final Set<String> assignedAllocationIds;
+    private final ObjectLongMap<String> trackingLocalCheckpoint;
 
     /*
      * The current global checkpoint for this shard. Note that this field is guarded by a lock on this and thus this field does not need to
@@ -76,45 +77,56 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
         super(shardId, indexSettings);
         assert globalCheckpoint >= UNASSIGNED_SEQ_NO : "illegal initial global checkpoint: " + globalCheckpoint;
         inSyncLocalCheckpoints = new ObjectLongHashMap<>(1 + indexSettings.getNumberOfReplicas());
-        assignedAllocationIds = new HashSet<>(1 + indexSettings.getNumberOfReplicas());
+        trackingLocalCheckpoint = new ObjectLongHashMap<>(indexSettings.getNumberOfReplicas());
         this.globalCheckpoint = globalCheckpoint;
     }
 
     /**
      * Notifies the service to update the local checkpoint for the shard with the provided allocation ID. If the checkpoint is lower than
-     * the currently known one, this is a no-op. If the allocation ID is not in sync, it is ignored. This is to prevent late arrivals from
-     * shards that are removed to be re-added.
+     * the currently known one, this is a no-op. Last, if the allocation id is not yet known, it is ignored. This is to prevent late
+     * arrivals from shards that are removed to be re-added.
      *
      * @param allocationId the allocation ID of the shard to update the local checkpoint for
      * @param checkpoint   the local checkpoint for the shard
      */
     public synchronized void updateLocalCheckpoint(final String allocationId, final long checkpoint) {
-        final int indexOfKey = inSyncLocalCheckpoints.indexOf(allocationId);
+        if (updateLocalCheckpointInMap(allocationId, checkpoint, inSyncLocalCheckpoints, "inSync")) {
+            return;
+        }
+        if (updateLocalCheckpointInMap(allocationId, checkpoint, trackingLocalCheckpoint, "tracking")) {
+            return;
+        }
+        logger.trace("[{}] isn't tracked. ignoring local checkpoint of [{}].", allocationId, checkpoint);
+    }
+
+    private boolean updateLocalCheckpointInMap(String allocationId, long localCheckpoint,
+                                                      ObjectLongMap<String> checkpointsMap, String name) {
+        assert Thread.holdsLock(this);
+        int indexOfKey = checkpointsMap.indexOf(allocationId);
         if (indexOfKey >= 0) {
-            final long current = inSyncLocalCheckpoints.indexGet(indexOfKey);
-            if (current < checkpoint) {
-                inSyncLocalCheckpoints.indexReplace(indexOfKey, checkpoint);
+            long current = checkpointsMap.indexGet(indexOfKey);
+            if (current < localCheckpoint) {
+                checkpointsMap.indexReplace(indexOfKey, localCheckpoint);
                 if (logger.isTraceEnabled()) {
-                    logger.trace("updated local checkpoint of [{}] to [{}] (was [{}])", allocationId, checkpoint, current);
+                    logger.trace("updated local checkpoint of [{}] to [{}] (type [{}])", allocationId, localCheckpoint,
+                        name);
                 }
             } else {
-                logger.trace(
-                    "skipping update of local checkpoint [{}], current checkpoint is higher (current [{}], incoming [{}], type [{}])",
-                    allocationId,
-                    current,
-                    checkpoint,
-                    allocationId);
+                logger.trace("skipping update local checkpoint [{}], current check point is higher " +
+                        "(current [{}], incoming [{}], type [{}])",
+                    allocationId, current, localCheckpoint, name);
             }
+            return true;
         } else {
-            logger.trace("[{}] isn't marked as in sync. ignoring local checkpoint of [{}].", allocationId, checkpoint);
+            return false;
         }
     }
+
 
     /**
      * Scans through the currently known local checkpoint and updates the global checkpoint accordingly.
      *
-     * @return {@code true} if the checkpoint has been updated or if it can not be updated since one of the local checkpoints of one of the
-     * active allocations is not known.
+     * @return {@code true} if the checkpoint has been updated
      */
     synchronized boolean updateCheckpointOnPrimary() {
         long minCheckpoint = Long.MAX_VALUE;
@@ -124,10 +136,11 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
         for (final ObjectLongCursor<String> cp : inSyncLocalCheckpoints) {
             if (cp.value == UNASSIGNED_SEQ_NO) {
                 logger.trace("unknown local checkpoint for active allocationId [{}], requesting a sync", cp.key);
-                return true;
+                return false;
             }
             minCheckpoint = Math.min(cp.value, minCheckpoint);
         }
+        assert minCheckpoint != UNASSIGNED_SEQ_NO : "newly calculated checkpoint can't be unassigned";
         if (minCheckpoint < globalCheckpoint) {
             final String message =
                 String.format(Locale.ROOT, "new global checkpoint [%d] is lower than previous one [%d]", minCheckpoint, globalCheckpoint);
@@ -137,8 +150,9 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
             logger.trace("global checkpoint updated to [{}]", minCheckpoint);
             globalCheckpoint = minCheckpoint;
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     /**
@@ -175,16 +189,28 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      */
     public synchronized void updateAllocationIdsFromMaster(final Set<String> activeAllocationIds,
                                                            final Set<String> initializingAllocationIds) {
-        assignedAllocationIds.removeIf(
-            aId -> activeAllocationIds.contains(aId) == false && initializingAllocationIds.contains(aId) == false);
-        assignedAllocationIds.addAll(activeAllocationIds);
-        assignedAllocationIds.addAll(initializingAllocationIds);
+        inSyncLocalCheckpoints.removeAll(key ->
+            activeAllocationIds.contains(key) == false && initializingAllocationIds.contains(key) == false);
         for (String activeId : activeAllocationIds) {
             if (inSyncLocalCheckpoints.containsKey(activeId) == false) {
-                inSyncLocalCheckpoints.put(activeId, UNASSIGNED_SEQ_NO);
+                long knownCheckpoint = trackingLocalCheckpoint.getOrDefault(activeId, SequenceNumbersService.UNASSIGNED_SEQ_NO);
+                inSyncLocalCheckpoints.put(activeId, knownCheckpoint);
+                logger.trace("marking [{}] as in sync via cluster state. known checkpoint [{}]", activeId, knownCheckpoint);
             }
         }
-        inSyncLocalCheckpoints.removeAll(key -> assignedAllocationIds.contains(key) == false);
+        trackingLocalCheckpoint.removeAll(key -> initializingAllocationIds.contains(key) == false);
+        // add initializing shards to tracking
+        for (String initID : initializingAllocationIds) {
+            if (inSyncLocalCheckpoints.containsKey(initID)) {
+                continue;
+            }
+            if (trackingLocalCheckpoint.containsKey(initID)) {
+                continue;
+            }
+            trackingLocalCheckpoint.put(initID, SequenceNumbersService.UNASSIGNED_SEQ_NO);
+            logger.trace("added [{}] to the tracking map due to a CS update", initID);
+
+        }
     }
 
     /**
@@ -192,14 +218,20 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      * the primary knows all operations below the global checkpoint have been completed on this shard.
      *
      * @param allocationId the allocation ID of the shard to mark as in-sync
+     * @param localCheckpoint the local checkpoint of the shard marked in-sync
      */
-    public synchronized void markAllocationIdAsInSync(final String allocationId) {
-        if (assignedAllocationIds.contains(allocationId) == false) {
+    public synchronized void markAllocationIdAsInSync(final String allocationId, long localCheckpoint) {
+        if (trackingLocalCheckpoint.containsKey(allocationId) == false) {
             // master has removed this allocation, ignore
             return;
         }
-        logger.trace("marked [{}] as in sync", allocationId);
-        inSyncLocalCheckpoints.put(allocationId, UNASSIGNED_SEQ_NO);
+        long current = trackingLocalCheckpoint.remove(allocationId);
+        localCheckpoint = Math.max(current, localCheckpoint);
+        assert localCheckpoint >= globalCheckpoint :
+            "local checkpoint [" + localCheckpoint + "] for [" + allocationId + "] is lower than global checkpoint [" + globalCheckpoint
+                + "]";
+        logger.trace("marked [{}] as in sync with a local checkpoint of [{}]", allocationId, localCheckpoint);
+        inSyncLocalCheckpoints.put(allocationId, localCheckpoint);
     }
 
     /**

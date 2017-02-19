@@ -446,9 +446,22 @@ public class RecoverySourceHandler {
         StopWatch stopWatch = new StopWatch().start();
         logger.trace("finalizing recovery");
         cancellableThreads.execute(() -> {
-            shard.markAllocationIdAsInSync(recoveryTarget.getTargetAllocationId());
-            shard.updateLocalCheckpointForShard(recoveryTarget.getTargetAllocationId(), targetLocalCheckpoint);
-            shard.updateGlobalCheckpointOnPrimary();
+// We need to guaranteee that the global checkpoint <= the local checkpoint of a recovering replica at the moment the replica is
+// marked as in sync:
+//
+// For every OP with seq# <= the primary's GC it must the case that OP was indexed to the primary before the replica shard was marked
+// as in sync. By waiting for all operations to completed we guarantee that OP was processed on the replica and the primary was
+// notified of a LC for the replica which was sampled after OP was indexed. This is because OP can be in one of these places:
+// - In the lucene commit transferred the replica (checkpoint sampled at the end of translog replay)
+// - In the translog snapshot (checkpoint sampled at the end of translog replay)
+// - TRA replicated the OP (since we wait for all OPs to completed, the primary is notified by response from the replica of its
+// local checkpoint, sampled after the operation was performed)
+//
+// For the last operation <= GC performed on the replica, it holds that all operations <= GC were perfomed and the local checkpoint LC'
+// which was sampled when it was done must maitain GC <= LC'. The primary is therefore guaranteed to know of a local checkpoint that is
+// at least as high as LC' and thus >= GC.
+
+            shard.markAllocationIdAsInSync(recoveryTarget.getTargetAllocationId(), targetLocalCheckpoint);
             recoveryTarget.finalizeRecovery(shard.getGlobalCheckpoint());
         });
 
@@ -458,6 +471,7 @@ public class RecoverySourceHandler {
             // will not be send to these replicas. To accomplish this, first block new recoveries, then take version of latest cluster
             // state. This means that no new recovery can be completed based on information of a newer cluster state than the current one.
             try (Releasable ignored = delayNewRecoveries.apply("primary relocation hand-off in progress or completed for " + shardId)) {
+                // TODO: transfer inAsync aids
                 final long currentClusterStateVersion = currentClusterStateVersionSupplier.get();
                 logger.trace("waiting on remote node to have cluster state with version [{}]", currentClusterStateVersion);
                 cancellableThreads.execute(() -> recoveryTarget.ensureClusterStateVersion(currentClusterStateVersion));

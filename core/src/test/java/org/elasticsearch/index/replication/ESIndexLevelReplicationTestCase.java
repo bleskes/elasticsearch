@@ -41,6 +41,7 @@ import org.elasticsearch.cluster.routing.ShardRoutingHelper;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.TestShardRouting;
 import org.elasticsearch.common.collect.Iterators;
+import org.elasticsearch.common.lease.Releasable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.Index;
@@ -55,6 +56,7 @@ import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.shard.ShardPath;
 import org.elasticsearch.indices.recovery.RecoveryState;
 import org.elasticsearch.indices.recovery.RecoveryTarget;
+import org.elasticsearch.threadpool.ThreadPool;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -370,15 +372,21 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
         }
 
         public void execute() throws Exception {
+            PlainActionFuture<Releasable> opLockFuture = new PlainActionFuture<>();
+            threadPool.generic().submit(() ->
+                replicationGroup.primary.acquirePrimaryOperationLock(opLockFuture, ThreadPool.Names.SAME));
+            Releasable opLock = opLockFuture.get();
             new ReplicationOperation<Request, ReplicaRequest, PrimaryResult>(request, new PrimaryRef(),
                 new ActionListener<PrimaryResult>() {
                     @Override
                     public void onResponse(PrimaryResult result) {
+                        opLock.close();
                         result.respond(listener);
                     }
 
                     @Override
                     public void onFailure(Exception e) {
+                        opLock.close();
                         listener.onFailure(e);
                     }
                 }, true, new ReplicasRef(), () -> null, logger, opType) {

@@ -21,7 +21,6 @@ package org.elasticsearch.indices.recovery;
 
 import org.elasticsearch.common.lease.Releasable;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.seqno.SequenceNumbersService;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.translog.Translog;
 
@@ -64,7 +63,7 @@ public class SharedFSRecoverySourceHandler extends RecoverySourceHandler {
                 }
             }
             prepareTargetForTranslog(0, maxUnsafeAutoIdTimestamp);
-            finalizeRecovery(SequenceNumbersService.UNASSIGNED_SEQ_NO);
+            finalizeRecovery(shard.getLocalCheckpoint());
             return response;
         } catch (Exception e) {
             if (engineClosed) {

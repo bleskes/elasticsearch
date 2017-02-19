@@ -112,7 +112,7 @@ public final class ShadowIndexShard extends IndexShard {
     }
 
     @Override
-    public void updateGlobalCheckpointOnReplica(long checkpoint) {
+    public void updateGlobalCheckpointOnReplica(long globalCheckpoint) {
     }
 
     @Override

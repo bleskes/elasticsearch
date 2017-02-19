@@ -56,8 +56,8 @@ public class GlobalCheckpointTests extends ESTestCase {
     }
 
     public void testEmptyShards() {
-        assertFalse("checkpoint shouldn't be updated when the are no active shards", tracker.updateCheckpointOnPrimary());
-        assertThat(tracker.getCheckpoint(), equalTo(UNASSIGNED_SEQ_NO));
+        tracker.updateCheckpointOnPrimary();
+        assertThat("checkpoint shouldn't be updated when the are no active shards", tracker.getCheckpoint(), equalTo(UNASSIGNED_SEQ_NO));
     }
 
     private final AtomicInteger aIdGenerator = new AtomicInteger();
@@ -72,7 +72,7 @@ public class GlobalCheckpointTests extends ESTestCase {
 
     public void testGlobalCheckpointUpdate() {
         Map<String, Long> allocations = new HashMap<>();
-        Map<String, Long> activeWithCheckpoints = randomAllocationsWithLocalCheckpoints(0, 5);
+        Map<String, Long> activeWithCheckpoints = randomAllocationsWithLocalCheckpoints(1, 5);
         Set<String> active = new HashSet<>(activeWithCheckpoints.keySet());
         allocations.putAll(activeWithCheckpoints);
         Map<String, Long> initializingWithCheckpoints = randomAllocationsWithLocalCheckpoints(0, 5);
@@ -82,7 +82,7 @@ public class GlobalCheckpointTests extends ESTestCase {
 
         // note: allocations can never be empty in practice as we always have at least one primary shard active/in sync
         // it is however nice not to assume this on this level and check we do the right thing.
-        final long maxLocalCheckpoint = allocations.values().stream().min(Long::compare).orElse(UNASSIGNED_SEQ_NO);
+        long maxLocalCheckpoint = allocations.values().stream().min(Long::compare).orElse(UNASSIGNED_SEQ_NO);
 
         assertThat(tracker.getCheckpoint(), equalTo(UNASSIGNED_SEQ_NO));
 
@@ -100,13 +100,13 @@ public class GlobalCheckpointTests extends ESTestCase {
         });
 
         tracker.updateAllocationIdsFromMaster(active, initializing);
-        initializing.forEach(aId -> tracker.markAllocationIdAsInSync(aId));
-        allocations.keySet().forEach(aId -> tracker.updateLocalCheckpoint(aId, allocations.get(aId)));
+        initializing.forEach(aId -> tracker.markAllocationIdAsInSync(aId, allocations.get(aId)));
+        active.forEach(aId -> tracker.updateLocalCheckpoint(aId, allocations.get(aId)));
 
 
         assertThat(tracker.getCheckpoint(), equalTo(UNASSIGNED_SEQ_NO));
 
-        assertThat(tracker.updateCheckpointOnPrimary(), equalTo(maxLocalCheckpoint != UNASSIGNED_SEQ_NO));
+        tracker.updateCheckpointOnPrimary();
         assertThat(tracker.getCheckpoint(), equalTo(maxLocalCheckpoint));
 
         // increment checkpoints
@@ -121,20 +121,34 @@ public class GlobalCheckpointTests extends ESTestCase {
         tracker.updateLocalCheckpoint(extraId, maxLocalCheckpoint + 1 + randomInt(4));
         assertThat(tracker.getLocalCheckpointForAllocationId(extraId), equalTo(UNASSIGNED_SEQ_NO));
 
-        Set<String> newActive = new HashSet<>(active);
-        newActive.add(extraId);
-        tracker.updateAllocationIdsFromMaster(newActive, initializing);
+        Set<String> newIntializing = new HashSet<>(initializing);
+        newIntializing.add(extraId);
+        tracker.updateAllocationIdsFromMaster(active, newIntializing);
 
-        // we should ask for a refresh , but not update the checkpoint
-        assertTrue(tracker.updateCheckpointOnPrimary());
-        assertThat(tracker.getCheckpoint(), equalTo(maxLocalCheckpoint));
+        // initializing shards don't prevent updates
+        tracker.updateCheckpointOnPrimary();
+        assertThat(tracker.getCheckpoint(), greaterThan(maxLocalCheckpoint));
 
         // now notify for the new id
-        tracker.updateLocalCheckpoint(extraId, maxLocalCheckpoint + 1 + randomInt(4));
+        maxLocalCheckpoint = allocations.values().stream().min(Long::compare).orElse(UNASSIGNED_SEQ_NO);
+        allocations.put(extraId, maxLocalCheckpoint);
+        tracker.markAllocationIdAsInSync(extraId, maxLocalCheckpoint);
 
+        // increment checkpoints for active shards
+        Stream.concat(active.stream(), initializing.stream())
+            .forEach(aId -> allocations.put(aId, allocations.get(aId) + 1 + randomInt(4)));
+        allocations.forEach(tracker::updateLocalCheckpoint);
+        assertFalse(tracker.updateCheckpointOnPrimary());
+        // checkpoint shouldn't be incremented previous maxLocalCheckpoint, as the extra id is in sync
+        assertThat(tracker.getCheckpoint(), equalTo(maxLocalCheckpoint));
+
+        allocations.put(extraId, maxLocalCheckpoint + randomIntBetween(1, 4));
+        tracker.updateLocalCheckpoint(extraId, allocations.get(extraId));
         // now it should be incremented
         assertTrue(tracker.updateCheckpointOnPrimary());
-        assertThat(tracker.getCheckpoint(), greaterThan(maxLocalCheckpoint));
+        maxLocalCheckpoint = allocations.values().stream().min(Long::compare).orElse(UNASSIGNED_SEQ_NO);
+        maxLocalCheckpoint = Math.min(maxLocalCheckpoint, allocations.get(extraId));
+        assertThat(tracker.getCheckpoint(), equalTo(maxLocalCheckpoint));
     }
 
     public void testMissingActiveIdsPreventAdvance() {
@@ -146,14 +160,14 @@ public class GlobalCheckpointTests extends ESTestCase {
         tracker.updateAllocationIdsFromMaster(
             new HashSet<>(randomSubsetOf(randomInt(active.size() - 1), active.keySet())),
             initializing.keySet());
-        randomSubsetOf(initializing.keySet()).forEach(tracker::markAllocationIdAsInSync);
+        randomSubsetOf(initializing.keySet()).forEach((aId) -> tracker.markAllocationIdAsInSync(aId, initializing.get(aId)));
         assigned.forEach(tracker::updateLocalCheckpoint);
 
         // now mark all active shards
         tracker.updateAllocationIdsFromMaster(active.keySet(), initializing.keySet());
 
-        // global checkpoint can't be advanced, but we need a sync
-        assertTrue(tracker.updateCheckpointOnPrimary());
+        // global checkpoint can't be advanced
+        assertFalse(tracker.updateCheckpointOnPrimary());
         assertThat(tracker.getCheckpoint(), equalTo(UNASSIGNED_SEQ_NO));
 
         // update again
@@ -162,39 +176,40 @@ public class GlobalCheckpointTests extends ESTestCase {
         assertThat(tracker.getCheckpoint(), not(equalTo(UNASSIGNED_SEQ_NO)));
     }
 
-    public void testMissingInSyncIdsPreventAdvance() {
-        final Map<String, Long> active = randomAllocationsWithLocalCheckpoints(0, 5);
-        final Map<String, Long> initializing = randomAllocationsWithLocalCheckpoints(1, 5);
-        tracker.updateAllocationIdsFromMaster(active.keySet(), initializing.keySet());
-        initializing.keySet().forEach(tracker::markAllocationIdAsInSync);
-        randomSubsetOf(randomInt(initializing.size() - 1),
-            initializing.keySet()).forEach(aId -> tracker.updateLocalCheckpoint(aId, initializing.get(aId)));
-
-        active.forEach(tracker::updateLocalCheckpoint);
-
-        // global checkpoint can't be advanced, but we need a sync
-        assertTrue(tracker.updateCheckpointOnPrimary());
-        assertThat(tracker.getCheckpoint(), equalTo(UNASSIGNED_SEQ_NO));
-
-        // update again
-        initializing.forEach(tracker::updateLocalCheckpoint);
-        assertTrue(tracker.updateCheckpointOnPrimary());
-        assertThat(tracker.getCheckpoint(), not(equalTo(UNASSIGNED_SEQ_NO)));
-    }
+// TODO: transfer in sync aid or cancel recoveries on primary relocation?
+//    public void testMissingInSyncIdsPreventAdvance() {
+//        final Map<String, Long> active = randomAllocationsWithLocalCheckpoints(0, 5);
+//        final Map<String, Long> initializing = randomAllocationsWithLocalCheckpoints(1, 5);
+//        tracker.updateAllocationIdsFromMaster(active.keySet(), initializing.keySet());
+//        initializing.keySet().forEach(tracker::markAllocationIdAsInSync);
+//        randomSubsetOf(randomInt(initializing.size() - 1),
+//            initializing.keySet()).forEach(aId -> tracker.updateLocalCheckpoint(aId, initializing.get(aId)));
+//
+//        active.forEach(tracker::updateLocalCheckpoint);
+//
+//        // global checkpoint can't be advanced, but we need a sync
+//        assertTrue(tracker.updateCheckpointOnPrimary());
+//        assertThat(tracker.getCheckpoint(), equalTo(UNASSIGNED_SEQ_NO));
+//
+//        // update again
+//        initializing.forEach(tracker::updateLocalCheckpoint);
+//        assertTrue(tracker.updateCheckpointOnPrimary());
+//        assertThat(tracker.getCheckpoint(), not(equalTo(UNASSIGNED_SEQ_NO)));
+//    }
 
     public void testInSyncIdsAreIgnoredIfNotValidatedByMaster() {
         final Map<String, Long> active = randomAllocationsWithLocalCheckpoints(1, 5);
         final Map<String, Long> initializing = randomAllocationsWithLocalCheckpoints(1, 5);
         final Map<String, Long> nonApproved = randomAllocationsWithLocalCheckpoints(1, 5);
         tracker.updateAllocationIdsFromMaster(active.keySet(), initializing.keySet());
-        initializing.keySet().forEach(tracker::markAllocationIdAsInSync);
-        nonApproved.keySet().forEach(tracker::markAllocationIdAsInSync);
+        initializing.forEach(tracker::markAllocationIdAsInSync);
+        nonApproved.forEach(tracker::markAllocationIdAsInSync);
 
         List<Map<String, Long>> allocations = Arrays.asList(active, initializing, nonApproved);
         Collections.shuffle(allocations, random());
         allocations.forEach(a -> a.forEach(tracker::updateLocalCheckpoint));
 
-        // global checkpoint can be advanced, but we need a sync
+        // global checkpoint can be advanced
         assertTrue(tracker.updateCheckpointOnPrimary());
         assertThat(tracker.getCheckpoint(), not(equalTo(UNASSIGNED_SEQ_NO)));
     }
@@ -217,16 +232,16 @@ public class GlobalCheckpointTests extends ESTestCase {
         }
         tracker.updateAllocationIdsFromMaster(active, initializing);
         if (randomBoolean()) {
-            initializingToStay.keySet().forEach(tracker::markAllocationIdAsInSync);
+            initializingToStay.forEach(tracker::markAllocationIdAsInSync);
         } else {
-            initializing.forEach(tracker::markAllocationIdAsInSync);
+            initializing.forEach((allocationId) -> tracker.markAllocationIdAsInSync(allocationId, allocations.get(allocationId)));
         }
         if (randomBoolean()) {
             allocations.forEach(tracker::updateLocalCheckpoint);
         }
 
-        // global checkpoint may be advanced, but we need a sync in any case
-        assertTrue(tracker.updateCheckpointOnPrimary());
+        // global checkpoint may be advanced
+        tracker.updateCheckpointOnPrimary();
 
         // now remove shards
         if (randomBoolean()) {
