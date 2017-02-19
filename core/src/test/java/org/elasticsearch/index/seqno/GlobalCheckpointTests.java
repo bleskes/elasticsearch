@@ -234,7 +234,9 @@ public class GlobalCheckpointTests extends ESTestCase {
         if (randomBoolean()) {
             initializingToStay.forEach(tracker::markAllocationIdAsInSync);
         } else {
-            initializing.forEach((allocationId) -> tracker.markAllocationIdAsInSync(allocationId, allocations.get(allocationId)));
+            initializing.forEach((allocationId) ->
+                tracker.markAllocationIdAsInSync(allocationId,
+                    allocations.getOrDefault(allocationId, SequenceNumbersService.UNASSIGNED_SEQ_NO)));
         }
         if (randomBoolean()) {
             allocations.forEach(tracker::updateLocalCheckpoint);
