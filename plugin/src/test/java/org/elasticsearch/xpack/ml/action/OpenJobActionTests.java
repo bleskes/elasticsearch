@@ -187,11 +187,11 @@ public class OpenJobActionTests extends ESTestCase {
         nodeAttr.put(MachineLearning.ALLOCATION_ENABLED_ATTR, "true");
         nodeAttr.put(MAX_RUNNING_JOBS_PER_NODE.getKey(), "10");
         DiscoveryNodes nodes = DiscoveryNodes.builder()
-                .add(new DiscoveryNode("_node_name1", "_node_id1", new TransportAddress(InetAddress.getLoopbackAddress(), 9300),
+                .add(new DiscoveryNode("_node_name1", "_node_id1", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300),
                         nodeAttr, Collections.emptySet(), Version.CURRENT))
-                .add(new DiscoveryNode("_node_name2", "_node_id2", new TransportAddress(InetAddress.getLoopbackAddress(), 9301),
+                .add(new DiscoveryNode("_node_name2", "_node_id2", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9301),
                         nodeAttr, Collections.emptySet(), Version.CURRENT))
-                .add(new DiscoveryNode("_node_name3", "_node_id3", new TransportAddress(InetAddress.getLoopbackAddress(), 9302),
+                .add(new DiscoveryNode("_node_name3", "_node_id3", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9302),
                         nodeAttr, Collections.emptySet(), Version.CURRENT))
                 .build();
 
