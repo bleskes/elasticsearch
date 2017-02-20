@@ -22,6 +22,7 @@ package org.elasticsearch.index.seqno;
 import com.carrotsearch.hppc.ObjectLongHashMap;
 import com.carrotsearch.hppc.ObjectLongMap;
 import com.carrotsearch.hppc.cursors.ObjectLongCursor;
+import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
@@ -99,6 +100,7 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      * @param allocationId the allocation ID of the shard to update the local checkpoint for
      * @param checkpoint   the local checkpoint for the shard
      */
+    @SuppressForbidden(reason = "need to notify pending in-sync shards")
     public synchronized void updateLocalCheckpoint(final String allocationId, final long checkpoint) {
         final boolean updated;
         if (updateLocalCheckpointInMap(allocationId, checkpoint, inSyncLocalCheckpoints, "inSync")) {
@@ -235,6 +237,7 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      * @param allocationId    the allocation ID of the shard to mark as in-sync
      * @param localCheckpoint the local checkpoint of the shard marked in-sync
      */
+    @SuppressForbidden(reason = "need to wait for local checkpoint to be above global")
     public synchronized void markAllocationIdAsInSync(final String allocationId, long localCheckpoint) throws InterruptedException {
         if (trackingLocalCheckpoint.containsKey(allocationId) == false) {
             // master has removed this allocation, ignore
