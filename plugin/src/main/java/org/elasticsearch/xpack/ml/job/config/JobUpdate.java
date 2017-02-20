@@ -15,7 +15,7 @@
 package org.elasticsearch.xpack.ml.job.config;
 
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.inject.internal.Nullable;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
@@ -45,6 +45,7 @@ public class JobUpdate implements Writeable, ToXContent {
         PARSER.declareLong(Builder::setModelSnapshotRetentionDays, Job.MODEL_SNAPSHOT_RETENTION_DAYS);
         PARSER.declareStringArray(Builder::setCategorizationFilters, AnalysisConfig.CATEGORIZATION_FILTERS);
         PARSER.declareField(Builder::setCustomSettings, (p, c) -> p.map(), Job.CUSTOM_SETTINGS,  ObjectParser.ValueType.OBJECT);
+        PARSER.declareString(Builder::setModelSnapshotId, Job.MODEL_SNAPSHOT_ID);
     }
 
     private final String description;
@@ -57,12 +58,14 @@ public class JobUpdate implements Writeable, ToXContent {
     private final Long resultsRetentionDays;
     private final List<String> categorizationFilters;
     private final Map<String, Object> customSettings;
+    private final String modelSnapshotId;
 
     private JobUpdate(@Nullable String description, @Nullable List<DetectorUpdate> detectorUpdates,
                       @Nullable ModelDebugConfig modelDebugConfig, @Nullable AnalysisLimits analysisLimits,
                       @Nullable Long backgroundPersistInterval, @Nullable Long renormalizationWindowDays,
                       @Nullable Long resultsRetentionDays, @Nullable Long modelSnapshotRetentionDays,
-                      @Nullable List<String> categorisationFilters, @Nullable  Map<String, Object> customSettings) {
+                      @Nullable List<String> categorisationFilters, @Nullable  Map<String, Object> customSettings,
+                      @Nullable String modelSnapshotId) {
         this.description = description;
         this.detectorUpdates = detectorUpdates;
         this.modelDebugConfig = modelDebugConfig;
@@ -73,6 +76,7 @@ public class JobUpdate implements Writeable, ToXContent {
         this.resultsRetentionDays = resultsRetentionDays;
         this.categorizationFilters = categorisationFilters;
         this.customSettings = customSettings;
+        this.modelSnapshotId = modelSnapshotId;
     }
 
     public JobUpdate(StreamInput in) throws IOException {
@@ -94,6 +98,7 @@ public class JobUpdate implements Writeable, ToXContent {
             categorizationFilters = null;
         }
         customSettings = in.readMap();
+        modelSnapshotId = in.readOptionalString();
     }
     @Override
     public void writeTo(StreamOutput out) throws IOException {
@@ -113,6 +118,7 @@ public class JobUpdate implements Writeable, ToXContent {
             out.writeStringList(categorizationFilters);
         }
         out.writeMap(customSettings);
+        out.writeOptionalString(modelSnapshotId);
     }
 
     public String getDescription() {
@@ -155,6 +161,10 @@ public class JobUpdate implements Writeable, ToXContent {
         return customSettings;
     }
 
+    public String getModelSnapshotId() {
+        return modelSnapshotId;
+    }
+
     public boolean isAutodetectProcessUpdate() {
         return modelDebugConfig != null || detectorUpdates != null;
     }
@@ -191,6 +201,9 @@ public class JobUpdate implements Writeable, ToXContent {
         }
         if (customSettings != null) {
             builder.field(Job.CUSTOM_SETTINGS.getPreferredName(), customSettings);
+        }
+        if (modelSnapshotId != null) {
+            builder.field(Job.MODEL_SNAPSHOT_ID.getPreferredName(), modelSnapshotId);
         }
         builder.endObject();
         return builder;
@@ -254,6 +267,9 @@ public class JobUpdate implements Writeable, ToXContent {
         if (customSettings != null) {
             builder.setCustomSettings(customSettings);
         }
+        if (modelSnapshotId != null) {
+            builder.setModelSnapshotId(modelSnapshotId);
+        }
 
         return builder.build();
     }
@@ -279,13 +295,15 @@ public class JobUpdate implements Writeable, ToXContent {
                 && Objects.equals(this.modelSnapshotRetentionDays, that.modelSnapshotRetentionDays)
                 && Objects.equals(this.resultsRetentionDays, that.resultsRetentionDays)
                 && Objects.equals(this.categorizationFilters, that.categorizationFilters)
-                && Objects.equals(this.customSettings, that.customSettings);
+                && Objects.equals(this.customSettings, that.customSettings)
+                && Objects.equals(this.modelSnapshotId, that.modelSnapshotId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(description, detectorUpdates, modelDebugConfig, analysisLimits, renormalizationWindowDays,
-                backgroundPersistInterval, modelSnapshotRetentionDays, resultsRetentionDays, categorizationFilters, customSettings);
+                backgroundPersistInterval, modelSnapshotRetentionDays, resultsRetentionDays, categorizationFilters, customSettings,
+                modelSnapshotId);
     }
 
     public static class DetectorUpdate implements Writeable, ToXContent {
@@ -392,6 +410,7 @@ public class JobUpdate implements Writeable, ToXContent {
         private Long resultsRetentionDays;
         private List<String> categorizationFilters;
         private Map<String, Object> customSettings;
+        private String modelSnapshotId;
 
         public Builder() {}
 
@@ -445,9 +464,15 @@ public class JobUpdate implements Writeable, ToXContent {
             return this;
         }
 
+        public Builder setModelSnapshotId(String modelSnapshotId) {
+            this.modelSnapshotId = modelSnapshotId;
+            return this;
+        }
+
         public JobUpdate build() {
             return new JobUpdate(description, detectorUpdates, modelDebugConfig, analysisLimits, backgroundPersistInterval,
-                    renormalizationWindowDays, resultsRetentionDays, modelSnapshotRetentionDays, categorizationFilters, customSettings);
+                    renormalizationWindowDays, resultsRetentionDays, modelSnapshotRetentionDays, categorizationFilters, customSettings,
+                    modelSnapshotId);
         }
     }
 }
