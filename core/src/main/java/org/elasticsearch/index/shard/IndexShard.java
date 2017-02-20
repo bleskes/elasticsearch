@@ -1401,6 +1401,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         getEngine().seqNoService().markAllocationIdAsInSync(allocationId, localCheckpoint);
         // make sure we have another global checkpoint sync, in case we delayed things so much shard became inactive
         // TODO: really? :) find something simpler
+        updateGlobalCheckpointOnPrimary();
         active.compareAndSet(false, true);
     }
 

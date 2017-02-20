@@ -261,7 +261,6 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
             } while (success == false);
         } finally {
             pendingInSync.remove(allocationId);
-            updateCheckpointOnPrimary(); // just in case we delayed things
         }
     }
 
