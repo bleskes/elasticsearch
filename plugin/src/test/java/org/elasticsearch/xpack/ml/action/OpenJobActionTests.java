@@ -24,7 +24,6 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.ml.MachineLearning;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
 import org.elasticsearch.xpack.ml.MlMetadata;
@@ -105,7 +104,6 @@ public class OpenJobActionTests extends ESTestCase {
 
     public void testSelectLeastLoadedMlNode() {
         Map<String, String> nodeAttr = new HashMap<>();
-        nodeAttr.put(MachineLearning.ALLOCATION_ENABLED_ATTR, "true");
         nodeAttr.put(MAX_RUNNING_JOBS_PER_NODE.getKey(), "10");
         DiscoveryNodes nodes = DiscoveryNodes.builder()
                 .add(new DiscoveryNode("_node_name1", "_node_id1", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300),
@@ -137,7 +135,6 @@ public class OpenJobActionTests extends ESTestCase {
         int maxRunningJobsPerNode = randomIntBetween(1, 100);
 
         Map<String, String> nodeAttr = new HashMap<>();
-        nodeAttr.put(MachineLearning.ALLOCATION_ENABLED_ATTR, "true");
         nodeAttr.put(MAX_RUNNING_JOBS_PER_NODE.getKey(), String.valueOf(maxRunningJobsPerNode));
         DiscoveryNodes.Builder nodes = DiscoveryNodes.builder();
         Map<Long, PersistentTaskInProgress<?>> taskMap = new HashMap<>();
@@ -161,14 +158,11 @@ public class OpenJobActionTests extends ESTestCase {
     }
 
     public void testSelectLeastLoadedMlNode_noMlNodes() {
-        Map<String, String> nodeAttr = new HashMap<>();
-        nodeAttr.put(MachineLearning.ALLOCATION_ENABLED_ATTR, "false");
-        nodeAttr.put(MAX_RUNNING_JOBS_PER_NODE.getKey(), "10");
         DiscoveryNodes nodes = DiscoveryNodes.builder()
                 .add(new DiscoveryNode("_node_name1", "_node_id1", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300),
-                        nodeAttr, Collections.emptySet(), Version.CURRENT))
+                        Collections.emptyMap(), Collections.emptySet(), Version.CURRENT))
                 .add(new DiscoveryNode("_node_name2", "_node_id2", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9301),
-                        nodeAttr, Collections.emptySet(), Version.CURRENT))
+                        Collections.emptyMap(), Collections.emptySet(), Version.CURRENT))
                 .build();
 
         PersistentTaskInProgress<OpenJobAction.Request> task =
@@ -184,7 +178,6 @@ public class OpenJobActionTests extends ESTestCase {
 
     public void testSelectLeastLoadedMlNode_maxConcurrentOpeningJobs() {
         Map<String, String> nodeAttr = new HashMap<>();
-        nodeAttr.put(MachineLearning.ALLOCATION_ENABLED_ATTR, "true");
         nodeAttr.put(MAX_RUNNING_JOBS_PER_NODE.getKey(), "10");
         DiscoveryNodes nodes = DiscoveryNodes.builder()
                 .add(new DiscoveryNode("_node_name1", "_node_id1", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300),
