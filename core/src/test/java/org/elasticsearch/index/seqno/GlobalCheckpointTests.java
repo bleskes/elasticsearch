@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static org.elasticsearch.index.seqno.SequenceNumbersService.UNASSIGNED_SEQ_NO;
@@ -70,7 +71,7 @@ public class GlobalCheckpointTests extends ESTestCase {
         return allocations;
     }
 
-    public void testGlobalCheckpointUpdate() {
+    public void testGlobalCheckpointUpdate() throws InterruptedException {
         Map<String, Long> allocations = new HashMap<>();
         Map<String, Long> activeWithCheckpoints = randomAllocationsWithLocalCheckpoints(1, 5);
         Set<String> active = new HashSet<>(activeWithCheckpoints.keySet());
@@ -100,7 +101,7 @@ public class GlobalCheckpointTests extends ESTestCase {
         });
 
         tracker.updateAllocationIdsFromMaster(active, initializing);
-        initializing.forEach(aId -> tracker.markAllocationIdAsInSync(aId, allocations.get(aId)));
+        initializing.forEach(aId -> safeMarkInSync(tracker).accept(aId, allocations.get(aId)));
         active.forEach(aId -> tracker.updateLocalCheckpoint(aId, allocations.get(aId)));
 
 
@@ -160,7 +161,7 @@ public class GlobalCheckpointTests extends ESTestCase {
         tracker.updateAllocationIdsFromMaster(
             new HashSet<>(randomSubsetOf(randomInt(active.size() - 1), active.keySet())),
             initializing.keySet());
-        randomSubsetOf(initializing.keySet()).forEach((aId) -> tracker.markAllocationIdAsInSync(aId, initializing.get(aId)));
+        randomSubsetOf(initializing.keySet()).forEach((aId) -> safeMarkInSync(tracker).accept(aId, initializing.get(aId)));
         assigned.forEach(tracker::updateLocalCheckpoint);
 
         // now mark all active shards
@@ -202,8 +203,8 @@ public class GlobalCheckpointTests extends ESTestCase {
         final Map<String, Long> initializing = randomAllocationsWithLocalCheckpoints(1, 5);
         final Map<String, Long> nonApproved = randomAllocationsWithLocalCheckpoints(1, 5);
         tracker.updateAllocationIdsFromMaster(active.keySet(), initializing.keySet());
-        initializing.forEach(tracker::markAllocationIdAsInSync);
-        nonApproved.forEach(tracker::markAllocationIdAsInSync);
+        initializing.forEach(safeMarkInSync(tracker));
+        nonApproved.forEach(safeMarkInSync(tracker));
 
         List<Map<String, Long>> allocations = Arrays.asList(active, initializing, nonApproved);
         Collections.shuffle(allocations, random());
@@ -232,10 +233,10 @@ public class GlobalCheckpointTests extends ESTestCase {
         }
         tracker.updateAllocationIdsFromMaster(active, initializing);
         if (randomBoolean()) {
-            initializingToStay.forEach(tracker::markAllocationIdAsInSync);
+            initializingToStay.forEach(safeMarkInSync(tracker));
         } else {
             initializing.forEach((allocationId) ->
-                tracker.markAllocationIdAsInSync(allocationId,
+                safeMarkInSync(tracker).accept(allocationId,
                     allocations.getOrDefault(allocationId, SequenceNumbersService.UNASSIGNED_SEQ_NO)));
         }
         if (randomBoolean()) {
@@ -260,5 +261,16 @@ public class GlobalCheckpointTests extends ESTestCase {
         // global checkpoint is advanced and we need a sync
         assertTrue(tracker.updateCheckpointOnPrimary());
         assertThat(tracker.getCheckpoint(), equalTo(checkpoint));
+    }
+
+    private static BiConsumer<String, Long> safeMarkInSync(GlobalCheckpointTracker tracker) {
+        return (s,l) -> {
+            try {
+                tracker.markAllocationIdAsInSync(s, l);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError(e);
+            }
+        };
     }
 }

@@ -22,10 +22,13 @@ package org.elasticsearch.index.seqno;
 import com.carrotsearch.hppc.ObjectLongHashMap;
 import com.carrotsearch.hppc.ObjectLongMap;
 import com.carrotsearch.hppc.cursors.ObjectLongCursor;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
 import org.elasticsearch.index.shard.ShardId;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -59,11 +62,17 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      */
     private final ObjectLongMap<String> trackingLocalCheckpoint;
 
-    /*
+    /**
      * The current global checkpoint for this shard. Note that this field is guarded by a lock on this and thus this field does not need to
      * be volatile.
      */
     private long globalCheckpoint;
+
+    /**
+     * true if there is a pending in sync shard which waits for it's local checkpoint to advance above the global checkpoint.
+     * we delay the global checkpoint from advancing in that case
+     */
+    final List<String> pendingInSync;
 
     /**
      * Initialize the global checkpoint service. The specified global checkpoint should be set to the last known global checkpoint, or
@@ -78,6 +87,7 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
         assert globalCheckpoint >= UNASSIGNED_SEQ_NO : "illegal initial global checkpoint: " + globalCheckpoint;
         inSyncLocalCheckpoints = new ObjectLongHashMap<>(1 + indexSettings.getNumberOfReplicas());
         trackingLocalCheckpoint = new ObjectLongHashMap<>(indexSettings.getNumberOfReplicas());
+        pendingInSync = new ArrayList<>();
         this.globalCheckpoint = globalCheckpoint;
     }
 
@@ -90,17 +100,22 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      * @param checkpoint   the local checkpoint for the shard
      */
     public synchronized void updateLocalCheckpoint(final String allocationId, final long checkpoint) {
+        final boolean updated;
         if (updateLocalCheckpointInMap(allocationId, checkpoint, inSyncLocalCheckpoints, "inSync")) {
-            return;
+            updated = true;
+        } else if (updateLocalCheckpointInMap(allocationId, checkpoint, trackingLocalCheckpoint, "tracking")) {
+            updated = true;
+        } else {
+            logger.trace("[{}] isn't tracked. ignoring local checkpoint of [{}].", allocationId, checkpoint);
+            updated = false;
         }
-        if (updateLocalCheckpointInMap(allocationId, checkpoint, trackingLocalCheckpoint, "tracking")) {
-            return;
+        if (updated) {
+            this.notifyAll();
         }
-        logger.trace("[{}] isn't tracked. ignoring local checkpoint of [{}].", allocationId, checkpoint);
     }
 
     private boolean updateLocalCheckpointInMap(String allocationId, long localCheckpoint,
-                                                      ObjectLongMap<String> checkpointsMap, String name) {
+                                               ObjectLongMap<String> checkpointsMap, String name) {
         assert Thread.holdsLock(this);
         int indexOfKey = checkpointsMap.indexOf(allocationId);
         if (indexOfKey >= 0) {
@@ -130,7 +145,7 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      */
     synchronized boolean updateCheckpointOnPrimary() {
         long minCheckpoint = Long.MAX_VALUE;
-        if (inSyncLocalCheckpoints.isEmpty()) {
+        if (inSyncLocalCheckpoints.isEmpty() || pendingInSync.isEmpty() == false) {
             return false;
         }
         for (final ObjectLongCursor<String> cp : inSyncLocalCheckpoints) {
@@ -214,24 +229,37 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
     }
 
     /**
-     * Marks the shard with the provided allocation ID as in-sync with the primary shard. This should be called at the end of recovery where
-     * the primary knows all operations below the global checkpoint have been completed on this shard.
+     * Marks the shard with the provided allocation ID as in-sync with the primary shard. The method will wait
+     * until the shard's local checkpoint is above the current global checkpoint.
      *
-     * @param allocationId the allocation ID of the shard to mark as in-sync
+     * @param allocationId    the allocation ID of the shard to mark as in-sync
      * @param localCheckpoint the local checkpoint of the shard marked in-sync
      */
-    public synchronized void markAllocationIdAsInSync(final String allocationId, long localCheckpoint) {
+    public synchronized void markAllocationIdAsInSync(final String allocationId, long localCheckpoint) throws InterruptedException {
         if (trackingLocalCheckpoint.containsKey(allocationId) == false) {
             // master has removed this allocation, ignore
             return;
         }
-        long current = trackingLocalCheckpoint.remove(allocationId);
-        localCheckpoint = Math.max(current, localCheckpoint);
-        assert localCheckpoint >= globalCheckpoint :
-            "local checkpoint [" + localCheckpoint + "] for [" + allocationId + "] is lower than global checkpoint [" + globalCheckpoint
-                + "]";
-        logger.trace("marked [{}] as in sync with a local checkpoint of [{}]", allocationId, localCheckpoint);
-        inSyncLocalCheckpoints.put(allocationId, localCheckpoint);
+        updateLocalCheckpointInMap(allocationId, localCheckpoint, trackingLocalCheckpoint, "tracking");
+
+        boolean success = false;
+        pendingInSync.add(allocationId);
+        try {
+            do {
+                long current = trackingLocalCheckpoint.get(allocationId);
+                if (current >= globalCheckpoint) {
+                    logger.trace("marked [{}] as in sync with a local checkpoint of [{}]", allocationId, localCheckpoint);
+                    trackingLocalCheckpoint.remove(allocationId);
+                    inSyncLocalCheckpoints.put(allocationId, current);
+                    success = true;
+                } else {
+                    this.wait(TimeValue.timeValueSeconds(30).millis());
+                }
+            } while (success == false);
+        } finally {
+            pendingInSync.remove(allocationId);
+            updateCheckpointOnPrimary(); // just in case we delayed things
+        }
     }
 
     /**

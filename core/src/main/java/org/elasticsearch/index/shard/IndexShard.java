@@ -1398,20 +1398,10 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
      */
     public void markAllocationIdAsInSync(final String allocationId, final long localCheckpoint) throws InterruptedException {
         verifyPrimary();
-        try {
-            indexShardOperationsLock.blockOperations(30, TimeUnit.MINUTES, () -> {
-                // no shard operation locks are being held here, move state from started to relocated
-                assert indexShardOperationsLock.getActiveOperationsCount() == 0 :
-                    "in-flight operations in progress while moving shard state to relocated";
-                getEngine().seqNoService().markAllocationIdAsInSync(allocationId, localCheckpoint);
-            });
-        } catch (TimeoutException e) {
-            logger.warn("timed out waiting for relocation hand-off to complete");
-            // This is really bad as ongoing replication operations are preventing this shard from completing relocation hand-off.
-            // Fail primary relocation source and target shards.
-            failShard("timed out waiting for relocation hand-off to complete", null);
-            throw new IndexShardClosedException(shardId(), "timed out waiting for relocation hand-off to complete");
-        }
+        getEngine().seqNoService().markAllocationIdAsInSync(allocationId, localCheckpoint);
+        // make sure we have another global checkpoint sync, in case we delayed things so much shard became inactive
+        // TODO: really? :) find something simpler
+        active.compareAndSet(false, true);
     }
 
     /**

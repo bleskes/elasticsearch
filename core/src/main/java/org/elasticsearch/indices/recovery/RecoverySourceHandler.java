@@ -454,8 +454,8 @@ public class RecoverySourceHandler {
 // notified of a LC for the replica which was sampled after OP was indexed. This is because OP can be in one of these places:
 // - In the lucene commit transferred the replica (checkpoint sampled at the end of translog replay)
 // - In the translog snapshot (checkpoint sampled at the end of translog replay)
-// - TRA replicated the OP (since we wait for all OPs to completed, the primary is notified by response from the replica of its
-// local checkpoint, sampled after the operation was performed)
+// - TRA replicated the OP (when all OPs bellow the global checkpoint are completed, the primary is notified by response from the
+//   replica of its  local checkpoint, sampled after the operation was performed)
 //
 // For the last operation <= GC performed on the replica, it holds that all operations <= GC were perfomed and the local checkpoint LC'
 // which was sampled when it was done must maitain GC <= LC'. The primary is therefore guaranteed to know of a local checkpoint that is
