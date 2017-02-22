@@ -5,13 +5,11 @@ dependencies {
     testCompile project(path: ':x-pack-elasticsearch:plugin', configuration: 'runtime')
 }
 
-integTest {
-    cluster {
-        setting 'xpack.security.enabled', 'false'
-        setting 'xpack.ml.enabled', 'true'
+integTestCluster {
+    setting 'xpack.security.enabled', 'false'
+    setting 'xpack.ml.enabled', 'true'
 //        debug = true
-        numNodes = 3
-        distribution = 'zip'
-        plugin ':x-pack-elasticsearch:plugin'
-    }
+    numNodes = 3
+    distribution = 'zip'
+    plugin ':x-pack-elasticsearch:plugin'
 }
