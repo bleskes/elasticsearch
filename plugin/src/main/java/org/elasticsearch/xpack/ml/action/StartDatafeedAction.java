@@ -62,6 +62,7 @@ import org.elasticsearch.xpack.persistent.PersistentActionResponse;
 import org.elasticsearch.xpack.persistent.PersistentActionService;
 import org.elasticsearch.xpack.persistent.PersistentTask;
 import org.elasticsearch.xpack.persistent.PersistentTasksInProgress;
+import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.Assignment;
 import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.PersistentTaskInProgress;
 import org.elasticsearch.xpack.persistent.TransportPersistentAction;
 
@@ -322,8 +323,14 @@ public class StartDatafeedAction
         }
 
         @Override
-        public DiscoveryNode executorNode(Request request, ClusterState clusterState) {
-            return selectNode(logger, request, clusterState);
+        public Assignment getAssignment(Request request, ClusterState clusterState) {
+            DiscoveryNode discoveryNode = selectNode(logger, request, clusterState);
+            // TODO: Add proper explanation
+            if (discoveryNode == null) {
+                return NO_NODE_FOUND;
+            } else {
+                return new Assignment(discoveryNode.getId(), "");
+            }
         }
 
         @Override
@@ -368,7 +375,7 @@ public class StartDatafeedAction
         PersistentTaskInProgress<?> datafeedTask = MlMetadata.getDatafeedTask(datafeedId, tasks);
         DatafeedState datafeedState = MlMetadata.getDatafeedState(datafeedId, tasks);
         if (datafeedTask != null && datafeedState == DatafeedState.STARTED) {
-            if (datafeedTask.getExecutorNode() == null) {
+            if (datafeedTask.isAssigned() == false) {
                 // We can skip the datafeed state check below, because the task got unassigned after we went into
                 // started state on a node that disappeared and we didn't have the opportunity to set the status to stopped
                 return;
