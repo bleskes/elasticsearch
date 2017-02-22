@@ -319,6 +319,7 @@ public class DatafeedJobRunnerTests extends ESTestCase {
 
         Job.Builder builder = new Job.Builder("foo");
         builder.setAnalysisConfig(acBuilder);
+        builder.setCreateTime(new Date());
         return builder;
     }
 

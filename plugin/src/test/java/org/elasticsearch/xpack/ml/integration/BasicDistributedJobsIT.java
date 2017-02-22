@@ -36,6 +36,7 @@ import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.PersistentTa
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         ensureStableCluster(4);
 
         Job.Builder job = createJob("job_id");
-        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build(true, job.getId()));
+        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build());
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
         assertTrue(putJobResponse.isAcknowledged());
         ensureGreen();
@@ -88,7 +89,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         ensureStableCluster(4);
 
         Job.Builder job = createScheduledJob("job_id");
-        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build(true, job.getId()));
+        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build());
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
         assertTrue(putJobResponse.isAcknowledged());
         DatafeedConfig config = createDatafeed("data_feed_id", job.getId(), Collections.singletonList("*"));
@@ -161,7 +162,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         ensureStableCluster(3);
 
         Job.Builder job = createJob("job_id");
-        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build(true, job.getId()));
+        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build());
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
         assertTrue(putJobResponse.isAcknowledged());
 
@@ -256,7 +257,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         int numJobs = numMlNodes * 10;
         for (int i = 0; i < numJobs; i++) {
             Job.Builder job = createJob(Integer.toString(i));
-            PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build(true, job.getId()));
+            PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build());
             PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
             assertTrue(putJobResponse.isAcknowledged());
 

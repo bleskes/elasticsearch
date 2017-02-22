@@ -24,7 +24,9 @@ import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.support.AbstractStreamableXContentTestCase;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ValidateJobConfigActionRequestTests extends AbstractStreamableXContentTestCase<ValidateJobConfigAction.Request> {
 
@@ -81,7 +83,9 @@ public class ValidateJobConfigActionRequestTests extends AbstractStreamableXCont
         if (randomBoolean()) {
             job.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
         }
-        return new Request(job.build(true, "ok"));
+        job.setCreateTime(new Date());
+        job.setId(randomAsciiOfLength(5).replace(".", "-").replace("_", "-").toLowerCase(Locale.ENGLISH));
+        return new Request(job.build());
     }
 
     @Override

@@ -46,6 +46,7 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 import org.elasticsearch.xpack.persistent.RemovePersistentTaskAction;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -93,6 +94,7 @@ public abstract class BaseMlIntegTestCase extends SecurityIntegTestCase {
 
         Job.Builder builder = new Job.Builder();
         builder.setId(id);
+        builder.setCreateTime(new Date());
 
         builder.setAnalysisConfig(analysisConfig);
         builder.setDataDescription(dataDescription);
@@ -112,6 +114,7 @@ public abstract class BaseMlIntegTestCase extends SecurityIntegTestCase {
 
         builder.setAnalysisConfig(analysisConfig);
         builder.setDataDescription(dataDescription);
+        builder.setCreateTime(new Date());
         return builder;
     }
 
