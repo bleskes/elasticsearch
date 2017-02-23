@@ -17,7 +17,7 @@ package org.elasticsearch.xpack.ml.job.persistence;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.ml.job.results.Bucket;
+import org.elasticsearch.xpack.ml.job.results.Result;
 
 public class ResultsFilterBuilderTests extends ESTestCase {
     private static final String TIMESTAMP = "timestamp";
@@ -37,11 +37,11 @@ public class ResultsFilterBuilderTests extends ESTestCase {
 
     public void testBuild_GivenOnlyStartTime() {
         QueryBuilder expected = QueryBuilders
-                .rangeQuery(Bucket.TIMESTAMP.getPreferredName())
+                .rangeQuery(Result.TIMESTAMP.getPreferredName())
                 .gte(1000);
 
         QueryBuilder fb = new ResultsFilterBuilder()
-                .timeRange(Bucket.TIMESTAMP.getPreferredName(), 1000, null)
+                .timeRange(Result.TIMESTAMP.getPreferredName(), 1000, null)
                 .build();
 
         assertEquals(expected.toString(), fb.toString());
@@ -132,7 +132,7 @@ public class ResultsFilterBuilderTests extends ESTestCase {
     public void testBuild_GivenCombination() {
         QueryBuilder originalFilter = QueryBuilders.existsQuery("someField");
         QueryBuilder timeFilter = QueryBuilders
-                .rangeQuery(Bucket.TIMESTAMP.getPreferredName())
+                .rangeQuery(Result.TIMESTAMP.getPreferredName())
                 .gte(1000)
                 .lt(2000);
         QueryBuilder score1Filter = new ResultsFilterBuilder()
@@ -153,7 +153,7 @@ public class ResultsFilterBuilderTests extends ESTestCase {
                 .filter(termFilter);
 
         QueryBuilder fb = new ResultsFilterBuilder(originalFilter)
-                .timeRange(Bucket.TIMESTAMP.getPreferredName(), 1000, 2000)
+                .timeRange(Result.TIMESTAMP.getPreferredName(), 1000, 2000)
                 .score("score1", 50.0)
                 .score("score2", 80.0)
                 .interim("isInterim", false)

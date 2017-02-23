@@ -25,6 +25,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.xpack.ml.job.results.Bucket;
+import org.elasticsearch.xpack.ml.job.results.Result;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -75,7 +76,7 @@ public abstract class BatchedDocumentsIterator<T>  {
      * @return the iterator itself
      */
     public BatchedDocumentsIterator<T> timeRange(long startEpochMs, long endEpochMs) {
-        filterBuilder.timeRange(Bucket.TIMESTAMP.getPreferredName(), startEpochMs, endEpochMs);
+        filterBuilder.timeRange(Result.TIMESTAMP.getPreferredName(), startEpochMs, endEpochMs);
         return this;
     }
 

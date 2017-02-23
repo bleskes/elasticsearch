@@ -47,7 +47,6 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
     public static final ParseField RAW_ANOMALY_SCORE = new ParseField("raw_anomaly_score");
     public static final ParseField PROBABILITY = new ParseField("probability");
     public static final ParseField IS_INTERIM = new ParseField("is_interim");
-    public static final ParseField TIMESTAMP = new ParseField("timestamp");
     public static final ParseField BUCKET_SPAN = new ParseField("bucket_span");
     public static final ParseField SEQUENCE_NUM = new ParseField("sequence_num");
 
@@ -68,8 +67,9 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
             } else if (p.currentToken() == Token.VALUE_STRING) {
                 return new Date(TimeUtils.dateStringToEpoch(p.text()));
             }
-            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for [" + TIMESTAMP.getPreferredName() + "]");
-        }, TIMESTAMP, ValueType.VALUE);
+            throw new IllegalArgumentException("unexpected token [" + p.currentToken() + "] for ["
+                    + Result.TIMESTAMP.getPreferredName() + "]");
+        }, Result.TIMESTAMP, ValueType.VALUE);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), BUCKET_SPAN);
         PARSER.declareInt(ConstructingObjectParser.constructorArg(), SEQUENCE_NUM);
         PARSER.declareString((bucketInfluencer, s) -> {}, Result.RESULT_TYPE);
@@ -94,7 +94,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
 
     public BucketInfluencer(String jobId, Date timestamp, long bucketSpan, int sequenceNum) {
         this.jobId = jobId;
-        this.timestamp = ExceptionsHelper.requireNonNull(timestamp, TIMESTAMP.getPreferredName());
+        this.timestamp = ExceptionsHelper.requireNonNull(timestamp, Result.TIMESTAMP.getPreferredName());
         this.bucketSpan = bucketSpan;
         this.sequenceNum = sequenceNum;
     }
@@ -138,7 +138,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScore);
         builder.field(RAW_ANOMALY_SCORE.getPreferredName(), rawAnomalyScore);
         builder.field(PROBABILITY.getPreferredName(), probability);
-        builder.dateField(TIMESTAMP.getPreferredName(), TIMESTAMP.getPreferredName() + "_string", timestamp.getTime());
+        builder.dateField(Result.TIMESTAMP.getPreferredName(), Result.TIMESTAMP.getPreferredName() + "_string", timestamp.getTime());
         builder.field(BUCKET_SPAN.getPreferredName(), bucketSpan);
         builder.field(SEQUENCE_NUM.getPreferredName(), sequenceNum);
         builder.field(IS_INTERIM.getPreferredName(), isInterim);

@@ -168,8 +168,8 @@ public class DeleteModelSnapshotAction extends Action<DeleteModelSnapshotAction.
                         }
 
                         if (deleteCandidates.isEmpty()) {
-                            listener.onFailure(new ResourceNotFoundException(
-                                    Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT, request.getJobId())));
+                            listener.onFailure(new ResourceNotFoundException(Messages.getMessage(Messages.REST_NO_SUCH_MODEL_SNAPSHOT,
+                                    request.getSnapshotId(), request.getJobId())));
                         }
                         ModelSnapshot deleteCandidate = deleteCandidates.get(0);
 
