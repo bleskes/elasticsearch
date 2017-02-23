@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.integration;
 
+import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.xpack.ml.action.GetJobsStatsAction;
@@ -34,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+@LuceneTestCase.AwaitsFix(bugUrl = "Too noisy, needs to be stabalized first")
 public class MlFullClusterRestartIT extends BaseMlIntegTestCase {
 
     @TestLogging("org.elasticsearch.xpack.ml.datafeed:TRACE")
