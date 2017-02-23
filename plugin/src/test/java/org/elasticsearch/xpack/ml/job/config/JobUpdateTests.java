@@ -58,7 +58,7 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
             update.setDetectorUpdates(detectorUpdates);
         }
         if (randomBoolean()) {
-            update.setModelDebugConfig(new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10)));
+            update.setModelDebugConfig(new ModelDebugConfig(randomBoolean(), randomAsciiOfLength(10)));
         }
         if (randomBoolean()) {
             update.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
@@ -109,7 +109,7 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
                         new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, new Condition(Operator.GT, "5"), null))));
         detectorUpdates.add(new JobUpdate.DetectorUpdate(1, "description-2", detectionRules2));
 
-        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(randomDouble(), randomAsciiOfLength(10));
+        ModelDebugConfig modelDebugConfig = new ModelDebugConfig(randomBoolean(), randomAsciiOfLength(10));
         AnalysisLimits analysisLimits = new AnalysisLimits(randomPositiveLong(), randomPositiveLong());
         List<String> categorizationFilters = Arrays.asList(generateRandomStringArray(10, 10, false));
         Map<String, Object> customSettings = Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10));
@@ -163,7 +163,7 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
     public void testIsAutodetectProcessUpdate() {
         JobUpdate update = new JobUpdate.Builder().build();
         assertFalse(update.isAutodetectProcessUpdate());
-        update = new JobUpdate.Builder().setModelDebugConfig(new ModelDebugConfig(1.0, "ff")).build();
+        update = new JobUpdate.Builder().setModelDebugConfig(new ModelDebugConfig(true, "ff")).build();
         assertTrue(update.isAutodetectProcessUpdate());
         update = new JobUpdate.Builder().setDetectorUpdates(Arrays.asList(mock(JobUpdate.DetectorUpdate.class))).build();
         assertTrue(update.isAutodetectProcessUpdate());
