@@ -22,19 +22,18 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.mapper.DateFieldMapper;
 import org.elasticsearch.xpack.ml.action.FlushJobAction;
 import org.elasticsearch.xpack.ml.action.PostDataAction;
-import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
-import org.elasticsearch.xpack.ml.job.config.DataDescription;
-import org.elasticsearch.xpack.ml.notifications.Auditor;
-import org.elasticsearch.xpack.ml.job.messages.Messages;
 import org.elasticsearch.xpack.ml.datafeed.extractor.DataExtractor;
 import org.elasticsearch.xpack.ml.datafeed.extractor.DataExtractorFactory;
+import org.elasticsearch.xpack.ml.job.config.DataDescription;
+import org.elasticsearch.xpack.ml.job.messages.Messages;
+import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
+import org.elasticsearch.xpack.ml.notifications.Auditor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -154,6 +153,7 @@ class DatafeedJob {
             try {
                 extractedData = dataExtractor.next();
             } catch (Exception e) {
+                LOGGER.debug("[" + jobId + "] error while extracting data", e);
                 error = new ExtractionProblemException(e);
                 break;
             }
@@ -165,6 +165,7 @@ class DatafeedJob {
                     if (e instanceof InterruptedException) {
                         Thread.currentThread().interrupt();
                     }
+                    LOGGER.debug("[" + jobId + "] error while posting data", e);
                     error = new AnalysisProblemException(e);
                     break;
                 }
@@ -187,23 +188,16 @@ class DatafeedJob {
             throw new EmptyDataCountException();
         }
 
-        try {
-            client.execute(FlushJobAction.INSTANCE, flushRequest).get();
-        } catch (Exception e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            throw new RuntimeException(e);
-        }
+        client.execute(FlushJobAction.INSTANCE, flushRequest).actionGet();
     }
 
-    private DataCounts postData(InputStream inputStream) throws IOException, ExecutionException, InterruptedException {
+    private DataCounts postData(InputStream inputStream) throws IOException {
         PostDataAction.Request request = new PostDataAction.Request(jobId);
         request.setDataDescription(dataDescription);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         Streams.copy(inputStream, outputStream);
         request.setContent(new BytesArray(outputStream.toByteArray()));
-        PostDataAction.Response response = client.execute(PostDataAction.INSTANCE, request).get();
+        PostDataAction.Response response = client.execute(PostDataAction.INSTANCE, request).actionGet();
         return response.getDataCounts();
     }
 

@@ -36,7 +36,6 @@ import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.PersistentTa
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +80,6 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
                     client().execute(GetJobsStatsAction.INSTANCE, new GetJobsStatsAction.Request(job.getId())).actionGet();
             assertEquals(JobState.OPENED, statsResponse.getResponse().results().get(0).getState());
         });
-        cleanupWorkaround(2);
     }
 
     public void testFailOverBasics_withDataFeeder() throws Exception {
@@ -143,7 +141,6 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
             assertEquals(1, statsResponse.getResponse().results().size());
             assertEquals(DatafeedState.STARTED, statsResponse.getResponse().results().get(0).getDatafeedState());
         });
-        cleanupWorkaround(2);
     }
 
     @TestLogging("org.elasticsearch.xpack.persistent:TRACE,org.elasticsearch.cluster.service:DEBUG")
@@ -210,7 +207,6 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
             assertEquals(expectedNodeAttr, node.getAttributes());
             assertEquals(JobState.OPENED, task.getStatus());
         });
-        cleanupWorkaround(3);
     }
 
     public void testMaxConcurrentJobAllocations() throws Exception {
@@ -316,7 +312,6 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         }, 30, TimeUnit.SECONDS);
 
         assertEquals("Expected no violations, but got [" + violations + "]", 0, violations.size());
-        cleanupWorkaround(numMlNodes + 1);
     }
 
 
