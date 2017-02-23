@@ -16,7 +16,7 @@ package org.elasticsearch.xpack.ml.action;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.node.DiscoveryNode;
-import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.xpack.ml.action.GetJobsStatsAction.Response;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
 import org.elasticsearch.xpack.ml.job.config.Job;
@@ -55,7 +55,7 @@ public class GetJobStatsActionResponseTests extends AbstractStreamableTestCase<R
 
             DiscoveryNode node = null;
             if (randomBoolean()) {
-                node = new DiscoveryNode("_id", new TransportAddress(InetAddress.getLoopbackAddress(), 9300), Version.CURRENT);
+                node = new DiscoveryNode("_id", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300), Version.CURRENT);
             }
             Response.JobStats jobStats = new Response.JobStats(jobId, dataCounts, sizeStats, jobState, node);
             jobStatsList.add(jobStats);
