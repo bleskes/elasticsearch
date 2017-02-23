@@ -51,7 +51,6 @@ import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.SecurityLifecycleService;
-import org.elasticsearch.xpack.security.SecurityTemplateService;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -107,7 +106,7 @@ public final class TokenService extends AbstractComponent {
             "\", error=\"invalid_token\", error_description=\"The access token is malformed\"";
     private static final String TYPE = "doc";
 
-    public static final String INDEX_NAME = SecurityTemplateService.SECURITY_INDEX_NAME;
+    public static final String INDEX_NAME = SecurityLifecycleService.SECURITY_INDEX_NAME;
     public static final String THREAD_POOL_NAME = XPackPlugin.SECURITY + "-token-key";
     public static final Setting<SecureString> TOKEN_PASSPHRASE = SecureSetting.secureString("xpack.security.authc.token.passphrase", null);
     public static final Setting<TimeValue> TOKEN_EXPIRATION = Setting.timeSetting("xpack.security.authc.token.timeout",

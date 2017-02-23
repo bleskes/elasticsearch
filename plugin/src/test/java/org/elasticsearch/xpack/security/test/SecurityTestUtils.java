@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.UUID;
 
 import org.elasticsearch.ElasticsearchException;
@@ -43,7 +44,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.test.ESTestCase;
-import org.elasticsearch.xpack.security.SecurityTemplateService;
+import org.elasticsearch.xpack.security.SecurityLifecycleService;
 import org.elasticsearch.xpack.security.authz.store.NativeRolesStoreTests;
 
 import static org.elasticsearch.cluster.routing.RecoverySource.StoreRecoverySource.EXISTING_STORE_INSTANCE;
@@ -90,8 +91,8 @@ public class SecurityTestUtils {
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
                 .build();
         MetaData metaData = MetaData.builder()
-                .put(IndexMetaData.builder(SecurityTemplateService.SECURITY_INDEX_NAME).settings(settings))
-                .put(new IndexTemplateMetaData(SecurityTemplateService.SECURITY_TEMPLATE_NAME, 0, 0,
+                .put(IndexMetaData.builder(SecurityLifecycleService.SECURITY_INDEX_NAME).settings(settings))
+                .put(new IndexTemplateMetaData(SecurityLifecycleService.SECURITY_TEMPLATE_NAME, 0, 0,
                         "", Settings.EMPTY, ImmutableOpenMap.of(),
                         ImmutableOpenMap.of(), ImmutableOpenMap.of()))
                 .build();
@@ -104,7 +105,7 @@ public class SecurityTestUtils {
     }
 
     public static RoutingTable buildSecurityIndexRoutingTable() {
-        Index index = new Index(SecurityTemplateService.SECURITY_INDEX_NAME, UUID.randomUUID().toString());
+        Index index = new Index(SecurityLifecycleService.SECURITY_INDEX_NAME, UUID.randomUUID().toString());
         ShardRouting shardRouting = ShardRouting.newUnassigned(new ShardId(index, 0), true, EXISTING_STORE_INSTANCE,
                 new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, ""));
         String nodeId = ESTestCase.randomAlphaOfLength(8);

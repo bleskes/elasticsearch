@@ -19,7 +19,7 @@ package org.elasticsearch.xpack.security.authz;
 
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.cluster.metadata.MetaData;
-import org.elasticsearch.xpack.security.SecurityTemplateService;
+import org.elasticsearch.xpack.security.SecurityLifecycleService;
 import org.elasticsearch.xpack.security.authz.permission.Role;
 import org.elasticsearch.xpack.security.authz.store.ReservedRolesStore;
 import org.elasticsearch.xpack.security.user.User;
@@ -73,7 +73,7 @@ class AuthorizedIndices {
 
         if (isSuperuser(user) == false) {
             // we should filter out the .security index from wildcards
-            indicesAndAliases.remove(SecurityTemplateService.SECURITY_INDEX_NAME);
+            indicesAndAliases.remove(SecurityLifecycleService.SECURITY_INDEX_NAME);
         }
         return Collections.unmodifiableList(indicesAndAliases);
     }

@@ -51,7 +51,7 @@ import org.elasticsearch.search.internal.ShardSearchTransportRequest;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportRequest;
-import org.elasticsearch.xpack.security.SecurityTemplateService;
+import org.elasticsearch.xpack.security.SecurityLifecycleService;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.authc.DefaultAuthenticationFailureHandler;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor.IndicesPrivileges;
@@ -117,7 +117,7 @@ public class IndicesAndAliasesResolverTests extends ESTestCase {
                 .put(indexBuilder("-index11").settings(settings))
                 .put(indexBuilder("-index20").settings(settings))
                 .put(indexBuilder("-index21").settings(settings))
-                .put(indexBuilder(SecurityTemplateService.SECURITY_INDEX_NAME).settings(settings)).build();
+                .put(indexBuilder(SecurityLifecycleService.SECURITY_INDEX_NAME).settings(settings)).build();
 
         user = new User("user", "role");
         userDashIndices = new User("dash", "dash");
@@ -1066,14 +1066,14 @@ public class IndicesAndAliasesResolverTests extends ESTestCase {
         {
             Set<String> indices = defaultIndicesResolver.resolve(request,
                     metaData, buildAuthorizedIndices(XPackUser.INSTANCE, SearchAction.NAME));
-            assertThat(indices, hasItem(SecurityTemplateService.SECURITY_INDEX_NAME));    
+            assertThat(indices, hasItem(SecurityLifecycleService.SECURITY_INDEX_NAME));
         }
         {
             IndicesAliasesRequest aliasesRequest = new IndicesAliasesRequest();
             aliasesRequest.addAliasAction(AliasActions.add().alias("security_alias").index("*"));
             Set<String> indices = defaultIndicesResolver.resolve(aliasesRequest,
                     metaData, buildAuthorizedIndices(XPackUser.INSTANCE, IndicesAliasesAction.NAME));
-            assertThat(indices, hasItem(SecurityTemplateService.SECURITY_INDEX_NAME));
+            assertThat(indices, hasItem(SecurityLifecycleService.SECURITY_INDEX_NAME));
         }
     }
 
@@ -1086,7 +1086,7 @@ public class IndicesAndAliasesResolverTests extends ESTestCase {
             SearchRequest request = new SearchRequest();
             Set<String> indices = defaultIndicesResolver.resolve(request,
                     metaData, buildAuthorizedIndices(allAccessUser, SearchAction.NAME));
-            assertThat(indices, not(hasItem(SecurityTemplateService.SECURITY_INDEX_NAME)));    
+            assertThat(indices, not(hasItem(SecurityLifecycleService.SECURITY_INDEX_NAME)));
         }
         
         {
@@ -1094,7 +1094,7 @@ public class IndicesAndAliasesResolverTests extends ESTestCase {
             aliasesRequest.addAliasAction(AliasActions.add().alias("security_alias1").index("*"));
             Set<String> indices = defaultIndicesResolver.resolve(aliasesRequest,
                     metaData, buildAuthorizedIndices(allAccessUser, IndicesAliasesAction.NAME));
-            assertThat(indices, not(hasItem(SecurityTemplateService.SECURITY_INDEX_NAME)));
+            assertThat(indices, not(hasItem(SecurityLifecycleService.SECURITY_INDEX_NAME)));
         }
     }
 

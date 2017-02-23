@@ -24,9 +24,9 @@ import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.support.ActionFilter;
 import org.elasticsearch.action.support.DestructiveOperations;
+import org.elasticsearch.bootstrap.BootstrapCheck;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
-import org.elasticsearch.bootstrap.BootstrapCheck;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Booleans;
 import org.elasticsearch.common.Nullable;
@@ -292,25 +292,6 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         securityContext.set(new SecurityContext(settings, threadPool.getThreadContext(), cryptoService));
         components.add(securityContext.get());
 
-        // realms construction
-        final NativeUsersStore nativeUsersStore = new NativeUsersStore(settings, client);
-        final AnonymousUser anonymousUser = new AnonymousUser(settings);
-        final ReservedRealm reservedRealm = new ReservedRealm(env, settings, nativeUsersStore, anonymousUser, threadPool.getThreadContext());
-        Map<String, Realm.Factory> realmFactories = new HashMap<>();
-        realmFactories.putAll(InternalRealms.getFactories(threadPool, resourceWatcherService, sslService, nativeUsersStore));
-        for (XPackExtension extension : extensions) {
-            Map<String, Realm.Factory> newRealms = extension.getRealms(resourceWatcherService);
-            for (Map.Entry<String, Realm.Factory> entry : newRealms.entrySet()) {
-                if (realmFactories.put(entry.getKey(), entry.getValue()) != null) {
-                    throw new IllegalArgumentException("Realm type [" + entry.getKey() + "] is already registered");
-                }
-            }
-        }
-        final Realms realms = new Realms(settings, env, realmFactories, licenseState, threadPool.getThreadContext(), reservedRealm);
-        components.add(nativeUsersStore);
-        components.add(realms);
-        components.add(reservedRealm);
-
         // audit trails construction
         IndexAuditTrail indexAuditTrail = null;
         Set<AuditTrail> auditTrails = new LinkedHashSet<>();
@@ -339,11 +320,31 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
             new AuditTrailService(settings, auditTrails.stream().collect(Collectors.toList()), licenseState);
         components.add(auditTrailService);
 
-        final NativeRolesStore nativeRolesStore = new NativeRolesStore(settings, client, licenseState);
-        final SecurityLifecycleService securityLifecycleService =
-                new SecurityLifecycleService(settings, clusterService, threadPool, indexAuditTrail, nativeUsersStore, nativeRolesStore, licenseState, client);
+        SecurityLifecycleService securityLifecycleService =
+            new SecurityLifecycleService(settings, clusterService, threadPool, client, licenseState, indexAuditTrail);
+
         final TokenService tokenService = new TokenService(settings, Clock.systemUTC(), client, securityLifecycleService);
         components.add(tokenService);
+
+        // realms construction
+        final NativeUsersStore nativeUsersStore = new NativeUsersStore(settings, client, securityLifecycleService);
+        final AnonymousUser anonymousUser = new AnonymousUser(settings);
+        final ReservedRealm reservedRealm = new ReservedRealm(env, settings, nativeUsersStore, anonymousUser, securityLifecycleService,
+                threadPool.getThreadContext());
+        Map<String, Realm.Factory> realmFactories = new HashMap<>();
+        realmFactories.putAll(InternalRealms.getFactories(threadPool, resourceWatcherService, sslService, nativeUsersStore));
+        for (XPackExtension extension : extensions) {
+            Map<String, Realm.Factory> newRealms = extension.getRealms(resourceWatcherService);
+            for (Map.Entry<String, Realm.Factory> entry : newRealms.entrySet()) {
+                if (realmFactories.put(entry.getKey(), entry.getValue()) != null) {
+                    throw new IllegalArgumentException("Realm type [" + entry.getKey() + "] is already registered");
+                }
+            }
+        }
+        final Realms realms = new Realms(settings, env, realmFactories, licenseState, threadPool.getThreadContext(), reservedRealm);
+        components.add(nativeUsersStore);
+        components.add(realms);
+        components.add(reservedRealm);
 
         AuthenticationFailureHandler failureHandler = null;
         String extensionName = null;
@@ -368,6 +369,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         components.add(authcService.get());
 
         final FileRolesStore fileRolesStore = new FileRolesStore(settings, env, resourceWatcherService, licenseState);
+        final NativeRolesStore nativeRolesStore = new NativeRolesStore(settings, client, licenseState, securityLifecycleService);
         final ReservedRolesStore reservedRolesStore = new ReservedRolesStore();
         List<BiConsumer<Set<String>, ActionListener<Set<RoleDescriptor>>>> rolesProviders = new ArrayList<>();
         for (XPackExtension extension : extensions) {
@@ -384,6 +386,8 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         components.add(reservedRolesStore); // used by roles actions
         components.add(allRolesStore); // for SecurityFeatureSet and clear roles cache
         components.add(authzService);
+
+        components.add(securityLifecycleService);
 
         ipFilter.set(new IPFilter(settings, auditTrailService, clusterService.getClusterSettings(), licenseState));
         components.add(ipFilter.get());
@@ -708,7 +712,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         final String auditIndex = indexAuditingEnabled ? "," + IndexAuditTrail.INDEX_NAME_PREFIX + "*" : "";
         String errorMessage = LoggerMessageFormat.format(
                 "the [{}] setting value [{}] is too restrictive. disable [{}] or set it to [{}{}]",
-                (Object) SETTING_KEY_AUTO_CREATE_INDEX, value, SETTING_KEY_AUTO_CREATE_INDEX, SecurityTemplateService.SECURITY_INDEX_NAME,
+                (Object) SETTING_KEY_AUTO_CREATE_INDEX, value, SETTING_KEY_AUTO_CREATE_INDEX, SecurityLifecycleService.SECURITY_INDEX_NAME,
                 auditIndex);
         if (Booleans.isExplicitFalse(value)) {
             if (Booleans.isStrictlyBoolean(value) == false) {
@@ -726,7 +730,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
 
         String[] matches = Strings.commaDelimitedListToStringArray(value);
         List<String> indices = new ArrayList<>();
-        indices.add(SecurityTemplateService.SECURITY_INDEX_NAME);
+        indices.add(SecurityLifecycleService.SECURITY_INDEX_NAME);
         if (indexAuditingEnabled) {
             DateTime now = new DateTime(DateTimeZone.UTC);
             // just use daily rollover

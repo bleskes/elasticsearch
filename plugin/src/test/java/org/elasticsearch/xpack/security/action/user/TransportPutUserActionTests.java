@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.xpack.security.SecurityLifecycleService;
 import org.elasticsearch.xpack.security.authc.esnative.NativeUsersStore;
 import org.elasticsearch.xpack.security.authc.esnative.ReservedRealm;
 import org.elasticsearch.xpack.security.authc.esnative.ReservedRealmTests;
@@ -126,11 +127,12 @@ public class TransportPutUserActionTests extends ESTestCase {
 
     public void testReservedUser() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
-        when(usersStore.started()).thenReturn(true);
+        SecurityLifecycleService securityLifecycleService = mock(SecurityLifecycleService.class);
+        when(securityLifecycleService.securityIndexAvailable()).thenReturn(true);
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         Settings settings = Settings.builder().put("path.home", createTempDir()).build();
         ReservedRealm reservedRealm = new ReservedRealm(new Environment(settings), settings, usersStore, new AnonymousUser(settings),
-                new ThreadContext(Settings.EMPTY));
+                securityLifecycleService, new ThreadContext(Settings.EMPTY));
         PlainActionFuture<Collection<User>> userFuture = new PlainActionFuture<>();
         reservedRealm.users(userFuture);
         final User reserved = randomFrom(userFuture.actionGet().toArray(new User[0]));
@@ -159,7 +161,6 @@ public class TransportPutUserActionTests extends ESTestCase {
         assertThat(responseRef.get(), is(nullValue()));
         assertThat(throwableRef.get(), instanceOf(IllegalArgumentException.class));
         assertThat(throwableRef.get().getMessage(), containsString("is reserved and only the password"));
-        verify(usersStore).started();
     }
 
     public void testValidUser() {

@@ -28,7 +28,7 @@ import org.elasticsearch.test.rest.yaml.ClientYamlTestResponse;
 import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 import org.elasticsearch.xpack.ml.MachineLearningTemplateRegistry;
 import org.elasticsearch.xpack.ml.integration.MlRestTestStateCleaner;
-import org.elasticsearch.xpack.security.SecurityTemplateService;
+import org.elasticsearch.xpack.security.SecurityLifecycleService;
 import org.junit.After;
 import org.junit.Before;
 
@@ -66,7 +66,7 @@ public class MlWithSecurityIT extends ESClientYamlSuiteTestCase {
     @Before
     public void waitForTemplates() throws Exception {
         List<String> templates = new ArrayList<>();
-        templates.add(SecurityTemplateService.SECURITY_TEMPLATE_NAME);
+        templates.add(SecurityLifecycleService.SECURITY_TEMPLATE_NAME);
         templates.addAll(Arrays.asList(MachineLearningTemplateRegistry.TEMPLATE_NAMES));
 
         for (String template : templates) {
