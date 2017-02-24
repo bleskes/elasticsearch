@@ -20,6 +20,7 @@ import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
@@ -35,6 +36,7 @@ import org.junit.Before;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.BiConsumer;
 
 import static org.elasticsearch.mock.orig.Mockito.doAnswer;
 import static org.elasticsearch.mock.orig.Mockito.times;
@@ -72,6 +74,9 @@ public class MlInitializationServiceTests extends ESTestCase {
     }
 
     public void testInitialize() throws Exception {
+        JobProvider jobProvider = mockJobProvider();
+
+        ClusterService clusterService = mock(ClusterService.class);
         MlInitializationService initializationService =
                 new MlInitializationService(Settings.EMPTY, threadPool, clusterService, client, jobProvider);
 
@@ -85,10 +90,11 @@ public class MlInitializationServiceTests extends ESTestCase {
         initializationService.clusterChanged(new ClusterChangedEvent("_source", cs, cs));
 
         verify(clusterService, times(1)).submitStateUpdateTask(eq("install-ml-metadata"), any());
-        verify(jobProvider, times(1)).createNotificationMessageIndex(any());
-        verify(jobProvider, times(1)).createMetaIndex(any());
-        verify(jobProvider, times(1)).createJobStateIndex(any());
         assertThat(initializationService.getDailyManagementService().isStarted(), is(true));
+        verify(jobProvider, times(1)).putNotificationMessageIndexTemplate(any());
+        verify(jobProvider, times(1)).putMetaIndexTemplate(any());
+        verify(jobProvider, times(1)).putJobStateIndexTemplate(any());
+        verify(jobProvider, times(1)).putJobResultsIndexTemplate(any());
     }
 
     public void testInitialize_noMasterNode() throws Exception {
@@ -103,13 +109,24 @@ public class MlInitializationServiceTests extends ESTestCase {
         initializationService.clusterChanged(new ClusterChangedEvent("_source", cs, cs));
 
         verify(clusterService, times(0)).submitStateUpdateTask(eq("install-ml-metadata"), any());
-        verify(jobProvider, times(0)).createNotificationMessageIndex(any());
-        verify(jobProvider, times(0)).createMetaIndex(any());
-        verify(jobProvider, times(0)).createJobStateIndex(any());
         assertThat(initializationService.getDailyManagementService(), is(nullValue()));
+        verify(jobProvider, times(0)).putNotificationMessageIndexTemplate(any());
+        verify(jobProvider, times(0)).putMetaIndexTemplate(any());
+        verify(jobProvider, times(0)).putJobStateIndexTemplate(any());
+        verify(jobProvider, times(0)).putJobResultsIndexTemplate(any());
     }
 
     public void testInitialize_alreadyInitialized() throws Exception {
+        ThreadPool threadPool = mock(ThreadPool.class);
+        ExecutorService executorService = mock(ExecutorService.class);
+        doAnswer(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        }).when(executorService).execute(any(Runnable.class));
+        when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
+
+        ClusterService clusterService = mock(ClusterService.class);
+        JobProvider jobProvider = mockJobProvider();
         MlInitializationService initializationService =
                 new MlInitializationService(Settings.EMPTY, threadPool, clusterService, client, jobProvider);
 
@@ -134,6 +151,10 @@ public class MlInitializationServiceTests extends ESTestCase {
                                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
                                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
                         ))
+                        .put(IndexTemplateMetaData.builder(Auditor.NOTIFICATIONS_INDEX).build())
+                        .put(IndexTemplateMetaData.builder(JobProvider.ML_META_INDEX).build())
+                        .put(IndexTemplateMetaData.builder(AnomalyDetectorsIndex.jobStateIndexName()).build())
+                        .put(IndexTemplateMetaData.builder(AnomalyDetectorsIndex.jobResultsIndexPrefix()).build())
                         .putCustom(MlMetadata.TYPE, new MlMetadata.Builder().build()))
                 .build();
         MlDailyManagementService initialDailyManagementService = mock(MlDailyManagementService.class);
@@ -141,13 +162,24 @@ public class MlInitializationServiceTests extends ESTestCase {
         initializationService.clusterChanged(new ClusterChangedEvent("_source", cs, cs));
 
         verify(clusterService, times(0)).submitStateUpdateTask(eq("install-ml-metadata"), any());
-        verify(jobProvider, times(0)).createNotificationMessageIndex(any());
-        verify(jobProvider, times(0)).createMetaIndex(any());
-        verify(jobProvider, times(0)).createJobStateIndex(any());
         assertSame(initialDailyManagementService, initializationService.getDailyManagementService());
+        verify(jobProvider, times(0)).putNotificationMessageIndexTemplate(any());
+        verify(jobProvider, times(0)).putMetaIndexTemplate(any());
+        verify(jobProvider, times(0)).putJobStateIndexTemplate(any());
+        verify(jobProvider, times(0)).putJobResultsIndexTemplate(any());
     }
 
     public void testInitialize_onlyOnce() throws Exception {
+        ThreadPool threadPool = mock(ThreadPool.class);
+        ExecutorService executorService = mock(ExecutorService.class);
+        doAnswer(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        }).when(executorService).execute(any(Runnable.class));
+        when(threadPool.executor(ThreadPool.Names.GENERIC)).thenReturn(executorService);
+
+        ClusterService clusterService = mock(ClusterService.class);
+        JobProvider jobProvider = mockJobProvider();
         MlInitializationService initializationService =
                 new MlInitializationService(Settings.EMPTY, threadPool, clusterService, client, jobProvider);
 
@@ -162,9 +194,37 @@ public class MlInitializationServiceTests extends ESTestCase {
         initializationService.clusterChanged(new ClusterChangedEvent("_source", cs, cs));
 
         verify(clusterService, times(1)).submitStateUpdateTask(eq("install-ml-metadata"), any());
-        verify(jobProvider, times(1)).createNotificationMessageIndex(any());
-        verify(jobProvider, times(1)).createMetaIndex(any());
-        verify(jobProvider, times(1)).createJobStateIndex(any());
+        verify(jobProvider, times(1)).putNotificationMessageIndexTemplate(any());
+        verify(jobProvider, times(1)).putMetaIndexTemplate(any());
+        verify(jobProvider, times(1)).putJobStateIndexTemplate(any());
+        verify(jobProvider, times(1)).putJobResultsIndexTemplate(any());
+    }
+
+    private JobProvider mockJobProvider() {
+        JobProvider jobProvider = mock(JobProvider.class);
+
+        doAnswer(invocation -> {
+            BiConsumer<Boolean, Exception> listener = (BiConsumer<Boolean, Exception>)invocation.getArguments()[0];
+            listener.accept(true,  null);
+            return null;
+        }).when(jobProvider).putMetaIndexTemplate(any());
+        doAnswer(invocation -> {
+            BiConsumer<Boolean, Exception> listener = (BiConsumer<Boolean, Exception>)invocation.getArguments()[0];
+            listener.accept(true,  null);
+            return null;
+        }).when(jobProvider).putNotificationMessageIndexTemplate(any());
+        doAnswer(invocation -> {
+            BiConsumer<Boolean, Exception> listener = (BiConsumer<Boolean, Exception>)invocation.getArguments()[0];
+            listener.accept(true,  null);
+            return null;
+        }).when(jobProvider).putJobStateIndexTemplate(any());
+        doAnswer(invocation -> {
+            BiConsumer<Boolean, Exception> listener = (BiConsumer<Boolean, Exception>)invocation.getArguments()[0];
+            listener.accept(true,  null);
+            return null;
+        }).when(jobProvider).putJobResultsIndexTemplate(any());
+
+        return jobProvider;
     }
 
     public void testNodeGoesFromMasterToNonMasterAndBack() throws Exception {

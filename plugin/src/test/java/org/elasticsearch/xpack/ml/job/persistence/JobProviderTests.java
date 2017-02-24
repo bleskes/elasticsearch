@@ -21,6 +21,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
+import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.MultiSearchRequest;
 import org.elasticsearch.action.search.MultiSearchResponse;
@@ -86,6 +87,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.elasticsearch.xpack.ml.job.config.JobTests.buildJobBuilder;
+import static org.elasticsearch.xpack.ml.job.persistence.JobProvider.ML_META_INDEX;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Matchers.any;
@@ -159,39 +161,50 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("all_field_values", settings.get("index.query.default_field"));
     }
 
+    public void testPutJobResultsIndexTemplate() {
+        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
+        ArgumentCaptor<PutIndexTemplateRequest> captor = ArgumentCaptor.forClass(PutIndexTemplateRequest.class);
+        clientBuilder.putTemplate(captor);
+
+        Job.Builder job = buildJobBuilder("foo");
+        JobProvider provider = createProvider(clientBuilder.build());
+
+        provider.putJobResultsIndexTemplate((result, error) -> {
+            assertTrue(result);
+            PutIndexTemplateRequest request = captor.getValue();
+            assertNotNull(request);
+            assertEquals(provider.mlResultsIndexSettings().build(), request.settings());
+            assertTrue(request.mappings().containsKey(Result.TYPE.getPreferredName()));
+            assertTrue(request.mappings().containsKey(CategoryDefinition.TYPE.getPreferredName()));
+            assertTrue(request.mappings().containsKey(DataCounts.TYPE.getPreferredName()));
+            assertTrue(request.mappings().containsKey(ModelSnapshot.TYPE.getPreferredName()));
+            assertEquals(4, request.mappings().size());
+            assertEquals(AnomalyDetectorsIndex.jobResultsIndexPrefix() + "*", request.template());
+        });
+    }
+
     @SuppressWarnings("unchecked")
     public void testCreateJobResultsIndex() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
         clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
+        clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         Job.Builder job = buildJobBuilder("foo");
         JobProvider provider = createProvider(clientBuilder.build());
+        AtomicReference<Boolean> resultHolder = new AtomicReference<>();
 
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(ImmutableOpenMap.of())).build();
-
-        ClusterService clusterService = mock(ClusterService.class);
-
-        doAnswer(invocationOnMock -> {
-            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs);
-            return null;
-        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
 
         provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 CreateIndexRequest request = captor.getValue();
                 assertNotNull(request);
-                assertEquals(provider.mlResultsIndexSettings().build(), request.settings());
-                assertTrue(request.mappings().containsKey(Result.TYPE.getPreferredName()));
-                assertTrue(request.mappings().containsKey(CategoryDefinition.TYPE.getPreferredName()));
-                assertTrue(request.mappings().containsKey(DataCounts.TYPE.getPreferredName()));
-                assertTrue(request.mappings().containsKey(ModelSnapshot.TYPE.getPreferredName()));
-                assertEquals(4, request.mappings().size());
-
+                assertEquals(AnomalyDetectorsIndex.jobResultsIndexName("foo"), request.index());
                 clientBuilder.verifyIndexCreated(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+                resultHolder.set(aBoolean);
             }
 
             @Override
@@ -199,6 +212,9 @@ public class JobProviderTests extends ESTestCase {
                 fail(e.toString());
             }
         });
+
+        assertNotNull(resultHolder.get());
+        assertTrue(resultHolder.get());
     }
 
     @SuppressWarnings("unchecked")
@@ -263,11 +279,12 @@ public class JobProviderTests extends ESTestCase {
     }
 
     @SuppressWarnings("unchecked")
-    public void testCreateJobRelatedIndicies_createsAliasIfIndexNameIsSet() {
+    public void testCreateJobRelatedIndicies_createsAliasBecauseIndexNameIsSet() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
         clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
         clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsIndexName("bar"), AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+        clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         Job.Builder job = buildJobBuilder("foo");
         job.setResultsIndexName("bar");
@@ -286,14 +303,6 @@ public class JobProviderTests extends ESTestCase {
 
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
-
-        ClusterService clusterService = mock(ClusterService.class);
-
-        doAnswer(invocationOnMock -> {
-            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs);
-            return null;
-        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
 
         provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
@@ -341,14 +350,6 @@ public class JobProviderTests extends ESTestCase {
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
 
-        ClusterService clusterService = mock(ClusterService.class);
-
-        doAnswer(invocationOnMock -> {
-            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs);
-            return null;
-        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
-
         provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
@@ -374,41 +375,39 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("true", settings.get("index.mapper.dynamic"));
     }
 
-    public void testCreateAuditMessageIndex() {
+    public void testPutNotificationIndexTemplate() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
-        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(Auditor.NOTIFICATIONS_INDEX, captor);
+        ArgumentCaptor<PutIndexTemplateRequest> captor = ArgumentCaptor.forClass(PutIndexTemplateRequest.class);
+        clientBuilder.putTemplate(captor);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
-        provider.createNotificationMessageIndex((result, error) -> {
+        provider.putNotificationMessageIndexTemplate((result, error) -> {
                 assertTrue(result);
-                CreateIndexRequest request = captor.getValue();
+                PutIndexTemplateRequest request = captor.getValue();
                 assertNotNull(request);
                 assertEquals(provider.mlNotificationIndexSettings().build(), request.settings());
                 assertTrue(request.mappings().containsKey(AuditMessage.TYPE.getPreferredName()));
                 assertTrue(request.mappings().containsKey(AuditActivity.TYPE.getPreferredName()));
                 assertEquals(2, request.mappings().size());
-
-                clientBuilder.verifyIndexCreated(Auditor.NOTIFICATIONS_INDEX);
+                assertEquals(Auditor.NOTIFICATIONS_INDEX, request.template());
             });
     }
 
-    public void testCreateMetaIndex() {
+    public void testPutMetaIndexTemplate() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
-        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(JobProvider.ML_META_INDEX, captor);
+        ArgumentCaptor<PutIndexTemplateRequest> captor = ArgumentCaptor.forClass(PutIndexTemplateRequest.class);
+        clientBuilder.putTemplate(captor);
 
         JobProvider provider = createProvider(clientBuilder.build());
 
-        provider.createMetaIndex((result, error) -> {
+        provider.putMetaIndexTemplate((result, error) -> {
             assertTrue(result);
-            CreateIndexRequest request = captor.getValue();
+            PutIndexTemplateRequest request = captor.getValue();
             assertNotNull(request);
             assertEquals(provider.mlNotificationIndexSettings().build(), request.settings());
             assertEquals(0, request.mappings().size());
-
-            clientBuilder.verifyIndexCreated(JobProvider.ML_META_INDEX);
+            assertEquals(ML_META_INDEX, request.template());
         });
     }
 
@@ -422,68 +421,28 @@ public class JobProviderTests extends ESTestCase {
         assertEquals("async", settings.get("index.translog.durability"));
     }
 
-    public void testCreateJobStateIndex() {
+    public void testPutJobStateIndexTemplate() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
-        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobStateIndexName(), captor);
+        ArgumentCaptor<PutIndexTemplateRequest> captor = ArgumentCaptor.forClass(PutIndexTemplateRequest.class);
+        clientBuilder.putTemplate(captor);
 
         Job.Builder job = buildJobBuilder("foo");
         JobProvider provider = createProvider(clientBuilder.build());
 
-        provider.createJobStateIndex((result, error) -> {
+        provider.putJobStateIndexTemplate((result, error) -> {
                 assertTrue(result);
-                CreateIndexRequest request = captor.getValue();
+                PutIndexTemplateRequest request = captor.getValue();
                 assertNotNull(request);
                 assertEquals(provider.mlStateIndexSettings().build(), request.settings());
                 assertTrue(request.mappings().containsKey(CategorizerState.TYPE));
                 assertTrue(request.mappings().containsKey(Quantiles.TYPE.getPreferredName()));
                 assertTrue(request.mappings().containsKey(ModelState.TYPE.getPreferredName()));
                 assertEquals(3, request.mappings().size());
+                assertEquals(AnomalyDetectorsIndex.jobStateIndexName(), request.template());
             });
     }
 
-    @SuppressWarnings("unchecked")
-    public void testCreateJob() throws InterruptedException, ExecutionException {
-        Job.Builder job = buildJobBuilder("marscapone");
-        job.setDescription("This is a very cheesy job");
-        AnalysisLimits limits = new AnalysisLimits(9878695309134L, null);
-        job.setAnalysisLimits(limits);
-
-        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME)
-                .createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName(job.getId()), captor);
-
-        Client client = clientBuilder.build();
-        JobProvider provider = createProvider(client);
-        AtomicReference<Boolean> resultHolder = new AtomicReference<>();
-
-        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
-                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA)).build();
-
-        ClusterService clusterService = mock(ClusterService.class);
-
-        doAnswer(invocationOnMock -> {
-            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs);
-            return null;
-        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
-
-        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
-            @Override
-            public void onResponse(Boolean aBoolean) {
-                resultHolder.set(aBoolean);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-
-            }
-        });
-        assertNotNull(resultHolder.get());
-        assertTrue(resultHolder.get());
-    }
-
-    public void testDeleteJob() throws InterruptedException, ExecutionException, IOException {
+    public void testDeleteJobRelatedIndices() throws InterruptedException, ExecutionException, IOException {
         @SuppressWarnings("unchecked")
         ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
@@ -503,7 +462,7 @@ public class JobProviderTests extends ESTestCase {
         assertTrue(responseCaptor.getValue().isAcknowledged());
     }
 
-    public void testDeleteJob_InvalidIndex() throws InterruptedException, ExecutionException, IOException {
+    public void testDeleteJobRelatedIndices_InvalidIndex() throws InterruptedException, ExecutionException, IOException {
         @SuppressWarnings("unchecked")
         ActionListener<DeleteJobAction.Response> actionListener = mock(ActionListener.class);
         String jobId = "ThisIsMyJob";
@@ -536,7 +495,7 @@ public class JobProviderTests extends ESTestCase {
         source.add(map);
 
         QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         int from = 0;
         int size = 10;
         Client client = getMockedClient(queryBuilder -> {queryBuilderHolder[0] = queryBuilder;}, response);
@@ -570,7 +529,7 @@ public class JobProviderTests extends ESTestCase {
         source.add(map);
 
         QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         int from = 99;
         int size = 17;
 
@@ -605,7 +564,7 @@ public class JobProviderTests extends ESTestCase {
         source.add(map);
 
         QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         int from = 99;
         int size = 17;
 
@@ -637,7 +596,7 @@ public class JobProviderTests extends ESTestCase {
         Long timestamp = 98765432123456789L;
         List<Map<String, Object>> source = new ArrayList<>();
 
-        SearchResponse response = createSearchResponse(false, source);
+        SearchResponse response = createSearchResponse(source);
 
         Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
@@ -661,7 +620,7 @@ public class JobProviderTests extends ESTestCase {
         map.put("bucket_span", 22);
         source.add(map);
 
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -689,7 +648,7 @@ public class JobProviderTests extends ESTestCase {
         map.put("is_interim", true);
         source.add(map);
 
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -728,7 +687,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 14;
         int size = 2;
         String sortfield = "minefield";
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -778,7 +737,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 14;
         int size = 2;
         String sortfield = "minefield";
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
 
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
@@ -836,7 +795,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 14;
         int size = 2;
         String sortfield = "minefield";
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -873,7 +832,7 @@ public class JobProviderTests extends ESTestCase {
             source.add(recordMap);
         }
 
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -902,7 +861,7 @@ public class JobProviderTests extends ESTestCase {
             source.add(recordMap);
         }
 
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -928,7 +887,7 @@ public class JobProviderTests extends ESTestCase {
 
         source.add(map);
 
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         int from = 0;
         int size = 10;
         Client client = getMockedClient(q -> {}, response);
@@ -954,7 +913,7 @@ public class JobProviderTests extends ESTestCase {
         source.put("category_id", categoryId);
         source.put("terms", terms);
 
-        SearchResponse response = createSearchResponse(true, Collections.singletonList(source));
+        SearchResponse response = createSearchResponse(Collections.singletonList(source));
         Client client = getMockedClient(q -> {}, response);
         JobProvider provider = createProvider(client);
         @SuppressWarnings({"unchecked", "rawtypes"})
@@ -997,7 +956,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 4;
         int size = 3;
         QueryBuilder[] qbHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(q -> qbHolder[0] = q, response);
         JobProvider provider = createProvider(client);
 
@@ -1059,7 +1018,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 4;
         int size = 3;
         QueryBuilder[] qbHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(q -> qbHolder[0] = q, response);
         JobProvider provider = createProvider(client);
 
@@ -1114,7 +1073,7 @@ public class JobProviderTests extends ESTestCase {
 
         int from = 4;
         int size = 3;
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -1165,7 +1124,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 4;
         int size = 3;
         QueryBuilder[] qbHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(true, source);
+        SearchResponse response = createSearchResponse(source);
         Client client = getMockedClient(qb -> qbHolder[0] = qb, response);
         JobProvider provider = createProvider(client);
 
@@ -1323,7 +1282,7 @@ public class JobProviderTests extends ESTestCase {
         return getResponse;
     }
 
-    private static SearchResponse createSearchResponse(boolean exists, List<Map<String, Object>> source) throws IOException {
+    private static SearchResponse createSearchResponse(List<Map<String, Object>> source) throws IOException {
         SearchResponse response = mock(SearchResponse.class);
         List<SearchHit> list = new ArrayList<>();
 
