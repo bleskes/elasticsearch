@@ -28,6 +28,7 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.script.Script;
@@ -214,7 +215,7 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
                 }
             } else if (token == XContentParser.Token.START_OBJECT) {
                 if (BODY_FIELD.match(currentFieldName)) {
-                    try (XContentBuilder builder = XContentBuilder.builder(parser.contentType().xContent())) {
+                    try (XContentBuilder builder = XContentFactory.jsonBuilder()) {
                         builder.copyCurrentStructure(parser);
                         searchSource = builder.bytes();
                         if (upgradeSearchSource) {
