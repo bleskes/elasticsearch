@@ -18,7 +18,6 @@ import org.elasticsearch.xpack.ml.job.messages.Messages;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
  * <p>
@@ -36,16 +35,17 @@ class ProblemTracker {
 
     private static final int EMPTY_DATA_WARN_COUNT = 10;
 
-    private final Supplier<Auditor> auditor;
+    private final Auditor auditor;
+    private final String jobId;
 
     private volatile boolean hasProblems;
     private volatile boolean hadProblems;
     private volatile String previousProblem;
-
     private volatile int emptyDataCount;
 
-    ProblemTracker(Supplier<Auditor> auditor) {
+    ProblemTracker(Auditor auditor, String jobId) {
         this.auditor = Objects.requireNonNull(auditor);
+        this.jobId = Objects.requireNonNull(jobId);
     }
 
     /**
@@ -75,7 +75,7 @@ class ProblemTracker {
         hasProblems = true;
         if (!Objects.equals(previousProblem, problemMessage)) {
             previousProblem = problemMessage;
-            auditor.get().error(Messages.getMessage(template, problemMessage));
+            auditor.error(jobId, Messages.getMessage(template, problemMessage));
         }
     }
 
@@ -87,14 +87,14 @@ class ProblemTracker {
         if (emptyDataCount < EMPTY_DATA_WARN_COUNT) {
             emptyDataCount++;
             if (emptyDataCount == EMPTY_DATA_WARN_COUNT) {
-                auditor.get().warning(Messages.getMessage(Messages.JOB_AUDIT_DATAFEED_NO_DATA));
+                auditor.warning(jobId, Messages.getMessage(Messages.JOB_AUDIT_DATAFEED_NO_DATA));
             }
         }
     }
 
     public void reportNoneEmptyCount() {
         if (emptyDataCount >= EMPTY_DATA_WARN_COUNT) {
-            auditor.get().info(Messages.getMessage(Messages.JOB_AUDIR_DATAFEED_DATA_SEEN_AGAIN));
+            auditor.info(jobId, Messages.getMessage(Messages.JOB_AUDIR_DATAFEED_DATA_SEEN_AGAIN));
         }
         emptyDataCount = 0;
     }
@@ -108,7 +108,7 @@ class ProblemTracker {
      */
     public void finishReport() {
         if (!hasProblems && hadProblems) {
-            auditor.get().info(Messages.getMessage(Messages.JOB_AUDIT_DATAFEED_RECOVERED));
+            auditor.info(jobId, Messages.getMessage(Messages.JOB_AUDIT_DATAFEED_RECOVERED));
         }
 
         hadProblems = hasProblems;

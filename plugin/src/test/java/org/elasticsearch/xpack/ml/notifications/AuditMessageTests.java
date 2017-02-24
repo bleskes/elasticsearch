@@ -17,7 +17,6 @@ package org.elasticsearch.xpack.ml.notifications;
 import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.support.AbstractSerializingTestCase;
-import org.elasticsearch.xpack.ml.utils.time.TimeUtils;
 import org.junit.Before;
 
 import java.util.Date;
@@ -30,15 +29,8 @@ public class AuditMessageTests extends AbstractSerializingTestCase<AuditMessage>
         startMillis = System.currentTimeMillis();
     }
 
-    public void testDefaultConstructor() {
-        AuditMessage auditMessage = new AuditMessage();
-        assertNull(auditMessage.getMessage());
-        assertNull(auditMessage.getLevel());
-        assertNull(auditMessage.getTimestamp());
-    }
-
     public void testNewInfo() {
-        AuditMessage info = AuditMessage.newInfo("foo", "some info");
+        AuditMessage info = AuditMessage.newInfo("foo", "some info", "some_node");
         assertEquals("foo", info.getJobId());
         assertEquals("some info", info.getMessage());
         assertEquals(Level.INFO, info.getLevel());
@@ -46,7 +38,7 @@ public class AuditMessageTests extends AbstractSerializingTestCase<AuditMessage>
     }
 
     public void testNewWarning() {
-        AuditMessage warning = AuditMessage.newWarning("bar", "some warning");
+        AuditMessage warning = AuditMessage.newWarning("bar", "some warning", "some_node");
         assertEquals("bar", warning.getJobId());
         assertEquals("some warning", warning.getMessage());
         assertEquals(Level.WARNING, warning.getLevel());
@@ -55,7 +47,7 @@ public class AuditMessageTests extends AbstractSerializingTestCase<AuditMessage>
 
 
     public void testNewError() {
-        AuditMessage error = AuditMessage.newError("foo", "some error");
+        AuditMessage error = AuditMessage.newError("foo", "some error", "some_node");
         assertEquals("foo", error.getJobId());
         assertEquals("some error", error.getMessage());
         assertEquals(Level.ERROR, error.getLevel());
@@ -63,7 +55,7 @@ public class AuditMessageTests extends AbstractSerializingTestCase<AuditMessage>
     }
 
     public void testNewActivity() {
-        AuditMessage error = AuditMessage.newActivity("foo", "some error");
+        AuditMessage error = AuditMessage.newActivity("foo", "some error", "some_node");
         assertEquals("foo", error.getJobId());
         assertEquals("some error", error.getMessage());
         assertEquals(Level.ACTIVITY, error.getLevel());
@@ -83,20 +75,8 @@ public class AuditMessageTests extends AbstractSerializingTestCase<AuditMessage>
 
     @Override
     protected AuditMessage createTestInstance() {
-        AuditMessage message = new AuditMessage();
-        if (randomBoolean()) {
-            message.setJobId(randomAsciiOfLengthBetween(1, 20));
-        }
-        if (randomBoolean()) {
-            message.setMessage(randomAsciiOfLengthBetween(1, 200));
-        }
-        if (randomBoolean()) {
-            message.setLevel(randomFrom(Level.values()));
-        }
-        if (randomBoolean()) {
-            message.setTimestamp(new Date(TimeUtils.dateStringToEpoch(randomTimeValue())));
-        }
-        return message;
+        return new AuditMessage(randomAsciiOfLengthBetween(1, 20), randomAsciiOfLengthBetween(1, 200),
+                randomFrom(Level.values()), randomAsciiOfLengthBetween(1, 20));
     }
 
     @Override

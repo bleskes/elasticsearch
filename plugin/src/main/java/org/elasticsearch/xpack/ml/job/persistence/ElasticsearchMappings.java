@@ -695,6 +695,9 @@ public class ElasticsearchMappings {
                             .startObject(AuditMessage.TIMESTAMP.getPreferredName())
                                 .field(TYPE, DATE)
                             .endObject()
+                            .startObject(AuditMessage.NODE_NAME.getPreferredName())
+                                .field(TYPE, KEYWORD)
+                            .endObject()
                         .endObject()
                     .endObject()
                 .endObject();

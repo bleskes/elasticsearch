@@ -165,6 +165,6 @@ public class ExpiredResultsRemoverTests extends ESTestCase {
     }
 
     private ExpiredResultsRemover createExpiredResultsRemover() {
-        return new ExpiredResultsRemover(client, clusterService, jobId -> mock(Auditor.class));
+        return new ExpiredResultsRemover(client, clusterService, mock(Auditor.class));
     }
 }
