@@ -33,6 +33,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.xpack.XPackClient;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.ml.MachineLearning;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
@@ -203,6 +204,8 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder().put(super.nodeSettings(nodeOrdinal))
                 .put(customSecuritySettingsSource.nodeSettings(nodeOrdinal))
+                // Disable native ML autodetect_process as the c++ controller won't be available
+                .put(MachineLearning.AUTODETECT_PROCESS.getKey(), false)
                 .build();
     }
 

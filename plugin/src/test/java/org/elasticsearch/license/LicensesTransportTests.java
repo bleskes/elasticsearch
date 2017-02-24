@@ -23,9 +23,9 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.XPackSingleNodeTestCase;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -38,7 +38,7 @@ import static org.elasticsearch.license.TestUtils.generateSignedLicense;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 
-public class LicensesTransportTests extends ESSingleNodeTestCase {
+public class LicensesTransportTests extends XPackSingleNodeTestCase {
 
     @Override
     protected boolean resetNodeAfterTest() {
@@ -53,6 +53,7 @@ public class LicensesTransportTests extends ESSingleNodeTestCase {
     @Override
     protected Settings nodeSettings() {
         Settings.Builder newSettings = Settings.builder();
+        newSettings.put(super.nodeSettings());
         newSettings.put(XPackSettings.SECURITY_ENABLED.getKey(), false);
         newSettings.put(XPackSettings.MONITORING_ENABLED.getKey(), false);
         newSettings.put(XPackSettings.WATCHER_ENABLED.getKey(), false);
