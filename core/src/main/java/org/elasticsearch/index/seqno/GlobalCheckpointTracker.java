@@ -28,8 +28,7 @@ import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
 import org.elasticsearch.index.shard.ShardId;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -73,7 +72,7 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
      * true if there is a pending in sync shard which waits for it's local checkpoint to advance above the global checkpoint.
      * we delay the global checkpoint from advancing in that case
      */
-    final List<String> pendingInSync;
+    final Set<String> pendingInSync;
 
     /**
      * Initialize the global checkpoint service. The specified global checkpoint should be set to the last known global checkpoint, or
@@ -88,7 +87,7 @@ public class GlobalCheckpointTracker extends AbstractIndexShardComponent {
         assert globalCheckpoint >= UNASSIGNED_SEQ_NO : "illegal initial global checkpoint: " + globalCheckpoint;
         inSyncLocalCheckpoints = new ObjectLongHashMap<>(1 + indexSettings.getNumberOfReplicas());
         trackingLocalCheckpoint = new ObjectLongHashMap<>(indexSettings.getNumberOfReplicas());
-        pendingInSync = new ArrayList<>();
+        pendingInSync = new HashSet<>();
         this.globalCheckpoint = globalCheckpoint;
     }
 
