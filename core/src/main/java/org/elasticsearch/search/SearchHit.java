@@ -21,6 +21,7 @@ package org.elasticsearch.search;
 
 import org.apache.lucene.search.Explanation;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -42,6 +43,7 @@ import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.mapper.SourceFieldMapper;
+import org.elasticsearch.index.seqno.SequenceNumbersService;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.lookup.SourceLookup;
@@ -86,6 +88,9 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
     private NestedIdentity nestedIdentity;
 
     private long version = -1;
+
+    private long term = 0;
+    private long seqNo = SequenceNumbersService.UNASSIGNED_SEQ_NO;
 
     private BytesReference source;
 
@@ -156,6 +161,19 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
      */
     public long getVersion() {
         return this.version;
+    }
+
+    public void setSeqNoAndTerm(long seqNo, long term) {
+        this.seqNo = seqNo;
+        this.term = term;
+    }
+
+    public long getSeqNo() {
+        return seqNo;
+    }
+
+    public long getPrimaryTerm() {
+        return term;
     }
 
     /**
@@ -356,6 +374,8 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
         static final String _TYPE = "_type";
         static final String _ID = "_id";
         static final String _VERSION = "_version";
+        static final String _SEQ_NO = "_seq_no";
+        static final String _PRIMARY_TERM = "_primary_term";
         static final String _SCORE = "_score";
         static final String FIELDS = "fields";
         static final String HIGHLIGHT = "highlight";
@@ -416,6 +436,10 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
         }
         if (version != -1) {
             builder.field(Fields._VERSION, version);
+        }
+        if (seqNo != SequenceNumbersService.UNASSIGNED_SEQ_NO) {
+            builder.field(Fields._SEQ_NO, seqNo);
+            builder.field(Fields._PRIMARY_TERM, term);
         }
         if (Float.isNaN(score)) {
             builder.nullField(Fields._SCORE);
@@ -500,6 +524,8 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
         parser.declareField((map, value) -> map.put(Fields._SCORE, value), SearchHit::parseScore, new ParseField(Fields._SCORE),
                 ValueType.FLOAT_OR_NULL);
         parser.declareLong((map, value) -> map.put(Fields._VERSION, value), new ParseField(Fields._VERSION));
+        parser.declareLong((map, value) -> map.put(Fields._SEQ_NO, value), new ParseField(Fields._SEQ_NO));
+        parser.declareLong((map, value) -> map.put(Fields._PRIMARY_TERM, value), new ParseField(Fields._PRIMARY_TERM));
         parser.declareField((map, value) -> map.put(Fields._SHARD, value), (p, c) -> ShardId.fromString(p.text()),
                 new ParseField(Fields._SHARD), ValueType.STRING);
         parser.declareObject((map, value) -> map.put(SourceFieldMapper.NAME, value), (p, c) -> parseSourceBytes(p),
@@ -688,6 +714,13 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
         type = in.readOptionalText();
         nestedIdentity = in.readOptionalWriteable(NestedIdentity::new);
         version = in.readLong();
+        if (in.getVersion().onOrAfter(Version.V_6_0_0_alpha1_UNRELEASED)) {
+            seqNo = in.readZLong();
+            term = in.readVLong();
+        } else {
+            seqNo = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+            term = 0;
+        }
         source = in.readBytesReference();
         if (source.length() == 0) {
             source = null;
@@ -754,6 +787,10 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
         out.writeOptionalText(type);
         out.writeOptionalWriteable(nestedIdentity);
         out.writeLong(version);
+        if (out.getVersion().onOrAfter(Version.V_6_0_0_alpha1_UNRELEASED)) {
+            out.writeZLong(seqNo);
+            out.writeVLong(term);
+        }
         out.writeBytesReference(source);
         if (explanation == null) {
             out.writeBoolean(false);
@@ -809,6 +846,8 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
                 && Objects.equals(type, other.type)
                 && Objects.equals(nestedIdentity, other.nestedIdentity)
                 && Objects.equals(version, other.version)
+                && Objects.equals(seqNo, other.seqNo)
+                && Objects.equals(term, other.term)
                 && Objects.equals(source, other.source)
                 && Objects.equals(fields, other.fields)
                 && Objects.equals(getHighlightFields(), other.getHighlightFields())
@@ -820,8 +859,8 @@ public final class SearchHit implements Streamable, ToXContentObject, Iterable<S
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, type, nestedIdentity, version, source, fields, getHighlightFields(), Arrays.hashCode(matchedQueries),
-                explanation, shard, innerHits);
+        return Objects.hash(id, type, nestedIdentity, version, seqNo, term, source, fields,
+            getHighlightFields(), Arrays.hashCode(matchedQueries), explanation, shard, innerHits);
     }
 
     /**
