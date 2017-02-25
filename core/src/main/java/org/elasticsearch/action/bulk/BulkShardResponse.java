@@ -33,7 +33,7 @@ public class BulkShardResponse extends ReplicationResponse implements WriteRespo
     private ShardId shardId;
     private BulkItemResponse[] responses;
 
-    BulkShardResponse() {
+    public BulkShardResponse() {
     }
 
     // NOTE: public for testing only
