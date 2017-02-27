@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.action;
 
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.action.StartDatafeedAction.Request;
 import org.elasticsearch.xpack.ml.support.AbstractStreamableXContentTestCase;
@@ -25,6 +26,9 @@ public class StartDatafeedActionRequestTests extends AbstractStreamableXContentT
         Request request = new Request(randomAsciiOfLength(10), randomPositiveLong());
         if (randomBoolean()) {
             request.setEndTime(randomPositiveLong());
+        }
+        if (randomBoolean()) {
+            request.setTimeout(TimeValue.timeValueMillis(randomPositiveLong()));
         }
         return request;
     }

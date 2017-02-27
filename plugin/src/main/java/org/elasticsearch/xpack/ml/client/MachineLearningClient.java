@@ -47,7 +47,6 @@ import org.elasticsearch.xpack.ml.action.UpdateDatafeedAction;
 import org.elasticsearch.xpack.ml.action.UpdateJobAction;
 import org.elasticsearch.xpack.ml.action.UpdateModelSnapshotAction;
 import org.elasticsearch.xpack.persistent.PersistentActionResponse;
-import org.elasticsearch.xpack.persistent.RemovePersistentTaskAction;
 
 public class MachineLearningClient {
 
@@ -151,7 +150,7 @@ public class MachineLearningClient {
         client.execute(StartDatafeedAction.INSTANCE, request, listener);
     }
 
-    public void stopDatafeed(StopDatafeedAction.Request request, ActionListener<RemovePersistentTaskAction.Response> listener) {
+    public void stopDatafeed(StopDatafeedAction.Request request, ActionListener<StopDatafeedAction.Response> listener) {
         client.execute(StopDatafeedAction.INSTANCE, request, listener);
     }
 
