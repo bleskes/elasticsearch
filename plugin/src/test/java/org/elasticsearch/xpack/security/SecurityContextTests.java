@@ -65,7 +65,7 @@ public class SecurityContextTests extends ESTestCase {
 
         assertEquals(authentication, securityContext.getAuthentication());
         assertEquals(user, securityContext.getUser());
-        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated");
+        assertSettingDeprecations(AuthenticationService.SIGN_USER_HEADER);
     }
 
     public void testSetUser() {
@@ -78,7 +78,7 @@ public class SecurityContextTests extends ESTestCase {
         IllegalStateException e = expectThrows(IllegalStateException.class,
                 () -> securityContext.setUser(randomFrom(user, SystemUser.INSTANCE), Version.CURRENT));
         assertEquals("authentication is already present in the context", e.getMessage());
-        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated");
+        assertSettingDeprecations(AuthenticationService.SIGN_USER_HEADER);
     }
 
     public void testExecuteAsUser() throws IOException {
@@ -104,6 +104,6 @@ public class SecurityContextTests extends ESTestCase {
         assertNotNull(originalContext);
         originalContext.restore();
         assertEquals(original, securityContext.getUser());
-        assertWarnings("[xpack.security.authc.sign_user_header] setting was deprecated");
+        assertSettingDeprecations(AuthenticationService.SIGN_USER_HEADER);
     }
 }
