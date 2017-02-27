@@ -34,8 +34,8 @@ import org.elasticsearch.xpack.ml.datafeed.DatafeedState;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
 import org.elasticsearch.xpack.ml.support.BaseMlIntegTestCase;
-import org.elasticsearch.xpack.persistent.PersistentTasksInProgress;
-import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.PersistentTaskInProgress;
+import org.elasticsearch.xpack.persistent.PersistentTasks;
+import org.elasticsearch.xpack.persistent.PersistentTasks.PersistentTask;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -173,8 +173,8 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         client().execute(OpenJobAction.INSTANCE, openJobRequest).get();
         assertBusy(() -> {
             ClusterState clusterState = client().admin().cluster().prepareState().get().getState();
-            PersistentTasksInProgress tasks = clusterState.getMetaData().custom(PersistentTasksInProgress.TYPE);
-            PersistentTaskInProgress task = tasks.taskMap().values().iterator().next();
+            PersistentTasks tasks = clusterState.getMetaData().custom(PersistentTasks.TYPE);
+            PersistentTask task = tasks.taskMap().values().iterator().next();
 
             DiscoveryNode node = clusterState.nodes().resolveNode(task.getExecutorNode());
             Map<String, String> expectedNodeAttr = new HashMap<>();
@@ -224,13 +224,13 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         // Sample each cs update and keep track each time a node holds more than `maxConcurrentJobAllocations` opening jobs.
         List<String> violations = new CopyOnWriteArrayList<>();
         internalCluster().clusterService(nonMlNode).addListener(event -> {
-            PersistentTasksInProgress tasks = event.state().metaData().custom(PersistentTasksInProgress.TYPE);
+            PersistentTasks tasks = event.state().metaData().custom(PersistentTasks.TYPE);
             if (tasks == null) {
                 return;
             }
 
             for (DiscoveryNode node : event.state().nodes()) {
-                Collection<PersistentTaskInProgress<?>> foundTasks = tasks.findTasks(OpenJobAction.NAME, task -> {
+                Collection<PersistentTask<?>> foundTasks = tasks.findTasks(OpenJobAction.NAME, task -> {
                     return node.getId().equals(task.getExecutorNode()) &&
                             (task.getStatus() == null || task.getStatus() == JobState.OPENING || task.isCurrentStatus() == false);
                 });
@@ -255,9 +255,9 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
 
         assertBusy(() -> {
             ClusterState state = client().admin().cluster().prepareState().get().getState();
-            PersistentTasksInProgress tasks = state.metaData().custom(PersistentTasksInProgress.TYPE);
+            PersistentTasks tasks = state.metaData().custom(PersistentTasks.TYPE);
             assertEquals(numJobs, tasks.taskMap().size());
-            for (PersistentTaskInProgress<?> task : tasks.taskMap().values()) {
+            for (PersistentTask<?> task : tasks.taskMap().values()) {
                 assertNotNull(task.getExecutorNode());
                 assertEquals(JobState.OPENED, task.getStatus());
             }
@@ -279,9 +279,9 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         ensureStableCluster(1, nonMlNode);
         assertBusy(() -> {
             ClusterState state = client(nonMlNode).admin().cluster().prepareState().get().getState();
-            PersistentTasksInProgress tasks = state.metaData().custom(PersistentTasksInProgress.TYPE);
+            PersistentTasks tasks = state.metaData().custom(PersistentTasks.TYPE);
             assertEquals(numJobs, tasks.taskMap().size());
-            for (PersistentTaskInProgress<?> task : tasks.taskMap().values()) {
+            for (PersistentTask<?> task : tasks.taskMap().values()) {
                 assertNull(task.getExecutorNode());
             }
         });
@@ -295,9 +295,9 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         ensureStableCluster(1 + numMlNodes);
         assertBusy(() -> {
             ClusterState state = client().admin().cluster().prepareState().get().getState();
-            PersistentTasksInProgress tasks = state.metaData().custom(PersistentTasksInProgress.TYPE);
+            PersistentTasks tasks = state.metaData().custom(PersistentTasks.TYPE);
             assertEquals(numJobs, tasks.taskMap().size());
-            for (PersistentTaskInProgress<?> task : tasks.taskMap().values()) {
+            for (PersistentTask<?> task : tasks.taskMap().values()) {
                 assertNotNull(task.getExecutorNode());
                 assertEquals(JobState.OPENED, task.getStatus());
             }
@@ -340,7 +340,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         client().execute(CloseJobAction.INSTANCE, closeJobRequest);
         assertBusy(() -> {
             ClusterState clusterState = client().admin().cluster().prepareState().get().getState();
-            PersistentTasksInProgress tasks = clusterState.getMetaData().custom(PersistentTasksInProgress.TYPE);
+            PersistentTasks tasks = clusterState.getMetaData().custom(PersistentTasks.TYPE);
             assertEquals(0, tasks.taskMap().size());
         });
         logger.info("Stop data node");
@@ -363,9 +363,9 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
 
     private void assertJobTask(String jobId, JobState expectedState, boolean hasExecutorNode) {
         ClusterState clusterState = client().admin().cluster().prepareState().get().getState();
-        PersistentTasksInProgress tasks = clusterState.getMetaData().custom(PersistentTasksInProgress.TYPE);
+        PersistentTasks tasks = clusterState.getMetaData().custom(PersistentTasks.TYPE);
         assertEquals(1, tasks.taskMap().size());
-        PersistentTaskInProgress<?> task = tasks.findTasks(OpenJobAction.NAME, p -> {
+        PersistentTask<?> task = tasks.findTasks(OpenJobAction.NAME, p -> {
             return p.getRequest() instanceof OpenJobAction.Request &&
                     jobId.equals(((OpenJobAction.Request) p.getRequest()).getJobId());
         }).iterator().next();

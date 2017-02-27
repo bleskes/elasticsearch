@@ -28,7 +28,6 @@ import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.LocalTransportAddress;
-import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.PersistentTaskInProgress;
 import org.elasticsearch.xpack.persistent.CompletionPersistentTaskAction.Response;
 import org.elasticsearch.xpack.persistent.TestPersistentActionPlugin.TestRequest;
 import org.elasticsearch.tasks.Task;
@@ -37,7 +36,7 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportResponse.Empty;
 import org.elasticsearch.xpack.persistent.CompletionPersistentTaskAction.Response;
-import org.elasticsearch.xpack.persistent.PersistentTasksInProgress.Assignment;
+import org.elasticsearch.xpack.persistent.PersistentTasks.Assignment;
 import org.elasticsearch.xpack.persistent.TestPersistentActionPlugin.TestRequest;
 
 import java.io.IOException;
@@ -86,7 +85,7 @@ public class PersistentActionCoordinatorTests extends ESTestCase {
         ClusterState state = ClusterState.builder(clusterService.state()).nodes(createTestNodes(nonLocalNodesCount, Settings.EMPTY))
                 .build();
 
-        PersistentTasksInProgress.Builder tasks = PersistentTasksInProgress.builder();
+        PersistentTasks.Builder tasks = PersistentTasks.builder();
         boolean added = false;
         if (nonLocalNodesCount > 0) {
             for (int i = 0; i < randomInt(5); i++) {
@@ -105,7 +104,7 @@ public class PersistentActionCoordinatorTests extends ESTestCase {
 
         }
         MetaData.Builder metaData = MetaData.builder(state.metaData());
-        metaData.putCustom(PersistentTasksInProgress.TYPE, tasks.build());
+        metaData.putCustom(PersistentTasks.TYPE, tasks.build());
         ClusterState newClusterState = ClusterState.builder(state).metaData(metaData).build();
 
         coordinator.clusterChanged(new ClusterChangedEvent("test", newClusterState, state));
@@ -302,36 +301,36 @@ public class PersistentActionCoordinatorTests extends ESTestCase {
 
     private <Request extends PersistentActionRequest> ClusterState addTask(ClusterState state, String action, Request request,
                                                                            String node) {
-        PersistentTasksInProgress.Builder builder =
-                PersistentTasksInProgress.builder(state.getMetaData().custom(PersistentTasksInProgress.TYPE));
-        return ClusterState.builder(state).metaData(MetaData.builder(state.metaData()).putCustom(PersistentTasksInProgress.TYPE,
+        PersistentTasks.Builder builder =
+                PersistentTasks.builder(state.getMetaData().custom(PersistentTasks.TYPE));
+        return ClusterState.builder(state).metaData(MetaData.builder(state.metaData()).putCustom(PersistentTasks.TYPE,
                 builder.addTask(action, request, false, true, new Assignment(node, "test assignment")).build())).build();
     }
 
     private ClusterState reallocateTask(ClusterState state, long taskId, String node) {
-        PersistentTasksInProgress.Builder builder =
-                PersistentTasksInProgress.builder(state.getMetaData().custom(PersistentTasksInProgress.TYPE));
+        PersistentTasks.Builder builder =
+                PersistentTasks.builder(state.getMetaData().custom(PersistentTasks.TYPE));
         assertTrue(builder.hasTask(taskId));
-        return ClusterState.builder(state).metaData(MetaData.builder(state.metaData()).putCustom(PersistentTasksInProgress.TYPE,
+        return ClusterState.builder(state).metaData(MetaData.builder(state.metaData()).putCustom(PersistentTasks.TYPE,
                 builder.reassignTask(taskId, new Assignment(node, "test assignment")).build())).build();
     }
 
     private ClusterState removeTask(ClusterState state, long taskId) {
-        PersistentTasksInProgress.Builder builder =
-                PersistentTasksInProgress.builder(state.getMetaData().custom(PersistentTasksInProgress.TYPE));
+        PersistentTasks.Builder builder =
+                PersistentTasks.builder(state.getMetaData().custom(PersistentTasks.TYPE));
         assertTrue(builder.hasTask(taskId));
-        return ClusterState.builder(state).metaData(MetaData.builder(state.metaData()).putCustom(PersistentTasksInProgress.TYPE,
+        return ClusterState.builder(state).metaData(MetaData.builder(state.metaData()).putCustom(PersistentTasks.TYPE,
                 builder.removeTask(taskId).build())).build();
     }
 
     private class Execution {
         private final PersistentActionRequest request;
-        private final PersistentTask task;
+        private final NodePersistentTask task;
         private final PersistentActionRegistry.PersistentActionHolder<?> holder;
         private final ActionListener<Empty> listener;
 
-        Execution(PersistentActionRequest request, PersistentTask task, PersistentActionRegistry.PersistentActionHolder<?> holder,
-                         ActionListener<Empty> listener) {
+        Execution(PersistentActionRequest request, NodePersistentTask task, PersistentActionRegistry.PersistentActionHolder<?> holder,
+                  ActionListener<Empty> listener) {
             this.request = request;
             this.task = task;
             this.holder = holder;
@@ -347,7 +346,7 @@ public class PersistentActionCoordinatorTests extends ESTestCase {
         }
 
         @Override
-        public <Request extends PersistentActionRequest> void executeAction(Request request, PersistentTask task,
+        public <Request extends PersistentActionRequest> void executeAction(Request request, NodePersistentTask task,
                                                                             PersistentActionRegistry.PersistentActionHolder<Request> holder,
                                                                             ActionListener<Empty> listener) {
             executions.add(new Execution(request, task, holder, listener));
