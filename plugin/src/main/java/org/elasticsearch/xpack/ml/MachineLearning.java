@@ -47,6 +47,7 @@ import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.ml.action.CloseJobAction;
+import org.elasticsearch.xpack.ml.action.CloseJobService;
 import org.elasticsearch.xpack.ml.action.DeleteDatafeedAction;
 import org.elasticsearch.xpack.ml.action.DeleteFilterAction;
 import org.elasticsearch.xpack.ml.action.DeleteJobAction;
@@ -318,7 +319,8 @@ public class MachineLearning extends Plugin implements ActionPlugin {
                 persistentActionService,
                 persistentActionRegistry,
                 new PersistentTaskClusterService(Settings.EMPTY, persistentActionRegistry, clusterService),
-                auditor
+                auditor,
+                new CloseJobService(client, threadPool, clusterService)
         );
     }
 
