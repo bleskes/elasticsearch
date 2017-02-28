@@ -52,7 +52,6 @@ public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport
                                              SSLService sslService, ThreadPool threadPool, NamedXContentRegistry xContentRegistry,
                                              HttpServerTransport.Dispatcher dispatcher) {
         super(settings, networkService, bigArrays, threadPool, xContentRegistry, dispatcher);
-        deprecationLogger.deprecated("http type [security3] is deprecated");
         this.ipFilter = ipFilter;
         this.sslService =  sslService;
         this.ssl = HTTP_SSL_ENABLED.get(settings);
