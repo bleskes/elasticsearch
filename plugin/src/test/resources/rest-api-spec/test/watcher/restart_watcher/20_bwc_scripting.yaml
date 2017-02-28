@@ -1,0 +1,71 @@
+---
+# https://github.com/elastic/x-pack-elasticsearch/issues/542
+"Test 5.x indices should not try to be loaded with upgrading sources and replace scripts with legacy values":
+  - do:
+      cluster.health:
+          wait_for_status: yellow
+
+  - do:
+      xpack.watcher.put_watch:
+        id: my-watch
+        body: >
+          {
+            "trigger": {
+              "schedule": {
+                "interval": "10s"
+              }
+            },
+            "input": {
+              "search": {
+                "request": {
+                  "indices": [
+                    "logs"
+                  ],
+                  "body": {
+                    "aggs": {
+                      "hosts": {
+                        "terms": {
+                          "field": "host.keyword"
+                        },
+                        "aggs": {
+                          "avg_cpu_usage": {
+                            "avg": {
+                              "field": "pct"
+                            }
+                          },
+                          "avg_buckets_above_80": {
+                            "bucket_selector": {
+                              "buckets_path": {
+                                "avgCPUUsage": "avg_cpu_usage"
+                              },
+                              "script": "params.avgCPUUsage > 80"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "size": 0
+                  }
+                }
+              }
+            },
+            "actions": {
+              "log": {
+                "logging": {
+                  "level": "info",
+                  "text": "{{ctx.payload}}"
+                }
+              }
+            }
+          }
+  - match: { "_id" : "my-watch" }
+
+  - do: {xpack.watcher.restart: {}}
+  - match: { acknowledged: true }
+
+  - do:
+      xpack.watcher.get_watch:
+        id: my-watch
+
+  - match: { "found": true }
+  - is_false: "watch.input.search.request.body.aggregations.hosts.aggregations.avg_buckets_above_80.bucket_selector.script.lang"

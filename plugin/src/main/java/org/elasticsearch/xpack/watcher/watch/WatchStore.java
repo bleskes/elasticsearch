@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.watcher.watch;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -43,6 +44,7 @@ import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.DocumentMissingException;
@@ -103,7 +105,7 @@ public class WatchStore extends AbstractComponent {
 
         try {
             IndexMetaData indexMetaData = WatchStoreUtils.getConcreteIndex(INDEX, state.metaData());
-            int count = loadWatches(indexMetaData.getNumberOfShards());
+            int count = loadWatches(indexMetaData);
             logger.debug("loaded [{}] watches from the watches index [{}]", count, indexMetaData.getIndex().getName());
         } catch (IndexNotFoundException e) {
         } catch (Exception e) {
@@ -312,12 +314,15 @@ public class WatchStore extends AbstractComponent {
      * scrolls all the watch documents in the watches index, parses them, and loads them into
      * the given map.
      */
-    int loadWatches(int numPrimaryShards) {
+    private int loadWatches(IndexMetaData indexMetaData) {
         assert watches.isEmpty() : "no watches should reside, but there are [" + watches.size() + "] watches.";
         RefreshResponse refreshResponse = client.refresh(new RefreshRequest(INDEX));
-        if (refreshResponse.getSuccessfulShards() < numPrimaryShards) {
+        if (refreshResponse.getSuccessfulShards() < indexMetaData.getNumberOfShards()) {
             throw illegalState("not all required shards have been refreshed");
         }
+
+        // only try to upgrade the source, if we come from a 2.x index
+        boolean upgradeSource = indexMetaData.getCreationVersion().before(Version.V_5_0_0_alpha1);
 
         int count = 0;
         SearchRequest searchRequest = new SearchRequest(INDEX)
@@ -340,7 +345,7 @@ public class WatchStore extends AbstractComponent {
                     try {
                         final BytesReference source = hit.getSourceRef();
                         Watch watch =
-                                watchParser.parse(id, true, source, XContentFactory.xContentType(source), true);
+                                watchParser.parse(id, true, source, XContentFactory.xContentType(source), upgradeSource);
                         watch.status().version(hit.version());
                         watch.version(hit.version());
                         watches.put(id, watch);

@@ -46,6 +46,7 @@ import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.test.VersionUtils;
 import org.elasticsearch.xpack.watcher.actions.ActionWrapper;
 import org.elasticsearch.xpack.watcher.actions.ExecutableAction;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
@@ -73,7 +74,9 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -82,6 +85,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class WatchStoreTests extends ESTestCase {
+
     private WatchStore watchStore;
     private WatcherClientProxy clientProxy;
     private Watch.Parser parser;
@@ -136,7 +140,7 @@ public class WatchStoreTests extends ESTestCase {
 
     public void testStartRefreshFailed() {
         ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
-        createWatchIndexMetaData(csBuilder);
+        createWatchIndexMetaData(csBuilder, VersionUtils.randomVersion(random()));
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 0);
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
@@ -156,7 +160,7 @@ public class WatchStoreTests extends ESTestCase {
 
     public void testStartSearchFailed() {
         ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
-        createWatchIndexMetaData(csBuilder);
+        createWatchIndexMetaData(csBuilder, VersionUtils.randomVersion(random()));
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
@@ -180,7 +184,7 @@ public class WatchStoreTests extends ESTestCase {
 
     public void testStartNoWatchStored() throws Exception {
         ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
-        createWatchIndexMetaData(csBuilder);
+        createWatchIndexMetaData(csBuilder, VersionUtils.randomVersion(random()));
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
@@ -201,8 +205,16 @@ public class WatchStoreTests extends ESTestCase {
     }
 
     public void testStartWatchStored() throws Exception {
+        boolean requireUpgradeSource = randomBoolean();
+        Version indexVersion;
+        if (requireUpgradeSource) {
+            indexVersion = VersionUtils.randomVersionBetween(random(), Version.V_2_0_0, Version.V_2_4_4);
+        } else {
+            indexVersion = VersionUtils.randomVersionBetween(random(), Version.V_5_0_0_alpha1, Version.CURRENT);
+        }
+        logger.info("Using index version [{}]", indexVersion);
         ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
-        createWatchIndexMetaData(csBuilder);
+        createWatchIndexMetaData(csBuilder, indexVersion);
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
@@ -233,10 +245,10 @@ public class WatchStoreTests extends ESTestCase {
         when(watch3.status()).thenReturn(status);
         Watch watch4 = mock(Watch.class);
         when(watch4.status()).thenReturn(status);
-        when(parser.parse("_id1", true, source, XContentType.JSON, true)).thenReturn(watch1);
-        when(parser.parse("_id2", true, source, XContentType.JSON, true)).thenReturn(watch2);
-        when(parser.parse("_id3", true, source, XContentType.JSON, true)).thenReturn(watch3);
-        when(parser.parse("_id4", true, source, XContentType.JSON, true)).thenReturn(watch4);
+        when(parser.parse("_id1", true, source, XContentType.JSON, requireUpgradeSource)).thenReturn(watch1);
+        when(parser.parse("_id2", true, source, XContentType.JSON, requireUpgradeSource)).thenReturn(watch2);
+        when(parser.parse("_id3", true, source, XContentType.JSON, requireUpgradeSource)).thenReturn(watch3);
+        when(parser.parse("_id4", true, source, XContentType.JSON, requireUpgradeSource)).thenReturn(watch4);
 
         when(clientProxy.clearScroll(anyString())).thenReturn(new ClearScrollResponse(true, 0));
 
@@ -253,7 +265,7 @@ public class WatchStoreTests extends ESTestCase {
 
     public void testUsageStats() throws Exception {
         ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
-        createWatchIndexMetaData(csBuilder);
+        createWatchIndexMetaData(csBuilder, VersionUtils.randomVersion(random()));
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
@@ -315,7 +327,7 @@ public class WatchStoreTests extends ESTestCase {
             };
             when(watch.transform()).thenReturn(randomFrom(testTransform, null));
 
-            when(parser.parse("_id" + i, true, source, XContentType.JSON, true)).thenReturn(watch);
+            when(parser.parse(eq("_id" + i), eq(true), eq(source), eq(XContentType.JSON), anyBoolean())).thenReturn(watch);
         }
 
         SearchResponse searchResponse = mockSearchResponse(1, 1, hitCount, hits.toArray(new SearchHit[] {}));
@@ -359,7 +371,7 @@ public class WatchStoreTests extends ESTestCase {
 
     public void testThatCleaningWatchesWorks() throws Exception {
         ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
-        createWatchIndexMetaData(csBuilder);
+        createWatchIndexMetaData(csBuilder, VersionUtils.randomVersion(random()));
 
         RefreshResponse refreshResponse = mockRefreshResponse(1, 1);
         when(clientProxy.refresh(any(RefreshRequest.class))).thenReturn(refreshResponse);
@@ -377,7 +389,7 @@ public class WatchStoreTests extends ESTestCase {
         Watch watch = mock(Watch.class);
         WatchStatus status = mock(WatchStatus.class);
         when(watch.status()).thenReturn(status);
-        when(parser.parse("_id1", true, source, XContentType.JSON, true)).thenReturn(watch);
+        when(parser.parse(eq("_id1"), eq(true), eq(source), eq(XContentType.JSON), anyBoolean())).thenReturn(watch);
 
         when(clientProxy.clearScroll(anyString())).thenReturn(new ClearScrollResponse(true, 0));
 
@@ -446,10 +458,10 @@ public class WatchStoreTests extends ESTestCase {
         when(watch3.status()).thenReturn(status);
         Watch watch4 = mock(Watch.class);
         when(watch4.status()).thenReturn(status);
-        when(parser.parse("_id1", true, source, XContentType.JSON, true)).thenReturn(watch1);
-        when(parser.parse("_id2", true, source, XContentType.JSON, true)).thenReturn(watch2);
-        when(parser.parse("_id3", true, source, XContentType.JSON, true)).thenReturn(watch3);
-        when(parser.parse("_id4", true, source, XContentType.JSON, true)).thenReturn(watch4);
+        when(parser.parse(eq("_id1"), eq(true), eq(source), eq(XContentType.JSON), anyBoolean())).thenReturn(watch1);
+        when(parser.parse(eq("_id2"), eq(true), eq(source), eq(XContentType.JSON), anyBoolean())).thenReturn(watch2);
+        when(parser.parse(eq("_id3"), eq(true), eq(source), eq(XContentType.JSON), anyBoolean())).thenReturn(watch3);
+        when(parser.parse(eq("_id4"), eq(true), eq(source), eq(XContentType.JSON), anyBoolean())).thenReturn(watch4);
 
         when(clientProxy.clearScroll(anyString())).thenReturn(new ClearScrollResponse(true, 0));
 
@@ -514,16 +526,14 @@ public class WatchStoreTests extends ESTestCase {
         assertThat(watchStore.validate(csBuilder.build()), Matchers.is(false));
     }
 
-
-
-    /*
+    /**
      * Creates the standard cluster state metadata for the watches index
      * with shards/replicas being marked as started
      */
-    private void createWatchIndexMetaData(ClusterState.Builder builder) {
+    private void createWatchIndexMetaData(ClusterState.Builder builder, Version version) {
         MetaData.Builder metaDataBuilder = MetaData.builder();
         RoutingTable.Builder routingTableBuilder = RoutingTable.builder();
-        Settings settings = settings(Version.CURRENT)
+        Settings settings = settings(version)
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 1)
                 .build();
