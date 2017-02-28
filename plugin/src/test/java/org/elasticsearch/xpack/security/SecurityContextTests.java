@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.security;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.util.concurrent.ThreadContext.StoredContext;
@@ -65,7 +66,7 @@ public class SecurityContextTests extends ESTestCase {
 
         assertEquals(authentication, securityContext.getAuthentication());
         assertEquals(user, securityContext.getUser());
-        assertSettingDeprecations(AuthenticationService.SIGN_USER_HEADER);
+        assertSettingDeprecationsAndWarnings(new Setting<?>[]{AuthenticationService.SIGN_USER_HEADER});
     }
 
     public void testSetUser() {
@@ -78,7 +79,7 @@ public class SecurityContextTests extends ESTestCase {
         IllegalStateException e = expectThrows(IllegalStateException.class,
                 () -> securityContext.setUser(randomFrom(user, SystemUser.INSTANCE), Version.CURRENT));
         assertEquals("authentication is already present in the context", e.getMessage());
-        assertSettingDeprecations(AuthenticationService.SIGN_USER_HEADER);
+        assertSettingDeprecationsAndWarnings(new Setting<?>[]{AuthenticationService.SIGN_USER_HEADER});
     }
 
     public void testExecuteAsUser() throws IOException {
@@ -104,6 +105,6 @@ public class SecurityContextTests extends ESTestCase {
         assertNotNull(originalContext);
         originalContext.restore();
         assertEquals(original, securityContext.getUser());
-        assertSettingDeprecations(AuthenticationService.SIGN_USER_HEADER);
+        assertSettingDeprecationsAndWarnings(new Setting<?>[]{AuthenticationService.SIGN_USER_HEADER});
     }
 }
