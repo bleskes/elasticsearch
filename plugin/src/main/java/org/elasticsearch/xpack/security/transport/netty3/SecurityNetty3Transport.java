@@ -63,6 +63,7 @@ public class SecurityNetty3Transport extends Netty3Transport {
                                    @Nullable IPFilter authenticator, SSLService sslService, NamedWriteableRegistry namedWriteableRegistry,
                                    CircuitBreakerService circuitBreakerService) {
         super(settings, threadPool, networkService, bigArrays, namedWriteableRegistry, circuitBreakerService);
+        deprecationLogger.deprecated("transport type [security3] is deprecated");
         this.authenticator = authenticator;
         this.ssl = TRANSPORT_SSL_ENABLED.get(settings);
         this.sslService = sslService;
