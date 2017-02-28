@@ -23,6 +23,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -30,6 +31,7 @@ import org.elasticsearch.xpack.XPackFeatureSet;
 import org.elasticsearch.xpack.action.XPackUsageRequestBuilder;
 import org.elasticsearch.xpack.action.XPackUsageResponse;
 import org.elasticsearch.xpack.security.SecurityFeatureSet;
+import org.elasticsearch.xpack.security.SecurityTemplateService;
 import org.elasticsearch.xpack.security.action.role.ClearRolesCacheRequestBuilder;
 import org.elasticsearch.xpack.security.action.role.ClearRolesCacheResponse;
 import org.elasticsearch.xpack.security.action.role.GetRolesResponse;
@@ -176,7 +178,11 @@ public class OldSecurityIndexBackwardsCompatibilityTests extends AbstractOldXPac
         Exception e = expectThrows(ElasticsearchSecurityException.class, () -> bwcTestUserClient.prepareSearch("index3").get());
         assertEquals("action [indices:data/read/search] is unauthorized for user [bwc_test_user]", e.getMessage());
 
-        // try adding a user
+        // try adding a user and role
+        assertBusy(() -> {
+            internalCluster().getInstances(ClusterService.class)
+                    .forEach(cs -> SecurityTemplateService.securityIndexMappingAndTemplateUpToDate(cs.state(), logger));
+        });
         PutRoleResponse roleResponse = securityClient.preparePutRole("test_role").addIndices(
                 new String[] { "index3" },
                 new String[] { "all" },
