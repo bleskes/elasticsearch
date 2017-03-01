@@ -18,6 +18,7 @@
 package org.elasticsearch.smoketest;
 
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
+
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -30,9 +31,8 @@ import org.elasticsearch.script.ScriptSettings;
 import org.elasticsearch.script.mustache.MustacheScriptEngineService;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.elasticsearch.xpack.XPackPlugin;
-import org.elasticsearch.xpack.common.text.TextTemplateEngine;
 import org.elasticsearch.xpack.common.text.TextTemplate;
+import org.elasticsearch.xpack.common.text.TextTemplateEngine;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -59,7 +59,7 @@ public class WatcherTemplateIT extends ESTestCase {
         ScriptContextRegistry registry = new ScriptContextRegistry(Collections.singletonList(new ScriptContext.Plugin("xpack", "watch")));
 
         ScriptEngineRegistry scriptEngineRegistry = new ScriptEngineRegistry(
-                Collections.singleton(new MustacheScriptEngineService(setting))
+                Collections.singleton(new MustacheScriptEngineService())
         );
         ScriptSettings scriptSettings = new ScriptSettings(scriptEngineRegistry, registry);
         ScriptService scriptService = new ScriptService(setting, environment, resourceWatcherService, scriptEngineRegistry,
