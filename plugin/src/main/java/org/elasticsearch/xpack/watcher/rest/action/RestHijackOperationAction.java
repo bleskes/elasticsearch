@@ -68,13 +68,14 @@ public class RestHijackOperationAction extends WatcherRestHandler {
         if (request.hasParam("id")) {
             request.param("id");
         }
-        XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
-        jsonBuilder.startObject().field("error", "This endpoint is not supported for " +
-                request.method().name() + " on " + WatchStore.INDEX + " index. Please use " +
-                request.method().name() + " " + URI_BASE + "/watch/<watch_id> instead");
-        jsonBuilder.field("status", RestStatus.BAD_REQUEST.getStatus());
-        jsonBuilder.endObject();
-        return channel -> channel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, jsonBuilder));
+        try (XContentBuilder jsonBuilder = XContentFactory.jsonBuilder()) {
+            jsonBuilder.startObject().field("error", "This endpoint is not supported for " +
+                    request.method().name() + " on " + WatchStore.INDEX + " index. Please use " +
+                    request.method().name() + " " + URI_BASE + "/watch/<watch_id> instead");
+            jsonBuilder.field("status", RestStatus.BAD_REQUEST.getStatus());
+            jsonBuilder.endObject();
+            return channel -> channel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, jsonBuilder));
+        }
     }
 
     private static class UnsupportedHandler extends WatcherRestHandler {
@@ -89,14 +90,13 @@ public class RestHijackOperationAction extends WatcherRestHandler {
             if (request.hasParam("id")) {
                 request.param("id");
             }
-            XContentBuilder jsonBuilder = XContentFactory.jsonBuilder();
-            jsonBuilder.startObject().field("error", "This endpoint is not supported for " +
-                    request.method().name() + " on " + WatchStore.INDEX + " index.");
-            jsonBuilder.field("status", RestStatus.BAD_REQUEST.getStatus());
-            jsonBuilder.endObject();
-            return channel -> channel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, jsonBuilder));
+            try (XContentBuilder jsonBuilder = XContentFactory.jsonBuilder()) {
+                jsonBuilder.startObject().field("error", "This endpoint is not supported for " +
+                        request.method().name() + " on " + WatchStore.INDEX + " index.");
+                jsonBuilder.field("status", RestStatus.BAD_REQUEST.getStatus());
+                jsonBuilder.endObject();
+                return channel -> channel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, jsonBuilder));
+            }
         }
-
     }
-
 }

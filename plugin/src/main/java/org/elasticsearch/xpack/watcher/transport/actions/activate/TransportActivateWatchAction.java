@@ -80,6 +80,4 @@ public class TransportActivateWatchAction extends WatcherTransportAction<Activat
     protected ClusterBlockException checkBlock(ActivateWatchRequest request, ClusterState state) {
         return state.blocks().indexBlockedException(ClusterBlockLevel.WRITE, WatchStore.INDEX);
     }
-
-
 }
