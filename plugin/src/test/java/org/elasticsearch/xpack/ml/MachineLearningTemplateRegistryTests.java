@@ -42,13 +42,11 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelState;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.Quantiles;
 import org.elasticsearch.xpack.ml.job.results.CategoryDefinition;
 import org.elasticsearch.xpack.ml.job.results.Result;
-import org.elasticsearch.xpack.ml.notifications.AuditActivity;
 import org.elasticsearch.xpack.ml.notifications.AuditMessage;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 
-import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 
 import static org.elasticsearch.mock.orig.Mockito.doAnswer;
@@ -209,8 +207,7 @@ public class MachineLearningTemplateRegistryTests extends ESTestCase {
             assertNotNull(request);
             assertEquals(templateRegistry.mlNotificationIndexSettings().build(), request.settings());
             assertTrue(request.mappings().containsKey(AuditMessage.TYPE.getPreferredName()));
-            assertTrue(request.mappings().containsKey(AuditActivity.TYPE.getPreferredName()));
-            assertEquals(2, request.mappings().size());
+            assertEquals(1, request.mappings().size());
             assertEquals(Auditor.NOTIFICATIONS_INDEX, request.template());
             assertEquals(new Integer(Version.CURRENT.id), request.version());
         });
