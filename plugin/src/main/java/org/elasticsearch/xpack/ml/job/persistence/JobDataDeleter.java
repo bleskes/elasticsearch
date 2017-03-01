@@ -76,7 +76,7 @@ public class JobDataDeleter {
      * @param listener Response listener
      */
     public void deleteResultsFromTime(long cutoffEpochMs, ActionListener<Boolean> listener) {
-        String index = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String index = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
 
         RangeQueryBuilder timeRange = QueryBuilders.rangeQuery(Result.TIMESTAMP.getPreferredName());
         timeRange.gte(cutoffEpochMs);
@@ -128,7 +128,7 @@ public class JobDataDeleter {
             ++deletedModelStateCount;
         }
 
-        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobResultsIndexName(modelSnapshot.getJobId()),
+        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobResultsAliasedName(modelSnapshot.getJobId()),
                 ModelSnapshot.TYPE.getPreferredName(), snapshotDocId));
         ++deletedModelSnapshotCount;
     }
@@ -137,7 +137,7 @@ public class JobDataDeleter {
      * Delete all results marked as interim
      */
     public void deleteInterimResults() {
-        String index = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String index = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
 
         QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM.getPreferredName(), true);
 

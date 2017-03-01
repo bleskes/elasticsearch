@@ -14,7 +14,6 @@
  */
 package org.elasticsearch.xpack.ml.job.persistence;
 
-import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
@@ -34,16 +33,12 @@ import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
-import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.Index;
-import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
@@ -144,9 +139,12 @@ public class JobProviderTests extends ESTestCase {
 
     @SuppressWarnings("unchecked")
     public void testCreateJobResultsIndex() {
+        String resultsIndexName = AnomalyDetectorsIndex.RESULTS_INDEX_PREFIX + AnomalyDetectorsIndex.RESULTS_INDEX_DEFAULT;
+
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
+        clientBuilder.createIndexRequest(resultsIndexName, captor);
+        clientBuilder.prepareAlias(resultsIndexName, AnomalyDetectorsIndex.jobResultsAliasedName("foo"));
         clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         Job.Builder job = buildJobBuilder("foo");
@@ -156,13 +154,21 @@ public class JobProviderTests extends ESTestCase {
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(ImmutableOpenMap.of())).build();
 
+        ClusterService clusterService = mock(ClusterService.class);
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
+
         provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 CreateIndexRequest request = captor.getValue();
                 assertNotNull(request);
-                assertEquals(AnomalyDetectorsIndex.jobResultsIndexName("foo"), request.index());
-                clientBuilder.verifyIndexCreated(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+                assertEquals(resultsIndexName, request.index());
+                clientBuilder.verifyIndexCreated(resultsIndexName);
                 resultHolder.set(aBoolean);
             }
 
@@ -179,7 +185,8 @@ public class JobProviderTests extends ESTestCase {
     @SuppressWarnings("unchecked")
     public void testCreateJobWithExistingIndex() {
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
-        clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsIndexName("foo"), AnomalyDetectorsIndex.jobResultsIndexName("foo123"));
+        clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsAliasedName("foo"),
+                AnomalyDetectorsIndex.jobResultsAliasedName("foo123"));
         clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         GetMappingsResponse getMappingsResponse = mock(GetMappingsResponse.class);
@@ -187,7 +194,7 @@ public class JobProviderTests extends ESTestCase {
 
         ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings =
                 ImmutableOpenMap.<String, ImmutableOpenMap<String, MappingMetaData>>builder()
-                        .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), typeMappings).build();
+                        .fPut(AnomalyDetectorsIndex.jobResultsAliasedName("foo"), typeMappings).build();
         when(getMappingsResponse.mappings()).thenReturn(mappings);
         clientBuilder.prepareGetMapping(getMappingsResponse);
 
@@ -196,7 +203,7 @@ public class JobProviderTests extends ESTestCase {
         JobProvider provider = createProvider(clientBuilder.build());
 
         Index index = mock(Index.class);
-        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsAliasedName("foo"));
         IndexMetaData indexMetaData = mock(IndexMetaData.class);
         when(indexMetaData.getIndex()).thenReturn(index);
 
@@ -204,26 +211,26 @@ public class JobProviderTests extends ESTestCase {
         when(indexMetaData.getAliases()).thenReturn(aliases);
 
         ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
-                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), indexMetaData).build();
+                .fPut(AnomalyDetectorsIndex.jobResultsAliasedName("foo"), indexMetaData).build();
 
-        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
+        ClusterState cs2 = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
 
         ClusterService clusterService = mock(ClusterService.class);
 
         doAnswer(invocationOnMock -> {
             AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs);
+            task.execute(cs2);
             return null;
         }).when(clusterService).submitStateUpdateTask(eq("put-job-foo123"), any(AckedClusterStateUpdateTask.class));
 
         doAnswer(invocationOnMock -> {
             AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
-            task.execute(cs);
+            task.execute(cs2);
             return null;
         }).when(clusterService).submitStateUpdateTask(eq("index-aliases"), any(AckedClusterStateUpdateTask.class));
 
-        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
+        provider.createJobResultIndex(job.build(), cs2, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 assertTrue(aBoolean);
@@ -239,10 +246,13 @@ public class JobProviderTests extends ESTestCase {
 
     @SuppressWarnings("unchecked")
     public void testCreateJobRelatedIndicies_createsAliasBecauseIndexNameIsSet() {
+        String indexName = AnomalyDetectorsIndex.RESULTS_INDEX_PREFIX + "custom-bar";
+        String aliasName = AnomalyDetectorsIndex.jobResultsAliasedName("foo");
+
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
-        clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsIndexName("bar"), AnomalyDetectorsIndex.jobResultsIndexName("foo"));
+        clientBuilder.createIndexRequest(indexName, captor);
+        clientBuilder.prepareAlias(indexName, aliasName);
         clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         Job.Builder job = buildJobBuilder("foo");
@@ -250,70 +260,23 @@ public class JobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
 
-        Index index = mock(Index.class);
-        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
-        IndexMetaData indexMetaData = mock(IndexMetaData.class);
-        when(indexMetaData.getIndex()).thenReturn(index);
-        ImmutableOpenMap<String, AliasMetaData> aliases = ImmutableOpenMap.of();
-        when(indexMetaData.getAliases()).thenReturn(aliases);
-
-        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
-                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), indexMetaData).build();
+        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder().build();
 
         ClusterState cs = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
+
+        ClusterService clusterService = mock(ClusterService.class);
+
+        doAnswer(invocationOnMock -> {
+            AckedClusterStateUpdateTask<Boolean> task = (AckedClusterStateUpdateTask<Boolean>) invocationOnMock.getArguments()[1];
+            task.execute(cs);
+            return null;
+        }).when(clusterService).submitStateUpdateTask(eq("put-job-foo"), any(AckedClusterStateUpdateTask.class));
 
         provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
             @Override
             public void onResponse(Boolean aBoolean) {
                 verify(client.admin().indices(), times(1)).prepareAliases();
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                fail(e.toString());
-            }
-        });
-    }
-
-    @SuppressWarnings("unchecked")
-    public void testCreateJobRelatedIndicies_doesntCreateAliasIfIndexNameIsSameAsJobId() {
-        MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
-        ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
-        clientBuilder.createIndexRequest(AnomalyDetectorsIndex.jobResultsIndexName("foo"), captor);
-        clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
-
-        GetMappingsResponse getMappingsResponse = mock(GetMappingsResponse.class);
-        ImmutableOpenMap<String, MappingMetaData> typeMappings = ImmutableOpenMap.of();
-        ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings =
-                ImmutableOpenMap.<String, ImmutableOpenMap<String, MappingMetaData>>builder()
-                        .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), typeMappings).build();
-        when(getMappingsResponse.mappings()).thenReturn(mappings);
-        clientBuilder.prepareGetMapping(getMappingsResponse);
-
-        Job.Builder job = buildJobBuilder("foo");
-        job.setResultsIndexName("foo");
-        Client client = clientBuilder.build();
-        JobProvider provider = createProvider(client);
-
-        Index index = mock(Index.class);
-        when(index.getName()).thenReturn(AnomalyDetectorsIndex.jobResultsIndexName("foo"));
-        IndexMetaData indexMetaData = mock(IndexMetaData.class);
-        when(indexMetaData.getIndex()).thenReturn(index);
-        ImmutableOpenMap<String, AliasMetaData> aliases = ImmutableOpenMap.of();
-        when(indexMetaData.getAliases()).thenReturn(aliases);
-
-        ImmutableOpenMap<String, IndexMetaData> indexMap = ImmutableOpenMap.<String, IndexMetaData>builder()
-                .fPut(AnomalyDetectorsIndex.jobResultsIndexName("foo"), indexMetaData).build();
-
-        ClusterState cs = ClusterState.builder(new ClusterName("_name"))
-                .metaData(MetaData.builder().putCustom(MlMetadata.TYPE, MlMetadata.EMPTY_METADATA).indices(indexMap)).build();
-
-        provider.createJobResultIndex(job.build(), cs, new ActionListener<Boolean>() {
-            @Override
-            public void onResponse(Boolean aBoolean) {
-                verify(client.admin().indices(), never()).prepareAliases();
-                verify(clientBuilder.build().admin().indices(), times(1)).preparePutMapping(any());
             }
 
             @Override
@@ -331,8 +294,8 @@ public class JobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
-        clientBuilder.addIndicesExistsResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true)
-                .addIndicesDeleteResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true,
+        clientBuilder.addIndicesExistsResponse(AnomalyDetectorsIndex.jobResultsAliasedName(jobId), true)
+                .addIndicesDeleteResponse(AnomalyDetectorsIndex.jobResultsAliasedName(jobId), true,
                 false, actionListener);
         clientBuilder.build();
 
@@ -351,8 +314,8 @@ public class JobProviderTests extends ESTestCase {
         Client client = clientBuilder.build();
         JobProvider provider = createProvider(client);
         clientBuilder.resetIndices();
-        clientBuilder.addIndicesExistsResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true)
-                .addIndicesDeleteResponse(AnomalyDetectorsIndex.jobResultsIndexName(jobId), true,
+        clientBuilder.addIndicesExistsResponse(AnomalyDetectorsIndex.jobResultsAliasedName(jobId), true)
+                .addIndicesDeleteResponse(AnomalyDetectorsIndex.jobResultsAliasedName(jobId), true,
                 true, actionListener);
         clientBuilder.build();
 
@@ -376,7 +339,7 @@ public class JobProviderTests extends ESTestCase {
         source.add(map);
 
         QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         int from = 0;
         int size = 10;
         Client client = getMockedClient(queryBuilder -> {queryBuilderHolder[0] = queryBuilder;}, response);
@@ -410,7 +373,7 @@ public class JobProviderTests extends ESTestCase {
         source.add(map);
 
         QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         int from = 99;
         int size = 17;
 
@@ -445,7 +408,7 @@ public class JobProviderTests extends ESTestCase {
         source.add(map);
 
         QueryBuilder[] queryBuilderHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         int from = 99;
         int size = 17;
 
@@ -477,7 +440,7 @@ public class JobProviderTests extends ESTestCase {
         Long timestamp = 98765432123456789L;
         List<Map<String, Object>> source = new ArrayList<>();
 
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(false, source);
 
         Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
@@ -501,7 +464,7 @@ public class JobProviderTests extends ESTestCase {
         map.put("bucket_span", 22);
         source.add(map);
 
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -529,7 +492,7 @@ public class JobProviderTests extends ESTestCase {
         map.put("is_interim", true);
         source.add(map);
 
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(queryBuilder -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -568,7 +531,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 14;
         int size = 2;
         String sortfield = "minefield";
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -618,7 +581,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 14;
         int size = 2;
         String sortfield = "minefield";
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
 
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
@@ -676,7 +639,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 14;
         int size = 2;
         String sortfield = "minefield";
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -713,7 +676,7 @@ public class JobProviderTests extends ESTestCase {
             source.add(recordMap);
         }
 
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -742,7 +705,7 @@ public class JobProviderTests extends ESTestCase {
             source.add(recordMap);
         }
 
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -768,7 +731,7 @@ public class JobProviderTests extends ESTestCase {
 
         source.add(map);
 
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         int from = 0;
         int size = 10;
         Client client = getMockedClient(q -> {}, response);
@@ -794,7 +757,7 @@ public class JobProviderTests extends ESTestCase {
         source.put("category_id", categoryId);
         source.put("terms", terms);
 
-        SearchResponse response = createSearchResponse(Collections.singletonList(source));
+        SearchResponse response = createSearchResponse(true, Collections.singletonList(source));
         Client client = getMockedClient(q -> {}, response);
         JobProvider provider = createProvider(client);
         @SuppressWarnings({"unchecked", "rawtypes"})
@@ -837,7 +800,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 4;
         int size = 3;
         QueryBuilder[] qbHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(q -> qbHolder[0] = q, response);
         JobProvider provider = createProvider(client);
 
@@ -899,7 +862,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 4;
         int size = 3;
         QueryBuilder[] qbHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(q -> qbHolder[0] = q, response);
         JobProvider provider = createProvider(client);
 
@@ -954,7 +917,7 @@ public class JobProviderTests extends ESTestCase {
 
         int from = 4;
         int size = 3;
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(qb -> {}, response);
         JobProvider provider = createProvider(client);
 
@@ -1005,7 +968,7 @@ public class JobProviderTests extends ESTestCase {
         int from = 4;
         int size = 3;
         QueryBuilder[] qbHolder = new QueryBuilder[1];
-        SearchResponse response = createSearchResponse(source);
+        SearchResponse response = createSearchResponse(true, source);
         Client client = getMockedClient(qb -> qbHolder[0] = qb, response);
         JobProvider provider = createProvider(client);
 
@@ -1160,7 +1123,7 @@ public class JobProviderTests extends ESTestCase {
         return getResponse;
     }
 
-    private static SearchResponse createSearchResponse(List<Map<String, Object>> source) throws IOException {
+    private static SearchResponse createSearchResponse(boolean exists, List<Map<String, Object>> source) throws IOException {
         SearchResponse response = mock(SearchResponse.class);
         List<SearchHit> list = new ArrayList<>();
 
@@ -1169,11 +1132,11 @@ public class JobProviderTests extends ESTestCase {
 
             Map<String, SearchHitField> fields = new HashMap<>();
             fields.put("field_1", new SearchHitField("field_1", Arrays.asList("foo")));
-            fields.put("field_2", new
-            SearchHitField ("field_2", Arrays.asList("foo")));
+            fields.put("field_2", new SearchHitField("field_2", Arrays.asList("foo")));
 
-            SearchHit hit= new SearchHit(123,String.valueOf(map.hashCode()), new Text("foo"), fields)
-                .sourceRef(XContentFactory.jsonBuilder().map(_source).bytes());
+            SearchHit hit = new SearchHit(123, String.valueOf(map.hashCode()), new Text("foo"), fields)
+                    .sourceRef(XContentFactory.jsonBuilder().map(_source).bytes());
+
             list.add(hit);
         }
         SearchHits hits = new SearchHits(list.toArray(new SearchHit[0]), source.size(), 1);

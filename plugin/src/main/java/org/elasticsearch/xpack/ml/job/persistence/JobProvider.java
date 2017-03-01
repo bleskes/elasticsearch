@@ -37,14 +37,12 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -63,7 +61,6 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
-import org.elasticsearch.xpack.ml.MachineLearning;
 import org.elasticsearch.xpack.ml.action.DeleteJobAction;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
 import org.elasticsearch.xpack.ml.job.config.Job;
@@ -133,51 +130,50 @@ public class JobProvider {
      */
     public void createJobResultIndex(Job job, ClusterState state, ActionListener<Boolean> listener) {
         Collection<String> termFields = (job.getAnalysisConfig() != null) ? job.getAnalysisConfig().termFields() : Collections.emptyList();
-        String jobId = job.getId();
-        boolean createIndexAlias = !job.getResultsIndexName().equals(job.getId());
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(job.getResultsIndexName());
 
-        if (createIndexAlias) {
+
+            String aliasName = AnomalyDetectorsIndex.jobResultsAliasedName(job.getId());
+            String indexName = job.getResultsIndexName();
+
+
             final ActionListener<Boolean> responseListener = listener;
             listener = ActionListener.wrap(aBoolean -> {
                         client.admin().indices().prepareAliases()
-                                .addAlias(indexName, AnomalyDetectorsIndex.jobResultsIndexName(jobId))
+                                .addAlias(indexName, aliasName)
                                 .execute(ActionListener.wrap(r -> responseListener.onResponse(true), responseListener::onFailure));
                     },
                     listener::onFailure);
-        }
 
-        // Indices can be shared, so only create if it doesn't exist already. Saves us a roundtrip if
-        // already in the CS
-        if (!state.getMetaData().hasIndex(indexName)) {
-            LOGGER.trace("ES API CALL: create index {}", indexName);
-            CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
+            // Indices can be shared, so only create if it doesn't exist already. Saves us a roundtrip if
+            // already in the CS
+            if (!state.getMetaData().hasIndex(indexName)) {
+                LOGGER.trace("ES API CALL: create index {}", indexName);
+                CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
 
-            final ActionListener<Boolean> createdListener = listener;
-            client.admin().indices().create(createIndexRequest,
-                    ActionListener.wrap(
-                            r -> {
-                                updateIndexMappingWithTermFields(indexName, termFields, createdListener);
-                            },
-                            e -> {
-                                // Possible that the index was created while the request was executing,
-                                // so we need to handle that possibility
-                                if (e instanceof ResourceAlreadyExistsException) {
-                                    LOGGER.info("Index already exists");
-                                    // Create the alias
-                                    createdListener.onResponse(true);
-                                } else {
-                                    createdListener.onFailure(e);
+                final ActionListener<Boolean> createdListener = listener;
+                client.admin().indices().create(createIndexRequest,
+                        ActionListener.wrap(
+                                r -> updateIndexMappingWithTermFields(indexName, termFields, createdListener),
+                                e -> {
+                                    // Possible that the index was created while the request was executing,
+                                    // so we need to handle that possibility
+                                    if (e instanceof ResourceAlreadyExistsException) {
+                                        LOGGER.info("Index already exists");
+                                        // Create the alias
+                                        createdListener.onResponse(true);
+                                    } else {
+                                        createdListener.onFailure(e);
+                                    }
                                 }
-                            }
-                    ));
-        } else {
-            // Add the job's term fields to the index mapping
-            final ActionListener<Boolean> updateMappingListener = listener;
-            checkNumberOfFieldsLimit(indexName, termFields.size(), ActionListener.wrap(
-                    r -> updateIndexMappingWithTermFields(indexName, termFields, updateMappingListener),
-                    updateMappingListener::onFailure));
-        }
+                        ));
+            } else {
+                // Add the job's term fields to the index mapping
+                final ActionListener<Boolean> updateMappingListener = listener;
+                checkNumberOfFieldsLimit(indexName, termFields.size(), ActionListener.wrap(
+                        r -> updateIndexMappingWithTermFields(indexName, termFields, updateMappingListener),
+                        updateMappingListener::onFailure));
+            }
+
     }
 
     private void updateIndexMappingWithTermFields(String indexName, Collection<String> termFields, ActionListener<Boolean> listener) {
@@ -239,7 +235,7 @@ public class JobProvider {
      */
     // TODO: should live together with createJobRelatedIndices (in case it moves)?
     public void deleteJobRelatedIndices(String jobId, ActionListener<DeleteJobAction.Response> listener) {
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         LOGGER.trace("ES API CALL: delete index {}", indexName);
 
         try {
@@ -257,7 +253,7 @@ public class JobProvider {
      * @param jobId The job id
      */
     public void dataCounts(String jobId, Consumer<DataCounts> handler, Consumer<Exception> errorHandler) {
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         get(jobId, indexName, DataCounts.TYPE.getPreferredName(), DataCounts.documentId(jobId), handler, errorHandler,
                 DataCounts.PARSER, () -> new DataCounts(jobId));
     }
@@ -265,10 +261,9 @@ public class JobProvider {
     private <T, U> void get(String jobId, String indexName, String type, String id, Consumer<T> handler, Consumer<Exception> errorHandler,
                             BiFunction<XContentParser, U, T> objectParser, Supplier<T> notFoundSupplier) {
         GetRequest getRequest = new GetRequest(indexName, type, id);
-
         client.get(getRequest, ActionListener.wrap(
-            response -> {
-                    if (response.isExists() ==  false) {
+                response -> {
+                    if (response.isExists() == false) {
                         handler.accept(notFoundSupplier.get());
                     } else {
                         BytesReference source = response.getSourceAsBytesRef();
@@ -352,7 +347,7 @@ public class JobProvider {
         QueryBuilder boolQuery = new BoolQueryBuilder()
                 .filter(rfb.build())
                 .filter(QueryBuilders.termQuery(Result.RESULT_TYPE.getPreferredName(), Bucket.RESULT_TYPE_VALUE));
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         SearchRequest searchRequest = new SearchRequest(indexName);
         searchRequest.types(Result.TYPE.getPreferredName());
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -474,7 +469,7 @@ public class JobProvider {
                 .filter(new TermsQueryBuilder(AnomalyRecord.PARTITION_FIELD_VALUE.getPreferredName(), partitionFieldValue));
 
         FieldSortBuilder sb = new FieldSortBuilder(Result.TIMESTAMP.getPreferredName()).order(SortOrder.ASC);
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         sourceBuilder.sort(sb);
         sourceBuilder.query(boolQuery);
@@ -606,7 +601,7 @@ public class JobProvider {
             throw new IllegalStateException("Both categoryId and pageParams are specified");
         }
 
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         LOGGER.trace("ES API CALL: search all of type {} from index {} sort ascending {} from {} size {}",
                 CategoryDefinition.TYPE.getPreferredName(), indexName, CategoryDefinition.CATEGORY_ID.getPreferredName(), from, size);
 
@@ -672,7 +667,7 @@ public class JobProvider {
                          QueryBuilder recordFilter, FieldSortBuilder sb, List<String> secondarySort,
                          boolean descending, Consumer<QueryPage<AnomalyRecord>> handler,
                          Consumer<Exception> errorHandler) {
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
 
         recordFilter = new BoolQueryBuilder()
                 .filter(recordFilter)
@@ -727,7 +722,7 @@ public class JobProvider {
                 .interim(Bucket.IS_INTERIM.getPreferredName(), query.isIncludeInterim())
                 .build();
 
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         LOGGER.trace("ES API CALL: search all of result type {} from index {}{}  with filter from {} size {}",
                 () -> Influencer.RESULT_TYPE_VALUE, () -> indexName,
                 () -> (query.getSortField() != null) ?
@@ -794,7 +789,7 @@ public class JobProvider {
             handler.accept(null);
             return;
         }
-        get(jobId, AnomalyDetectorsIndex.jobResultsIndexName(jobId), ModelSnapshot.TYPE.getPreferredName(),
+        get(jobId, AnomalyDetectorsIndex.jobResultsAliasedName(jobId), ModelSnapshot.TYPE.getPreferredName(),
                 ModelSnapshot.documentId(jobId, modelSnapshotId), handler, errorHandler, ModelSnapshot.PARSER, () -> null);
     }
 
@@ -870,7 +865,7 @@ public class JobProvider {
         FieldSortBuilder sb = new FieldSortBuilder(sortField)
                 .order(sortDescending ? SortOrder.DESC : SortOrder.ASC);
 
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         LOGGER.trace("ES API CALL: search all of type {} from index {} sort ascending {} with filter after sort from {} size {}",
                 ModelSnapshot.TYPE, indexName, sortField, from, size);
 
@@ -962,7 +957,7 @@ public class JobProvider {
 
     public QueryPage<ModelDebugOutput> modelDebugOutput(String jobId, int from, int size) {
         SearchResponse searchResponse;
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         LOGGER.trace("ES API CALL: search result type {} from index {} from {}, size {}",
                 ModelDebugOutput.RESULT_TYPE_VALUE, indexName, from, size);
 
@@ -995,7 +990,7 @@ public class JobProvider {
         LOGGER.trace("ES API CALL: get result type {} ID {} for job {}",
                 ModelSizeStats.RESULT_TYPE_VALUE, ModelSizeStats.RESULT_TYPE_FIELD, jobId);
 
-        String indexName = AnomalyDetectorsIndex.jobResultsIndexName(jobId);
+        String indexName = AnomalyDetectorsIndex.jobResultsAliasedName(jobId);
         get(jobId, indexName, Result.TYPE.getPreferredName(), ModelSizeStats.documentId(jobId),
                 handler, errorHandler, (parser, context) -> ModelSizeStats.PARSER.apply(parser, null).build(),
                 () -> {

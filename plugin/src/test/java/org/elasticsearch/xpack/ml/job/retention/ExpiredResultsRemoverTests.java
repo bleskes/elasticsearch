@@ -107,9 +107,9 @@ public class ExpiredResultsRemoverTests extends ESTestCase {
 
         assertThat(capturedDeleteByQueryRequests.size(), equalTo(2));
         DeleteByQueryRequest dbqRequest = capturedDeleteByQueryRequests.get(0);
-        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("results-1")}));
+        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-1")}));
         dbqRequest = capturedDeleteByQueryRequests.get(1);
-        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("results-2")}));
+        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-2")}));
     }
 
     public void testOnTrigger_GivenClientRequestsFailed_StillIteratesThroughJobs() throws IOException {
@@ -124,9 +124,9 @@ public class ExpiredResultsRemoverTests extends ESTestCase {
 
         assertThat(capturedDeleteByQueryRequests.size(), equalTo(2));
         DeleteByQueryRequest dbqRequest = capturedDeleteByQueryRequests.get(0);
-        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("results-1")}));
+        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-1")}));
         dbqRequest = capturedDeleteByQueryRequests.get(1);
-        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("results-2")}));
+        assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-2")}));
     }
 
     private void givenClientRequestsSucceed() {

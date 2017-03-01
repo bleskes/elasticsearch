@@ -112,9 +112,9 @@ public class ExpiredModelSnapshotsRemoverTests extends ESTestCase {
 
         assertThat(capturedSearchRequests.size(), equalTo(2));
         SearchRequest searchRequest = capturedSearchRequests.get(0);
-        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("snapshots-1")}));
+        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("snapshots-1")}));
         searchRequest = capturedSearchRequests.get(1);
-        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("snapshots-2")}));
+        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("snapshots-2")}));
 
         assertThat(capturedDeleteModelSnapshotRequests.size(), equalTo(3));
         DeleteModelSnapshotAction.Request deleteSnapshotRequest = capturedDeleteModelSnapshotRequests.get(0);
@@ -146,9 +146,9 @@ public class ExpiredModelSnapshotsRemoverTests extends ESTestCase {
 
         assertThat(capturedSearchRequests.size(), equalTo(2));
         SearchRequest searchRequest = capturedSearchRequests.get(0);
-        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("snapshots-1")}));
+        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("snapshots-1")}));
         searchRequest = capturedSearchRequests.get(1);
-        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("snapshots-2")}));
+        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("snapshots-2")}));
 
         assertThat(capturedDeleteModelSnapshotRequests.size(), equalTo(0));
     }
@@ -171,9 +171,9 @@ public class ExpiredModelSnapshotsRemoverTests extends ESTestCase {
 
         assertThat(capturedSearchRequests.size(), equalTo(2));
         SearchRequest searchRequest = capturedSearchRequests.get(0);
-        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("snapshots-1")}));
+        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("snapshots-1")}));
         searchRequest = capturedSearchRequests.get(1);
-        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsIndexName("snapshots-2")}));
+        assertThat(searchRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("snapshots-2")}));
 
         assertThat(capturedDeleteModelSnapshotRequests.size(), equalTo(3));
         DeleteModelSnapshotAction.Request deleteSnapshotRequest = capturedDeleteModelSnapshotRequests.get(0);
