@@ -53,4 +53,9 @@ public class UpgradeClusterClientYamlTestSuiteIT extends ESClientYamlSuiteTestCa
                 .put(ThreadContext.PREFIX + ".Authorization", token)
                 .build();
     }
+
+    @Override
+    protected boolean randomizeContentType() {
+        return false;
+    }
 }
