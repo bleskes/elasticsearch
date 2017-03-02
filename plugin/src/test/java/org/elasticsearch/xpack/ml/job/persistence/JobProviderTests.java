@@ -40,14 +40,15 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.ml.MlMetadata;
 import org.elasticsearch.xpack.ml.action.DeleteJobAction;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
 import org.elasticsearch.xpack.ml.job.config.Job;
-import org.elasticsearch.xpack.ml.MlMetadata;
 import org.elasticsearch.xpack.ml.job.persistence.InfluencersQueryBuilder.InfluencersQuery;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.CategorizerState;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
@@ -82,7 +83,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -140,11 +140,12 @@ public class JobProviderTests extends ESTestCase {
     @SuppressWarnings("unchecked")
     public void testCreateJobResultsIndex() {
         String resultsIndexName = AnomalyDetectorsIndex.RESULTS_INDEX_PREFIX + AnomalyDetectorsIndex.RESULTS_INDEX_DEFAULT;
+        QueryBuilder jobFilter = QueryBuilders.termQuery("job_id", "foo");
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
         clientBuilder.createIndexRequest(resultsIndexName, captor);
-        clientBuilder.prepareAlias(resultsIndexName, AnomalyDetectorsIndex.jobResultsAliasedName("foo"));
+        clientBuilder.prepareAlias(resultsIndexName, AnomalyDetectorsIndex.jobResultsAliasedName("foo"), jobFilter);
         clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         Job.Builder job = buildJobBuilder("foo");
@@ -184,9 +185,10 @@ public class JobProviderTests extends ESTestCase {
 
     @SuppressWarnings("unchecked")
     public void testCreateJobWithExistingIndex() {
+        QueryBuilder jobFilter = QueryBuilders.termQuery("job_id", "foo");
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         clientBuilder.prepareAlias(AnomalyDetectorsIndex.jobResultsAliasedName("foo"),
-                AnomalyDetectorsIndex.jobResultsAliasedName("foo123"));
+                AnomalyDetectorsIndex.jobResultsAliasedName("foo123"), jobFilter);
         clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         GetMappingsResponse getMappingsResponse = mock(GetMappingsResponse.class);
@@ -248,11 +250,12 @@ public class JobProviderTests extends ESTestCase {
     public void testCreateJobRelatedIndicies_createsAliasBecauseIndexNameIsSet() {
         String indexName = AnomalyDetectorsIndex.RESULTS_INDEX_PREFIX + "custom-bar";
         String aliasName = AnomalyDetectorsIndex.jobResultsAliasedName("foo");
+        QueryBuilder jobFilter = QueryBuilders.termQuery("job_id", "foo");
 
         MockClientBuilder clientBuilder = new MockClientBuilder(CLUSTER_NAME);
         ArgumentCaptor<CreateIndexRequest> captor = ArgumentCaptor.forClass(CreateIndexRequest.class);
         clientBuilder.createIndexRequest(indexName, captor);
-        clientBuilder.prepareAlias(indexName, aliasName);
+        clientBuilder.prepareAlias(indexName, aliasName, jobFilter);
         clientBuilder.preparePutMapping(mock(PutMappingResponse.class), Result.TYPE.getPreferredName());
 
         Job.Builder job = buildJobBuilder("foo");
