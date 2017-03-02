@@ -32,8 +32,6 @@ import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.discovery.zen.UnicastZenPing;
-import org.elasticsearch.xpack.XPackPlugin;
-import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.node.MockNode;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.plugins.Plugin;
@@ -43,9 +41,10 @@ import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.test.InternalTestCluster;
 import org.elasticsearch.test.NodeConfigurationSource;
 import org.elasticsearch.test.TestCluster;
-import org.elasticsearch.test.discovery.MockZenPing;
 import org.elasticsearch.test.discovery.TestZenDiscovery;
-import org.elasticsearch.transport.MockTcpTransportPlugin;
+import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.ml.MachineLearning;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,6 +75,8 @@ public abstract class TribeTransportTestCase extends ESIntegTestCase {
         builder.put(XPackSettings.MONITORING_ENABLED.getKey(), enabledFeatures.contains(XPackPlugin.MONITORING));
         builder.put(XPackSettings.WATCHER_ENABLED.getKey(), enabledFeatures.contains(XPackPlugin.WATCHER));
         builder.put(XPackSettings.GRAPH_ENABLED.getKey(), enabledFeatures.contains(XPackPlugin.GRAPH));
+        builder.put(XPackSettings.MACHINE_LEARNING_ENABLED.getKey(), enabledFeatures.contains(XPackPlugin.MACHINE_LEARNING));
+        builder.put(MachineLearning.AUTODETECT_PROCESS.getKey(), false);
         return builder.build();
     }
 
@@ -150,8 +151,14 @@ public abstract class TribeTransportTestCase extends ESIntegTestCase {
                 .put(NetworkModule.HTTP_ENABLED.getKey(), false)
                 .put(internalCluster().getDefaultSettings())
                 .put(XPackSettings.SECURITY_ENABLED.getKey(), false) // otherwise it conflicts with mock transport
+                .put(XPackSettings.MACHINE_LEARNING_ENABLED.getKey(), false)
+                .put(MachineLearning.AUTODETECT_PROCESS.getKey(), false)
                 .put("tribe.t1." + XPackSettings.SECURITY_ENABLED.getKey(), false)
                 .put("tribe.t2." + XPackSettings.SECURITY_ENABLED.getKey(), false)
+                .put("tribe.t1." + XPackSettings.MACHINE_LEARNING_ENABLED.getKey(), false)
+                .put("tribe.t2." + XPackSettings.MACHINE_LEARNING_ENABLED.getKey(), false)
+                .put("tribe.t1." + MachineLearning.AUTODETECT_PROCESS.getKey(), false)
+                .put("tribe.t2." + MachineLearning.AUTODETECT_PROCESS.getKey(), false)
                 .put("node.name", "tribe_node") // make sure we can identify threads from this node
                 .put("transport.type", "local")
                 .build();

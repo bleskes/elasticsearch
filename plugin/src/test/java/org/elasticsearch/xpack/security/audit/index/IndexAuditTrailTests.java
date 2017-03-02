@@ -51,6 +51,7 @@ import org.elasticsearch.transport.TransportInfo;
 import org.elasticsearch.transport.TransportMessage;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.ml.MachineLearning;
 import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail.Message;
 import org.elasticsearch.xpack.security.authc.AuthenticationToken;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
@@ -154,6 +155,8 @@ public class IndexAuditTrailTests extends SecurityIntegTestCase {
             public Settings nodeSettings(int nodeOrdinal) {
                 Settings.Builder builder = Settings.builder()
                         .put(super.nodeSettings(nodeOrdinal))
+                        // Disable native ML autodetect_process as the c++ controller won't be available
+                        .put(MachineLearning.AUTODETECT_PROCESS.getKey(), false)
                         .put(XPackSettings.SECURITY_ENABLED.getKey(), useSecurity);
                 if (useSecurity == false && builder.get(NetworkModule.TRANSPORT_TYPE_KEY) == null) {
                     builder.put(NetworkModule.TRANSPORT_TYPE_KEY, MockTcpTransportPlugin.MOCK_TCP_TRANSPORT_NAME);
