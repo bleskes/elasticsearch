@@ -67,7 +67,11 @@ public class SecurityNetty3Transport extends Netty3Transport {
         this.ssl = TRANSPORT_SSL_ENABLED.get(settings);
         this.sslService = sslService;
         this.transportSSLSettings = settings.getByPrefix(setting("transport.ssl."));
+    }
 
+    @Override
+    protected String deprecationMessage() {
+        return "transport type [security3] is deprecated";
     }
 
     @Override

@@ -58,6 +58,11 @@ public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport
     }
 
     @Override
+    protected String deprecationMessage() {
+        return "http type [security3] is deprecated";
+    }
+
+    @Override
     protected void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
         Netty3Utils.maybeDie(e.getCause());
         if (!lifecycle.started()) {

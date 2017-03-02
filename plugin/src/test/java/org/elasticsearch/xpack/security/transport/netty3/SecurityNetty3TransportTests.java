@@ -23,17 +23,19 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.indices.breaker.CircuitBreakerService;
-import org.elasticsearch.xpack.XPackSettings;
-import org.elasticsearch.xpack.ssl.SSLService;
-import org.elasticsearch.xpack.ssl.SSLClientAuth;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.netty3.Netty3MockUtil;
+import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.ssl.SSLClientAuth;
+import org.elasticsearch.xpack.ssl.SSLService;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.junit.After;
 import org.junit.Before;
 
 import javax.net.ssl.SSLEngine;
+
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -58,6 +60,13 @@ public class SecurityNetty3TransportTests extends ESTestCase {
                 .build();
         env = new Environment(settings);
         sslService = new SSLService(settings, env);
+    }
+
+    @Override
+    @After
+    public void tearDown() throws Exception {
+        assertWarnings("transport type [security3] is deprecated");
+        super.tearDown();
     }
 
     public void testThatSSLCanBeDisabledByProfile() throws Exception {

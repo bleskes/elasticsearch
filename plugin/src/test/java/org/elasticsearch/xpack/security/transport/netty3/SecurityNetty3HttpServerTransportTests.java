@@ -24,16 +24,18 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.http.HttpTransportSettings;
 import org.elasticsearch.http.NullDispatcher;
 import org.elasticsearch.http.netty3.Netty3HttpMockUtil;
-import org.elasticsearch.xpack.ssl.SSLService;
-import org.elasticsearch.xpack.ssl.SSLClientAuth;
-import org.elasticsearch.xpack.security.transport.filter.IPFilter;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.xpack.security.transport.filter.IPFilter;
+import org.elasticsearch.xpack.ssl.SSLClientAuth;
+import org.elasticsearch.xpack.ssl.SSLService;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.junit.After;
 import org.junit.Before;
 
 import javax.net.ssl.SSLEngine;
+
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -73,6 +75,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
+        assertWarnings("http type [security3] is deprecated");
     }
 
     public void testOptionalClientAuth() throws Exception {
@@ -89,6 +92,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(true));
+        assertWarnings("http type [security3] is deprecated");
     }
 
     public void testRequiredClientAuth() throws Exception {
@@ -104,6 +108,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(true));
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
+        assertWarnings("http type [security3] is deprecated");
     }
 
     public void testNoClientAuth() throws Exception {
@@ -119,6 +124,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getNeedClientAuth(), is(false));
         assertThat(factory.getPipeline().get(SslHandler.class).getEngine().getWantClientAuth(), is(false));
+        assertWarnings("http type [security3] is deprecated");
     }
 
     public void testCustomSSLConfiguration() throws Exception {
@@ -132,6 +138,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         Netty3HttpMockUtil.setOpenChannelsHandlerToMock(transport);
         ChannelPipelineFactory factory = transport.configureServerChannelPipelineFactory();
         SSLEngine defaultEngine = factory.getPipeline().get(SslHandler.class).getEngine();
+        assertWarnings("http type [security3] is deprecated");
 
         settings = Settings.builder()
                 .put(env.settings())
@@ -147,6 +154,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
         SSLEngine customEngine = factory.getPipeline().get(SslHandler.class).getEngine();
         assertThat(customEngine.getEnabledProtocols(), arrayContaining("TLSv1.2"));
         assertThat(customEngine.getEnabledProtocols(), not(equalTo(defaultEngine.getEnabledProtocols())));
+        assertWarnings("http type [security3] is deprecated");
     }
 
     public void testDisablesCompressionByDefaultForSsl() throws Exception {
@@ -192,6 +200,7 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
                 new NullDispatcher());
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class, transport::configureServerChannelPipelineFactory);
         assertThat(e.getMessage(), containsString("key must be provided"));
+        assertWarnings("http type [security3] is deprecated");
     }
 
     public void testNoExceptionWhenConfiguredWithoutSslKeySSLDisabled() throws Exception {
@@ -207,5 +216,6 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
                 new NullDispatcher());
         assertNotNull(transport.configureServerChannelPipelineFactory());
+        assertWarnings("http type [security3] is deprecated");
     }
 }
