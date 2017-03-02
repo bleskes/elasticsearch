@@ -192,6 +192,8 @@ integTestCluster {
   setting 'xpack.ssl.keystore.path', nodeKeystore.name
   setting 'xpack.ssl.keystore.password', 'keypass'
 
+  setting 'xpack.ml.enabled', 'false'
+
   plugin ':x-pack-elasticsearch:plugin'
 
   // copy keystores into config/
