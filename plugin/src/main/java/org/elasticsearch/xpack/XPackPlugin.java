@@ -110,6 +110,7 @@ import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.Watcher;
 import org.elasticsearch.xpack.watcher.WatcherFeatureSet;
 
+import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.AccessController;
@@ -125,8 +126,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-
-import javax.security.auth.DestroyFailedException;
 
 public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, IngestPlugin, NetworkPlugin {
 
@@ -209,7 +208,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         this.monitoring = new Monitoring(settings, licenseState);
         this.watcher = new Watcher(settings);
         this.graph = new Graph(settings);
-        this.machineLearning = new MachineLearning(settings, env);
+        this.machineLearning = new MachineLearning(settings, env, licenseState);
         // Check if the node is a transport client.
         if (transportClientMode == false) {
             this.extensionsService = new XPackExtensionsService(settings, resolveXPackExtensionsFile(env), getExtensions());
