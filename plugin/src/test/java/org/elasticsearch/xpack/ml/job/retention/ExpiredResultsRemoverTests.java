@@ -46,6 +46,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class ExpiredResultsRemoverTests extends ESTestCase {
@@ -54,6 +55,7 @@ public class ExpiredResultsRemoverTests extends ESTestCase {
     private ClusterService clusterService;
     private ClusterState clusterState;
     private List<DeleteByQueryRequest> capturedDeleteByQueryRequests;
+    private Runnable onFinish;
 
     @Before
     public void setUpTests() {
@@ -72,30 +74,33 @@ public class ExpiredResultsRemoverTests extends ESTestCase {
                      return null;
                  }
              }).when(client).execute(same(MlDeleteByQueryAction.INSTANCE), any(), any());
+        onFinish = mock(Runnable.class);
     }
 
-    public void testOnTrigger_GivenNoJobs() {
+    public void testTrigger_GivenNoJobs() {
         givenClientRequestsSucceed();
         givenJobs(Collections.emptyList());
 
-        createExpiredResultsRemover().onTrigger();
+        createExpiredResultsRemover().trigger(onFinish);
 
+        verify(onFinish).run();
         Mockito.verifyNoMoreInteractions(client);
     }
 
-    public void testOnTrigger_GivenJobsWithoutRetentionPolicy() {
+    public void testTrigger_GivenJobsWithoutRetentionPolicy() {
         givenClientRequestsSucceed();
         givenJobs(Arrays.asList(
                 JobTests.buildJobBuilder("foo").build(),
                 JobTests.buildJobBuilder("bar").build()
         ));
 
-        createExpiredResultsRemover().onTrigger();
+        createExpiredResultsRemover().trigger(onFinish);
 
+        verify(onFinish).run();
         Mockito.verifyNoMoreInteractions(client);
     }
 
-    public void testOnTrigger_GivenJobsWithAndWithoutRetentionPolicy() throws IOException {
+    public void testTrigger_GivenJobsWithAndWithoutRetentionPolicy() throws IOException {
         givenClientRequestsSucceed();
         givenJobs(Arrays.asList(
                 JobTests.buildJobBuilder("none").build(),
@@ -103,16 +108,17 @@ public class ExpiredResultsRemoverTests extends ESTestCase {
                 JobTests.buildJobBuilder("results-2").setResultsRetentionDays(20L).build()
         ));
 
-        createExpiredResultsRemover().onTrigger();
+        createExpiredResultsRemover().trigger(onFinish);
 
         assertThat(capturedDeleteByQueryRequests.size(), equalTo(2));
         DeleteByQueryRequest dbqRequest = capturedDeleteByQueryRequests.get(0);
         assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-1")}));
         dbqRequest = capturedDeleteByQueryRequests.get(1);
         assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-2")}));
+        verify(onFinish).run();
     }
 
-    public void testOnTrigger_GivenClientRequestsFailed_StillIteratesThroughJobs() throws IOException {
+    public void testTrigger_GivenClientRequestsFailed_StillIteratesThroughJobs() throws IOException {
         givenClientRequestsFailed();
         givenJobs(Arrays.asList(
                 JobTests.buildJobBuilder("none").build(),
@@ -120,13 +126,14 @@ public class ExpiredResultsRemoverTests extends ESTestCase {
                 JobTests.buildJobBuilder("results-2").setResultsRetentionDays(20L).build()
         ));
 
-        createExpiredResultsRemover().onTrigger();
+        createExpiredResultsRemover().trigger(onFinish);
 
         assertThat(capturedDeleteByQueryRequests.size(), equalTo(2));
         DeleteByQueryRequest dbqRequest = capturedDeleteByQueryRequests.get(0);
         assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-1")}));
         dbqRequest = capturedDeleteByQueryRequests.get(1);
         assertThat(dbqRequest.indices(), equalTo(new String[] {AnomalyDetectorsIndex.jobResultsAliasedName("results-2")}));
+        verify(onFinish).run();
     }
 
     private void givenClientRequestsSucceed() {
