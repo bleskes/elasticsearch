@@ -49,7 +49,6 @@ import org.elasticsearch.xpack.ml.notifications.Auditor;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
@@ -123,8 +122,8 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
     }
 
     private void addMlNotificationsIndexTemplate(MetaData metaData) {
-        if (templateIsPresentAndUpToDate(Auditor.NOTIFICATIONS_INDEX, metaData) == false) {
-            if (putMlNotificationsIndexTemplateCheck.compareAndSet(false, true)) {
+        if (putMlNotificationsIndexTemplateCheck.compareAndSet(false, true)) {
+            if (templateIsPresentAndUpToDate(Auditor.NOTIFICATIONS_INDEX, metaData) == false) {
                 threadPool.executor(ThreadPool.Names.GENERIC).execute(() -> {
                     putNotificationMessageIndexTemplate((result, error) -> {
                         putMlNotificationsIndexTemplateCheck.set(false);
@@ -136,13 +135,15 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                         }
                     });
                 });
+            } else {
+                putMlNotificationsIndexTemplateCheck.set(false);
             }
         }
     }
 
     private void addMlMetaIndexTemplate(MetaData metaData) {
-        if (templateIsPresentAndUpToDate(AnomalyDetectorsIndex.ML_META_INDEX, metaData) == false) {
-            if (putMlMetaIndexTemplateCheck.compareAndSet(false, true)) {
+        if (putMlMetaIndexTemplateCheck.compareAndSet(false, true)) {
+            if (templateIsPresentAndUpToDate(AnomalyDetectorsIndex.ML_META_INDEX, metaData) == false) {
                 threadPool.executor(ThreadPool.Names.GENERIC).execute(() -> {
                     putMetaIndexTemplate((result, error) -> {
                         putMlMetaIndexTemplateCheck.set(false);
@@ -154,14 +155,16 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                         }
                     });
                 });
+            } else {
+                putMlMetaIndexTemplateCheck.set(false);
             }
         }
     }
 
     private void addStateIndexTemplate(MetaData metaData) {
         String stateIndexName = AnomalyDetectorsIndex.jobStateIndexName();
-        if (templateIsPresentAndUpToDate(stateIndexName, metaData) == false) {
-            if (putStateIndexTemplateCheck.compareAndSet(false, true)) {
+        if (putStateIndexTemplateCheck.compareAndSet(false, true)) {
+            if (templateIsPresentAndUpToDate(stateIndexName, metaData) == false) {
                 threadPool.executor(ThreadPool.Names.GENERIC).execute(() -> {
                     putJobStateIndexTemplate((result, error) -> {
                         putStateIndexTemplateCheck.set(false);
@@ -172,13 +175,15 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                         }
                     });
                 });
+            } else {
+                putStateIndexTemplateCheck.set(false);
             }
         }
     }
 
     private void addResultsIndexTemplate(MetaData metaData) {
-        if (templateIsPresentAndUpToDate(AnomalyDetectorsIndex.jobResultsIndexPrefix(), metaData) == false) {
-            if (putResultsIndexTemplateCheck.compareAndSet(false, true)) {
+        if (putResultsIndexTemplateCheck.compareAndSet(false, true)) {
+            if (templateIsPresentAndUpToDate(AnomalyDetectorsIndex.jobResultsIndexPrefix(), metaData) == false) {
                 threadPool.executor(ThreadPool.Names.GENERIC).execute(() -> {
                     putJobResultsIndexTemplate((result, error) -> {
                         putResultsIndexTemplateCheck.set(false);
@@ -191,6 +196,8 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                         }
                     });
                 });
+            } else {
+                putResultsIndexTemplateCheck.set(false);
             }
         }
     }
