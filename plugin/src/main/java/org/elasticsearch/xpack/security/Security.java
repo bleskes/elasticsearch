@@ -87,12 +87,14 @@ import org.elasticsearch.xpack.security.action.user.AuthenticateAction;
 import org.elasticsearch.xpack.security.action.user.ChangePasswordAction;
 import org.elasticsearch.xpack.security.action.user.DeleteUserAction;
 import org.elasticsearch.xpack.security.action.user.GetUsersAction;
+import org.elasticsearch.xpack.security.action.user.HasPrivilegesAction;
 import org.elasticsearch.xpack.security.action.user.PutUserAction;
 import org.elasticsearch.xpack.security.action.user.SetEnabledAction;
 import org.elasticsearch.xpack.security.action.user.TransportAuthenticateAction;
 import org.elasticsearch.xpack.security.action.user.TransportChangePasswordAction;
 import org.elasticsearch.xpack.security.action.user.TransportDeleteUserAction;
 import org.elasticsearch.xpack.security.action.user.TransportGetUsersAction;
+import org.elasticsearch.xpack.security.action.user.TransportHasPrivilegesAction;
 import org.elasticsearch.xpack.security.action.user.TransportPutUserAction;
 import org.elasticsearch.xpack.security.action.user.TransportSetEnabledAction;
 import org.elasticsearch.xpack.security.audit.AuditTrail;
@@ -134,6 +136,7 @@ import org.elasticsearch.xpack.security.rest.action.role.RestPutRoleAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestChangePasswordAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestDeleteUserAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestGetUsersAction;
+import org.elasticsearch.xpack.security.rest.action.user.RestHasPrivilegesAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestPutUserAction;
 import org.elasticsearch.xpack.security.rest.action.user.RestSetEnabledAction;
 import org.elasticsearch.xpack.security.transport.SecurityServerTransportInterceptor;
@@ -525,7 +528,8 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
                 new ActionHandler<>(DeleteRoleAction.INSTANCE, TransportDeleteRoleAction.class),
                 new ActionHandler<>(ChangePasswordAction.INSTANCE, TransportChangePasswordAction.class),
                 new ActionHandler<>(AuthenticateAction.INSTANCE, TransportAuthenticateAction.class),
-                new ActionHandler<>(SetEnabledAction.INSTANCE, TransportSetEnabledAction.class));
+                new ActionHandler<>(SetEnabledAction.INSTANCE, TransportSetEnabledAction.class),
+                new ActionHandler<>(HasPrivilegesAction.INSTANCE, TransportHasPrivilegesAction.class));
     }
 
     @Override
@@ -558,7 +562,8 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
                 new RestPutRoleAction(settings, restController),
                 new RestDeleteRoleAction(settings, restController),
                 new RestChangePasswordAction(settings, restController, securityContext.get()),
-                new RestSetEnabledAction(settings, restController));
+                new RestSetEnabledAction(settings, restController),
+                new RestHasPrivilegesAction(settings, restController, securityContext.get()));
     }
 
     @Override
