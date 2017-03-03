@@ -18,8 +18,10 @@
 package org.elasticsearch.xpack.test.rest;
 
 import org.apache.http.HttpStatus;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestResponse;
+import org.elasticsearch.xpack.ml.MachineLearningTemplateRegistry;
 import org.elasticsearch.xpack.ml.integration.MlRestTestStateCleaner;
 import org.elasticsearch.xpack.security.SecurityTemplateService;
 import org.junit.After;
@@ -46,17 +48,22 @@ public class XPackRestIT extends XPackRestTestCase {
     }
 
     /**
-     * Waits for the Security template to be created by the {@link SecurityTemplateService}.
+     * Waits for the Security template to be created by the {@link SecurityTemplateService} and
+     * the Machine Learning templates to be created by {@link MachineLearningTemplateRegistry}
      */
     @Before
-    public void waitForSecurityTemplate() throws Exception {
-        String templateApi = "indices.exists_template";
-        Map<String, String> params = singletonMap("name", SecurityTemplateService.SECURITY_TEMPLATE_NAME);
+    public void waitForTemplates() throws Exception {
+        waitForTemplate(SecurityTemplateService.SECURITY_TEMPLATE_NAME);
+        waitForTemplate(Strings.arrayToCommaDelimitedString(MachineLearningTemplateRegistry.TEMPLATE_NAMES));
+    }
 
+    private void waitForTemplate(String templateName) throws Exception {
+        Map<String, String> params = singletonMap("name", templateName);
         AtomicReference<IOException> exceptionHolder = new AtomicReference<>();
         awaitBusy(() -> {
             try {
-                ClientYamlTestResponse response = getAdminExecutionContext().callApi(templateApi, params, emptyList(), emptyMap());
+                ClientYamlTestResponse response = getAdminExecutionContext().callApi("indices.exists_template",
+                        params, emptyList(), emptyMap());
                 // We don't check the version of the template - it is the right one when testing documentation.
                 if (response.getStatusCode() == HttpStatus.SC_OK) {
                     exceptionHolder.set(null);
@@ -70,7 +77,7 @@ public class XPackRestIT extends XPackRestTestCase {
 
         IOException exception = exceptionHolder.get();
         if (exception != null) {
-            throw new IllegalStateException("Exception when waiting for security template to be created", exception);
+            throw new IllegalStateException("Exception when waiting for [" + templateName + "] template to be created", exception);
         }
     }
 }
