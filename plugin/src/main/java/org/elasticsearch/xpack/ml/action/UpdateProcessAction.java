@@ -88,6 +88,10 @@ public class UpdateProcessAction extends
             out.writeBoolean(isUpdated);
         }
 
+        public boolean isUpdated() {
+            return isUpdated;
+        }
+
         @Override
         public RestStatus status() {
             return RestStatus.ACCEPTED;
