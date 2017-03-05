@@ -54,7 +54,12 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         ensureStableCluster(1);
         ensureYellow();
     }
-    
+
+    @Override
+    protected boolean addMockTransportService() {
+        return false;
+    }
+
     public void testMachineLearningPutJobActionRestricted() throws Exception {
         // Pick a license that does not allow machine learning
         License.OperationMode mode = randomInvalidLicenseType();
