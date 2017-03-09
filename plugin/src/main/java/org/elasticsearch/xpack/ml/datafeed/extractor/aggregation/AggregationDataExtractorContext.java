@@ -30,9 +30,10 @@ class AggregationDataExtractorContext {
     final AggregatorFactories.Builder aggs;
     final long start;
     final long end;
+    final boolean includeDocCount;
 
     AggregationDataExtractorContext(String jobId, String timeField, List<String> indexes, List<String> types, QueryBuilder query,
-                                           AggregatorFactories.Builder aggs, long start, long end) {
+                                           AggregatorFactories.Builder aggs, long start, long end, boolean includeDocCount) {
         this.jobId = Objects.requireNonNull(jobId);
         this.timeField = Objects.requireNonNull(timeField);
         this.indexes = indexes.toArray(new String[indexes.size()]);
@@ -41,5 +42,6 @@ class AggregationDataExtractorContext {
         this.aggs = Objects.requireNonNull(aggs);
         this.start = start;
         this.end = end;
+        this.includeDocCount = includeDocCount;
     }
 }
