@@ -82,7 +82,8 @@ public class DataCountsReporterTests extends ESTestCase {
     }
 
     public void testComplexConstructor() throws Exception {
-        DataCounts counts = new DataCounts("foo", 1L, 1L, 2L, 0L, 3L, 4L, 5L, new Date(), new Date(), new Date());
+        DataCounts counts = new DataCounts("foo", 1L, 1L, 2L, 0L, 3L, 4L, 5L, 6L, 7L, 8L, 
+                new Date(), new Date(), new Date(), new Date(), new Date());
 
         try (DataCountsReporter dataCountsReporter =
                 new DataCountsReporter(threadPool, settings, JOB_ID, counts, jobDataCountsPersister)) {
@@ -95,6 +96,9 @@ public class DataCountsReporterTests extends ESTestCase {
             assertEquals(3, dataCountsReporter.getDateParseErrorsCount());
             assertEquals(4, dataCountsReporter.getMissingFieldErrorCount());
             assertEquals(5, dataCountsReporter.getOutOfOrderRecordCount());
+            assertEquals(6, dataCountsReporter.getEmptyBucketCount());
+            assertEquals(7, dataCountsReporter.getSparseBucketCount());
+            assertEquals(8, dataCountsReporter.getBucketCount());
             assertNull(stats.getEarliestRecordTimeStamp());
         }
     }
@@ -257,9 +261,9 @@ public class DataCountsReporterTests extends ESTestCase {
                  jobDataCountsPersister)) {
 
             dataCountsReporter.setAnalysedFieldsPerRecord(3);
-
             Date now = new Date();
-            DataCounts dc = new DataCounts(JOB_ID, 2L, 5L, 0L, 10L, 0L, 1L, 0L, new Date(2000), new Date(3000), now);
+            DataCounts dc = new DataCounts(JOB_ID, 2L, 5L, 0L, 10L, 0L, 1L, 0L, 0L, 0L, 0L, new Date(2000), new Date(3000), 
+                    now, (Date) null, (Date) null);
             dataCountsReporter.reportRecordWritten(5, 2000);
             dataCountsReporter.reportRecordWritten(5, 3000);
             dataCountsReporter.reportMissingField();
@@ -318,5 +322,7 @@ public class DataCountsReporterTests extends ESTestCase {
         assertEquals(0L, stats.getInvalidDateCount());
         assertEquals(0L, stats.getMissingFieldCount());
         assertEquals(0L, stats.getOutOfOrderTimeStampCount());
+        assertEquals(0L, stats.getEmptyBucketCount());
+        assertEquals(0L, stats.getSparseBucketCount());;
     }
 }
