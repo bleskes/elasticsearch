@@ -313,7 +313,7 @@ public class JobProviderTests extends ESTestCase {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<Bucket>[] holder = new QueryPage[1];
-        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);});
+        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);}, client);
         QueryPage<Bucket> buckets = holder[0];
         assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilderHolder[0];
@@ -348,7 +348,7 @@ public class JobProviderTests extends ESTestCase {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<Bucket>[] holder = new QueryPage[1];
-        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);});
+        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);}, client);
         QueryPage<Bucket> buckets = holder[0];
         assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilderHolder[0];
@@ -387,7 +387,7 @@ public class JobProviderTests extends ESTestCase {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<Bucket>[] holder = new QueryPage[1];
-        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);});
+        provider.buckets(jobId, bq.build(), r -> holder[0] = r, e -> {throw new RuntimeException(e);}, client);
         QueryPage<Bucket> buckets = holder[0];
         assertEquals(1L, buckets.count());
         QueryBuilder query = queryBuilderHolder[0];
@@ -411,7 +411,7 @@ public class JobProviderTests extends ESTestCase {
         BucketsQueryBuilder bq = new BucketsQueryBuilder();
         bq.timestamp(Long.toString(timestamp));
         Exception[] holder = new Exception[1];
-        provider.buckets(jobId, bq.build(), q -> {}, e -> {holder[0] = e;});
+        provider.buckets(jobId, bq.build(), q -> {}, e -> {holder[0] = e;}, client);
         assertEquals(ResourceNotFoundException.class, holder[0].getClass());
     }
 
@@ -436,7 +436,7 @@ public class JobProviderTests extends ESTestCase {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<Bucket>[] bucketHolder = new QueryPage[1];
-        provider.buckets(jobId, bq.build(), q -> {bucketHolder[0] = q;}, e -> {});
+        provider.buckets(jobId, bq.build(), q -> {bucketHolder[0] = q;}, e -> {}, client);
         assertThat(bucketHolder[0].count(), equalTo(1L));
         Bucket b = bucketHolder[0].results().get(0);
         assertEquals(now, b.getTimestamp());
@@ -463,7 +463,7 @@ public class JobProviderTests extends ESTestCase {
         bq.timestamp(Long.toString(now.getTime()));
 
         Exception[] holder = new Exception[1];
-        provider.buckets(jobId, bq.build(), q -> {}, e -> {holder[0] = e;});
+        provider.buckets(jobId, bq.build(), q -> {}, e -> {holder[0] = e;}, client);
         assertEquals(ResourceNotFoundException.class, holder[0].getClass());
     }
 
@@ -504,7 +504,7 @@ public class JobProviderTests extends ESTestCase {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<AnomalyRecord>[] holder = new QueryPage[1];
-        provider.records(jobId, rqb.build(), page -> holder[0] = page, RuntimeException::new);
+        provider.records(jobId, rqb.build(), page -> holder[0] = page, RuntimeException::new, client);
         QueryPage<AnomalyRecord> recordPage = holder[0];
         assertEquals(2L, recordPage.count());
         List<AnomalyRecord> records = recordPage.results();
@@ -561,7 +561,7 @@ public class JobProviderTests extends ESTestCase {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<AnomalyRecord>[] holder = new QueryPage[1];
-        provider.records(jobId, rqb.build(), page -> holder[0] = page, RuntimeException::new);
+        provider.records(jobId, rqb.build(), page -> holder[0] = page, RuntimeException::new, client);
         QueryPage<AnomalyRecord> recordPage = holder[0];
         assertEquals(2L, recordPage.count());
         List<AnomalyRecord> records = recordPage.results();
@@ -608,7 +608,8 @@ public class JobProviderTests extends ESTestCase {
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<AnomalyRecord>[] holder = new QueryPage[1];
-        provider.bucketRecords(jobId, bucket, from, size, true, sortfield, true, "", page -> holder[0] = page, RuntimeException::new);
+        provider.bucketRecords(jobId, bucket, from, size, true, sortfield, true, "", page -> holder[0] = page, RuntimeException::new,
+                client);
         QueryPage<AnomalyRecord> recordPage = holder[0];
         assertEquals(2L, recordPage.count());
         List<AnomalyRecord> records = recordPage.results();
@@ -644,7 +645,8 @@ public class JobProviderTests extends ESTestCase {
         JobProvider provider = createProvider(client);
 
         Integer[] holder = new Integer[1];
-        provider.expandBucket(jobId, false, bucket, null, 0, records -> holder[0] = records, RuntimeException::new);
+        provider.expandBucket(jobId, false, bucket, null, 0, records -> holder[0] = records, RuntimeException::new,
+                client);
         int records = holder[0];
         assertEquals(400L, records);
     }
@@ -673,7 +675,8 @@ public class JobProviderTests extends ESTestCase {
         JobProvider provider = createProvider(client);
 
         Integer[] holder = new Integer[1];
-        provider.expandBucket(jobId, false, bucket, null, 0, records -> holder[0] = records, RuntimeException::new);
+        provider.expandBucket(jobId, false, bucket, null, 0, records -> holder[0] = records, RuntimeException::new,
+                client);
         int records = holder[0];
 
         // This is not realistic, but is an artifact of the fact that the mock
@@ -703,7 +706,7 @@ public class JobProviderTests extends ESTestCase {
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<CategoryDefinition>[] holder = new QueryPage[1];
         provider.categoryDefinitions(jobId, null, from, size, r -> {holder[0] = r;},
-                e -> {throw new RuntimeException(e);});
+                e -> {throw new RuntimeException(e);}, client);
         QueryPage<CategoryDefinition> categoryDefinitions = holder[0];
         assertEquals(1L, categoryDefinitions.count());
         assertEquals(terms, categoryDefinitions.results().get(0).getTerms());
@@ -726,7 +729,7 @@ public class JobProviderTests extends ESTestCase {
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<CategoryDefinition>[] holder = new QueryPage[1];
         provider.categoryDefinitions(jobId, categoryId, null, null,
-                r -> {holder[0] = r;}, e -> {throw new RuntimeException(e);});
+                r -> {holder[0] = r;}, e -> {throw new RuntimeException(e);}, client);
         QueryPage<CategoryDefinition> categoryDefinitions = holder[0];
         assertEquals(1L, categoryDefinitions.count());
         assertEquals(terms, categoryDefinitions.results().get(0).getTerms());
@@ -770,7 +773,7 @@ public class JobProviderTests extends ESTestCase {
         @SuppressWarnings({"unchecked", "rawtypes"})
         QueryPage<Influencer>[] holder = new QueryPage[1];
         InfluencersQuery query = new InfluencersQueryBuilder().from(from).size(size).includeInterim(false).build();
-        provider.influencers(jobId, query, page -> holder[0] = page, RuntimeException::new);
+        provider.influencers(jobId, query, page -> holder[0] = page, RuntimeException::new, client);
         QueryPage<Influencer> page = holder[0];
         assertEquals(2L, page.count());
 
@@ -833,7 +836,7 @@ public class JobProviderTests extends ESTestCase {
         QueryPage<Influencer>[] holder = new QueryPage[1];
         InfluencersQuery query = new InfluencersQueryBuilder().from(from).size(size).start("0").end("0").sortField("sort")
                 .sortDescending(true).anomalyScoreThreshold(0.0).includeInterim(true).build();
-        provider.influencers(jobId, query, page -> holder[0] = page, RuntimeException::new);
+        provider.influencers(jobId, query, page -> holder[0] = page, RuntimeException::new, client);
         QueryPage<Influencer> page = holder[0];
         assertEquals(2L, page.count());
 

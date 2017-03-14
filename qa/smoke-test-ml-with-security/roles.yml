@@ -1,0 +1,17 @@
+# The REST test framework requires a certain amount of permissions - if you
+# don't have these our REST tests will fail during basic setup/teardown
+minimal:
+  cluster:
+    - cluster:monitor/health
+    - cluster:monitor/main
+  indices:
+    - names: '*'
+      privileges:
+        - indices:admin/create
+        - indices:admin/exists
+        - indices:admin/get
+        - indices:admin/mapping/put
+        - indices:admin/refresh
+        - indices:data/read/search
+        - indices:data/write/bulk
+        - indices:data/write/index
