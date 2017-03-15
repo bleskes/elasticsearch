@@ -52,6 +52,7 @@ public class SecurityContextTests extends ESTestCase {
         threadContext = new ThreadContext(settings);
         cryptoService = new CryptoService(settings, new Environment(settings));
         securityContext = new SecurityContext(settings, threadContext, cryptoService);
+        assertSettingDeprecationsAndWarnings(new Setting<?>[]{AuthenticationService.SIGN_USER_HEADER});
     }
 
     public void testGetAuthenticationAndUserInEmptyContext() throws IOException {
@@ -62,11 +63,10 @@ public class SecurityContextTests extends ESTestCase {
     public void testGetAuthenticationAndUser() throws IOException {
         final User user = new User("test");
         final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, true);
 
         assertEquals(authentication, securityContext.getAuthentication());
         assertEquals(user, securityContext.getUser());
-        assertSettingDeprecationsAndWarnings(new Setting<?>[]{AuthenticationService.SIGN_USER_HEADER});
     }
 
     public void testSetUser() {
@@ -79,7 +79,6 @@ public class SecurityContextTests extends ESTestCase {
         IllegalStateException e = expectThrows(IllegalStateException.class,
                 () -> securityContext.setUser(randomFrom(user, SystemUser.INSTANCE), Version.CURRENT));
         assertEquals("authentication is already present in the context", e.getMessage());
-        assertSettingDeprecationsAndWarnings(new Setting<?>[]{AuthenticationService.SIGN_USER_HEADER});
     }
 
     public void testExecuteAsUser() throws IOException {
@@ -87,7 +86,7 @@ public class SecurityContextTests extends ESTestCase {
         if (randomBoolean()) {
             original = new User("test");
             final Authentication authentication = new Authentication(original, new RealmRef("ldap", "foo", "node1"), null);
-            authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+            authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, true);
         } else {
             original = null;
         }
@@ -105,6 +104,5 @@ public class SecurityContextTests extends ESTestCase {
         assertNotNull(originalContext);
         originalContext.restore();
         assertEquals(original, securityContext.getUser());
-        assertSettingDeprecationsAndWarnings(new Setting<?>[]{AuthenticationService.SIGN_USER_HEADER});
     }
 }

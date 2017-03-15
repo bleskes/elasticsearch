@@ -100,8 +100,8 @@ public class Authentication {
      * {@link ThreadContext} then we can read the transient directly and return it. If not, we read the authentication header and
      * deserialize it using the {@link Version} to ensure we deserialize it properly
      */
-    public static Authentication readFromContext(ThreadContext ctx, CryptoService cryptoService, Settings settings, Version version)
-            throws IOException, IllegalArgumentException {
+    public static Authentication readFromContext(ThreadContext ctx, CryptoService cryptoService, Settings settings, Version version,
+                                                 boolean signingEnabled) throws IOException, IllegalArgumentException {
         Authentication authentication = ctx.getTransient(AUTHENTICATION_KEY);
         if (authentication != null) {
             assert ctx.getHeader(AUTHENTICATION_KEY) != null;
@@ -112,7 +112,8 @@ public class Authentication {
         if (authenticationHeader == null) {
             return null;
         }
-        return deserializeHeaderAndPutInContext(authenticationHeader, ctx, cryptoService, shouldSign(settings, version), version);
+        final boolean shouldSign = shouldSign(settings, version, signingEnabled);
+        return deserializeHeaderAndPutInContext(authenticationHeader, ctx, cryptoService, shouldSign, version);
     }
 
     public static Authentication getAuthentication(ThreadContext context) {
@@ -147,8 +148,8 @@ public class Authentication {
         return authentication;
     }
 
-    void writeToContextIfMissing(ThreadContext context, CryptoService cryptoService, Settings settings, Version version)
-            throws IOException, IllegalArgumentException {
+    void writeToContextIfMissing(ThreadContext context, CryptoService cryptoService, Settings settings, Version version,
+                                 boolean signingEnabled) throws IOException, IllegalArgumentException {
         if (context.getTransient(AUTHENTICATION_KEY) != null) {
             if (context.getHeader(AUTHENTICATION_KEY) == null) {
                 throw new IllegalStateException("authentication present as a transient but not a header");
@@ -157,27 +158,26 @@ public class Authentication {
         }
 
         if (context.getHeader(AUTHENTICATION_KEY) != null) {
-            final boolean shouldSign = shouldSign(settings, version);
+            final boolean shouldSign = shouldSign(settings, version, signingEnabled);
             deserializeHeaderAndPutInContext(context.getHeader(AUTHENTICATION_KEY), context, cryptoService, shouldSign, version);
         } else {
-            writeToContext(context, cryptoService, settings, version);
+            writeToContext(context, cryptoService, settings, version, signingEnabled);
         }
     }
 
-    public static boolean shouldSign(Settings settings, Version version) {
-        return AuthenticationService.SIGN_USER_HEADER.get(settings) && XPackSettings.TRANSPORT_SSL_ENABLED.get(settings) == false
-                && version.before(Version.V_5_4_0_UNRELEASED);
+    public static boolean shouldSign(Settings settings, Version version, boolean signingEnabled) {
+        return signingEnabled && XPackSettings.TRANSPORT_SSL_ENABLED.get(settings) == false && version.before(Version.V_5_4_0_UNRELEASED);
     }
 
     /**
      * Writes the authentication to the context. There must not be an existing authentication in the context and if there is an
      * {@link IllegalStateException} will be thrown
      */
-    public void writeToContext(ThreadContext ctx, CryptoService cryptoService, Settings settings, Version version)
-            throws IOException, IllegalArgumentException {
+    public void writeToContext(ThreadContext ctx, CryptoService cryptoService, Settings settings, Version version,
+                               boolean signingEnabled) throws IOException, IllegalArgumentException {
         ensureContextDoesNotContainAuthentication(ctx);
         String header = encode();
-        if (shouldSign(settings, version)) {
+        if (shouldSign(settings, version, signingEnabled)) {
             header = cryptoService.sign(header, version);
         }
         ctx.putTransient(AUTHENTICATION_KEY, this);

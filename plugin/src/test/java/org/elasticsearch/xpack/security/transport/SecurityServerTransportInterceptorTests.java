@@ -113,7 +113,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
     public void testSendAsync() throws Exception {
         final User user = new User("test");
         final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, true);
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
                 mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
                 securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
@@ -145,7 +145,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
     public void testSendAsyncSwitchToSystem() throws Exception {
         final User user = new User("test");
         final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, true);
         threadContext.putTransient(AuthorizationService.ORIGINATING_ACTION_KEY, "indices:foo");
 
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
@@ -181,8 +181,8 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         final User user = new User("test");
         final Authentication authentication = new Authentication(user, new RealmRef("ldap", "foo", "node1"), null);
         // sanity check signing is off
-        assertFalse(Authentication.shouldSign(settings, Version.CURRENT));
-        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+        assertFalse(Authentication.shouldSign(settings, Version.CURRENT, true));
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, true);
         threadContext.putTransient(AuthorizationService.ORIGINATING_ACTION_KEY, "indices:foo");
 
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
@@ -206,7 +206,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         final Version remoteVersion = Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_4_0_ID_UNRELEASED - 100));
         when(connection.getVersion()).thenReturn(remoteVersion);
         // sanity check that remote node requires signing
-        assertTrue(Authentication.shouldSign(settings, remoteVersion));
+        assertTrue(Authentication.shouldSign(settings, remoteVersion, true));
         sender.sendRequest(connection, "indices:foo", null, null, null);
         assertTrue(calledWrappedSender.get());
         assertEquals(user, sendingUser.get());
@@ -244,7 +244,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
     public void testSendWithKibanaUser() throws Exception {
         final User user = new KibanaUser(true);
         final Authentication authentication = new Authentication(user, new RealmRef("reserved", "reserved", "node1"), null);
-        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, true);
         threadContext.putTransient(AuthorizationService.ORIGINATING_ACTION_KEY, "indices:foo");
 
         SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,

@@ -201,7 +201,7 @@ public class AuthenticationServiceTests extends ESTestCase {
 
     public void testAuthenticateCached() throws Exception {
         final Authentication authentication = new Authentication(new User("_username", "r1"), new RealmRef("test", "cached", "foo"), null);
-        authentication.writeToContext(threadContext, cryptoService, Settings.EMPTY, Version.CURRENT);
+        authentication.writeToContext(threadContext, cryptoService, Settings.EMPTY, Version.CURRENT, true);
 
         Authentication result = authenticateBlocking("_action", message, null);
 

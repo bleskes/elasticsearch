@@ -39,6 +39,7 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.security.authc.Authentication;
+import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.user.XPackUser;
 
@@ -61,6 +62,7 @@ public class InternalClient extends FilterClient {
 
     private final CryptoService cryptoService;
     private final String nodeName;
+    private final boolean signingEnabled;
 
     /**
      * Constructs an InternalClient.
@@ -70,6 +72,7 @@ public class InternalClient extends FilterClient {
         super(settings, threadPool, in);
         this.cryptoService = cryptoService;
         this.nodeName = Node.NODE_NAME_SETTING.get(settings);
+        this.signingEnabled = AuthenticationService.SIGN_USER_HEADER.get(settings);
     }
 
     @Override
@@ -96,7 +99,7 @@ public class InternalClient extends FilterClient {
         try {
             Authentication authentication = new Authentication(XPackUser.INSTANCE,
                     new Authentication.RealmRef("__attach", "__attach", nodeName), null);
-            authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+            authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, signingEnabled);
         } catch (IOException ioe) {
             throw new ElasticsearchException("failed to attach internal user to request", ioe);
         }

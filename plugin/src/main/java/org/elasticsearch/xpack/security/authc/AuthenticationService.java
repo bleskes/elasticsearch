@@ -70,6 +70,7 @@ public class AuthenticationService extends AbstractComponent {
     private final AnonymousUser anonymousUser;
     private final boolean runAsEnabled;
     private final boolean isAnonymousUserEnabled;
+    private final boolean signingEnabled;
 
     public AuthenticationService(Settings settings, Realms realms, AuditTrailService auditTrail, CryptoService cryptoService,
                                  AuthenticationFailureHandler failureHandler, ThreadPool threadPool, AnonymousUser anonymousUser) {
@@ -83,6 +84,7 @@ public class AuthenticationService extends AbstractComponent {
         this.anonymousUser = anonymousUser;
         this.runAsEnabled = RUN_AS_ENABLED.get(settings);
         this.isAnonymousUserEnabled = AnonymousUser.isAnonymousEnabled(settings);
+        this.signingEnabled = SIGN_USER_HEADER.get(settings);
     }
 
     /**
@@ -122,7 +124,7 @@ public class AuthenticationService extends AbstractComponent {
      */
     void attachUserIfMissing(User user, Version version) throws IOException {
         Authentication authentication = new Authentication(user, new RealmRef("__attach", "__attach", nodeName), null);
-        authentication.writeToContextIfMissing(threadContext, cryptoService, settings, version);
+        authentication.writeToContextIfMissing(threadContext, cryptoService, settings, version, signingEnabled);
     }
 
     // pkg private method for testing
@@ -200,7 +202,8 @@ public class AuthenticationService extends AbstractComponent {
         private void lookForExistingAuthentication(Consumer<Authentication> authenticationConsumer) {
             Runnable action;
             try {
-                final Authentication authentication = Authentication.readFromContext(threadContext, cryptoService, settings, version);
+                final Authentication authentication =
+                        Authentication.readFromContext(threadContext, cryptoService, settings, version, signingEnabled);
                 if (authentication != null && request instanceof AuditableRestRequest) {
                     action = () -> listener.onFailure(request.tamperedRequest());
                 } else {
@@ -311,7 +314,7 @@ public class AuthenticationService extends AbstractComponent {
             Runnable action;
             if (authentication != null) {
                 try {
-                    authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+                    authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, signingEnabled);
                     request.authenticationSuccess(authentication.getAuthenticatedBy().getName(), authentication.getUser());
                     action = () -> listener.onResponse(authentication);
                 } catch (Exception e) {
@@ -400,7 +403,7 @@ public class AuthenticationService extends AbstractComponent {
                 final Authentication finalAuth = new Authentication(finalUser, authenticatedBy, lookedupBy);
                 Runnable action = () -> listener.onResponse(finalAuth);
                 try {
-                    finalAuth.writeToContext(threadContext, cryptoService, settings, Version.CURRENT);
+                    finalAuth.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, signingEnabled);
                 } catch (Exception e) {
                     action = () -> listener.onFailure(request.exceptionProcessingRequest(e, authenticationToken));
                 }

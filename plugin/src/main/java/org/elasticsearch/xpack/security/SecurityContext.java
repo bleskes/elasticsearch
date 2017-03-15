@@ -25,6 +25,7 @@ import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.util.concurrent.ThreadContext.StoredContext;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.xpack.security.authc.Authentication;
+import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.user.User;
 
@@ -42,6 +43,7 @@ public class SecurityContext {
     private final CryptoService cryptoService;
     private final Settings settings;
     private final String nodeName;
+    private final boolean signingEnabled;
 
     /**
      * Creates a new security context.
@@ -54,6 +56,7 @@ public class SecurityContext {
         this.cryptoService = cryptoService;
         this.nodeName = Node.NODE_NAME_SETTING.get(settings);
         this.settings = settings;
+        this.signingEnabled = AuthenticationService.SIGN_USER_HEADER.get(settings);
     }
 
     /** Returns the current user information, or null if the current request has no authentication info. */
@@ -65,7 +68,7 @@ public class SecurityContext {
     /** Returns the authentication information, or null if the current request has no authentication info. */
     public Authentication getAuthentication() {
         try {
-            return Authentication.readFromContext(threadContext, cryptoService, settings, Version.CURRENT);
+            return Authentication.readFromContext(threadContext, cryptoService, settings, Version.CURRENT, signingEnabled);
         } catch (IOException e) {
             // TODO: this seems bogus, the only way to get an ioexception here is from a corrupt or tampered
             // auth header, which should be be audited?
@@ -91,7 +94,7 @@ public class SecurityContext {
         try {
             Authentication authentication =
                     new Authentication(user, new Authentication.RealmRef("__attach", "__attach", nodeName), lookedUpBy, version);
-            authentication.writeToContext(threadContext, cryptoService, settings, version);
+            authentication.writeToContext(threadContext, cryptoService, settings, version, signingEnabled);
         } catch (IOException e) {
             throw new AssertionError("how can we have a IOException with a user we set", e);
         }

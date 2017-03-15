@@ -73,6 +73,7 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
     private final Settings settings;
     private final SecurityContext securityContext;
     private final boolean reservedRealmEnabled;
+    private final boolean signingEnabled;
 
     public SecurityServerTransportInterceptor(Settings settings,
                                               ThreadPool threadPool,
@@ -92,6 +93,7 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
         this.securityContext = securityContext;
         this.profileFilters = initializeProfileFilters(destructiveOperations);
         this.reservedRealmEnabled = XPackSettings.RESERVED_REALM_ENABLED_SETTING.get(settings);
+        this.signingEnabled = AuthenticationService.SIGN_USER_HEADER.get(settings);
     }
 
     @Override
@@ -115,7 +117,7 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
                         securityContext.executeAsUser(bwcKibanaUser, (original) -> sendWithUser(connection, action, request, options,
                                 new TransportService.ContextRestoreResponseHandler<>(threadPool.getThreadContext().wrapRestorable(original),
                                         handler), sender), connection.getVersion());
-                    } else if (Authentication.shouldSign(settings, connection.getVersion()) ||
+                    } else if (Authentication.shouldSign(settings, connection.getVersion(), signingEnabled) ||
                             (securityContext.getAuthentication() != null &&
                                     securityContext.getAuthentication().getVersion().equals(connection.getVersion()) == false)) {
                         securityContext.executeAsUser(securityContext.getUser(),
