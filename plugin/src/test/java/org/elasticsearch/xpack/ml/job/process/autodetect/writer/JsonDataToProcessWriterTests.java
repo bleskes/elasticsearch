@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.config.DataDescription;
@@ -123,7 +124,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
             throws Exception {
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
-        builder.setLatency(2L);
+        builder.setLatency(TimeValue.timeValueSeconds(2));
         analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
@@ -154,7 +155,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_GivenMalformedJsonWithoutNestedLevels()
             throws Exception {
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
-        builder.setLatency(2L);
+        builder.setLatency(TimeValue.timeValueSeconds(2));
         analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
@@ -183,7 +184,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
             throws Exception {
         Detector detector = new Detector.Builder("metric", "nested.value").build();
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(detector));
-        builder.setLatency(2L);
+        builder.setLatency(TimeValue.timeValueSeconds(2));
         analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
@@ -210,7 +211,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_GivenMalformedJsonThatNeverRecovers()
             throws Exception {
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("count", null).build()));
-        builder.setLatency(2L);
+        builder.setLatency(TimeValue.timeValueSeconds(2));
         analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
@@ -226,7 +227,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_GivenJsonWithArrayField()
             throws Exception {
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
-        builder.setLatency(2L);
+        builder.setLatency(TimeValue.timeValueSeconds(2));
         analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();
@@ -251,7 +252,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
     public void testWrite_GivenJsonWithMissingFields()
             throws Exception {
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "value").build()));
-        builder.setLatency(2L);
+        builder.setLatency(TimeValue.timeValueSeconds(2));
         analysisConfig = builder.build();
 
         StringBuilder input = new StringBuilder();

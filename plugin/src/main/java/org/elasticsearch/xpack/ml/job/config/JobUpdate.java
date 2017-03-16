@@ -14,11 +14,12 @@
  */
 package org.elasticsearch.xpack.ml.job.config;
 
-import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -39,7 +40,8 @@ public class JobUpdate implements Writeable, ToXContent {
         PARSER.declareObjectArray(Builder::setDetectorUpdates, DetectorUpdate.PARSER, DETECTORS);
         PARSER.declareObject(Builder::setModelDebugConfig, ModelDebugConfig.PARSER, Job.MODEL_DEBUG_CONFIG);
         PARSER.declareObject(Builder::setAnalysisLimits, AnalysisLimits.PARSER, Job.ANALYSIS_LIMITS);
-        PARSER.declareLong(Builder::setBackgroundPersistInterval, Job.BACKGROUND_PERSIST_INTERVAL);
+        PARSER.declareString((builder, val) -> builder.setBackgroundPersistInterval(
+                TimeValue.parseTimeValue(val, Job.BACKGROUND_PERSIST_INTERVAL.getPreferredName())), Job.BACKGROUND_PERSIST_INTERVAL);
         PARSER.declareLong(Builder::setRenormalizationWindowDays, Job.RENORMALIZATION_WINDOW_DAYS);
         PARSER.declareLong(Builder::setResultsRetentionDays, Job.RESULTS_RETENTION_DAYS);
         PARSER.declareLong(Builder::setModelSnapshotRetentionDays, Job.MODEL_SNAPSHOT_RETENTION_DAYS);
@@ -53,7 +55,7 @@ public class JobUpdate implements Writeable, ToXContent {
     private final ModelDebugConfig modelDebugConfig;
     private final AnalysisLimits analysisLimits;
     private final Long renormalizationWindowDays;
-    private final Long backgroundPersistInterval;
+    private final TimeValue backgroundPersistInterval;
     private final Long modelSnapshotRetentionDays;
     private final Long resultsRetentionDays;
     private final List<String> categorizationFilters;
@@ -62,7 +64,7 @@ public class JobUpdate implements Writeable, ToXContent {
 
     private JobUpdate(@Nullable String description, @Nullable List<DetectorUpdate> detectorUpdates,
                       @Nullable ModelDebugConfig modelDebugConfig, @Nullable AnalysisLimits analysisLimits,
-                      @Nullable Long backgroundPersistInterval, @Nullable Long renormalizationWindowDays,
+                      @Nullable TimeValue backgroundPersistInterval, @Nullable Long renormalizationWindowDays,
                       @Nullable Long resultsRetentionDays, @Nullable Long modelSnapshotRetentionDays,
                       @Nullable List<String> categorisationFilters, @Nullable  Map<String, Object> customSettings,
                       @Nullable String modelSnapshotId) {
@@ -89,7 +91,7 @@ public class JobUpdate implements Writeable, ToXContent {
         modelDebugConfig = in.readOptionalWriteable(ModelDebugConfig::new);
         analysisLimits = in.readOptionalWriteable(AnalysisLimits::new);
         renormalizationWindowDays = in.readOptionalLong();
-        backgroundPersistInterval = in.readOptionalLong();
+        backgroundPersistInterval = in.readOptionalWriteable(TimeValue::new);
         modelSnapshotRetentionDays = in.readOptionalLong();
         resultsRetentionDays = in.readOptionalLong();
         if (in.readBoolean()) {
@@ -110,7 +112,7 @@ public class JobUpdate implements Writeable, ToXContent {
         out.writeOptionalWriteable(modelDebugConfig);
         out.writeOptionalWriteable(analysisLimits);
         out.writeOptionalLong(renormalizationWindowDays);
-        out.writeOptionalLong(backgroundPersistInterval);
+        out.writeOptionalWriteable(backgroundPersistInterval);
         out.writeOptionalLong(modelSnapshotRetentionDays);
         out.writeOptionalLong(resultsRetentionDays);
         out.writeBoolean(categorizationFilters != null);
@@ -141,7 +143,7 @@ public class JobUpdate implements Writeable, ToXContent {
         return renormalizationWindowDays;
     }
 
-    public Long getBackgroundPersistInterval() {
+    public TimeValue getBackgroundPersistInterval() {
         return backgroundPersistInterval;
     }
 
@@ -405,7 +407,7 @@ public class JobUpdate implements Writeable, ToXContent {
         private ModelDebugConfig modelDebugConfig;
         private AnalysisLimits analysisLimits;
         private Long renormalizationWindowDays;
-        private Long backgroundPersistInterval;
+        private TimeValue backgroundPersistInterval;
         private Long modelSnapshotRetentionDays;
         private Long resultsRetentionDays;
         private List<String> categorizationFilters;
@@ -439,7 +441,7 @@ public class JobUpdate implements Writeable, ToXContent {
             return this;
         }
 
-        public Builder setBackgroundPersistInterval(Long backgroundPersistInterval) {
+        public Builder setBackgroundPersistInterval(TimeValue backgroundPersistInterval) {
             this.backgroundPersistInterval = backgroundPersistInterval;
             return this;
         }

@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.ml.job.process;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.config.Detector;
@@ -36,7 +37,7 @@ public class DataStreamDiagnosticsTests extends ESTestCase {
         logger = Loggers.getLogger(DataStreamDiagnosticsTests.class);
 
         AnalysisConfig.Builder acBuilder = new AnalysisConfig.Builder(Arrays.asList(new Detector.Builder("metric", "field").build()));
-        acBuilder.setBucketSpan(60L);
+        acBuilder.setBucketSpan(TimeValue.timeValueSeconds(60));
         analysisConfig = acBuilder.build();
     }
 

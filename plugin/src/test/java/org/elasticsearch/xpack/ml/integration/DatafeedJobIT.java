@@ -219,7 +219,8 @@ public class DatafeedJobIT extends ESRestTestCase {
 
     public void testLookbackOnlyGivenAggregationsWithHistogram() throws Exception {
         String jobId = "aggs-histogram-job";
-        String job = "{\"description\":\"Aggs job\",\"analysis_config\" :{\"bucket_span\":3600,\"summary_count_field_name\":\"doc_count\","
+        String job = "{\"description\":\"Aggs job\",\"analysis_config\" :{\"bucket_span\":\"1h\","
+                + "\"summary_count_field_name\":\"doc_count\","
                 + "\"detectors\":[{\"function\":\"mean\",\"field_name\":\"responsetime\",\"by_field_name\":\"airline\"}]},"
                 + "\"data_description\" : {\"time_field\":\"time stamp\"}"
                 + "}";
@@ -244,7 +245,8 @@ public class DatafeedJobIT extends ESRestTestCase {
 
     public void testLookbackOnlyGivenAggregationsWithDateHistogram() throws Exception {
         String jobId = "aggs-date-histogram-job";
-        String job = "{\"description\":\"Aggs job\",\"analysis_config\" :{\"bucket_span\":3600,\"summary_count_field_name\":\"doc_count\","
+        String job = "{\"description\":\"Aggs job\",\"analysis_config\" :{\"bucket_span\":\"3600s\","
+                + "\"summary_count_field_name\":\"doc_count\","
                 + "\"detectors\":[{\"function\":\"mean\",\"field_name\":\"responsetime\",\"by_field_name\":\"airline\"}]},"
                 + "\"data_description\" : {\"time_field\":\"time stamp\"}"
                 + "}";
@@ -407,7 +409,7 @@ public class DatafeedJobIT extends ESRestTestCase {
 
     private Response createJob(String id) throws Exception {
         String job = "{\n" + "    \"description\":\"Analysis of response time by airline\",\n"
-                + "    \"analysis_config\" : {\n" + "        \"bucket_span\":3600,\n"
+                + "    \"analysis_config\" : {\n" + "        \"bucket_span\":\"1h\",\n"
                 + "        \"detectors\" :[{\"function\":\"mean\",\"field_name\":\"responsetime\",\"by_field_name\":\"airline\"}]\n"
                 + "    },\n" + "    \"data_description\" : {\n" + "        \"format\":\"JSON\",\n"
                 + "        \"time_field\":\"time stamp\",\n" + "        \"time_format\":\"yyyy-MM-dd'T'HH:mm:ssX\"\n" + "    }\n"
@@ -429,7 +431,7 @@ public class DatafeedJobIT extends ESRestTestCase {
     }
 
     private void executeTestLookbackOnlyWithNestedFields(String jobId, boolean source) throws Exception {
-        String job = "{\"description\":\"Nested job\", \"analysis_config\" : {\"bucket_span\":3600,\"detectors\" :"
+        String job = "{\"description\":\"Nested job\", \"analysis_config\" : {\"bucket_span\":\"1h\",\"detectors\" :"
                 + "[{\"function\":\"mean\",\"field_name\":\"responsetime.millis\"}]}, \"data_description\" : {\"time_field\":\"time\"}"
                 + "}";
         client().performRequest("put", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId, Collections.emptyMap(),

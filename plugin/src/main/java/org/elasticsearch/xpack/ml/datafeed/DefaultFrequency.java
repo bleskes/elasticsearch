@@ -12,7 +12,7 @@
  * express written consent of Elasticsearch BV is
  * strictly prohibited.
  */
-package org.elasticsearch.xpack.ml.job.config;
+package org.elasticsearch.xpack.ml.datafeed;
 
 import java.time.Duration;
 
