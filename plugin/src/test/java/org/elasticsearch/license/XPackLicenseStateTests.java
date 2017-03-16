@@ -80,6 +80,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(true));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(true));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.ALL));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(true));
     }
 
     public void testSecurityBasic() {
@@ -92,6 +93,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(true));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(false));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.NONE));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(false));
     }
 
     public void testSecurityBasicExpired() {
@@ -104,6 +106,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(false));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(false));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.NONE));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(false));
     }
 
     public void testSecurityStandard() {
@@ -116,6 +119,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(true));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(false));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.NATIVE));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(false));
     }
 
     public void testSecurityStandardExpired() {
@@ -128,6 +132,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(false));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(false));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.NATIVE));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(false));
     }
 
     public void testSecurityGold() {
@@ -140,6 +145,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(true));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(false));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.DEFAULT));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(false));
     }
 
     public void testSecurityGoldExpired() {
@@ -152,6 +158,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(false));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(false));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.DEFAULT));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(false));
     }
 
     public void testSecurityPlatinum() {
@@ -164,6 +171,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(true));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(true));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.ALL));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(true));
     }
 
     public void testSecurityPlatinumExpired() {
@@ -176,6 +184,7 @@ public class XPackLicenseStateTests extends ESTestCase {
         assertThat(licenseState.isStatsAndHealthAllowed(), is(false));
         assertThat(licenseState.isDocumentAndFieldLevelSecurityAllowed(), is(true));
         assertThat(licenseState.allowedRealmType(), Matchers.is(XPackLicenseState.AllowedRealmType.ALL));
+        assertThat(licenseState.isCustomRoleProvidersAllowed(), is(false));
     }
 
     public void testSecurityAckBasicToNotGoldOrStandard() {
