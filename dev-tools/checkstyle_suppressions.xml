@@ -5,17 +5,7 @@
 
 <suppressions>
   <!-- On Windows, Checkstyle matches files using \ path separator -->
-  <suppress files="distribution[/\\]tools[/\\]java-version-checker[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]tools[/\\]JavaVersionChecker.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]LicenseSigner.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]tools[/\\]KeyPairGeneratorTool.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]tools[/\\]LicenseGeneratorTool.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]tools[/\\]LicenseVerificationTool.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]LicenseVerificationTests.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]TestUtils.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]tools[/\\]KeyPairGenerationToolTests.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]tools[/\\]LicenseGenerationToolTests.java" checks="LineLength" />
-  <suppress files="license-tools[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]licensor[/\\]tools[/\\]LicenseVerificationToolTests.java" checks="LineLength" />
-  <suppress files="plugin[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]common[/\\]network[/\\]InetAddressHelper.java" checks="LineLength" />-5.x|elasticsearch-5.x-extra/x-pack-elas
+  <suppress files="plugin[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]common[/\\]network[/\\]InetAddressHelper.java" checks="LineLength" />
   <suppress files="plugin[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]CryptUtils.java" checks="LineLength" />
   <suppress files="plugin[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]DateUtils.java" checks="LineLength" />
   <suppress files="plugin[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]license[/\\]DeleteLicenseAction.java" checks="LineLength" />

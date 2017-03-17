@@ -14,18 +14,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Elasticsearch Incorporated.
  */
-package org.elasticsearch.license.licensor.tools;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+package org.elasticsearch.license.licensor.tools;
 
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import org.elasticsearch.cli.Command;
 import org.elasticsearch.cli.ExitCodes;
-import org.elasticsearch.cli.UserException;
 import org.elasticsearch.cli.Terminal;
+import org.elasticsearch.cli.UserException;
 import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.PathUtils;
@@ -35,6 +32,10 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.license.License;
 import org.elasticsearch.license.LicenseVerifier;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class LicenseVerificationTool extends Command {
 
@@ -67,20 +68,25 @@ public class LicenseVerificationTool extends Command {
 
         final License licenseSpec;
         if (options.has(licenseOption)) {
+            final BytesArray bytes =
+                    new BytesArray(licenseOption.value(options).getBytes(StandardCharsets.UTF_8));
             licenseSpec =
-                    License.fromSource(new BytesArray(licenseOption.value(options).getBytes(StandardCharsets.UTF_8)), XContentType.JSON);
+                    License.fromSource(bytes, XContentType.JSON);
         } else if (options.has(licenseFileOption)) {
             Path licenseSpecPath = parsePath(licenseFileOption.value(options));
             if (Files.exists(licenseSpecPath) == false) {
                 throw new UserException(ExitCodes.USAGE, licenseSpecPath + " does not exist");
             }
-            licenseSpec = License.fromSource(new BytesArray(Files.readAllBytes(licenseSpecPath)), XContentType.JSON);
+            final BytesArray bytes = new BytesArray(Files.readAllBytes(licenseSpecPath));
+            licenseSpec = License.fromSource(bytes, XContentType.JSON);
         } else {
-            throw new UserException(ExitCodes.USAGE, "Must specify either --license or --licenseFile");
+            throw new UserException(
+                    ExitCodes.USAGE,
+                    "Must specify either --license or --licenseFile");
         }
 
         // verify
-        if (LicenseVerifier.verifyLicense(licenseSpec, Files.readAllBytes(publicKeyPath)) == false) {
+        if (!LicenseVerifier.verifyLicense(licenseSpec, Files.readAllBytes(publicKeyPath))) {
             throw new UserException(ExitCodes.DATA_ERROR, "Invalid License!");
         }
         XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
