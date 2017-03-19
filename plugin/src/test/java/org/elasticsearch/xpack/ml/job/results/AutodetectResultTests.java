@@ -38,7 +38,7 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
         Quantiles quantiles;
         ModelSnapshot modelSnapshot;
         ModelSizeStats.Builder modelSizeStats;
-        ModelDebugOutput modelDebugOutput;
+        ModelPlot modelPlot;
         CategoryDefinition categoryDefinition;
         FlushAcknowledgement flushAcknowledgement;
         String jobId = "foo";
@@ -85,10 +85,10 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
             modelSizeStats = null;
         }
         if (randomBoolean()) {
-            modelDebugOutput = new ModelDebugOutput(jobId);
-            modelDebugOutput.setId(randomAsciiOfLengthBetween(1, 20));
+            modelPlot = new ModelPlot(jobId);
+            modelPlot.setId(randomAsciiOfLengthBetween(1, 20));
         } else {
-            modelDebugOutput = null;
+            modelPlot = null;
         }
         if (randomBoolean()) {
             categoryDefinition = new CategoryDefinition(jobId);
@@ -102,7 +102,7 @@ public class AutodetectResultTests extends AbstractSerializingTestCase<Autodetec
             flushAcknowledgement = null;
         }
         return new AutodetectResult(bucket, records, influencers, quantiles, modelSnapshot,
-                modelSizeStats == null ? null : modelSizeStats.build(), modelDebugOutput, categoryDefinition, flushAcknowledgement);
+                modelSizeStats == null ? null : modelSizeStats.build(), modelPlot, categoryDefinition, flushAcknowledgement);
     }
 
     @Override

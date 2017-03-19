@@ -15,7 +15,7 @@
 package org.elasticsearch.xpack.ml.job.process.autodetect;
 
 import org.elasticsearch.xpack.ml.job.config.DetectionRule;
-import org.elasticsearch.xpack.ml.job.config.ModelDebugConfig;
+import org.elasticsearch.xpack.ml.job.config.ModelPlotConfig;
 import org.elasticsearch.xpack.ml.job.process.autodetect.output.FlushAcknowledgement;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.InterimResultsParams;
@@ -57,7 +57,7 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess {
     }
 
     @Override
-    public void writeUpdateModelDebugMessage(ModelDebugConfig modelDebugConfig) throws IOException {
+    public void writeUpdateModelPlotMessage(ModelPlotConfig modelPlotConfig) throws IOException {
     }
 
     @Override
