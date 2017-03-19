@@ -77,7 +77,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
             builder.setOverlappingBuckets(randomBoolean());
         }
         if (randomBoolean()) {
-            builder.setResultFinalizationWindow(randomPositiveLong());
+            builder.setResultFinalizationWindow(randomNonNegativeLong());
         }
 
         builder.setUsePerPartitionNormalization(false);

@@ -23,12 +23,12 @@ public class StartDatafeedActionRequestTests extends AbstractStreamableXContentT
 
     @Override
     protected Request createTestInstance() {
-        Request request = new Request(randomAsciiOfLength(10), randomPositiveLong());
+        Request request = new Request(randomAsciiOfLength(10), randomNonNegativeLong());
         if (randomBoolean()) {
-            request.setEndTime(randomPositiveLong());
+            request.setEndTime(randomNonNegativeLong());
         }
         if (randomBoolean()) {
-            request.setTimeout(TimeValue.timeValueMillis(randomPositiveLong()));
+            request.setTimeout(TimeValue.timeValueMillis(randomNonNegativeLong()));
         }
         return request;
     }

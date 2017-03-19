@@ -59,7 +59,7 @@ public class ChunkingConfigTests extends AbstractSerializingTestCase<ChunkingCon
         ChunkingConfig.Mode mode = randomFrom(ChunkingConfig.Mode.values());
         Long timeSpan = null;
         if (mode == ChunkingConfig.Mode.MANUAL) {
-            timeSpan = randomPositiveLong();
+            timeSpan = randomNonNegativeLong();
             if (timeSpan == 0L) {
                 timeSpan = 1L;
             }

@@ -62,7 +62,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.Matchers.any;
@@ -267,7 +266,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
         List<AnomalyRecord> records = new ArrayList<>();
 
         int count = randomIntBetween(0, 100);
-        Date now = new Date(randomPositiveLong());
+        Date now = new Date(randomNonNegativeLong());
         for (int i=0; i<count; i++) {
             AnomalyRecord r = new AnomalyRecord(JOB_ID, now, 3600L, i);
             r.setByFieldName("by_instance");
@@ -302,13 +301,13 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
     private ModelSizeStats createModelSizeStats() {
         ModelSizeStats.Builder builder = new ModelSizeStats.Builder(JOB_ID);
         builder.setId(randomAsciiOfLength(20));
-        builder.setTimestamp(new Date(randomPositiveLong()));
-        builder.setLogTime(new Date(randomPositiveLong()));
-        builder.setBucketAllocationFailuresCount(randomPositiveLong());
-        builder.setModelBytes(randomPositiveLong());
-        builder.setTotalByFieldCount(randomPositiveLong());
-        builder.setTotalOverFieldCount(randomPositiveLong());
-        builder.setTotalPartitionFieldCount(randomPositiveLong());
+        builder.setTimestamp(new Date(randomNonNegativeLong()));
+        builder.setLogTime(new Date(randomNonNegativeLong()));
+        builder.setBucketAllocationFailuresCount(randomNonNegativeLong());
+        builder.setModelBytes(randomNonNegativeLong());
+        builder.setTotalByFieldCount(randomNonNegativeLong());
+        builder.setTotalOverFieldCount(randomNonNegativeLong());
+        builder.setTotalPartitionFieldCount(randomNonNegativeLong());
         builder.setMemoryStatus(randomFrom(EnumSet.allOf(ModelSizeStats.MemoryStatus.class)));
         return builder.build();
     }
@@ -320,7 +319,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
     }
 
     private Quantiles createQuantiles() {
-        return new Quantiles(JOB_ID, new Date(randomPositiveLong()), randomAsciiOfLength(100));
+        return new Quantiles(JOB_ID, new Date(randomNonNegativeLong()), randomAsciiOfLength(100));
     }
 
     private FlushAcknowledgement createFlushAcknowledgement() {

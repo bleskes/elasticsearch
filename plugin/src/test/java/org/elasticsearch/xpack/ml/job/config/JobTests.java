@@ -386,15 +386,15 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         if (randomBoolean()) {
             builder.setDescription(randomAsciiOfLength(10));
         }
-        builder.setCreateTime(new Date(randomPositiveLong()));
+        builder.setCreateTime(new Date(randomNonNegativeLong()));
         if (randomBoolean()) {
-            builder.setFinishedTime(new Date(randomPositiveLong()));
+            builder.setFinishedTime(new Date(randomNonNegativeLong()));
         }
         if (randomBoolean()) {
-            builder.setLastDataTime(new Date(randomPositiveLong()));
+            builder.setLastDataTime(new Date(randomNonNegativeLong()));
         }
         builder.setAnalysisConfig(AnalysisConfigTests.createRandomized());
-        builder.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
+        builder.setAnalysisLimits(new AnalysisLimits(randomNonNegativeLong(), randomNonNegativeLong()));
         if (randomBoolean()) {
             DataDescription.Builder dataDescription = new DataDescription.Builder();
             dataDescription.setFormat(randomFrom(DataDescription.DataFormat.values()));
@@ -404,16 +404,16 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
             builder.setModelDebugConfig(new ModelDebugConfig(randomBoolean(), randomAsciiOfLength(10)));
         }
         if (randomBoolean()) {
-            builder.setRenormalizationWindowDays(randomPositiveLong());
+            builder.setRenormalizationWindowDays(randomNonNegativeLong());
         }
         if (randomBoolean()) {
             builder.setBackgroundPersistInterval(TimeValue.timeValueHours(randomIntBetween(1, 24)));
         }
         if (randomBoolean()) {
-            builder.setModelSnapshotRetentionDays(randomPositiveLong());
+            builder.setModelSnapshotRetentionDays(randomNonNegativeLong());
         }
         if (randomBoolean()) {
-            builder.setResultsRetentionDays(randomPositiveLong());
+            builder.setResultsRetentionDays(randomNonNegativeLong());
         }
         if (randomBoolean()) {
             builder.setCustomSettings(Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10)));

@@ -61,19 +61,19 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
             update.setModelDebugConfig(new ModelDebugConfig(randomBoolean(), randomAsciiOfLength(10)));
         }
         if (randomBoolean()) {
-            update.setAnalysisLimits(new AnalysisLimits(randomPositiveLong(), randomPositiveLong()));
+            update.setAnalysisLimits(new AnalysisLimits(randomNonNegativeLong(), randomNonNegativeLong()));
         }
         if (randomBoolean()) {
-            update.setRenormalizationWindowDays(randomPositiveLong());
+            update.setRenormalizationWindowDays(randomNonNegativeLong());
         }
         if (randomBoolean()) {
             update.setBackgroundPersistInterval(TimeValue.timeValueHours(randomIntBetween(1, 24)));
         }
         if (randomBoolean()) {
-            update.setModelSnapshotRetentionDays(randomPositiveLong());
+            update.setModelSnapshotRetentionDays(randomNonNegativeLong());
         }
         if (randomBoolean()) {
-            update.setResultsRetentionDays(randomPositiveLong());
+            update.setResultsRetentionDays(randomNonNegativeLong());
         }
         if (randomBoolean()) {
             update.setCategorizationFilters(Arrays.asList(generateRandomStringArray(10, 10, false)));
@@ -110,7 +110,7 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
         detectorUpdates.add(new JobUpdate.DetectorUpdate(1, "description-2", detectionRules2));
 
         ModelDebugConfig modelDebugConfig = new ModelDebugConfig(randomBoolean(), randomAsciiOfLength(10));
-        AnalysisLimits analysisLimits = new AnalysisLimits(randomPositiveLong(), randomPositiveLong());
+        AnalysisLimits analysisLimits = new AnalysisLimits(randomNonNegativeLong(), randomNonNegativeLong());
         List<String> categorizationFilters = Arrays.asList(generateRandomStringArray(10, 10, false));
         Map<String, Object> customSettings = Collections.singletonMap(randomAsciiOfLength(10), randomAsciiOfLength(10));
 
@@ -120,9 +120,9 @@ public class JobUpdateTests extends AbstractSerializingTestCase<JobUpdate> {
         updateBuilder.setModelDebugConfig(modelDebugConfig);
         updateBuilder.setAnalysisLimits(analysisLimits);
         updateBuilder.setBackgroundPersistInterval(TimeValue.timeValueHours(randomIntBetween(1, 24)));
-        updateBuilder.setResultsRetentionDays(randomPositiveLong());
-        updateBuilder.setModelSnapshotRetentionDays(randomPositiveLong());
-        updateBuilder.setRenormalizationWindowDays(randomPositiveLong());
+        updateBuilder.setResultsRetentionDays(randomNonNegativeLong());
+        updateBuilder.setModelSnapshotRetentionDays(randomNonNegativeLong());
+        updateBuilder.setRenormalizationWindowDays(randomNonNegativeLong());
         updateBuilder.setCategorizationFilters(categorizationFilters);
         updateBuilder.setCustomSettings(customSettings);
         updateBuilder.setModelSnapshotId(randomAsciiOfLength(10));
