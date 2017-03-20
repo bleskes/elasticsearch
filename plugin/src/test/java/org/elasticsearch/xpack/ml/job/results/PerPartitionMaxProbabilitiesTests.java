@@ -62,9 +62,9 @@ public class PerPartitionMaxProbabilitiesTests extends AbstractSerializingTestCa
         assertEquals(2, pProbs.size());
         for (PerPartitionMaxProbabilities.PartitionProbability pProb : pProbs) {
             if (pProb.getPartitionValue().equals("A")) {
-                assertEquals(40.0, pProb.getMaxNormalizedProbability(), 0.0001);
+                assertEquals(40.0, pProb.getMaxRecordScore(), 0.0001);
             } else {
-                assertEquals(90.0, pProb.getMaxNormalizedProbability(), 0.0001);
+                assertEquals(90.0, pProb.getMaxRecordScore(), 0.0001);
             }
         }
     }
@@ -83,10 +83,10 @@ public class PerPartitionMaxProbabilitiesTests extends AbstractSerializingTestCa
         assertEquals(90.0, ppMax.getMaxProbabilityForPartition("B"), 0.0001);
     }
 
-    private AnomalyRecord createAnomalyRecord(String partitionFieldValue, double normalizedProbability) {
+    private AnomalyRecord createAnomalyRecord(String partitionFieldValue, double recordScore) {
         AnomalyRecord record = new AnomalyRecord("foo", new Date(), 600, 1);
         record.setPartitionFieldValue(partitionFieldValue);
-        record.setNormalizedProbability(normalizedProbability);
+        record.setRecordScore(recordScore);
         return record;
     }
 }

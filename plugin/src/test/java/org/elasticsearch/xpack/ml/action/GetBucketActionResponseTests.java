@@ -68,9 +68,6 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
                 bucket.setInterim(randomBoolean());
             }
             if (randomBoolean()) {
-                bucket.setMaxNormalizedProbability(randomDouble());
-            }
-            if (randomBoolean()) {
                 int size = randomInt(10);
                 List<PartitionScore> partitionScores = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
@@ -98,7 +95,6 @@ public class GetBucketActionResponseTests extends AbstractStreamableTestCase<Get
                 List<AnomalyRecord> records = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
                     AnomalyRecord anomalyRecord = new AnomalyRecord(jobId, new Date(randomLong()), randomNonNegativeLong(), sequenceNum++);
-                    anomalyRecord.setAnomalyScore(randomDouble());
                     anomalyRecord.setActual(Collections.singletonList(randomDouble()));
                     anomalyRecord.setTypical(Collections.singletonList(randomDouble()));
                     anomalyRecord.setProbability(randomDouble());

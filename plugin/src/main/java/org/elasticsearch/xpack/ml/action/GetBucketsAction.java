@@ -78,7 +78,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         public static final ParseField START = new ParseField("start");
         public static final ParseField END = new ParseField("end");
         public static final ParseField ANOMALY_SCORE = new ParseField("anomaly_score");
-        public static final ParseField MAX_NORMALIZED_PROBABILITY = new ParseField("max_normalized_probability");
         public static final ParseField TIMESTAMP = new ParseField("timestamp");
 
         private static final ObjectParser<Request, Void> PARSER = new ObjectParser<>(NAME, Request::new);
@@ -95,7 +94,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             PARSER.declareBoolean(Request::setIncludeInterim, INCLUDE_INTERIM);
             PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
             PARSER.declareDouble(Request::setAnomalyScore, ANOMALY_SCORE);
-            PARSER.declareDouble(Request::setMaxNormalizedProbability, MAX_NORMALIZED_PROBABILITY);
             PARSER.declareString(Request::setPartitionValue, PARTITION_VALUE);
         }
 
@@ -116,7 +114,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         private String end;
         private PageParams pageParams;
         private Double anomalyScore;
-        private Double maxNormalizedProbability;
 
         Request() {
         }
@@ -130,14 +127,13 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         }
 
         public void setTimestamp(String timestamp) {
-            if (pageParams != null || start != null || end != null || anomalyScore != null || maxNormalizedProbability != null) {
+            if (pageParams != null || start != null || end != null || anomalyScore != null) {
                 throw new IllegalArgumentException("Param [" + TIMESTAMP.getPreferredName() + "] is incompatible with ["
                                 + PageParams.FROM.getPreferredName() + ","
                                 + PageParams.SIZE.getPreferredName() + ","
                                 + START.getPreferredName() + ","
                                 + END.getPreferredName() + ","
-                                + ANOMALY_SCORE.getPreferredName() + ","
-                                + MAX_NORMALIZED_PROBABILITY.getPreferredName() + "]");
+                                + ANOMALY_SCORE.getPreferredName() + "]");
             }
             this.timestamp = ExceptionsHelper.requireNonNull(timestamp, Result.TIMESTAMP.getPreferredName());
         }
@@ -222,18 +218,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             this.anomalyScore = anomalyScore;
         }
 
-        public double getMaxNormalizedProbability() {
-            return maxNormalizedProbability;
-        }
-
-        public void setMaxNormalizedProbability(double maxNormalizedProbability) {
-            if (timestamp != null) {
-                throw new IllegalArgumentException("Param [" + MAX_NORMALIZED_PROBABILITY.getPreferredName() + "] is incompatible with ["
-                        + TIMESTAMP.getPreferredName() + "].");
-            }
-            this.maxNormalizedProbability = maxNormalizedProbability;
-        }
-
         @Override
         public ActionRequestValidationException validate() {
             return null;
@@ -250,7 +234,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             start = in.readOptionalString();
             end = in.readOptionalString();
             anomalyScore = in.readOptionalDouble();
-            maxNormalizedProbability = in.readOptionalDouble();
             pageParams = in.readOptionalWriteable(PageParams::new);
         }
 
@@ -265,7 +248,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             out.writeOptionalString(start);
             out.writeOptionalString(end);
             out.writeOptionalDouble(anomalyScore);
-            out.writeOptionalDouble(maxNormalizedProbability);
             out.writeOptionalWriteable(pageParams);
         }
 
@@ -293,9 +275,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             if (anomalyScore != null) {
                 builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScore);
             }
-            if (maxNormalizedProbability != null) {
-                builder.field(MAX_NORMALIZED_PROBABILITY.getPreferredName(), maxNormalizedProbability);
-            }
             builder.endObject();
             return builder;
         }
@@ -303,7 +282,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         @Override
         public int hashCode() {
             return Objects.hash(jobId, timestamp, partitionValue, expand, includeInterim,
-                    anomalyScore, maxNormalizedProbability, pageParams, start, end);
+                    anomalyScore, pageParams, start, end);
         }
 
         @Override
@@ -321,7 +300,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                     Objects.equals(expand, other.expand) &&
                     Objects.equals(includeInterim, other.includeInterim) &&
                     Objects.equals(anomalyScore, other.anomalyScore) &&
-                    Objects.equals(maxNormalizedProbability, other.maxNormalizedProbability) &&
                     Objects.equals(pageParams, other.pageParams) &&
                     Objects.equals(start, other.start) &&
                     Objects.equals(end, other.end);
@@ -419,7 +397,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                             .start(request.start)
                             .end(request.end)
                             .anomalyScoreThreshold(request.anomalyScore)
-                            .normalizedProbabilityThreshold(request.maxNormalizedProbability)
                             .partitionValue(request.partitionValue);
 
             if (request.pageParams != null) {
