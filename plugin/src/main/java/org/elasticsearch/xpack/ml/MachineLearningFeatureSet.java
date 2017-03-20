@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.ml;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -89,8 +90,8 @@ public class MachineLearningFeatureSet implements XPackFeatureSet {
     }
 
     @Override
-    public XPackFeatureSet.Usage usage() {
-        return new Usage(available(), enabled());
+    public void usage(ActionListener<XPackFeatureSet.Usage> listener) {
+        listener.onResponse(new Usage(available(), enabled()));
     }
 
     public static class Usage extends XPackFeatureSet.Usage {

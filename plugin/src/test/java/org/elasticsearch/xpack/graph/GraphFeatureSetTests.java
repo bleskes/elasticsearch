@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.graph;
 
+import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.license.XPackLicenseState;
@@ -45,10 +46,13 @@ public class GraphFeatureSetTests extends ESTestCase {
         boolean available = randomBoolean();
         when(licenseState.isGraphAllowed()).thenReturn(available);
         assertThat(featureSet.available(), is(available));
-        assertThat(featureSet.usage().available(), is(available));
+        PlainActionFuture<XPackFeatureSet.Usage> future = new PlainActionFuture<>();
+        featureSet.usage(future);
+        XPackFeatureSet.Usage usage = future.get();
+        assertThat(usage.available(), is(available));
 
         BytesStreamOutput out = new BytesStreamOutput();
-        featureSet.usage().writeTo(out);
+        usage.writeTo(out);
         XPackFeatureSet.Usage serializedUsage = new GraphFeatureSet.Usage(out.bytes().streamInput());
         assertThat(serializedUsage.available(), is(available));
     }
@@ -65,10 +69,13 @@ public class GraphFeatureSetTests extends ESTestCase {
         }
         GraphFeatureSet featureSet = new GraphFeatureSet(settings.build(), licenseState);
         assertThat(featureSet.enabled(), is(enabled));
-        assertThat(featureSet.usage().enabled(), is(enabled));
+        PlainActionFuture<XPackFeatureSet.Usage> future = new PlainActionFuture<>();
+        featureSet.usage(future);
+        XPackFeatureSet.Usage usage = future.get();
+        assertThat(usage.enabled(), is(enabled));
 
         BytesStreamOutput out = new BytesStreamOutput();
-        featureSet.usage().writeTo(out);
+        usage.writeTo(out);
         XPackFeatureSet.Usage serializedUsage = new GraphFeatureSet.Usage(out.bytes().streamInput());
         assertThat(serializedUsage.enabled(), is(enabled));
     }
