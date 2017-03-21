@@ -313,9 +313,7 @@ public class AutodetectResultProcessorIT extends ESSingleNodeTestCase {
     }
 
     private ModelSnapshot createModelSnapshot() {
-        ModelSnapshot snapshot = new ModelSnapshot(JOB_ID);
-        snapshot.setSnapshotId(randomAsciiOfLength(12));
-        return snapshot;
+        return new ModelSnapshot.Builder(JOB_ID).setSnapshotId(randomAsciiOfLength(12)).build();
     }
 
     private Quantiles createQuantiles() {
