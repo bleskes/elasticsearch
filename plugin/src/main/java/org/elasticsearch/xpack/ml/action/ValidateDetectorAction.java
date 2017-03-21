@@ -43,7 +43,7 @@ public class ValidateDetectorAction
 extends Action<ValidateDetectorAction.Request, ValidateDetectorAction.Response, ValidateDetectorAction.RequestBuilder> {
 
     public static final ValidateDetectorAction INSTANCE = new ValidateDetectorAction();
-    public static final String NAME = "cluster:admin/ml/anomaly_detectors/validate/detector";
+    public static final String NAME = "cluster:admin/ml/job/validate/detector";
 
     protected ValidateDetectorAction() {
         super(NAME);
