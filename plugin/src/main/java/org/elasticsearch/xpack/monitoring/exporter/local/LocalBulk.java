@@ -18,6 +18,7 @@
 package org.elasticsearch.xpack.monitoring.exporter.local;
 
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -37,7 +38,8 @@ import static org.elasticsearch.xpack.monitoring.exporter.Exporter.EXPORT_PIPELI
 
 /**
  * LocalBulk exports monitoring data in the local cluster using bulk requests. Its usage is not thread safe since the
- * {@link LocalBulk#add(Collection)},  {@link LocalBulk#flush()} and  {@link LocalBulk#doClose()} methods are not synchronized.
+ * {@link LocalBulk#add(Collection)}, {@link LocalBulk#flush(org.elasticsearch.action.ActionListener)} and
+ * {@link LocalBulk#doClose(ActionListener)} methods are not synchronized.
  */
 public class LocalBulk extends ExportBulk {
 
@@ -50,7 +52,7 @@ public class LocalBulk extends ExportBulk {
 
 
     public LocalBulk(String name, Logger logger, InternalClient client, ResolversRegistry resolvers, boolean usePipeline) {
-        super(name);
+        super(name, client.threadPool().getThreadContext());
         this.logger = logger;
         this.client = client;
         this.resolvers = resolvers;
@@ -99,25 +101,26 @@ public class LocalBulk extends ExportBulk {
     }
 
     @Override
-    public void doFlush() throws ExportException {
+    public void doFlush(ActionListener<Void> listener) {
         if (requestBuilder == null || requestBuilder.numberOfActions() == 0 || isClosed()) {
-            return;
-        }
-        try {
-            logger.trace("exporter [{}] - exporting {} documents", name, requestBuilder.numberOfActions());
-            BulkResponse bulkResponse = requestBuilder.get();
-
-            if (bulkResponse.hasFailures()) {
-                throwExportException(bulkResponse.getItems());
+            listener.onResponse(null);
+        } else {
+            try {
+                logger.trace("exporter [{}] - exporting {} documents", name, requestBuilder.numberOfActions());
+                requestBuilder.execute(ActionListener.wrap(bulkResponse -> {
+                    if (bulkResponse.hasFailures()) {
+                        throwExportException(bulkResponse.getItems(), listener);
+                    } else {
+                        listener.onResponse(null);
+                    }
+                }, e -> listener.onFailure(new ExportException("failed to flush export bulk [{}]", e, name))));
+            } finally {
+                requestBuilder = null;
             }
-        } catch (Exception e) {
-            throw new ExportException("failed to flush export bulk [{}]", e, name);
-        } finally {
-            requestBuilder = null;
         }
     }
 
-    void throwExportException(BulkItemResponse[] bulkItemResponses) {
+    void throwExportException(BulkItemResponse[] bulkItemResponses, ActionListener<Void> listener) {
         ExportException exception = new ExportException("bulk [{}] reports failures when exporting documents", name);
 
         Arrays.stream(bulkItemResponses)
@@ -126,14 +129,17 @@ public class LocalBulk extends ExportBulk {
                 .forEach(exception::addExportException);
 
         if (exception.hasExportExceptions()) {
-            throw exception;
+            listener.onFailure(exception);
+        } else {
+            listener.onResponse(null);
         }
     }
 
     @Override
-    protected void doClose() throws ExportException {
+    protected void doClose(ActionListener<Void> listener) {
         if (isClosed() == false) {
             requestBuilder = null;
         }
+        listener.onResponse(null);
     }
 }
