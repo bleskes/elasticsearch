@@ -252,7 +252,7 @@ public class StartDatafeedAction
             return datafeedId;
         }
 
-        public long getStartTime() {
+        public long getDatafeedStartTime() {
             return startTime;
         }
 
