@@ -43,7 +43,6 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 
-@LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/750")
 public class PainlessDomainSplitIT extends ESRestTestCase {
 
     static class TestConfiguration {
@@ -210,6 +209,12 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
                         + ", \"mappings\" : {" + mapping + "} }")));
     }
 
+    // needed to avoid the test suite from failing for having no tests
+    public void testSoThatTestsDoNotFail() {
+
+    }
+
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/750")
     public void testIsolated() throws Exception {
         Settings.Builder settings = Settings.builder()
                 .put(IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING.getKey(), 1)
@@ -271,6 +276,7 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
         }
     }
 
+    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/750")
     public void testHRDSplit() throws Exception {
 
         // Create job
