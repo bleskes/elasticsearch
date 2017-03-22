@@ -43,6 +43,7 @@ import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor;
 import org.elasticsearch.xpack.security.authz.permission.FieldPermissions;
 import org.elasticsearch.xpack.security.authz.store.NativeRolesStore;
+import org.elasticsearch.xpack.security.authz.permission.FieldPermissionsDefinition;
 import org.elasticsearch.xpack.security.client.SecurityClient;
 import org.elasticsearch.xpack.security.user.User;
 
@@ -124,8 +125,8 @@ public class OldSecurityIndexBackwardsCompatibilityTests extends AbstractOldXPac
         RoleDescriptor.IndicesPrivileges indicesPrivileges = role.getIndicesPrivileges()[0];
         assertThat(indicesPrivileges.getIndices(), arrayWithSize(2));
         assertArrayEquals(new String[] { "index1", "index2" }, indicesPrivileges.getIndices());
-        final FieldPermissions fieldPermissions =
-                new FieldPermissions(indicesPrivileges.getGrantedFields(), indicesPrivileges.getDeniedFields());
+        final FieldPermissions fieldPermissions = new FieldPermissions(
+                new FieldPermissionsDefinition(indicesPrivileges.getGrantedFields(), indicesPrivileges.getDeniedFields()));
         assertTrue(fieldPermissions.grantsAccessTo("title"));
         assertTrue(fieldPermissions.grantsAccessTo("body"));
         assertArrayEquals(new String[] { "all" }, indicesPrivileges.getPrivileges());
