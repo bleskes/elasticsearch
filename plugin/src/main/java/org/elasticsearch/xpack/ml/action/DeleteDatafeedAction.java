@@ -41,7 +41,7 @@ import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedConfig;
 import org.elasticsearch.xpack.ml.MlMetadata;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
-import org.elasticsearch.xpack.persistent.PersistentTasks;
+import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -179,8 +179,8 @@ public class DeleteDatafeedAction extends Action<DeleteDatafeedAction.Request, D
                         @Override
                         public ClusterState execute(ClusterState currentState) throws Exception {
                             MlMetadata currentMetadata = state.getMetaData().custom(MlMetadata.TYPE);
-                            PersistentTasks persistentTasks =
-                                    state.getMetaData().custom(PersistentTasks.TYPE);
+                            PersistentTasksCustomMetaData persistentTasks =
+                                    state.getMetaData().custom(PersistentTasksCustomMetaData.TYPE);
                             MlMetadata newMetadata = new MlMetadata.Builder(currentMetadata)
                                     .removeDatafeed(request.getDatafeedId(), persistentTasks).build();
                             return ClusterState.builder(state).metaData(

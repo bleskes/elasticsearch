@@ -28,7 +28,6 @@ import org.elasticsearch.rest.action.RestBuilderListener;
 import org.elasticsearch.xpack.ml.MachineLearning;
 import org.elasticsearch.xpack.ml.action.OpenJobAction;
 import org.elasticsearch.xpack.ml.job.config.Job;
-import org.elasticsearch.xpack.persistent.PersistentActionResponse;
 
 import java.io.IOException;
 
@@ -54,12 +53,11 @@ public class RestOpenJobAction extends BaseRestHandler {
             }
         }
         return channel -> {
-            client.execute(OpenJobAction.INSTANCE, request, new RestBuilderListener<PersistentActionResponse>(channel) {
-
+            client.execute(OpenJobAction.INSTANCE, request, new RestBuilderListener<OpenJobAction.Response>(channel) {
                 @Override
-                public RestResponse buildResponse(PersistentActionResponse r, XContentBuilder builder) throws Exception {
+                public RestResponse buildResponse(OpenJobAction.Response r, XContentBuilder builder) throws Exception {
                     builder.startObject();
-                    builder.field("opened", true);
+                    builder.field("opened", r.isAcknowledged());
                     builder.endObject();
                     return new BytesRestResponse(RestStatus.OK, builder);
                 }
