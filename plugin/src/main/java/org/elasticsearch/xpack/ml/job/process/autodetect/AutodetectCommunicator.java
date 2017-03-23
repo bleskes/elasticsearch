@@ -19,6 +19,7 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.xpack.ml.job.config.DataDescription;
 import org.elasticsearch.xpack.ml.job.config.DetectionRule;
@@ -61,15 +62,19 @@ public class AutodetectCommunicator implements Closeable {
     private final Consumer<Exception> handler;
 
     final AtomicReference<CountDownLatch> inUse = new AtomicReference<>();
+    private NamedXContentRegistry xContentRegistry;
 
-    public AutodetectCommunicator(long taskId, Job job, AutodetectProcess process, DataCountsReporter dataCountsReporter,
-                                  AutoDetectResultProcessor autoDetectResultProcessor, Consumer<Exception> handler) {
+    public AutodetectCommunicator(long taskId, Job job, AutodetectProcess process,
+            DataCountsReporter dataCountsReporter,
+            AutoDetectResultProcessor autoDetectResultProcessor, Consumer<Exception> handler,
+            NamedXContentRegistry xContentRegistry) {
         this.taskId = taskId;
         this.job = job;
         this.autodetectProcess = process;
         this.dataCountsReporter = dataCountsReporter;
         this.autoDetectResultProcessor = autoDetectResultProcessor;
         this.handler = handler;
+        this.xContentRegistry = xContentRegistry;
     }
 
     public void writeJobInputHeader() throws IOException {
@@ -77,8 +82,9 @@ public class AutodetectCommunicator implements Closeable {
     }
 
     private DataToProcessWriter createProcessWriter(Optional<DataDescription> dataDescription) {
-        return DataToProcessWriterFactory.create(true, autodetectProcess, dataDescription.orElse(job.getDataDescription()),
-                job.getAnalysisConfig(), dataCountsReporter);
+        return DataToProcessWriterFactory.create(true, autodetectProcess,
+                dataDescription.orElse(job.getDataDescription()), job.getAnalysisConfig(),
+                dataCountsReporter, xContentRegistry);
     }
 
     public DataCounts writeToJob(InputStream inputStream, DataLoadParams params) throws IOException {

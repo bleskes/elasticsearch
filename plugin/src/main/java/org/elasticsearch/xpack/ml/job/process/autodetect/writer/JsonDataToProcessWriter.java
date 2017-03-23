@@ -14,15 +14,17 @@
  */
 package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
-import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 import org.elasticsearch.xpack.ml.job.config.DataDescription;
-import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.ml.job.process.DataCountsReporter;
+import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcess;
+import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,10 +43,14 @@ import java.util.Map;
 class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
 
     private static final Logger LOGGER = Loggers.getLogger(JsonDataToProcessWriter.class);
+    private NamedXContentRegistry xContentRegistry;
 
-    JsonDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess, DataDescription dataDescription,
-                                   AnalysisConfig analysisConfig, DataCountsReporter dataCountsReporter) {
-        super(includeControlField, autodetectProcess, dataDescription, analysisConfig, dataCountsReporter, LOGGER);
+    JsonDataToProcessWriter(boolean includeControlField, AutodetectProcess autodetectProcess,
+            DataDescription dataDescription, AnalysisConfig analysisConfig,
+            DataCountsReporter dataCountsReporter, NamedXContentRegistry xContentRegistry) {
+        super(includeControlField, autodetectProcess, dataDescription, analysisConfig,
+                dataCountsReporter, LOGGER);
+        this.xContentRegistry = xContentRegistry;
     }
 
     /**
@@ -58,7 +64,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
     public DataCounts write(InputStream inputStream) throws IOException {
         dataCountsReporter.startNewIncrementalCount();
 
-        try (JsonParser parser = new JsonFactory().createParser(inputStream)) {
+        try (XContentParser parser = XContentFactory.xContent(XContentType.JSON)
+                .createParser(xContentRegistry, inputStream)) {
             writeJson(parser);
 
             // this line can throw and will be propagated
@@ -68,7 +75,7 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
         return dataCountsReporter.incrementalStats();
     }
 
-    private void writeJson(JsonParser parser) throws IOException {
+    private void writeJson(XContentParser parser) throws IOException {
         Collection<String> analysisFields = inputFields();
 
         buildFieldIndexMapping(analysisFields.toArray(new String[0]));
@@ -80,7 +87,8 @@ class JsonDataToProcessWriter extends AbstractDataToProcessWriter {
         // We never expect to get the control field
         boolean[] gotFields = new boolean[analysisFields.size()];
 
-        JsonRecordReader recordReader = new SimpleJsonRecordReader(parser, inFieldIndexes, LOGGER);
+        SimpleJsonRecordReader recordReader = new SimpleJsonRecordReader(parser, inFieldIndexes,
+                LOGGER);
         long inputFieldCount = recordReader.read(input, gotFields);
         while (inputFieldCount >= 0) {
             Arrays.fill(record, "");

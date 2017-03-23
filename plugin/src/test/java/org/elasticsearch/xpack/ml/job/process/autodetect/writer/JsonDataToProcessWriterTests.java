@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.config.DataDescription;
@@ -34,6 +35,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
@@ -292,7 +294,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
     private JsonDataToProcessWriter createWriter() {
         return new JsonDataToProcessWriter(true, autodetectProcess, dataDescription.build(), analysisConfig,
-                dataCountsReporter);
+                dataCountsReporter, new NamedXContentRegistry(Collections.emptyList()));
     }
 
     private void assertWrittenRecordsEqualTo(List<String[]> expectedRecords) {
