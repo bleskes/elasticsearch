@@ -18,6 +18,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.mock.orig.Mockito;
@@ -55,7 +56,7 @@ public class ChunkedDataExtractorTests extends ESTestCase {
     private List<String> indexes;
     private QueryBuilder query;
     private int scrollSize;
-    private Long chunkSpan;
+    private TimeValue chunkSpan;
     private DataExtractorFactory dataExtractorFactory;
 
     private class TestDataExtractor extends ChunkedDataExtractor {
@@ -102,7 +103,7 @@ public class ChunkedDataExtractorTests extends ESTestCase {
     }
 
     public void testExtractionGivenSpecifiedChunk() throws IOException {
-        chunkSpan = 1000L;
+        chunkSpan = TimeValue.timeValueSeconds(1);
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2300L);
         extractor.setNextResponse(createSearchResponse(10L, 1000L, 2200L));
 
@@ -326,7 +327,7 @@ public class ChunkedDataExtractorTests extends ESTestCase {
     }
 
     public void testCancelGivenNextWasNeverCalled() throws IOException {
-        chunkSpan = 1000L;
+        chunkSpan = TimeValue.timeValueSeconds(1);
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2300L);
         extractor.setNextResponse(createSearchResponse(10L, 1000L, 2200L));
 
@@ -345,7 +346,7 @@ public class ChunkedDataExtractorTests extends ESTestCase {
     }
 
     public void testCancelGivenCurrentSubExtractorHasMore() throws IOException {
-        chunkSpan = 1000L;
+        chunkSpan = TimeValue.timeValueSeconds(1);
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2300L);
         extractor.setNextResponse(createSearchResponse(10L, 1000L, 2200L));
 
@@ -372,7 +373,7 @@ public class ChunkedDataExtractorTests extends ESTestCase {
     }
 
     public void testCancelGivenCurrentSubExtractorIsDone() throws IOException {
-        chunkSpan = 1000L;
+        chunkSpan = TimeValue.timeValueSeconds(1);
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2300L);
         extractor.setNextResponse(createSearchResponse(10L, 1000L, 2200L));
 
@@ -396,7 +397,7 @@ public class ChunkedDataExtractorTests extends ESTestCase {
     }
 
     public void testDataSummaryRequestIsNotOk() {
-        chunkSpan = 2000L;
+        chunkSpan = TimeValue.timeValueSeconds(2);
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2300L);
         extractor.setNextResponse(createErrorResponse());
 
@@ -405,7 +406,7 @@ public class ChunkedDataExtractorTests extends ESTestCase {
     }
 
     public void testDataSummaryRequestHasShardFailures() {
-        chunkSpan = 2000L;
+        chunkSpan = TimeValue.timeValueSeconds(2);
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2300L);
         extractor.setNextResponse(createResponseWithShardFailures());
 
