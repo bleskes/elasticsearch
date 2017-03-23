@@ -1,0 +1,25 @@
+[[ml-get-job]]
+== Get Job API
+
+The get jobs API allows you to retrieve configuration information about an anomaly detection job.
+
+[source,js]
+--------------------------------------------------
+GET _xpack/anomaly_detectors/my_analysis
+--------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+
+
+The above example gets the information for an anomaly detection job called `my_analysis`.
+
+The get job API can also be applied to all jobs by using `_all` as the job name.
+
+Operational usage information can be retrieved using `_stats`, for example:
+
+[source,js]
+--------------------------------------------------
+GET _xpack/anomaly_detectors/my_analysis/_stats
+--------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]

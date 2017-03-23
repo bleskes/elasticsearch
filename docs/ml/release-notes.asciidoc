@@ -1,0 +1,17 @@
+[[ml-release-notes]]
+= Release Notes
+
+[partintro]
+--
+This section summarizes the changes in each release.
+--
+
+[[ml-change-list]]
+== Change List
+
+[float]
+=== 5.4.0
+
+May 2017
+
+* Introduces Machine Learning in the Elastic Stack.

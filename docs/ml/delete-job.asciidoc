@@ -1,0 +1,22 @@
+[[ml-delete-job]]
+== Delete Job API
+
+The delete job API allows you to delete an existing anomaly detection job.
+
+[source,js]
+--------------------------------------------------
+DELETE _xpack/ml/anomaly_detectors/my_analysis
+--------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+
+The above example deletes a job called `my_analysis`.
+All job configuration, model state and results will be deleted.
+A `job_id` must be specified.
+
+IMPORTANT:  Deleting a job must be done via this API only. Do not delete the
+            job directly from the `.ml-*` indices using Elasticsearch's
+            DELETE Document API. When {security} is enabled, make sure no `write`
+            privileges are granted to anyone over the `.ml-*` indices.
+
+It is not currently possible to delete multiple jobs using wildcards or a comma separated list.

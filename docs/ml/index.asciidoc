@@ -1,0 +1,42 @@
+[[xpack-ml]]
+= Machine learning in the Elastic Stack
+
+:branch:            master
+:doctype:           book
+:version:           master
+:docversion:        current
+:imagesdir:         images/graph
+:release-state:     unreleased
+:forum:             https://discuss.elastic.co/c/x-pack
+:security-forum:    https://discuss.elastic.co/c/shield
+:watcher-forum:     https://discuss.elastic.co/c/watcher
+:monitoring-forum:  https://discuss.elastic.co/c/marvel
+:graph-forum:       https://discuss.elastic.co/c/graph
+:ref:               http://www.elastic.co/guide/en/elasticsearch/reference/{docversion}
+:logstash-ref:      http://www.elastic.co/guide/en/logstash/{docversion}
+:kibana-ref:        http://www.elastic.co/guide/en/kibana/{docversion}
+:java-client-ref:   http://www.elastic.co/guide/en/elasticsearch/client/java-api/{docversion}
+:blog-ref:          https://www.elastic.co/blog/
+:wikipedia:         https://en.wikipedia.org/wiki
+:xpack:             X-Pack
+:es:                Elasticsearch
+:security:          X-Pack security
+:monitoring:        X-Pack monitoring
+:watcher:           Watcher
+:reporting:         X-Pack reporting
+:graph:             X-Pack graph
+:searchprofiler:    X-Pack search profiler
+:ml:                Machine Learning
+
+include::introduction.asciidoc[]
+include::getting-started.asciidoc[]
+include::ml-scenarios.asciidoc[]
+include::ml-api.asciidoc[]
+include::delete-job.asciidoc[]
+include::flush-job.asciidoc[]
+include::get-job.asciidoc[]
+include::open-close-job.asciidoc[]
+include::post-data.asciidoc[]
+include::put-job.asciidoc[]
+include::troubleshooting.asciidoc[]
+include::release-notes.asciidoc[]

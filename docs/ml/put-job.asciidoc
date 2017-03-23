@@ -1,0 +1,460 @@
+[[ml-put-job]]
+== Create Job API
+
+The create job API allows you to instantiate an anomaly detection job.
+
+
+[float]
+[[create-job-settings]]
+=== Job Settings
+
+Each anomaly detector job can have specific settings associated with it.
+
+
+[source,js]
+--------------------------------------------------
+PUT _xpack/ml/anomaly_detectors/event_rate
+{
+    "description" : "Event rate analysis", <1>
+    "analysis_config" : { <2>
+        "detectors" :[
+            {
+                "function":"count"
+            }
+        ]
+    },
+    "data_description" : { <3>
+        "format":"JSON",
+        "time_field":"timestamp",
+        "time_format":"yyyy-MM-dd HH:mm:ssX"
+    },
+    "analysis_limits" : { <4>
+        "modelMemoryLimit": 1024
+    }
+}
+---------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+<1> A friendly name for the analysis
+<2> Specifies the type of analysis to be performed
+<3> Specifies the format of the input data
+<4> Specifies runtime limits per analysis job (optional)
+
+
+The above example shows how an analysis job called `event_rate` can be created.
+This expects data to be sent in JSON format using the POST `_data` API.
+
+[float]
+[[job-analysis_config]]
+=== Analysis Config Settings
+
+The first method for creating a new job is by supplying an analysisConfig parameter which specifies how the data should be analyzed.
+This has the following available configuration options:
+
+[cols="<,<,<,<m",options="header",]
+|=======================================================================
+|Setting |Type|Required|Default value
+|<<analysis_config-detectors,detectors>> | Array of objects | Yes |
+|<<analysis_config-bucket_span,bucket_span>> | Int | Yes | 300
+|<<analysis_config-influencers,influencers>> | Array of strings | No |
+|<<analysis_config-summary_count_field_name,summary_count_field_name>> | String | No |
+|<<analysis_config-categorization_field_name,categorization_field_name>> | String | No |
+|<<analysis_config-categorization_filters,categorization_filters>> | Array of strings | No |
+|<<analysis_config-multivariate_by_fields,multivariate_by_fields>> | Boolean | No |
+|<<analysis_config-overlapping_buckets,overlapping_buckets>> | Boolean | No |
+|<<analysis_config-latency,latency>> | Int | No | 0
+|<<analysis_config-period,period>> | Int | No |
+|<<analysis_config-batch_span,batch_span>> | Int | No |
+|=======================================================================
+
+
+[float]
+[[analysis_config-detectors]]
+==== `detectors`
+
+    * This is a required setting
+    * Value type is an array of <<job-detectors,detector objects>>
+    * There is no default value
+
+Configuration for the anomaly detectors to be used in the job.
+Multiple detectors can be specified.
+The list should contain at least one configured detector.
+If none are present no analysis will take place and an error will be returned.
+
+[float]
+[[analysis_config-bucket_span]]
+==== `bucket_span`
+
+    * This is a required setting
+    * Value type is an unsigned int
+    * The default value is 300 seconds (5 mins)
+
+The size of the interval the analysis is aggregated into, measured in seconds
+
+[float]
+[[analysis_config-influencers]]
+==== `influencers`
+
+    * Value type is an array of string
+    * There is no default value
+
+A comma separated list of Influencer field names.
+Typically these can be the by/over/partition fields used in the detector configuration.
+You may also wish to use a field name that is not specifically named in a detector,
+but is available as part of the input data.
+When using multiple detectors, the use of influencers is recommended as it aggregates results for each influencer entity.
+
+[float]
+[[analysis_config-summary_count_field_name]]
+==== `summary_count_field_name`
+
+    * Value type is a string
+    * There is no default value
+
+If not null, the input to the job is expected to be pre-summarized,
+and this is the name of the field in which the count of raw data points that have been summarized must be provided.
+Cannot be used with the `metric` function.
+The same `summary_count_field_name` applies to all `detectors`.
+
+[float]
+[[analysis_config-categorization_field_name]]
+==== `categorization_field_name`
+
+    * Value type is a string
+    * There is no default value
+
+If not null, the values of the specified field will be categorized.
+The resulting categories can be used in a detector
+by setting either of `byfield_name`, `overfield_name` or `partitionfield_name` to the keyword `prelertcategory`.
+
+[float]
+[[analysis_config-categorization_filters]]
+==== `categorization_filters`
+
+    * Value type is an array of strings
+    * There is no default value
+    * Requires `categorization_field_name` to be specified
+
+If `categorization_field_name` is specified, optional filters can be defined.
+This parameter expects an array of regular expressions.
+The expressions are used to filter out matching sequences off the categorization field values.
+This is useful to fine tune categorization by excluding sequences that should not be taken into consideration for defining categories, e.g. SQL statements in log files.
+
+[float]
+[[analysis_config-multivariate_by_fields]]
+==== `multivariate_by_fields`
+
+    * Value type is a boolean
+    * There is no default value
+    * Requires `by_field_name` to be specified
+
+If set to `true` the analysis will automatically find correlations between metrics for a given `by` field
+value and then report anomalies when those correlations cease to hold.
+For example, suppose CPU and memory usage on host A is usually highly correlated with the same metrics on host B
+(perhaps because they're running a load-balanced application).
+If you enable this option then anomalies will be reported when, for example, CPU usage on host A is
+high and the value of CPU usage on host B is low.
+i.e. The CPU of host A is unusual given the CPU of host B.
+
+[float]
+[[analysis_config-overlapping_buckets]]
+==== `overlapping_buckets`
+
+    * Value type is a boolean
+    * There is no default value
+
+If set to `true` will perform an additional analysis that runs out of phase by half a bucket length.
+This requires more system resources and will enhance detection of anomalies that span bucket boundaries.
+
+[float]
+[[analysis_config-latency]]
+==== `latency`
+
+    * Value type is an unsigned int
+    * The default value is 0 (no latency)
+
+Latency is only applicable when sending data using the POST `_data` API.
+This is the size of the window, in seconds, in which to expect data that is out-of-time order.
+
+[float]
+[[analysis_config-period]]
+==== `period`
+
+    * Value type is an unsigned int
+    * The default value is automatically determined
+
+The repeat interval for periodic data in multiples of `batch_span`.
+If not specified, daily and weekly periodicity will be automatically determined.
+This is an advanced option; usually left as default.
+
+[float]
+[[analysis_config-batch_span]]
+==== `batch_span`
+
+    * Value type is an unsigned int
+    * The default value is automatically determined
+    * Requires `period` to be specified
+
+The interval into which to batch seasonal data measured in seconds.
+This is an advanced option; usually left as default.
+
+
+[float]
+[[job-detectors]]
+==== Detector Objects
+
+The `detectors` property of the analysis configuration object specifies which fields in the data are to be analyzed,
+and the analytical functions used
+It is an object with the following properties:
+
+[cols="<,<,<,<m",options="header",]
+|=======================================================================
+|Setting |Type|Required|Default value
+|<<detector-function,function>> | String | Yes |
+|<<detector-field_name,field_name>> | String | Conditional |
+|<<detector-by_field_name,by_field_name>> | String | No |
+|<<detector-over_field_name,over_field_name>> | String | No |
+|<<detector-partition_field_name,partition_field_name>> | String | No |
+|<<detector-exclude_frequent,exclude_frequent>> | String | No |
+|<<detector-use_null,use_null>> | Boolean | No | false
+|=======================================================================
+
+
+[float]
+[[detector-function]]
+==== `function`
+
+    * This is a required setting
+    * Value type is a string
+    * There is no default value
+
+The analysis function to be used.
+Examples are `count`, `rare`, `mean`, `min`, `max` and `sum`.
+For a full list of the analytical functions see the todo.
+The default function is `metric`, which looks for anomalies in all of `min`, `max` and `mean`. Todo check.
+The `metric` function cannot be used with pre-summarized input, in other words,
+if `summary_count_field_name` is not null then you must specify a function other than `metric`.
+
+Example:
+
+[source,js]
+--------------------------------------------------
+PUT _xpack/ml/anomaly_detectors/event_rate
+{
+    "description" : "Simple event rate monitoring",
+    "analysis_config" : {
+        "detectors" :[
+            {
+                "function":"count"
+            }
+        ]
+    },
+    "data_description" : {
+        "format":"JSON",
+        "time_field":"timestamp",
+        "time_format":"yyyy-MM-dd HH:mm:ssX"
+    }
+}
+---------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+
+[float]
+[[detector-field_name]]
+==== `field_name`
+
+    * Value type is a string
+    * There is no default value
+    * Required for certain `function` values
+
+The field to be analyzed for certain functions (e.g. `sum`, `min`, `max`, `mean`, `info_content`).
+If using an event rate function such as `count` or `rare` then this should not be specified.
+`field_name` cannot contain double quotes or backslashes.
+The field should be renamed to avoid using these characters.
+
+[float]
+[[detector-by_field_name]]
+==== `by_field_name`
+
+    * Value type is a string
+    * There is no default value
+
+The field used to split the data for analyzing those splits with respect to their own history.
+Used for finding unusual values in the context of the split.
+
+[float]
+[[detector-over_field_name]]
+==== `over_field_name`
+
+    * Value type is a string
+    * There is no default value
+    * Required for population analysis
+
+The field used to split the data for analyzing those splits with respect to the history of all splits.
+This is used for finding unusual values in the population of all splits.
+
+Example:
+
+[source,js]
+--------------------------------------------------
+PUT _xpack/ml/anomaly_detectors/port_scan_analysis
+{
+    "description" : "Port scanning",
+    "analysis_config" : {
+        "detectors" :[
+            {
+                "function":"high_distinct_count",
+                "field_name":"port",
+                "over_field_name":"dst_ip"
+            }
+        ]
+    },
+    "data_description" : {
+        "format":"JSON",
+        "time_field":"timestamp",
+        "time_format":"yyyy-MM-dd HH:mm:ssX"
+    }
+}
+---------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+
+[float]
+[[detector-partition_field_name]]
+==== `partition_field_name`
+
+    * Value type is a string
+    * There is no default value
+
+Segment the analysis along this field to have completely independent baselines for each value of this field.
+
+Example:
+
+[source,js]
+--------------------------------------------------
+PUT _xpack/ml/anomaly_detectors/txn_analysis
+{
+    "description" : "Unusual transactions by department",
+    "analysis_config" : {
+        "detectors" :[
+            {
+                "function":"mean",
+                "field_name":"txn_value",
+                "over_field_name":"user",
+                "partition_field_name":"department"
+            }
+        ]
+    },
+    "data_description" : {
+        "format":"JSON",
+        "time_field":"timestamp",
+        "time_format":"yyyy-MM-dd HH:mm:ssX"
+    }
+}
+---------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+
+[float]
+[[detector-exclude_frequent]]
+==== `exclude_frequent`
+
+    * Value type is a string
+    * There is no default value
+
+May contain "all", "none", "by" or "over".
+If set, frequent entities will be excluded from influencing the anomaly results.
+Entities may be considered frequent over time or frequent in a population.
+If working with both over and by fields, then `exclude_frequent` may be set to "all" for both fields, or specifically for the `over` or the `by` fields.
+
+[float]
+[[detector-use_null]]
+==== `use_null`
+
+    * Value type is a boolean
+    * The default value is `false`
+
+When there isn't a value for the `by` or `partition` fields, defines whether a new series be used as the `null` series.
+
+IMPORTANT: Field names are case sensitive, for example a field named 'Bytes' is different to one named 'bytes'.
+
+[float]
+[[job-data_description]]
+=== Data Description Settings
+
+The data description settings define the format of the input data.
+
+When data is read from elasticsearch, the datafeed must be configured.
+This defines which index data will be taken from, and over what time period.
+
+When data is being received via the POST `_data` API, then the data format is required, for example JSON or CSV.
+Note that data posted will not be stored in elasticsearch. Only the results for anomaly detection are retained.
+
+Todo
+
+[float]
+[[job-analysis_limits]]
+=== Analysis Limits Settings
+
+Limits can be applied for the size of the internal mathematical models held in memory.
+These can be set per job, and do not control the memory used by other processes.
+If necessary, they can also be updated after the job is created. Todo
+
+Example:
+
+[source,js]
+--------------------------------------------------
+PUT _xpack/ml/anomaly_detectors/event_rate
+{
+    "description" : "Simple event rate monitoring",
+    "analysis_config" : {
+        "detectors" :[
+            {
+                "function":"count"
+            }
+        ]
+    },
+    "data_description" : {
+        "format":"JSON",
+        "time_field":"timestamp",
+        "time_format":"yyyy-MM-dd HH:mm:ssX"
+    },
+    "analysisLimits" : {
+        "modelMemoryLimit": 8192,
+        "categorization_examples_limit": 0
+    }
+}
+---------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+
+[cols="<,<,<,<m",options="header",]
+|=======================================================================
+|Setting |Type|Required|Default value
+|<<analysis_limits-model_memory_limit,model_memory_limit>> | Long | No | 4096
+|<<analysis_limits-categorization_examples_limit,categorization_examples_limit>> | Long | No | 4
+|=======================================================================
+
+[float]
+[[analysis_limits-model_memory_limit]]
+==== model_memory_limit
+
+    * Value type is a long
+    * The default value is 4096
+
+The maximum amount of memory, in MiB, that the internal mathematical models can use.
+Once this limit is appoached, pruning of data becomes more aggressive.
+Upon exceeding this limit, new entities will not be modeled.
+
+[float]
+[[analysis_limits-categorization_examples_limit]]
+==== categorization_examples_limit
+
+    * Value type is a long
+    * The default value is 4
+
+This setting only applies to analysis that uses categorization.
+It controls maximum number of examples stored per category, in memory and in the results data store.
+Increasing this will allow more examples to be available, however will require more storage to be available.
+
+If set to `0`, no examples will be stored.
