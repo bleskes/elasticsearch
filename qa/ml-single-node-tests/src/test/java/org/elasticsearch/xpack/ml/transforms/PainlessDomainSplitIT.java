@@ -20,7 +20,6 @@ package org.elasticsearch.xpack.ml.transforms;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.Strings;
@@ -200,21 +199,15 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
 
     private void createIndex(String name, Settings settings) throws IOException {
         assertOK(client().performRequest("PUT", name, Collections.emptyMap(),
-                new StringEntity("{ \"settings\": " + Strings.toString(settings) + " }")));
+                new StringEntity("{ \"settings\": " + Strings.toString(settings) + " }", ContentType.APPLICATION_JSON)));
     }
 
     private void createIndex(String name, Settings settings, String mapping) throws IOException {
         assertOK(client().performRequest("PUT", name, Collections.emptyMap(),
                 new StringEntity("{ \"settings\": " + Strings.toString(settings)
-                        + ", \"mappings\" : {" + mapping + "} }")));
+                        + ", \"mappings\" : {" + mapping + "} }", ContentType.APPLICATION_JSON)));
     }
 
-    // needed to avoid the test suite from failing for having no tests
-    public void testSoThatTestsDoNotFail() {
-
-    }
-
-    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/750")
     public void testIsolated() throws Exception {
         Settings.Builder settings = Settings.builder()
                 .put(IndexMetaData.INDEX_NUMBER_OF_SHARDS_SETTING.getKey(), 1)
@@ -222,7 +215,7 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
 
         createIndex("painless", settings.build());
         client().performRequest("PUT", "painless/test/1", Collections.emptyMap(),
-                new StringEntity("{\"test\": \"test\"}"));
+                new StringEntity("{\"test\": \"test\"}", ContentType.APPLICATION_JSON));
         client().performRequest("POST", "painless/_refresh");
 
         Pattern pattern = Pattern.compile("domain_split\":\\[(.*?),(.*?)\\]");
@@ -232,7 +225,6 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
         for (TestConfiguration testConfig : tests) {
             params.put("host", testConfig.hostName);
             String mapAsJson = jsonBuilder().map(params).string();
-            logger.info("params={}", mapAsJson);
 
             StringEntity body = new StringEntity("{\n" +
                     "    \"query\" : {\n" +
@@ -248,7 +240,7 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
                     "            }\n" +
                     "        }\n" +
                     "    }\n" +
-                    "}");
+                    "}", ContentType.APPLICATION_JSON);
 
             Response response = client().performRequest("GET", "painless/test/_search", Collections.emptyMap(), body);
             String responseBody = EntityUtils.toString(response.getEntity());
@@ -267,7 +259,7 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
             // domainSplit() tests had subdomain, testHighestRegisteredDomainCases() do not
             if (testConfig.subDomainExpected != null) {
                 assertThat("Expected subdomain [" + testConfig.subDomainExpected + "] but found [" + actualSubDomain
-                        + "]. Actual " + actualTotal + " vs Expected " + expectedTotal, actualSubDomain,
+                                + "]. Actual " + actualTotal + " vs Expected " + expectedTotal, actualSubDomain,
                         equalTo(testConfig.subDomainExpected));
             }
 
@@ -276,7 +268,6 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
         }
     }
 
-    @LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/750")
     public void testHRDSplit() throws Exception {
 
         // Create job
@@ -294,7 +285,7 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
                 "  }";
 
         client().performRequest("PUT", MachineLearning.BASE_PATH + "anomaly_detectors/painless", Collections.emptyMap(),
-                new StringEntity(job));
+                new StringEntity(job, ContentType.APPLICATION_JSON));
         client().performRequest("POST", MachineLearning.BASE_PATH + "anomaly_detectors/painless/_open");
 
         // Create index to hold data
@@ -323,14 +314,14 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
                     client().performRequest("PUT", "painless/test/" + time.toDateTimeISO() + "_" + j,
                             Collections.emptyMap(),
                             new StringEntity("{\"domain\": \"" + "bar.bar.com\", \"time\": \"" + time.toDateTimeISO()
-                                    + "\"}"));
+                                    + "\"}", ContentType.APPLICATION_JSON));
                 }
             } else {
                 // Non-anomalous values will be what's seen when the anomaly is reported
                 client().performRequest("PUT", "painless/test/" + time.toDateTimeISO(),
                         Collections.emptyMap(),
                         new StringEntity("{\"domain\": \"" + test.hostName + "\", \"time\": \"" + time.toDateTimeISO()
-                                + "\"}"));
+                                + "\"}", ContentType.APPLICATION_JSON));
             }
         }
 
@@ -349,9 +340,8 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
                 "      }";
 
         client().performRequest("PUT", MachineLearning.BASE_PATH + "datafeeds/painless", Collections.emptyMap(),
-                new StringEntity(body));
+                new StringEntity(body, ContentType.APPLICATION_JSON));
         client().performRequest("POST", MachineLearning.BASE_PATH + "datafeeds/painless/_start");
-
 
         boolean passed = awaitBusy(() -> {
             try {
@@ -377,7 +367,7 @@ public class PainlessDomainSplitIT extends ESRestTestCase {
                     // domainSplit() tests had subdomain, testHighestRegisteredDomainCases() do not
                     if (test.subDomainExpected != null) {
                         assertThat("Expected subdomain [" + test.subDomainExpected + "] but found [" + actualSubDomain
-                                + "]. Actual " + actualTotal + " vs Expected " + expectedTotal, actualSubDomain,
+                                        + "]. Actual " + actualTotal + " vs Expected " + expectedTotal, actualSubDomain,
                                 equalTo(test.subDomainExpected));
                     }
 
