@@ -23,6 +23,7 @@ import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.MasterNodeRequest;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
@@ -54,6 +55,7 @@ import org.elasticsearch.xpack.ml.job.config.JobState;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
+import org.elasticsearch.xpack.persistent.RemovePersistentTaskAction;
 
 import java.io.IOException;
 import java.util.Date;
@@ -84,12 +86,14 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
     public static class Request extends MasterNodeRequest<Request> implements ToXContent {
 
         public static final ParseField TIMEOUT = new ParseField("timeout");
+        public static final ParseField FORCE = new ParseField("force");
         public static ObjectParser<Request, Void> PARSER = new ObjectParser<>(NAME, Request::new);
 
         static {
             PARSER.declareString(Request::setJobId, Job.ID);
             PARSER.declareString((request, val) ->
                     request.setTimeout(TimeValue.parseTimeValue(val, TIMEOUT.getPreferredName())), TIMEOUT);
+            PARSER.declareBoolean(Request::setForce, FORCE);
         }
 
         public static Request parseRequest(String jobId, XContentParser parser) {
@@ -102,6 +106,7 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
 
         private String jobId;
         private TimeValue timeout = TimeValue.timeValueMinutes(20);
+        private boolean force = false;
 
         Request() {}
 
@@ -125,6 +130,14 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
             this.timeout = timeout;
         }
 
+        public boolean isForce() {
+            return force;
+        }
+
+        public void setForce(boolean force) {
+            this.force = force;
+        }
+
         @Override
         public ActionRequestValidationException validate() {
             return null;
@@ -135,6 +148,7 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
             super.readFrom(in);
             jobId = in.readString();
             timeout = new TimeValue(in);
+            force = in.readBoolean();
         }
 
         @Override
@@ -142,6 +156,7 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
             super.writeTo(out);
             out.writeString(jobId);
             timeout.writeTo(out);
+            out.writeBoolean(force);
         }
 
         @Override
@@ -168,7 +183,8 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
             }
             Request other = (Request) obj;
             return Objects.equals(jobId, other.jobId) &&
-                    Objects.equals(timeout, other.timeout);
+                    Objects.equals(timeout, other.timeout) &&
+                    Objects.equals(force, other.force);
         }
     }
 
@@ -232,15 +248,17 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
 
         private final ClusterService clusterService;
         private final CloseJobService closeJobService;
+        private final Client client;
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool,
                                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                               ClusterService clusterService, CloseJobService closeJobService) {
+                               ClusterService clusterService, CloseJobService closeJobService, Client client) {
             super(settings, CloseJobAction.NAME, transportService, clusterService, threadPool, actionFilters,
                     indexNameExpressionResolver, Request::new);
             this.clusterService = clusterService;
             this.closeJobService = closeJobService;
+            this.client = client;
         }
 
         @Override
@@ -255,6 +273,19 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
 
         @Override
         protected void masterOperation(Request request, ClusterState state, ActionListener<Response> listener) throws Exception {
+            if (request.isForce()) {
+                forceCloseJob(client, request.getJobId(), state, listener);
+            } else {
+                closeJob(request, listener);
+            }
+        }
+
+        @Override
+        protected ClusterBlockException checkBlock(Request request, ClusterState state) {
+            return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA_WRITE);
+        }
+
+        private void closeJob(Request request, ActionListener<Response> listener) {
             clusterService.submitStateUpdateTask("closing job [" + request.getJobId() + "]", new ClusterStateUpdateTask() {
                 @Override
                 public ClusterState execute(ClusterState currentState) throws Exception {
@@ -283,10 +314,24 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
             });
         }
 
-        @Override
-        protected ClusterBlockException checkBlock(Request request, ClusterState state) {
-            return state.blocks().globalBlockedException(ClusterBlockLevel.METADATA_WRITE);
+        private void forceCloseJob(Client client, String jobId, ClusterState currentState,
+                                   ActionListener<Response> listener) {
+            PersistentTask<?> task = MlMetadata.getJobTask(jobId,
+                    currentState.getMetaData().custom(PersistentTasksCustomMetaData.TYPE));
+            if (task != null) {
+                RemovePersistentTaskAction.Request request = new RemovePersistentTaskAction.Request(task.getId());
+                client.execute(RemovePersistentTaskAction.INSTANCE, request,
+                        ActionListener.wrap(
+                                response -> listener.onResponse(new Response(response.isAcknowledged())),
+                                listener::onFailure));
+            } else {
+                String msg = "Requested job [" + jobId + "] be force-closed, but job's task" +
+                        "could not be found.";
+                logger.warn(msg);
+                listener.onFailure(new RuntimeException(msg));
+            }
         }
+
     }
 
     static PersistentTask<?> validateAndFindTask(String jobId, ClusterState state) {
