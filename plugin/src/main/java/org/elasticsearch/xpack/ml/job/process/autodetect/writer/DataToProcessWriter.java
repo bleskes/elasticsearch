@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public interface DataToProcessWriter {
      *
      * @return Counts of the records processed, bytes read etc
      */
-    DataCounts write(InputStream inputStream) throws IOException;
+    DataCounts write(InputStream inputStream, XContentType xContentType) throws IOException;
 
     /**
      * Flush the outputstream

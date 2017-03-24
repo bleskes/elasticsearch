@@ -125,7 +125,7 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
 
     protected Job.Builder createJob(String id) {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.JSON);
+        dataDescription.setFormat(DataDescription.DataFormat.XCONTENT);
         dataDescription.setTimeFormat(DataDescription.EPOCH_MS);
 
         Detector.Builder d = new Detector.Builder("count", null);
@@ -142,7 +142,7 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
 
     public static Job.Builder createFareQuoteJob(String id) {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.JSON);
+        dataDescription.setFormat(DataDescription.DataFormat.XCONTENT);
         dataDescription.setTimeFormat(DataDescription.EPOCH);
         dataDescription.setTimeField("time");
 
@@ -162,7 +162,7 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
 
     public static Job.Builder createScheduledJob(String jobId) {
         DataDescription.Builder dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataDescription.DataFormat.JSON);
+        dataDescription.setFormat(DataDescription.DataFormat.XCONTENT);
         dataDescription.setTimeFormat("yyyy-MM-dd HH:mm:ss");
 
         Detector.Builder d = new Detector.Builder("count", null);

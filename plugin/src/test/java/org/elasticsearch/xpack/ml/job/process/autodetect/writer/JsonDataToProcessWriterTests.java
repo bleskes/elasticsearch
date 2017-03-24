@@ -17,13 +17,14 @@ package org.elasticsearch.xpack.ml.job.process.autodetect.writer;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.config.DataDescription;
 import org.elasticsearch.xpack.ml.job.config.DataDescription.DataFormat;
 import org.elasticsearch.xpack.ml.job.config.Detector;
-import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcess;
 import org.elasticsearch.xpack.ml.job.process.DataCountsReporter;
+import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcess;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -73,7 +74,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
 
         dataDescription = new DataDescription.Builder();
-        dataDescription.setFormat(DataFormat.JSON);
+        dataDescription.setFormat(DataFormat.XCONTENT);
         dataDescription.setTimeFormat(DataDescription.EPOCH);
 
         Detector detector = new Detector.Builder("metric", "value").build();
@@ -87,7 +88,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream);
+        writer.write(inputStream, XContentType.JSON);
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -109,7 +110,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream);
+        writer.write(inputStream, XContentType.JSON);
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -138,7 +139,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream);
+        writer.write(inputStream, XContentType.JSON);
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -167,7 +168,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream);
+        writer.write(inputStream, XContentType.JSON);
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -196,7 +197,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream);
+        writer.write(inputStream, XContentType.JSON);
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -223,7 +224,8 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
 
-        ESTestCase.expectThrows(ElasticsearchParseException.class, () -> writer.write(inputStream));
+        ESTestCase.expectThrows(ElasticsearchParseException.class,
+                () -> writer.write(inputStream, XContentType.JSON));
     }
 
     public void testWrite_GivenJsonWithArrayField()
@@ -238,7 +240,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream);
+        writer.write(inputStream, XContentType.JSON);
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -267,7 +269,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream);
+        writer.write(inputStream, XContentType.JSON);
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
