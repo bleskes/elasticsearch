@@ -4,6 +4,7 @@ minimal:
   cluster:
     - cluster:monitor/health
     - cluster:monitor/main
+    - cluster:monitor/state
   indices:
     - names: '*'
       privileges:
