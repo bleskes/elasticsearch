@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.ml.action;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
+import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -32,6 +33,8 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.logging.DeprecationLogger;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.ToXContentObject;
@@ -44,6 +47,7 @@ import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.ml.job.JobManager;
+import org.elasticsearch.xpack.ml.job.config.DataDescription;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.messages.Messages;
 
@@ -52,6 +56,9 @@ import java.util.Date;
 import java.util.Objects;
 
 public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Response, PutJobAction.RequestBuilder> {
+
+    private static final DeprecationLogger DEPRECATION_LOGGER =
+            new DeprecationLogger(Loggers.getLogger(PutJobAction.class));
 
     public static final PutJobAction INSTANCE = new PutJobAction();
     public static final String NAME = "cluster:admin/ml/job/put";
@@ -102,6 +109,11 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
 
         @Override
         public ActionRequestValidationException validate() {
+            if (job != null && job.getDataDescription() != null &&
+                    job.getDataDescription().getFormat() == DataDescription.DataFormat.DELIMITED) {
+                DEPRECATION_LOGGER.deprecated("Creating jobs with delimited data format is " +
+                        "deprecated. Please use JSON instead.");
+            }
             return null;
         }
 
