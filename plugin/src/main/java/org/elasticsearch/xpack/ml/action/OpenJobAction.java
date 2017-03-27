@@ -60,7 +60,7 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcessManage
 import org.elasticsearch.xpack.ml.notifications.Auditor;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.ml.utils.JobStateObserver;
-import org.elasticsearch.xpack.persistent.NodePersistentTask;
+import org.elasticsearch.xpack.persistent.AllocatedPersistentTask;
 import org.elasticsearch.xpack.persistent.PersistentTaskRequest;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Assignment;
@@ -260,7 +260,7 @@ public class OpenJobAction extends Action<OpenJobAction.Request, OpenJobAction.R
 
     }
 
-    public static class JobTask extends NodePersistentTask {
+    public static class JobTask extends AllocatedPersistentTask {
 
         private final String jobId;
         private volatile AutodetectProcessManager autodetectProcessManager;
@@ -389,7 +389,7 @@ public class OpenJobAction extends Action<OpenJobAction.Request, OpenJobAction.R
         }
 
         @Override
-        protected void nodeOperation(NodePersistentTask task, Request request, ActionListener<TransportResponse.Empty> listener) {
+        protected void nodeOperation(AllocatedPersistentTask task, Request request, ActionListener<TransportResponse.Empty> listener) {
             JobTask jobTask = (JobTask) task;
             jobTask.autodetectProcessManager = autodetectProcessManager;
             autodetectProcessManager.setJobState(task.getPersistentTaskId(), JobState.OPENING, e1 -> {
