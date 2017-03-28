@@ -20,6 +20,7 @@ import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.tasks.BaseTasksResponse;
 import org.elasticsearch.client.ElasticsearchClient;
+import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
@@ -73,6 +74,7 @@ public class UpdateProcessAction extends
         private boolean isUpdated;
 
         private Response() {
+            super(null, null);
             this.isUpdated = true;
         }
 
@@ -205,7 +207,7 @@ public class UpdateProcessAction extends
         }
 
         @Override
-        protected void innerTaskOperation(Request request, OpenJobAction.JobTask task, ActionListener<Response> listener) {
+        protected void innerTaskOperation(Request request, OpenJobAction.JobTask task, ActionListener<Response> listener, ClusterState state) {
             threadPool.executor(MachineLearning.THREAD_POOL_NAME).execute(() -> {
                 try {
                     processManager.writeUpdateProcessMessage(request.getJobId(), request.getDetectorUpdates(),
