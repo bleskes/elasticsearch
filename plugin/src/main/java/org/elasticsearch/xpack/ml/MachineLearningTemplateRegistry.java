@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.ml;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
@@ -216,6 +217,8 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                     ActionListener.wrap(r -> listener.accept(true, null), e -> listener.accept(false, e)));
         } catch (IOException e) {
             logger.warn("Error putting the template for the notification message index", e);
+            listener.accept(false,
+                    new ElasticsearchException("Error creating the template mappings for the notification message indices", e));
         }
     }
 
@@ -250,6 +253,8 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                     ActionListener.wrap(r -> listener.accept(true, null), e -> listener.accept(false, e)));
         } catch (IOException e) {
             logger.error("Error creating template mappings for the " + AnomalyDetectorsIndex.jobStateIndexName() + " index", e);
+            listener.accept(false, new ElasticsearchException("Error creating template mappings for the " +
+                                        AnomalyDetectorsIndex.jobStateIndexName() + " indices", e));
         }
     }
 
@@ -273,6 +278,8 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                     ActionListener.wrap(r -> listener.accept(true, null), e -> listener.accept(false, e)));
         } catch (IOException e) {
             logger.error("Error creating template mappings for the " + AnomalyDetectorsIndex.jobResultsIndexPrefix() + " indices", e);
+            listener.accept(false, new ElasticsearchException("Error creating template mappings for the "
+                    + AnomalyDetectorsIndex.jobResultsIndexPrefix() + " index", e));
         }
     }
 
