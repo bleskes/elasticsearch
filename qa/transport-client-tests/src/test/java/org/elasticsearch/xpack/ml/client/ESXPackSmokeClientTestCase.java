@@ -22,6 +22,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
@@ -106,7 +107,7 @@ public abstract class ESXPackSmokeClientTestCase extends LuceneTestCase {
         for (String stringAddress : stringAddresses) {
             URL url = new URL("http://" + stringAddress);
             InetAddress inetAddress = InetAddress.getByName(url.getHost());
-            transportAddresses[i++] = new TransportAddress(
+            transportAddresses[i++] = new InetSocketTransportAddress(
                     new InetSocketAddress(inetAddress, url.getPort()));
         }
         return startClient(createTempDir(), transportAddresses);
