@@ -1,5 +1,5 @@
 [[ml-get-job]]
-== Get Job API
+=== Get Job API
 
 The get jobs API allows you to retrieve configuration information about an anomaly detection job.
 

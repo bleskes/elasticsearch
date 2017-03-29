@@ -1,5 +1,5 @@
 [[ml-delete-job]]
-== Delete Job API
+=== Delete Job API
 
 The delete job API allows you to delete an existing anomaly detection job.
 

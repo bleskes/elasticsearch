@@ -1,16 +1,11 @@
 [[ml-release-notes]]
-= Release Notes
-
-[partintro]
---
-This section summarizes the changes in each release.
---
+== Machine Learning Release Notes
 
 [[ml-change-list]]
-== Change List
+=== Change List
 
 [float]
-=== 5.4.0
+==== 5.4.0
 
 May 2017
 

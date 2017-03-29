@@ -1,5 +1,5 @@
 [[ml-flush-job]]
-== Flush Job API
+=== Flush Job API
 
 The flush job API is only applicable when sending data for analysis using the POST `_data` API.
 A flush will force any buffered data to be processed.

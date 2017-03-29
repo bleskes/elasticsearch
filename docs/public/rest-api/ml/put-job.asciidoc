@@ -1,12 +1,12 @@
 [[ml-put-job]]
-== Create Job API
+=== Create Job API
 
 The create job API allows you to instantiate an anomaly detection job.
 
 
 [float]
 [[create-job-settings]]
-=== Job Settings
+==== Job Settings
 
 Each anomaly detector job can have specific settings associated with it.
 
@@ -70,7 +70,7 @@ This has the following available configuration options:
 
 [float]
 [[analysis_config-detectors]]
-==== `detectors`
+===== `detectors`
 
     * This is a required setting
     * Value type is an array of <<job-detectors,detector objects>>
@@ -83,7 +83,7 @@ If none are present no analysis will take place and an error will be returned.
 
 [float]
 [[analysis_config-bucket_span]]
-==== `bucket_span`
+===== `bucket_span`
 
     * This is a required setting
     * Value type is an unsigned int
@@ -93,7 +93,7 @@ The size of the interval the analysis is aggregated into, measured in seconds
 
 [float]
 [[analysis_config-influencers]]
-==== `influencers`
+===== `influencers`
 
     * Value type is an array of string
     * There is no default value
@@ -106,7 +106,7 @@ When using multiple detectors, the use of influencers is recommended as it aggre
 
 [float]
 [[analysis_config-summary_count_field_name]]
-==== `summary_count_field_name`
+===== `summary_count_field_name`
 
     * Value type is a string
     * There is no default value
@@ -118,7 +118,7 @@ The same `summary_count_field_name` applies to all `detectors`.
 
 [float]
 [[analysis_config-categorization_field_name]]
-==== `categorization_field_name`
+===== `categorization_field_name`
 
     * Value type is a string
     * There is no default value
@@ -142,7 +142,7 @@ This is useful to fine tune categorization by excluding sequences that should no
 
 [float]
 [[analysis_config-multivariate_by_fields]]
-==== `multivariate_by_fields`
+===== `multivariate_by_fields`
 
     * Value type is a boolean
     * There is no default value
@@ -158,7 +158,7 @@ i.e. The CPU of host A is unusual given the CPU of host B.
 
 [float]
 [[analysis_config-overlapping_buckets]]
-==== `overlapping_buckets`
+===== `overlapping_buckets`
 
     * Value type is a boolean
     * There is no default value
@@ -168,7 +168,7 @@ This requires more system resources and will enhance detection of anomalies that
 
 [float]
 [[analysis_config-latency]]
-==== `latency`
+===== `latency`
 
     * Value type is an unsigned int
     * The default value is 0 (no latency)
@@ -178,7 +178,7 @@ This is the size of the window, in seconds, in which to expect data that is out-
 
 [float]
 [[analysis_config-period]]
-==== `period`
+===== `period`
 
     * Value type is an unsigned int
     * The default value is automatically determined
@@ -189,7 +189,7 @@ This is an advanced option; usually left as default.
 
 [float]
 [[analysis_config-batch_span]]
-==== `batch_span`
+===== `batch_span`
 
     * Value type is an unsigned int
     * The default value is automatically determined
@@ -201,7 +201,7 @@ This is an advanced option; usually left as default.
 
 [float]
 [[job-detectors]]
-==== Detector Objects
+===== Detector Objects
 
 The `detectors` property of the analysis configuration object specifies which fields in the data are to be analyzed,
 and the analytical functions used
@@ -222,7 +222,7 @@ It is an object with the following properties:
 
 [float]
 [[detector-function]]
-==== `function`
+===== `function`
 
     * This is a required setting
     * Value type is a string
@@ -261,7 +261,7 @@ PUT _xpack/ml/anomaly_detectors/event_rate
 
 [float]
 [[detector-field_name]]
-==== `field_name`
+===== `field_name`
 
     * Value type is a string
     * There is no default value
@@ -274,7 +274,7 @@ The field should be renamed to avoid using these characters.
 
 [float]
 [[detector-by_field_name]]
-==== `by_field_name`
+===== `by_field_name`
 
     * Value type is a string
     * There is no default value
@@ -284,7 +284,7 @@ Used for finding unusual values in the context of the split.
 
 [float]
 [[detector-over_field_name]]
-==== `over_field_name`
+===== `over_field_name`
 
     * Value type is a string
     * There is no default value
@@ -321,7 +321,7 @@ PUT _xpack/ml/anomaly_detectors/port_scan_analysis
 
 [float]
 [[detector-partition_field_name]]
-==== `partition_field_name`
+===== `partition_field_name`
 
     * Value type is a string
     * There is no default value
@@ -357,7 +357,7 @@ PUT _xpack/ml/anomaly_detectors/txn_analysis
 
 [float]
 [[detector-exclude_frequent]]
-==== `exclude_frequent`
+===== `exclude_frequent`
 
     * Value type is a string
     * There is no default value
@@ -369,7 +369,7 @@ If working with both over and by fields, then `exclude_frequent` may be set to "
 
 [float]
 [[detector-use_null]]
-==== `use_null`
+===== `use_null`
 
     * Value type is a boolean
     * The default value is `false`
@@ -380,7 +380,7 @@ IMPORTANT: Field names are case sensitive, for example a field named 'Bytes' is 
 
 [float]
 [[job-data_description]]
-=== Data Description Settings
+==== Data Description Settings
 
 The data description settings define the format of the input data.
 
@@ -394,7 +394,7 @@ Todo
 
 [float]
 [[job-analysis_limits]]
-=== Analysis Limits Settings
+==== Analysis Limits Settings
 
 Limits can be applied for the size of the internal mathematical models held in memory.
 These can be set per job, and do not control the memory used by other processes.
@@ -437,7 +437,7 @@ PUT _xpack/ml/anomaly_detectors/event_rate
 
 [float]
 [[analysis_limits-model_memory_limit]]
-==== model_memory_limit
+===== model_memory_limit
 
     * Value type is a long
     * The default value is 4096
@@ -448,7 +448,7 @@ Upon exceeding this limit, new entities will not be modeled.
 
 [float]
 [[analysis_limits-categorization_examples_limit]]
-==== categorization_examples_limit
+===== categorization_examples_limit
 
     * Value type is a long
     * The default value is 4
