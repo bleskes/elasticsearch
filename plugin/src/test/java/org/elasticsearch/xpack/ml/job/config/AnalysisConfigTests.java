@@ -40,7 +40,9 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         List<Detector> detectors = new ArrayList<>();
         int numDetectors = randomIntBetween(1, 10);
         for (int i = 0; i < numDetectors; i++) {
-            detectors.add(new Detector.Builder("count", null).build());
+            Detector.Builder builder = new Detector.Builder("count", null);
+            builder.setPartitionFieldName("part");
+            detectors.add(builder.build());
         }
         AnalysisConfig.Builder builder = new AnalysisConfig.Builder(detectors);
 
@@ -55,9 +57,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         if (randomBoolean()) {
             builder.setCategorizationFieldName(randomAsciiOfLength(10));
             builder.setCategorizationFilters(Arrays.asList(generateRandomStringArray(10, 10, false)));
-        }
-        if (randomBoolean()) {
-            builder.setInfluencers(Arrays.asList(generateRandomStringArray(10, 10, false)));
         }
         if (randomBoolean()) {
             builder.setLatency(TimeValue.timeValueSeconds(randomIntBetween(1, 1_000_000)));
@@ -80,7 +79,11 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
             builder.setResultFinalizationWindow(randomNonNegativeLong());
         }
 
-        builder.setUsePerPartitionNormalization(false);
+        boolean usePerPartitionNormalisation = randomBoolean();
+        builder.setUsePerPartitionNormalization(usePerPartitionNormalisation);
+        if (!usePerPartitionNormalisation) { // influencers can't be used with per partition normalisation
+            builder.setInfluencers(Arrays.asList(generateRandomStringArray(10, 10, false)));
+        }
         return builder;
     }
 
@@ -240,22 +243,18 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertTrue(ac.getMultipleBucketSpans().contains(TimeValue.timeValueSeconds(24000)));
     }
 
-
     public void testEquals_GivenSameReference() {
         AnalysisConfig config = createFullyPopulatedConfig();
         assertTrue(config.equals(config));
     }
 
     public void testEquals_GivenDifferentClass() {
-
         assertFalse(createFullyPopulatedConfig().equals("a string"));
     }
-
 
     public void testEquals_GivenNull() {
         assertFalse(createFullyPopulatedConfig().equals(null));
     }
-
 
     public void testEquals_GivenEqualConfig() {
         AnalysisConfig config1 = createFullyPopulatedConfig();
@@ -265,7 +264,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertTrue(config2.equals(config1));
         assertEquals(config1.hashCode(), config2.hashCode());
     }
-
 
     public void testEquals_GivenDifferentBatchSpan() {
         AnalysisConfig.Builder builder = createConfigBuilder();
@@ -280,7 +278,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config2.equals(config1));
     }
 
-
     public void testEquals_GivenDifferentBucketSpan() {
         AnalysisConfig.Builder builder = createConfigBuilder();
         builder.setBucketSpan(TimeValue.timeValueSeconds(1800));
@@ -293,7 +290,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
     }
-
 
     public void testEquals_GivenCategorizationField() {
         AnalysisConfig.Builder builder = createConfigBuilder();
@@ -308,7 +304,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config2.equals(config1));
     }
 
-
     public void testEquals_GivenDifferentDetector() {
         AnalysisConfig config1 = createConfigWithDetectors(Collections.singletonList(new Detector.Builder("min", "low_count").build()));
 
@@ -317,7 +312,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
     }
-
 
     public void testEquals_GivenDifferentInfluencers() {
         AnalysisConfig.Builder builder = createConfigBuilder();
@@ -332,7 +326,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config2.equals(config1));
     }
 
-
     public void testEquals_GivenDifferentLatency() {
         AnalysisConfig.Builder builder = createConfigBuilder();
         builder.setLatency(TimeValue.timeValueSeconds(1800));
@@ -345,7 +338,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
     }
-
 
     public void testEquals_GivenDifferentPeriod() {
         AnalysisConfig.Builder builder = createConfigBuilder();
@@ -360,7 +352,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config2.equals(config1));
     }
 
-
     public void testEquals_GivenSummaryCountField() {
         AnalysisConfig.Builder builder = createConfigBuilder();
         builder.setSummaryCountFieldName("foo");
@@ -374,7 +365,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config2.equals(config1));
     }
 
-
     public void testEquals_GivenMultivariateByField() {
         AnalysisConfig.Builder builder = createConfigBuilder();
         builder.setMultivariateByFields(true);
@@ -387,7 +377,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(config1.equals(config2));
         assertFalse(config2.equals(config1));
     }
-
 
     public void testEquals_GivenDifferentCategorizationFilters() {
         AnalysisConfig config1 = createFullyPopulatedConfig();
@@ -440,7 +429,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
     }
 
     public void testVerify_throws() {
-
         // count works with no fields
         Detector d = new Detector.Builder("count", null).build();
         new AnalysisConfig.Builder(Collections.singletonList(d)).build();
@@ -494,7 +482,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertEquals("batch_span cannot be less or equal than 0. Value = -1", e.getMessage());
     }
 
-
     public void testVerify_GivenNegativeLatency() {
         AnalysisConfig.Builder analysisConfig = createValidConfig();
         analysisConfig.setLatency(TimeValue.timeValueSeconds(-1));
@@ -503,7 +490,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         assertEquals("latency cannot be less than 0. Value = -1", e.getMessage());
     }
-
 
     public void testVerify_GivenNegativePeriod() {
         AnalysisConfig.Builder analysisConfig = createValidConfig();
@@ -530,7 +516,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         analysisConfig.build();
     }
 
-
     public void testVerify_GivenValidConfigWithCategorizationFieldNameAndCategorizationFilters() {
         AnalysisConfig.Builder analysisConfig = createValidConfig();
         analysisConfig.setCategorizationFieldName("myCategory");
@@ -538,7 +523,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         analysisConfig.build();
     }
-
 
     public void testVerify_OverlappingBuckets() {
         List<Detector> detectors;
@@ -631,7 +615,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertFalse(ac.getOverlappingBuckets());
     }
 
-
     public void testMultipleBucketsConfig() {
         AnalysisConfig.Builder ac = createValidConfig();
         ac.setMultipleBucketSpans(Arrays.asList(
@@ -684,9 +667,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_MULTIPLE_BUCKETSPANS_MUST_BE_MULTIPLE, -444, "3.7m"), e.getMessage());
     }
 
-
     public void testVerify_GivenCategorizationFiltersButNoCategorizationFieldName() {
-
         AnalysisConfig.Builder config = createValidConfig();
         config.setCategorizationFilters(Arrays.asList("foo"));
 
@@ -695,9 +676,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_REQUIRE_CATEGORIZATION_FIELD_NAME), e.getMessage());
     }
 
-
     public void testVerify_GivenDuplicateCategorizationFilters() {
-
         AnalysisConfig.Builder config = createValidConfig();
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", "bar", "foo"));
@@ -707,9 +686,7 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_CATEGORIZATION_FILTERS_CONTAINS_DUPLICATES), e.getMessage());
     }
 
-
     public void testVerify_GivenEmptyCategorizationFilter() {
-
         AnalysisConfig.Builder config = createValidConfig();
         config.setCategorizationFieldName("myCategory");
         config.setCategorizationFilters(Arrays.asList("foo", ""));
@@ -721,7 +698,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
 
     public void testCheckDetectorsHavePartitionFields() {
-
         AnalysisConfig.Builder config = createValidConfig();
         config.setUsePerPartitionNormalization(true);
 
@@ -729,7 +705,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_REQUIRES_PARTITION_FIELD), e.getMessage());
     }
-
 
     public void testCheckDetectorsHavePartitionFields_doesntThrowWhenValid() {
         AnalysisConfig.Builder config = createValidConfig();
@@ -740,7 +715,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         config.build();
     }
-
 
     public void testCheckNoInfluencersAreSet() {
 
@@ -755,7 +729,6 @@ public class AnalysisConfigTests extends AbstractSerializingTestCase<AnalysisCon
 
         assertEquals(Messages.getMessage(Messages.JOB_CONFIG_PER_PARTITION_NORMALIZATION_CANNOT_USE_INFLUENCERS), e.getMessage());
     }
-
 
     public void testVerify_GivenCategorizationFiltersContainInvalidRegex() {
 
