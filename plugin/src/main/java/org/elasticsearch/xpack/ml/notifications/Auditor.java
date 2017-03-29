@@ -20,6 +20,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -55,7 +56,8 @@ public class Auditor {
     }
 
     private void indexDoc(String type, ToXContent toXContent) {
-        client.prepareIndex(NOTIFICATIONS_INDEX, type)
+        // TODO: Fix the assertion tripping in internal engine for index requests without an id being retried:
+        client.prepareIndex(NOTIFICATIONS_INDEX, type, UUIDs.base64UUID())
                 .setSource(toXContentBuilder(toXContent))
                 .execute(new ActionListener<IndexResponse>() {
                     @Override
