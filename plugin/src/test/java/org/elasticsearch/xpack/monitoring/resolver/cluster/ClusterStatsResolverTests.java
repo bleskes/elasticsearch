@@ -67,34 +67,25 @@ import java.util.UUID;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
+import static org.elasticsearch.common.transport.LocalTransportAddress.buildUnique;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 
 public class ClusterStatsResolverTests extends MonitoringIndexNameResolverTestCase<ClusterStatsMonitoringDoc, ClusterStatsResolver> {
 
     @Override
     protected ClusterStatsMonitoringDoc newMonitoringDoc() {
-        ClusterStatsMonitoringDoc doc = new ClusterStatsMonitoringDoc(randomMonitoringId(), randomAsciiOfLength(2));
-        doc.setClusterUUID(randomAsciiOfLength(5));
-        doc.setTimestamp(Math.abs(randomLong()));
-        doc.setSourceNode(new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT));
-        doc.setClusterStats(randomClusterStats());
+        ClusterStatsMonitoringDoc doc = new ClusterStatsMonitoringDoc(randomMonitoringId(),
+                randomAsciiOfLength(2), randomAsciiOfLength(5), 1437580442979L,
+                new DiscoveryNode("id", buildUnique(), emptyMap(), emptySet(), Version.CURRENT),
+                randomClusterStats());
         return doc;
-    }
-
-    @Override
-    protected boolean checkResolvedId() {
-        return false;
     }
 
     public void testClusterStatsResolver() throws Exception {
         ClusterStatsMonitoringDoc doc = newMonitoringDoc();
-        doc.setTimestamp(1437580442979L);
 
         ClusterStatsResolver resolver = newResolver();
         assertThat(resolver.index(doc), equalTo(".monitoring-es-" + MonitoringTemplateUtils.TEMPLATE_VERSION + "-2015.07.22"));
-        assertThat(resolver.type(doc), equalTo(ClusterStatsResolver.TYPE));
-        assertThat(resolver.id(doc), nullValue());
 
         assertSource(resolver.source(doc, XContentType.JSON),
                 Sets.newHashSet(
@@ -109,7 +100,7 @@ public class ClusterStatsResolverTests extends MonitoringIndexNameResolverTestCa
      */
     private ClusterStatsResponse randomClusterStats() {
         List<ClusterStatsNodeResponse> responses = Collections.singletonList(
-                new ClusterStatsNodeResponse(new DiscoveryNode("node_0", LocalTransportAddress.buildUnique(),
+                new ClusterStatsNodeResponse(new DiscoveryNode("node_0", buildUnique(),
                         emptyMap(), emptySet(), Version.CURRENT),
                         ClusterHealthStatus.GREEN, randomNodeInfo(), randomNodeStats(), randomShardStats())
         );
@@ -124,10 +115,10 @@ public class ClusterStatsResolverTests extends MonitoringIndexNameResolverTestCa
      * @return a random {@link NodeInfo} used to resolve a monitoring document.
      */
     private NodeInfo randomNodeInfo() {
-        BoundTransportAddress transportAddress = new BoundTransportAddress(new TransportAddress[]{LocalTransportAddress.buildUnique()},
-                LocalTransportAddress.buildUnique());
+        BoundTransportAddress transportAddress = new BoundTransportAddress(new TransportAddress[]{buildUnique()},
+                buildUnique());
         return new NodeInfo(Version.CURRENT, org.elasticsearch.Build.CURRENT,
-                new DiscoveryNode("node_0", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT), Settings.EMPTY,
+                new DiscoveryNode("node_0", buildUnique(), emptyMap(), emptySet(), Version.CURRENT), Settings.EMPTY,
                 DummyOsInfo.INSTANCE, new ProcessInfo(randomInt(), randomBoolean(), randomNonNegativeLong()), JvmInfo.jvmInfo(),
                 new ThreadPoolInfo(Collections.singletonList(new ThreadPool.Info("test_threadpool", ThreadPool.ThreadPoolType.FIXED, 5))),
                 new TransportInfo(transportAddress, Collections.emptyMap()), new HttpInfo(transportAddress, randomLong()),
@@ -146,7 +137,7 @@ public class ClusterStatsResolverTests extends MonitoringIndexNameResolverTestCa
         };
         Map<Index, List<IndexShardStats>> statsByShard = new HashMap<>();
         statsByShard.put(index, Collections.singletonList(new IndexShardStats(new ShardId(index, 0), randomShardStats())));
-        return new NodeStats(new DiscoveryNode("node_0", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT), 0,
+        return new NodeStats(new DiscoveryNode("node_0", buildUnique(), emptyMap(), emptySet(), Version.CURRENT), 0,
                 new NodeIndicesStats(new CommonStats(), statsByShard), null, null, null, null,
                 new FsInfo(0, null, pathInfo), null, null, null, null, null, null);
     }

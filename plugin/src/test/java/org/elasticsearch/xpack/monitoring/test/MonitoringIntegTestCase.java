@@ -85,9 +85,6 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
 
-/**
- *
- */
 public abstract class MonitoringIntegTestCase extends ESIntegTestCase {
 
     public static final String MONITORING_INDICES_PREFIX = MonitoringIndexNameResolver.PREFIX + MonitoringIndexNameResolver.DELIMITER;
@@ -395,16 +392,6 @@ public abstract class MonitoringIntegTestCase extends ESIntegTestCase {
         }
 
         @Override
-        public String type(MonitoringDoc document) {
-            throw new UnsupportedOperationException("MockDataIndexNameResolver does not support resolving type");
-        }
-
-        @Override
-        public String id(MonitoringDoc document) {
-            throw new UnsupportedOperationException("MockDataIndexNameResolver does not support resolving id");
-        }
-
-        @Override
         protected void buildXContent(MonitoringDoc document, XContentBuilder builder, ToXContent.Params params) throws IOException {
             throw new UnsupportedOperationException("MockDataIndexNameResolver does not support resolving building XContent");
         }
@@ -414,11 +401,6 @@ public abstract class MonitoringIntegTestCase extends ESIntegTestCase {
 
         public MockTimestampedIndexNameResolver(MonitoredSystem system, Settings settings, String version) {
             super(system, settings, version);
-        }
-
-        @Override
-        public String type(MonitoringDoc document) {
-            throw new UnsupportedOperationException("MockTimestampedIndexNameResolver does not support resolving type");
         }
 
         @Override

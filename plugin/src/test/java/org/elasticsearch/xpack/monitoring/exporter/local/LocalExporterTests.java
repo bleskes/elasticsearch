@@ -104,8 +104,8 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
         awaitMonitoringDocsCount(is((long) monitoringDocs.size()));
 
         SearchResponse response = client().prepareSearch(MONITORING_INDICES_PREFIX + "*").get();
-        for (SearchHit hit : response.getHits().hits()) {
-            Map<String, Object> source = hit.sourceAsMap();
+        for (SearchHit hit : response.getHits().getHits()) {
+            Map<String, Object> source = hit.getSourceAsMap();
             assertNotNull(source.get("cluster_uuid"));
             assertNotNull(source.get("timestamp"));
             assertNotNull(source.get("source_node"));
@@ -160,7 +160,6 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
         awaitIndexExists(indexName);
     }
 
-    @TestLogging("org.elasticsearch.xpack.monitoring.exporter.local:TRACE")
     public void testLocalExporterFlush() throws Exception {
         internalCluster().startNode(Settings.builder()
                 .put("xpack.monitoring.exporters._local.type", LocalExporter.TYPE)
@@ -218,21 +217,18 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
     }
 
     private MonitoringDoc newRandomMonitoringDoc() {
+        String monitoringId = MonitoredSystem.ES.getSystem();
+        String monitoringVersion = Version.CURRENT.toString();
+        String clusterUUID = internalCluster().getClusterName();
+        long timestamp = System.currentTimeMillis();
+        DiscoveryNode sourceNode = new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT);
+
         if (randomBoolean()) {
-            IndexRecoveryMonitoringDoc doc = new IndexRecoveryMonitoringDoc(MonitoredSystem.ES.getSystem(), Version.CURRENT.toString());
-            doc.setClusterUUID(internalCluster().getClusterName());
-            doc.setTimestamp(System.currentTimeMillis());
-            doc.setSourceNode(new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT));
-            doc.setRecoveryResponse(new RecoveryResponse());
-            return doc;
+            return new IndexRecoveryMonitoringDoc(monitoringId, monitoringVersion, clusterUUID,
+                    timestamp, sourceNode, new RecoveryResponse());
         } else {
-            ClusterStateMonitoringDoc doc = new ClusterStateMonitoringDoc(MonitoredSystem.ES.getSystem(), Version.CURRENT.toString());
-            doc.setClusterUUID(internalCluster().getClusterName());
-            doc.setTimestamp(System.currentTimeMillis());
-            doc.setSourceNode(new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT));
-            doc.setClusterState(ClusterState.EMPTY_STATE);
-            doc.setStatus(ClusterHealthStatus.GREEN);
-            return doc;
+            return new ClusterStateMonitoringDoc(monitoringId, monitoringVersion, clusterUUID,
+                    timestamp, sourceNode, ClusterState.EMPTY_STATE, ClusterHealthStatus.GREEN);
         }
     }
 }

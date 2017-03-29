@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.monitoring.resolver;
 
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.node.DiscoveryNode;
-import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.xpack.monitoring.exporter.MonitoringDoc;
@@ -29,6 +28,7 @@ import java.io.IOException;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
+import static org.elasticsearch.common.transport.LocalTransportAddress.buildUnique;
 import static org.hamcrest.Matchers.equalTo;
 
 public class DataResolverTests extends MonitoringIndexNameResolverTestCase {
@@ -40,21 +40,10 @@ public class DataResolverTests extends MonitoringIndexNameResolverTestCase {
 
     @Override
     protected MonitoringDoc newMonitoringDoc() {
-        MonitoringDoc doc = new MonitoringDoc(randomMonitoringId(), randomAsciiOfLength(2));
-        doc.setClusterUUID(randomAsciiOfLength(5));
-        doc.setTimestamp(Math.abs(randomLong()));
-        doc.setSourceNode(new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT));
+        MonitoringDoc doc = new MonitoringDoc(randomMonitoringId(), randomAsciiOfLength(2),
+                null, null, randomAsciiOfLength(5), Math.abs(randomLong()),
+                new DiscoveryNode("id", buildUnique(), emptyMap(), emptySet(), Version.CURRENT));
         return doc;
-    }
-
-    @Override
-    protected boolean checkResolvedType() {
-        return false;
-    }
-
-    @Override
-    protected boolean checkResolvedId() {
-        return false;
     }
 
     @Override
@@ -68,16 +57,6 @@ public class DataResolverTests extends MonitoringIndexNameResolverTestCase {
 
     private MonitoringIndexNameResolver.Data<MonitoringDoc> newDataResolver() {
         return new MonitoringIndexNameResolver.Data<MonitoringDoc>() {
-            @Override
-            public String type(MonitoringDoc document) {
-                return null;
-            }
-
-            @Override
-            public String id(MonitoringDoc document) {
-                return null;
-            }
-
             @Override
             protected void buildXContent(MonitoringDoc document, XContentBuilder builder, ToXContent.Params params) throws IOException {
             }

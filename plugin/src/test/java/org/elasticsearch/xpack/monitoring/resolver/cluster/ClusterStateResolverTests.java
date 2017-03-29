@@ -34,41 +34,32 @@ import java.io.IOException;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
+import static org.elasticsearch.common.transport.LocalTransportAddress.buildUnique;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 
 public class ClusterStateResolverTests extends MonitoringIndexNameResolverTestCase<ClusterStateMonitoringDoc, ClusterStateResolver> {
 
     @Override
     protected ClusterStateMonitoringDoc newMonitoringDoc() {
-        ClusterStateMonitoringDoc doc = new ClusterStateMonitoringDoc(randomMonitoringId(), randomAsciiOfLength(2));
-        doc.setClusterUUID(randomAsciiOfLength(5));
-        doc.setTimestamp(Math.abs(randomLong()));
-        doc.setSourceNode(new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT));
-        doc.setStatus(randomFrom(ClusterHealthStatus.values()));
-
-        DiscoveryNode masterNode = new DiscoveryNode("master", new LocalTransportAddress("master"),
+        DiscoveryNode masterNode = new DiscoveryNode("master", buildUnique(),
                 emptyMap(), emptySet(), Version.CURRENT);
-        DiscoveryNode otherNode = new DiscoveryNode("other", new LocalTransportAddress("other"), emptyMap(), emptySet(), Version.CURRENT);
+        DiscoveryNode otherNode = new DiscoveryNode("other", buildUnique(), emptyMap(), emptySet(), Version.CURRENT);
         DiscoveryNodes discoveryNodes = DiscoveryNodes.builder().add(masterNode).add(otherNode).masterNodeId(masterNode.getId()).build();
         ClusterState clusterState = ClusterState.builder(new ClusterName("test")).nodes(discoveryNodes).build();
-        doc.setClusterState(clusterState);
-        return doc;
-    }
 
-    @Override
-    protected boolean checkResolvedId() {
-        return false;
+        ClusterStateMonitoringDoc doc = new ClusterStateMonitoringDoc(randomMonitoringId(),
+                randomAsciiOfLength(2), randomAsciiOfLength(5), 1437580442979L,
+                new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT),
+                clusterState, randomFrom(ClusterHealthStatus.values()));
+
+        return doc;
     }
 
     public void testClusterStateResolver() throws IOException {
         ClusterStateMonitoringDoc doc = newMonitoringDoc();
-        doc.setTimestamp(1437580442979L);
 
         ClusterStateResolver resolver = newResolver();
         assertThat(resolver.index(doc), equalTo(".monitoring-es-" + MonitoringTemplateUtils.TEMPLATE_VERSION + "-2015.07.22"));
-        assertThat(resolver.type(doc), equalTo(ClusterStateResolver.TYPE));
-        assertThat(resolver.id(doc), nullValue());
 
         assertSource(resolver.source(doc, XContentType.JSON),
                 Sets.newHashSet(

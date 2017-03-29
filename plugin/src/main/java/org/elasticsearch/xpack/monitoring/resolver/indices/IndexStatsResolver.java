@@ -111,11 +111,6 @@ public class IndexStatsResolver extends MonitoringIndexNameResolver.Timestamped<
     }
 
     @Override
-    public String type(IndexStatsMonitoringDoc document) {
-        return TYPE;
-    }
-
-    @Override
     public Set<String> filters() {
         return FILTERS;
     }

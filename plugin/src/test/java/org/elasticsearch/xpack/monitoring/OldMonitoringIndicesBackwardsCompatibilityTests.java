@@ -35,13 +35,14 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.CountDown;
 import org.elasticsearch.test.SecuritySettingsSource;
 import org.elasticsearch.xpack.XPackSettings;
+import org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStateMonitoringDoc;
+import org.elasticsearch.xpack.monitoring.collector.indices.IndexStatsMonitoringDoc;
+import org.elasticsearch.xpack.monitoring.collector.indices.IndicesStatsMonitoringDoc;
+import org.elasticsearch.xpack.monitoring.collector.node.NodeStatsMonitoringDoc;
+import org.elasticsearch.xpack.monitoring.collector.shards.ShardMonitoringDoc;
 import org.elasticsearch.xpack.monitoring.exporter.MonitoringDoc;
 import org.elasticsearch.xpack.monitoring.resolver.MonitoringIndexNameResolver;
-import org.elasticsearch.xpack.monitoring.resolver.cluster.ClusterStateResolver;
 import org.elasticsearch.xpack.monitoring.resolver.indices.IndexStatsResolver;
-import org.elasticsearch.xpack.monitoring.resolver.indices.IndicesStatsResolver;
-import org.elasticsearch.xpack.monitoring.resolver.node.NodeStatsResolver;
-import org.elasticsearch.xpack.monitoring.resolver.shards.ShardsResolver;
 import org.hamcrest.Matcher;
 
 import java.net.InetSocketAddress;
@@ -125,9 +126,9 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
 
             // And we wait until data have been indexed locally using either by the local or http exporter
             MonitoringIndexNameResolver.Timestamped resolver = new IndexStatsResolver(MonitoredSystem.ES, Settings.EMPTY);
-            MonitoringDoc monitoringDoc = new MonitoringDoc(MonitoredSystem.ES.getSystem(), randomAsciiOfLength(2));
-            monitoringDoc.setTimestamp(System.currentTimeMillis());
+            MonitoringDoc monitoringDoc = new IndexStatsMonitoringDoc(MonitoredSystem.ES.getSystem(), null, null, System.currentTimeMillis(), null, null);
             final String expectedIndex = resolver.index(monitoringDoc);
+            final String indexPattern = resolver.indexPattern();
 
             logger.info("--> {} Waiting for [{}] to be ready", Thread.currentThread().getName(), expectedIndex);
             assertBusy(() -> {
@@ -148,7 +149,7 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
                 long expectedEsData = version.before(Version.V_2_1_0) ? 1 : 2;
                 assertHitCount(response, expectedEsData);
                 response = client().prepareSearch(".marvel-es-*").get();
-                assertThat(response.getHits().totalHits(), greaterThanOrEqualTo(20L));
+                assertThat(response.getHits().getTotalHits(), greaterThanOrEqualTo(20L));
                 return;
             }
 
@@ -156,40 +157,45 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
              * Monitoring doesn't really have a Java API so we can't test that, but we can test that we write the data we expected to
              * write. */
 
-            SearchResponse firstIndexStats = search(resolver, greaterThanOrEqualTo(10L));
+            SearchResponse firstIndexStats =
+                    search(indexPattern, IndexStatsMonitoringDoc.TYPE, greaterThanOrEqualTo(10L));
 
             // All the other aliases should have been created by now so we can assert that we have the data we saved in the bwc indexes
-            SearchResponse firstShards = search(new ShardsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(10L));
-            SearchResponse firstIndices = search(new IndicesStatsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
-            SearchResponse firstNode = search(new NodeStatsResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
-            SearchResponse firstState = search(new ClusterStateResolver(MonitoredSystem.ES, Settings.EMPTY), greaterThanOrEqualTo(3L));
+            SearchResponse firstShards =
+                    search(indexPattern, ShardMonitoringDoc.TYPE, greaterThanOrEqualTo(10L));
+            SearchResponse firstIndices =
+                    search(indexPattern, IndicesStatsMonitoringDoc.TYPE, greaterThanOrEqualTo(3L));
+            SearchResponse firstNode =
+                    search(indexPattern, NodeStatsMonitoringDoc.TYPE, greaterThanOrEqualTo(3L));
+            SearchResponse firstState =
+                    search(indexPattern, ClusterStateMonitoringDoc.TYPE, greaterThanOrEqualTo(3L));
 
             ClusterStateResponse clusterStateResponse = client().admin().cluster().prepareState().clear().setNodes(true).get();
             final String masterNodeId = clusterStateResponse.getState().getNodes().getMasterNodeId();
 
             // Verify some stuff about the stuff in the backwards compatibility indexes
-            Arrays.stream(firstIndexStats.getHits().hits()).forEach(hit -> checkIndexStats(version, hit.sourceAsMap()));
-            Arrays.stream(firstShards.getHits().hits()).forEach(hit -> checkShards(version, hit.sourceAsMap()));
-            Arrays.stream(firstIndices.getHits().hits()).forEach(hit -> checkIndicesStats(version, hit.sourceAsMap()));
-            Arrays.stream(firstNode.getHits().hits()).forEach(hit -> checkNodeStats(version, masterNodeId, hit.sourceAsMap()));
-            Arrays.stream(firstState.getHits().hits()).forEach(hit -> checkClusterState(version, hit.sourceAsMap()));
+            Arrays.stream(firstIndexStats.getHits().getHits()).forEach(hit -> checkIndexStats(version, hit.getSourceAsMap()));
+            Arrays.stream(firstShards.getHits().getHits()).forEach(hit -> checkShards(version, hit.getSourceAsMap()));
+            Arrays.stream(firstIndices.getHits().getHits()).forEach(hit -> checkIndicesStats(version, hit.getSourceAsMap()));
+            Arrays.stream(firstNode.getHits().getHits()).forEach(hit -> checkNodeStats(version, masterNodeId, hit.getSourceAsMap()));
+            Arrays.stream(firstState.getHits().getHits()).forEach(hit -> checkClusterState(version, hit.getSourceAsMap()));
 
             // Create some docs
             indexRandom(true, client().prepareIndex("test-1", "doc", "1").setSource("field", 1),
                     client().prepareIndex("test-2", "doc", "2").setSource("field", 2));
 
             // Wait for monitoring to accumulate some data about the current cluster
-            long indexStatsCount = firstIndexStats.getHits().totalHits();
-            assertBusy(() -> search(new IndexStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
+            long indexStatsCount = firstIndexStats.getHits().getTotalHits();
+            assertBusy(() -> search(indexPattern, IndexStatsMonitoringDoc.TYPE,
                     greaterThan(indexStatsCount)), 1, TimeUnit.MINUTES);
-            assertBusy(() -> search(new ShardsResolver(MonitoredSystem.ES, Settings.EMPTY),
-                    greaterThan(firstShards.getHits().totalHits())), 1, TimeUnit.MINUTES);
-            assertBusy(() -> search(new IndicesStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
-                    greaterThan(firstIndices.getHits().totalHits())), 1, TimeUnit.MINUTES);
-            assertBusy(() -> search(new NodeStatsResolver(MonitoredSystem.ES, Settings.EMPTY),
-                    greaterThan(firstNode.getHits().totalHits())), 1, TimeUnit.MINUTES);
-            assertBusy(() -> search(new ClusterStateResolver(MonitoredSystem.ES, Settings.EMPTY),
-                    greaterThan(firstState.getHits().totalHits())), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(indexPattern, ShardMonitoringDoc.TYPE,
+                    greaterThan(firstShards.getHits().getTotalHits())), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(indexPattern, IndicesStatsMonitoringDoc.TYPE,
+                    greaterThan(firstIndices.getHits().getTotalHits())), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(indexPattern, NodeStatsMonitoringDoc.TYPE,
+                    greaterThan(firstNode.getHits().getTotalHits())), 1, TimeUnit.MINUTES);
+            assertBusy(() -> search(indexPattern, ClusterStateMonitoringDoc.TYPE,
+                    greaterThan(firstState.getHits().getTotalHits())), 1, TimeUnit.MINUTES);
 
         } finally {
             /* Now we stop monitoring and disable the HTTP exporter. We also delete all data and checks multiple times
@@ -219,9 +225,9 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
         }
     }
 
-    private SearchResponse search(MonitoringIndexNameResolver<?> resolver, Matcher<Long> hitCount) {
-        SearchResponse response = client().prepareSearch(resolver.indexPattern()).setTypes(resolver.type(null)).get();
-        assertThat(response.getHits().totalHits(), hitCount);
+    private SearchResponse search(String indexPattern, String type, Matcher<Long> hitCount) {
+        SearchResponse response = client().prepareSearch(indexPattern).setTypes(type).get();
+        assertThat(response.getHits().getTotalHits(), hitCount);
         return response;
     }
 

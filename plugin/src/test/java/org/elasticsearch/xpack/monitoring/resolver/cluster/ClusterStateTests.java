@@ -27,6 +27,7 @@ import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.xpack.monitoring.MonitoredSystem;
 import org.elasticsearch.xpack.monitoring.MonitoringSettings;
+import org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStateNodeMonitoringDoc;
 import org.elasticsearch.xpack.monitoring.exporter.MonitoringTemplateUtils;
 import org.elasticsearch.xpack.monitoring.resolver.MonitoringIndexNameResolver;
 import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
@@ -83,7 +84,7 @@ public class ClusterStateTests extends MonitoringIntegTestCase {
         logger.debug("--> checking that every document contains the expected fields");
         Set<String> filters = ClusterStateResolver.FILTERS;
         for (SearchHit searchHit : response.getHits().getHits()) {
-            Map<String, Object> fields = searchHit.sourceAsMap();
+            Map<String, Object> fields = searchHit.getSourceAsMap();
 
             for (String filter : filters) {
                 assertContains(filter, fields);
@@ -125,10 +126,10 @@ public class ClusterStateTests extends MonitoringIntegTestCase {
         awaitIndexExists(timestampedIndex);
 
         logger.debug("--> waiting for documents to be collected");
-        awaitMonitoringDocsCount(greaterThanOrEqualTo(nbNodes), ClusterStateNodeResolver.TYPE);
+        awaitMonitoringDocsCount(greaterThanOrEqualTo(nbNodes), ClusterStateNodeMonitoringDoc.TYPE);
 
-        logger.debug("--> searching for monitoring documents of type [{}]", ClusterStateNodeResolver.TYPE);
-        SearchResponse response = client().prepareSearch(timestampedIndex).setTypes(ClusterStateNodeResolver.TYPE).get();
+        logger.debug("--> searching for monitoring documents of type [{}]", ClusterStateNodeMonitoringDoc.TYPE);
+        SearchResponse response = client().prepareSearch(timestampedIndex).setTypes(ClusterStateNodeMonitoringDoc.TYPE).get();
         assertThat(response.getHits().getTotalHits(), greaterThanOrEqualTo(nbNodes));
 
         logger.debug("--> checking that every document contains the expected fields");
@@ -143,7 +144,7 @@ public class ClusterStateTests extends MonitoringIntegTestCase {
         };
 
         for (SearchHit searchHit : response.getHits().getHits()) {
-            Map<String, Object> fields = searchHit.sourceAsMap();
+            Map<String, Object> fields = searchHit.getSourceAsMap();
 
             for (String filter : filters) {
                 assertContains(filter, fields);
@@ -153,7 +154,7 @@ public class ClusterStateTests extends MonitoringIntegTestCase {
         logger.debug("--> check that node attributes are indexed");
         assertThat(client().prepareSearch().setSize(0)
                 .setIndices(timestampedIndex)
-                .setTypes(ClusterStateNodeResolver.TYPE)
+                .setTypes(ClusterStateNodeMonitoringDoc.TYPE)
                 .setQuery(QueryBuilders.matchQuery(MonitoringIndexNameResolver.Fields.SOURCE_NODE + ".attributes.custom", randomInt))
                 .get().getHits().getTotalHits(), greaterThan(0L));
 
@@ -193,7 +194,7 @@ public class ClusterStateTests extends MonitoringIntegTestCase {
         };
 
         for (SearchHit searchHit : response.getHits().getHits()) {
-            Map<String, Object> fields = searchHit.sourceAsMap();
+            Map<String, Object> fields = searchHit.getSourceAsMap();
 
             for (String filter : filters) {
                 assertContains(filter, fields);
