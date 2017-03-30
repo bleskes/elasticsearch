@@ -55,7 +55,6 @@ public class AutodetectCommunicator implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger(AutodetectCommunicator.class);
     private static final Duration FLUSH_PROCESS_CHECK_FREQUENCY = Duration.ofSeconds(1);
 
-    private final long taskId;
     private final Job job;
     private final DataCountsReporter dataCountsReporter;
     private final AutodetectProcess autodetectProcess;
@@ -63,13 +62,11 @@ public class AutodetectCommunicator implements Closeable {
     private final Consumer<Exception> handler;
 
     final AtomicReference<CountDownLatch> inUse = new AtomicReference<>();
-    private NamedXContentRegistry xContentRegistry;
+    private final NamedXContentRegistry xContentRegistry;
 
-    public AutodetectCommunicator(long taskId, Job job, AutodetectProcess process,
-            DataCountsReporter dataCountsReporter,
-            AutoDetectResultProcessor autoDetectResultProcessor, Consumer<Exception> handler,
-            NamedXContentRegistry xContentRegistry) {
-        this.taskId = taskId;
+    AutodetectCommunicator(Job job, AutodetectProcess process, DataCountsReporter dataCountsReporter,
+                           AutoDetectResultProcessor autoDetectResultProcessor, Consumer<Exception> handler,
+                           NamedXContentRegistry xContentRegistry) {
         this.job = job;
         this.autodetectProcess = process;
         this.dataCountsReporter = dataCountsReporter;
@@ -191,10 +188,6 @@ public class AutodetectCommunicator implements Closeable {
 
     public DataCounts getDataCounts() {
         return dataCountsReporter.runningTotalStats();
-    }
-
-    public long getTaskId() {
-        return taskId;
     }
 
     private <T> T checkAndRun(Supplier<String> errorMessage, Callback<T> callback, boolean wait) throws IOException {
