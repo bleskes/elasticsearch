@@ -38,6 +38,7 @@ import org.elasticsearch.xpack.ml.action.OpenJobAction;
 import org.elasticsearch.xpack.ml.action.PutDatafeedAction;
 import org.elasticsearch.xpack.ml.action.PutJobAction;
 import org.elasticsearch.xpack.ml.action.StartDatafeedAction;
+import org.elasticsearch.xpack.ml.action.UpdateModelSnapshotAction;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedConfig;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.config.DataDescription;
@@ -56,9 +57,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -131,6 +130,7 @@ public class DeleteExpiredDataIT extends SecurityIntegTestCase {
         jobs.add(newJobBuilder("no-retention").setResultsRetentionDays(null).setModelSnapshotRetentionDays(null).build());
         jobs.add(newJobBuilder("results-retention").setResultsRetentionDays(1L).setModelSnapshotRetentionDays(null).build());
         jobs.add(newJobBuilder("snapshots-retention").setResultsRetentionDays(null).setModelSnapshotRetentionDays(2L).build());
+        jobs.add(newJobBuilder("snapshots-retention-with-retain").setResultsRetentionDays(null).setModelSnapshotRetentionDays(2L).build());
         jobs.add(newJobBuilder("results-and-snapshots-retention").setResultsRetentionDays(1L).setModelSnapshotRetentionDays(2L).build());
 
         long now = System.currentTimeMillis();
@@ -180,6 +180,8 @@ public class DeleteExpiredDataIT extends SecurityIntegTestCase {
             assertThat(modelSnapshots.size(), equalTo(2));
         }
 
+        retainAllSnapshots("snapshots-retention-with-retain");
+
         long totalModelSizeStatsBeforeDelete = client().prepareSearch("*").setTypes("result")
                 .setQuery(QueryBuilders.termQuery("result_type", "model_size_stats"))
                 .get().getHits().totalHits;
@@ -207,6 +209,10 @@ public class DeleteExpiredDataIT extends SecurityIntegTestCase {
         assertThat(getBuckets("snapshots-retention").size(), is(greaterThanOrEqualTo(70)));
         assertThat(getRecords("snapshots-retention").size(), equalTo(1));
         assertThat(getModelSnapshots("snapshots-retention").size(), equalTo(1));
+
+        assertThat(getBuckets("snapshots-retention-with-retain").size(), is(greaterThanOrEqualTo(70)));
+        assertThat(getRecords("snapshots-retention-with-retain").size(), equalTo(1));
+        assertThat(getModelSnapshots("snapshots-retention-with-retain").size(), equalTo(2));
 
         buckets = getBuckets("results-and-snapshots-retention");
         assertThat(buckets.size(), is(lessThanOrEqualTo(24)));
@@ -280,5 +286,17 @@ public class DeleteExpiredDataIT extends SecurityIntegTestCase {
     @Override
     protected void ensureClusterStateConsistency() throws IOException {
         // this method in ESIntegTestCase is not plugin-friendly - it does not account for plugin NamedWritableRegistries
+    }
+
+    private void retainAllSnapshots(String jobId) throws Exception {
+        List<ModelSnapshot> modelSnapshots = getModelSnapshots(jobId);
+        for (ModelSnapshot modelSnapshot : modelSnapshots) {
+            UpdateModelSnapshotAction.Request request = new UpdateModelSnapshotAction.Request(
+                    jobId, modelSnapshot.getSnapshotId());
+            request.setRetain(true);
+            client().execute(UpdateModelSnapshotAction.INSTANCE, request).get();
+        }
+        // We need to refresh to ensure the updates are visible
+        client().admin().indices().prepareRefresh("*").get();
     }
 }
