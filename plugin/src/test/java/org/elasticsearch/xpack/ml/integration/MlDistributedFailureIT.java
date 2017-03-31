@@ -39,7 +39,7 @@ import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Persiste
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-@TestLogging("org.elasticsearch.xpack.ml.datafeed:TRACE,org.elasticsearch.xpack.ml.action:TRACE")
+@TestLogging("org.elasticsearch.xpack.ml.datafeed:DEBUG,org.elasticsearch.xpack.ml.action:DEBUG")
 public class MlDistributedFailureIT extends BaseMlIntegTestCase {
 
     public void testFailOver() throws Exception {
