@@ -298,7 +298,7 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
             String jobId = entry.getKey();
             try {
                 CloseJobAction.Request closeRequest = new CloseJobAction.Request(jobId);
-                closeRequest.setTimeout(TimeValue.timeValueSeconds(30L));
+                closeRequest.setCloseTimeout(TimeValue.timeValueSeconds(20L));
                 logger.info("Closing job [{}]", jobId);
                 CloseJobAction.Response response =
                         client.execute(CloseJobAction.INSTANCE, closeRequest).get();
@@ -310,7 +310,7 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
                     try {
                         CloseJobAction.Request closeRequest = new CloseJobAction.Request(jobId);
                         closeRequest.setForce(true);
-                        closeRequest.setTimeout(TimeValue.timeValueSeconds(30L));
+                        closeRequest.setCloseTimeout(TimeValue.timeValueSeconds(20L));
                         CloseJobAction.Response response =
                                 client.execute(CloseJobAction.INSTANCE, closeRequest).get();
                         assertTrue(response.isClosed());
