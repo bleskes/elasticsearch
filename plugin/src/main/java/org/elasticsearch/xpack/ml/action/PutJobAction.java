@@ -61,7 +61,7 @@ public class PutJobAction extends Action<PutJobAction.Request, PutJobAction.Resp
             new DeprecationLogger(Loggers.getLogger(PutJobAction.class));
 
     public static final PutJobAction INSTANCE = new PutJobAction();
-    public static final String NAME = "cluster:admin/ml/job/put";
+    public static final String NAME = "cluster:admin/xpack/ml/job/put";
 
     private PutJobAction() {
         super(NAME);
