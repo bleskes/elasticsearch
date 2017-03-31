@@ -161,7 +161,7 @@ public class PersistentTasksNodeServiceTests extends ESTestCase {
         ClusterService clusterService = createClusterService();
         AtomicLong capturedTaskId = new AtomicLong();
         AtomicReference<PersistentTaskOperationListener> capturedListener = new AtomicReference<>();
-        PersistentTasksService persistentTasksService = new PersistentTasksService(Settings.EMPTY, null, null) {
+        PersistentTasksService persistentTasksService = new PersistentTasksService(Settings.EMPTY, null, null, null) {
             @Override
             public void sendCancellation(long taskId, PersistentTaskOperationListener listener) {
                 capturedTaskId.set(taskId);
@@ -239,7 +239,7 @@ public class PersistentTasksNodeServiceTests extends ESTestCase {
             AtomicReference<Exception> capturedException = new AtomicReference<>();
             AtomicReference<PersistentTaskOperationListener> capturedListener = new AtomicReference<>();
             PersistentTasksService persistentTasksService =
-                    new PersistentTasksService(Settings.EMPTY, clusterService, null) {
+                    new PersistentTasksService(Settings.EMPTY, clusterService, null, null) {
                         @Override
                         public void sendCompletionNotification(long taskId, Exception failure, PersistentTaskOperationListener listener) {
                             capturedTaskId.set(taskId);
