@@ -95,7 +95,7 @@ public class AutodetectCommunicator implements Closeable {
             CountingInputStream countingStream = new CountingInputStream(inputStream, dataCountsReporter);
 
             DataToProcessWriter autoDetectWriter = createProcessWriter(params.getDataDescription());
-                    DataCounts results = autoDetectWriter.write(countingStream, xContentType);
+            DataCounts results = autoDetectWriter.write(countingStream, xContentType);
             autoDetectWriter.flush();
             return results;
         }, handler);
