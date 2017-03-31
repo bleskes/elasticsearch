@@ -211,6 +211,13 @@ public class JobResultsPersister extends AbstractComponent {
             if (addRecordsResponse.hasFailures()) {
                 logger.error("[{}] Bulk index of results has errors: {}", jobId, addRecordsResponse.buildFailureMessage());
             }
+
+            bulkRequest = new BulkRequest();
+        }
+
+        // for testing
+        BulkRequest getBulkRequest() {
+            return bulkRequest;
         }
     }
 
