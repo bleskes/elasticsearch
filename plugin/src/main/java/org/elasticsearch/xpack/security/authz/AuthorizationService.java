@@ -44,6 +44,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.util.set.Sets;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.transport.TransportActionProxy;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.security.SecurityTemplateService;
 import org.elasticsearch.xpack.security.action.user.AuthenticateAction;
@@ -141,6 +142,7 @@ public class AuthorizationService extends AbstractComponent {
         if (request instanceof ConcreteShardRequest) {
             request = ((ConcreteShardRequest<?>) request).getRequest();
         }
+        request = TransportActionProxy.unwrapRequest(request);
         // prior to doing any authorization lets set the originating action in the context only
         setOriginatingAction(action);
 
