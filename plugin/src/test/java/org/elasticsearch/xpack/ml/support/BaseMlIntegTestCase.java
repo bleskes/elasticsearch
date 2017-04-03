@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.ml.support;
 
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -59,7 +60,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 
 /**
  * A base class for testing datafeed and job lifecycle specifics.
@@ -218,7 +218,16 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
         BulkResponse bulkResponse = bulkRequestBuilder
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                 .get();
-        assertThat(bulkResponse.hasFailures(), is(false));
+        if (bulkResponse.hasFailures()) {
+            int failures = 0;
+            for (BulkItemResponse itemResponse : bulkResponse) {
+                if (itemResponse.isFailed()) {
+                    failures++;
+                    logger.error("Item response failure [{}]", itemResponse.getFailureMessage());
+                }
+            }
+            fail("Bulk response contained " + failures + " failures");
+        }
         logger.info("Indexed [{}] documents", numDocs);
     }
 
