@@ -3,16 +3,35 @@
 
 Use machine learning to detect anomalies in time series data.
 
-* <<ml-put-job>>
-* <<ml-delete-job>>
-* <<ml-get-job>>
-* <<ml-open-close-job>>
-* <<ml-flush-job>>
-* <<ml-post-data>>
+* <<ml-api-job-endpoint,Jobs>>
+* <<ml-api-datafeed-endpoint,Datafeeds>>
+* <<ml-api-result-endpoint,Results>>
+
+[[ml-api-job-endpoint]]
+=== Jobs
 
 include::ml/put-job.asciidoc[]
 include::ml/delete-job.asciidoc[]
 include::ml/get-job.asciidoc[]
-include::ml/open-close-job.asciidoc[]
+include::ml/get-job-stats.asciidoc[]
+include::ml/open-job.asciidoc[]
+include::ml/close-job.asciidoc[]
 include::ml/flush-job.asciidoc[]
 include::ml/post-data.asciidoc[]
+
+[[ml-api-datafeed-endpoint]]
+=== Datafeeds
+
+TBD
+
+[[ml-api-result-endpoint]]
+=== Results
+
+TBD
+
+//* <<ml-put-job>>
+//* <<ml-delete-job>>
+//* <<ml-get-job>>
+//* <<ml-open-close-job>>
+//* <<ml-flush-job>>
+//* <<ml-post-data>>

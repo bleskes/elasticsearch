@@ -1,42 +1,49 @@
 [[ml-flush-job]]
-=== Flush Job API
+==== Flush Jobs
+
+The flush job API forces any buffered data to be processed by the {ml} job.
+
+===== Request
+`POST _xpack/ml/anomaly_detectors/{job_ID}/_flush`
+
+===== Description
 
 The flush job API is only applicable when sending data for analysis using the POST `_data` API.
-A flush will force any buffered data to be processed.
-Depending on the content of the buffer, then it may additionally calculate new results.
-
-The following example will flush buffered data for the `my_analysis` anomaly detection job.
-
-[source,js]
-----------------------------------------------------
-POST _xpack/ml/anomaly_detectors/my_analysis/_flush
-----------------------------------------------------
-// CONSOLE
-// TEST[skip:todo]
-
-
-
-This API supports the following fields:
-
-[cols=",^,^,", options="header"]
-|======
-| Name                | Required | Default  | Description
-
-| `calc_interim`      | no       | false    | When set to `true` will calculate interim results for the
-                                              most recent bucket or
-                                              all buckets within the latency period
-
-| `start`             | no       | null     | When used in conjunction with `calc_interim`, specifies the
-                                              range of buckets on which to calculate interim results
-
-| `end`               | no       | null     | When used in conjunction with `calc_interim`, specifies the
-                                              range of buckets on which to calculate interim results
-
-| `advance_time`      | no       | null     | Specifies that no data prior
-                                              to the date `advance_time` is expected
-
-|======
+Depending on the content of the buffer, then it might additionally calculate new results.
 
 Both flush and close operations are similar, however the flush is more efficient if you are expecting to send more data for analysis.
-When flushing, the job will remain open and is available to continue analyzing data.
-A close operation will addionally prune and persist model state to disk and the job must be opened again before analyzing further data.
+When flushing, the job remains open and is available to continue analyzing data.
+A close operation additionally prunes and persists the model state to disk and the job must be opened again before analyzing further data.
+
+===== Path Parameters
+
+`job_id` (required)::
+( +string+)    Identifier for the job
+
+===== Query Parameters
+
+`calc_interim`::
+  (+boolean+; default: ++false++) If true (default false), will calculate interim
+  results for the most recent bucket or all buckets within the latency period
+
+`start`::
+  (+string+; default: ++null++) When used in conjunction with `calc_interim`,
+  specifies the range of buckets on which to calculate interim results
+
+`end`::
+  (+string+; default: ++null++) When used in conjunction with `calc_interim`,
+  specifies the range of buckets on which to calculate interim results
+
+
+`advance_time`::
+  (+string+; default: ++null++) Specifies that no data prior to the date `advance_time` is expected
+
+////
+===== Responses
+200
+(EmptyResponse) The cluster has been successfully deleted
+404
+(BasicFailedReply) The cluster specified by {cluster_id} cannot be found (code: clusters.cluster_not_found)
+412
+(BasicFailedReply) The Elasticsearch cluster has not been shutdown yet (code: clusters.cluster_plan_state_error)
+////

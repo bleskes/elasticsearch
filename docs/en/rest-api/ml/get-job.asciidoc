@@ -1,25 +1,77 @@
 [[ml-get-job]]
-=== Get Job API
+==== Get Job Details
 
-The get jobs API allows you to retrieve configuration information about an anomaly detection job.
+The get jobs API allows you to retrieve configuration information about jobs.
 
-[source,js]
---------------------------------------------------
-GET _xpack/anomaly_detectors/my_analysis
---------------------------------------------------
-// CONSOLE
-// TEST[skip:todo]
+===== Request
 
+`GET _xpack/anomaly_detectors/`
+`GET _xpack/anomaly_detectors/{job_ID}`
 
-The above example gets the information for an anomaly detection job called `my_analysis`.
+////
+===== Description
 
-The get job API can also be applied to all jobs by using `_all` as the job name.
+OUTDATED?: The get job API can also be applied to all jobs by using `_all` as the job name.
+////
+===== Path Parameters
 
-Operational usage information can be retrieved using `_stats`, for example:
+`job_id`::
+  (+string+) Identifier for the job. If you do not specify this optional parameter,
+  the API returns information about all jobs that you have authority to view.
 
-[source,js]
---------------------------------------------------
-GET _xpack/anomaly_detectors/my_analysis/_stats
---------------------------------------------------
-// CONSOLE
-// TEST[skip:todo]
+////
+===== Query Parameters
+
+`_stats`::
+(+boolean+; default: ++true++) If true (default false), will just validate the cluster definition but will not perform the creation
+
+===== Responses
+
+200
+(EmptyResponse) The cluster has been successfully deleted
+404
+(BasicFailedReply) The cluster specified by {cluster_id} cannot be found (code: clusters.cluster_not_found)
+412
+(BasicFailedReply) The Elasticsearch cluster has not been shutdown yet (code: clusters.cluster_plan_state_error)
+////
+===== Examples
+
+.Example results for a single job
+----
+{
+  "count": 1,
+  "jobs": [
+      {
+      "job_id": "it-ops-kpi",
+      "description": "First simple job",
+      "create_time": 1491007356077,
+      "finished_time": 1491007365347,
+      "analysis_config": {
+        "bucket_span": "5m",
+        "latency": "0ms",
+        "summary_count_field_name": "doc_count",
+        "detectors": [
+          {
+            "detector_description": "low_sum(events_per_min)",
+            "function": "low_sum",
+            "field_name": "events_per_min",
+            "detector_rules": []
+          }
+        ],
+        "influencers": [],
+        "use_per_partition_normalization": false
+      },
+      "data_description": {
+        "time_field": "@timestamp",
+        "time_format": "epoch_ms"
+      },
+      "model_plot_config": {
+        "enabled": true
+      },
+      "model_snapshot_retention_days": 1,
+      "model_snapshot_id": "1491007364",
+      "results_index_name": "shared"
+    }
+  ]
+}
+----
