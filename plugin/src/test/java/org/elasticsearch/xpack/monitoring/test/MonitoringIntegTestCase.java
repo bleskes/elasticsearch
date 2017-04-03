@@ -232,7 +232,7 @@ public abstract class MonitoringIntegTestCase extends ESIntegTestCase {
     }
 
     protected void wipeMonitoringIndices() throws Exception {
-        CountDown retries = new CountDown(3);
+        CountDown retries = new CountDown(12);
         assertBusy(() -> {
             try {
                 boolean exist = client().admin().indices().prepareExists(MONITORING_INDICES_PREFIX + "*")
