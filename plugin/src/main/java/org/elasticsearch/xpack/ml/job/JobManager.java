@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.ml.job;
 
 import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterChangedEvent;
@@ -27,6 +28,9 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.CheckedConsumer;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.ml.MlMetadata;
 import org.elasticsearch.xpack.ml.action.DeleteJobAction;
 import org.elasticsearch.xpack.ml.action.PutJobAction;
@@ -36,6 +40,7 @@ import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
 import org.elasticsearch.xpack.ml.job.config.JobUpdate;
 import org.elasticsearch.xpack.ml.job.messages.Messages;
+import org.elasticsearch.xpack.ml.job.persistence.AnomalyDetectorsIndex;
 import org.elasticsearch.xpack.ml.job.persistence.JobProvider;
 import org.elasticsearch.xpack.ml.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.ml.job.persistence.JobStorageDeletionTask;
@@ -44,6 +49,7 @@ import org.elasticsearch.xpack.ml.notifications.Auditor;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -65,7 +71,6 @@ public class JobManager extends AbstractComponent {
 
     private final JobProvider jobProvider;
     private final ClusterService clusterService;
-    private final JobResultsPersister jobResultsPersister;
     private final Auditor auditor;
     private final Client client;
     private final UpdateJobProcessNotifier updateJobProcessNotifier;
@@ -73,13 +78,11 @@ public class JobManager extends AbstractComponent {
     /**
      * Create a JobManager
      */
-    public JobManager(Settings settings, JobProvider jobProvider, JobResultsPersister jobResultsPersister,
-                      ClusterService clusterService, Auditor auditor, Client client,
+    public JobManager(Settings settings, JobProvider jobProvider, ClusterService clusterService, Auditor auditor, Client client,
                       UpdateJobProcessNotifier updateJobProcessNotifier) {
         super(settings);
         this.jobProvider = Objects.requireNonNull(jobProvider);
         this.clusterService = Objects.requireNonNull(clusterService);
-        this.jobResultsPersister = Objects.requireNonNull(jobResultsPersister);
         this.auditor = Objects.requireNonNull(auditor);
         this.client = Objects.requireNonNull(client);
         this.updateJobProcessNotifier = updateJobProcessNotifier;
@@ -385,7 +388,15 @@ public class JobManager extends AbstractComponent {
      * @param modelSnapshot         the updated model snapshot object to be stored
      */
     public void updateModelSnapshot(ModelSnapshot modelSnapshot, Consumer<Boolean> handler, Consumer<Exception> errorHandler) {
-        jobResultsPersister.updateModelSnapshot(modelSnapshot, handler, errorHandler);
+        String index = AnomalyDetectorsIndex.jobResultsAliasedName(modelSnapshot.getJobId());
+        IndexRequest indexRequest = new IndexRequest(index, ModelSnapshot.TYPE.getPreferredName(), ModelSnapshot.documentId(modelSnapshot));
+        try (XContentBuilder builder = XContentFactory.jsonBuilder()) {
+            modelSnapshot.toXContent(builder, ToXContent.EMPTY_PARAMS);
+            indexRequest.source(builder);
+        } catch (IOException e) {
+            errorHandler.accept(e);
+        }
+        client.index(indexRequest, ActionListener.wrap(r -> handler.accept(true), errorHandler));
     }
 
     private static MlMetadata.Builder createMlMetadataBuilder(ClusterState currentState) {
