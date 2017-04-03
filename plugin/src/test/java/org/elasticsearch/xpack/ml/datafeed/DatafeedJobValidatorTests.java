@@ -17,6 +17,7 @@ package org.elasticsearch.xpack.ml.datafeed;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
+import org.elasticsearch.search.aggregations.bucket.histogram.HistogramAggregationBuilder;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.config.Detector;
@@ -79,7 +80,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         builder.setAnalysisConfig(ac);
         Job job = builder.build();
-        DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs().build();
+        DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(1800.0).build();
 
         IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class,
                 () -> DatafeedJobValidator.validate(datafeedConfig, job));
@@ -96,7 +97,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         builder.setAnalysisConfig(ac);
         Job job = builder.build();
-        DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs().build();
+        DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(1800.0).build();
 
         IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class,
                 () -> DatafeedJobValidator.validate(datafeedConfig, job));
@@ -111,9 +112,24 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         builder.setAnalysisConfig(ac);
         Job job = builder.build();
-        DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs().build();
+        DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(900.0).build();
 
         DatafeedJobValidator.validate(datafeedConfig, job);
+    }
+
+    public void testVerify_GivenHistogramIntervalGreaterThanBucketSpan() throws IOException {
+        Job.Builder builder = buildJobBuilder("foo");
+        AnalysisConfig.Builder ac = createAnalysisConfig();
+        ac.setSummaryCountFieldName("some_count");
+        ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
+        builder.setAnalysisConfig(ac);
+        Job job = builder.build();
+        DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(1800001.0).build();
+
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class,
+                () -> DatafeedJobValidator.validate(datafeedConfig, job));
+
+        assertEquals("Aggregation interval [1800001ms] must be less than or equal to the bucket_span [1800000ms]", e.getMessage());
     }
 
     public static Job.Builder buildJobBuilder(String id) {
@@ -132,9 +148,10 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         return ac;
     }
 
-    private static DatafeedConfig.Builder createValidDatafeedConfigWithAggs() throws IOException {
+    private static DatafeedConfig.Builder createValidDatafeedConfigWithAggs(double interval) throws IOException {
+        HistogramAggregationBuilder histogram = AggregationBuilders.histogram("time").interval(interval);
         DatafeedConfig.Builder datafeedConfig = createValidDatafeedConfig();
-        datafeedConfig.setAggregations(new AggregatorFactories.Builder().addAggregator(AggregationBuilders.avg("foo")));
+        datafeedConfig.setAggregations(new AggregatorFactories.Builder().addAggregator(histogram));
         return datafeedConfig;
     }
 
