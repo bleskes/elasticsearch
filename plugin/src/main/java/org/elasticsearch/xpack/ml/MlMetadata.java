@@ -82,6 +82,11 @@ public class MlMetadata implements MetaData.Custom {
         return jobs;
     }
 
+    public boolean isJobDeleted(String jobId) {
+        Job job = jobs.get(jobId);
+        return job == null || job.isDeleted();
+    }
+
     public SortedMap<String, DatafeedConfig> getDatafeeds() {
         return datafeeds;
     }
