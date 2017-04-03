@@ -64,14 +64,14 @@ public class StopDatafeedActionRequestTests extends AbstractStreamableXContentTe
         Job job = createDatafeedJob().build();
         MlMetadata mlMetadata1 = new MlMetadata.Builder().putJob(job, false).build();
         Exception e = expectThrows(ResourceNotFoundException.class,
-                () -> StopDatafeedAction.validateAndReturnNodeId("foo", mlMetadata1, tasks));
+                () -> StopDatafeedAction.validateAndReturnDatafeedTask("foo", mlMetadata1, tasks));
         assertThat(e.getMessage(), equalTo("No datafeed with id [foo] exists"));
 
         DatafeedConfig datafeedConfig = createDatafeedConfig("foo", "job_id").build();
         MlMetadata mlMetadata2 = new MlMetadata.Builder().putJob(job, false)
                 .putDatafeed(datafeedConfig)
                 .build();
-        StopDatafeedAction.validateAndReturnNodeId("foo", mlMetadata2, tasks);
+        StopDatafeedAction.validateAndReturnDatafeedTask("foo", mlMetadata2, tasks);
     }
 
     public void testValidate_alreadyStopped() {
@@ -91,7 +91,7 @@ public class StopDatafeedActionRequestTests extends AbstractStreamableXContentTe
                 .putDatafeed(datafeedConfig)
                 .build();
         Exception e = expectThrows(ElasticsearchStatusException.class,
-                () -> StopDatafeedAction.validateAndReturnNodeId("foo", mlMetadata1, tasks));
+                () -> StopDatafeedAction.validateAndReturnDatafeedTask("foo", mlMetadata1, tasks));
         assertThat(e.getMessage(), equalTo("Cannot stop datafeed [foo] because it has already been stopped"));
     }
 

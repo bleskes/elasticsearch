@@ -54,6 +54,7 @@ import org.elasticsearch.xpack.ml.notifications.AuditMessage;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
+import org.elasticsearch.xpack.persistent.PersistentTasksService;
 import org.elasticsearch.xpack.persistent.PersistentTasksService.PersistentTaskOperationListener;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
@@ -151,7 +152,9 @@ public class DatafeedJobRunnerTests extends ESTestCase {
         when(client.execute(same(PostDataAction.INSTANCE), any())).thenReturn(jobDataFuture);
         when(client.execute(same(FlushJobAction.INSTANCE), any())).thenReturn(flushJobFuture);
 
-        datafeedJobRunner = new DatafeedJobRunner(threadPool, client, clusterService, jobProvider, () -> currentTime, auditor) {
+        PersistentTasksService persistentTasksService = mock(PersistentTasksService.class);
+        datafeedJobRunner = new DatafeedJobRunner(threadPool, client, clusterService, jobProvider, () -> currentTime, auditor,
+                persistentTasksService) {
             @Override
             DataExtractorFactory createDataExtractorFactory(DatafeedConfig datafeedConfig, Job job) {
                 return dataExtractorFactory;
