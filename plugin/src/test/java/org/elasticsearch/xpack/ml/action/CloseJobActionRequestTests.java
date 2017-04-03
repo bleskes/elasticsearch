@@ -31,6 +31,7 @@ import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,7 +63,7 @@ public class CloseJobActionRequestTests extends AbstractStreamableXContentTestCa
 
     public void testValidate() {
         MlMetadata.Builder mlBuilder = new MlMetadata.Builder();
-        mlBuilder.putJob(BaseMlIntegTestCase.createScheduledJob("job_id").build(), false);
+        mlBuilder.putJob(BaseMlIntegTestCase.createScheduledJob("job_id").build(new Date()), false);
         mlBuilder.putDatafeed(BaseMlIntegTestCase.createDatafeed("datafeed_id", "job_id",
                 Collections.singletonList("*")));
         Map<Long, PersistentTask<?>> tasks = new HashMap<>();

@@ -38,7 +38,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         ac.setLatency(TimeValue.timeValueSeconds(3600));
         builder.setAnalysisConfig(ac);
-        Job job = builder.build();
+        Job job = builder.build(new Date());
         DatafeedConfig datafeedConfig = createValidDatafeedConfig().build();
 
         IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class,
@@ -53,7 +53,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         ac.setLatency(TimeValue.ZERO);
         builder.setAnalysisConfig(ac);
-        Job job = builder.build();
+        Job job = builder.build(new Date());
         DatafeedConfig datafeedConfig = createValidDatafeedConfig().build();
 
         DatafeedJobValidator.validate(datafeedConfig, job);
@@ -65,7 +65,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setBatchSpan(TimeValue.timeValueSeconds(1800));
         ac.setBucketSpan(TimeValue.timeValueSeconds(100));
         builder.setAnalysisConfig(ac);
-        Job job = builder.build();
+        Job job = builder.build(new Date());
         DatafeedConfig datafeedConfig = createValidDatafeedConfig().build();
 
         DatafeedJobValidator.validate(datafeedConfig, job);
@@ -79,7 +79,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setSummaryCountFieldName(null);
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         builder.setAnalysisConfig(ac);
-        Job job = builder.build();
+        Job job = builder.build(new Date());
         DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(1800.0).build();
 
         IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class,
@@ -96,7 +96,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setSummaryCountFieldName("");
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         builder.setAnalysisConfig(ac);
-        Job job = builder.build();
+        Job job = builder.build(new Date());
         DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(1800.0).build();
 
         IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class,
@@ -111,9 +111,8 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setSummaryCountFieldName("some_count");
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         builder.setAnalysisConfig(ac);
-        Job job = builder.build();
+        Job job = builder.build(new Date());
         DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(900.0).build();
-
         DatafeedJobValidator.validate(datafeedConfig, job);
     }
 
@@ -123,7 +122,7 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         ac.setSummaryCountFieldName("some_count");
         ac.setBucketSpan(TimeValue.timeValueSeconds(1800));
         builder.setAnalysisConfig(ac);
-        Job job = builder.build();
+        Job job = builder.build(new Date());
         DatafeedConfig datafeedConfig = createValidDatafeedConfigWithAggs(1800001.0).build();
 
         IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class,
@@ -132,9 +131,8 @@ public class DatafeedJobValidatorTests extends ESTestCase {
         assertEquals("Aggregation interval [1800001ms] must be less than or equal to the bucket_span [1800000ms]", e.getMessage());
     }
 
-    public static Job.Builder buildJobBuilder(String id) {
+    private static Job.Builder buildJobBuilder(String id) {
         Job.Builder builder = new Job.Builder(id);
-        builder.setCreateTime(new Date());
         AnalysisConfig.Builder ac = createAnalysisConfig();
         builder.setAnalysisConfig(ac);
         return builder;

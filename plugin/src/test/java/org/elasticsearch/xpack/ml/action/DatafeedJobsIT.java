@@ -141,7 +141,7 @@ public class DatafeedJobsIT extends SecurityIntegTestCase {
         indexDocs(logger, "data-2", numDocs2, oneWeekAgo, now);
 
         Job.Builder job = createScheduledJob("lookback-job");
-        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build());
+        PutJobAction.Request putJobRequest = new PutJobAction.Request(job);
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
         assertTrue(putJobResponse.isAcknowledged());
         client().execute(OpenJobAction.INSTANCE, new OpenJobAction.Request(job.getId()));
@@ -180,7 +180,7 @@ public class DatafeedJobsIT extends SecurityIntegTestCase {
         indexDocs(logger, "data", numDocs1, lastWeek, now);
 
         Job.Builder job = createScheduledJob("realtime-job");
-        PutJobAction.Request putJobRequest = new PutJobAction.Request(job.build());
+        PutJobAction.Request putJobRequest = new PutJobAction.Request(job);
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).get();
         assertTrue(putJobResponse.isAcknowledged());
         client().execute(OpenJobAction.INSTANCE, new OpenJobAction.Request(job.getId()));

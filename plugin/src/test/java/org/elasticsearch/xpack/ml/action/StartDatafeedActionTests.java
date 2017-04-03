@@ -38,6 +38,7 @@ import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Persiste
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +52,7 @@ public class StartDatafeedActionTests extends ESTestCase {
 
     public void testSelectNode() throws Exception {
         MlMetadata.Builder mlMetadata = new MlMetadata.Builder();
-        Job job = createScheduledJob("job_id").build();
+        Job job = createScheduledJob("job_id").build(new Date());
         mlMetadata.putJob(job, false);
         mlMetadata.putDatafeed(createDatafeed("datafeed_id", job.getId(), Collections.singletonList("*")));
 
@@ -86,7 +87,7 @@ public class StartDatafeedActionTests extends ESTestCase {
 
     public void testSelectNode_jobTaskStale() {
         MlMetadata.Builder mlMetadata = new MlMetadata.Builder();
-        Job job = createScheduledJob("job_id").build();
+        Job job = createScheduledJob("job_id").build(new Date());
         mlMetadata.putJob(job, false);
         mlMetadata.putDatafeed(createDatafeed("datafeed_id", job.getId(), Collections.singletonList("*")));
 
@@ -120,7 +121,7 @@ public class StartDatafeedActionTests extends ESTestCase {
     }
 
     public void testValidate() {
-        Job job1 = DatafeedManagerTests.createDatafeedJob().build();
+        Job job1 = DatafeedManagerTests.createDatafeedJob().build(new Date());
         MlMetadata mlMetadata1 = new MlMetadata.Builder()
                 .putJob(job1, false)
                 .build();
@@ -130,7 +131,7 @@ public class StartDatafeedActionTests extends ESTestCase {
     }
 
     public void testValidate_jobClosed() {
-        Job job1 = DatafeedManagerTests.createDatafeedJob().build();
+        Job job1 = DatafeedManagerTests.createDatafeedJob().build(new Date());
         MlMetadata mlMetadata1 = new MlMetadata.Builder()
                 .putJob(job1, false)
                 .build();
@@ -147,7 +148,7 @@ public class StartDatafeedActionTests extends ESTestCase {
     }
 
     public void testValidate_dataFeedAlreadyStarted() {
-        Job job1 = createScheduledJob("job_id").build();
+        Job job1 = createScheduledJob("job_id").build(new Date());
         DatafeedConfig datafeedConfig = createDatafeed("datafeed_id", "job_id", Collections.singletonList("*"));
         MlMetadata mlMetadata1 = new MlMetadata.Builder()
                 .putJob(job1, false)

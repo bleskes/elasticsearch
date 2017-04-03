@@ -40,6 +40,7 @@ import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Persiste
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 
 import static org.elasticsearch.xpack.ml.action.OpenJobActionTests.createJobTask;
 import static org.elasticsearch.xpack.ml.datafeed.DatafeedManagerTests.createDatafeedConfig;
@@ -166,7 +167,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testRemoveJob_failDatafeedRefersToJob() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
         builder.putJob(job1, false);
@@ -186,7 +187,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testCrudDatafeed() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
         builder.putJob(job1, false);
@@ -211,7 +212,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testPutDatafeed_failBecauseDatafeedIdIsAlreadyTaken() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
         builder.putJob(job1, false);
@@ -221,7 +222,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testPutDatafeed_failBecauseJobAlreadyHasDatafeed() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         DatafeedConfig datafeedConfig2 = createDatafeedConfig("datafeed2", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
@@ -235,18 +236,19 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
 
     public void testPutDatafeed_failBecauseJobIsNotCompatibleForDatafeed() {
         Job.Builder job1 = createDatafeedJob();
-        AnalysisConfig.Builder analysisConfig = new AnalysisConfig.Builder(job1.build().getAnalysisConfig());
+        Date now = new Date();
+        AnalysisConfig.Builder analysisConfig = new AnalysisConfig.Builder(job1.build(now).getAnalysisConfig());
         analysisConfig.setLatency(TimeValue.timeValueHours(1));
         job1.setAnalysisConfig(analysisConfig);
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
-        builder.putJob(job1.build(), false);
+        builder.putJob(job1.build(now), false);
 
         expectThrows(IllegalArgumentException.class, () -> builder.putDatafeed(datafeedConfig1));
     }
 
     public void testUpdateDatafeed() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
         builder.putJob(job1, false);
@@ -271,7 +273,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testUpdateDatafeed_failBecauseDatafeedIsNotStopped() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
         builder.putJob(job1, false);
@@ -293,7 +295,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testUpdateDatafeed_failBecauseNewJobIdDoesNotExist() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
         builder.putJob(job1, false);
@@ -308,7 +310,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testUpdateDatafeed_failBecauseNewJobHasAnotherDatafeedAttached() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         Job.Builder job2 = new Job.Builder(job1);
         job2.setId(job1.getId() + "_2");
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
@@ -330,7 +332,7 @@ public class MlMetadataTests extends AbstractSerializingTestCase<MlMetadata> {
     }
 
     public void testRemoveDatafeed_failBecauseDatafeedStarted() {
-        Job job1 = createDatafeedJob().build();
+        Job job1 = createDatafeedJob().build(new Date());
         DatafeedConfig datafeedConfig1 = createDatafeedConfig("datafeed1", job1.getId()).build();
         MlMetadata.Builder builder = new MlMetadata.Builder();
         builder.putJob(job1, false);

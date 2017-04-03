@@ -133,7 +133,6 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
 
         Job.Builder builder = new Job.Builder();
         builder.setId(id);
-        builder.setCreateTime(new Date());
 
         builder.setAnalysisConfig(analysisConfig);
         builder.setDataDescription(dataDescription);
@@ -153,8 +152,6 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
 
         Job.Builder builder = new Job.Builder();
         builder.setId(id);
-        builder.setCreateTime(new Date());
-
         builder.setAnalysisConfig(analysisConfig);
         builder.setDataDescription(dataDescription);
         return builder;
@@ -173,7 +170,6 @@ public abstract class BaseMlIntegTestCase extends ESIntegTestCase {
 
         builder.setAnalysisConfig(analysisConfig);
         builder.setDataDescription(dataDescription);
-        builder.setCreateTime(new Date());
         return builder;
     }
 

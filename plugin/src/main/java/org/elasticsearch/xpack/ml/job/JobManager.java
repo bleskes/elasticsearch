@@ -51,6 +51,7 @@ import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -172,7 +173,7 @@ public class JobManager extends AbstractComponent {
      * Stores a job in the cluster state
      */
     public void putJob(PutJobAction.Request request, ClusterState state, ActionListener<PutJobAction.Response> actionListener) {
-        Job job = request.getJob();
+        Job job = request.getJob().build(new Date());
 
         jobProvider.createJobResultIndex(job, state, new ActionListener<Boolean>() {
             @Override

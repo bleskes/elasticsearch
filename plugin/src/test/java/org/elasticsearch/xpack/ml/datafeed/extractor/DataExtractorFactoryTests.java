@@ -28,6 +28,8 @@ import org.elasticsearch.xpack.ml.job.config.DataDescription;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.junit.Before;
 
+import java.util.Date;
+
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.mock;
 
@@ -47,7 +49,8 @@ public class DataExtractorFactoryTests extends ESTestCase {
         jobBuilder.setDataDescription(dataDescription);
         DatafeedConfig datafeedConfig = DatafeedManagerTests.createDatafeedConfig("datafeed1", "foo").build();
 
-        DataExtractorFactory dataExtractorFactory = DataExtractorFactory.create(client, datafeedConfig, jobBuilder.build());
+        DataExtractorFactory dataExtractorFactory =
+                DataExtractorFactory.create(client, datafeedConfig, jobBuilder.build(new Date()));
 
         assertThat(dataExtractorFactory, instanceOf(ChunkedDataExtractorFactory.class));
     }
@@ -60,7 +63,8 @@ public class DataExtractorFactoryTests extends ESTestCase {
         DatafeedConfig.Builder datafeedConfig = DatafeedManagerTests.createDatafeedConfig("datafeed1", "foo");
         datafeedConfig.setChunkingConfig(ChunkingConfig.newAuto());
 
-        DataExtractorFactory dataExtractorFactory = DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build());
+        DataExtractorFactory dataExtractorFactory =
+                DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build(new Date()));
 
         assertThat(dataExtractorFactory, instanceOf(ChunkedDataExtractorFactory.class));
     }
@@ -73,7 +77,8 @@ public class DataExtractorFactoryTests extends ESTestCase {
         DatafeedConfig.Builder datafeedConfig = DatafeedManagerTests.createDatafeedConfig("datafeed1", "foo");
         datafeedConfig.setChunkingConfig(ChunkingConfig.newOff());
 
-        DataExtractorFactory dataExtractorFactory = DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build());
+        DataExtractorFactory dataExtractorFactory =
+                DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build(new Date()));
 
         assertThat(dataExtractorFactory, instanceOf(ScrollDataExtractorFactory.class));
     }
@@ -87,7 +92,8 @@ public class DataExtractorFactoryTests extends ESTestCase {
         datafeedConfig.setAggregations(AggregatorFactories.builder().addAggregator(
                 AggregationBuilders.histogram("time").interval(300000)));
 
-        DataExtractorFactory dataExtractorFactory = DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build());
+        DataExtractorFactory dataExtractorFactory =
+                DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build(new Date()));
 
         assertThat(dataExtractorFactory, instanceOf(AggregationDataExtractorFactory.class));
     }
@@ -102,7 +108,8 @@ public class DataExtractorFactoryTests extends ESTestCase {
                 AggregationBuilders.histogram("time").interval(300000)));
         datafeedConfig.setChunkingConfig(ChunkingConfig.newAuto());
 
-        DataExtractorFactory dataExtractorFactory = DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build());
+        DataExtractorFactory dataExtractorFactory =
+                DataExtractorFactory.create(client, datafeedConfig.build(), jobBuilder.build(new Date()));
 
         assertThat(dataExtractorFactory, instanceOf(ChunkedDataExtractorFactory.class));
     }

@@ -76,7 +76,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> listener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), listener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), listener);
             listener.actionGet();
             fail("put job action should not be enabled!");
         } catch (ElasticsearchSecurityException e) {
@@ -93,7 +93,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> listener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), listener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), listener);
             PutJobAction.Response response = listener.actionGet();
             assertNotNull(response);
         }
@@ -106,7 +106,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response response = putJobListener.actionGet();
             assertNotNull(response);
         }
@@ -156,7 +156,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response putJobResponse = putJobListener.actionGet();
             assertNotNull(putJobResponse);
         }
@@ -200,7 +200,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             // put job
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response putJobResponse = putJobListener.actionGet();
             assertNotNull(putJobResponse);
             // put datafeed
@@ -297,7 +297,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response putJobResponse = putJobListener.actionGet();
             assertNotNull(putJobResponse);
             PlainListenableActionFuture<PutDatafeedAction.Response> putDatafeedListener = new PlainListenableActionFuture<>(
@@ -366,7 +366,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response putJobResponse = putJobListener.actionGet();
             assertNotNull(putJobResponse);
             PlainListenableActionFuture<PutDatafeedAction.Response> putDatafeedListener = new PlainListenableActionFuture<>(
@@ -416,7 +416,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response putJobResponse = putJobListener.actionGet();
             assertNotNull(putJobResponse);
             PlainListenableActionFuture<OpenJobAction.Response> openJobListener = new PlainListenableActionFuture<>(client.threadPool());
@@ -458,7 +458,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response putJobResponse = putJobListener.actionGet();
             assertNotNull(putJobResponse);
         }
@@ -482,7 +482,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             PlainListenableActionFuture<PutJobAction.Response> putJobListener = new PlainListenableActionFuture<>(client.threadPool());
-            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo").build()), putJobListener);
+            new MachineLearningClient(client).putJob(new PutJobAction.Request(createJob("foo")), putJobListener);
             PutJobAction.Response putJobResponse = putJobListener.actionGet();
             assertNotNull(putJobResponse);
             PlainListenableActionFuture<PutDatafeedAction.Response> putDatafeedListener = new PlainListenableActionFuture<>(
