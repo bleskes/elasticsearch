@@ -196,6 +196,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
 
     public void testAutoCloseJobWithDatafeed() throws Exception {
         assertMLAllowed(true);
+        createIndex("foo");
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
             // put job
@@ -293,6 +294,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
     public void testMachineLearningStartDatafeedActionRestricted() throws Exception {
 
         assertMLAllowed(true);
+        createIndex("foo");
         // test that license restricted apis do now work
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
@@ -362,6 +364,7 @@ public class MachineLearningLicensingTests extends BaseMlIntegTestCase {
     public void testMachineLearningStopDatafeedActionNotRestricted() throws Exception {
 
         assertMLAllowed(true);
+        createIndex("foo");
         // test that license restricted apis do now work
         try (TransportClient client = new TestXPackTransportClient(internalCluster().transportClient().settings())) {
             client.addTransportAddress(internalCluster().getDataNodeInstance(Transport.class).boundAddress().publishAddress());
