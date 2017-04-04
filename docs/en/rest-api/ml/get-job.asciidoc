@@ -5,9 +5,9 @@ The get jobs API allows you to retrieve configuration information about jobs.
 
 ===== Request
 
-`GET _xpack/anomaly_detectors/`
-`GET _xpack/anomaly_detectors/{job_ID}`
+`GET _xpack/ml/anomaly_detectors/` +
 
+`GET _xpack/ml/anomaly_detectors/{job_ID}`
 ////
 ===== Description
 
@@ -18,6 +18,11 @@ OUTDATED?: The get job API can also be applied to all jobs by using `_all` as th
 `job_id`::
   (+string+) Identifier for the job. If you do not specify this optional parameter,
   the API returns information about all jobs that you have authority to view.
+
+===== Results
+
+The API returns information about the job resource. For more information, see
+<<ml-job-resource,job resources>>.
 
 ////
 ===== Query Parameters

@@ -29,6 +29,11 @@ TBD
 
 TBD
 
+=== Definitions
+
+include::ml/jobresource.asciidoc[]
+include::ml/jobcounts.asciidoc[]
+
 //* <<ml-put-job>>
 //* <<ml-delete-job>>
 //* <<ml-get-job>>

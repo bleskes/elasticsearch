@@ -32,7 +32,7 @@ IMPORTANT:  Data can only be accepted from a single connection.
 `reset_start`::
 		(+string+; default: ++null++) Specifies the start of the bucket resetting range
 
-`reset _end`::
+`reset_end`::
 		(+string+; default: ++null++) Specifies the end of the bucket resetting range"
 
 ////

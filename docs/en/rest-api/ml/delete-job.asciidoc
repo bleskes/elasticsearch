@@ -16,8 +16,10 @@ IMPORTANT:  Deleting a job must be done via this API only. Do not delete the
             DELETE Document API. When {security} is enabled, make sure no `write`
             privileges are granted to anyone over the `.ml-*` indices.
 
-It is not currently possible to delete multiple jobs using wildcards or a comma separated list.
+Before you can delete a job, you must delete the data feeds that are associated with it.
+//See <<>>.
 
+It is not currently possible to delete multiple jobs using wildcards or a comma separated list.
 
 ===== Path Parameters
 
@@ -33,3 +35,21 @@ It is not currently possible to delete multiple jobs using wildcards or a comma 
 412
 (BasicFailedReply) The Elasticsearch cluster has not been shutdown yet (code: clusters.cluster_plan_state_error)
 ////
+
+===== Examples
+
+The following example deletes the `event_rate` job:
+
+[source,js]
+--------------------------------------------------
+DELETE _xpack/ml/anomaly_detectors/event_rate
+--------------------------------------------------
+// CONSOLE
+// TEST[skip:todo]
+
+When the job is deleted, you receive the following results:
+----
+{
+  "acknowledged": true
+}
+----

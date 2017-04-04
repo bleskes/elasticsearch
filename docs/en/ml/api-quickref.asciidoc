@@ -1,0 +1,72 @@
+[[ml-api-quickref]]
+== API Quick Reference
+
+All {ml} endpoints have the following base:
+
+----
+/_xpack/ml/
+----
+
+The main {ml} resources can be accessed with a variety of endpoints:
+
+* <<ml-api-jobs,+/anomaly_detectors/+>>: Create and manage {ml} jobs.
+* <<ml-api-datafeeds,+/datafeeds/+>>: Update data to be analyzed.
+* <<ml-api-results,+/results/+>>: Access the results of a {ml} job.
+* <<ml-api-snapshots,+/modelsnapshots/+>>: Manage model snapshots.
+* <<ml-api-validate,+/validate/+>>: Validate subsections of job configurations.
+
+[float]
+[[ml-api-jobs]]
+=== /anomaly_detectors/
+
+* <<ml-put-job,POST /anomaly_detectors>>: Create job
+//* GET /anomaly_detectors: List jobs
+* <<ml-get-job,GET /anomaly_detectors/<jobID+++>+++>>: Get job details
+* <<ml-get-job-stats,GET /anomaly_detectors/<jobID>/_stats>>: Get job statistics
+* <<ml-delete-job,DELETE /anomaly_detectors/<jobID+++>+++>>: Delete job
+* <<ml-put-job,PUT /anomaly_detectors/<jobID>/update>>: Update certain properties of the job configuration
+* <<ml-open-job,POST /anomaly_detectors/<jobID>/_open>>: Open a job
+* <<ml-close-job,POST /anomaly_detectors/<jobID>/_close>>: Close a job
+* <<ml-flush-job,POST anomaly_detectors/<jobID>/_flush>>: Force a job to analyze buffered data
+* <<ml-post-data,POST anomaly_detectors/<jobID+++>+++>>: Send data to a job
+
+[float]
+[[ml-api-datafeeds]]
+=== /datafeeds/
+
+* PUT /datafeeds/<datafeedID>: Create a datafeed
+* GET /datafeeds/<datafeedID>: Get datafeed details
+* GET /datafeeds/<datafeedID>/_stats: Get statistical information for datafeeds
+* GET /datafeeds/<datafeedID>/_preview: Get a preview of a datafeed
+* POST /datafeeds/<datafeedID>/_start: Start a datafeed
+* POST /datafeeds/<datafeedID>/_stop: Stop a datafeed
+* POST /datafeeds/<datafeedID>/_update: Update certain settings for a datafeed
+
+[float]
+[[ml-api-results]]
+=== /results/
+
+TBD
+
+[float]
+[[ml-api-snapshots]]
+=== /modelsnapshots/
+
+TBD
+
+[float]
+[[ml-api-validate]]
+=== /validate/
+
+TBD
+//[float]
+//== Where to Go Next
+
+//<<ml-getting-started, Getting Started>> :: Enable machine learning and start
+//discovering anomalies in your data.
+
+//[float]
+//== Have Comments, Questions, or Feedback?
+
+//Head over to our {forum}[Graph Discussion Forum] to share your experience, questions, and
+//suggestions.

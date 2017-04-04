@@ -1,0 +1,117 @@
+[[ml-job-resource]]
+==== Job Resources
+
+A job resource has the following properties:
+
+`job_id`::
+  (+string+) A numerical character string that uniquely identifies the job.
+
+`description`::
+  (+string+) An optional description of the job.
+
+`create_time`::
+  (+string+) The time the job was created, in ISO 8601 format. For example, `1491007356077`.
+
+`finished_time`::
+  (+string+) If the job closed of failed, this is the time the job finished, in ISO 8601 format.
+  Otherwise, it is `null`. For example, `1491007365347`.
+
+`analysis_config`::
+  (+object+) The analysis configuration, which specifies how to analyze the data. See <<ml-analysisconfig, analysis configuration objects>>.
+
+`data_description`::
+  (+object+) Describes the data format and how APIs parse timestamp fields. See <<ml-datadescription,data description objects>>.
+
+`model_plot_config`:: TBD
+  `enabled`:: TBD. For example, `true`.
+
+`model_snapshot_retention_days`::
+  (+long+) The time in days that model snapshots are retained for the job. Older snapshots are deleted.
+  The default value is 1 day.
+
+`model_snapshot_id`::
+  TBD.  For example, `1491007364`.
+
+`results_index_name`::
+  TBD.  For example, `shared`.
+
+[[ml-analysisconfig]]
+===== Analysis Configuration Objects
+
+An analysis configuration object has the following properties:
+
+`bucket_span`::
+  (+unsigned integer+) The size of the interval that the analysis is integrated into, measured in seconds.
+  The default value is 300 seconds (5 minutes).
+
+`latency`::
+  (+unsigned integer+) The size of the interval of the maximum latency, measured in seconds.
+  The default value is 0 seconds (no latency). // Should this be milliseconds?
+
+`summary_count_field_name`::
+  (+string+) If not null, the data fed to the job is expected to be pre-summarized, and
+  this is the name of the field that contains the count of raw data points that have been summarized. +
+
+NOTE: This property cannot be used with the `metric` function.
+
+`detectors`::
+  (+array+) An array of detector configuration objects, which describe the anomaly detectors that are used in the job.
+  See <<ml-detectorconfig,detector configuration objects>>.
+
+`influencers`::
+  TBD
+
+`use_per_partition_normalization`::
+  TBD
+
+[[ml-detectorconfig]]
+===== Detector Configuration Objects
+
+Detector configuration objects specify which data fields the job analyzes.
+It also specifies which analytical functions are used.
+It has the following properties:
+
+`detector_description`::
+  (+string+) A description of the detector. For example, `low_sum(events_per_min)`.
+
+`function`::
+  (+string+) The analysis function that is used. For example, `low_sum`.
+  The default function is `metric`, which looks for anomalies in all of `min`, `max`,
+  and `mean`.
+
+NOTE: You cannot use the `metric` function with pre-summarized input. If `summary_count_field_name`
+  is not null, you must specify a function other than `metric`.
+
+`field_name`::
+  (+string+) The field that the detector uses in the function. If you use an event rate
+  function such as `count` or `rare`, do not specify this field.
+
+NOTE: `field_name` cannot contain double quotes or backslashes.
+
+`detector_rules`::
+  TBD
+
+[[ml-datadescription]]
+===== Data Description Objects
+
+When you create a job, by default it accepts data in tab-separated-values format and expects
+an Epoch time value in a field named `time`. The `time` field must be measured in seconds from the Epoch.
+If, however, your data is not in this format, you can provide a data description object that specifies the
+format of your data.
+
+A data description object has the following properties:
+////
+LCQ: Also add "format", "fieldDelimiter", "quotecharacter" properties?
+////
+`time_field`::
+  (+string+) The name of the field that contains the timestamp.
+  The default value is `time`.
+
+`time_format`::
+  (+string+) The time format, which can be `epoch`, `epoch_ms`, or a custom pattern.
+  The default value is `epoch`, which refers to UNIX or Epoch time (the number of seconds
+  since 1 Jan 1970) and corresponds to the time_t type in C and C++.
+  The value `epoch_ms` indicates that time is measured in milliseconds since the epoch.
+  The `epoch` and `epoch_ms` time formats accept either integer or real values. +
+
+NOTE: Custom patterns must conform to the Java `DateTimeFormatter` class. When you use date-time formatting patterns, it is recommended that you provide the full date, time and time zone. For example: `yyyy-MM-ddTHH:mm:ssX`. If the pattern that you specify is not sufficient to produce a complete timestamp, job creation fails.
