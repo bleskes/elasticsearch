@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.persistent;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.tasks.CancellableTask;
 import org.elasticsearch.tasks.Task;
@@ -110,6 +109,10 @@ public class AllocatedPersistentTask extends CancellableTask {
 
     public State getState() {
         return state.get();
+    }
+
+    public long getAllocationId() {
+        return allocationId;
     }
 
     public enum State {
