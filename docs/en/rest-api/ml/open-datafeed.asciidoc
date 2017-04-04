@@ -6,7 +6,7 @@ A job may be opened and closed multiple times throughout its lifecycle.
 
 ===== Request
 
-`POST _xpack/ml/anomaly_detectors/{job_id}/_open`
+`POST _xpack/ml/anomaly_detectors/<job_id>/_open`
 
 ===== Description
 
@@ -43,13 +43,13 @@ The job is ready to resume its analysis from where it left off, once new data is
 ////
 ===== Examples
 
-The following example opens the `event_rate` job and sets an optional property:
+The following example opens the `event_rate` job:
 
 [source,js]
 --------------------------------------------------
 POST _xpack/ml/anomaly_detectors/event_rate/_open
 {
-  "ignore_downtime": false
+  "ignore_downtime":false
 }
 --------------------------------------------------
 // CONSOLE

@@ -1,13 +1,13 @@
-[[ml-close-job]]
-==== Close Jobs
+[[ml-stop-datafeed]]
+==== Stop Data Feeds
 
-An anomaly detection job must be opened in order for it to be ready to receive and analyze data.
-A job may be opened and closed multiple times throughout its lifecycle.
+A data feed can be opened and closed multiple times throughout its lifecycle.
 
 ===== Request
 
-`POST _xpack/ml/anomaly_detectors/<job_id>/_close`
+`POST _xpack/ml/datafeeds/<feed_id>/_stop`
 
+////
 ===== Description
 
 A job can be closed once all data has been analyzed.
@@ -23,18 +23,18 @@ data and analysis operations, however you can still explore and navigate results
 
 //NOTE:
 //OUTDATED?: If using the {prelert} UI, the job will be automatically closed when stopping a datafeed job.
-
+////
 ===== Path Parameters
 
-`job_id` (required)::
-  (+string+)    Identifier for the job
-
+`feed_id` (required)::
+  (+string+)    Identifier for the data feed
+////
 ===== Query Parameters
 
 `close_timeout`::
   (+time+; default: ++30 min++)  Controls the time to wait until a job has closed
 
-////
+
 ===== Responses
 
 200
@@ -43,7 +43,7 @@ data and analysis operations, however you can still explore and navigate results
 (BasicFailedReply) The cluster specified by {cluster_id} cannot be found (code: clusters.cluster_not_found)
 412
 (BasicFailedReply) The Elasticsearch cluster has not been shutdown yet (code: clusters.cluster_plan_state_error)
-////
+
 ===== Examples
 
 The following example closes the `event_rate` job:
@@ -61,3 +61,4 @@ When the job is closed, you receive the following results:
   "closed": true
 }
 ----
+////

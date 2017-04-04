@@ -6,7 +6,7 @@ The job must have been opened prior to sending data.
 
 ===== Request
 
-`POST _xpack/ml/anomaly_detectors/{job_ID} --data-binary @{data-file.json}`
+`POST _xpack/ml/anomaly_detectors/<job_id> --data-binary @{data-file.json}`
 
 ===== Description
 
@@ -27,7 +27,7 @@ IMPORTANT:  Data can only be accepted from a single connection.
 `job_id` (required)::
 		(+string+)    Identifier for the job
 
-===== Query Parameters
+===== Request Body
 
 `reset_start`::
 		(+string+; default: ++null++) Specifies the start of the bucket resetting range

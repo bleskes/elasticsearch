@@ -1,13 +1,13 @@
-[[ml-get-job]]
-==== Get Job Details
+[[ml-get-snapshot]]
+==== Get Model Snapshots
 
-The get jobs API allows you to retrieve configuration information about jobs.
+The get model snapshots API allows you to retrieve information about model snapshots.
 
 ===== Request
 
-`GET _xpack/ml/anomaly_detectors/` +
+`GET _xpack/ml/anomaly_detectors/<job_id>/model_snapshots` +
 
-`GET _xpack/ml/anomaly_detectors/<job_id>`
+`GET _xpack/ml/anomaly_detectors/<job_id>/model_snapshots/<snapshot_id>`
 ////
 ===== Description
 
@@ -16,15 +16,18 @@ OUTDATED?: The get job API can also be applied to all jobs by using `_all` as th
 ===== Path Parameters
 
 `job_id`::
-  (+string+) Identifier for the job. If you do not specify this optional parameter,
-  the API returns information about all jobs that you have authority to view.
+  (+string+) Identifier for the job.
 
+`snapshot_id`::
+  (+string+) Identifier for the job. If you do not specify this optional parameter,
+  the API returns information about all model snapshots that you have authority to view.
+
+////
 ===== Results
 
 The API returns information about the job resource. For more information, see
 <<ml-job-resource,job resources>>.
 
-////
 ===== Query Parameters
 
 `_stats`::
@@ -38,7 +41,7 @@ The API returns information about the job resource. For more information, see
 (BasicFailedReply) The cluster specified by {cluster_id} cannot be found (code: clusters.cluster_not_found)
 412
 (BasicFailedReply) The Elasticsearch cluster has not been shutdown yet (code: clusters.cluster_plan_state_error)
-////
+
 ===== Examples
 
 .Example results for a single job
@@ -80,3 +83,4 @@ The API returns information about the job resource. For more information, see
   ]
 }
 ----
+////

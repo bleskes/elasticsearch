@@ -1,12 +1,13 @@
-[[ml-delete-job]]
-==== Delete Jobs
+[[ml-delete-datafeed]]
+==== Delete Data Feeds
 
-The delete job API allows you to delete an existing anomaly detection job.
+The delete data feed API allows you to delete an existing data feed.
 
 ===== Request
 
-`DELETE _xpack/ml/anomaly_detectors/<job_id>`
+`DELETE _xpack/ml/datafeeds/<feed_id>`
 
+////
 ===== Description
 
 All job configuration, model state and results are deleted.
@@ -20,11 +21,11 @@ Before you can delete a job, you must delete the data feeds that are associated 
 //See <<>>.
 
 It is not currently possible to delete multiple jobs using wildcards or a comma separated list.
-
+////
 ===== Path Parameters
 
-`job_id` (required)::
-  (+string+)    Identifier for the job
+`feed_id` (required)::
+  (+string+)    Identifier for the data feed
 ////
 ===== Responses
 
@@ -38,16 +39,16 @@ It is not currently possible to delete multiple jobs using wildcards or a comma 
 
 ===== Examples
 
-The following example deletes the `event_rate` job:
+The following example deletes the `datafeed-it-ops` data feed:
 
 [source,js]
 --------------------------------------------------
-DELETE _xpack/ml/anomaly_detectors/event_rate
+DELETE _xpack/ml/datafeeds/datafeed-it-ops
 --------------------------------------------------
 // CONSOLE
 // TEST[skip:todo]
 
-When the job is deleted, you receive the following results:
+When the data feed is deleted, you receive the following results:
 ----
 {
   "acknowledged": true

@@ -4,7 +4,7 @@
 The flush job API forces any buffered data to be processed by the {ml} job.
 
 ===== Request
-`POST _xpack/ml/anomaly_detectors/{job_ID}/_flush`
+`POST _xpack/ml/anomaly_detectors/<job_id>/_flush`
 
 ===== Description
 
