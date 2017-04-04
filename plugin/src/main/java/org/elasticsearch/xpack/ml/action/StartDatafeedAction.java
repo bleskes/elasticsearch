@@ -53,8 +53,8 @@ import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.ml.MlMetadata;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedConfig;
-import org.elasticsearch.xpack.ml.datafeed.DatafeedJobRunner;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedJobValidator;
+import org.elasticsearch.xpack.ml.datafeed.DatafeedManager;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedState;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
@@ -305,7 +305,7 @@ public class StartDatafeedAction
         private final long startTime;
         private final Long endTime;
         /* only pck protected for testing */
-        volatile DatafeedJobRunner datafeedJobRunner;
+        volatile DatafeedManager datafeedManager;
 
         DatafeedTask(long id, String type, String action, TaskId parentTaskId, Request request) {
             super(id, type, action, "datafeed-" + request.getDatafeedId(), parentTaskId);
@@ -341,7 +341,7 @@ public class StartDatafeedAction
         }
 
         public void stop(String reason, TimeValue timeout) {
-            datafeedJobRunner.stopDatafeed(datafeedId, reason, timeout);
+            datafeedManager.stopDatafeed(datafeedId, reason, timeout);
         }
     }
 
@@ -403,17 +403,17 @@ public class StartDatafeedAction
     }
 
     public static class StartDatafeedPersistentTasksExecutor extends PersistentTasksExecutor<Request> {
-        private final DatafeedJobRunner datafeedJobRunner;
+        private final DatafeedManager datafeedManager;
         private final XPackLicenseState licenseState;
         private final Auditor auditor;
         private final ThreadPool threadPool;
 
         public StartDatafeedPersistentTasksExecutor(Settings settings, ThreadPool threadPool, XPackLicenseState licenseState,
-                                                    PersistentTasksService persistentTasksService, DatafeedJobRunner datafeedJobRunner,
+                                                    PersistentTasksService persistentTasksService, DatafeedManager datafeedManager,
                                                     Auditor auditor) {
             super(settings, NAME, persistentTasksService, ThreadPool.Names.MANAGEMENT);
             this.licenseState = licenseState;
-            this.datafeedJobRunner = datafeedJobRunner;
+            this.datafeedManager = datafeedManager;
             this.auditor = auditor;
             this.threadPool = threadPool;
         }
@@ -440,8 +440,8 @@ public class StartDatafeedAction
         protected void nodeOperation(AllocatedPersistentTask allocatedPersistentTask, Request request,
                                      ActionListener<TransportResponse.Empty> listener) {
             DatafeedTask datafeedTask = (DatafeedTask) allocatedPersistentTask;
-            datafeedTask.datafeedJobRunner = datafeedJobRunner;
-            datafeedJobRunner.run(datafeedTask,
+            datafeedTask.datafeedManager = datafeedManager;
+            datafeedManager.run(datafeedTask,
                     (error) -> {
                         if (error != null) {
                             listener.onFailure(error);
