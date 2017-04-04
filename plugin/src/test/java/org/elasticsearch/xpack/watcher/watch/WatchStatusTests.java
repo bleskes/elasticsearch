@@ -42,7 +42,7 @@ public class WatchStatusTests extends ESTestCase {
 
         // actions, no action with reset ack status, unmet condition
         Map<String, ActionStatus > actions = new HashMap<>();
-        actions.put(randomAsciiOfLength(10), new ActionStatus(now()));
+        actions.put(randomAlphaOfLength(10), new ActionStatus(now()));
         status = new WatchStatus(now(), actions);
         status.onCheck(false, now());
         assertThat(status.dirty(), is(true));
@@ -50,8 +50,8 @@ public class WatchStatusTests extends ESTestCase {
         // actions, one action with state other than AWAITS_SUCCESSFUL_EXECUTION, unmet condition
         actions.clear();
         ActionStatus.AckStatus ackStatus = new ActionStatus.AckStatus(now(), randomFrom(State.ACKED, State.ACKABLE));
-        actions.put(randomAsciiOfLength(10), new ActionStatus(ackStatus, null, null, null));
-        actions.put(randomAsciiOfLength(11), new ActionStatus(now()));
+        actions.put(randomAlphaOfLength(10), new ActionStatus(ackStatus, null, null, null));
+        actions.put(randomAlphaOfLength(11), new ActionStatus(now()));
         status = new WatchStatus(now(), actions);
         status.onCheck(false, now());
         assertThat(status.dirty(), is(true));

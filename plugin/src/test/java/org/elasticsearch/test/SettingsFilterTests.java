@@ -61,8 +61,8 @@ public class SettingsFilterTests extends ESTestCase {
                     "Expected a boolean [true/false] for setting [hostname_verification] but got [" + ldap1HostNameVerification + "]");
         }
         configureFilteredSetting("xpack.security.authc.realms.ldap1.hostname_verification", ldap1HostNameVerification);
-        configureFilteredSetting("xpack.security.authc.realms.ldap1.bind_dn", randomAsciiOfLength(5));
-        configureFilteredSetting("xpack.security.authc.realms.ldap1.bind_password", randomAsciiOfLength(5));
+        configureFilteredSetting("xpack.security.authc.realms.ldap1.bind_dn", randomAlphaOfLength(5));
+        configureFilteredSetting("xpack.security.authc.realms.ldap1.bind_password", randomAlphaOfLength(5));
 
         // active directory filtering
         configureUnfilteredSetting("xpack.security.authc.realms.ad1.type", "active_directory");
@@ -91,7 +91,7 @@ public class SettingsFilterTests extends ESTestCase {
         configureFilteredSetting("xpack.ssl.keystore.password", "testnode");
         configureFilteredSetting("xpack.ssl.keystore.algorithm", KeyManagerFactory.getDefaultAlgorithm());
         configureFilteredSetting("xpack.ssl.keystore.key_password", "testnode");
-        configureFilteredSetting("xpack.ssl.truststore.password", randomAsciiOfLength(5));
+        configureFilteredSetting("xpack.ssl.truststore.password", randomAlphaOfLength(5));
         configureFilteredSetting("xpack.ssl.truststore.algorithm", TrustManagerFactory.getDefaultAlgorithm());
 
         // client profile
@@ -106,7 +106,7 @@ public class SettingsFilterTests extends ESTestCase {
         configureFilteredSetting("transport.profiles.client.xpack.security.ssl.keystore.algorithm",
                 KeyManagerFactory.getDefaultAlgorithm());
         configureFilteredSetting("transport.profiles.client.xpack.security.ssl.keystore.key_password", "testnode");
-        configureFilteredSetting("transport.profiles.client.xpack.security.ssl.truststore.password", randomAsciiOfLength(5));
+        configureFilteredSetting("transport.profiles.client.xpack.security.ssl.truststore.password", randomAlphaOfLength(5));
         configureFilteredSetting("transport.profiles.client.xpack.security.ssl.truststore.algorithm",
                 TrustManagerFactory.getDefaultAlgorithm());
 

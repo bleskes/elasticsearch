@@ -36,10 +36,10 @@ public class PutWatchSerializationTests extends ESTestCase {
     // https://github.com/elastic/x-plugins/issues/2490
     public void testPutWatchSerialization() throws Exception {
         PutWatchRequest request = new PutWatchRequest();
-        request.setId(randomAsciiOfLength(10));
+        request.setId(randomAlphaOfLength(10));
         request.setActive(randomBoolean());
         request.setSource(
-                new BytesArray(JsonXContent.contentBuilder().startObject().field("foo", randomAsciiOfLength(20)).endObject().string()),
+                new BytesArray(JsonXContent.contentBuilder().startObject().field("foo", randomAlphaOfLength(20)).endObject().string()),
                 XContentType.JSON);
 
         BytesStreamOutput streamOutput = new BytesStreamOutput();
@@ -55,10 +55,10 @@ public class PutWatchSerializationTests extends ESTestCase {
 
     public void testPutWatchSerializationXContent() throws Exception {
         PutWatchRequest request = new PutWatchRequest();
-        request.setId(randomAsciiOfLength(10));
+        request.setId(randomAlphaOfLength(10));
         request.setActive(randomBoolean());
         request.setSource(
-                new BytesArray(JsonXContent.contentBuilder().startObject().field("foo", randomAsciiOfLength(20)).endObject().string()),
+                new BytesArray(JsonXContent.contentBuilder().startObject().field("foo", randomAlphaOfLength(20)).endObject().string()),
                 XContentType.JSON);
         assertEquals(XContentType.JSON, request.xContentType());
 

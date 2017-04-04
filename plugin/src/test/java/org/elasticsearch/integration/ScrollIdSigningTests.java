@@ -75,7 +75,7 @@ public class ScrollIdSigningTests extends SecurityIntegTestCase {
         final int tamperPos = scrollId.indexOf("$$$$") + 5; // go one past the 4 $$$$ so that it matches the expected patter
         String tamperedScrollId = randomBoolean() ?
                 scrollId.substring(0, randomIntBetween(tamperPos, Math.min(tamperPos + 10, scrollId.length() - 1))) :
-                scrollId + randomAsciiOfLength(randomIntBetween(3, 10));
+                scrollId + randomAlphaOfLength(randomIntBetween(3, 10));
         logger.info("tampered scroll id {}", tamperedScrollId);
 
         try {
@@ -100,7 +100,7 @@ public class ScrollIdSigningTests extends SecurityIntegTestCase {
         final int tamperPos = scrollId.indexOf("$$$$") + 5; // go one past the 4 $$$$ so that it matches the expected patter
         String tamperedScrollId = randomBoolean() ?
                 scrollId.substring(0, randomIntBetween(tamperPos, Math.min(tamperPos + 10, scrollId.length() - 1))) :
-                scrollId + randomAsciiOfLength(randomIntBetween(3, 10));
+                scrollId + randomAlphaOfLength(randomIntBetween(3, 10));
         logger.info("tampered scroll id {}", tamperedScrollId);
 
         try {

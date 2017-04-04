@@ -29,9 +29,9 @@ public class MlFilterTests extends AbstractSerializingTestCase<MlFilter> {
         int size = randomInt(10);
         List<String> items = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
-            items.add(randomAsciiOfLengthBetween(1, 20));
+            items.add(randomAlphaOfLengthBetween(1, 20));
         }
-        return new MlFilter(randomAsciiOfLengthBetween(1, 20), items);
+        return new MlFilter(randomAlphaOfLengthBetween(1, 20), items);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class MlFilterTests extends AbstractSerializingTestCase<MlFilter> {
 
     public void testNullItems() {
         NullPointerException ex =
-                expectThrows(NullPointerException.class, () -> new MlFilter(randomAsciiOfLengthBetween(1, 20), null));
+                expectThrows(NullPointerException.class, () -> new MlFilter(randomAlphaOfLengthBetween(1, 20), null));
         assertEquals(MlFilter.ITEMS.getPreferredName() + " must not be null", ex.getMessage());
     }
 

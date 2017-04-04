@@ -229,7 +229,7 @@ public class SecurityNetty3TransportTests extends ESTestCase {
                 mock(NetworkService.class), mock(BigArrays.class), null, sslService,
                 mock(NamedWriteableRegistry.class), mock(CircuitBreakerService.class));
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> transport.configureServerChannelPipelineFactory(randomAsciiOfLength(6), Settings.EMPTY));
+                () -> transport.configureServerChannelPipelineFactory(randomAlphaOfLength(6), Settings.EMPTY));
         assertThat(e.getMessage(), containsString("key must be provided"));
     }
 
@@ -246,7 +246,7 @@ public class SecurityNetty3TransportTests extends ESTestCase {
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class),
                 mock(NetworkService.class), mock(BigArrays.class), null, sslService,
                 mock(NamedWriteableRegistry.class), mock(CircuitBreakerService.class));
-        assertNotNull(transport.configureServerChannelPipelineFactory(randomAsciiOfLength(6), Settings.EMPTY));
+        assertNotNull(transport.configureServerChannelPipelineFactory(randomAlphaOfLength(6), Settings.EMPTY));
     }
 
     public void testTransportSSLOverridesGlobalSSL() throws Exception {

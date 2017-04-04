@@ -106,7 +106,7 @@ public class NativeUsersStoreTests extends ESTestCase {
         final GetResult result = new GetResult(
                 SecurityTemplateService.SECURITY_INDEX_NAME,
                 NativeUsersStore.RESERVED_USER_DOC_TYPE,
-                randomAsciiOfLength(12),
+                randomAlphaOfLength(12),
                 1L,
                 true,
                 jsonBuilder().map(values).bytes(),

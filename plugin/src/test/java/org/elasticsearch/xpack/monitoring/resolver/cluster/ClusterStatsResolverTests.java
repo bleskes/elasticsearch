@@ -34,7 +34,6 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.UnassignedInfo;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.BoundTransportAddress;
-import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.util.set.Sets;
@@ -75,7 +74,7 @@ public class ClusterStatsResolverTests extends MonitoringIndexNameResolverTestCa
     @Override
     protected ClusterStatsMonitoringDoc newMonitoringDoc() {
         ClusterStatsMonitoringDoc doc = new ClusterStatsMonitoringDoc(randomMonitoringId(),
-                randomAsciiOfLength(2), randomAsciiOfLength(5), 1437580442979L,
+                randomAlphaOfLength(2), randomAlphaOfLength(5), 1437580442979L,
                 new DiscoveryNode("id", buildUnique(), emptyMap(), emptySet(), Version.CURRENT),
                 randomClusterStats());
         return doc;

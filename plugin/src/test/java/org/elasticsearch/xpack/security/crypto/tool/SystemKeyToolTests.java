@@ -59,7 +59,7 @@ public class SystemKeyToolTests extends CommandTestCase {
     public void testGenerate() throws Exception {
         final Path homeDir = initFileSystem(true);
 
-        Path path = jimfs.getPath(randomAsciiOfLength(10)).resolve("key");
+        Path path = jimfs.getPath(randomAlphaOfLength(10)).resolve("key");
         Files.createDirectory(path.getParent());
 
         execute("-Epath.home=" + homeDir, path.toString());
@@ -95,7 +95,7 @@ public class SystemKeyToolTests extends CommandTestCase {
     public void testThatSystemKeyMayOnlyBeReadByOwner() throws Exception {
         final Path homeDir = initFileSystem(true);
 
-        Path path = jimfs.getPath(randomAsciiOfLength(10)).resolve("key");
+        Path path = jimfs.getPath(randomAlphaOfLength(10)).resolve("key");
         Files.createDirectories(path.getParent());
 
         execute("-Epath.home=" + homeDir, path.toString());

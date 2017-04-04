@@ -67,7 +67,7 @@ import static org.mockito.Mockito.when;
 
 public class JiraActionTests extends ESTestCase {
     public void testParser() throws Exception {
-        final String accountName = randomAsciiOfLength(10);
+        final String accountName = randomAlphaOfLength(10);
         final Map<String, Object> issueDefaults = JiraAccountTests.randomIssueDefaults();
 
         XContentBuilder builder = jsonBuilder().startObject()
@@ -188,17 +188,17 @@ public class JiraActionTests extends ESTestCase {
         final Map<String, Object> model = new HashMap<>();
         final MapBuilder<String, Object> actionFields = MapBuilder.newMapBuilder();
 
-        String summary = randomAsciiOfLength(15);
+        String summary = randomAlphaOfLength(15);
         actionFields.put("summary", "{{ctx.summary}}");
         model.put("{{ctx.summary}}", summary);
 
-        String projectId = randomAsciiOfLength(10);
+        String projectId = randomAlphaOfLength(10);
         actionFields.put("project", singletonMap("id", "{{ctx.project_id}}"));
         model.put("{{ctx.project_id}}", projectId);
 
         String description = null;
         if (randomBoolean()) {
-            description = randomAsciiOfLength(50);
+            description = randomAlphaOfLength(50);
             actionFields.put("description", description);
         }
 
@@ -238,7 +238,7 @@ public class JiraActionTests extends ESTestCase {
 
         DateTime now = DateTime.now(DateTimeZone.UTC);
 
-        Wid wid = new Wid(randomAsciiOfLength(5),  now);
+        Wid wid = new Wid(randomAlphaOfLength(5),  now);
         WatchExecutionContext context = mockExecutionContextBuilder(wid.watchId())
                 .wid(wid)
                 .payload(payload)
@@ -269,7 +269,7 @@ public class JiraActionTests extends ESTestCase {
     private static JiraAction randomJiraAction() {
         String account = null;
         if (randomBoolean()) {
-            account = randomAsciiOfLength(randomIntBetween(5, 10));
+            account = randomAlphaOfLength(randomIntBetween(5, 10));
         }
         Map<String, Object> fields = emptyMap();
         if (frequently()) {

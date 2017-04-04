@@ -21,7 +21,7 @@ public class PreviewDatafeedActionRequestTests extends AbstractStreamableTestCas
 
     @Override
     protected Request createTestInstance() {
-        return new Request(randomAsciiOfLength(10));
+        return new Request(randomAlphaOfLength(10));
     }
 
     @Override

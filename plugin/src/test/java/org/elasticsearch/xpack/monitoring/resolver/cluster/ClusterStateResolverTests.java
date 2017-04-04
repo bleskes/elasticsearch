@@ -48,7 +48,7 @@ public class ClusterStateResolverTests extends MonitoringIndexNameResolverTestCa
         ClusterState clusterState = ClusterState.builder(new ClusterName("test")).nodes(discoveryNodes).build();
 
         ClusterStateMonitoringDoc doc = new ClusterStateMonitoringDoc(randomMonitoringId(),
-                randomAsciiOfLength(2), randomAsciiOfLength(5), 1437580442979L,
+                randomAlphaOfLength(2), randomAlphaOfLength(5), 1437580442979L,
                 new DiscoveryNode("id", LocalTransportAddress.buildUnique(), emptyMap(), emptySet(), Version.CURRENT),
                 clusterState, randomFrom(ClusterHealthStatus.values()));
 

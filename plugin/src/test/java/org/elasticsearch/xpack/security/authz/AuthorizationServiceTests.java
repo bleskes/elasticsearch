@@ -833,7 +833,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         when(authentication.getRunAsUser()).thenReturn(user);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType())
-                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAsciiOfLengthBetween(4, 12));
+                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAlphaOfLengthBetween(4, 12));
 
         assertThat(request, instanceOf(UserRequest.class));
         assertTrue(AuthorizationService.checkSameUserPermissions(action, request, authentication));
@@ -842,7 +842,7 @@ public class AuthorizationServiceTests extends ESTestCase {
     public void testSameUserPermissionDoesNotAllowNonMatchingUsername() {
         final User user = new User("joe");
         final boolean changePasswordRequest = randomBoolean();
-        final String username = randomFrom("", "joe" + randomAsciiOfLengthBetween(1, 5), randomAsciiOfLengthBetween(3, 10));
+        final String username = randomFrom("", "joe" + randomAlphaOfLengthBetween(1, 5), randomAlphaOfLengthBetween(3, 10));
         final TransportRequest request = changePasswordRequest ?
                 new ChangePasswordRequestBuilder(mock(Client.class)).username(username).request() :
                 new AuthenticateRequestBuilder(mock(Client.class)).username(username).request();
@@ -853,7 +853,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         when(authentication.getRunAsUser()).thenReturn(user);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType())
-                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAsciiOfLengthBetween(4, 12));
+                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAlphaOfLengthBetween(4, 12));
 
         assertThat(request, instanceOf(UserRequest.class));
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
@@ -864,7 +864,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         final RealmRef lookedUpBy = mock(RealmRef.class);
         when(authentication.getLookedUpBy()).thenReturn(lookedUpBy);
         when(lookedUpBy.getType())
-                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAsciiOfLengthBetween(4, 12));
+                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAlphaOfLengthBetween(4, 12));
         // this should still fail since the username is still different
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
 
@@ -887,7 +887,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         when(authentication.getRunAsUser()).thenReturn(randomBoolean() ? user : new User("runAs"));
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType())
-                .thenReturn(randomAsciiOfLengthBetween(4, 12));
+                .thenReturn(randomAlphaOfLengthBetween(4, 12));
 
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
         verifyZeroInteractions(user, request, authentication);
@@ -911,7 +911,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         when(authentication.getLookedUpBy()).thenReturn(lookedUpBy);
         when(authentication.isRunAs()).thenReturn(true);
         when(lookedUpBy.getType())
-                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAsciiOfLengthBetween(4, 12));
+                .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAlphaOfLengthBetween(4, 12));
         assertTrue(AuthorizationService.checkSameUserPermissions(action, request, authentication));
 
         when(authentication.getRunAsUser()).thenReturn(user);
@@ -929,7 +929,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         when(authentication.isRunAs()).thenReturn(false);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType()).thenReturn(randomFrom(LdapRealm.LDAP_TYPE, FileRealm.TYPE, LdapRealm.AD_TYPE, PkiRealm.TYPE,
-                randomAsciiOfLengthBetween(4, 12)));
+                randomAlphaOfLengthBetween(4, 12)));
 
         assertThat(request, instanceOf(UserRequest.class));
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
@@ -954,7 +954,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authentication.getLookedUpBy()).thenReturn(lookedUpBy);
         when(lookedUpBy.getType()).thenReturn(randomFrom(LdapRealm.LDAP_TYPE, FileRealm.TYPE, LdapRealm.AD_TYPE, PkiRealm.TYPE,
-                randomAsciiOfLengthBetween(4, 12)));
+                randomAlphaOfLengthBetween(4, 12)));
 
         assertThat(request, instanceOf(UserRequest.class));
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));

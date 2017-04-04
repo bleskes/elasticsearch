@@ -88,7 +88,7 @@ public class EmailAttachmentParsersTests extends ESTestCase {
         EmailAttachmentsParser parser = new EmailAttachmentsParser(Collections.emptyMap());
 
         XContentBuilder builder = jsonBuilder();
-        String type = randomAsciiOfLength(8);
+        String type = randomAlphaOfLength(8);
         builder.startObject().startObject("some-id").startObject(type).endObject().endObject().endObject();
 
         XContentParser xContentParser = createParser(builder);

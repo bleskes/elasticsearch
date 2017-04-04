@@ -18,7 +18,6 @@
 package org.elasticsearch.xpack.monitoring.exporter.http;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.recovery.RecoveryResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -137,7 +136,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         final boolean bwcIndexesExist = randomBoolean();
         final boolean bwcAliasesExist = randomBoolean();
 
-        final String headerValue = randomAsciiOfLengthBetween(3, 9);
+        final String headerValue = randomAlphaOfLengthBetween(3, 9);
         final String[] array = generateRandomStringArray(2, 4, false);
 
         final Map<String, String[]> headers = new HashMap<>();
@@ -178,7 +177,7 @@ public class HttpExporterIT extends MonitoringIntegTestCase {
         final boolean bwcIndexesExist = randomBoolean();
         final boolean bwcAliasesExist = randomBoolean();
 
-        final String headerValue = randomAsciiOfLengthBetween(3, 9);
+        final String headerValue = randomAlphaOfLengthBetween(3, 9);
         final String[] array = generateRandomStringArray(2, 4, false);
 
         final Map<String, String[]> headers = new HashMap<>();

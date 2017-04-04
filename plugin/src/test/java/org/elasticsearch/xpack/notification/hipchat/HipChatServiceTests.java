@@ -47,7 +47,7 @@ public class HipChatServiceTests extends ESTestCase {
     }
 
     public void testSingleAccountV1() throws Exception {
-        String accountName = randomAsciiOfLength(10);
+        String accountName = randomAlphaOfLength(10);
         String host = randomBoolean() ? null : "_host";
         int port = randomBoolean() ? -1 : randomIntBetween(300, 400);
         String defaultRoom = randomBoolean() ? null : "_r1, _r2";
@@ -93,10 +93,10 @@ public class HipChatServiceTests extends ESTestCase {
     }
 
     public void testSingleAccountIntegration() throws Exception {
-        String accountName = randomAsciiOfLength(10);
+        String accountName = randomAlphaOfLength(10);
         String host = randomBoolean() ? null : "_host";
         int port = randomBoolean() ? -1 : randomIntBetween(300, 400);
-        String room = randomAsciiOfLength(10);
+        String room = randomAlphaOfLength(10);
         String defaultFrom = randomBoolean() ? null : "_from";
         HipChatMessage.Color defaultColor = randomBoolean() ? null : randomFrom(HipChatMessage.Color.values());
         HipChatMessage.Format defaultFormat = randomBoolean() ? null : randomFrom(HipChatMessage.Format.values());
@@ -136,7 +136,7 @@ public class HipChatServiceTests extends ESTestCase {
     }
 
     public void testSingleAccountIntegrationNoRoomSetting() throws Exception {
-        String accountName = randomAsciiOfLength(10);
+        String accountName = randomAlphaOfLength(10);
         Settings.Builder settingsBuilder = Settings.builder()
                 .put("xpack.notification.hipchat.account." + accountName + ".profile",
                         HipChatAccount.Profile.INTEGRATION.value())
@@ -148,7 +148,7 @@ public class HipChatServiceTests extends ESTestCase {
     }
 
     public void testSingleAccountUser() throws Exception {
-        String accountName = randomAsciiOfLength(10);
+        String accountName = randomAlphaOfLength(10);
         String host = randomBoolean() ? null : "_host";
         int port = randomBoolean() ? -1 : randomIntBetween(300, 400);
         String defaultRoom = randomBoolean() ? null : "_r1, _r2";
