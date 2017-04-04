@@ -70,7 +70,6 @@ import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Assignme
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
 import org.elasticsearch.xpack.persistent.PersistentTasksExecutor;
 import org.elasticsearch.xpack.persistent.PersistentTasksService;
-import org.elasticsearch.xpack.persistent.PersistentTasksService.PersistentTaskOperationListener;
 import org.elasticsearch.xpack.persistent.PersistentTasksService.WaitForPersistentTaskStatusListener;
 import org.elasticsearch.xpack.security.InternalClient;
 
@@ -371,10 +370,10 @@ public class StartDatafeedAction
         @Override
         protected void doExecute(Request request, ActionListener<Response> listener) {
             if (licenseState.isMachineLearningAllowed()) {
-                PersistentTaskOperationListener finalListener = new PersistentTaskOperationListener() {
+                ActionListener<PersistentTask<Request>> finalListener = new ActionListener<PersistentTask<Request>>() {
                     @Override
-                    public void onResponse(long taskId) {
-                        waitForYellow(taskId, request, listener);
+                    public void onResponse(PersistentTask<Request> persistentTask) {
+                        waitForYellow(persistentTask.getId(), request, listener);
                     }
 
                     @Override
@@ -382,7 +381,7 @@ public class StartDatafeedAction
                         listener.onFailure(e);
                     }
                 };
-                persistentTasksService.createPersistentActionTask(NAME, request, finalListener);
+                persistentTasksService.startPersistentTask(NAME, request, finalListener);
             } else {
                 listener.onFailure(LicenseUtils.newComplianceException(XPackPlugin.MACHINE_LEARNING));
             }
@@ -413,9 +412,9 @@ public class StartDatafeedAction
                 return datafeedState == DatafeedState.STARTED;
             };
             persistentTasksService.waitForPersistentTaskStatus(taskId, predicate, request.timeout,
-                    new WaitForPersistentTaskStatusListener() {
+                    new WaitForPersistentTaskStatusListener<Request>() {
                 @Override
-                public void onResponse(long taskId) {
+                public void onResponse(PersistentTask<Request> task) {
                     listener.onResponse(new Response(true));
                 }
 
@@ -434,9 +433,8 @@ public class StartDatafeedAction
         private final ThreadPool threadPool;
 
         public StartDatafeedPersistentTasksExecutor(Settings settings, ThreadPool threadPool, XPackLicenseState licenseState,
-                                                    PersistentTasksService persistentTasksService, DatafeedManager datafeedManager,
-                                                    Auditor auditor) {
-            super(settings, NAME, persistentTasksService, ThreadPool.Names.MANAGEMENT);
+                                                    DatafeedManager datafeedManager, Auditor auditor) {
+            super(settings, NAME, ThreadPool.Names.MANAGEMENT);
             this.licenseState = licenseState;
             this.datafeedManager = datafeedManager;
             this.auditor = auditor;
