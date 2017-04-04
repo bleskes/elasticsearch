@@ -293,9 +293,11 @@ public class DatafeedJobIT extends ESRestTestCase {
                 new StringEntity(job));
 
         String datafeedId = "datafeed-" + jobId;
-        String aggregations = "{\"time stamp\":{\"histogram\":{\"field\":\"time stamp\",\"interval\":3600000},"
-                + "\"aggregations\":{\"airline\":{\"terms\":{\"field\":\"airline\",\"size\":10},"
-                + "\"aggregations\":{\"responsetime\":{\"avg\":{\"field\":\"responsetime\"}}}}}}}";
+        String aggregations = "{\"buckets\":{\"histogram\":{\"field\":\"time stamp\",\"interval\":3600000},"
+                + "\"aggregations\":{"
+                + "\"time stamp\":{\"max\":{\"field\":\"time stamp\"}},"
+                + "\"airline\":{\"terms\":{\"field\":\"airline\",\"size\":10},"
+                + "  \"aggregations\":{\"responsetime\":{\"avg\":{\"field\":\"responsetime\"}}}}}}}";
         new DatafeedBuilder(datafeedId, jobId, "airline-data-aggs", "response").setAggregations(aggregations).build();
         openJob(client(), jobId);
 
@@ -320,8 +322,10 @@ public class DatafeedJobIT extends ESRestTestCase {
 
         String datafeedId = "datafeed-" + jobId;
         String aggregations = "{\"time stamp\":{\"date_histogram\":{\"field\":\"time stamp\",\"interval\":\"1h\"},"
-                + "\"aggregations\":{\"airline\":{\"terms\":{\"field\":\"airline\",\"size\":10},"
-                + "\"aggregations\":{\"responsetime\":{\"avg\":{\"field\":\"responsetime\"}}}}}}}";
+                + "\"aggregations\":{"
+                + "\"time stamp\":{\"max\":{\"field\":\"time stamp\"}},"
+                + "\"airline\":{\"terms\":{\"field\":\"airline\",\"size\":10},"
+                + "  \"aggregations\":{\"responsetime\":{\"avg\":{\"field\":\"responsetime\"}}}}}}}";
         new DatafeedBuilder(datafeedId, jobId, "airline-data-aggs", "response").setAggregations(aggregations).build();
         openJob(client(), jobId);
 
