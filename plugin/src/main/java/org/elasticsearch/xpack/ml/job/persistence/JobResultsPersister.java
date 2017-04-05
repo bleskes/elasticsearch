@@ -22,7 +22,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -337,8 +336,7 @@ public class JobResultsPersister extends AbstractComponent {
             this.jobId = jobId;
             this.object = object;
             this.type = type;
-            // TODO: Fix the assertion tripping in internal engine for index requests without an id being retried:
-            this.id = id != null ? id : UUIDs.base64UUID();
+            this.id = id;
         }
 
         boolean persist(String indexName) {

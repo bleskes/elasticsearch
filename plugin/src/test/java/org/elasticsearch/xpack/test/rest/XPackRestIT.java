@@ -18,8 +18,11 @@
 package org.elasticsearch.xpack.test.rest;
 
 import org.apache.http.HttpStatus;
+import org.elasticsearch.action.admin.cluster.node.tasks.list.ListTasksAction;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.util.concurrent.CountDown;
@@ -50,8 +53,48 @@ import static java.util.Collections.singletonMap;
 public class XPackRestIT extends XPackRestTestCase {
 
     @After
-    public void clearMlState() throws IOException {
+    public void clearMlState() throws IOException, InterruptedException {
+        waitForPendingTasks();
         new MlRestTestStateCleaner(logger, adminClient(), this).clearMlMetadata();
+    }
+    
+    private void waitForPendingTasks() throws InterruptedException {
+        AtomicReference<IOException> exceptionHolder = new AtomicReference<>();
+        awaitBusy(() -> {
+            try {
+                ClientYamlTestResponse response = getAdminExecutionContext().callApi("cat.tasks",
+                        emptyMap(), emptyList(), emptyMap());
+                // Check to see if there are tasks still active. We exclude the list tasks 
+                // actions tasks form this otherwise we will always fail
+                if (response.getStatusCode() == HttpStatus.SC_OK) {
+                    String tasksListString = response.getBodyAsString();
+                    String[] tasksLines = tasksListString.split("\n");
+                    int activeTasks = 0;
+                    for (String line : tasksLines) {
+                        if (line.startsWith(ListTasksAction.NAME) == false) {
+                            activeTasks++;
+                        }
+                    }
+                    ESLoggerFactory.getLogger(getClass())
+                            .info(activeTasks
+                                    + " active tasks found, waiting for them to complete:\n"
+                                    + tasksListString);
+                    if (activeTasks == 0) {
+                        exceptionHolder.set(null);
+                        return true;
+                    }
+                }
+            } catch (IOException e) {
+                exceptionHolder.set(e);
+            }
+            return false;
+        });
+
+        IOException exception = exceptionHolder.get();
+        if (exception != null) {
+            throw new IllegalStateException("Exception when waiting for pending tasks to complete",
+                    exception);
+        }
     }
 
     public XPackRestIT(ClientYamlTestCandidate testCandidate) {
