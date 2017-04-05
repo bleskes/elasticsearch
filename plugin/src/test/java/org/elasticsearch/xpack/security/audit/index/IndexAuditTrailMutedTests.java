@@ -75,9 +75,10 @@ public class IndexAuditTrailMutedTests extends ESTestCase {
         transportClient = new MockTransportClient(Settings.EMPTY);
         clientCalled = new AtomicBoolean(false);
         class IClient extends InternalClient {
-           IClient(Client transportClient){
-                super(Settings.EMPTY, null, transportClient, null);
-           }
+            IClient(Client transportClient) {
+                super(Settings.EMPTY, threadPool, transportClient, null);
+            }
+
             @Override
             protected <Request extends ActionRequest, Response extends ActionResponse, RequestBuilder extends
                     ActionRequestBuilder<Request, Response, RequestBuilder>> void doExecute(
