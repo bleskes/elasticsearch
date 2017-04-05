@@ -304,7 +304,8 @@ class LdapUserSearchSessionFactory extends SessionFactory {
 
     private void findUser(String user, LDAPInterface ldapInterface, ActionListener<SearchResultEntry> listener) {
         searchForEntry(ldapInterface, userSearchBaseDn, scope.scope(),
-                createEqualityFilter(userAttribute, encodeValue(user)), Math.toIntExact(timeout.seconds()), listener,
+                createEqualityFilter(userAttribute, encodeValue(user)),
+                Math.toIntExact(timeout.seconds()), ignoreReferralErrors, listener,
                 attributesToSearchFor(groupResolver.attributes()));
     }
 
