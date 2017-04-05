@@ -88,7 +88,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, XContentType.JSON);
+        writer.write(inputStream, XContentType.JSON, (r, e) -> {});
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -98,7 +98,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"2", "2.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(dataCountsReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting(any());
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndTimestampsAreOutOfOrder()
@@ -110,7 +110,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, XContentType.JSON);
+        writer.write(inputStream, XContentType.JSON, (r, e) -> {});
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -121,7 +121,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
         verify(dataCountsReporter, times(2)).reportOutOfOrderRecord(2);
         verify(dataCountsReporter, never()).reportLatestTimeIncrementalStats(anyLong());
-        verify(dataCountsReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting(any());
     }
 
     public void testWrite_GivenTimeFormatIsEpochAndSomeTimestampsWithinLatencySomeOutOfOrder()
@@ -139,7 +139,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, XContentType.JSON);
+        writer.write(inputStream, XContentType.JSON, (r, e) -> {});
 
         List<String[]> expectedRecords = new ArrayList<>();
         // The final field is the control field
@@ -152,7 +152,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
 
         verify(dataCountsReporter, times(1)).reportOutOfOrderRecord(2);
         verify(dataCountsReporter, never()).reportLatestTimeIncrementalStats(anyLong());
-        verify(dataCountsReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting(any());
     }
 
     public void testWrite_GivenMalformedJsonWithoutNestedLevels()
@@ -168,7 +168,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, XContentType.JSON);
+        writer.write(inputStream, XContentType.JSON, (r, e) -> {});
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -180,7 +180,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         assertWrittenRecordsEqualTo(expectedRecords);
 
         verify(dataCountsReporter).reportMissingFields(1);
-        verify(dataCountsReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting(any());
     }
 
     public void testWrite_GivenMalformedJsonWithNestedLevels()
@@ -197,7 +197,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, XContentType.JSON);
+        writer.write(inputStream, XContentType.JSON, (r, e) -> {});
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -208,7 +208,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"3", "3.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(dataCountsReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting(any());
     }
 
     public void testWrite_GivenMalformedJsonThatNeverRecovers()
@@ -225,7 +225,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         writer.writeHeader();
 
         ESTestCase.expectThrows(ElasticsearchParseException.class,
-                () -> writer.write(inputStream, XContentType.JSON));
+                () -> writer.write(inputStream, XContentType.JSON, (r, e) -> {}));
     }
 
     public void testWrite_GivenJsonWithArrayField()
@@ -240,7 +240,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, XContentType.JSON);
+        writer.write(inputStream, XContentType.JSON, (r, e) -> {});
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -250,7 +250,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         expectedRecords.add(new String[]{"2", "2.0", ""});
         assertWrittenRecordsEqualTo(expectedRecords);
 
-        verify(dataCountsReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting(any());
     }
 
     public void testWrite_GivenJsonWithMissingFields()
@@ -269,7 +269,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         InputStream inputStream = createInputStream(input.toString());
         JsonDataToProcessWriter writer = createWriter();
         writer.writeHeader();
-        writer.write(inputStream, XContentType.JSON);
+        writer.write(inputStream, XContentType.JSON, (r, e) -> {});
         verify(dataCountsReporter, times(1)).startNewIncrementalCount();
 
         List<String[]> expectedRecords = new ArrayList<>();
@@ -287,7 +287,7 @@ public class JsonDataToProcessWriterTests extends ESTestCase {
         verify(dataCountsReporter, times(1)).reportRecordWritten(1, 3000);
         verify(dataCountsReporter, times(1)).reportRecordWritten(1, 4000);
         verify(dataCountsReporter, times(1)).reportDateParseError(0);
-        verify(dataCountsReporter).finishReporting();
+        verify(dataCountsReporter).finishReporting(any());
     }
 
     private static InputStream createInputStream(String input) {
