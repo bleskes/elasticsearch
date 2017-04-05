@@ -27,6 +27,7 @@ import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -48,10 +49,12 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSizeStats;
+import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
 import org.elasticsearch.xpack.ml.job.process.normalizer.NormalizerFactory;
 import org.elasticsearch.xpack.ml.job.process.normalizer.Renormalizer;
 import org.elasticsearch.xpack.ml.job.process.normalizer.ScoresUpdater;
 import org.elasticsearch.xpack.ml.job.process.normalizer.ShortCircuitingRenormalizer;
+import org.elasticsearch.xpack.ml.notifications.Auditor;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
 
@@ -59,6 +62,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -71,7 +75,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -99,13 +102,15 @@ public class AutodetectProcessManager extends AbstractComponent {
 
     private final int maxAllowedRunningJobs;
 
-    private NamedXContentRegistry xContentRegistry;
+    private final NamedXContentRegistry xContentRegistry;
+
+    private final Auditor auditor;
 
     public AutodetectProcessManager(Settings settings, Client client, ThreadPool threadPool,
             JobManager jobManager, JobProvider jobProvider, JobResultsPersister jobResultsPersister,
             JobDataCountsPersister jobDataCountsPersister,
             AutodetectProcessFactory autodetectProcessFactory, NormalizerFactory normalizerFactory,
-            NamedXContentRegistry xContentRegistry) {
+            NamedXContentRegistry xContentRegistry, Auditor auditor) {
         super(settings);
         this.client = client;
         this.threadPool = threadPool;
@@ -115,11 +120,10 @@ public class AutodetectProcessManager extends AbstractComponent {
         this.normalizerFactory = normalizerFactory;
         this.jobManager = jobManager;
         this.jobProvider = jobProvider;
-
         this.jobResultsPersister = jobResultsPersister;
         this.jobDataCountsPersister = jobDataCountsPersister;
-
         this.autoDetectCommunicatorByJob = new ConcurrentHashMap<>();
+        this.auditor = auditor;
     }
 
     public synchronized void closeAllJobs(String reason) throws IOException {
@@ -248,12 +252,18 @@ public class AutodetectProcessManager extends AbstractComponent {
                     RestStatus.TOO_MANY_REQUESTS);
         }
 
+        notifyLoadingSnapshot(jobId, autodetectParams);
+
         if (autodetectParams.dataCounts().getProcessedRecordCount() > 0) {
             if (autodetectParams.modelSnapshot() == null) {
-                logger.warn("[{}] No model snapshot could be found for a job with processed records", jobId);
+                String msg = "No model snapshot could be found for a job with processed records";
+                logger.warn("[{}] {}", jobId, msg);
+                auditor.warning(jobId, "No model snapshot could be found for a job with processed records");
             }
             if (autodetectParams.quantiles() == null) {
-                logger.warn("[{}] No quantiles could be found for a job with processed records", jobId);
+                String msg = "No quantiles could be found for a job with processed records";
+                logger.warn("[{}] {}", jobId);
+                auditor.warning(jobId, msg);
             }
         }
 
@@ -291,6 +301,29 @@ public class AutodetectProcessManager extends AbstractComponent {
         return new AutodetectCommunicator(job, process, dataCountsReporter, processor,
                 handler, xContentRegistry, autodetectWorkerExecutor);
 
+    }
+
+    private void notifyLoadingSnapshot(String jobId, AutodetectParams autodetectParams) {
+        ModelSnapshot modelSnapshot = autodetectParams.modelSnapshot();
+        StringBuilder msgBuilder = new StringBuilder("Loading model snapshot [");
+        if (modelSnapshot == null) {
+            msgBuilder.append("N/A");
+        } else {
+            msgBuilder.append(modelSnapshot.getSnapshotId());
+            msgBuilder.append("] with latest_record_timestamp [");
+            Date snapshotLatestRecordTimestamp = modelSnapshot.getLatestRecordTimeStamp();
+            msgBuilder.append(snapshotLatestRecordTimestamp == null ? "N/A" :
+                    XContentBuilder.DEFAULT_DATE_PRINTER.print(
+                            snapshotLatestRecordTimestamp.getTime()));
+        }
+        msgBuilder.append("], job latest_record_timestamp [");
+        Date jobLatestRecordTimestamp = autodetectParams.dataCounts().getLatestRecordTimeStamp();
+        msgBuilder.append(jobLatestRecordTimestamp == null ? "N/A"
+                : XContentBuilder.DEFAULT_DATE_PRINTER.print(jobLatestRecordTimestamp.getTime()));
+        msgBuilder.append("]");
+        String msg = msgBuilder.toString();
+        logger.info("[{}] {}", jobId, msg);
+        auditor.info(jobId, msg);
     }
 
     /**
