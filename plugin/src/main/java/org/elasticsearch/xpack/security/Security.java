@@ -317,17 +317,20 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
             }
         }
         final AuditTrailService auditTrailService =
-            new AuditTrailService(settings, auditTrails.stream().collect(Collectors.toList()), licenseState);
+            new AuditTrailService(settings,
+                    auditTrails.stream().collect(Collectors.toList()), licenseState);
         components.add(auditTrailService);
 
         SecurityLifecycleService securityLifecycleService =
-            new SecurityLifecycleService(settings, clusterService, threadPool, client, licenseState, indexAuditTrail);
+            new SecurityLifecycleService(settings, clusterService, threadPool, client, licenseState,
+                    indexAuditTrail);
 
         final TokenService tokenService = new TokenService(settings, Clock.systemUTC(), client, securityLifecycleService);
         components.add(tokenService);
 
         // realms construction
-        final NativeUsersStore nativeUsersStore = new NativeUsersStore(settings, client, securityLifecycleService);
+        final NativeUsersStore nativeUsersStore = new NativeUsersStore(settings, client,
+                securityLifecycleService);
         final AnonymousUser anonymousUser = new AnonymousUser(settings);
         final ReservedRealm reservedRealm = new ReservedRealm(env, settings, nativeUsersStore, anonymousUser, securityLifecycleService,
                 threadPool.getThreadContext());
@@ -337,7 +340,8 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
             Map<String, Realm.Factory> newRealms = extension.getRealms(resourceWatcherService);
             for (Map.Entry<String, Realm.Factory> entry : newRealms.entrySet()) {
                 if (realmFactories.put(entry.getKey(), entry.getValue()) != null) {
-                    throw new IllegalArgumentException("Realm type [" + entry.getKey() + "] is already registered");
+                    throw new IllegalArgumentException("Realm type [" + entry.getKey() +
+                            "] is already registered");
                 }
             }
         }
@@ -710,10 +714,10 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
 
         final boolean indexAuditingEnabled = Security.indexAuditLoggingEnabled(settings);
         final String auditIndex = indexAuditingEnabled ? "," + IndexAuditTrail.INDEX_NAME_PREFIX + "*" : "";
+        String securityIndices = SecurityLifecycleService.indexNames().stream().collect(Collectors.joining(","));
         String errorMessage = LoggerMessageFormat.format(
                 "the [{}] setting value [{}] is too restrictive. disable [{}] or set it to [{}{}]",
-                (Object) SETTING_KEY_AUTO_CREATE_INDEX, value, SETTING_KEY_AUTO_CREATE_INDEX, SecurityLifecycleService.SECURITY_INDEX_NAME,
-                auditIndex);
+                (Object) SETTING_KEY_AUTO_CREATE_INDEX, value, SETTING_KEY_AUTO_CREATE_INDEX, securityIndices, auditIndex);
         if (Booleans.isExplicitFalse(value)) {
             if (Booleans.isStrictlyBoolean(value) == false) {
                 DEPRECATION_LOGGER.deprecated("Expected [false] for setting [{}] but got [{}]", SETTING_KEY_AUTO_CREATE_INDEX, value);
@@ -730,7 +734,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
 
         String[] matches = Strings.commaDelimitedListToStringArray(value);
         List<String> indices = new ArrayList<>();
-        indices.add(SecurityLifecycleService.SECURITY_INDEX_NAME);
+        indices.addAll(SecurityLifecycleService.indexNames());
         if (indexAuditingEnabled) {
             DateTime now = new DateTime(DateTimeZone.UTC);
             // just use daily rollover

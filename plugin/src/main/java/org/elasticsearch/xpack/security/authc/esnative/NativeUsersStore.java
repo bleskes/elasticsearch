@@ -193,7 +193,7 @@ public class NativeUsersStore extends AbstractComponent {
         if (isTribeNode) {
             listener.onFailure(new UnsupportedOperationException("users may not be created or modified using a tribe node"));
             return;
-        } else if (securityLifecycleService.canWriteToSecurityIndex() == false) {
+        } else if (securityLifecycleService.isSecurityIndexWriteable() == false) {
             listener.onFailure(new IllegalStateException("password cannot be changed as user service cannot write until template and " +
                     "mappings are up to date"));
             return;
@@ -266,7 +266,7 @@ public class NativeUsersStore extends AbstractComponent {
         if (isTribeNode) {
             listener.onFailure(new UnsupportedOperationException("users may not be created or modified using a tribe node"));
             return;
-        }  else if (securityLifecycleService.canWriteToSecurityIndex() == false) {
+        }  else if (securityLifecycleService.isSecurityIndexWriteable() == false) {
             listener.onFailure(new IllegalStateException("user cannot be created or changed as the user service cannot write until " +
                     "template and mappings are up to date"));
             return;
@@ -357,7 +357,7 @@ public class NativeUsersStore extends AbstractComponent {
         if (isTribeNode) {
             listener.onFailure(new UnsupportedOperationException("users may not be created or modified using a tribe node"));
             return;
-        }  else if (securityLifecycleService.canWriteToSecurityIndex() == false) {
+        }  else if (securityLifecycleService.isSecurityIndexWriteable() == false) {
             listener.onFailure(new IllegalStateException("enabled status cannot be changed as user service cannot write until template " +
                     "and mappings are up to date"));
             return;
@@ -435,7 +435,7 @@ public class NativeUsersStore extends AbstractComponent {
         if (isTribeNode) {
             listener.onFailure(new UnsupportedOperationException("users may not be deleted using a tribe node"));
             return;
-        }  else if (securityLifecycleService.canWriteToSecurityIndex() == false) {
+        }  else if (securityLifecycleService.isSecurityIndexWriteable() == false) {
             listener.onFailure(new IllegalStateException("user cannot be deleted as user service cannot write until template and " +
                     "mappings are up to date"));
             return;
@@ -483,7 +483,7 @@ public class NativeUsersStore extends AbstractComponent {
     }
 
     void getReservedUserInfo(String username, ActionListener<ReservedUserInfo> listener) {
-        if (!securityLifecycleService.securityIndexExists()) {
+        if (!securityLifecycleService.isSecurityIndexExisting()) {
             listener.onFailure(new IllegalStateException("Attempt to get reserved user info but the security index does not exist"));
             return;
         }

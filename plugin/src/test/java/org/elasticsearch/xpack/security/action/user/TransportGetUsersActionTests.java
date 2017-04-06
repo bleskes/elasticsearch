@@ -86,7 +86,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
     public void testAnonymousUser() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         SecurityLifecycleService securityLifecycleService = mock(SecurityLifecycleService.class);
-        when(securityLifecycleService.securityIndexAvailable()).thenReturn(true);
+        when(securityLifecycleService.isSecurityIndexAvailable()).thenReturn(true);
         AnonymousUser anonymousUser = new AnonymousUser(settings);
         ReservedRealm reservedRealm = new ReservedRealm(mock(Environment.class), settings, usersStore, anonymousUser,
                                                         securityLifecycleService, new ThreadContext(Settings.EMPTY));
@@ -156,8 +156,8 @@ public class TransportGetUsersActionTests extends ESTestCase {
     public void testReservedUsersOnly() {
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         SecurityLifecycleService securityLifecycleService = mock(SecurityLifecycleService.class);
-        when(securityLifecycleService.securityIndexAvailable()).thenReturn(true);
-        when(securityLifecycleService.checkMappingVersion(any())).thenReturn(true);
+        when(securityLifecycleService.isSecurityIndexAvailable()).thenReturn(true);
+        when(securityLifecycleService.checkSecurityMappingVersion(any())).thenReturn(true);
 
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         ReservedRealm reservedRealm = new ReservedRealm(mock(Environment.class), settings, usersStore, new AnonymousUser(settings),
@@ -202,7 +202,7 @@ public class TransportGetUsersActionTests extends ESTestCase {
                 Arrays.asList(new User("jane"), new User("fred")), randomUsers());
         NativeUsersStore usersStore = mock(NativeUsersStore.class);
         SecurityLifecycleService securityLifecycleService = mock(SecurityLifecycleService.class);
-        when(securityLifecycleService.securityIndexAvailable()).thenReturn(true);
+        when(securityLifecycleService.isSecurityIndexAvailable()).thenReturn(true);
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         ReservedRealm reservedRealm = new ReservedRealm(mock(Environment.class), settings, usersStore, new AnonymousUser(settings),
                 securityLifecycleService, new ThreadContext(Settings.EMPTY));
