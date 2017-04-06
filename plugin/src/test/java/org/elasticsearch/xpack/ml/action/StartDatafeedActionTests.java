@@ -130,7 +130,7 @@ public class StartDatafeedActionTests extends ESTestCase {
         mlMetadata.putDatafeed(createDatafeed("datafeed_id", job.getId(), Collections.singletonList("fo*")));
 
         DiscoveryNodes nodes = DiscoveryNodes.builder()
-                .add(new DiscoveryNode("node_name", "node_id", new TransportAddress(InetAddress.getLoopbackAddress(), 9300),
+                .add(new DiscoveryNode("node_name", "node_id", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300),
                         Collections.emptyMap(), Collections.emptySet(), Version.CURRENT))
                 .build();
 
@@ -170,7 +170,7 @@ public class StartDatafeedActionTests extends ESTestCase {
         mlMetadata.putDatafeed(createDatafeed("datafeed_id", job.getId(), Collections.singletonList("fo*")));
 
         DiscoveryNodes nodes = DiscoveryNodes.builder()
-                .add(new DiscoveryNode("node_name", "node_id", new TransportAddress(InetAddress.getLoopbackAddress(), 9300),
+                .add(new DiscoveryNode("node_name", "node_id", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300),
                         Collections.emptyMap(), Collections.emptySet(), Version.CURRENT))
                 .build();
 
@@ -209,7 +209,7 @@ public class StartDatafeedActionTests extends ESTestCase {
         mlMetadata.putDatafeed(createDatafeed("datafeed_id", job.getId(), Collections.singletonList("not_foo")));
 
         DiscoveryNodes nodes = DiscoveryNodes.builder()
-                .add(new DiscoveryNode("node_name", "node_id", new TransportAddress(InetAddress.getLoopbackAddress(), 9300),
+                .add(new DiscoveryNode("node_name", "node_id", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300),
                         Collections.emptyMap(), Collections.emptySet(), Version.CURRENT))
                 .build();
 
