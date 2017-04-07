@@ -14,10 +14,17 @@
  */
 package org.elasticsearch.xpack.ml.integration;
 
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.CheckedRunnable;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.xpack.ml.action.GetDatafeedsStatsAction;
 import org.elasticsearch.xpack.ml.action.GetDatafeedsStatsAction.Response.DatafeedStats;
@@ -36,6 +43,7 @@ import org.elasticsearch.xpack.ml.support.BaseMlIntegTestCase;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -45,13 +53,13 @@ public class MlDistributedFailureIT extends BaseMlIntegTestCase {
 
     public void testFailOver() throws Exception {
         internalCluster().ensureAtLeastNumDataNodes(3);
-        ensureStableCluster(3);
+        ensureStableClusterOnAllNodes(3);
         run(() -> {
             GetJobsStatsAction.Request  request = new GetJobsStatsAction.Request("job_id");
             GetJobsStatsAction.Response response = client().execute(GetJobsStatsAction.INSTANCE, request).actionGet();
             DiscoveryNode discoveryNode = response.getResponse().results().get(0).getNode();
             internalCluster().stopRandomNode(settings -> discoveryNode.getName().equals(settings.get("node.name")));
-            ensureStableCluster(2);
+            ensureStableClusterOnAllNodes(2);
         });
     }
 
@@ -68,7 +76,7 @@ public class MlDistributedFailureIT extends BaseMlIntegTestCase {
         String mlAndDataNode = internalCluster().startNode(Settings.builder()
                 .put("node.master", false)
                 .build());
-        ensureStableCluster(2);
+        ensureStableClusterOnAllNodes(2);
         run(() -> {
             logger.info("Stopping dedicated master node");
             internalCluster().stopRandomNode(settings -> settings.getAsBoolean("node.master", false));
@@ -83,13 +91,13 @@ public class MlDistributedFailureIT extends BaseMlIntegTestCase {
                     .put("node.data", false)
                     .put("node.ml", false)
                     .build());
-            ensureStableCluster(2);
+            ensureStableClusterOnAllNodes(2);
         });
     }
 
     public void testFullClusterRestart() throws Exception {
         internalCluster().ensureAtLeastNumDataNodes(3);
-        ensureStableCluster(3);
+        ensureStableClusterOnAllNodes(3);
         run(() -> {
             logger.info("Restarting all nodes");
             internalCluster().fullRestart();
@@ -128,10 +136,11 @@ public class MlDistributedFailureIT extends BaseMlIntegTestCase {
         StartDatafeedAction.Request startDatafeedRequest = new StartDatafeedAction.Request(config.getId(), 0L);
         client().execute(StartDatafeedAction.INSTANCE, startDatafeedRequest).get();
         assertBusy(() -> {
-            DataCounts dataCounts = getDataCounts(job.getId());
+            DataCounts dataCounts = getDataCountsFromIndex(job.getId());
             assertEquals(numDocs1, dataCounts.getProcessedRecordCount());
             assertEquals(0L, dataCounts.getOutOfOrderTimeStampCount());
         });
+        client().admin().indices().prepareSyncedFlush().get();
 
         disrupt.run();
         assertBusy(() -> {
@@ -164,6 +173,33 @@ public class MlDistributedFailureIT extends BaseMlIntegTestCase {
             assertEquals(numDocs1 + numDocs2, dataCounts.getProcessedRecordCount());
             assertEquals(0L, dataCounts.getOutOfOrderTimeStampCount());
         }, 30, TimeUnit.SECONDS);
+    }
+
+    // Get datacounts from index instead of via job stats api,
+    // because then data counts have been persisted to an index (happens each 10s (DataCountsReporter)),
+    // so when restarting job on another node the data counts
+    // are what we expect them to be:
+    private static DataCounts getDataCountsFromIndex(String jobId) {
+        SearchResponse searchResponse = client().prepareSearch()
+                .setTypes(DataCounts.TYPE.getPreferredName())
+                .setQuery(QueryBuilders.idsQuery().addIds(jobId + "-data-counts"))
+                .get();
+        if (searchResponse.getHits().getTotalHits() != 1) {
+            return new DataCounts(jobId);
+        }
+
+        BytesReference source = searchResponse.getHits().getHits()[0].getSourceRef();
+        try (XContentParser parser = XContentHelper.createParser(NamedXContentRegistry.EMPTY, source, XContentType.JSON)) {
+            return DataCounts.PARSER.apply(parser, null);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void ensureStableClusterOnAllNodes(int nodeCount) {
+        for (String nodeName : internalCluster().getNodeNames()) {
+            ensureStableCluster(nodeCount, nodeName);
+        }
     }
 
 }
