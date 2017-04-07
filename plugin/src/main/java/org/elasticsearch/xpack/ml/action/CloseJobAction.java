@@ -38,6 +38,7 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.AtomicArray;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -55,6 +56,7 @@ import org.elasticsearch.xpack.ml.datafeed.DatafeedState;
 import org.elasticsearch.xpack.ml.job.JobManager;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
+import org.elasticsearch.xpack.ml.job.config.JobTaskStatus;
 import org.elasticsearch.xpack.ml.job.messages.Messages;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
@@ -287,8 +289,9 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
                                ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
                                ClusterService clusterService, InternalClient client,
                                Auditor auditor, PersistentTasksService persistentTasksService) {
+            // We fork in innerTaskOperation(...), so we can use ThreadPool.Names.SAME here:
             super(settings, CloseJobAction.NAME, threadPool, clusterService, transportService, actionFilters,
-                    indexNameExpressionResolver, Request::new, Response::new, ThreadPool.Names.MANAGEMENT);
+                    indexNameExpressionResolver, Request::new, Response::new, ThreadPool.Names.SAME);
             this.client = client;
             this.clusterService = clusterService;
             this.auditor = auditor;
@@ -341,9 +344,23 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
         }
 
         @Override
-        protected void taskOperation(Request request, OpenJobAction.JobTask task, ActionListener<Response> listener) {
-            task.closeJob("close job (api)");
-            listener.onResponse(new Response(true));
+        protected void taskOperation(Request request, OpenJobAction.JobTask jobTask, ActionListener<Response> listener) {
+            JobTaskStatus taskStatus = new JobTaskStatus(JobState.CLOSING, jobTask.getAllocationId());
+            jobTask.updatePersistentStatus(taskStatus, ActionListener.wrap(task -> {
+                // we need to fork because we are now on a network threadpool and closeJob method may take a while to complete:
+                threadPool.executor(ThreadPool.Names.MANAGEMENT).execute(new AbstractRunnable() {
+                    @Override
+                    public void onFailure(Exception e) {
+                        listener.onFailure(e);
+                    }
+
+                    @Override
+                    protected void doRun() throws Exception {
+                        jobTask.closeJob("close job (api)");
+                        listener.onResponse(new Response(true));
+                    }
+                });
+            }, listener::onFailure));
         }
 
         @Override
@@ -549,7 +566,7 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
                 continue;
             }
 
-            if (MlMetadata.getJobState(resolvedJobId, tasks) == JobState.CLOSED) {
+            if (MlMetadata.getJobState(resolvedJobId, tasks).isAnyOf(JobState.OPENED, JobState.FAILED) == false) {
                 continue;
             }
 
@@ -571,7 +588,11 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
         PersistentTasksCustomMetaData tasks = state.getMetaData()
                 .custom(PersistentTasksCustomMetaData.TYPE);
         PersistentTask<?> jobTask = MlMetadata.getJobTask(jobId, tasks);
-        if (jobTask == null) {
+        if (jobTask == null || jobTask.getStatus() == null) {
+            throw new ElasticsearchStatusException("cannot close job, because job [" + jobId + "] is not open", RestStatus.CONFLICT);
+        }
+        JobTaskStatus jobTaskStatus = (JobTaskStatus) jobTask.getStatus();
+        if (jobTaskStatus.getState().isAnyOf(JobState.OPENED, JobState.FAILED) == false) {
             throw new ElasticsearchStatusException("cannot close job, because job [" + jobId + "] is not open", RestStatus.CONFLICT);
         }
 
