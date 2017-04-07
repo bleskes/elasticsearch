@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -301,7 +302,7 @@ public class AutoDetectResultProcessorTests extends ESTestCase {
         verifyNoMoreInteractions(renormalizer);
     }
 
-    public void testAwaitCompletion() {
+    public void testAwaitCompletion() throws TimeoutException {
         AutodetectResult autodetectResult = mock(AutodetectResult.class);
         @SuppressWarnings("unchecked")
         Iterator<AutodetectResult> iterator = mock(Iterator.class);
