@@ -222,7 +222,7 @@ TransportClient client = new PreBuiltXPackTransportClient(Settings.builder()
 ------------------------------------------------------------------------------------------------------
 
 NOTE: If you are using a public CA that is already trusted by the Java runtime,
-      you do not need to set the `xpack.ssl.certificate_authorities`.
+      you to not need to set the `xpack.ssl.certificate_authorities`.
 
 [float]
 [[connecting-anonymously]]

@@ -57,15 +57,15 @@ privilege is primarily available for use by <<kibana-roles, Kibana users>>.
 `read`::
 Read only access to actions (count, explain, get, mget, get indexed scripts,
 more like this, multi percolate/search/termvector, percolate, scroll,
-clear_scroll, search, tv). Also grants access to the update mapping 
+clear_scroll, search, suggest, tv). Also grants access to the update mapping 
 action.
 
 `index`::
-Privilege to index and update documents. Also grants access to the update
+Privilege to index and update documents. Also grants access to the update 
 mapping action.
 
 `create`::
-Privilege to index documents. Also grants access to the update mapping
+Privilege to index documents. Also grants access to the update mapping 
 action.
 
 `delete`::

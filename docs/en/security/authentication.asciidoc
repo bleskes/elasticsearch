@@ -104,12 +104,11 @@ PUT _xpack/security/user/logstash_system/_enable
 The default password of `changeme` is provided as a convenience that allows you to quickly
 setup your Elasticsearch stack. It should not be used when running in production.
 
-Once you have changed the password for the built-in users, you must disable default password support
+Once you have changed the password for the built-in users, you should disable default password support
 by setting `xpack.security.authc.accept_default_password` to `false`.
 
-A {ref}/bootstrap-checks.html[bootstrap check] will prevent your cluster from operating in production
-mode until you make this configuration change.
-
+Future releases will require that default passwords are disabled in
+{ref}/bootstrap-checks.html#_development_vs_production_mode[production mode].
 =============================================================================
 
 === How Authentication Works
