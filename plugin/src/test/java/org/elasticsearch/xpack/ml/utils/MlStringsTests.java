@@ -38,5 +38,6 @@ public class MlStringsTests extends ESTestCase {
         assertThat(MlStrings.isValidId("_-.a1"), is(false));
         assertThat(MlStrings.isValidId("A"), is(false));
         assertThat(MlStrings.isValidId("!afafd"), is(false));
+        assertThat(MlStrings.isValidId("_all"), is(false));
     }
 }
