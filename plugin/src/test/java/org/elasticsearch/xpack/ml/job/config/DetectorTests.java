@@ -33,15 +33,15 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
 
     public void testEquals_GivenEqual() {
         Detector.Builder builder = new Detector.Builder("mean", "field");
-        builder.setByFieldName("by");
-        builder.setOverFieldName("over");
+        builder.setByFieldName("by_field");
+        builder.setOverFieldName("over_field");
         builder.setPartitionFieldName("partition");
         builder.setUseNull(false);
         Detector detector1 = builder.build();
 
         builder = new Detector.Builder("mean", "field");
-        builder.setByFieldName("by");
-        builder.setOverFieldName("over");
+        builder.setByFieldName("by_field");
+        builder.setOverFieldName("over_field");
         builder.setPartitionFieldName("partition");
         builder.setUseNull(false);
         Detector detector2 = builder.build();
@@ -69,7 +69,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         Detector.Builder builder = new Detector.Builder(detector2);
         builder.setByFieldName("by2");
         Condition condition = new Condition(Operator.GT, "5");
-        DetectionRule rule = new DetectionRule("over", "targetValue", Connective.AND,
+        DetectionRule rule = new DetectionRule("over_field", "targetValue", Connective.AND,
                 Collections.singletonList(new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "by2", "val", condition, null)));
         builder.setDetectorRules(Collections.singletonList(rule));
         detector2 = builder.build();
@@ -91,19 +91,19 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
 
     public void testExtractAnalysisFields() {
         Detector detector = createDetector().build();
-        assertEquals(Arrays.asList("by", "over", "partition"), detector.extractAnalysisFields());
+        assertEquals(Arrays.asList("by_field", "over_field", "partition"), detector.extractAnalysisFields());
         Detector.Builder builder = new Detector.Builder(detector);
         builder.setPartitionFieldName(null);
         detector = builder.build();
-        assertEquals(Arrays.asList("by", "over"), detector.extractAnalysisFields());
+        assertEquals(Arrays.asList("by_field", "over_field"), detector.extractAnalysisFields());
         builder = new Detector.Builder(detector);
         Condition condition = new Condition(Operator.GT, "5");
-        DetectionRule rule = new DetectionRule("over", "targetValue", Connective.AND,
+        DetectionRule rule = new DetectionRule("over_field", "targetValue", Connective.AND,
                 Collections.singletonList(new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, condition, null)));
         builder.setDetectorRules(Collections.singletonList(rule));
         builder.setByFieldName(null);
         detector = builder.build();
-        assertEquals(Arrays.asList("over"), detector.extractAnalysisFields());
+        assertEquals(Arrays.asList("over_field"), detector.extractAnalysisFields());
         builder = new Detector.Builder(detector);
         rule = new DetectionRule(null, null, Connective.AND,
                 Collections.singletonList(new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, null, null, condition, null)));
@@ -116,8 +116,8 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
     public void testExtractReferencedLists() {
         Detector.Builder builder = createDetector();
         builder.setDetectorRules(Arrays.asList(
-                new DetectionRule(null, null, Connective.OR, Arrays.asList(RuleCondition.createCategorical("by", "list1"))),
-                new DetectionRule(null, null, Connective.OR, Arrays.asList(RuleCondition.createCategorical("by", "list2")))));
+                new DetectionRule(null, null, Connective.OR, Arrays.asList(RuleCondition.createCategorical("by_field", "list1"))),
+                new DetectionRule(null, null, Connective.OR, Arrays.asList(RuleCondition.createCategorical("by_field", "list2")))));
 
         Detector detector = builder.build();
         assertEquals(new HashSet<>(Arrays.asList("list1", "list2")), detector.extractReferencedFilters());
@@ -125,13 +125,13 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
 
     private Detector.Builder createDetector() {
         Detector.Builder detector = new Detector.Builder("mean", "field");
-        detector.setByFieldName("by");
-        detector.setOverFieldName("over");
+        detector.setByFieldName("by_field");
+        detector.setOverFieldName("over_field");
         detector.setPartitionFieldName("partition");
         detector.setUseNull(true);
         Condition condition = new Condition(Operator.GT, "5");
-        DetectionRule rule = new DetectionRule("over", "targetValue", Connective.AND,
-                Collections.singletonList(new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "by", "val", condition, null)));
+        DetectionRule rule = new DetectionRule("over_field", "targetValue", Connective.AND,
+                Collections.singletonList(new RuleCondition(RuleConditionType.NUMERICAL_ACTUAL, "by_field", "val", condition, null)));
         detector.setDetectorRules(Arrays.asList(rule));
         return detector;
     }
@@ -270,16 +270,16 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
 
     private static Detector.Builder createDetectorWithValidFieldNames() {
         Detector.Builder d = new Detector.Builder("metric", "field");
-        d.setByFieldName("by");
-        d.setOverFieldName("over");
+        d.setByFieldName("by_field");
+        d.setOverFieldName("over_field");
         d.setPartitionFieldName("partition");
         return d;
     }
 
     private static Detector.Builder createDetectorWithSpecificFieldName(String fieldName) {
         Detector.Builder d = new Detector.Builder("metric", fieldName);
-        d.setByFieldName("by");
-        d.setOverFieldName("over");
+        d.setByFieldName("by_field");
+        d.setOverFieldName("over_field");
         d.setPartitionFieldName("partition");
         return d;
     }
@@ -339,7 +339,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
                 Detector.LOW_NON_ZERO_COUNT, Detector.LOW_NZC, Detector.HIGH_NON_ZERO_COUNT,
                 Detector.HIGH_NZC}) {
             Detector.Builder builder = new Detector.Builder(f, null);
-            builder.setOverFieldName("over");
+            builder.setOverFieldName("over_field");
             try {
                 builder.build();
                 Assert.fail("IllegalArgumentException not thrown when expected");
@@ -361,7 +361,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         difference.remove(Detector.TIME_OF_WEEK);
         for (String f : difference) {
             Detector.Builder builder = new Detector.Builder(f, null);
-            builder.setOverFieldName("over");
+            builder.setOverFieldName("over_field");
             try {
                 builder.build();
                 Assert.fail("IllegalArgumentException not thrown when expected");
@@ -378,15 +378,15 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         for (String f : new String[]{Detector.COUNT, Detector.HIGH_COUNT,
                 Detector.LOW_COUNT}) {
             Detector.Builder builder = new Detector.Builder(f, null);
-            builder.setOverFieldName("over");
+            builder.setOverFieldName("over_field");
             builder.build();
             builder.build(true);
         }
 
         for (String f : new String[]{Detector.RARE, Detector.FREQ_RARE}) {
             Detector.Builder builder = new Detector.Builder(f, null);
-            builder.setOverFieldName("over");
-            builder.setByFieldName("by");
+            builder.setOverFieldName("over_field");
+            builder.setByFieldName("by_field");
             builder.build();
             builder.build(true);
         }
@@ -402,7 +402,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
                 Detector.LOW_NON_NULL_SUM, Detector.HIGH_NON_NULL_SUM, Detector.POPULATION_VARIANCE,
                 Detector.LOW_POPULATION_VARIANCE, Detector.HIGH_POPULATION_VARIANCE}) {
             Detector.Builder builder = new Detector.Builder(f, "f");
-            builder.setOverFieldName("over");
+            builder.setOverFieldName("over_field");
             builder.build();
             try {
                 builder.build(true);
@@ -446,7 +446,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         difference.remove(Detector.LAT_LONG);
         for (String f : difference) {
             Detector.Builder builder = new Detector.Builder(f, "f");
-            builder.setOverFieldName("over");
+            builder.setOverFieldName("over_field");
             try {
                 builder.build();
                 Assert.fail("IllegalArgumentException not thrown when expected");
@@ -470,12 +470,12 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         }
 
         Detector.Builder builder = new Detector.Builder(Detector.FREQ_RARE, null);
-        builder.setOverFieldName("over");
+        builder.setOverFieldName("over_field");
         builder.setByFieldName("b");
         builder.build();
         builder.build(true);
         builder = new Detector.Builder(Detector.FREQ_RARE, null);
-        builder.setOverFieldName("over");
+        builder.setOverFieldName("over_field");
         builder.setByFieldName("b");
         builder.build();
 
@@ -547,7 +547,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
 
         builder = new Detector.Builder(Detector.FREQ_RARE, "field");
         builder.setByFieldName("b");
-        builder.setOverFieldName("over");
+        builder.setOverFieldName("over_field");
         try {
             builder.build();
             Assert.fail("IllegalArgumentException not thrown when expected");
@@ -563,7 +563,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         for (String f : new String[]{Detector.HIGH_COUNT,
                 Detector.LOW_COUNT, Detector.NON_ZERO_COUNT, Detector.NZC}) {
             builder = new Detector.Builder(f, null);
-            builder.setByFieldName("by");
+            builder.setByFieldName("by_field");
             builder.build();
             builder.build(true);
         }
@@ -571,7 +571,7 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         for (String f : new String[]{Detector.COUNT, Detector.HIGH_COUNT,
                 Detector.LOW_COUNT}) {
             builder = new Detector.Builder(f, null);
-            builder.setOverFieldName("over");
+            builder.setOverFieldName("over_field");
             builder.build();
             builder.build(true);
         }
@@ -579,8 +579,8 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         for (String f : new String[]{Detector.HIGH_COUNT,
                 Detector.LOW_COUNT}) {
             builder = new Detector.Builder(f, null);
-            builder.setByFieldName("by");
-            builder.setOverFieldName("over");
+            builder.setByFieldName("by_field");
+            builder.setOverFieldName("over_field");
             builder.build();
             builder.build(true);
         }
@@ -588,16 +588,16 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         for (String f : new String[]{Detector.NON_ZERO_COUNT, Detector.NZC}) {
             try {
                 builder = new Detector.Builder(f, "field");
-                builder.setByFieldName("by");
-                builder.setOverFieldName("over");
+                builder.setByFieldName("by_field");
+                builder.setOverFieldName("over_field");
                 builder.build();
                 Assert.fail("IllegalArgumentException not thrown when expected");
             } catch (IllegalArgumentException e) {
             }
             try {
                 builder = new Detector.Builder(f, "field");
-                builder.setByFieldName("by");
-                builder.setOverFieldName("over");
+                builder.setByFieldName("by_field");
+                builder.setOverFieldName("over_field");
                 builder.build(true);
                 Assert.fail("IllegalArgumentException not thrown when expected");
             } catch (IllegalArgumentException e) {
@@ -673,6 +673,38 @@ public class DetectorTests extends AbstractSerializingTestCase<Detector> {
         IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, detector::build);
 
         assertEquals("'count' is not a permitted value for over_field_name", e.getMessage());
+    }
+
+    public void testVerify_GivenByIsBy() {
+        Detector.Builder detector = new Detector.Builder("count", "");
+        detector.setByFieldName("by");
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, detector::build);
+
+        assertEquals("'by' is not a permitted value for by_field_name", e.getMessage());
+    }
+
+    public void testVerify_GivenOverIsBy() {
+        Detector.Builder detector = new Detector.Builder("count", "");
+        detector.setOverFieldName("by");
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, detector::build);
+
+        assertEquals("'by' is not a permitted value for over_field_name", e.getMessage());
+    }
+
+    public void testVerify_GivenByIsOver() {
+        Detector.Builder detector = new Detector.Builder("count", "");
+        detector.setByFieldName("over");
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, detector::build);
+
+        assertEquals("'over' is not a permitted value for by_field_name", e.getMessage());
+    }
+
+    public void testVerify_GivenOverIsOver() {
+        Detector.Builder detector = new Detector.Builder("count", "");
+        detector.setOverFieldName("over");
+        IllegalArgumentException e = ESTestCase.expectThrows(IllegalArgumentException.class, detector::build);
+
+        assertEquals("'over' is not a permitted value for over_field_name", e.getMessage());
     }
 
     public void testExcludeFrequentForString() {
