@@ -57,7 +57,8 @@ public class ActivateWatchTests extends AbstractWatcherIntegrationTestCase {
         return false;
     }
 
-    @AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/4002")
+    @AwaitsFix(bugUrl="https://github.com/elastic/x-pack-elasticsearch/issues/395")
+    // FIXME not to be sleep based
     public void testDeactivateAndActivate() throws Exception {
         WatcherClient watcherClient = watcherClient();
 
