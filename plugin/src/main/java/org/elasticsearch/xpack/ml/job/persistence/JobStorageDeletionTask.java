@@ -39,7 +39,7 @@ import org.elasticsearch.rest.action.admin.indices.AliasesNotFoundException;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.tasks.TaskId;
-import org.elasticsearch.xpack.ml.action.MlDeleteByQueryAction;
+import org.elasticsearch.xpack.common.action.XPackDeleteByQueryAction;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.CategorizerState;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
@@ -108,7 +108,7 @@ public class JobStorageDeletionTask extends Task {
         searchRequest.indicesOptions(JobProvider.addIgnoreUnavailable(IndicesOptions.lenientExpandOpen()));
         request.setSlices(5);
 
-        client.execute(MlDeleteByQueryAction.INSTANCE, request, dbqHandler);
+        client.execute(XPackDeleteByQueryAction.INSTANCE, request, dbqHandler);
     }
 
     private void deleteQuantiles(String jobId, Client client, ActionListener<DeleteResponse> finishedHandler) {
@@ -142,7 +142,7 @@ public class JobStorageDeletionTask extends Task {
         searchRequest.indicesOptions(IndicesOptions.lenientExpandOpen());
         WildcardQueryBuilder query = new WildcardQueryBuilder(UidFieldMapper.NAME, Uid.createUid(CategorizerState.TYPE, jobId + "#*"));
         searchRequest.source(new SearchSourceBuilder().query(query));
-        client.execute(MlDeleteByQueryAction.INSTANCE, request, new ActionListener<BulkByScrollResponse>() {
+        client.execute(XPackDeleteByQueryAction.INSTANCE, request, new ActionListener<BulkByScrollResponse>() {
             @Override
             public void onResponse(BulkByScrollResponse bulkByScrollResponse) {
                 finishedHandler.onResponse(true);
