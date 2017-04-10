@@ -32,7 +32,6 @@ import org.elasticsearch.tasks.Task;
 import org.elasticsearch.tasks.TaskManager;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.TransportResponse.Empty;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Assignment;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
 import org.elasticsearch.xpack.persistent.TestPersistentTasksPlugin.TestRequest;
@@ -128,8 +127,8 @@ public class PersistentTasksNodeServiceTests extends ESTestCase {
             assertThat(executor.size(), equalTo(2));
 
             // Finish both tasks
-            executor.get(0).listener.onFailure(new RuntimeException());
-            executor.get(1).listener.onResponse(Empty.INSTANCE);
+            executor.get(0).task.markAsFailed(new RuntimeException());
+            executor.get(1).task.markAsCompleted();
             long failedTaskId = executor.get(0).task.getParentTaskId().getId();
             long finishedTaskId = executor.get(1).task.getParentTaskId().getId();
             executor.clear();
@@ -214,7 +213,7 @@ public class PersistentTasksNodeServiceTests extends ESTestCase {
 
         // Make sure it returns correct status
         assertThat(taskManager.getTasks().size(), equalTo(1));
-        assertThat(taskManager.getTasks().values().iterator().next().getStatus().toString(), equalTo("{\"state\":\"CANCELLED\"}"));
+        assertThat(taskManager.getTasks().values().iterator().next().getStatus().toString(), equalTo("{\"state\":\"PENDING_CANCEL\"}"));
 
 
         // That should trigger cancellation request
@@ -224,9 +223,9 @@ public class PersistentTasksNodeServiceTests extends ESTestCase {
 
         // finish or fail task
         if (randomBoolean()) {
-            executor.get(0).listener.onResponse(Empty.INSTANCE);
+            executor.get(0).task.markAsCompleted();
         } else {
-            executor.get(0).listener.onFailure(new IOException("test"));
+            executor.get(0).task.markAsFailed(new IOException("test"));
         }
 
         // Check the the task is now removed from task manager
@@ -262,14 +261,11 @@ public class PersistentTasksNodeServiceTests extends ESTestCase {
         private final PersistentTaskRequest request;
         private final AllocatedPersistentTask task;
         private final PersistentTasksExecutor<?> holder;
-        private final ActionListener<Empty> listener;
 
-        Execution(PersistentTaskRequest request, AllocatedPersistentTask task, PersistentTasksExecutor<?> holder,
-                  ActionListener<Empty> listener) {
+        Execution(PersistentTaskRequest request, AllocatedPersistentTask task, PersistentTasksExecutor<?> holder) {
             this.request = request;
             this.task = task;
             this.holder = holder;
-            this.listener = listener;
         }
     }
 
@@ -282,9 +278,8 @@ public class PersistentTasksNodeServiceTests extends ESTestCase {
 
         @Override
         public <Request extends PersistentTaskRequest> void executeTask(Request request, AllocatedPersistentTask task,
-                                                                        PersistentTasksExecutor<Request> action,
-                                                                        ActionListener<Empty> listener) {
-            executions.add(new Execution(request, task, action, listener));
+                                                                        PersistentTasksExecutor<Request> action) {
+            executions.add(new Execution(request, task, action));
         }
 
         public Execution get(int i) {
