@@ -28,12 +28,12 @@ import com.unboundid.ldap.sdk.SingleServerSet;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapTestCase;
-import org.elasticsearch.xpack.security.authc.ldap.support.SessionFactory;
 import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.authc.support.SecuredStringTests;
 import org.elasticsearch.xpack.ssl.SSLService;
@@ -78,13 +78,13 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
 
     public void testSupportsUnauthenticatedSessions() throws Exception {
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, "", LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", "")
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.attribute", "cn")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, "", LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", "")
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.attribute", "cn")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
         try {
@@ -99,13 +99,13 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String userSearchBase = "o=sevenSeas";
 
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.attribute", "cn")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.attribute", "cn")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -134,14 +134,14 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String userSearchBase = "o=sevenSeas";
 
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.scope", LdapSearchScope.BASE)
-                .put("user_search.attribute", "cn")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.scope", LdapSearchScope.BASE)
+                        .put("user_search.attribute", "cn")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -161,14 +161,14 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String userSearchBase = "cn=William Bush,ou=people,o=sevenSeas";
 
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.scope", LdapSearchScope.BASE)
-                .put("user_search.attribute", "cn")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.scope", LdapSearchScope.BASE)
+                        .put("user_search.attribute", "cn")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -197,14 +197,14 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String userSearchBase = "o=sevenSeas";
 
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.scope", LdapSearchScope.ONE_LEVEL)
-                .put("user_search.attribute", "cn")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.scope", LdapSearchScope.ONE_LEVEL)
+                        .put("user_search.attribute", "cn")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -224,14 +224,14 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String userSearchBase = "ou=people,o=sevenSeas";
 
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.scope", LdapSearchScope.ONE_LEVEL)
-                .put("user_search.attribute", "cn")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.scope", LdapSearchScope.ONE_LEVEL)
+                        .put("user_search.attribute", "cn")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -260,13 +260,13 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String userSearchBase = "o=sevenSeas";
 
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.attribute", "uid1")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.attribute", "uid1")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -286,12 +286,12 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String userSearchBase = "o=sevenSeas";
 
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
@@ -337,7 +337,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         }
         Settings fullSettings = builder.build();
         sslService = new SSLService(fullSettings, new Environment(fullSettings));
-        RealmConfig config = new RealmConfig("ad-as-ldap-test", settings, globalSettings);
+        RealmConfig config = new RealmConfig("ad-as-ldap-test", settings, globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "Bruce Banner";
@@ -373,13 +373,13 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String groupSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         String userSearchBase = "ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com";
         RealmConfig config = new RealmConfig("oldap-test", Settings.builder()
-                .put(LdapTestCase.buildLdapSettings(new String[] { OpenLdapTests.OPEN_LDAP_URL }, Strings.EMPTY_ARRAY, groupSearchBase,
-                        LdapSearchScope.ONE_LEVEL))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "uid=blackwidow,ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com")
-                .put("bind_password", OpenLdapTests.PASSWORD)
-                .put("user_search.pool.enabled", randomBoolean())
-                .build(), globalSettings);
+                        .put(LdapTestCase.buildLdapSettings(new String[] { OpenLdapTests.OPEN_LDAP_URL }, Strings.EMPTY_ARRAY, groupSearchBase,
+                                LdapSearchScope.ONE_LEVEL))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "uid=blackwidow,ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com")
+                        .put("bind_password", OpenLdapTests.PASSWORD)
+                        .put("user_search.pool.enabled", randomBoolean())
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
         Settings.Builder builder = Settings.builder()
                 .put(globalSettings);
         for (Map.Entry<String, String> entry : config.settings().getAsMap().entrySet()) {
@@ -415,11 +415,11 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LDAPConnectionPool connectionPool = LdapUserSearchSessionFactory.createConnectionPool(config, new SingleServerSet("localhost",
                 randomFrom(ldapServers).getListenPort()), TimeValue.timeValueSeconds(5), NoOpLogger.INSTANCE);
@@ -441,14 +441,14 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
-                .put("bind_password", "pass")
-                .put("user_search.pool.initial_size", 10)
-                .put("user_search.pool.size", 12)
-                .put("user_search.pool.health_check.enabled", false)
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_dn", "cn=Horatio Hornblower,ou=people,o=sevenSeas")
+                        .put("bind_password", "pass")
+                        .put("user_search.pool.initial_size", 10)
+                        .put("user_search.pool.size", 12)
+                        .put("user_search.pool.health_check.enabled", false)
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LDAPConnectionPool connectionPool = LdapUserSearchSessionFactory.createConnectionPool(config, new SingleServerSet("localhost",
                 randomFrom(ldapServers).getListenPort()), TimeValue.timeValueSeconds(5), NoOpLogger.INSTANCE);
@@ -466,10 +466,10 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String groupSearchBase = "o=sevenSeas";
         String userSearchBase = "o=sevenSeas";
         RealmConfig config = new RealmConfig("ldap_realm", Settings.builder()
-                .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
-                .put("user_search.base_dn", userSearchBase)
-                .put("bind_password", "pass")
-                .build(), globalSettings);
+                        .put(buildLdapSettings(ldapUrls(), Strings.EMPTY_ARRAY, groupSearchBase, LdapSearchScope.SUB_TREE))
+                        .put("user_search.base_dn", userSearchBase)
+                        .put("bind_password", "pass")
+                        .build(), globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
 
         LdapUserSearchSessionFactory searchSessionFactory = null;
         try {
@@ -518,7 +518,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
                 .put("user_search.pool.enabled", randomBoolean())
                 .build();
 
-        RealmConfig config = new RealmConfig("ldap_realm", ldapSettings, globalSettings);
+        RealmConfig config = new RealmConfig("ldap_realm", ldapSettings, globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
         LdapUserSearchSessionFactory searchSessionFactory = null;
         try {
             searchSessionFactory = new LdapUserSearchSessionFactory(config, sslService);

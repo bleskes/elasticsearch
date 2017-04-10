@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.lucene.util.SetOnce;
 import org.elasticsearch.ElasticsearchException;
@@ -99,6 +98,8 @@ public class AuthenticationServiceTests extends ESTestCase {
         token = mock(AuthenticationToken.class);
         message = new InternalMessage();
         restRequest = new FakeRestRequest();
+        threadContext = new ThreadContext(Settings.EMPTY);
+
         firstRealm = mock(Realm.class);
         when(firstRealm.type()).thenReturn("file");
         when(firstRealm.name()).thenReturn("file_realm");
@@ -112,13 +113,12 @@ public class AuthenticationServiceTests extends ESTestCase {
         XPackLicenseState licenseState = mock(XPackLicenseState.class);
         when(licenseState.allowedRealmType()).thenReturn(XPackLicenseState.AllowedRealmType.ALL);
         when(licenseState.isAuthAllowed()).thenReturn(true);
-        realms = new TestRealms(Settings.EMPTY, new Environment(settings), Collections.<String, Realm.Factory>emptyMap(),
-            licenseState, mock(ReservedRealm.class), Arrays.asList(firstRealm, secondRealm), Collections.singletonList(firstRealm));
+        realms = new TestRealms(Settings.EMPTY, new Environment(settings), Collections.<String, Realm.Factory>emptyMap(), licenseState,
+                threadContext, mock(ReservedRealm.class), Arrays.asList(firstRealm, secondRealm), Collections.singletonList(firstRealm));
         cryptoService = mock(CryptoService.class);
 
         auditTrail = mock(AuditTrailService.class);
         threadPool = mock(ThreadPool.class);
-        threadContext = new ThreadContext(Settings.EMPTY);
         when(threadPool.getThreadContext()).thenReturn(threadContext);
         when(cryptoService.sign(any(String.class), any(Version.class))).thenReturn("_signed_auth");
         service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
@@ -821,8 +821,9 @@ public class AuthenticationServiceTests extends ESTestCase {
     static class TestRealms extends Realms {
 
         TestRealms(Settings settings, Environment env, Map<String, Factory> factories, XPackLicenseState licenseState,
-                   ReservedRealm reservedRealm, List<Realm> realms, List<Realm> internalRealms) throws Exception {
-            super(settings, env, factories, licenseState, reservedRealm);
+                   ThreadContext threadContext, ReservedRealm reservedRealm, List<Realm> realms, List<Realm> internalRealms)
+                throws Exception {
+            super(settings, env, factories, licenseState, threadContext, reservedRealm);
             this.realms = realms;
             this.internalRealmsOnly = internalRealms;
         }

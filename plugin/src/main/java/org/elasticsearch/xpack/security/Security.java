@@ -283,7 +283,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         // realms construction
         final NativeUsersStore nativeUsersStore = new NativeUsersStore(settings, client);
         final AnonymousUser anonymousUser = new AnonymousUser(settings);
-        final ReservedRealm reservedRealm = new ReservedRealm(env, settings, nativeUsersStore, anonymousUser);
+        final ReservedRealm reservedRealm = new ReservedRealm(env, settings, nativeUsersStore, anonymousUser, threadPool.getThreadContext());
         Map<String, Realm.Factory> realmFactories = new HashMap<>();
         realmFactories.putAll(InternalRealms.getFactories(threadPool, resourceWatcherService, sslService, nativeUsersStore));
         for (XPackExtension extension : extensions) {
@@ -294,7 +294,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
                 }
             }
         }
-        final Realms realms = new Realms(settings, env, realmFactories, licenseState, reservedRealm);
+        final Realms realms = new Realms(settings, env, realmFactories, licenseState, threadPool.getThreadContext(), reservedRealm);
         components.add(nativeUsersStore);
         components.add(realms);
         components.add(reservedRealm);

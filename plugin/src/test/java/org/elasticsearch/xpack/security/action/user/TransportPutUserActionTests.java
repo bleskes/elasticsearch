@@ -24,6 +24,7 @@ import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.common.ValidationException;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.security.authc.esnative.NativeUsersStore;
 import org.elasticsearch.xpack.security.authc.esnative.ReservedRealm;
@@ -128,7 +129,8 @@ public class TransportPutUserActionTests extends ESTestCase {
         when(usersStore.started()).thenReturn(true);
         ReservedRealmTests.mockGetAllReservedUserInfo(usersStore, Collections.emptyMap());
         Settings settings = Settings.builder().put("path.home", createTempDir()).build();
-        ReservedRealm reservedRealm = new ReservedRealm(new Environment(settings), settings, usersStore, new AnonymousUser(settings));
+        ReservedRealm reservedRealm = new ReservedRealm(new Environment(settings), settings, usersStore, new AnonymousUser(settings),
+                new ThreadContext(Settings.EMPTY));
         PlainActionFuture<Collection<User>> userFuture = new PlainActionFuture<>();
         reservedRealm.users(userFuture);
         final User reserved = randomFrom(userFuture.actionGet().toArray(new User[0]));

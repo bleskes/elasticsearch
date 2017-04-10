@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.TestThreadPool;
@@ -88,7 +89,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
                 .put("files.users_roles", file.toAbsolutePath())
                 .build();
 
-        RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env);
+        RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env, new ThreadContext(Settings.EMPTY));
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         FileUserRolesStore store = new FileUserRolesStore(config, watcherService);
         assertThat(store.entriesCount(), is(0));
@@ -103,7 +104,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
                 .put("files.users_roles", tmp.toAbsolutePath())
                 .build();
 
-        RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env);
+        RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env, new ThreadContext(Settings.EMPTY));
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         final CountDownLatch latch = new CountDownLatch(1);
 
@@ -141,7 +142,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
                 .put("files.users_roles", tmp.toAbsolutePath())
                 .build();
 
-        RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env);
+        RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env, new ThreadContext(Settings.EMPTY));
         ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
         final CountDownLatch latch = new CountDownLatch(1);
 
@@ -232,7 +233,7 @@ public class FileUserRolesStoreTests extends ESTestCase {
                     .build();
 
             Environment env = new Environment(settings);
-            RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env);
+            RealmConfig config = new RealmConfig("file-test", fileSettings, settings, env, new ThreadContext(Settings.EMPTY));
             ResourceWatcherService watcherService = new ResourceWatcherService(settings, threadPool);
             FileUserRolesStore store = new FileUserRolesStore(config, watcherService);
             assertThat(store.roles("user"), equalTo(Strings.EMPTY_ARRAY));
