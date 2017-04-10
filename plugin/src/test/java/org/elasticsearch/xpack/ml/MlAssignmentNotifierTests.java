@@ -23,7 +23,7 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.ml.action.OpenJobAction;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
@@ -53,7 +53,7 @@ public class MlAssignmentNotifierTests extends ESTestCase {
         notifier.onMaster();
 
         DiscoveryNode node =
-                new DiscoveryNode("node_id", new TransportAddress(InetAddress.getLoopbackAddress(), 9300), Version.CURRENT);
+                new DiscoveryNode("node_id", new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300), Version.CURRENT);
         ClusterState previous = ClusterState.builder(new ClusterName("_name"))
                 .metaData(MetaData.builder().putCustom(PersistentTasksCustomMetaData.TYPE,
                         new PersistentTasksCustomMetaData(0L, Collections.emptyMap())))
