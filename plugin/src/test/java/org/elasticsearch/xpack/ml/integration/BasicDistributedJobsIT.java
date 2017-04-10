@@ -153,7 +153,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         });
     }
 
-    @TestLogging("org.elasticsearch.xpack.persistent:TRACE,org.elasticsearch.cluster.service:DEBUG,org.elasticsearch.xpack.ml.action::DEBUG")
+    @TestLogging("org.elasticsearch.xpack.persistent:TRACE,org.elasticsearch.cluster.service:DEBUG,org.elasticsearch.xpack.ml.action:DEBUG")
     public void testDedicatedMlNode() throws Exception {
         internalCluster().ensureAtMostNumDataNodes(0);
         // start 2 non ml node that will never get a job allocated. (but ml apis are accessable from this node)
@@ -317,7 +317,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         assertEquals("Expected no violations, but got [" + violations + "]", 0, violations.size());
     }
 
-    @TestLogging("org.elasticsearch.xpack.ml.action::DEBUG,org.elasticsearch.xpack.persistent:TRACE")
+    @TestLogging("org.elasticsearch.xpack.ml.action:DEBUG,org.elasticsearch.xpack.persistent:TRACE")
     public void testMlIndicesNotAvailable() throws Exception {
         internalCluster().ensureAtMostNumDataNodes(0);
         // start non ml node, but that will hold the indices
