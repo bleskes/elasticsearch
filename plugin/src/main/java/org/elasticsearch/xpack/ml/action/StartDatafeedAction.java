@@ -17,6 +17,8 @@ package org.elasticsearch.xpack.ml.action;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.ElasticsearchParseException;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestBuilder;
@@ -33,7 +35,6 @@ import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.IndexRoutingTable;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
-import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -47,6 +48,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.DateFieldMapper;
 import org.elasticsearch.license.LicenseUtils;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.tasks.TaskId;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -371,10 +373,14 @@ public class StartDatafeedAction
 
                     @Override
                     public void onFailure(Exception e) {
+                        if (e instanceof ResourceAlreadyExistsException) {
+                            e = new ElasticsearchStatusException("cannot start datafeed [" + request.getDatafeedId() +
+                                    "] because it has already been started", RestStatus.CONFLICT, e);
+                        }
                         listener.onFailure(e);
                     }
                 };
-                persistentTasksService.startPersistentTask(UUIDs.base64UUID(), NAME, request, finalListener);
+                persistentTasksService.startPersistentTask(MlMetadata.datafeedTaskId(request.datafeedId), NAME, request, finalListener);
             } else {
                 listener.onFailure(LicenseUtils.newComplianceException(XPackPlugin.MACHINE_LEARNING));
             }
@@ -473,11 +479,6 @@ public class StartDatafeedAction
         if (jobState != JobState.OPENED) {
             throw ExceptionsHelper.conflictStatusException("cannot start datafeed [" + datafeedId + "] because job [" + job.getId() +
                     "] is not open");
-        }
-
-        PersistentTask<?> datafeedTask = MlMetadata.getDatafeedTask(datafeedId, tasks);
-        if (datafeedTask != null) {
-            throw ExceptionsHelper.conflictStatusException("cannot start datafeed [" + datafeedId + "] because it has already been started");
         }
     }
 
