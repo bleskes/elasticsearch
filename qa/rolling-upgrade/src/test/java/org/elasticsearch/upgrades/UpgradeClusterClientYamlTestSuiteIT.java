@@ -23,14 +23,14 @@ import org.apache.lucene.util.TimeUnits;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
-import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
+import org.elasticsearch.xpack.security.SecurityClusterClientYamlTestCase;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @TimeoutSuite(millis = 5 * TimeUnits.MINUTE) // to account for slow as hell VMs
-public class UpgradeClusterClientYamlTestSuiteIT extends ESClientYamlSuiteTestCase {
+public class UpgradeClusterClientYamlTestSuiteIT extends SecurityClusterClientYamlTestCase {
 
     @Override
     protected boolean preserveIndicesUponCompletion() {
