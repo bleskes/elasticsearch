@@ -18,7 +18,6 @@ import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.support.ActionFilters;
-import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.support.master.MasterNodeOperationRequestBuilder;
 import org.elasticsearch.action.support.master.MasterNodeRequest;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
@@ -33,7 +32,6 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.TransportResponse.Empty;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
 
@@ -63,30 +61,30 @@ public class RemovePersistentTaskAction extends Action<RemovePersistentTaskActio
 
     public static class Request extends MasterNodeRequest<Request> {
 
-        private long taskId;
+        private String taskId;
 
         public Request() {
 
         }
 
-        public Request(long taskId) {
+        public Request(String taskId) {
             this.taskId = taskId;
         }
 
-        public void setTaskId(long taskId) {
+        public void setTaskId(String taskId) {
             this.taskId = taskId;
         }
 
         @Override
         public void readFrom(StreamInput in) throws IOException {
             super.readFrom(in);
-            taskId = in.readLong();
+            taskId = in.readString();
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
-            out.writeLong(taskId);
+            out.writeString(taskId);
         }
 
         @Override
@@ -99,7 +97,7 @@ public class RemovePersistentTaskAction extends Action<RemovePersistentTaskActio
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Request request = (Request) o;
-            return taskId == request.taskId;
+            return Objects.equals(taskId, request.taskId);
         }
 
         @Override
@@ -115,7 +113,7 @@ public class RemovePersistentTaskAction extends Action<RemovePersistentTaskActio
             super(client, action, new Request());
         }
 
-        public final RequestBuilder setTaskId(long taskId) {
+        public final RequestBuilder setTaskId(String taskId) {
             request.setTaskId(taskId);
             return this;
         }

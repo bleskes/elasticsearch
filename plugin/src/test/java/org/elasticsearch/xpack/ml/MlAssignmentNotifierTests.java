@@ -59,9 +59,9 @@ public class MlAssignmentNotifierTests extends ESTestCase {
                         new PersistentTasksCustomMetaData(0L, Collections.emptyMap())))
                 .build();
 
-        Map<Long, PersistentTask<?>> tasks = new HashMap<>();
-        tasks.put(0L, new PersistentTask<PersistentTaskRequest>(0L, OpenJobAction.NAME,
-                new OpenJobAction.Request("job_id"), new Assignment("node_id", "")));
+        Map<String, PersistentTask<?>> tasks = new HashMap<>();
+        tasks.put("0L", new PersistentTask<PersistentTaskRequest>("0L", OpenJobAction.NAME,
+                new OpenJobAction.Request("job_id"), 0L, new Assignment("node_id", "")));
 
         MetaData metaData = MetaData.builder().putCustom(PersistentTasksCustomMetaData.TYPE,
                 new PersistentTasksCustomMetaData(0L, tasks)).build();
@@ -88,9 +88,9 @@ public class MlAssignmentNotifierTests extends ESTestCase {
                         new PersistentTasksCustomMetaData(0L, Collections.emptyMap())))
                 .build();
 
-        Map<Long, PersistentTask<?>> tasks = new HashMap<>();
-        tasks.put(0L, new PersistentTask<PersistentTaskRequest>(0L, OpenJobAction.NAME,
-                new OpenJobAction.Request("job_id"), new Assignment(null, "no nodes")));
+        Map<String, PersistentTask<?>> tasks = new HashMap<>();
+        tasks.put("0L", new PersistentTask<PersistentTaskRequest>("0L", OpenJobAction.NAME,
+                new OpenJobAction.Request("job_id"), 0L, new Assignment(null, "no nodes")));
 
         MetaData metaData = MetaData.builder().putCustom(PersistentTasksCustomMetaData.TYPE,
                 new PersistentTasksCustomMetaData(0L, tasks)).build();
