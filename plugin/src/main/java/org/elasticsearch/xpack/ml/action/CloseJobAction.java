@@ -28,7 +28,6 @@ import org.elasticsearch.action.support.tasks.BaseTasksResponse;
 import org.elasticsearch.action.support.tasks.TransportTasksAction;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.ClusterState;
-import org.elasticsearch.cluster.ClusterStateObserver;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.ParseField;
@@ -45,7 +44,6 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.node.NodeClosedException;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -77,7 +75,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobAction.Response, CloseJobAction.RequestBuilder> {
@@ -474,9 +471,7 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
         // so wait for that to happen here.
         void waitForJobClosed(Request request, Map<String, Long> jobIdToPersistentTaskId, Response response,
                 ActionListener<Response> listener) {
-            ClusterStateObserver stateObserver = new ClusterStateObserver(clusterService,
-                    request.timeout, logger, threadPool.getThreadContext());
-            waitForPersistentTaskStatus(stateObserver, persistentTasksCustomMetaData -> {
+            persistentTasksService.waitForPersistentTasksStatus(persistentTasksCustomMetaData -> {
                 for (Map.Entry<String, Long> entry : jobIdToPersistentTaskId.entrySet()) {
                     long persistentTaskId = entry.getValue();
                     if (persistentTasksCustomMetaData.getTask(persistentTaskId) != null) {
@@ -484,7 +479,7 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
                     }
                 }
                 return true;
-            }, new ActionListener<Boolean>() {
+            }, request.timeout, new ActionListener<Boolean>() {
                 @Override
                 public void onResponse(Boolean result) {
                     Set<String> jobIds = jobIdToPersistentTaskId.keySet();
@@ -509,34 +504,6 @@ public class CloseJobAction extends Action<CloseJobAction.Request, CloseJobActio
                     listener.onFailure(e);
                 }
             });
-        }
-
-        void waitForPersistentTaskStatus(ClusterStateObserver stateObserver,
-                Predicate<PersistentTasksCustomMetaData> predicate,
-                ActionListener<Boolean> listener) {
-            if (predicate.test(stateObserver.setAndGetObservedState().metaData()
-                    .custom(PersistentTasksCustomMetaData.TYPE))) {
-                listener.onResponse(true);
-            } else {
-                stateObserver.waitForNextChange(new ClusterStateObserver.Listener() {
-                    @Override
-                    public void onNewClusterState(ClusterState state) {
-                        listener.onResponse(true);
-                    }
-
-                    @Override
-                    public void onClusterServiceClose() {
-                        listener.onFailure(new NodeClosedException(clusterService.localNode()));
-                    }
-
-                    @Override
-                    public void onTimeout(TimeValue timeout) {
-                        listener.onFailure(new IllegalStateException("timed out after " + timeout));
-                    }
-                }, clusterState -> predicate
-                        .test(clusterState.metaData()
-                        .custom(PersistentTasksCustomMetaData.TYPE)));
-            }
         }
     }
 
