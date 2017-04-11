@@ -166,6 +166,10 @@ public class DatafeedManager extends AbstractComponent {
                         next = e.nextDelayInMsSinceEpoch;
                     }
                     holder.problemTracker.reportAnalysisProblem(e.getCause().getMessage());
+                    if (e.shouldStop) {
+                        holder.stop("lookback_analysis_error", TimeValue.timeValueSeconds(20), e);
+                        return;
+                    }
                 } catch (DatafeedJob.EmptyDataCountException e) {
                     if (endTime == null) {
                         holder.problemTracker.reportEmptyDataCount();
@@ -215,6 +219,10 @@ public class DatafeedManager extends AbstractComponent {
                     } catch (DatafeedJob.AnalysisProblemException e) {
                         nextDelayInMsSinceEpoch = e.nextDelayInMsSinceEpoch;
                         holder.problemTracker.reportAnalysisProblem(e.getCause().getMessage());
+                        if (e.shouldStop) {
+                            holder.stop("realtime_analysis_error", TimeValue.timeValueSeconds(20), e);
+                            return;
+                        }
                     } catch (DatafeedJob.EmptyDataCountException e) {
                         nextDelayInMsSinceEpoch = e.nextDelayInMsSinceEpoch;
                         holder.problemTracker.reportEmptyDataCount();
@@ -283,6 +291,13 @@ public class DatafeedManager extends AbstractComponent {
 
     private TimeValue computeNextDelay(long next) {
         return new TimeValue(Math.max(1, next - currentTimeSupplier.get()));
+    }
+
+    /**
+     * Visible for testing
+     */
+    boolean isRunning(String datafeedId) {
+        return runningDatafeeds.containsKey(datafeedId);
     }
 
     public class Holder {
