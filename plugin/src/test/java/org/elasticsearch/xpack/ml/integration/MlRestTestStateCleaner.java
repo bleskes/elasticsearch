@@ -46,7 +46,6 @@ public class MlRestTestStateCleaner {
     public void clearMlMetadata() throws IOException {
         deleteAllDatafeeds();
         deleteAllJobs();
-        deleteDotML();
     }
 
     @SuppressWarnings("unchecked")
@@ -125,13 +124,6 @@ public class MlRestTestStateCleaner {
             if (statusCode != 200) {
                 logger.error("Got status code " + statusCode + " when deleting job " + jobId);
             }
-        }
-    }
-
-    private void deleteDotML() throws IOException {
-        int statusCode = adminClient.performRequest("DELETE",  ".ml-*?ignore_unavailable=true").getStatusLine().getStatusCode();
-        if (statusCode != 200) {
-            logger.error("Got status code " + statusCode + " when deleting .ml-* indexes");
         }
     }
 }

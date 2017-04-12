@@ -22,7 +22,6 @@ import org.elasticsearch.action.admin.cluster.node.tasks.list.ListTasksAction;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.util.concurrent.CountDown;
@@ -54,17 +53,17 @@ public class XPackRestIT extends XPackRestTestCase {
 
     @After
     public void clearMlState() throws IOException, InterruptedException {
-        waitForPendingTasks();
         new MlRestTestStateCleaner(logger, adminClient(), this).clearMlMetadata();
+        waitForPendingTasks();
     }
-    
+
     private void waitForPendingTasks() throws InterruptedException {
         AtomicReference<IOException> exceptionHolder = new AtomicReference<>();
         awaitBusy(() -> {
             try {
                 ClientYamlTestResponse response = getAdminExecutionContext().callApi("cat.tasks",
                         emptyMap(), emptyList(), emptyMap());
-                // Check to see if there are tasks still active. We exclude the list tasks 
+                // Check to see if there are tasks still active. We exclude the list tasks
                 // actions tasks form this otherwise we will always fail
                 if (response.getStatusCode() == HttpStatus.SC_OK) {
                     String tasksListString = response.getBodyAsString();
@@ -75,14 +74,13 @@ public class XPackRestIT extends XPackRestTestCase {
                             activeTasks++;
                         }
                     }
-                    ESLoggerFactory.getLogger(getClass())
-                            .info(activeTasks
-                                    + " active tasks found, waiting for them to complete:\n"
-                                    + tasksListString);
                     if (activeTasks == 0) {
                         exceptionHolder.set(null);
                         return true;
                     }
+                    logger.info(activeTasks
+                            + " active tasks found, waiting for them to complete:\n"
+                            + tasksListString);
                 }
             } catch (IOException e) {
                 exceptionHolder.set(e);
