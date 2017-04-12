@@ -1,3 +1,4 @@
+//lcawley Verified example output 2017-04-11
 [[ml-delete-datafeed]]
 ==== Delete Data Feeds
 
@@ -14,7 +15,7 @@ NOTE: You must stop the data feed before you can delete it.
 ===== Path Parameters
 
 `feed_id` (required)::
-  (+string+) Identifier for the data feed
+  (string) Identifier for the data feed
 ////
 ===== Responses
 

@@ -1,10 +1,11 @@
+//lcawley Verified example output 2017-04-11
 [[ml-datafeed-resource]]
 ==== Data Feed Resources
 
 A data feed resource has the following properties:
 
 `aggregations`::
-  (+object+) TBD
+  (object) TBD
   The aggregations object describes the aggregations that are
   applied to the search query?
   For more information, see {ref}search-aggregations.html[Aggregations].
@@ -14,20 +15,24 @@ A data feed resource has the following properties:
   "min_doc_count": 0}, "aggregations": {"events_per_min": {"sum": {
   "field": "events_per_min"}}}}}`.
 
+`chunking_config`::
+  (object) TBD.
+  For example: {"mode": "manual", "time_span": "30000000ms"}
+
 `datafeed_id`::
- (+string+) A numerical character string that uniquely identifies the data feed.
+ (string) A numerical character string that uniquely identifies the data feed.
 
 `frequency`::
    TBD. For example: "150s"
 
 `indexes` (required)::
-  (+array+) An array of index names. For example: ["it_ops_metrics"]
+  (array) An array of index names. For example: ["it_ops_metrics"]
 
 `job_id` (required)::
- (+string+) A numerical character string that uniquely identifies the job.
+ (string) A numerical character string that uniquely identifies the job.
 
 `query`::
-  (+object+) TBD. The query that retrieves the data.
+  (object) TBD. The query that retrieves the data.
   By default, this property has the following value: `{"match_all": {"boost": 1}}`.
 
 `query_delay`::
@@ -39,8 +44,9 @@ A data feed resource has the following properties:
   The default value is `1000`.
 
 `types` (required)::
-  (+array+) TBD. For example: ["network","sql","kpi"]
+  (array) TBD. For example: ["network","sql","kpi"]
 
+[float]
 [[ml-datafeed-counts]]
 ==== Data Feed Counts
 
@@ -48,17 +54,21 @@ The get data feed statistics API provides information about the operational
 progress of a data feed. For example:
 
 `assigment_explanation`::
-  TBD. For example: ""
+  TBD. For example: " "
+
+`datafeed_id`::
+ (string) A numerical character string that uniquely identifies the data feed.
 
 `node`::
-  (+object+) TBD
+  (object) TBD
   The node that is running the query?
-  For example: `{"id": "0-o0tOoRTwKFZifatTWKNw","name": "0-o0tOo",
-  "ephemeral_id": "DOZltLxLS_SzYpW6hQ9hyg","transport_address": "127.0.0.1:9300",
-  "attributes": {"max_running_jobs": "10"}}
+  `id`::: TBD. For example, "0-o0tOoRTwKFZifatTWKNw".
+  `name`::: TBD. For example, "0-o0tOo".
+  `ephemeral_id::: TBD. For example, "DOZltLxLS_SzYpW6hQ9hyg".
+  `transport_address::: TBD. For example, "127.0.0.1:9300".
+  `attributes`::: TBD. For example, {"max_running_jobs": "10"}.
 
 `state`::
-  (+string+) The status of the data feed,
-  which can be one of the following values:
-    started:: The data feed is actively receiving data.
-    stopped:: The data feed is stopped and will not receive data until it is re-started.
+  (string) The status of the data feed, which can be one of the following values: +
+  started::: The data feed is actively receiving data.
+  stopped::: The data feed is stopped and will not receive data until it is re-started.

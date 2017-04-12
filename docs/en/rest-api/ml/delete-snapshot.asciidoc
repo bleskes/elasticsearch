@@ -1,7 +1,7 @@
 [[ml-delete-snapshot]]
 ==== Delete Model Snapshots
 
-The delete model snapshot API allows you to delete an existing model snapshot.
+The delete model snapshot API enables you to delete an existing model snapshot.
 
 ===== Request
 
@@ -19,10 +19,10 @@ first revert to a different one.
 ===== Path Parameters
 
 `job_id` (required)::
-  (+string+) Identifier for the job
+  (string) Identifier for the job
 
 `snapshot_id` (required)::
-  (+string+) Identifier for the model snapshot
+  (string) Identifier for the model snapshot
 ////
 ===== Responses
 
