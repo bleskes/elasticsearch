@@ -21,6 +21,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.ResourceAlreadyExistsException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ValidateActions;
@@ -65,7 +66,7 @@ import org.elasticsearch.xpack.ml.job.config.JobTaskStatus;
 import org.elasticsearch.xpack.ml.job.messages.Messages;
 import org.elasticsearch.xpack.ml.utils.ExceptionsHelper;
 import org.elasticsearch.xpack.persistent.AllocatedPersistentTask;
-import org.elasticsearch.xpack.persistent.PersistentTaskRequest;
+import org.elasticsearch.xpack.persistent.PersistentTaskParams;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Assignment;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
@@ -103,7 +104,7 @@ public class StartDatafeedAction
         return new Response();
     }
 
-    public static class Request extends PersistentTaskRequest implements ToXContent {
+    public static class Request extends ActionRequest implements PersistentTaskParams, ToXContent {
 
         public static ObjectParser<Request, Void> PARSER = new ObjectParser<>(NAME, Request::new);
 
@@ -197,11 +198,6 @@ public class StartDatafeedAction
                         + " [" + endTime + "]", e);
             }
             return e;
-        }
-
-        @Override
-        public Task createTask(long id, String type, String action, TaskId parentTaskId) {
-            return new DatafeedTask(id, type, action, parentTaskId, this);
         }
 
         @Override
@@ -463,6 +459,11 @@ public class StartDatafeedAction
                     });
         }
 
+        @Override
+        protected AllocatedPersistentTask createTask(long id, String type, String action, TaskId parentTaskId,
+                                                     PersistentTask<Request> persistentTask) {
+            return new DatafeedTask(id, type, action, parentTaskId, persistentTask.getParams());
+        }
     }
 
     static void validate(String datafeedId, MlMetadata mlMetadata, PersistentTasksCustomMetaData tasks) {
