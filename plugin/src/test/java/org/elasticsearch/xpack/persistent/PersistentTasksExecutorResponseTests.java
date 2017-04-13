@@ -18,6 +18,7 @@ import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.test.AbstractStreamableTestCase;
 import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.PersistentTask;
+import org.elasticsearch.xpack.persistent.TestPersistentTasksPlugin.TestPersistentTasksExecutor;
 
 import java.util.Collections;
 
@@ -29,7 +30,7 @@ public class PersistentTasksExecutorResponseTests extends AbstractStreamableTest
     protected PersistentTaskResponse createTestInstance() {
         if (randomBoolean()) {
             return new PersistentTaskResponse(
-                    new PersistentTask<PersistentTaskParams>(UUIDs.base64UUID(), randomAsciiOfLength(10),
+                    new PersistentTask<PersistentTaskParams>(UUIDs.base64UUID(), TestPersistentTasksExecutor.NAME,
                             new TestPersistentTasksPlugin.TestParams("test"),
                             randomLong(), PersistentTasksCustomMetaData.INITIAL_ASSIGNMENT));
         } else {
@@ -46,7 +47,7 @@ public class PersistentTasksExecutorResponseTests extends AbstractStreamableTest
     protected NamedWriteableRegistry getNamedWriteableRegistry() {
         return new NamedWriteableRegistry(Collections.singletonList(
                 new NamedWriteableRegistry.Entry(PersistentTaskParams.class,
-                        TestPersistentTasksPlugin.TestPersistentTasksExecutor.NAME, TestPersistentTasksPlugin.TestParams::new)
+                        TestPersistentTasksExecutor.NAME, TestPersistentTasksPlugin.TestParams::new)
         ));
     }
 }
