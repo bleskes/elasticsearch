@@ -209,8 +209,9 @@ public class ManualExecutionTests extends AbstractWatcherIntegrationTestCase {
                         equalTo(ActionStatus.AckStatus.State.AWAITS_SUCCESSFUL_EXECUTION));
             }
         } else {
-            assertThat(parsedWatch.status().actionStatus("log").ackStatus().state(),
-                    equalTo(ActionStatus.AckStatus.State.AWAITS_SUCCESSFUL_EXECUTION));
+            ActionStatus.AckStatus.State expectedState = conditionAlwaysTrue || ignoreCondition ? ActionStatus.AckStatus.State.ACKABLE :
+                    ActionStatus.AckStatus.State.AWAITS_SUCCESSFUL_EXECUTION;
+            assertThat(parsedWatch.status().actionStatus("log").ackStatus().state(), is(expectedState));
         }
     }
 

@@ -373,6 +373,62 @@ public class WatchStatus implements ToXContentObject, Streamable {
         }
     }
 
+    /**
+     * Creates a fully immutable copy of a watch status without any reference to the old watch
+     * status
+     *
+     * @param other The watch status to copy from
+     * @return      The new immutable watch status
+     */
+    public static WatchStatus deepCopy(WatchStatus other) {
+        State state = new State(other.state.active, other.state.timestamp);
+        Map<String, ActionStatus> actionStates = new HashMap<>(other.actions.size());
+        for (Map.Entry<String, ActionStatus> entry : other.actions.entrySet()) {
+            ActionStatus.AckStatus oldAckStatus = entry.getValue().ackStatus();
+            final ActionStatus.AckStatus ackStatus = new ActionStatus.AckStatus(oldAckStatus.timestamp(), oldAckStatus.state());
+
+            ActionStatus.Execution oldLastExecution = entry.getValue().lastExecution();
+            ActionStatus.Execution lastExecution = null;
+            if (oldLastExecution != null) {
+                if (oldLastExecution.successful()) {
+                    lastExecution = ActionStatus.Execution.successful(oldLastExecution.timestamp());
+                } else {
+                    lastExecution = ActionStatus.Execution.failure(oldLastExecution.timestamp(), oldLastExecution.reason());
+                }
+            }
+
+            ActionStatus.Execution oldLastSuccessfulExecution = entry.getValue().lastSuccessfulExecution();
+            ActionStatus.Execution lastSuccessfulExecution = null;
+            if (oldLastSuccessfulExecution != null) {
+                if (oldLastSuccessfulExecution.successful()) {
+                    lastSuccessfulExecution = ActionStatus.Execution.successful(oldLastExecution.timestamp());
+                } else {
+                    lastSuccessfulExecution = ActionStatus.Execution.failure(oldLastExecution.timestamp(), oldLastExecution.reason());
+                }
+            }
+
+            ActionStatus.Throttle oldLastThrottle = entry.getValue().lastThrottle();
+            ActionStatus.Throttle lastThrottle = null;
+            if (oldLastThrottle != null) {
+                lastThrottle = new ActionStatus.Throttle(oldLastThrottle.timestamp(), oldLastThrottle.reason());
+            }
+
+            ActionStatus actionStatus = new ActionStatus(ackStatus, lastExecution, lastSuccessfulExecution, lastThrottle);
+            actionStates.put(entry.getKey(), actionStatus);
+        }
+
+        DateTime lastChecked = null;
+        if (other.lastChecked != null) {
+            lastChecked = new DateTime(other.lastChecked);
+        }
+        DateTime lastMetCondition = null;
+        if (other.lastMetCondition  != null) {
+            lastMetCondition = new DateTime(other.lastMetCondition);
+        }
+
+        return new WatchStatus(other.version, state, lastChecked, lastMetCondition, actionStates);
+    }
+
     interface Field {
         ParseField VERSION = new ParseField("version");
         ParseField STATE = new ParseField("state");

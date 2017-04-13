@@ -50,6 +50,7 @@ import org.elasticsearch.xpack.watcher.trigger.TriggerService;
 import org.elasticsearch.xpack.watcher.trigger.manual.ManualTriggerEvent;
 import org.elasticsearch.xpack.watcher.watch.Payload;
 import org.elasticsearch.xpack.watcher.watch.Watch;
+import org.elasticsearch.xpack.watcher.watch.WatchStatus;
 import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -106,6 +107,12 @@ public class TransportExecuteWatchAction extends WatcherTransportAction<ExecuteW
                     throw new ResourceNotFoundException("watch [{}] does not exist", request.getId());
                 }
                 knownWatch = true;
+                // if we do not want to record the execution, we have to create a copy of the watch
+                // to not change the watch status of the in memory watch
+                if (request.isRecordExecution() == false) {
+                    watch = new Watch(watch.id(), watch.trigger(), watch.input(), watch.condition(), watch.transform(),
+                            watch.throttlePeriod(), watch.actions(), watch.metadata(), WatchStatus.deepCopy(watch.status()));
+                }
             } else if (request.getWatchSource() != null) {
                 assert !request.isRecordExecution();
                 watch = watchParser.parse(ExecuteWatchRequest.INLINE_WATCH_ID, false, request.getWatchSource(), request.getXContentType());

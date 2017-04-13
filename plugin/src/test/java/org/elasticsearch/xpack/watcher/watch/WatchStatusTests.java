@@ -20,10 +20,14 @@ package org.elasticsearch.xpack.watcher.watch;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus.AckStatus.State;
+import org.elasticsearch.xpack.watcher.actions.logging.LoggingAction;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.core.Is.is;
 import static org.joda.time.DateTime.now;
 
@@ -58,5 +62,34 @@ public class WatchStatusTests extends ESTestCase {
 
         status.resetDirty();
         assertThat(status.dirty(), is(false));
+    }
+
+    public void testDeepCopyingStatusWorks() throws Exception {
+        HashMap<String, ActionStatus> myMap = new HashMap<>();
+        ActionStatus actionStatus = new ActionStatus(now());
+        myMap.put("foo", actionStatus);
+
+        actionStatus.update(now(), new LoggingAction.Result.Success("foo"));
+        assertThat(actionStatus.ackStatus().state(), is(State.ACKABLE));
+
+        WatchStatus w1 = new WatchStatus(now(), myMap);
+        WatchStatus w2 = new WatchStatus(w1);
+        assertThat(w2.actionStatus("foo").ackStatus(), sameInstance(w1.actionStatus("foo").ackStatus()));
+
+        WatchStatus copyW1 = WatchStatus.deepCopy(w1);
+        WatchStatus copyW2 = WatchStatus.deepCopy(w2);
+        assertThat(copyW1.actionStatus("foo").ackStatus(), not(sameInstance(w1.actionStatus("foo").ackStatus())));
+        assertThat(copyW2.actionStatus("foo").ackStatus(), not(sameInstance(w2.actionStatus("foo").ackStatus())));
+        assertThat(copyW2.actionStatus("foo").ackStatus(), not(sameInstance(copyW1.actionStatus("foo").ackStatus())));
+
+        // equality check should be true
+        assertThat(w1, equalTo(w2));
+        assertThat(copyW1, equalTo(w1));
+        assertThat(copyW2, equalTo(w2));
+
+        // hashcode should check, should also be the same
+        assertThat(w1.hashCode(), is(w2.hashCode()));
+        assertThat(copyW1.hashCode(), is(w1.hashCode()));
+        assertThat(copyW2.hashCode(), is(w2.hashCode()));
     }
 }

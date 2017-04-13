@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.watcher.transport.action.execute;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
+import org.elasticsearch.xpack.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.xpack.watcher.client.WatcherClient;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
 import org.elasticsearch.xpack.watcher.condition.NeverCondition;
@@ -86,25 +87,40 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
     public void testExecuteAllDefaults() throws Exception {
         WatcherClient watcherClient = watcherClient();
 
-        PutWatchResponse putWatchResponse = watcherClient.preparePutWatch()
-                .setId("_id")
-                .setSource(watchBuilder()
-                        .trigger(schedule(cron("0/5 * * * * ? 2099")))
-                        .input(simpleInput("foo", "bar"))
-                        .condition(AlwaysCondition.INSTANCE)
-                        .addAction("log", loggingAction("_text")))
-                .get();
+        WatchSourceBuilder watchSourceBuilder = watchBuilder()
+                .trigger(schedule(cron("0/5 * * * * ? 2099")))
+                .input(simpleInput("foo", "bar"))
+                .condition(AlwaysCondition.INSTANCE)
+                .addAction("log", loggingAction("_text"));
 
-        assertThat(putWatchResponse.isCreated(), is(true));
+        ExecuteWatchResponse response;
+        boolean storeWatchBeforeExecution = randomBoolean();
+        if (storeWatchBeforeExecution) {
+            PutWatchResponse putWatchResponse = watcherClient.preparePutWatch()
+                    .setId("_id")
+                    .setSource(watchSourceBuilder)
+                    .get();
 
-        ExecuteWatchResponse response = watcherClient.prepareExecuteWatch("_id").get();
+            assertThat(putWatchResponse.isCreated(), is(true));
+
+            response = watcherClient.prepareExecuteWatch("_id").get();
+        } else {
+            response = watcherClient.prepareExecuteWatch().setWatchSource(watchSourceBuilder).get();
+        }
+
         assertThat(response, notNullValue());
         assertThat(response.getRecordId(), notNullValue());
-        Wid wid = new Wid(response.getRecordId());
-        assertThat(wid.watchId(), is("_id"));
+        if (storeWatchBeforeExecution) {
+            Wid wid = new Wid(response.getRecordId());
+            assertThat(wid.watchId(), is("_id"));
+        }
 
         XContentSource record = response.getRecordSource();
-        assertValue(record, "watch_id", is("_id"));
+        if (storeWatchBeforeExecution) {
+            assertValue(record, "watch_id", is("_id"));
+        } else {
+            assertValue(record, "watch_id", is("_inlined_"));
+        }
         assertValue(record, "trigger_event.type", is("manual"));
         assertValue(record, "trigger_event.triggered_time", notNullValue());
         String triggeredTime = record.getValue("trigger_event.triggered_time");
@@ -122,6 +138,7 @@ public class ExecuteWatchTests extends AbstractWatcherIntegrationTestCase {
         assertValue(record, "result.actions.0.type", is("logging"));
         assertValue(record, "result.actions.0.status", is("success"));
         assertValue(record, "result.actions.0.logging.logged_text", is("_text"));
+        assertValue(record, "_status.actions.log.ack.state", is("ackable"));
     }
 
     public void testExecuteCustomTriggerData() throws Exception {
