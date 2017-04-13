@@ -50,8 +50,6 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.xpack.ml.job.process.autodetect.AutodetectProcessManager.MAX_RUNNING_JOBS_PER_NODE;
-
 public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
 
     public void testFailOverBasics() throws Exception {
@@ -182,7 +180,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
 
             DiscoveryNode node = clusterState.nodes().resolveNode(task.getExecutorNode());
             Map<String, String> expectedNodeAttr = new HashMap<>();
-            expectedNodeAttr.put(MAX_RUNNING_JOBS_PER_NODE.getKey(), "10");
+            expectedNodeAttr.put(MachineLearning.ML_ENABLED_NODE_ATTR, "true");
             assertEquals(expectedNodeAttr, node.getAttributes());
             JobTaskStatus jobTaskStatus = (JobTaskStatus) task.getStatus();
             assertNotNull(jobTaskStatus);
@@ -388,7 +386,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
             assertFalse(task.needsReassignment(clusterState.nodes()));
             DiscoveryNode node = clusterState.nodes().resolveNode(task.getExecutorNode());
             Map<String, String> expectedNodeAttr = new HashMap<>();
-            expectedNodeAttr.put(MAX_RUNNING_JOBS_PER_NODE.getKey(), "10");
+            expectedNodeAttr.put(MachineLearning.ML_ENABLED_NODE_ATTR, "true");
             assertEquals(expectedNodeAttr, node.getAttributes());
 
             JobTaskStatus jobTaskStatus = (JobTaskStatus) task.getStatus();
