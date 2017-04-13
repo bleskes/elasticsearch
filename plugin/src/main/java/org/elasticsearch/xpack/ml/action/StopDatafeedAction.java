@@ -71,7 +71,7 @@ public class StopDatafeedAction
         extends Action<StopDatafeedAction.Request, StopDatafeedAction.Response, StopDatafeedAction.RequestBuilder> {
 
     public static final StopDatafeedAction INSTANCE = new StopDatafeedAction();
-    public static final String NAME = "cluster:admin/xpack/ml/datafeeds/stop";
+    public static final String NAME = "cluster:admin/xpack/ml/datafeed/stop";
     public static final ParseField TIMEOUT = new ParseField("timeout");
     public static final ParseField FORCE = new ParseField("force");
     public static final TimeValue DEFAULT_TIMEOUT = TimeValue.timeValueMinutes(5);
@@ -121,7 +121,6 @@ public class StopDatafeedAction
         public Request(String datafeedId) {
             this.datafeedId = ExceptionsHelper.requireNonNull(datafeedId, DatafeedConfig.ID.getPreferredName());
             this.resolvedDatafeedIds = new String[] { datafeedId };
-            setActions(StartDatafeedAction.NAME);
         }
 
         Request() {
