@@ -95,7 +95,6 @@ public class MlJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"job_id\":\"farequote\""));
     }
 
-    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/1079")
     public void testGetJobs_GivenSingleJob() throws Exception {
         createFarequoteJob();
 
@@ -116,7 +115,6 @@ public class MlJobIT extends ESRestTestCase {
         assertThat(responseAsString, containsString("\"job_id\":\"farequote\""));
     }
 
-    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/1079")
     public void testGetJobs_GivenMultipleJobs() throws Exception {
         createFarequoteJob("farequote_1");
         createFarequoteJob("farequote_2");
