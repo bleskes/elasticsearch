@@ -50,6 +50,7 @@ public class IndicesStatsTests extends MonitoringIntegTestCase {
         wipeMonitoringIndices();
     }
 
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/496")
     public void testIndicesStats() throws Exception {
         logger.debug("--> creating some indices for future indices stats");
         final int nbIndices = randomIntBetween(1, 5);
