@@ -87,7 +87,7 @@ public class ReservedRealmIntegTests extends NativeRealmIntegTestCase {
             assertThat(response.getClusterName(), is(cluster().getClusterName()));
         }
 
-        ChangePasswordResponse response = securityClient().prepareChangePassword(username, newPassword).get();
+        ChangePasswordResponse response = securityClient().prepareChangePassword(username, newPassword.clone()).get();
         assertThat(response, notNullValue());
 
         ElasticsearchSecurityException elasticsearchSecurityException = expectThrows(ElasticsearchSecurityException.class, () -> client()
