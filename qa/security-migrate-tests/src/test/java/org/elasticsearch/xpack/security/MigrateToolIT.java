@@ -25,6 +25,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.io.PathUtils;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.env.Environment;
@@ -32,7 +33,6 @@ import org.elasticsearch.xpack.security.action.role.GetRolesResponse;
 import org.elasticsearch.xpack.security.action.user.GetUsersResponse;
 import org.elasticsearch.xpack.security.action.user.PutUserResponse;
 import org.elasticsearch.xpack.security.authc.esnative.ESNativeRealmMigrateTool;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor;
 import org.elasticsearch.xpack.security.authz.permission.FieldPermissions;
 import org.elasticsearch.xpack.security.authz.permission.FieldPermissionsDefinition;
@@ -125,7 +125,7 @@ public class MigrateToolIT extends MigrateToolTestCase {
         }
 
         // Check that bob can access the things the "actual_role" says he can
-        String token = basicAuthHeaderValue("bob", new SecuredString("changeme".toCharArray()));
+        String token = basicAuthHeaderValue("bob", new SecureString("changeme".toCharArray()));
         // Create "index1" index and try to search from it as "bob"
         client.filterWithHeader(Collections.singletonMap("Authorization", token)).admin().indices().prepareCreate("index1").get();
         // Wait for the index to be ready so it doesn't fail if no shards are initialized

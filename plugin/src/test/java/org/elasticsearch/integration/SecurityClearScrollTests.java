@@ -24,10 +24,10 @@ import org.elasticsearch.action.search.ClearScrollResponse;
 import org.elasticsearch.action.search.MultiSearchRequestBuilder;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchPhaseExecutionException;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authc.support.Hasher;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -45,7 +45,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 public class SecurityClearScrollTests extends SecurityIntegTestCase {
-    protected static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecuredString("change_me".toCharArray())));
+    protected static final String USERS_PASSWD_HASHED = new String(Hasher.BCRYPT.hash(new SecureString("change_me".toCharArray())));
 
     private List<String> scrollIds;
 
@@ -102,7 +102,7 @@ public class SecurityClearScrollTests extends SecurityIntegTestCase {
 
     public void testThatClearingAllScrollIdsWorks() throws Exception {
         String user = "allowed_user:change_me";
-        String basicAuth = basicAuthHeaderValue("allowed_user", new SecuredString("change_me".toCharArray()));
+        String basicAuth = basicAuthHeaderValue("allowed_user", new SecureString("change_me".toCharArray()));
         Map<String, String> headers = new HashMap<>();
         headers.put(Security.USER_SETTING.getKey(), user);
         headers.put(BASIC_AUTH_HEADER, basicAuth);
@@ -116,7 +116,7 @@ public class SecurityClearScrollTests extends SecurityIntegTestCase {
 
     public void testThatClearingAllScrollIdsRequirePermissions() throws Exception {
         String user = "denied_user:change_me";
-        String basicAuth = basicAuthHeaderValue("denied_user", new SecuredString("change_me".toCharArray()));
+        String basicAuth = basicAuthHeaderValue("denied_user", new SecureString("change_me".toCharArray()));
         Map<String, String> headers = new HashMap<>();
         headers.put(Security.USER_SETTING.getKey(), user);
         headers.put(BASIC_AUTH_HEADER, basicAuth);

@@ -26,6 +26,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.common.network.NetworkAddress;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
@@ -36,7 +37,6 @@ import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.ml.MachineLearning;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.client.SecurityClient;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -286,7 +286,7 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
      * {@link ClusterScope} is set to
      * {@link Scope#SUITE} or {@link Scope#TEST}
      */
-    protected SecuredString nodeClientPassword() {
+    protected SecureString nodeClientPassword() {
         return SECURITY_DEFAULT_SETTINGS.nodeClientPassword();
     }
 
@@ -304,7 +304,7 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
      * {@link ClusterScope} is set to
      * {@link Scope#SUITE} or {@link Scope#TEST}
      */
-    protected SecuredString transportClientPassword() {
+    protected SecureString transportClientPassword() {
         return SECURITY_DEFAULT_SETTINGS.transportClientPassword();
     }
 
@@ -352,7 +352,7 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
         }
 
         @Override
-        protected SecuredString nodeClientPassword() {
+        protected SecureString nodeClientPassword() {
             return SecurityIntegTestCase.this.nodeClientPassword();
         }
 
@@ -362,7 +362,7 @@ public abstract class SecurityIntegTestCase extends ESIntegTestCase {
         }
 
         @Override
-        protected SecuredString transportClientPassword() {
+        protected SecureString transportClientPassword() {
             return SecurityIntegTestCase.this.transportClientPassword();
         }
 

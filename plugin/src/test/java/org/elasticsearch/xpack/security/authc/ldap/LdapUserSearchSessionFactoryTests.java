@@ -26,6 +26,7 @@ import com.unboundid.ldap.sdk.LDAPURL;
 import com.unboundid.ldap.sdk.SimpleBindRequest;
 import com.unboundid.ldap.sdk.SingleServerSet;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
@@ -34,8 +35,6 @@ import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapTestCase;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
-import org.elasticsearch.xpack.security.authc.support.SecuredStringTests;
 import org.elasticsearch.xpack.ssl.SSLService;
 import org.elasticsearch.xpack.security.support.NoOpLogger;
 import org.elasticsearch.test.junit.annotations.Network;
@@ -110,7 +109,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try {
             // auth
@@ -146,7 +145,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try {
             assertNull(session(sessionFactory, user, userPass));
@@ -173,7 +172,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try {
             // auth
@@ -209,7 +208,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try {
             assertNull(session(sessionFactory, user, userPass));
@@ -236,7 +235,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try {
             //auth
@@ -271,7 +270,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "William Bush";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try {
             assertNull(session(sessionFactory, user, userPass));
@@ -296,7 +295,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         LdapUserSearchSessionFactory sessionFactory = new LdapUserSearchSessionFactory(config, sslService);
 
         String user = "wbush";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try {
             //auth
@@ -343,7 +342,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         String user = "Bruce Banner";
         try {
             //auth
-            try (LdapSession ldap = session(sessionFactory, user, SecuredStringTests.build(ActiveDirectorySessionFactoryTests.PASSWORD))) {
+            try (LdapSession ldap = session(sessionFactory, user, new SecureString(ActiveDirectorySessionFactoryTests.PASSWORD))) {
                 List<String> groups = groups(ldap);
 
                 assertThat(groups, containsInAnyOrder(
@@ -393,7 +392,7 @@ public class LdapUserSearchSessionFactoryTests extends LdapTestCase {
         try {
             for (String user : users) {
                 //auth
-                try (LdapSession ldap = session(sessionFactory, user, SecuredStringTests.build(OpenLdapTests.PASSWORD))) {
+                try (LdapSession ldap = session(sessionFactory, user, new SecureString(OpenLdapTests.PASSWORD))) {
                     assertThat(ldap.userDn(), is(equalTo(new MessageFormat("uid={0},ou=people,dc=oldap,dc=test,dc=elasticsearch,dc=com",
                             Locale.ROOT).format(new Object[]{user}, new StringBuffer(), null).toString())));
                     assertThat(groups(ldap), hasItem(containsString("Avengers")));

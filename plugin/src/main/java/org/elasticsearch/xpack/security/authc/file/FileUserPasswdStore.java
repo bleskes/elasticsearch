@@ -22,6 +22,7 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.inject.internal.Nullable;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.watcher.FileChangesListener;
@@ -31,7 +32,6 @@ import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.support.Hasher;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.support.NoOpLogger;
 import org.elasticsearch.xpack.security.support.Validation;
 import org.elasticsearch.xpack.security.support.Validation.Users;
@@ -90,7 +90,7 @@ public class FileUserPasswdStore {
         return users.size();
     }
 
-    public boolean verifyPassword(String username, SecuredString password) {
+    public boolean verifyPassword(String username, SecureString password) {
         char[] hash = users.get(username);
         if (hash == null) {
             return false;

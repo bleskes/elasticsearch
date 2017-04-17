@@ -23,12 +23,12 @@ import org.elasticsearch.action.support.WriteRequestBuilder;
 import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.common.ValidationException;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.xpack.security.authc.support.Hasher;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.support.Validation;
 import org.elasticsearch.xpack.security.user.User;
 import org.elasticsearch.xpack.common.xcontent.XContentUtils;
@@ -44,11 +44,7 @@ public class ChangePasswordRequestBuilder
         implements WriteRequestBuilder<ChangePasswordRequestBuilder> {
 
     public ChangePasswordRequestBuilder(ElasticsearchClient client) {
-        this(client, ChangePasswordAction.INSTANCE);
-    }
-
-    public ChangePasswordRequestBuilder(ElasticsearchClient client, ChangePasswordAction action) {
-        super(client, action, new ChangePasswordRequest());
+        super(client, ChangePasswordAction.INSTANCE, new ChangePasswordRequest());
     }
 
     public ChangePasswordRequestBuilder username(String username) {
@@ -57,15 +53,14 @@ public class ChangePasswordRequestBuilder
     }
 
     public ChangePasswordRequestBuilder password(char[] password) {
-        Validation.Error error = Validation.Users.validatePassword(password);
-        if (error != null) {
-            ValidationException validationException = new ValidationException();
-            validationException.addValidationError(error.toString());
-            throw validationException;
-        }
-
-        try (SecuredString securedString = new SecuredString(password)) {
-            request.passwordHash(Hasher.BCRYPT.hash(securedString));
+        try (SecureString secureString = new SecureString(password)) {
+            Validation.Error error = Validation.Users.validatePassword(password);
+            if (error != null) {
+                ValidationException validationException = new ValidationException();
+                validationException.addValidationError(error.toString());
+                throw validationException;
+            }
+            request.passwordHash(Hasher.BCRYPT.hash(secureString));
         }
         return this;
     }

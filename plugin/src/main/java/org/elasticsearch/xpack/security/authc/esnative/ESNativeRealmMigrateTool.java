@@ -42,6 +42,7 @@ import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -52,7 +53,6 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.security.authc.file.FileUserPasswdStore;
 import org.elasticsearch.xpack.security.authc.file.FileUserRolesStore;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor;
 import org.elasticsearch.xpack.security.authz.store.FileRolesStore;
@@ -172,7 +172,7 @@ public class ESNativeRealmMigrateTool extends MultiCommand {
             // Add basic-auth header
             conn.setRequestProperty("Authorization",
                     UsernamePasswordToken.basicAuthHeaderValue(username.value(options),
-                            new SecuredString(password.value(options).toCharArray())));
+                            new SecureString(password.value(options).toCharArray())));
             conn.setRequestProperty("Content-Type", XContentType.JSON.mediaType());
             conn.setDoOutput(true); // we'll be sending a body
             conn.connect();

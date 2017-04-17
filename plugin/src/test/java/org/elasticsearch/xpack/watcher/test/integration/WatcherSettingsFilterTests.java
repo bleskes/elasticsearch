@@ -23,6 +23,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.common.network.NetworkModule;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
@@ -30,7 +31,6 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.transport.Netty3Plugin;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.junit.After;
 
@@ -78,7 +78,7 @@ public class WatcherSettingsFilterTests extends AbstractWatcherIntegrationTestCa
             headers = new Header[] {
                     new BasicHeader(BASIC_AUTH_HEADER,
                             basicAuthHeaderValue(MonitoringIntegTestCase.SecuritySettings.TEST_USERNAME,
-                                    new SecuredString(MonitoringIntegTestCase.SecuritySettings.TEST_PASSWORD.toCharArray())))};
+                                    new SecureString(MonitoringIntegTestCase.SecuritySettings.TEST_PASSWORD.toCharArray())))};
         } else {
             headers = new Header[0];
         }

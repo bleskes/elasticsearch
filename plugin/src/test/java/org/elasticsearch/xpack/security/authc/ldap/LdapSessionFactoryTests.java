@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.security.authc.ldap;
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPURL;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.util.concurrent.UncategorizedExecutionException;
@@ -29,8 +30,6 @@ import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapTestCase;
 import org.elasticsearch.xpack.security.authc.ldap.support.SessionFactory;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
-import org.elasticsearch.xpack.security.authc.support.SecuredStringTests;
 import org.elasticsearch.test.junit.annotations.Network;
 import org.elasticsearch.xpack.ssl.SSLService;
 import org.junit.Before;
@@ -70,7 +69,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", settings, globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
         String user = "Horatio Hornblower";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         ldapServer.setProcessingDelayMillis(500L);
         try {
@@ -100,7 +99,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         RealmConfig config = new RealmConfig("ldap_realm", settings, globalSettings, new Environment(globalSettings), new ThreadContext(globalSettings));
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
         String user = "Horatio Hornblower";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         long start = System.currentTimeMillis();
         LDAPException expected = expectThrows(LDAPException.class, () -> session(sessionFactory, user, userPass));
@@ -124,7 +123,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         LdapSessionFactory sessionFactory = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try (LdapSession ldap = session(sessionFactory, user, userPass)) {
             String dn = ldap.userDn();
@@ -145,7 +144,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
         UncategorizedExecutionException e = expectThrows(UncategorizedExecutionException.class, () -> session(ldapFac, user, userPass));
         assertThat(e.getCause(), instanceOf(ExecutionException.class));
         assertThat(e.getCause().getCause(), instanceOf(LDAPException.class));
@@ -163,7 +162,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try (LdapSession ldap = session(ldapFac, user, userPass)) {
             List<String> groups = groups(ldap);
@@ -180,7 +179,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
-        try (LdapSession ldap = session(ldapFac, user, SecuredStringTests.build("pass"))) {
+        try (LdapSession ldap = session(ldapFac, user, new SecureString("pass"))) {
             List<String> groups = groups(ldap);
             assertThat(groups, contains("cn=HMS Lydia,ou=crews,ou=groups,o=sevenSeas"));
         }
@@ -195,7 +194,7 @@ public class LdapSessionFactoryTests extends LdapTestCase {
         LdapSessionFactory ldapFac = new LdapSessionFactory(config, sslService);
 
         String user = "Horatio Hornblower";
-        SecuredString userPass = SecuredStringTests.build("pass");
+        SecureString userPass = new SecureString("pass");
 
         try (LdapSession ldap = session(ldapFac, user, userPass)) {
             List<String> groups = groups(ldap);

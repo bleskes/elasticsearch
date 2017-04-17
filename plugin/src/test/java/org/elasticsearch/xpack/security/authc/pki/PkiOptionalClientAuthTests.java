@@ -24,6 +24,7 @@ import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.network.NetworkModule;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.test.SecurityIntegTestCase;
@@ -31,7 +32,6 @@ import org.elasticsearch.test.SecuritySettingsSource;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.xpack.TestXPackTransportClient;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.authc.support.UsernamePasswordToken;
 import org.elasticsearch.xpack.ssl.SSLClientAuth;
 import org.junit.BeforeClass;
@@ -100,7 +100,7 @@ public class PkiOptionalClientAuthTests extends SecurityIntegTestCase {
             Response response = restClient.performRequest("GET", "_nodes",
                     new BasicHeader(UsernamePasswordToken.BASIC_AUTH_HEADER,
                             UsernamePasswordToken.basicAuthHeaderValue(SecuritySettingsSource.DEFAULT_USER_NAME,
-                                    new SecuredString(SecuritySettingsSource.DEFAULT_PASSWORD.toCharArray()))));
+                                    new SecureString(SecuritySettingsSource.DEFAULT_PASSWORD.toCharArray()))));
             assertThat(response.getStatusLine().getStatusCode(), is(200));
         }
     }

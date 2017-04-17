@@ -25,6 +25,7 @@ import org.apache.logging.log4j.util.Supplier;
 import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
@@ -33,7 +34,6 @@ import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession.GroupsResolver;
 import org.elasticsearch.xpack.security.authc.ldap.support.SessionFactory;
 import org.elasticsearch.xpack.security.authc.support.CharArrays;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.ssl.SSLService;
 
 import java.text.MessageFormat;
@@ -80,11 +80,11 @@ public class LdapSessionFactory extends SessionFactory {
      * @param username a relative name, Not a distinguished name, that will be inserted into the template.
      */
     @Override
-    public void session(String username, SecuredString password, ActionListener<LdapSession> listener) {
+    public void session(String username, SecureString password, ActionListener<LdapSession> listener) {
         LDAPException lastException = null;
         LDAPConnection connection = null;
         LdapSession ldapSession = null;
-        final byte[] passwordBytes = CharArrays.toUtf8Bytes(password.internalChars());
+        final byte[] passwordBytes = CharArrays.toUtf8Bytes(password.getChars());
         boolean success = false;
         try {
             connection = serverSet.getConnection();

@@ -19,6 +19,7 @@ package org.elasticsearch.xpack;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.license.LicensingClient;
 import org.elasticsearch.license.XPackInfoResponse;
 import org.elasticsearch.xpack.action.XPackInfoAction;
@@ -26,7 +27,6 @@ import org.elasticsearch.xpack.action.XPackInfoRequest;
 import org.elasticsearch.xpack.action.XPackInfoRequestBuilder;
 import org.elasticsearch.xpack.ml.client.MachineLearningClient;
 import org.elasticsearch.xpack.monitoring.client.MonitoringClient;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.security.client.SecurityClient;
 import org.elasticsearch.xpack.watcher.client.WatcherClient;
 
@@ -93,7 +93,7 @@ public class XPackClient {
      * @param passwd    The password of the user. This char array can be cleared after calling this method.
      */
     public XPackClient withAuth(String username, char[] passwd) {
-        return withHeaders(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue(username, new SecuredString(passwd))));
+        return withHeaders(Collections.singletonMap(BASIC_AUTH_HEADER, basicAuthHeaderValue(username, new SecureString(passwd))));
     }
 
     public XPackInfoRequestBuilder prepareInfo() {

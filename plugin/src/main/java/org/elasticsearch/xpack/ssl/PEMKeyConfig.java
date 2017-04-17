@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.ssl;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.env.Environment;
 
 import javax.net.ssl.X509ExtendedKeyManager;
@@ -30,7 +31,6 @@ import java.nio.file.Path;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -59,29 +59,28 @@ class PEMKeyConfig extends KeyConfig {
     @Override
     X509ExtendedKeyManager createKeyManager(@Nullable Environment environment) {
         // password must be non-null for keystore...
-        char[] password = keyPassword == null ? new char[0] : keyPassword.toCharArray();
         try {
             PrivateKey privateKey = readPrivateKey(CertUtils.resolvePath(keyPath, environment));
             Certificate[] certificateChain = CertUtils.readCertificates(Collections.singletonList(certPath), environment);
             // password must be non-null for keystore...
-            return CertUtils.keyManager(certificateChain, privateKey, password);
+            try (SecureString securedKeyPasswordChars = new SecureString(keyPassword == null ? new char[0] : keyPassword.toCharArray())) {
+                return CertUtils.keyManager(certificateChain, privateKey, securedKeyPasswordChars.getChars());
+            }
         } catch (Exception e) {
             throw new ElasticsearchException("failed to initialize a KeyManagerFactory", e);
-        } finally {
-            if (password != null) {
-                Arrays.fill(password, (char) 0);
-            }
         }
     }
 
     private PrivateKey readPrivateKey(Path keyPath) throws Exception {
-        char[] password = keyPassword == null ? null : keyPassword.toCharArray();
-        try (Reader reader = Files.newBufferedReader(keyPath, StandardCharsets.UTF_8)) {
-            return CertUtils.readPrivateKey(reader, () -> password);
-        } finally {
-            if (password != null) {
-                Arrays.fill(password, (char) 0);
-            }
+        try (Reader reader = Files.newBufferedReader(keyPath, StandardCharsets.UTF_8);
+             SecureString secureString = new SecureString(keyPassword == null ? new char[0] : keyPassword.toCharArray())) {
+            return CertUtils.readPrivateKey(reader, () -> {
+                if (keyPassword == null) {
+                    return null;
+                } else {
+                    return secureString.getChars();
+                }
+            });
         }
     }
 

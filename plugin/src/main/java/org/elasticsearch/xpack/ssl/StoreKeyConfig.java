@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.ssl;
 
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.env.Environment;
 
 import javax.net.ssl.X509ExtendedKeyManager;
@@ -66,7 +67,9 @@ class StoreKeyConfig extends KeyConfig {
             KeyStore ks = KeyStore.getInstance("jks");
             assert keyStorePassword != null;
             ks.load(in, keyStorePassword.toCharArray());
-            return CertUtils.keyManager(ks, keyPassword.toCharArray(), keyStoreAlgorithm);
+            try (SecureString keyPasswordSecureString = new SecureString(keyPassword.toCharArray())) {
+                return CertUtils.keyManager(ks, keyPasswordSecureString.getChars(), keyStoreAlgorithm);
+            }
         } catch (Exception e) {
             throw new ElasticsearchException("failed to initialize a KeyManagerFactory", e);
         }

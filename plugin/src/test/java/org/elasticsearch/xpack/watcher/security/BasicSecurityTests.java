@@ -17,9 +17,9 @@
 
 package org.elasticsearch.xpack.watcher.security;
 
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 import org.elasticsearch.xpack.watcher.WatcherState;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.transport.actions.delete.DeleteWatchResponse;
@@ -69,7 +69,7 @@ public class BasicSecurityTests extends AbstractWatcherIntegrationTestCase {
 
     public void testWatcherMonitorRole() throws Exception {
         // stats and get watch apis require at least monitor role:
-        String token = basicAuthHeaderValue("test", new SecuredString("changeme".toCharArray()));
+        String token = basicAuthHeaderValue("test", new SecureString("changeme".toCharArray()));
         try {
             watcherClient().filterWithHeader(Collections.singletonMap("Authorization", token)).prepareWatcherStats()
                     .get();
@@ -87,7 +87,7 @@ public class BasicSecurityTests extends AbstractWatcherIntegrationTestCase {
         }
 
         // stats and get watch are allowed by role monitor:
-        token = basicAuthHeaderValue("monitor", new SecuredString("changeme".toCharArray()));
+        token = basicAuthHeaderValue("monitor", new SecureString("changeme".toCharArray()));
         WatcherStatsResponse statsResponse = watcherClient().filterWithHeader(Collections.singletonMap("Authorization", token))
                 .prepareWatcherStats().get();
         assertThat(statsResponse.getWatcherState(), equalTo(WatcherState.STARTED));
@@ -108,7 +108,7 @@ public class BasicSecurityTests extends AbstractWatcherIntegrationTestCase {
 
     public void testWatcherAdminRole() throws Exception {
         // put, execute and delete watch apis requires watcher admin role:
-        String token = basicAuthHeaderValue("test", new SecuredString("changeme".toCharArray()));
+        String token = basicAuthHeaderValue("test", new SecureString("changeme".toCharArray()));
         try {
             watcherClient().filterWithHeader(Collections.singletonMap("Authorization", token)).preparePutWatch("_id")
                     .setSource(watchBuilder().trigger(schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS))))
@@ -137,7 +137,7 @@ public class BasicSecurityTests extends AbstractWatcherIntegrationTestCase {
         }
 
         // put, execute and delete watch apis are allowed by role admin:
-        token = basicAuthHeaderValue("admin", new SecuredString("changeme".toCharArray()));
+        token = basicAuthHeaderValue("admin", new SecureString("changeme".toCharArray()));
         PutWatchResponse putWatchResponse = watcherClient().filterWithHeader(Collections.singletonMap("Authorization", token))
                 .preparePutWatch("_id")
                 .setSource(watchBuilder().trigger(schedule(interval(5, IntervalSchedule.Interval.Unit.SECONDS))))
@@ -154,7 +154,7 @@ public class BasicSecurityTests extends AbstractWatcherIntegrationTestCase {
         assertThat(deleteWatchResponse.isFound(), is(true));
 
         // stats and get watch are also allowed by role monitor:
-        token = basicAuthHeaderValue("admin", new SecuredString("changeme".toCharArray()));
+        token = basicAuthHeaderValue("admin", new SecureString("changeme".toCharArray()));
         WatcherStatsResponse statsResponse = watcherClient().filterWithHeader(Collections.singletonMap("Authorization", token))
                 .prepareWatcherStats()
                 .get();

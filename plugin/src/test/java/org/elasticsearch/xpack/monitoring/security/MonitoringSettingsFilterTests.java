@@ -21,6 +21,7 @@ import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.common.network.NetworkModule;
+import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.plugins.Plugin;
@@ -28,7 +29,6 @@ import org.elasticsearch.transport.Netty3Plugin;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.elasticsearch.xpack.monitoring.MonitoringSettings;
 import org.elasticsearch.xpack.monitoring.test.MonitoringIntegTestCase;
-import org.elasticsearch.xpack.security.authc.support.SecuredString;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,7 +74,7 @@ public class MonitoringSettingsFilterTests extends MonitoringIntegTestCase {
             headers = new Header[] {
                     new BasicHeader(BASIC_AUTH_HEADER,
                             basicAuthHeaderValue(SecuritySettings.TEST_USERNAME,
-                                    new SecuredString(SecuritySettings.TEST_PASSWORD.toCharArray())))};
+                                    new SecureString(SecuritySettings.TEST_PASSWORD.toCharArray())))};
         } else {
             headers = new Header[0];
         }

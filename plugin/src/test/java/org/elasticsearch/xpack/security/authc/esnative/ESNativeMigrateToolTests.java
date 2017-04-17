@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.security.authc.esnative;
 
-import com.google.common.base.Charsets;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.elasticsearch.cli.MockTerminal;
@@ -28,9 +27,11 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.NativeRealmIntegTestCase;
 import org.elasticsearch.test.SecuritySettingsSource;
 import org.elasticsearch.xpack.security.SecurityTemplateService;
+import org.elasticsearch.xpack.security.authc.support.CharArrays;
 import org.elasticsearch.xpack.security.client.SecurityClient;
 import org.junit.BeforeClass;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -87,7 +88,7 @@ public class ESNativeMigrateToolTests extends NativeRealmIntegTestCase {
 
         MockTerminal t = new MockTerminal();
         String username = nodeClientUsername();
-        String password = new String(nodeClientPassword().utf8Bytes(), Charsets.UTF_8);
+        String password = new String(CharArrays.toUtf8Bytes(nodeClientPassword().getChars()), StandardCharsets.UTF_8);
         String url = getHttpURL();
         ESNativeRealmMigrateTool.MigrateUserOrRoles muor = new ESNativeRealmMigrateTool.MigrateUserOrRoles();
         Settings sslSettings =
@@ -132,7 +133,7 @@ public class ESNativeMigrateToolTests extends NativeRealmIntegTestCase {
 
         MockTerminal t = new MockTerminal();
         String username = nodeClientUsername();
-        String password = new String(nodeClientPassword().utf8Bytes(), Charsets.UTF_8);
+        String password = new String(CharArrays.toUtf8Bytes(nodeClientPassword().getChars()), StandardCharsets.UTF_8);
         String url = getHttpURL();
         ESNativeRealmMigrateTool.MigrateUserOrRoles muor = new ESNativeRealmMigrateTool.MigrateUserOrRoles();
         Settings sslSettings =
