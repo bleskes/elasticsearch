@@ -22,9 +22,9 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.TestThreadPool;
-import org.elasticsearch.xpack.ml.action.CloseJobAction.Response;
 import org.elasticsearch.xpack.monitoring.exporter.ExportException;
 import org.elasticsearch.xpack.monitoring.exporter.Exporters;
 import org.elasticsearch.xpack.monitoring.exporter.MonitoringDoc;
@@ -47,6 +47,7 @@ public class MonitoringServiceTests extends ESTestCase {
 
     TestThreadPool threadPool;
     MonitoringService monitoringService;
+    XPackLicenseState licenseState = mock(XPackLicenseState.class);
     ClusterService clusterService;
     ClusterSettings clusterSettings;
 
@@ -116,20 +117,15 @@ public class MonitoringServiceTests extends ESTestCase {
         Settings settings = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), MonitoringSettings.MIN_INTERVAL).build();
         monitoringService = new MonitoringService(settings, clusterSettings, threadPool, emptySet(), exporter);
 
-        logger.debug("start the monitoring service");
         monitoringService.start();
         assertBusy(() -> assertTrue(monitoringService.isStarted()));
 
-        logger.debug("wait for the monitoring execution to be started");
         assertBusy(() -> assertThat(exporter.getExportsCount(), equalTo(1)));
 
-        logger.debug("cancel current execution to avoid further execution once the latch is unblocked");
         monitoringService.cancelExecution();
 
-        logger.debug("unblock the exporter");
         latch.countDown();
 
-        logger.debug("verify that it hasn't been called more than one");
         assertThat(exporter.getExportsCount(), equalTo(1));
     }
 
@@ -138,7 +134,7 @@ public class MonitoringServiceTests extends ESTestCase {
         private final AtomicInteger exports = new AtomicInteger(0);
 
         CountingExporter() {
-            super(Settings.EMPTY, Collections.emptyMap(), clusterService, threadPool.getThreadContext());
+            super(Settings.EMPTY, Collections.emptyMap(), clusterService, licenseState, threadPool.getThreadContext());
         }
 
         @Override

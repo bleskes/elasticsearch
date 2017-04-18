@@ -20,6 +20,7 @@ package org.elasticsearch.xpack.monitoring.exporter;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
@@ -27,6 +28,7 @@ import org.elasticsearch.common.settings.SettingsException;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.monitoring.MonitoredSystem;
@@ -59,6 +61,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -66,6 +69,8 @@ public class ExportersTests extends ESTestCase {
     private Exporters exporters;
     private Map<String, Exporter.Factory> factories;
     private ClusterService clusterService;
+    private ClusterState state;
+    private final XPackLicenseState licenseState = mock(XPackLicenseState.class);
     private ClusterSettings clusterSettings;
     private ThreadContext threadContext;
 
@@ -81,14 +86,17 @@ public class ExportersTests extends ESTestCase {
         InternalClient internalClient =
                 new InternalClient(Settings.EMPTY, threadPool, client, mock(CryptoService.class));
         clusterService = mock(ClusterService.class);
+        // default state.version() will be 0, which is "valid"
+        state = mock(ClusterState.class);
         clusterSettings = new ClusterSettings(Settings.EMPTY,
                 new HashSet<>(Arrays.asList(MonitoringSettings.INTERVAL, MonitoringSettings.EXPORTERS_SETTINGS)));
         when(clusterService.getClusterSettings()).thenReturn(clusterSettings);
+        when(clusterService.state()).thenReturn(state);
 
         // we always need to have the local exporter as it serves as the default one
-        factories.put(LocalExporter.TYPE, config -> new LocalExporter(config, internalClient, clusterService, mock(CleanerService.class)));
+        factories.put(LocalExporter.TYPE, config -> new LocalExporter(config, internalClient, mock(CleanerService.class)));
 
-        exporters = new Exporters(Settings.EMPTY, factories, clusterService, threadContext);
+        exporters = new Exporters(Settings.EMPTY, factories, clusterService, licenseState, threadContext);
     }
 
     public void testInitExportersDefault() throws Exception {
@@ -189,7 +197,7 @@ public class ExportersTests extends ESTestCase {
         clusterSettings = new ClusterSettings(nodeSettings, new HashSet<>(Arrays.asList(MonitoringSettings.EXPORTERS_SETTINGS)));
         when(clusterService.getClusterSettings()).thenReturn(clusterSettings);
 
-        exporters = new Exporters(nodeSettings, factories, clusterService, threadContext) {
+        exporters = new Exporters(nodeSettings, factories, clusterService, licenseState, threadContext) {
             @Override
             Map<String, Exporter> initExporters(Settings settings) {
                 settingsHolder.set(settings);
@@ -226,6 +234,21 @@ public class ExportersTests extends ESTestCase {
         assertThat(json, containsString("\"processors\":[]"));
     }
 
+    public void testExporterBlocksOnClusterState() {
+        when(state.version()).thenReturn(ClusterState.UNKNOWN_VERSION);
+
+        final int nbExporters = randomIntBetween(1, 5);
+        final Settings.Builder settings = Settings.builder();
+
+        for (int i = 0; i < nbExporters; i++) {
+            settings.put("xpack.monitoring.exporters._name" + String.valueOf(i) + ".type", "record");
+        }
+
+        final Exporters exporters = new Exporters(settings.build(), factories, clusterService, licenseState, threadContext);
+
+        assertThat(exporters.openBulk(), nullValue());
+    }
+
     /**
      * This test creates N threads that export a random number of document
      * using a {@link Exporters} instance.
@@ -233,7 +256,6 @@ public class ExportersTests extends ESTestCase {
     public void testConcurrentExports() throws Exception {
         final int nbExporters = randomIntBetween(1, 5);
 
-        logger.info("--> creating {} exporters", nbExporters);
         Settings.Builder settings = Settings.builder();
         for (int i = 0; i < nbExporters; i++) {
             settings.put("xpack.monitoring.exporters._name" + String.valueOf(i) + ".type", "record");
@@ -241,7 +263,7 @@ public class ExportersTests extends ESTestCase {
 
         factories.put("record", (s) -> new CountingExporter(s, threadContext));
 
-        Exporters exporters = new Exporters(settings.build(), factories, clusterService, threadContext);
+        Exporters exporters = new Exporters(settings.build(), factories, clusterService, licenseState, threadContext);
         exporters.start();
 
         final Thread[] threads = new Thread[3 + randomInt(7)];
@@ -250,7 +272,6 @@ public class ExportersTests extends ESTestCase {
 
         int total = 0;
 
-        logger.info("--> exporting documents using {} threads", threads.length);
         for (int i = 0; i < threads.length; i++) {
             int nbDocs = randomIntBetween(10, 50);
             total += nbDocs;
@@ -258,11 +279,9 @@ public class ExportersTests extends ESTestCase {
             final int threadNum = i;
             final int threadDocs = nbDocs;
 
-            logger.debug("--> exporting thread [{}] exports {} documents", threadNum, threadDocs);
             threads[i] = new Thread(new AbstractRunnable() {
                 @Override
                 public void onFailure(Exception e) {
-                    logger.error("unexpected error in exporting thread", e);
                     exceptions.add(e);
                 }
 
@@ -284,7 +303,6 @@ public class ExportersTests extends ESTestCase {
             threads[i].start();
         }
 
-        logger.info("--> waiting for threads to exports {} documents", total);
         for (Thread thread : threads) {
             thread.join();
         }
