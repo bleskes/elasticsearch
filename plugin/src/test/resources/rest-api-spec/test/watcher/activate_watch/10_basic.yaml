@@ -56,6 +56,7 @@
   - do:
       search:
         index: .watches
+        body: { "query": { "term": { "_id": "my_watch" } } }
   - match: { hits.total: 1 }
   - match: { hits.hits.0._source._status.state.active: false }
 
@@ -75,6 +76,7 @@
   - do:
       search:
         index: .watches
+        body: { "query": { "term": { "_id": "my_watch" } } }
   - match: { hits.total: 1 }
   - match: { hits.hits.0._source._status.state.active: true }
 
