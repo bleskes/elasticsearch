@@ -25,8 +25,6 @@ import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 import org.junit.After;
 import org.junit.Before;
 
-import java.io.IOException;
-
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
@@ -37,7 +35,7 @@ public abstract class SmokeTestWatchesWithMustacheClientYamlTestSuiteTestCase ex
     }
 
     @ParametersFactory
-    public static Iterable<Object[]> parameters() throws IOException {
+    public static Iterable<Object[]> parameters() throws Exception {
         return ESClientYamlSuiteTestCase.createParameters();
     }
 

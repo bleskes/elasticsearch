@@ -23,8 +23,6 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import org.elasticsearch.test.rest.yaml.ClientYamlTestCandidate;
 import org.elasticsearch.test.rest.yaml.ESClientYamlSuiteTestCase;
 
-import java.io.IOException;
-
 /** Runs rest tests against external cluster */
 public class WatcherWithMustacheIT extends SmokeTestWatchesWithMustacheClientYamlTestSuiteTestCase {
 
@@ -33,7 +31,7 @@ public class WatcherWithMustacheIT extends SmokeTestWatchesWithMustacheClientYam
     }
 
     @ParametersFactory
-    public static Iterable<Object[]> parameters() throws IOException {
+    public static Iterable<Object[]> parameters() throws Exception {
         return ESClientYamlSuiteTestCase.createParameters();
     }
 
