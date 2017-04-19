@@ -44,7 +44,7 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
     }
 
     public void testMiniFarequote() throws Exception {
-        String jobId = "foo1";
+        String jobId = "mini-farequote-job";
         createFarequoteJob(jobId);
 
         Response response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_open");
@@ -119,7 +119,7 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
         // Ensure all data is searchable
         client().performRequest("post", "_refresh");
 
-        String jobId = "foo2";
+        String jobId = "mini-farequote-with-data-feeder-job";
         createFarequoteJob(jobId);
         String datafeedId = "bar";
         createDatafeed(datafeedId, jobId);
@@ -165,7 +165,7 @@ public class MlBasicMultiNodeIT extends ESRestTestCase {
     }
 
     public void testMiniFarequoteReopen() throws Exception {
-        String jobId = "foo1_again";
+        String jobId = "mini-farequote-reopen";
         createFarequoteJob(jobId);
 
         Response response = client().performRequest("post", MachineLearning.BASE_PATH + "anomaly_detectors/" + jobId + "/_open");

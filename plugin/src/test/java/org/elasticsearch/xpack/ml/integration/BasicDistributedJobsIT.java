@@ -56,7 +56,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         internalCluster().ensureAtLeastNumDataNodes(4);
         ensureStableCluster(4);
 
-        Job.Builder job = createJob("job_id");
+        Job.Builder job = createJob("fail-over-basics-job");
         PutJobAction.Request putJobRequest = new PutJobAction.Request(job);
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).actionGet();
         assertTrue(putJobResponse.isAcknowledged());
@@ -92,7 +92,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         internalCluster().ensureAtLeastNumDataNodes(4);
         ensureStableCluster(4);
 
-        Job.Builder job = createScheduledJob("job_id");
+        Job.Builder job = createScheduledJob("fail-over-basics_with-data-feeder-job");
         PutJobAction.Request putJobRequest = new PutJobAction.Request(job);
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).actionGet();
         assertTrue(putJobResponse.isAcknowledged());
@@ -166,7 +166,8 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         }
         ensureStableCluster(3);
 
-        Job.Builder job = createJob("job_id");
+        String jobId = "dedicated-ml-node-job";
+        Job.Builder job = createJob(jobId);
         PutJobAction.Request putJobRequest = new PutJobAction.Request(job);
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).actionGet();
         assertTrue(putJobResponse.isAcknowledged());
@@ -176,7 +177,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         assertBusy(() -> {
             ClusterState clusterState = client().admin().cluster().prepareState().get().getState();
             PersistentTasksCustomMetaData tasks = clusterState.getMetaData().custom(PersistentTasksCustomMetaData.TYPE);
-            PersistentTask task = tasks.getTask(MlMetadata.jobTaskId("job_id"));
+            PersistentTask task = tasks.getTask(MlMetadata.jobTaskId(jobId));
 
             DiscoveryNode node = clusterState.nodes().resolveNode(task.getExecutorNode());
             Map<String, String> expectedNodeAttr = new HashMap<>();
@@ -193,7 +194,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         assertBusy(() -> {
             // job should get and remain in a failed state and
             // the status remains to be opened as from ml we didn't had the chance to set the status to failed:
-            assertJobTask("job_id", JobState.OPENED, false);
+            assertJobTask(jobId, JobState.OPENED, false);
         });
 
         logger.info("start ml node");
@@ -201,7 +202,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         ensureStableCluster(3);
         assertBusy(() -> {
             // job should be re-opened:
-            assertJobTask("job_id", JobState.OPENED, true);
+            assertJobTask(jobId, JobState.OPENED, true);
         });
     }
 
@@ -331,7 +332,8 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
                 .put(MachineLearning.ML_ENABLED.getKey(), true));
         ensureStableCluster(2);
 
-        Job.Builder job = createFareQuoteJob("job_id");
+        String jobId = "ml-indices-not-available-job";
+        Job.Builder job = createFareQuoteJob(jobId);
         PutJobAction.Request putJobRequest = new PutJobAction.Request(job);
         PutJobAction.Response putJobResponse = client().execute(PutJobAction.INSTANCE, putJobRequest).actionGet();
         assertTrue(putJobResponse.isAcknowledged());
@@ -339,7 +341,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         OpenJobAction.Request openJobRequest = new OpenJobAction.Request(job.getId());
         client().execute(OpenJobAction.INSTANCE, openJobRequest).actionGet();
 
-        PostDataAction.Request postDataRequest = new PostDataAction.Request("job_id");
+        PostDataAction.Request postDataRequest = new PostDataAction.Request(jobId);
         postDataRequest.setContent(new BytesArray(
             "{\"airline\":\"AAL\",\"responsetime\":\"132.2046\",\"sourcetype\":\"farequote\",\"time\":\"1403481600\"}\n" +
             "{\"airline\":\"JZA\",\"responsetime\":\"990.4628\",\"sourcetype\":\"farequote\",\"time\":\"1403481700\"}"
@@ -347,7 +349,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         PostDataAction.Response response = client().execute(PostDataAction.INSTANCE, postDataRequest).actionGet();
         assertEquals(2, response.getDataCounts().getProcessedRecordCount());
 
-        CloseJobAction.Request closeJobRequest = new CloseJobAction.Request("job_id");
+        CloseJobAction.Request closeJobRequest = new CloseJobAction.Request(jobId);
         client().execute(CloseJobAction.INSTANCE, closeJobRequest).actionGet();
         assertBusy(() -> {
             ClusterState clusterState = client().admin().cluster().prepareState().get().getState();
@@ -371,7 +373,7 @@ public class BasicDistributedJobsIT extends BaseMlIntegTestCase {
         ensureStableCluster(2, nonMlNode);
         ensureYellow(); // at least the primary shards of the indices a job uses should be started
         client().execute(OpenJobAction.INSTANCE, openJobRequest).actionGet();
-        assertBusy(() -> assertJobTask("job_id", JobState.OPENED, true));
+        assertBusy(() -> assertJobTask(jobId, JobState.OPENED, true));
     }
 
     private void assertJobTask(String jobId, JobState expectedState, boolean hasExecutorNode) {
