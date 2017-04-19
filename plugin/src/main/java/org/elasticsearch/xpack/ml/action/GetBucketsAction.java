@@ -74,7 +74,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
 
         public static final ParseField EXPAND = new ParseField("expand");
         public static final ParseField INCLUDE_INTERIM = new ParseField("include_interim");
-        public static final ParseField PARTITION_VALUE = new ParseField("partition_value");
         public static final ParseField START = new ParseField("start");
         public static final ParseField END = new ParseField("end");
         public static final ParseField ANOMALY_SCORE = new ParseField("anomaly_score");
@@ -85,16 +84,12 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         static {
             PARSER.declareString((request, jobId) -> request.jobId = jobId, Job.ID);
             PARSER.declareString(Request::setTimestamp, Result.TIMESTAMP);
-            PARSER.declareString(Request::setPartitionValue, PARTITION_VALUE);
             PARSER.declareBoolean(Request::setExpand, EXPAND);
             PARSER.declareBoolean(Request::setIncludeInterim, INCLUDE_INTERIM);
             PARSER.declareStringOrNull(Request::setStart, START);
             PARSER.declareStringOrNull(Request::setEnd, END);
-            PARSER.declareBoolean(Request::setExpand, EXPAND);
-            PARSER.declareBoolean(Request::setIncludeInterim, INCLUDE_INTERIM);
             PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
             PARSER.declareDouble(Request::setAnomalyScore, ANOMALY_SCORE);
-            PARSER.declareString(Request::setPartitionValue, PARTITION_VALUE);
         }
 
         public static Request parseRequest(String jobId, XContentParser parser) {
@@ -109,7 +104,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         private String timestamp;
         private boolean expand = false;
         private boolean includeInterim = false;
-        private String partitionValue;
         private String start;
         private String end;
         private PageParams pageParams;
@@ -156,18 +150,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
 
         public void setIncludeInterim(boolean includeInterim) {
             this.includeInterim = includeInterim;
-        }
-
-        public String getPartitionValue() {
-            return partitionValue;
-        }
-
-        public void setPartitionValue(String partitionValue) {
-            if (timestamp != null) {
-                throw new IllegalArgumentException("Param [" + PARTITION_VALUE.getPreferredName() + "] is incompatible with ["
-                        + TIMESTAMP.getPreferredName() + "].");
-            }
-            this.partitionValue = partitionValue;
         }
 
         public String getStart() {
@@ -230,7 +212,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             timestamp = in.readOptionalString();
             expand = in.readBoolean();
             includeInterim = in.readBoolean();
-            partitionValue = in.readOptionalString();
             start = in.readOptionalString();
             end = in.readOptionalString();
             anomalyScore = in.readOptionalDouble();
@@ -244,7 +225,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             out.writeOptionalString(timestamp);
             out.writeBoolean(expand);
             out.writeBoolean(includeInterim);
-            out.writeOptionalString(partitionValue);
             out.writeOptionalString(start);
             out.writeOptionalString(end);
             out.writeOptionalDouble(anomalyScore);
@@ -260,9 +240,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             }
             builder.field(EXPAND.getPreferredName(), expand);
             builder.field(INCLUDE_INTERIM.getPreferredName(), includeInterim);
-            if (partitionValue != null) {
-                builder.field(PARTITION_VALUE.getPreferredName(), partitionValue);
-            }
             if (start != null) {
                 builder.field(START.getPreferredName(), start);
             }
@@ -281,8 +258,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId, timestamp, partitionValue, expand, includeInterim,
-                    anomalyScore, pageParams, start, end);
+            return Objects.hash(jobId, timestamp, expand, includeInterim, anomalyScore, pageParams, start, end);
         }
 
         @Override
@@ -296,7 +272,6 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             Request other = (Request) obj;
             return Objects.equals(jobId, other.jobId) &&
                     Objects.equals(timestamp, other.timestamp) &&
-                    Objects.equals(partitionValue, other.partitionValue) &&
                     Objects.equals(expand, other.expand) &&
                     Objects.equals(includeInterim, other.includeInterim) &&
                     Objects.equals(anomalyScore, other.anomalyScore) &&
@@ -396,8 +371,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                             .includeInterim(request.includeInterim)
                             .start(request.start)
                             .end(request.end)
-                            .anomalyScoreThreshold(request.anomalyScore)
-                            .partitionValue(request.partitionValue);
+                            .anomalyScoreThreshold(request.anomalyScore);
 
             if (request.pageParams != null) {
                 query.from(request.pageParams.getFrom())
