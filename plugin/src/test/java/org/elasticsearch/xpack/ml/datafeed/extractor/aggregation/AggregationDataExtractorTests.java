@@ -175,9 +175,7 @@ public class AggregationDataExtractorTests extends ESTestCase {
 
     public void testExtractionGivenResponseHasEmptyAggs() throws IOException {
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2000L);
-
-        Aggregations emptyAggs = mock(Aggregations.class);
-        when(emptyAggs.asList()).thenReturn(Collections.emptyList());
+        Aggregations emptyAggs = AggregationTestUtils.createAggs(Collections.emptyList());
         SearchResponse response = createSearchResponse(emptyAggs);
         extractor.setNextResponse(response);
 
@@ -192,9 +190,8 @@ public class AggregationDataExtractorTests extends ESTestCase {
         TestDataExtractor extractor = new TestDataExtractor(1000L, 2000L);
 
         Terms termsAgg = mock(Terms.class);
-        Aggregations emptyAggs = mock(Aggregations.class);
-        when(emptyAggs.asList()).thenReturn(Collections.singletonList(termsAgg));
-        SearchResponse response = createSearchResponse(emptyAggs);
+        Aggregations aggs = AggregationTestUtils.createAggs(Collections.singletonList(termsAgg));
+        SearchResponse response = createSearchResponse(aggs);
         extractor.setNextResponse(response);
 
         assertThat(extractor.hasNext(), is(true));
@@ -210,13 +207,12 @@ public class AggregationDataExtractorTests extends ESTestCase {
         Histogram histogram2 = mock(Histogram.class);
         when(histogram2.getName()).thenReturn("hist_2");
 
-        Aggregations emptyAggs = mock(Aggregations.class);
-        when(emptyAggs.asList()).thenReturn(Arrays.asList(histogram1, histogram2));
-        SearchResponse response = createSearchResponse(emptyAggs);
+        Aggregations aggs = AggregationTestUtils.createAggs(Arrays.asList(histogram1, histogram2));
+        SearchResponse response = createSearchResponse(aggs);
         extractor.setNextResponse(response);
 
         assertThat(extractor.hasNext(), is(true));
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> extractor.next());
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, extractor::next);
         assertThat(e.getMessage(), containsString("Multiple top level aggregations not supported; found: [hist_1, hist_2]"));
     }
 
@@ -292,8 +288,7 @@ public class AggregationDataExtractorTests extends ESTestCase {
         when(histogram.getName()).thenReturn(histogramName);
         when((List<Histogram.Bucket>)histogram.getBuckets()).thenReturn(histogramBuckets);
 
-        Aggregations searchAggs = mock(Aggregations.class);
-        when(searchAggs.asList()).thenReturn(Collections.singletonList(histogram));
+        Aggregations searchAggs = AggregationTestUtils.createAggs(Collections.singletonList(histogram));
         return createSearchResponse(searchAggs);
     }
 
