@@ -92,4 +92,19 @@ public class WatchStatusTests extends ESTestCase {
         assertThat(copyW1.hashCode(), is(w1.hashCode()));
         assertThat(copyW2.hashCode(), is(w2.hashCode()));
     }
+
+    public void testAckStatusIsResetOnUnmetCondition() {
+        HashMap<String, ActionStatus> myMap = new HashMap<>();
+        ActionStatus actionStatus = new ActionStatus(now());
+        myMap.put("foo", actionStatus);
+
+        actionStatus.update(now(), new LoggingAction.Result.Success("foo"));
+        actionStatus.onAck(now());
+        assertThat(actionStatus.ackStatus().state(), is(State.ACKED));
+
+        WatchStatus status = new WatchStatus(now(), myMap);
+        status.onCheck(false, now());
+
+        assertThat(status.actionStatus("foo").ackStatus().state(), is(State.AWAITS_SUCCESSFUL_EXECUTION));
+    }
 }

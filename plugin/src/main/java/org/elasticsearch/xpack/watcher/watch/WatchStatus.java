@@ -154,6 +154,10 @@ public class WatchStatus implements ToXContentObject, Streamable {
         dirty = true;
         if (metCondition) {
             lastMetCondition = timestamp;
+        } else {
+            for (ActionStatus status : actions.values()) {
+                status.resetAckStatus(timestamp);
+            }
         }
     }
 
