@@ -14,22 +14,25 @@
  */
 package org.elasticsearch.xpack.ml.integration;
 
+import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.admin.cluster.node.tasks.list.ListTasksAction;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
+import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.rest.ESRestTestCase;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/*
- * NOTE: a copy if this file resides in :x-pack-elasticsearch:qa:smoke-test-ml-with-security
- *
- * Therefore any changes here, have to be transfered there, too.
- * (Or eventually fix it by introducing a common test infrastructure package)
- */
+import static org.junit.Assert.assertEquals;
+
 
 public class MlRestTestStateCleaner {
 
@@ -43,9 +46,41 @@ public class MlRestTestStateCleaner {
         this.testCase = testCase;
     }
 
-    public void clearMlMetadata() throws IOException {
+    public void clearMlMetadata() throws Exception {
         deleteAllDatafeeds();
         deleteAllJobs();
+        waitForPendingTasks();
+        deleteDotML();
+    }
+
+    private void waitForPendingTasks() throws Exception {
+        ESTestCase.assertBusy(() -> {
+            try {
+                Response response = adminClient.performRequest("GET", "/_cat/tasks",
+                        Collections.singletonMap("detailed", "true"));
+                // Check to see if there are tasks still active. We exclude the
+                // list tasks
+                // actions tasks form this otherwise we will always fail
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    try (BufferedReader responseReader = new BufferedReader(
+                            new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8))) {
+                        int activeTasks = 0;
+                        String line;
+                        StringBuilder tasksListString = new StringBuilder();
+                        while ((line = responseReader.readLine()) != null) {
+                            if (line.startsWith(ListTasksAction.NAME) == false) {
+                                activeTasks++;
+                                tasksListString.append(line);
+                                tasksListString.append('\n');
+                            }
+                        }
+                        assertEquals(activeTasks + " active tasks found:\n" + tasksListString, 0, activeTasks);
+                    }
+                }
+            } catch (IOException e) {
+                throw new AssertionError("Error getting active tasks list", e);
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -124,6 +159,13 @@ public class MlRestTestStateCleaner {
             if (statusCode != 200) {
                 logger.error("Got status code " + statusCode + " when deleting job " + jobId);
             }
+        }
+    }
+
+    private void deleteDotML() throws IOException {
+        int statusCode = adminClient.performRequest("DELETE",  ".ml-*?ignore_unavailable=true").getStatusLine().getStatusCode();
+        if (statusCode != 200) {
+            logger.error("Got status code " + statusCode + " when deleting .ml-* indexes");
         }
     }
 }

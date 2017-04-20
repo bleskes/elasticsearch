@@ -49,49 +49,8 @@ public class MlWithSecurityIT extends ESClientYamlSuiteTestCase {
     private static final String TEST_ADMIN_PASSWORD = "changeme";
 
     @After
-    public void clearMlState() throws IOException, InterruptedException {
+    public void clearMlState() throws Exception {
         new MlRestTestStateCleaner(logger, adminClient(), this).clearMlMetadata();
-        waitForPendingTasks();
-    }
-
-    private void waitForPendingTasks() throws InterruptedException {
-        AtomicReference<IOException> exceptionHolder = new AtomicReference<>();
-        Map<String, String> headers = Collections.singletonMap("Authorization",
-                basicAuthHeaderValue(TEST_ADMIN_USERNAME, new SecureString(TEST_ADMIN_PASSWORD.toCharArray())));
-        awaitBusy(() -> {
-            try {
-                ClientYamlTestResponse response = getAdminExecutionContext().callApi("cat.tasks",
-                        Collections.emptyMap(), Collections.emptyList(), headers);
-                // Check to see if there are tasks still active. We exclude the list tasks
-                // actions tasks form this otherwise we will always fail
-                if (response.getStatusCode() == HttpStatus.SC_OK) {
-                    String tasksListString = response.getBodyAsString();
-                    String[] tasksLines = tasksListString.split("\n");
-                    int activeTasks = 0;
-                    for (String line : tasksLines) {
-                        if (line.startsWith(ListTasksAction.NAME) == false) {
-                            activeTasks++;
-                        }
-                    }
-                    if (activeTasks == 0) {
-                        exceptionHolder.set(null);
-                        return true;
-                    }
-                    logger.info(activeTasks
-                            + " active tasks found, waiting for them to complete:\n"
-                            + tasksListString);
-                }
-            } catch (IOException e) {
-                exceptionHolder.set(e);
-            }
-            return false;
-        }, 10, TimeUnit.SECONDS);
-
-        IOException exception = exceptionHolder.get();
-        if (exception != null) {
-            throw new IllegalStateException("Exception when waiting for pending tasks to complete",
-                    exception);
-        }
     }
 
     public MlWithSecurityIT(@Name("yaml") ClientYamlTestCandidate testCandidate) {
