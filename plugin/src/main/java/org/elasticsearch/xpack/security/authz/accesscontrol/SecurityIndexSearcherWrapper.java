@@ -70,6 +70,7 @@ import org.elasticsearch.index.shard.IndexSearcherWrapper;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.index.shard.ShardUtils;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptContext;
@@ -291,7 +292,8 @@ public class SecurityIndexSearcherWrapper extends IndexSearcherWrapper {
                 params.put("_user", userModel);
                 // Always enforce mustache script lang:
                 script = new Script(script.getType(), "mustache", script.getIdOrCode(), script.getOptions(), params);
-                ExecutableScript executable = scriptService.executable(script, ScriptContext.Standard.SEARCH);
+                CompiledScript compiledScript = scriptService.compile(script, ScriptContext.Standard.SEARCH);
+                ExecutableScript executable = scriptService.executable(compiledScript, script.getParams());
                 return (BytesReference) executable.run();
             } else {
                 return querySource;
