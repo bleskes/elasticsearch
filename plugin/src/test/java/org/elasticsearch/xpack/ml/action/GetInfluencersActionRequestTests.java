@@ -38,7 +38,7 @@ public class GetInfluencersActionRequestTests extends AbstractStreamableXContent
             request.setEnd(end);
         }
         if (randomBoolean()) {
-            request.setAnomalyScore(randomDouble());
+            request.setInfluencerScore(randomDouble());
         }
         if (randomBoolean()) {
             request.setExcludeInterim(randomBoolean());

@@ -56,8 +56,8 @@ public final class InfluencersQueryBuilder {
         return this;
     }
 
-    public InfluencersQueryBuilder anomalyScoreThreshold(Double anomalyScoreFilter) {
-        influencersQuery.anomalyScoreFilter = anomalyScoreFilter;
+    public InfluencersQueryBuilder influencerScoreThreshold(Double influencerScoreFilter) {
+        influencersQuery.influencerScoreFilter = influencerScoreFilter;
         return this;
     }
 
@@ -100,7 +100,7 @@ public final class InfluencersQueryBuilder {
         private int from = 0;
         private int size = DEFAULT_SIZE;
         private boolean includeInterim = false;
-        private double anomalyScoreFilter = 0.0d;
+        private double influencerScoreFilter = 0.0d;
         private String start;
         private String end;
         private String sortField = Influencer.INFLUENCER_SCORE.getPreferredName();
@@ -118,8 +118,8 @@ public final class InfluencersQueryBuilder {
             return includeInterim;
         }
 
-        public double getAnomalyScoreFilter() {
-            return anomalyScoreFilter;
+        public double getInfluencerScoreFilter() {
+            return influencerScoreFilter;
         }
 
         public String getStart() {
@@ -140,7 +140,7 @@ public final class InfluencersQueryBuilder {
 
         @Override
         public int hashCode() {
-            return Objects.hash(from, size, includeInterim, anomalyScoreFilter, start, end, sortField, sortDescending);
+            return Objects.hash(from, size, includeInterim, influencerScoreFilter, start, end, sortField, sortDescending);
         }
 
 
@@ -162,7 +162,7 @@ public final class InfluencersQueryBuilder {
                     Objects.equals(includeInterim, other.includeInterim) &&
                     Objects.equals(start, other.start) &&
                     Objects.equals(end, other.end) &&
-                    Objects.equals(anomalyScoreFilter, other.anomalyScoreFilter) &&
+                    Objects.equals(influencerScoreFilter, other.influencerScoreFilter) &&
                     Objects.equals(sortField, other.sortField) &&
                     this.sortDescending == other.sortDescending;
         }
