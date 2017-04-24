@@ -16,7 +16,6 @@ package org.elasticsearch.xpack.ml.integration;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
 import org.elasticsearch.xpack.ml.job.config.DataDescription;
@@ -26,7 +25,6 @@ import org.elasticsearch.xpack.ml.job.persistence.AnomalyDetectorsIndex;
 import org.elasticsearch.xpack.ml.job.results.AnomalyRecord;
 import org.junit.After;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -116,10 +114,6 @@ public class InterimResultsDeletedAfterReopeningJobIT extends MlNativeAutodetect
         record.put("by_field", byFieldValue);
         record.put("value", value);
         return record;
-    }
-
-    private static String createJsonRecord(Map<String, Object> keyValueMap) throws IOException {
-        return JsonXContent.contentBuilder().map(keyValueMap).string() + "\n";
     }
 
     private void assertNoInterimResults(String jobId) {
