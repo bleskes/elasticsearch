@@ -23,6 +23,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteAction;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
@@ -165,9 +166,12 @@ public class JobDataDeleter {
     }
 
     /**
-     * Commit the deletions without enforcing the removal of data from disk
+     * Commit the deletions without enforcing the removal of data from disk.
+     * @param listener Response listener
+     * @param refresh If true a refresh is forced with request policy
+     * {@link WriteRequest.RefreshPolicy#IMMEDIATE} else the default
      */
-    public void commit(ActionListener<BulkResponse> listener) {
+    public void commit(ActionListener<BulkResponse> listener, boolean refresh) {
         if (bulkRequestBuilder.numberOfActions() == 0) {
             listener.onResponse(new BulkResponse(new BulkItemResponse[0], 0L));
             return;
@@ -177,6 +181,9 @@ public class JobDataDeleter {
         LOGGER.log(logLevel, "Requesting deletion of {} results, {} model snapshots and {} model state documents",
                 deletedResultCount, deletedModelSnapshotCount, deletedModelStateCount);
 
+        if (refresh) {
+            bulkRequestBuilder.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        }
         try {
             bulkRequestBuilder.execute(listener);
         } catch (Exception e) {
@@ -185,9 +192,9 @@ public class JobDataDeleter {
     }
 
     /**
-     * Blocking version of {@linkplain #commit(ActionListener)}
+     * Blocking version of {@linkplain #commit(ActionListener, boolean)}
      */
-    public void commit() {
+    public void commit(boolean refresh) {
         if (bulkRequestBuilder.numberOfActions() == 0) {
             return;
         }
@@ -195,7 +202,9 @@ public class JobDataDeleter {
         Level logLevel = quiet ? Level.DEBUG : Level.INFO;
         LOGGER.log(logLevel, "Requesting deletion of {} results, {} model snapshots and {} model state documents",
                 deletedResultCount, deletedModelSnapshotCount, deletedModelStateCount);
-
+        if (refresh) {
+            bulkRequestBuilder.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        }
         BulkResponse response = bulkRequestBuilder.get();
         if (response.hasFailures()) {
             LOGGER.debug("Bulk request has failures. {}", response.buildFailureMessage());
