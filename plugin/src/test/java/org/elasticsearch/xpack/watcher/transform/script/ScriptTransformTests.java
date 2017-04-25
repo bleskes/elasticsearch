@@ -17,7 +17,6 @@
 
 package org.elasticsearch.xpack.watcher.transform.script;
 
-import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -28,7 +27,6 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptException;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.template.CompiledTemplate;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -185,7 +183,7 @@ public class ScriptTransformTests extends ESTestCase {
         String errorMessage = "expected error message";
         ScriptException scriptException = new ScriptException(errorMessage, new RuntimeException("foo"),
                 Collections.emptyList(), "whatever", "whatever");
-        when(scriptService.compileTemplate(anyObject(), eq(Watcher.SCRIPT_CONTEXT))).thenThrow(scriptException);
+        when(scriptService.compile(anyObject(), eq(Watcher.SCRIPT_CONTEXT))).thenThrow(scriptException);
 
         ScriptTransformFactory transformFactory = new ScriptTransformFactory(Settings.builder().build(), scriptService);
         ScriptType scriptType = randomFrom(ScriptType.values());
