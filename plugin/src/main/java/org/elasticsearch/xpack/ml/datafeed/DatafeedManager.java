@@ -46,7 +46,6 @@ import org.elasticsearch.xpack.persistent.PersistentTasksService;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -70,7 +69,8 @@ public class DatafeedManager extends AbstractComponent {
     private final ThreadPool threadPool;
     private final Supplier<Long> currentTimeSupplier;
     private final Auditor auditor;
-    private final ConcurrentMap<String, Holder> runningDatafeeds = new ConcurrentHashMap<>();
+    // Use allocationId as key instead of datafeed id
+    private final ConcurrentMap<Long, Holder> runningDatafeeds = new ConcurrentHashMap<>();
 
     public DatafeedManager(ThreadPool threadPool, Client client, ClusterService clusterService, JobProvider jobProvider,
                            Supplier<Long> currentTimeSupplier, Auditor auditor, PersistentTasksService persistentTasksService) {
@@ -102,7 +102,7 @@ public class DatafeedManager extends AbstractComponent {
                 latestRecordTimeMs = dataCounts.getLatestRecordTimeStamp().getTime();
             }
             Holder holder = createJobDatafeed(datafeed, job, latestFinalBucketEndMs, latestRecordTimeMs, handler, task);
-            runningDatafeeds.put(datafeedId, holder);
+            runningDatafeeds.put(task.getAllocationId(), holder);
             task.updatePersistentStatus(DatafeedState.STARTED, new ActionListener<PersistentTask<?>>() {
                 @Override
                 public void onResponse(PersistentTask<?> persistentTask) {
@@ -117,8 +117,9 @@ public class DatafeedManager extends AbstractComponent {
         }, handler);
     }
 
-    public void stopDatafeed(String datafeedId, String reason, TimeValue timeout) {
-        Holder holder = runningDatafeeds.remove(datafeedId);
+    public void stopDatafeed(StartDatafeedAction.DatafeedTask task, String reason, TimeValue timeout) {
+        logger.info("[{}] attempt to stop datafeed [{}] [{}]", reason, task.getDatafeedId(), task.getAllocationId());
+        Holder holder = runningDatafeeds.remove(task.getAllocationId());
         if (holder != null) {
             holder.stop(reason, timeout, null);
         }
@@ -130,8 +131,8 @@ public class DatafeedManager extends AbstractComponent {
             logger.info("Closing [{}] datafeeds, because [{}]", numDatafeeds, reason);
         }
 
-        for (Map.Entry<String, Holder> entry : runningDatafeeds.entrySet()) {
-            entry.getValue().stop(reason, TimeValue.timeValueSeconds(20), null);
+        for (Holder holder : runningDatafeeds.values()) {
+            holder.stop(reason, TimeValue.timeValueSeconds(20), null);
         }
     }
 
@@ -246,7 +247,7 @@ public class DatafeedManager extends AbstractComponent {
         DataExtractorFactory dataExtractorFactory = createDataExtractorFactory(datafeed, job);
         DatafeedJob datafeedJob =  new DatafeedJob(job.getId(), buildDataDescription(job), frequency.toMillis(), queryDelay.toMillis(),
                 dataExtractorFactory, client, auditor, currentTimeSupplier, finalBucketEndMs, latestRecordTimeMs);
-        return new Holder(task.getPersistentTaskId(), datafeed, datafeedJob, task.isLookbackOnly(),
+        return new Holder(task.getPersistentTaskId(), task.getAllocationId(), datafeed, datafeedJob, task.isLookbackOnly(),
                 new ProblemTracker(auditor, job.getId()), handler);
     }
 
@@ -295,13 +296,14 @@ public class DatafeedManager extends AbstractComponent {
     /**
      * Visible for testing
      */
-    boolean isRunning(String datafeedId) {
-        return runningDatafeeds.containsKey(datafeedId);
+    boolean isRunning(long allocationId) {
+        return runningDatafeeds.containsKey(allocationId);
     }
 
     public class Holder {
 
         private final String taskId;
+        private final long allocationId;
         private final DatafeedConfig datafeed;
         // To ensure that we wait until loopback / realtime search has completed before we stop the datafeed
         private final ReentrantLock datafeedJobLock = new ReentrantLock(true);
@@ -311,9 +313,10 @@ public class DatafeedManager extends AbstractComponent {
         private final Consumer<Exception> handler;
         volatile Future<?> future;
 
-        Holder(String taskId, DatafeedConfig datafeed, DatafeedJob datafeedJob, boolean autoCloseJob, ProblemTracker problemTracker,
-                       Consumer<Exception> handler) {
+        Holder(String taskId, long allocationId, DatafeedConfig datafeed, DatafeedJob datafeedJob, boolean autoCloseJob,
+               ProblemTracker problemTracker, Consumer<Exception> handler) {
             this.taskId = taskId;
+            this.allocationId = allocationId;
             this.datafeed = datafeed;
             this.datafeedJob = datafeedJob;
             this.autoCloseJob = autoCloseJob;
@@ -338,7 +341,7 @@ public class DatafeedManager extends AbstractComponent {
                 } finally {
                     logger.info("[{}] stopping datafeed [{}] for job [{}], acquired [{}]...", source, datafeed.getId(),
                             datafeed.getJobId(), acquired);
-                    runningDatafeeds.remove(datafeed.getId());
+                    runningDatafeeds.remove(allocationId);
                     FutureUtils.cancel(future);
                     auditor.info(datafeed.getJobId(), Messages.getMessage(Messages.JOB_AUDIT_DATAFEED_STOPPED));
                     handler.accept(e);
