@@ -23,6 +23,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteAction;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.Loggers;
@@ -143,6 +144,7 @@ public class JobDataDeleter {
         QueryBuilder qb = QueryBuilders.termQuery(Bucket.IS_INTERIM.getPreferredName(), true);
 
         SearchResponse searchResponse = client.prepareSearch(index)
+                .setIndicesOptions(IndicesOptions.lenientExpandOpen())
                 .setTypes(Result.TYPE.getPreferredName())
                 .setQuery(new ConstantScoreQueryBuilder(qb))
                 .setFetchSource(false)
@@ -150,8 +152,7 @@ public class JobDataDeleter {
                 .setSize(SCROLL_SIZE)
                 .get();
 
-        String scrollId = searchResponse.getScrollId();
-        long totalHits = searchResponse.getHits().totalHits();
+        long totalHits = searchResponse.getHits().getTotalHits();
         long totalDeletedCount = 0;
         while (totalDeletedCount < totalHits) {
             for (SearchHit hit : searchResponse.getHits()) {
@@ -161,7 +162,17 @@ public class JobDataDeleter {
                 ++deletedResultCount;
             }
 
-            searchResponse = client.prepareSearchScroll(scrollId).setScroll(SCROLL_CONTEXT_DURATION).get();
+            searchResponse = client.prepareSearchScroll(searchResponse.getScrollId()).setScroll(SCROLL_CONTEXT_DURATION).get();
+        }
+
+        clearScroll(searchResponse.getScrollId());
+    }
+
+    private void clearScroll(String scrollId) {
+        try {
+            client.prepareClearScroll().addScrollId(scrollId).get();
+        } catch (Exception e) {
+            LOGGER.warn("[{}] Error while clearing scroll with id [{}]", jobId, scrollId);
         }
     }
 
@@ -235,6 +246,7 @@ public class JobDataDeleter {
                 client.prepareSearchScroll(searchResponse.getScrollId()).setScroll(SCROLL_CONTEXT_DURATION).execute(this);
             }
             else {
+                clearScroll(searchResponse.getScrollId());
                 scrollFinishedListener.onResponse(true);
             }
         }

@@ -280,7 +280,7 @@ public class AutoDetectResultProcessor {
         Context(String jobId, boolean isPerPartitionNormalization, JobResultsPersister.Builder bulkResultsPersister) {
             this.jobId = jobId;
             this.isPerPartitionNormalization = isPerPartitionNormalization;
-            this.deleteInterimRequired = false;
+            this.deleteInterimRequired = true;
             this.bulkResultsPersister = bulkResultsPersister;
         }
     }
