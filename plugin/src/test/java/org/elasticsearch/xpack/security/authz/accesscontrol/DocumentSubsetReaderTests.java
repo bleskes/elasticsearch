@@ -37,6 +37,7 @@ import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.TestUtil;
+import org.elasticsearch.common.lucene.index.ElasticsearchDirectoryReader;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.cache.bitset.BitsetFilterCache;
@@ -45,6 +46,8 @@ import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.IndexSettingsModule;
 import org.junit.After;
 import org.junit.Before;
+
+import java.io.IOException;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -103,7 +106,7 @@ public class DocumentSubsetReaderTests extends ESTestCase {
         iw.forceMerge(1);
         iw.deleteDocuments(new Term("field", "value3"));
         iw.close();
-        directoryReader = DirectoryReader.open(directory);
+        openDirectoryReader();
 
         IndexSearcher indexSearcher = new IndexSearcher(DocumentSubsetReader.wrap(directoryReader, bitsetFilterCache,
                 new TermQuery(new Term("field", "value1"))));
@@ -150,7 +153,7 @@ public class DocumentSubsetReaderTests extends ESTestCase {
         iw.forceMerge(1);
         iw.close();
 
-        directoryReader = DirectoryReader.open(directory);
+        openDirectoryReader();
         assertThat("should have one segment after force merge", directoryReader.leaves().size(), equalTo(1));
 
         for (int i = 0; i < numDocs; i++) {
@@ -219,7 +222,8 @@ public class DocumentSubsetReaderTests extends ESTestCase {
         iw.addDocument(doc);
 
         // open reader
-        DirectoryReader ir = DocumentSubsetReader.wrap(DirectoryReader.open(iw), bitsetFilterCache, new MatchAllDocsQuery());
+        DirectoryReader ir = ElasticsearchDirectoryReader.wrap(DirectoryReader.open(iw), new ShardId("_index", "_na_", 0));
+        ir = DocumentSubsetReader.wrap(ir, bitsetFilterCache, new MatchAllDocsQuery());
         assertEquals(2, ir.numDocs());
         assertEquals(1, ir.leaves().size());
 
@@ -234,5 +238,10 @@ public class DocumentSubsetReaderTests extends ESTestCase {
 
         TestUtil.checkReader(ir);
         IOUtils.close(ir, ir2, iw, dir);
+    }
+
+    private void openDirectoryReader() throws IOException {
+        directoryReader = DirectoryReader.open(directory);
+        directoryReader = ElasticsearchDirectoryReader.wrap(directoryReader, new ShardId("_index", "_na_", 0));
     }
 }
