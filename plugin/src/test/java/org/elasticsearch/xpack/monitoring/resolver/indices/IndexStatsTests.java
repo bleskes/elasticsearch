@@ -74,7 +74,7 @@ public class IndexStatsTests extends MonitoringIntegTestCase {
         updateMonitoringInterval(3L, TimeUnit.SECONDS);
         waitForMonitoringIndices();
 
-        awaitMonitoringDocsCount(greaterThan(0L), IndexStatsResolver.TYPE);
+        awaitMonitoringDocsCountOnPrimary(greaterThan(0L), IndexStatsResolver.TYPE);
 
         logger.debug("--> wait for index stats collector to collect stat for each index");
         assertBusy(new Runnable() {
@@ -86,6 +86,7 @@ public class IndexStatsTests extends MonitoringIntegTestCase {
                     SearchResponse count = client().prepareSearch()
                             .setSize(0)
                             .setTypes(IndexStatsResolver.TYPE)
+                            .setPreference("_primary")
                             .setQuery(QueryBuilders.termQuery("index_stats.index", indices[i]))
                             .get();
                     assertThat(count.getHits().getTotalHits(), greaterThan(0L));
@@ -94,7 +95,7 @@ public class IndexStatsTests extends MonitoringIntegTestCase {
         });
 
         logger.debug("--> searching for monitoring documents of type [{}]", IndexStatsResolver.TYPE);
-        SearchResponse response = client().prepareSearch().setTypes(IndexStatsResolver.TYPE).get();
+        SearchResponse response = client().prepareSearch().setTypes(IndexStatsResolver.TYPE).setPreference("_primary").get();
         assertThat(response.getHits().getTotalHits(), greaterThan(0L));
 
         logger.debug("--> checking that every document contains the expected fields");
