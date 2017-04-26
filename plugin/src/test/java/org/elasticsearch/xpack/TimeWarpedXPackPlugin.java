@@ -23,11 +23,12 @@ import org.elasticsearch.xpack.support.clock.ClockMock;
 import org.elasticsearch.xpack.watcher.test.TimeWarpedWatcher;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 public class TimeWarpedXPackPlugin extends XPackPlugin {
     private final ClockMock clock = new ClockMock();
 
-    public TimeWarpedXPackPlugin(Settings settings) throws IOException {
+    public TimeWarpedXPackPlugin(Settings settings) throws IOException, GeneralSecurityException {
         super(settings);
         watcher = new TimeWarpedWatcher(settings);
     }

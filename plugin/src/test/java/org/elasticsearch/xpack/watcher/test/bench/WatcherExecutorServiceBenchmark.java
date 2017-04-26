@@ -38,6 +38,7 @@ import org.elasticsearch.xpack.XPackPlugin;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -214,8 +215,7 @@ public class WatcherExecutorServiceBenchmark {
 
     public static final class XPackBenchmarkPlugin extends XPackPlugin {
 
-
-        public XPackBenchmarkPlugin(Settings settings) throws IOException {
+        public XPackBenchmarkPlugin(Settings settings) throws IOException, GeneralSecurityException {
             super(settings);
             watcher = new BenchmarkWatcher(settings);
         }

@@ -211,6 +211,28 @@ public class Authentication {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Authentication that = (Authentication) o;
+
+        if (!user.equals(that.user)) return false;
+        if (!authenticatedBy.equals(that.authenticatedBy)) return false;
+        if (lookedUpBy != null ? !lookedUpBy.equals(that.lookedUpBy) : that.lookedUpBy != null) return false;
+        return version.equals(that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = user.hashCode();
+        result = 31 * result + authenticatedBy.hashCode();
+        result = 31 * result + (lookedUpBy != null ? lookedUpBy.hashCode() : 0);
+        result = 31 * result + version.hashCode();
+        return result;
+    }
+
     public static class RealmRef {
 
         private final String nodeName;
@@ -245,6 +267,26 @@ public class Authentication {
 
         public String getType() {
             return type;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            RealmRef realmRef = (RealmRef) o;
+
+            if (!nodeName.equals(realmRef.nodeName)) return false;
+            if (!name.equals(realmRef.name)) return false;
+            return type.equals(realmRef.type);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = nodeName.hashCode();
+            result = 31 * result + name.hashCode();
+            result = 31 * result + type.hashCode();
+            return result;
         }
     }
 }

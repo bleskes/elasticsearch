@@ -51,6 +51,8 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
     private final NativeUsersStore nativeUserStore;
     private final NativeRolesStore nativeRolesStore;
 
+    private volatile SecurityIndexState securityIndexState;
+
     public SecurityLifecycleService(Settings settings, ClusterService clusterService, ThreadPool threadPool,
                                     @Nullable IndexAuditTrail indexAuditTrail, NativeUsersStore nativeUserStore,
                                     NativeRolesStore nativeRolesStore, XPackLicenseState licenseState, InternalClient client) {
@@ -60,6 +62,7 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
         this.indexAuditTrail = indexAuditTrail;
         this.nativeUserStore = nativeUserStore;
         this.nativeRolesStore = nativeRolesStore;
+        this.securityIndexState = new SecurityIndexState(false, false, false);
         // TODO: define a common interface for these and delegate from one place. nativeUserStore store is it's on
         // cluster
         // state listener , but is also activated from this clusterChanged method
@@ -72,7 +75,7 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
 
             @Override
             public void beforeStop() {
-                stop();
+                close();
             }
         });
     }
@@ -80,6 +83,11 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
     @Override
     public void clusterChanged(ClusterChangedEvent event) {
         final boolean master = event.localNodeMaster();
+        final boolean indexExists = SecurityTemplateService.getSecurityIndexRoutingTable(event.state()) != null;
+        final boolean indexAvailable = indexExists &&
+                SecurityTemplateService.getSecurityIndexRoutingTable(event.state()).allPrimaryShardsActive();
+        final boolean canWrite = SecurityTemplateService.securityIndexMappingAndTemplateUpToDate(event.state(), logger);
+        this.securityIndexState = new SecurityIndexState(indexExists, indexAvailable, canWrite);
         try {
             if (nativeUserStore.canStart(event.state(), master)) {
                 threadPool.generic().execute(new AbstractRunnable() {
@@ -121,7 +129,7 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
         try {
             if (Security.indexAuditLoggingEnabled(settings) &&
                     indexAuditTrail.state() == IndexAuditTrail.State.INITIALIZED) {
-                if (indexAuditTrail.canStart(event, master)) {
+                if (indexAuditTrail.canStart(event, event.localNodeMaster())) {
                     threadPool.generic().execute(new AbstractRunnable() {
 
                         @Override
@@ -132,7 +140,7 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
 
                         @Override
                         public void doRun() {
-                            indexAuditTrail.start(master);
+                            indexAuditTrail.start(event.localNodeMaster());
                         }
                     });
                 }
@@ -140,10 +148,22 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
         } catch (Exception e) {
             logger.error("failed to start index audit trail", e);
         }
-
     }
 
-    public void stop() {
+    public boolean isSecurityIndexExisting() {
+        return securityIndexState.exists;
+    }
+
+    public boolean isSecurityIndexAvailable() {
+        return securityIndexState.canRead;
+    }
+
+    public boolean isSecurityIndexWriteable() {
+        return securityIndexState.canWrite;
+    }
+
+    // this is called in a lifecycle listener beforeStop on the cluster service
+    private void close() {
         try {
             nativeUserStore.stop();
         } catch (Exception e) {
@@ -160,6 +180,19 @@ public class SecurityLifecycleService extends AbstractComponent implements Clust
             } catch (Exception e) {
                 logger.error("failed to stop audit trail module", e);
             }
+        }
+    }
+
+    // TODO remove me after IndexLifecycleManager backport!!
+    private static class SecurityIndexState {
+        private final boolean exists;
+        private final boolean canRead;
+        private final boolean canWrite;
+
+        SecurityIndexState(boolean exists, boolean canRead, boolean canWrite) {
+            this.exists = exists;
+            this.canRead = canRead;
+            this.canWrite = canWrite;
         }
     }
 }

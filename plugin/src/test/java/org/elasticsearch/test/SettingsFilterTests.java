@@ -32,6 +32,7 @@ import org.hamcrest.Matcher;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +48,7 @@ public class SettingsFilterTests extends ESTestCase {
     private Settings.Builder configuredSettingsBuilder = Settings.builder();
     private Map<String, Matcher> settingsMatcherMap = new HashMap<>();
 
-    public void testFiltering() throws IOException {
+    public void testFiltering() throws IOException, GeneralSecurityException {
         Set<String> expectedWarnings = new HashSet<>();
         configureUnfilteredSetting("xpack.security.authc.realms.file.type", "file");
 

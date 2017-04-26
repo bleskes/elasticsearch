@@ -241,7 +241,7 @@ public class SecurityTemplateServiceTests extends ESTestCase {
 
         migratorListenerRef.get().onResponse(true);
 
-        assertThat(listeners.size(), equalTo(3)); // we have three types in the mapping
+        assertThat(listeners.size(), equalTo(4)); // we have four types in the mapping
         assertTrue(securityTemplateService.updateMappingPending.get());
         assertThat(securityTemplateService.upgradeDataState.get(), equalTo(UpgradeState.COMPLETE));
 
@@ -260,7 +260,7 @@ public class SecurityTemplateServiceTests extends ESTestCase {
         // ... we should be able to send a new update
         securityTemplateService.clusterChanged(new ClusterChangedEvent("test-event", clusterStateBuilder.build()
                 , EMPTY_CLUSTER_STATE));
-        assertThat(listeners.size(), equalTo(3));
+        assertThat(listeners.size(), equalTo(4));
         assertTrue(securityTemplateService.updateMappingPending.get());
 
         // now check what happens if we get back an unacknowledged response
@@ -275,11 +275,11 @@ public class SecurityTemplateServiceTests extends ESTestCase {
         listeners.clear();
         securityTemplateService.clusterChanged(new ClusterChangedEvent("test-event", clusterStateBuilder.build()
                 , EMPTY_CLUSTER_STATE));
-        assertThat(listeners.size(), equalTo(3)); // we have three types in the mapping
+        assertThat(listeners.size(), equalTo(4)); // we have four types in the mapping
         int counter = 0;
         for (ActionListener actionListener : listeners) {
             actionListener.onResponse(new TestPutMappingResponse(true));
-            if (counter++ < 2) {
+            if (counter++ < 3) {
                 assertTrue(securityTemplateService.updateMappingPending.get());
             } else {
                 assertFalse(securityTemplateService.updateMappingPending.get());

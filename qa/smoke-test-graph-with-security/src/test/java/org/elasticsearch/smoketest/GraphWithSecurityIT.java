@@ -63,9 +63,6 @@ public class GraphWithSecurityIT extends ESClientYamlSuiteTestCase {
         return Settings.builder()
             .put(ThreadContext.PREFIX + ".Authorization", token)
             .build();
-    } 
-    
-    
-
+    }
 }
 

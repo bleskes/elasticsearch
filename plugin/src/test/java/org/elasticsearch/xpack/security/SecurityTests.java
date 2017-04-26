@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.network.NetworkModule;
 import org.elasticsearch.common.settings.ClusterSettings;
@@ -42,6 +43,7 @@ import org.elasticsearch.xpack.security.audit.logfile.LoggingAuditTrail;
 import org.elasticsearch.xpack.security.authc.Realm;
 import org.elasticsearch.xpack.security.authc.Realms;
 import org.elasticsearch.xpack.security.authc.file.FileRealm;
+import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.ssl.SSLService;
 
 import static org.hamcrest.Matchers.containsString;
@@ -81,7 +83,9 @@ public class SecurityTests extends ESTestCase {
         allowedSettings.addAll(ClusterSettings.BUILT_IN_CLUSTER_SETTINGS);
         ClusterSettings clusterSettings = new ClusterSettings(settings, allowedSettings);
         when(clusterService.getClusterSettings()).thenReturn(clusterSettings);
-        return security.createComponents(null, threadPool, clusterService, mock(ResourceWatcherService.class), Arrays.asList(extensions));
+        InternalClient client = new InternalClient(Settings.EMPTY, threadPool, mock(Client.class), mock(CryptoService.class));
+        when(threadPool.relativeTimeInMillis()).thenReturn(1L);
+        return security.createComponents(client, threadPool, clusterService, mock(ResourceWatcherService.class), Arrays.asList(extensions));
     }
 
     private <T> T findComponent(Class<T> type, Collection<Object> components) {

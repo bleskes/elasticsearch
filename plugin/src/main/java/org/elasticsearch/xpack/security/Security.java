@@ -61,6 +61,8 @@ import org.elasticsearch.plugins.IngestPlugin;
 import org.elasticsearch.plugins.NetworkPlugin;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
+import org.elasticsearch.threadpool.ExecutorBuilder;
+import org.elasticsearch.threadpool.FixedExecutorBuilder;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.transport.TransportInterceptor;
@@ -84,6 +86,10 @@ import org.elasticsearch.xpack.security.action.role.TransportClearRolesCacheActi
 import org.elasticsearch.xpack.security.action.role.TransportDeleteRoleAction;
 import org.elasticsearch.xpack.security.action.role.TransportGetRolesAction;
 import org.elasticsearch.xpack.security.action.role.TransportPutRoleAction;
+import org.elasticsearch.xpack.security.action.token.CreateTokenAction;
+import org.elasticsearch.xpack.security.action.token.InvalidateTokenAction;
+import org.elasticsearch.xpack.security.action.token.TransportCreateTokenAction;
+import org.elasticsearch.xpack.security.action.token.TransportInvalidateTokenAction;
 import org.elasticsearch.xpack.security.action.user.AuthenticateAction;
 import org.elasticsearch.xpack.security.action.user.ChangePasswordAction;
 import org.elasticsearch.xpack.security.action.user.DeleteUserAction;
@@ -110,6 +116,7 @@ import org.elasticsearch.xpack.security.authc.InternalRealms;
 import org.elasticsearch.xpack.security.authc.Realm;
 import org.elasticsearch.xpack.security.authc.RealmSettings;
 import org.elasticsearch.xpack.security.authc.Realms;
+import org.elasticsearch.xpack.security.authc.TokenService;
 import org.elasticsearch.xpack.security.authc.esnative.NativeRealm;
 import org.elasticsearch.xpack.security.authc.esnative.NativeUsersStore;
 import org.elasticsearch.xpack.security.authc.esnative.ReservedRealm;
@@ -151,6 +158,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -183,7 +192,7 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
     public static final Setting<Optional<String>> USER_SETTING =
             new Setting<>(setting("user"), (String) null, Optional::ofNullable, Property.NodeScope);
 
-    public static final Setting<List<String>> AUDIT_OUTPUTS_SETTING =
+    static final Setting<List<String>> AUDIT_OUTPUTS_SETTING =
         Setting.listSetting(setting("audit.outputs"),
             s -> s.getAsMap().containsKey(setting("audit.outputs")) ?
                 Collections.emptyList() : Collections.singletonList(LoggingAuditTrail.NAME),
@@ -206,7 +215,8 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
     private final SetOnce<SecurityContext> securityContext = new SetOnce<>();
     private final SetOnce<ThreadContext> threadContext = new SetOnce<>();
 
-    public Security(Settings settings, Environment env, XPackLicenseState licenseState, SSLService sslService) throws IOException {
+    public Security(Settings settings, Environment env, XPackLicenseState licenseState, SSLService sslService)
+                    throws IOException, GeneralSecurityException {
         this.settings = settings;
         this.env = env;
         this.transportClientMode = XPackPlugin.transportClientMode(settings);
@@ -327,6 +337,12 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
             new AuditTrailService(settings, auditTrails.stream().collect(Collectors.toList()), licenseState);
         components.add(auditTrailService);
 
+        final NativeRolesStore nativeRolesStore = new NativeRolesStore(settings, client, licenseState);
+        final SecurityLifecycleService securityLifecycleService =
+                new SecurityLifecycleService(settings, clusterService, threadPool, indexAuditTrail, nativeUsersStore, nativeRolesStore, licenseState, client);
+        final TokenService tokenService = new TokenService(settings, Clock.systemUTC(), client, securityLifecycleService);
+        components.add(tokenService);
+
         AuthenticationFailureHandler failureHandler = null;
         String extensionName = null;
         for (XPackExtension extension : extensions) {
@@ -345,12 +361,11 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
             logger.debug("Using authentication failure handler from extension [" + extensionName + "]");
         }
 
-        authcService.set(new AuthenticationService(settings, realms, auditTrailService,
-            cryptoService, failureHandler, threadPool, anonymousUser));
+        authcService.set(new AuthenticationService(settings, realms, auditTrailService, cryptoService, failureHandler, threadPool,
+                anonymousUser, tokenService));
         components.add(authcService.get());
 
         final FileRolesStore fileRolesStore = new FileRolesStore(settings, env, resourceWatcherService, licenseState);
-        final NativeRolesStore nativeRolesStore = new NativeRolesStore(settings, client, licenseState);
         final ReservedRolesStore reservedRolesStore = new ReservedRolesStore();
         List<BiConsumer<Set<String>, ActionListener<Set<RoleDescriptor>>>> rolesProviders = new ArrayList<>();
         for (XPackExtension extension : extensions) {
@@ -367,9 +382,6 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         components.add(reservedRolesStore); // used by roles actions
         components.add(allRolesStore); // for SecurityFeatureSet and clear roles cache
         components.add(authzService);
-
-        components.add(new SecurityLifecycleService(settings, clusterService, threadPool, indexAuditTrail,
-            nativeUsersStore, nativeRolesStore, licenseState, client));
 
         ipFilter.set(new IPFilter(settings, auditTrailService, clusterService.getClusterSettings(), licenseState));
         components.add(ipFilter.get());
@@ -454,6 +466,9 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         AuthorizationService.addSettings(settingsList);
         settingsList.add(CompositeRolesStore.CACHE_SIZE_SETTING);
         settingsList.add(FieldPermissionsCache.CACHE_SIZE_SETTING);
+        settingsList.add(TokenService.TOKEN_EXPIRATION);
+        settingsList.add(TokenService.TOKEN_PASSPHRASE);
+        settingsList.add(TokenService.DELETE_INTERVAL);
 
         // encryption settings
         CryptoService.addSettings(settingsList);
@@ -482,6 +497,17 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         // hide settings where we don't define them - they are part of a group...
         settingsFilter.add("transport.profiles.*." + setting("*"));
         return settingsFilter;
+    }
+
+    public List<BootstrapCheck> getBootstrapChecks() {
+        if (enabled) {
+            return Arrays.asList(
+                new TokenPassphraseBootstrapCheck(settings),
+                new TokenSSLBootstrapCheck(settings)
+            );
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     public void onIndexModule(IndexModule module) {
@@ -529,7 +555,9 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
                 new ActionHandler<>(ChangePasswordAction.INSTANCE, TransportChangePasswordAction.class),
                 new ActionHandler<>(AuthenticateAction.INSTANCE, TransportAuthenticateAction.class),
                 new ActionHandler<>(SetEnabledAction.INSTANCE, TransportSetEnabledAction.class),
-                new ActionHandler<>(HasPrivilegesAction.INSTANCE, TransportHasPrivilegesAction.class));
+                new ActionHandler<>(HasPrivilegesAction.INSTANCE, TransportHasPrivilegesAction.class),
+                new ActionHandler<>(CreateTokenAction.INSTANCE, TransportCreateTokenAction.class),
+                new ActionHandler<>(InvalidateTokenAction.INSTANCE, TransportInvalidateTokenAction.class));
     }
 
     @Override
@@ -806,4 +834,11 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         return handler -> new SecurityRestFilter(settings, licenseState, sslService, threadContext, authcService.get(), handler);
     }
 
+    public List<ExecutorBuilder<?>> getExecutorBuilders(final Settings settings) {
+        if (enabled && transportClientMode == false) {
+            return Collections.singletonList(
+                    new FixedExecutorBuilder(settings, TokenService.THREAD_POOL_NAME, 1, 1000, "xpack.security.authc.token.thread_pool"));
+        }
+        return Collections.emptyList();
+    }
 }

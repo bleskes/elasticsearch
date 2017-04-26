@@ -111,10 +111,10 @@ import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.Watcher;
 import org.elasticsearch.xpack.watcher.WatcherFeatureSet;
 
-import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.AccessController;
+import java.security.GeneralSecurityException;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -197,7 +197,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
     protected Graph graph;
     protected MachineLearning machineLearning;
 
-    public XPackPlugin(Settings settings) throws IOException {
+    public XPackPlugin(Settings settings) throws IOException, GeneralSecurityException {
         this.settings = settings;
         this.transportClientMode = transportClientMode(settings);
         this.env = transportClientMode ? null : new Environment(settings);
@@ -396,6 +396,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         List<ExecutorBuilder<?>> executorBuilders = new ArrayList<ExecutorBuilder<?>>();
         executorBuilders.addAll(watcher.getExecutorBuilders(settings));
         executorBuilders.addAll(machineLearning.getExecutorBuilders(settings));
+        executorBuilders.addAll(security.getExecutorBuilders(settings));
         return executorBuilders;
     }
 
