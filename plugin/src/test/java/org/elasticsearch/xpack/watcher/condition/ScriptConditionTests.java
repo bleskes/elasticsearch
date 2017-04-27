@@ -94,7 +94,7 @@ public class ScriptConditionTests extends ESTestCase {
             return total > threshold;
         });
 
-        ScriptEngineService engine = new MockScriptEngine(AbstractWatcherIntegrationTestCase.WATCHER_LANG, scripts);
+        ScriptEngineService engine = new MockScriptEngine(MockScriptEngine.NAME, scripts);
 
         ScriptEngineRegistry registry = new ScriptEngineRegistry(singleton(engine));
         ScriptContextRegistry contextRegistry = new ScriptContextRegistry(singleton(new ScriptContext.Plugin("xpack", "watch")));
@@ -109,15 +109,14 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testExecute() throws Exception {
-        ScriptCondition condition = new ScriptCondition(new Script("ctx.payload.hits.total > 1"), scriptService);
+        ScriptCondition condition = new ScriptCondition(mockScript("ctx.payload.hits.total > 1"), scriptService);
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500L, new ShardSearchFailure[0]);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.XContent(response));
         assertFalse(condition.execute(ctx).met());
     }
 
     public void testExecuteMergedParams() throws Exception {
-        Script script = new Script(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG,
-                "ctx.payload.hits.total > threshold", singletonMap("threshold", 1));
+        Script script = new Script(ScriptType.INLINE, "mockscript", "ctx.payload.hits.total > threshold", singletonMap("threshold", 1));
         ScriptCondition executable = new ScriptCondition(script, scriptService);
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500L, new ShardSearchFailure[0]);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.XContent(response));
@@ -126,7 +125,7 @@ public class ScriptConditionTests extends ESTestCase {
 
     public void testParserValid() throws Exception {
 
-        XContentBuilder builder = createConditionContent("ctx.payload.hits.total > 1", null, ScriptType.INLINE);
+        XContentBuilder builder = createConditionContent("ctx.payload.hits.total > 1", "mockscript", ScriptType.INLINE);
 
         XContentParser parser = createParser(builder);
         parser.nextToken();
@@ -138,7 +137,7 @@ public class ScriptConditionTests extends ESTestCase {
         assertFalse(executable.execute(ctx).met());
 
 
-        builder = createConditionContent("return true", null, ScriptType.INLINE);
+        builder = createConditionContent("return true", "mockscript", ScriptType.INLINE);
         parser = createParser(builder);
         parser.nextToken();
         executable = ScriptCondition.parse(scriptService, "_watch", parser, false, defaultScriptLang);
@@ -165,6 +164,7 @@ public class ScriptConditionTests extends ESTestCase {
     public void testScriptConditionParserBadScript() throws Exception {
         ScriptType scriptType = randomFrom(ScriptType.INLINE, ScriptType.FILE);
         String script;
+        Class<? extends Exception> expectedException = IllegalArgumentException.class;
         switch (scriptType) {
             case FILE:
                 script = "nonExisting_script";
@@ -172,11 +172,12 @@ public class ScriptConditionTests extends ESTestCase {
             case INLINE:
             default:
                 script = "foo = = 1";
+                expectedException = GeneralScriptException.class;
         }
-        XContentBuilder builder = createConditionContent(script, "groovy", scriptType);
+        XContentBuilder builder = createConditionContent(script, "mockscript", scriptType);
         XContentParser parser = createParser(builder);
         parser.nextToken();
-        Exception e = expectThrows(IllegalArgumentException.class,
+        expectThrows(expectedException,
                 () -> ScriptCondition.parse(scriptService, "_watch", parser, false, defaultScriptLang));
     }
 
@@ -192,7 +193,7 @@ public class ScriptConditionTests extends ESTestCase {
 
     public void testScriptConditionThrowException() throws Exception {
         ScriptCondition condition = new ScriptCondition(
-                new Script("null.foo"), scriptService);
+                mockScript("null.foo"), scriptService);
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500L, new ShardSearchFailure[0]);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.XContent(response));
         ScriptException exception = expectThrows(ScriptException.class, () -> condition.execute(ctx));
@@ -200,7 +201,7 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testScriptConditionReturnObjectThrowsException() throws Exception {
-        ScriptCondition condition = new ScriptCondition(new Script("return new Object()"), scriptService);
+        ScriptCondition condition = new ScriptCondition(mockScript("return new Object()"), scriptService);
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500L, new ShardSearchFailure[0]);
         WatchExecutionContext ctx = mockExecutionContext("_name", new Payload.XContent(response));
         Exception exception = expectThrows(GeneralScriptException.class, () -> condition.execute(ctx));
@@ -209,7 +210,7 @@ public class ScriptConditionTests extends ESTestCase {
     }
 
     public void testScriptConditionAccessCtx() throws Exception {
-        ScriptCondition condition = new ScriptCondition(new Script("ctx.trigger.scheduled_time.getMillis() < new Date().time"),
+        ScriptCondition condition = new ScriptCondition(mockScript("ctx.trigger.scheduled_time.getMillis() < new Date().time"),
                 scriptService);
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), "", 3, 3, 500L, new ShardSearchFailure[0]);
         WatchExecutionContext ctx = mockExecutionContext("_name", new DateTime(DateTimeZone.UTC), new Payload.XContent(response));
