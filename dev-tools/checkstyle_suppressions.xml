@@ -23,5 +23,4 @@
   <suppress files="plugin[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]xpack[/\\]security[/\\]authc[/\\]ldap[/\\]support[/\\]SessionFactoryTests.java" checks="LineLength" />
   <suppress files="plugin[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]xpack[/\\]security[/\\]authc[/\\]pki[/\\]PkiRealmTests.java" checks="LineLength" />
   <suppress files="qa[/\\]security-example-extension[/\\]src[/\\]test[/\\]java[/\\]org[/\\]elasticsearch[/\\]example[/\\]realm[/\\]CustomRealmTests.java" checks="LineLength" />
-  <suppress files="plugin[/\\]src[/\\]main[/\\]java[/\\]org[/\\]elasticsearch[/\\]xpack[/\\]common[/\\]action[/\\]XPackDeleteByQueryAction.java" checks="LineLength" />
 </suppressions>
