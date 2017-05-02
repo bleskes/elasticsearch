@@ -16,7 +16,7 @@ All cluster read-only operations, like cluster health & state, hot threads, node
 info, node & cluster stats, snapshot/restore status, pending cluster tasks.
 
 `monitor_ml`::
-All read only {ml} operations, such as getting information about data feeds, jobs,
+All read only {ml} operations, such as getting information about {dfeeds}, jobs,
 model snapshots, or results.
 
 `monitor_watcher`::
@@ -31,7 +31,7 @@ not include the ability to manage security.
 All operations on index templates.
 
 `manage_ml`::
-All {ml} operations, such as creating and deleting data feeds, jobs, and model
+All {ml} operations, such as creating and deleting {dfeeds}, jobs, and model
 snapshots.
 
 `manage_pipeline`::
