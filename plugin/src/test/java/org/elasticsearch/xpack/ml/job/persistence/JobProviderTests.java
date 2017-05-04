@@ -268,7 +268,7 @@ public class JobProviderTests extends ESTestCase {
         QueryBuilder query = queryBuilderHolder[0];
         String queryString = query.toString();
         assertTrue(
-                queryString.matches("(?s).*anomaly_score[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*is_interim.*value. : .true" +
+                queryString.matches("(?s).*anomaly_score[^}]*from. : 1\\.0.*must_not[^}]*term[^}]*is_interim.*value. : true" +
                         ".*"));
     }
 
@@ -690,7 +690,7 @@ public class JobProviderTests extends ESTestCase {
         assertEquals(2L, page.count());
 
         String queryString = qbHolder[0].toString();
-        assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*is_interim.*value. : .true.*"));
+        assertTrue(queryString.matches("(?s).*must_not[^}]*term[^}]*is_interim.*value. : true.*"));
 
         List<Influencer> records = page.results();
         assertEquals("foo", records.get(0).getJobId());

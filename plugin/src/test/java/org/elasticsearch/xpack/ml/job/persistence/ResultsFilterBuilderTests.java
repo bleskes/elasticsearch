@@ -102,18 +102,17 @@ public class ResultsFilterBuilderTests extends ESTestCase {
 
     public void testBuild_GivenInterimTrue() {
         QueryBuilder fb = new ResultsFilterBuilder()
-                .interim("isInterim", true)
+                .interim(true)
                 .build();
 
         assertEquals(QueryBuilders.matchAllQuery().toString(), fb.toString());
     }
 
     public void testBuild_GivenInterimFalse() {
-        QueryBuilder expected = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("isInterim",
-                Boolean.TRUE.toString()));
+        QueryBuilder expected = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("is_interim", true));
 
         QueryBuilder fb = new ResultsFilterBuilder()
-                .interim("isInterim", false)
+                .interim(false)
                 .build();
 
         assertEquals(expected.toString(), fb.toString());
@@ -141,8 +140,7 @@ public class ResultsFilterBuilderTests extends ESTestCase {
         QueryBuilder score2Filter = new ResultsFilterBuilder()
                 .score("score2", 80.0)
                 .build();
-        QueryBuilder interimFilter = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery(
-                "isInterim", Boolean.TRUE.toString()));
+        QueryBuilder interimFilter = QueryBuilders.boolQuery().mustNot(QueryBuilders.termQuery("is_interim", true));
         QueryBuilder termFilter = QueryBuilders.termQuery("airline", "AAL");
         QueryBuilder expected = QueryBuilders.boolQuery()
                 .filter(originalFilter)
@@ -156,7 +154,7 @@ public class ResultsFilterBuilderTests extends ESTestCase {
                 .timeRange(Result.TIMESTAMP.getPreferredName(), 1000, 2000)
                 .score("score1", 50.0)
                 .score("score2", 80.0)
-                .interim("isInterim", false)
+                .interim(false)
                 .term("airline", "AAL")
                 .build();
 
