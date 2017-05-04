@@ -35,6 +35,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.RealmSettings;
+import org.elasticsearch.xpack.security.authc.ldap.support.LdapMetaDataResolver;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSearchScope;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession;
 import org.elasticsearch.xpack.security.authc.ldap.support.LdapSession.GroupsResolver;
@@ -92,6 +93,7 @@ class LdapUserSearchSessionFactory extends SessionFactory {
     private final boolean useConnectionPool;
 
     private final LDAPConnectionPool connectionPool;
+    private final LdapMetaDataResolver metaDataResolver;
 
     LdapUserSearchSessionFactory(RealmConfig config, SSLService sslService) throws LDAPException {
         super(config, sslService);
@@ -104,6 +106,7 @@ class LdapUserSearchSessionFactory extends SessionFactory {
         scope = SEARCH_SCOPE.get(settings);
         userAttribute = SEARCH_ATTRIBUTE.get(settings);
         groupResolver = groupResolver(settings);
+        metaDataResolver = new LdapMetaDataResolver(config.settings(), ignoreReferralErrors);
         useConnectionPool = POOL_ENABLED.get(settings);
         if (useConnectionPool) {
             connectionPool = createConnectionPool(config, serverSet, timeout, logger);
@@ -186,7 +189,8 @@ class LdapUserSearchSessionFactory extends SessionFactory {
                 final byte[] passwordBytes = CharArrays.toUtf8Bytes(password.getChars());
                 try {
                     connectionPool.bindAndRevertAuthentication(new SimpleBindRequest(dn, passwordBytes));
-                    listener.onResponse(new LdapSession(logger, connectionPool, dn, groupResolver, timeout, entry.getAttributes()));
+                    listener.onResponse(new LdapSession(logger, config, connectionPool, dn, groupResolver, metaDataResolver, timeout,
+                            entry.getAttributes()));
                 } catch (LDAPException e) {
                     listener.onFailure(e);
                 } finally {
@@ -229,8 +233,8 @@ class LdapUserSearchSessionFactory extends SessionFactory {
                             try {
                                 userConnection = serverSet.getConnection();
                                 userConnection.bind(new SimpleBindRequest(dn, passwordBytes));
-                                LdapSession session = new LdapSession(logger, userConnection, dn, groupResolver, timeout,
-                                        entry.getAttributes());
+                                LdapSession session = new LdapSession(logger, config, userConnection, dn, groupResolver,
+                                        metaDataResolver, timeout, entry.getAttributes());
                                 sessionCreated = true;
                                 listener.onResponse(session);
                             } catch (Exception e) {
@@ -284,7 +288,8 @@ class LdapUserSearchSessionFactory extends SessionFactory {
                     boolean sessionCreated = false;
                     try {
                         final String dn = entry.getDN();
-                        LdapSession session = new LdapSession(logger, ldapInterface, dn, groupResolver, timeout, entry.getAttributes());
+                        LdapSession session = new LdapSession(logger, config, ldapInterface, dn, groupResolver, metaDataResolver, timeout,
+                                entry.getAttributes());
                         sessionCreated = true;
                         listener.onResponse(session);
                     } finally {
@@ -306,9 +311,8 @@ class LdapUserSearchSessionFactory extends SessionFactory {
 
     private void findUser(String user, LDAPInterface ldapInterface, ActionListener<SearchResultEntry> listener) {
         searchForEntry(ldapInterface, userSearchBaseDn, scope.scope(),
-                createEqualityFilter(userAttribute, encodeValue(user)),
-                Math.toIntExact(timeout.seconds()), ignoreReferralErrors, listener,
-                attributesToSearchFor(groupResolver.attributes()));
+                createEqualityFilter(userAttribute, encodeValue(user)), Math.toIntExact(timeout.seconds()), ignoreReferralErrors, listener,
+                attributesToSearchFor(groupResolver.attributes(), metaDataResolver.attributeNames()));
     }
 
     /*

@@ -1,0 +1,72 @@
+/*
+ * ELASTICSEARCH CONFIDENTIAL
+ * __________________
+ *
+ *  [2017] Elasticsearch Incorporated. All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Elasticsearch Incorporated and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Elasticsearch Incorporated
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Elasticsearch Incorporated.
+ */
+
+package org.elasticsearch.xpack.security.authc.support.mapper;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.support.GroupedActionListener;
+import org.elasticsearch.common.settings.Setting;
+import org.elasticsearch.watcher.ResourceWatcherService;
+import org.elasticsearch.xpack.security.authc.RealmConfig;
+import org.elasticsearch.xpack.security.authc.support.CachingUsernamePasswordRealm;
+import org.elasticsearch.xpack.security.authc.support.DnRoleMapper;
+import org.elasticsearch.xpack.security.authc.support.UserRoleMapper;
+
+/**
+ * A {@link UserRoleMapper} that composes one or more <i>delegate</i> role-mappers.
+ * During {@link #resolveRoles(UserData, ActionListener) role resolution}, each of the delegates is
+ * queried, and the individual results are merged into a single {@link Set} which includes all the roles from each mapper.
+ */
+public class CompositeRoleMapper implements UserRoleMapper {
+
+    private List<UserRoleMapper> delegates;
+
+    public CompositeRoleMapper(String realmType, RealmConfig realmConfig,
+                               ResourceWatcherService watcherService,
+                               NativeRoleMappingStore nativeRoleMappingStore) {
+        this(new DnRoleMapper(realmType, realmConfig, watcherService), nativeRoleMappingStore);
+    }
+
+    private CompositeRoleMapper(UserRoleMapper... delegates) {
+        this.delegates = new ArrayList<>(Arrays.asList(delegates));
+    }
+
+    @Override
+    public void resolveRoles(UserData user, ActionListener<Set<String>> listener) {
+        GroupedActionListener<Set<String>> groupListener = new GroupedActionListener<>(ActionListener.wrap(
+                composite -> listener.onResponse(composite.stream().flatMap(Set::stream).collect(Collectors.toSet())), listener::onFailure
+        ), delegates.size(), Collections.emptyList());
+        this.delegates.forEach(mapper -> mapper.resolveRoles(user, groupListener));
+    }
+
+    @Override
+    public void refreshRealmOnChange(CachingUsernamePasswordRealm realm) {
+        this.delegates.forEach(mapper -> mapper.refreshRealmOnChange(realm));
+    }
+
+    public static Collection<? extends Setting<?>> getSettings() {
+        return DnRoleMapper.getSettings();
+    }
+}

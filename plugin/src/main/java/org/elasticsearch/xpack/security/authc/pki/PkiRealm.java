@@ -30,6 +30,9 @@ import org.elasticsearch.env.Environment;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.security.Security;
 import org.elasticsearch.xpack.security.authc.Realms;
+import org.elasticsearch.xpack.security.authc.support.UserRoleMapper;
+import org.elasticsearch.xpack.security.authc.support.mapper.CompositeRoleMapper;
+import org.elasticsearch.xpack.security.authc.support.mapper.NativeRoleMappingStore;
 import org.elasticsearch.xpack.security.transport.netty4.SecurityNetty4Transport;
 import org.elasticsearch.xpack.ssl.CertUtils;
 import org.elasticsearch.xpack.ssl.SSLConfigurationSettings;
@@ -39,7 +42,6 @@ import org.elasticsearch.xpack.security.authc.AuthenticationToken;
 import org.elasticsearch.xpack.security.authc.Realm;
 import org.elasticsearch.xpack.security.authc.RealmConfig;
 import org.elasticsearch.xpack.security.authc.RealmSettings;
-import org.elasticsearch.xpack.security.authc.support.DnRoleMapper;
 import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3Transport;
 
 import javax.net.ssl.X509TrustManager;
@@ -73,15 +75,18 @@ public class PkiRealm extends Realm {
 
     private final X509TrustManager trustManager;
     private final Pattern principalPattern;
-    private final DnRoleMapper roleMapper;
+    private final UserRoleMapper roleMapper;
 
 
-    public PkiRealm(RealmConfig config, ResourceWatcherService watcherService, SSLService sslService) {
-        this(config, new DnRoleMapper(TYPE, config, watcherService), sslService);
+    public PkiRealm(RealmConfig config, SSLService sslService,
+                    ResourceWatcherService watcherService,
+                    NativeRoleMappingStore nativeRoleMappingStore) {
+        this(config, new CompositeRoleMapper(TYPE, config, watcherService, nativeRoleMappingStore),
+                sslService);
     }
 
     // pkg private for testing
-    PkiRealm(RealmConfig config, DnRoleMapper roleMapper, SSLService sslService) {
+    PkiRealm(RealmConfig config, UserRoleMapper roleMapper, SSLService sslService) {
         super(TYPE, config);
         this.trustManager = trustManagers(config);
         this.principalPattern = USERNAME_PATTERN_SETTING.get(config.settings());
@@ -110,8 +115,14 @@ public class PkiRealm extends Realm {
         if (isCertificateChainTrusted(trustManager, token, logger) == false) {
             listener.onResponse(null);
         } else {
-            Set<String> roles = roleMapper.resolveRoles(token.dn(), Collections.<String>emptyList());
-            listener.onResponse(new User(token.principal(), roles.toArray(new String[roles.size()])));
+            final Map<String, Object> metadata = Collections.singletonMap("pki_dn", token.dn());
+            final UserRoleMapper.UserData user = new UserRoleMapper.UserData(token.principal(),
+                    token.dn(), Collections.emptySet(), metadata, this.config);
+            roleMapper.resolveRoles(user, ActionListener.wrap(
+                    roles -> listener.onResponse(new User(token.principal(),
+                            roles.toArray(new String[roles.size()]), null, null, metadata, true)),
+                    listener::onFailure
+            ));
         }
     }
 
@@ -269,7 +280,7 @@ public class PkiRealm extends Realm {
         settings.add(SSL_SETTINGS.truststoreAlgorithm);
         settings.add(SSL_SETTINGS.caPaths);
 
-        DnRoleMapper.getSettings(settings);
+        settings.addAll(CompositeRoleMapper.getSettings());
 
         return settings;
     }

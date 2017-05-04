@@ -282,6 +282,7 @@ public class IndexLifecycleManager extends AbstractComponent {
             Map<String, Object> meta =
                     (Map<String, Object>) mappingMetaData.sourceAsMap().get("_meta");
             if (meta == null) {
+                logger.info("Missing _meta field in mapping [{}] of index [{}]", mappingMetaData.type(), indexName);
                 // something pre-5.0, but we don't know what. Use 2.3.0 as a placeholder for "old"
                 return Version.V_2_3_0;
             }
@@ -320,6 +321,11 @@ public class IndexLifecycleManager extends AbstractComponent {
                                     "failed to upgrade security [{}] data from version [{}] ",
                                     indexName, previousVersion),
                             e);
+                }
+
+                @Override
+                public String toString() {
+                    return getClass() + "{" + indexName + " migrator}";
                 }
             });
             return true;
@@ -398,6 +404,11 @@ public class IndexLifecycleManager extends AbstractComponent {
                                 "failed to update mapping for type [{}] on index [{}]",
                                 type, indexName), e);
                     }
+
+                    @Override
+                    public String toString() {
+                        return getClass() + "{" + indexName + " PutMapping}";
+                    }
                 });
     }
 
@@ -431,6 +442,11 @@ public class IndexLifecycleManager extends AbstractComponent {
                         templateCreationPending.set(false);
                         logger.warn(new ParameterizedMessage(
                                 "failed to put template [{}]", templateName), e);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return getClass() + "{" + indexName + " PutTemplate}";
                     }
                 });
     }
