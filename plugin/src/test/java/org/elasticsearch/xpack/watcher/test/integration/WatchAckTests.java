@@ -88,8 +88,8 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
                         .input(searchInput(templateRequest(searchSource(), "events")))
                         .condition(new CompareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
                         .transform(searchTransform(templateRequest(searchSource(), "events")))
-                        .addAction("_a1", indexAction("actions", "action1"))
-                        .addAction("_a2", indexAction("actions", "action2"))
+                        .addAction("_a1", indexAction("actions1", "doc"))
+                        .addAction("_a2", indexAction("actions2", "doc"))
                         .defaultThrottlePeriod(new TimeValue(0, TimeUnit.SECONDS)))
                 .get();
 
@@ -105,8 +105,8 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
         assertThat(ackResponse.getStatus().actionStatus("_a2").ackStatus().state(), is(ActionStatus.AckStatus.State.ACKABLE));
 
         refresh();
-        long a1CountAfterAck = docCount("actions", "action1", matchAllQuery());
-        long a2CountAfterAck = docCount("actions", "action2", matchAllQuery());
+        long a1CountAfterAck = docCount("actions1", "doc", matchAllQuery());
+        long a2CountAfterAck = docCount("actions2", "doc", matchAllQuery());
         assertThat(a1CountAfterAck, greaterThanOrEqualTo((long) 1));
         assertThat(a2CountAfterAck, greaterThanOrEqualTo((long) 1));
 
@@ -119,11 +119,11 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
         refresh();
 
         // There shouldn't be more a1 actions in the index after we ack the watch, even though the watch was triggered
-        long a1CountAfterPostAckFires = docCount("actions", "action1", matchAllQuery());
+        long a1CountAfterPostAckFires = docCount("actions1", "doc", matchAllQuery());
         assertThat(a1CountAfterPostAckFires, equalTo(a1CountAfterAck));
 
         // There should be more a2 actions in the index after we ack the watch
-        long a2CountAfterPostAckFires = docCount("actions", "action2", matchAllQuery());
+        long a2CountAfterPostAckFires = docCount("actions2", "doc", matchAllQuery());
         assertThat(a2CountAfterPostAckFires, greaterThan(a2CountAfterAck));
 
         // Now delete the event and the ack states should change to AWAITS_EXECUTION
@@ -162,8 +162,8 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
                         .input(searchInput(templateRequest(searchSource(), "events")))
                         .condition(new CompareCondition("ctx.payload.hits.total", CompareCondition.Op.GT, 0L))
                         .transform(searchTransform(templateRequest(searchSource(), "events")))
-                        .addAction("_a1", indexAction("actions", "action1"))
-                        .addAction("_a2", indexAction("actions", "action2"))
+                        .addAction("_a1", indexAction("actions1", "doc"))
+                        .addAction("_a2", indexAction("actions2", "doc"))
                         .defaultThrottlePeriod(new TimeValue(0, TimeUnit.SECONDS)))
                 .get();
 
@@ -187,8 +187,8 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
         assertThat(ackResponse.getStatus().actionStatus("_a2").ackStatus().state(), is(ActionStatus.AckStatus.State.ACKED));
 
         refresh();
-        long a1CountAfterAck = docCount("actions", "action1", matchAllQuery());
-        long a2CountAfterAck = docCount("actions", "action2", matchAllQuery());
+        long a1CountAfterAck = docCount("actions1", "doc", matchAllQuery());
+        long a2CountAfterAck = docCount("actions2", "doc", matchAllQuery());
         assertThat(a1CountAfterAck, greaterThanOrEqualTo((long) 1));
         assertThat(a2CountAfterAck, greaterThanOrEqualTo((long) 1));
 
@@ -201,11 +201,11 @@ public class WatchAckTests extends AbstractWatcherIntegrationTestCase {
         refresh();
 
         // There shouldn't be more a1 actions in the index after we ack the watch, even though the watch was triggered
-        long a1CountAfterPostAckFires = docCount("actions", "action1", matchAllQuery());
+        long a1CountAfterPostAckFires = docCount("actions1", "doc", matchAllQuery());
         assertThat(a1CountAfterPostAckFires, equalTo(a1CountAfterAck));
 
         // There shouldn't be more a2 actions in the index after we ack the watch, even though the watch was triggered
-        long a2CountAfterPostAckFires = docCount("actions", "action2", matchAllQuery());
+        long a2CountAfterPostAckFires = docCount("actions2", "doc", matchAllQuery());
         assertThat(a2CountAfterPostAckFires, equalTo(a2CountAfterAck));
 
         // Now delete the event and the ack states should change to AWAITS_EXECUTION
