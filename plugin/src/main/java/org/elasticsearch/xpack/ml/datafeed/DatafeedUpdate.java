@@ -49,7 +49,8 @@ public class DatafeedUpdate implements Writeable, ToXContent {
     static {
         PARSER.declareString(Builder::setId, DatafeedConfig.ID);
         PARSER.declareString(Builder::setJobId, Job.ID);
-        PARSER.declareStringArray(Builder::setIndexes, DatafeedConfig.INDEXES);
+        PARSER.declareStringArray(Builder::setIndices, DatafeedConfig.INDEXES);
+        PARSER.declareStringArray(Builder::setIndices, DatafeedConfig.INDICES);
         PARSER.declareStringArray(Builder::setTypes, DatafeedConfig.TYPES);
         PARSER.declareString((builder, val) -> builder.setQueryDelay(
                 TimeValue.parseTimeValue(val, DatafeedConfig.QUERY_DELAY.getPreferredName())), DatafeedConfig.QUERY_DELAY);
@@ -78,7 +79,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
     private final String jobId;
     private final TimeValue queryDelay;
     private final TimeValue frequency;
-    private final List<String> indexes;
+    private final List<String> indices;
     private final List<String> types;
     private final QueryBuilder query;
     private final AggregatorFactories.Builder aggregations;
@@ -87,14 +88,14 @@ public class DatafeedUpdate implements Writeable, ToXContent {
     private final Boolean source;
     private final ChunkingConfig chunkingConfig;
 
-    private DatafeedUpdate(String id, String jobId, TimeValue queryDelay, TimeValue frequency, List<String> indexes, List<String> types,
+    private DatafeedUpdate(String id, String jobId, TimeValue queryDelay, TimeValue frequency, List<String> indices, List<String> types,
                            QueryBuilder query, AggregatorFactories.Builder aggregations, List<SearchSourceBuilder.ScriptField> scriptFields,
                            Integer scrollSize, Boolean source, ChunkingConfig chunkingConfig) {
         this.id = id;
         this.jobId = jobId;
         this.queryDelay = queryDelay;
         this.frequency = frequency;
-        this.indexes = indexes;
+        this.indices = indices;
         this.types = types;
         this.query = query;
         this.aggregations = aggregations;
@@ -110,9 +111,9 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         this.queryDelay = in.readOptionalWriteable(TimeValue::new);
         this.frequency = in.readOptionalWriteable(TimeValue::new);
         if (in.readBoolean()) {
-            this.indexes = in.readList(StreamInput::readString);
+            this.indices = in.readList(StreamInput::readString);
         } else {
-            this.indexes = null;
+            this.indices = null;
         }
         if (in.readBoolean()) {
             this.types = in.readList(StreamInput::readString);
@@ -144,9 +145,9 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         out.writeOptionalString(jobId);
         out.writeOptionalWriteable(queryDelay);
         out.writeOptionalWriteable(frequency);
-        if (indexes != null) {
+        if (indices != null) {
             out.writeBoolean(true);
-            out.writeStringList(indexes);
+            out.writeStringList(indices);
         } else {
             out.writeBoolean(false);
         }
@@ -180,7 +181,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         if (frequency != null) {
             builder.field(DatafeedConfig.FREQUENCY.getPreferredName(), frequency.getStringRep());
         }
-        addOptionalField(builder, DatafeedConfig.INDEXES, indexes);
+        addOptionalField(builder, DatafeedConfig.INDICES, indices);
         addOptionalField(builder, DatafeedConfig.TYPES, types);
         addOptionalField(builder, DatafeedConfig.QUERY, query);
         addOptionalField(builder, DatafeedConfig.AGGREGATIONS, aggregations);
@@ -223,8 +224,8 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         if (frequency != null) {
             builder.setFrequency(frequency);
         }
-        if (indexes != null) {
-            builder.setIndexes(indexes);
+        if (indices != null) {
+            builder.setIndices(indices);
         }
         if (types != null) {
             builder.setTypes(types);
@@ -251,8 +252,8 @@ public class DatafeedUpdate implements Writeable, ToXContent {
     }
 
     /**
-     * The lists of indexes and types are compared for equality but they are not
-     * sorted first so this test could fail simply because the indexes and types
+     * The lists of indices and types are compared for equality but they are not
+     * sorted first so this test could fail simply because the indices and types
      * lists are in different orders.
      */
     @Override
@@ -271,7 +272,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
                 && Objects.equals(this.jobId, that.jobId)
                 && Objects.equals(this.frequency, that.frequency)
                 && Objects.equals(this.queryDelay, that.queryDelay)
-                && Objects.equals(this.indexes, that.indexes)
+                && Objects.equals(this.indices, that.indices)
                 && Objects.equals(this.types, that.types)
                 && Objects.equals(this.query, that.query)
                 && Objects.equals(this.scrollSize, that.scrollSize)
@@ -283,7 +284,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, jobId, frequency, queryDelay, indexes, types, query, scrollSize, aggregations, scriptFields, source,
+        return Objects.hash(id, jobId, frequency, queryDelay, indices, types, query, scrollSize, aggregations, scriptFields, source,
                 chunkingConfig);
     }
 
@@ -298,7 +299,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         private String jobId;
         private TimeValue queryDelay;
         private TimeValue frequency;
-        private List<String> indexes;
+        private List<String> indices;
         private List<String> types;
         private QueryBuilder query;
         private AggregatorFactories.Builder aggregations;
@@ -319,7 +320,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             this.jobId = config.jobId;
             this.queryDelay = config.queryDelay;
             this.frequency = config.frequency;
-            this.indexes = config.indexes;
+            this.indices = config.indices;
             this.types = config.types;
             this.query = config.query;
             this.aggregations = config.aggregations;
@@ -337,8 +338,8 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             this.jobId = jobId;
         }
 
-        public void setIndexes(List<String> indexes) {
-            this.indexes = indexes;
+        public void setIndices(List<String> indices) {
+            this.indices = indices;
         }
 
         public void setTypes(List<String> types) {
@@ -380,7 +381,7 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         }
 
         public DatafeedUpdate build() {
-            return new DatafeedUpdate(id, jobId, queryDelay, frequency, indexes, types, query, aggregations, scriptFields, scrollSize,
+            return new DatafeedUpdate(id, jobId, queryDelay, frequency, indices, types, query, aggregations, scriptFields, scrollSize,
                     source, chunkingConfig);
         }
     }

@@ -49,7 +49,7 @@ public class DatafeedUpdateTests extends AbstractSerializingTestCase<DatafeedUpd
             builder.setFrequency(TimeValue.timeValueSeconds(randomIntBetween(1, Integer.MAX_VALUE)));
         }
         if (randomBoolean()) {
-            builder.setIndexes(DatafeedConfigTests.randomStringList(1, 10));
+            builder.setIndices(DatafeedConfigTests.randomStringList(1, 10));
         }
         if (randomBoolean()) {
             builder.setTypes(DatafeedConfigTests.randomStringList(1, 10));
@@ -123,13 +123,13 @@ public class DatafeedUpdateTests extends AbstractSerializingTestCase<DatafeedUpd
 
     public void testApply_givenFullUpdateNoAggregations() {
         DatafeedConfig.Builder datafeedBuilder = new DatafeedConfig.Builder("foo", "foo-feed");
-        datafeedBuilder.setIndexes(Arrays.asList("i_1"));
+        datafeedBuilder.setIndices(Arrays.asList("i_1"));
         datafeedBuilder.setTypes(Arrays.asList("t_1"));
         DatafeedConfig datafeed = datafeedBuilder.build();
 
         DatafeedUpdate.Builder update = new DatafeedUpdate.Builder(datafeed.getId());
         update.setJobId("bar");
-        update.setIndexes(Arrays.asList("i_2"));
+        update.setIndices(Arrays.asList("i_2"));
         update.setTypes(Arrays.asList("t_2"));
         update.setQueryDelay(TimeValue.timeValueSeconds(42));
         update.setFrequency(TimeValue.timeValueSeconds(142));
@@ -142,7 +142,7 @@ public class DatafeedUpdateTests extends AbstractSerializingTestCase<DatafeedUpd
         DatafeedConfig updatedDatafeed = update.build().apply(datafeed);
 
         assertThat(updatedDatafeed.getJobId(), equalTo("bar"));
-        assertThat(updatedDatafeed.getIndexes(), equalTo(Arrays.asList("i_2")));
+        assertThat(updatedDatafeed.getIndices(), equalTo(Arrays.asList("i_2")));
         assertThat(updatedDatafeed.getTypes(), equalTo(Arrays.asList("t_2")));
         assertThat(updatedDatafeed.getQueryDelay(), equalTo(TimeValue.timeValueSeconds(42)));
         assertThat(updatedDatafeed.getFrequency(), equalTo(TimeValue.timeValueSeconds(142)));
@@ -157,7 +157,7 @@ public class DatafeedUpdateTests extends AbstractSerializingTestCase<DatafeedUpd
 
     public void testApply_givenAggregations() {
         DatafeedConfig.Builder datafeedBuilder = new DatafeedConfig.Builder("foo", "foo-feed");
-        datafeedBuilder.setIndexes(Arrays.asList("i_1"));
+        datafeedBuilder.setIndices(Arrays.asList("i_1"));
         datafeedBuilder.setTypes(Arrays.asList("t_1"));
         DatafeedConfig datafeed = datafeedBuilder.build();
 
@@ -167,7 +167,7 @@ public class DatafeedUpdateTests extends AbstractSerializingTestCase<DatafeedUpd
 
         DatafeedConfig updatedDatafeed = update.build().apply(datafeed);
 
-        assertThat(updatedDatafeed.getIndexes(), equalTo(Arrays.asList("i_1")));
+        assertThat(updatedDatafeed.getIndices(), equalTo(Arrays.asList("i_1")));
         assertThat(updatedDatafeed.getTypes(), equalTo(Arrays.asList("t_1")));
         assertThat(updatedDatafeed.getAggregations(),
                 equalTo(new AggregatorFactories.Builder().addAggregator(

@@ -72,6 +72,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
     public static final ParseField QUERY_DELAY = new ParseField("query_delay");
     public static final ParseField FREQUENCY = new ParseField("frequency");
     public static final ParseField INDEXES = new ParseField("indexes");
+    public static final ParseField INDICES = new ParseField("indices");
     public static final ParseField TYPES = new ParseField("types");
     public static final ParseField QUERY = new ParseField("query");
     public static final ParseField SCROLL_SIZE = new ParseField("scroll_size");
@@ -86,7 +87,8 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
     static {
         PARSER.declareString(Builder::setId, ID);
         PARSER.declareString(Builder::setJobId, Job.ID);
-        PARSER.declareStringArray(Builder::setIndexes, INDEXES);
+        PARSER.declareStringArray(Builder::setIndices, INDEXES);
+        PARSER.declareStringArray(Builder::setIndices, INDICES);
         PARSER.declareStringArray(Builder::setTypes, TYPES);
         PARSER.declareString((builder, val) ->
                 builder.setQueryDelay(TimeValue.parseTimeValue(val, QUERY_DELAY.getPreferredName())), QUERY_DELAY);
@@ -124,7 +126,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
      */
     private final TimeValue frequency;
 
-    private final List<String> indexes;
+    private final List<String> indices;
     private final List<String> types;
     private final QueryBuilder query;
     private final AggregatorFactories.Builder aggregations;
@@ -133,14 +135,14 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
     private final boolean source;
     private final ChunkingConfig chunkingConfig;
 
-    private DatafeedConfig(String id, String jobId, TimeValue queryDelay, TimeValue frequency, List<String> indexes, List<String> types,
+    private DatafeedConfig(String id, String jobId, TimeValue queryDelay, TimeValue frequency, List<String> indices, List<String> types,
                            QueryBuilder query, AggregatorFactories.Builder aggregations, List<SearchSourceBuilder.ScriptField> scriptFields,
                            Integer scrollSize, boolean source, ChunkingConfig chunkingConfig) {
         this.id = id;
         this.jobId = jobId;
         this.queryDelay = queryDelay;
         this.frequency = frequency;
-        this.indexes = indexes;
+        this.indices = indices;
         this.types = types;
         this.query = query;
         this.aggregations = aggregations;
@@ -156,9 +158,9 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
         this.queryDelay = in.readOptionalWriteable(TimeValue::new);
         this.frequency = in.readOptionalWriteable(TimeValue::new);
         if (in.readBoolean()) {
-            this.indexes = in.readList(StreamInput::readString);
+            this.indices = in.readList(StreamInput::readString);
         } else {
-            this.indexes = null;
+            this.indices = null;
         }
         if (in.readBoolean()) {
             this.types = in.readList(StreamInput::readString);
@@ -193,8 +195,8 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
         return frequency;
     }
 
-    public List<String> getIndexes() {
-        return indexes;
+    public List<String> getIndices() {
+        return indices;
     }
 
     public List<String> getTypes() {
@@ -325,9 +327,9 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
         out.writeString(jobId);
         out.writeOptionalWriteable(queryDelay);
         out.writeOptionalWriteable(frequency);
-        if (indexes != null) {
+        if (indices != null) {
             out.writeBoolean(true);
-            out.writeStringList(indexes);
+            out.writeStringList(indices);
         } else {
             out.writeBoolean(false);
         }
@@ -365,7 +367,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
         if (frequency != null) {
             builder.field(FREQUENCY.getPreferredName(), frequency.getStringRep());
         }
-        builder.field(INDEXES.getPreferredName(), indexes);
+        builder.field(INDICES.getPreferredName(), indices);
         builder.field(TYPES.getPreferredName(), types);
         builder.field(QUERY.getPreferredName(), query);
         if (aggregations != null) {
@@ -389,8 +391,8 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
     }
 
     /**
-     * The lists of indexes and types are compared for equality but they are not
-     * sorted first so this test could fail simply because the indexes and types
+     * The lists of indices and types are compared for equality but they are not
+     * sorted first so this test could fail simply because the indices and types
      * lists are in different orders.
      */
     @Override
@@ -409,7 +411,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
                 && Objects.equals(this.jobId, that.jobId)
                 && Objects.equals(this.frequency, that.frequency)
                 && Objects.equals(this.queryDelay, that.queryDelay)
-                && Objects.equals(this.indexes, that.indexes)
+                && Objects.equals(this.indices, that.indices)
                 && Objects.equals(this.types, that.types)
                 && Objects.equals(this.query, that.query)
                 && Objects.equals(this.scrollSize, that.scrollSize)
@@ -421,7 +423,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, jobId, frequency, queryDelay, indexes, types, query, scrollSize, aggregations, scriptFields, source,
+        return Objects.hash(id, jobId, frequency, queryDelay, indices, types, query, scrollSize, aggregations, scriptFields, source,
                 chunkingConfig);
     }
 
@@ -440,7 +442,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
         private String jobId;
         private TimeValue queryDelay = DEFAULT_QUERY_DELAY;
         private TimeValue frequency;
-        private List<String> indexes = Collections.emptyList();
+        private List<String> indices = Collections.emptyList();
         private List<String> types = Collections.emptyList();
         private QueryBuilder query = QueryBuilders.matchAllQuery();
         private AggregatorFactories.Builder aggregations;
@@ -463,7 +465,7 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
             this.jobId = config.jobId;
             this.queryDelay = config.queryDelay;
             this.frequency = config.frequency;
-            this.indexes = config.indexes;
+            this.indices = config.indices;
             this.types = config.types;
             this.query = config.query;
             this.aggregations = config.aggregations;
@@ -481,8 +483,8 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
             this.jobId = ExceptionsHelper.requireNonNull(jobId, Job.ID.getPreferredName());
         }
 
-        public void setIndexes(List<String> indexes) {
-            this.indexes = ExceptionsHelper.requireNonNull(indexes, INDEXES.getPreferredName());
+        public void setIndices(List<String> indices) {
+            this.indices = ExceptionsHelper.requireNonNull(indices, INDICES.getPreferredName());
         }
 
         public void setTypes(List<String> types) {
@@ -539,15 +541,15 @@ public class DatafeedConfig extends AbstractDiffable<DatafeedConfig> implements 
             if (!MlStrings.isValidId(id)) {
                 throw new IllegalArgumentException(Messages.getMessage(Messages.INVALID_ID, ID.getPreferredName()));
             }
-            if (indexes == null || indexes.isEmpty() || indexes.contains(null) || indexes.contains("")) {
-                throw invalidOptionValue(INDEXES.getPreferredName(), indexes);
+            if (indices == null || indices.isEmpty() || indices.contains(null) || indices.contains("")) {
+                throw invalidOptionValue(INDICES.getPreferredName(), indices);
             }
             if (types == null || types.isEmpty() || types.contains(null) || types.contains("")) {
                 throw invalidOptionValue(TYPES.getPreferredName(), types);
             }
             validateAggregations();
             setDefaultChunkingConfig();
-            return new DatafeedConfig(id, jobId, queryDelay, frequency, indexes, types, query, aggregations, scriptFields, scrollSize,
+            return new DatafeedConfig(id, jobId, queryDelay, frequency, indices, types, query, aggregations, scriptFields, scrollSize,
                     source, chunkingConfig);
         }
 

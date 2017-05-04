@@ -98,7 +98,7 @@ public class CategorizationIT extends MlNativeAutodetectIntegTestCase {
 
         String datafeedId = job.getId() + "-feed";
         DatafeedConfig.Builder datafeedConfig = new DatafeedConfig.Builder(datafeedId, job.getId());
-        datafeedConfig.setIndexes(Arrays.asList(DATA_INDEX));
+        datafeedConfig.setIndices(Arrays.asList(DATA_INDEX));
         datafeedConfig.setTypes(Arrays.asList(DATA_TYPE));
         DatafeedConfig datafeed = datafeedConfig.build();
         registerDatafeed(datafeed);
@@ -144,7 +144,7 @@ public class CategorizationIT extends MlNativeAutodetectIntegTestCase {
 
         String datafeedId = job.getId() + "-feed";
         DatafeedConfig.Builder datafeedConfig = new DatafeedConfig.Builder(datafeedId, job.getId());
-        datafeedConfig.setIndexes(Arrays.asList(DATA_INDEX));
+        datafeedConfig.setIndices(Arrays.asList(DATA_INDEX));
         datafeedConfig.setTypes(Arrays.asList(DATA_TYPE));
         DatafeedConfig datafeed = datafeedConfig.build();
         registerDatafeed(datafeed);
