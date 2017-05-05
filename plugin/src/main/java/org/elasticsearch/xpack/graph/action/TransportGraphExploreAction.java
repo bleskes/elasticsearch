@@ -363,7 +363,7 @@ public class TransportGraphExploreAction extends HandledTransportAction<GraphExp
                             // There were no terms from the previous phase that needed pursuing
                             continue;
                         }
-                        List<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> buckets = lastWaveTerms.getBuckets();
+                        List<? extends Terms.Bucket> buckets = lastWaveTerms.getBuckets();
                         for (org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket lastWaveTerm : buckets) {
                             Vertex fromVertex = getVertex(lastVr.fieldName(), lastWaveTerm.getKeyAsString());
                             for (int k = 0; k < currentHop.getNumberVertexRequests(); k++) {
@@ -481,7 +481,7 @@ public class TransportGraphExploreAction extends HandledTransportAction<GraphExp
                         if (lastWaveTerms == null) {
                             continue;
                         }
-                        List<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> buckets = lastWaveTerms.getBuckets();
+                        List<? extends Terms.Bucket> buckets = lastWaveTerms.getBuckets();
                         for (org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket lastWaveTerm : buckets) {
                             for (int k = 0; k < currentHop.getNumberVertexRequests(); k++) {
                                 VertexRequest vr = currentHop.getVertexRequest(k);
@@ -688,7 +688,7 @@ public class TransportGraphExploreAction extends HandledTransportAction<GraphExp
                                 }
                             } else {
                                 Terms terms = sample.getAggregations().get("field" + j);
-                                List<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> buckets = terms.getBuckets();
+                                List<? extends Terms.Bucket> buckets = terms.getBuckets();
                                 for (org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket bucket : buckets) {
                                     double signalWeight = bucket.getDocCount() / totalSignalStrength;
                                     addVertex(vr.fieldName(), bucket.getKeyAsString(), signalWeight, currentHopNumber, 0, 0);
@@ -714,7 +714,7 @@ public class TransportGraphExploreAction extends HandledTransportAction<GraphExp
                             } else {
                                 // Signal is based on popularity (number of documents)
                                 Terms terms = sample.getAggregations().get("field" + i);
-                                List<org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket> buckets = terms.getBuckets();
+                                List<? extends Terms.Bucket> buckets = terms.getBuckets();
                                 for (org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket bucket : buckets) {
                                     totalSignalStrength += bucket.getDocCount();
                                 }
