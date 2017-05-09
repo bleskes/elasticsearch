@@ -18,13 +18,11 @@
 package org.elasticsearch.xpack.monitoring;
 
 import com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
-import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.AbstractOldXPackIndicesBackwardsCompatibilityTestCase;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.network.NetworkModule;
@@ -32,7 +30,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.util.concurrent.CountDown;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.test.SecuritySettingsSource;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStateMonitoringDoc;
@@ -41,19 +40,22 @@ import org.elasticsearch.xpack.monitoring.collector.indices.IndicesStatsMonitori
 import org.elasticsearch.xpack.monitoring.collector.node.NodeStatsMonitoringDoc;
 import org.elasticsearch.xpack.monitoring.collector.shards.ShardMonitoringDoc;
 import org.elasticsearch.xpack.monitoring.exporter.MonitoringDoc;
+import org.elasticsearch.xpack.monitoring.exporter.http.HttpExporter;
 import org.elasticsearch.xpack.monitoring.resolver.MonitoringIndexNameResolver;
 import org.elasticsearch.xpack.monitoring.resolver.indices.IndexStatsResolver;
 import org.hamcrest.Matcher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
+import static org.elasticsearch.search.aggregations.AggregationBuilders.max;
+import static org.elasticsearch.search.aggregations.AggregationBuilders.terms;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
 import static org.hamcrest.Matchers.allOf;
@@ -61,14 +63,12 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.is;
 
 /**
  * Tests for monitoring indexes created before {@link Version#CURRENT}.
  */
 //Give ourselves 30 seconds instead of 5 to shut down. Sometimes it takes a while, especially on weak hardware. But we do get there.
 @ThreadLeakLingering(linger = 30000)
-@LuceneTestCase.AwaitsFix(bugUrl = "https://github.com/elastic/x-plugins/issues/4314")
 public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOldXPackIndicesBackwardsCompatibilityTestCase {
 
     private final boolean httpExporter = randomBoolean();
@@ -79,28 +79,20 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
                 .put(XPackSettings.MONITORING_ENABLED.getKey(), true)
                 // Don't clean old monitoring indexes - we want to make sure we can load them
                 .put(MonitoringSettings.HISTORY_DURATION.getKey(), TimeValue.timeValueHours(1000 * 365 * 24).getStringRep())
-                // Do not start monitoring exporters at startup
+                // Do not start the monitoring service at startup
                 .put(MonitoringSettings.INTERVAL.getKey(), "-1");
 
         if (httpExporter) {
             /* If we want to test the http exporter we have to create it but disable it. We need to create it so we don't use the default
              * local exporter and we have to disable it because we don't yet know the port we've bound to. We can only get that once
              * Elasticsearch starts so we'll enable the exporter then. */
-            settings.put(NetworkModule.HTTP_ENABLED.getKey(), true);
-            setupHttpExporter(settings, null);
+            settings.put(NetworkModule.HTTP_ENABLED.getKey(), true)
+                    .put("xpack.monitoring.exporters._http.type", HttpExporter.TYPE)
+                    .put("xpack.monitoring.exporters._http.enabled", "false")
+                    .put("xpack.monitoring.exporters._http.auth.username", SecuritySettingsSource.DEFAULT_USER_NAME)
+                    .put("xpack.monitoring.exporters._http.auth.password", SecuritySettingsSource.DEFAULT_PASSWORD);
         }
         return settings.build();
-    }
-
-    private void setupHttpExporter(Settings.Builder settings, Integer port) {
-        Map<String, String> httpExporter = new HashMap<>();
-        httpExporter.put("type", "http");
-        httpExporter.put("enabled", port == null ? "false" : "true");
-        httpExporter.put("host", "http://localhost:" + (port == null ? "does_not_matter" : port));
-        httpExporter.put("auth.username", SecuritySettingsSource.DEFAULT_USER_NAME);
-        httpExporter.put("auth.password", SecuritySettingsSource.DEFAULT_PASSWORD);
-
-        settings.putProperties(httpExporter, k -> MonitoringSettings.EXPORTERS_SETTINGS.getKey() + "my_exporter." + k);
     }
 
     @Override
@@ -113,16 +105,18 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
                 TransportAddress publishAddress = nodeInfos.getNodes().get(0).getHttp().address().publishAddress();
                 assertEquals(1, publishAddress.uniqueAddressTypeId());
                 InetSocketAddress address = ((InetSocketTransportAddress) publishAddress).address();
-                Settings.Builder settings = Settings.builder();
-                setupHttpExporter(settings, address.getPort());
+
+                Settings.Builder exporterSettings = Settings.builder()
+                        .put("xpack.monitoring.exporters._http.enabled", true)
+                        .put("xpack.monitoring.exporters._http.host", "http://localhost:" + address.getPort());
 
                 logger.info("--> Enabling http exporter pointing to [localhost:{}]", address.getPort());
-                assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get());
+                assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(exporterSettings));
             }
 
             // Monitoring can now start to collect new data
-            Settings.Builder settings = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), timeValueSeconds(3).getStringRep());
-            assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get());
+            Settings.Builder settings = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), 3L, TimeUnit.SECONDS);
+            assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings));
 
             // And we wait until data have been indexed locally using either by the local or http exporter
             MonitoringIndexNameResolver.Timestamped resolver = new IndexStatsResolver(MonitoredSystem.ES, Settings.EMPTY);
@@ -197,30 +191,48 @@ public class OldMonitoringIndicesBackwardsCompatibilityTests extends AbstractOld
             assertBusy(() -> search(indexPattern, ClusterStateMonitoringDoc.TYPE,
                     greaterThan(firstState.getHits().getTotalHits())), 1, TimeUnit.MINUTES);
 
+            logger.info("--> All tests passed for version [{}]", version);
         } finally {
-            /* Now we stop monitoring and disable the HTTP exporter. We also delete all data and checks multiple times
-                if they have not been re created by some in flight monitoring bulk request */
-            internalCluster().getInstances(MonitoringService.class).forEach(MonitoringService::stop);
+            // Now disabling the monitoring service, so that no more data are exported
+            assertAcked(client().admin().cluster().prepareUpdateSettings()
+                    .setTransientSettings(Settings.builder().putNull(MonitoringSettings.INTERVAL.getKey())));
 
-            Settings.Builder settings = Settings.builder().put(MonitoringSettings.INTERVAL.getKey(), "-1");
+            // Exporter is still enabled, allowing on-going collections to be exported without errors.
+            // This assertion loop waits for in flight exports to terminate. It checks that the latest
+            // node_stats document collected for the master node is at least 10 seconds old, corresponding
+            // to 2 elapsed collection intervals.
+            final int elapsedInSeconds = 6;
+            assertBusy(() -> {
+                String masterNodeId = internalCluster().clusterService(internalCluster().getMasterName()).localNode().getId();
+
+                refresh(".monitoring-*");
+                SearchResponse response = client().prepareSearch(".monitoring-*")
+                        .setTypes(NodeStatsMonitoringDoc.TYPE)
+                        .setSize(0)
+                        .addAggregation(terms("agg_nodes_ids").field("node_stats.node_id")
+                                .subAggregation(max("agg_last_time_collected").field("timestamp")))
+                        .get();
+
+                Terms aggregation = response.getAggregations().get("agg_nodes_ids");
+                assertNotNull("Terms aggregation not found for node ids", aggregation);
+
+                Terms.Bucket bucket = aggregation.getBucketByKey(masterNodeId);
+                assertTrue("No bucket found for node id [" + masterNodeId + "]", bucket != null);
+                assertTrue(bucket.getDocCount() >= 1L);
+
+                Max subAggregation = bucket.getAggregations().get("agg_last_time_collected");
+                assertNotNull("Max aggregation of last collected times not found", subAggregation);
+                DateTime lastCollection = new DateTime(Math.round(subAggregation.getValue()), DateTimeZone.UTC);
+                assertTrue(lastCollection.plusSeconds(elapsedInSeconds).isBefore(DateTime.now(DateTimeZone.UTC)));
+            }, 30L, TimeUnit.SECONDS);
+
             if (httpExporter) {
                 logger.info("--> Disabling http exporter after test");
-                setupHttpExporter(settings, null);
+                assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(Settings.builder()
+                                .putNull("xpack.monitoring.exporters._http.enabled")
+                                .putNull("xpack.monitoring.exporters._http.host")));
             }
-            assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(settings).get());
 
-            logger.info("--> Waiting for indices deletion");
-            CountDown retries = new CountDown(10);
-            assertBusy(() -> {
-                String[] indices = new String[]{".marvel-*", ".monitoring-*"};
-                IndicesExistsResponse existsResponse = client().admin().indices().prepareExists(indices).get();
-                if (existsResponse.isExists()) {
-                    assertAcked(client().admin().indices().prepareDelete(indices));
-                } else {
-                    retries.countDown();
-                }
-                assertThat(retries.isCountedDown(), is(true));
-            });
             logger.info("--> End testing version [{}]", version);
         }
     }
