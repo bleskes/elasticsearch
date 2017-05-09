@@ -340,8 +340,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User("_username", new String[]{"r1"},
-                    new User("running as", new String[] {"r2"}));
+            user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         } else {
             user = new User("_username", new String[]{"r1"});
         }
@@ -393,8 +392,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User("_username", new String[]{"r1"},
-                    new User("running as", new String[] {"r2"}));
+            user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         } else {
             user = new User("_username", new String[]{"r1"});
         }
@@ -424,8 +422,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User("_username", new String[]{"r1"},
-                    new User("running as", new String[] {"r2"}));
+            user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         } else {
             user = new User("_username", new String[]{"r1"});
         }
@@ -495,7 +492,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         final boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User("_username", new String[]{"r1"}, new User("running as", new String[] {"r2"}));
+            user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         } else {
             user = new User("_username", new String[]{"r1"});
         }
@@ -561,7 +558,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, clusterService, logger, threadContext);
         TransportMessage message = new MockMessage(threadContext);
         String origins = LoggingAuditTrail.originAttributes(message, localNode, threadContext);
-        User user = new User("_username", new String[]{"r1"}, new User("running as", new String[] {"r2"}));
+        User user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         auditTrail.runAsGranted(user, "_action", message);
         assertMsg(logger, Level.INFO, prefix + "[transport] [run_as_granted]\t" + origins +
                 ", principal=[_username], run_as_principal=[running as], action=[_action], request=[MockMessage]");
@@ -579,7 +576,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         LoggingAuditTrail auditTrail = new LoggingAuditTrail(settings, clusterService, logger, threadContext);
         TransportMessage message = new MockMessage(threadContext);
         String origins = LoggingAuditTrail.originAttributes(message, localNode, threadContext);
-        User user = new User("_username", new String[]{"r1"}, new User("running as", new String[] {"r2"}));
+        User user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         auditTrail.runAsDenied(user, "_action", message);
         assertMsg(logger, Level.INFO, prefix + "[transport] [run_as_denied]\t" + origins +
                 ", principal=[_username], run_as_principal=[running as], action=[_action], request=[MockMessage]");
@@ -626,7 +623,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User("_username", new String[] { "r1" }, new User("running as", new String[] { "r2" }));
+            user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         } else {
             user = new User("_username", new String[] { "r1" });
         }
@@ -667,7 +664,7 @@ public class LoggingAuditTrailTests extends ESTestCase {
         boolean runAs = randomBoolean();
         User user;
         if (runAs) {
-            user = new User("_username", new String[] { "r1" }, new User("running as", new String[] { "r2" }));
+            user = new User("running as", new String[]{"r2"}, new User("_username", new String[] {"r1"}));
         } else {
             user = new User("_username", new String[] { "r1" });
         }

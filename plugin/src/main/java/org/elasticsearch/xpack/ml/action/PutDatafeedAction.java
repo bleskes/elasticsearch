@@ -52,11 +52,13 @@ import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.ml.MlMetadata;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedConfig;
+import org.elasticsearch.xpack.security.SecurityContext;
 import org.elasticsearch.xpack.security.action.user.HasPrivilegesAction;
 import org.elasticsearch.xpack.security.action.user.HasPrivilegesRequest;
 import org.elasticsearch.xpack.security.action.user.HasPrivilegesResponse;
 import org.elasticsearch.xpack.security.authc.Authentication;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor;
+import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.support.Exceptions;
 
 import java.io.IOException;
@@ -203,17 +205,20 @@ public class PutDatafeedAction extends Action<PutDatafeedAction.Request, PutData
         private final XPackLicenseState licenseState;
         private final Client client;
         private final boolean securityEnabled;
+        private final SecurityContext securityContext;
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService,
                                ClusterService clusterService, ThreadPool threadPool, Client client,
                                XPackLicenseState licenseState, ActionFilters actionFilters,
-                               IndexNameExpressionResolver indexNameExpressionResolver) {
+                               IndexNameExpressionResolver indexNameExpressionResolver,
+                               @Nullable CryptoService cryptoService) {
             super(settings, PutDatafeedAction.NAME, transportService, clusterService, threadPool,
                     actionFilters, indexNameExpressionResolver, Request::new);
             this.licenseState = licenseState;
             this.client = client;
             this.securityEnabled = XPackSettings.SECURITY_ENABLED.get(settings);
+            this.securityContext = securityEnabled ? new SecurityContext(settings, threadPool.getThreadContext(), cryptoService) : null;
         }
 
         @Override
@@ -232,13 +237,13 @@ public class PutDatafeedAction extends Action<PutDatafeedAction.Request, PutData
             // If security is enabled only create the datafeed if the user requesting creation has
             // permission to read the indices the datafeed is going to read from
             if (securityEnabled) {
-                final String runAsUser = Authentication.getAuthentication(threadPool.getThreadContext()).getRunAsUser().principal();
+                final String username = securityContext.getUser().principal();
                 ActionListener<HasPrivilegesResponse> privResponseListener = ActionListener.wrap(
-                        r -> handlePrivsResponse(runAsUser, request, r, listener),
+                        r -> handlePrivsResponse(username, request, r, listener),
                         listener::onFailure);
 
                 HasPrivilegesRequest privRequest = new HasPrivilegesRequest();
-                privRequest.username(runAsUser);
+                privRequest.username(username);
                 privRequest.clusterPrivileges(Strings.EMPTY_ARRAY);
                 // We just check for permission to use the search action.  In reality we'll also
                 // use the scroll action, but that's considered an implementation detail.

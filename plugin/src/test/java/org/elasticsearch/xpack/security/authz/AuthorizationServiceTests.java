@@ -468,8 +468,8 @@ public class AuthorizationServiceTests extends ESTestCase {
 
     public void testRunAsRequestWithNoRolesUser() {
         TransportRequest request = mock(TransportRequest.class);
-        User user = new User("test user", null, new User("run as me", new String[] { "admin" }));
-        assertThat(user.runAs(), is(notNullValue()));
+        User user = new User("run as me", null, new User("test user", "admin"));
+        assertNotEquals(user.authenticatedUser(), user);
         assertThrowsAuthorizationExceptionRunAs(
                 () -> authorize(createAuthentication(user), "indices:a", request),
                 "indices:a", "test user", "run as me"); // run as [run as me]
@@ -480,9 +480,9 @@ public class AuthorizationServiceTests extends ESTestCase {
     public void testRunAsRequestWithoutLookedUpBy() {
         AuthenticateRequest request = new AuthenticateRequest("run as me");
         roleMap.put("can run as", ReservedRolesStore.SUPERUSER_ROLE_DESCRIPTOR);
-        User user = new User("test user", new String[] { "can run as" }, new User("run as me", Strings.EMPTY_ARRAY));
+        User user = new User("run as me", Strings.EMPTY_ARRAY, new User("test user", new String[] { "can run as" }));
         Authentication authentication = new Authentication(user, new RealmRef("foo", "bar", "baz"), null);
-        assertThat(user.runAs(), is(notNullValue()));
+        assertNotEquals(user.authenticatedUser(), user);
         assertThrowsAuthorizationExceptionRunAs(
                 () -> authorize(authentication, AuthenticateAction.NAME, request),
                 AuthenticateAction.NAME, "test user", "run as me"); // run as [run as me]
@@ -492,8 +492,8 @@ public class AuthorizationServiceTests extends ESTestCase {
 
     public void testRunAsRequestRunningAsUnAllowedUser() {
         TransportRequest request = mock(TransportRequest.class);
-        User user = new User("test user", new String[] { "can run as" }, new User("run as me", "doesn't exist"));
-        assertThat(user.runAs(), is(notNullValue()));
+        User user = new User("run as me", new String[] {"doesn't exist"}, new User("test user", "can run as"));
+        assertNotEquals(user.authenticatedUser(), user);
         roleMap.put("can run as", new RoleDescriptor("can run as",null,
                 new IndicesPrivileges[] { IndicesPrivileges.builder().indices("a").privileges("all").build() },
                 new String[] { "not the right user" }));
@@ -507,8 +507,8 @@ public class AuthorizationServiceTests extends ESTestCase {
 
     public void testRunAsRequestWithRunAsUserWithoutPermission() {
         TransportRequest request = new GetIndexRequest().indices("a");
-        User user = new User("test user", new String[] { "can run as" }, new User("run as me", "b"));
-        assertThat(user.runAs(), is(notNullValue()));
+        User user = new User("run as me", new String[] {"b"}, new User("test user", "can run as"));
+        assertNotEquals(user.authenticatedUser(), user);
         roleMap.put("can run as", new RoleDescriptor("can run as",null,
                 new IndicesPrivileges[] { IndicesPrivileges.builder().indices("a").privileges("all").build() },
                 new String[] { "run as me" }));
@@ -537,8 +537,8 @@ public class AuthorizationServiceTests extends ESTestCase {
 
     public void testRunAsRequestWithValidPermissions() {
         TransportRequest request = new GetIndexRequest().indices("b");
-        User user = new User("test user", new String[] { "can run as" }, new User("run as me", "b"));
-        assertThat(user.runAs(), is(notNullValue()));
+        User user = new User("run as me", new String[] {"b"}, new User("test user", new String[] { "can run as" }));
+        assertNotEquals(user.authenticatedUser(), user);
         roleMap.put("can run as", new RoleDescriptor("can run as",null,
                 new IndicesPrivileges[] { IndicesPrivileges.builder().indices("a").privileges("all").build() },
                 new String[] { "run as me" }));
@@ -857,7 +857,6 @@ public class AuthorizationServiceTests extends ESTestCase {
         final Authentication authentication = mock(Authentication.class);
         final RealmRef authenticatedBy = mock(RealmRef.class);
         when(authentication.getUser()).thenReturn(user);
-        when(authentication.getRunAsUser()).thenReturn(user);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType())
                 .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAlphaOfLengthBetween(4, 12));
@@ -867,7 +866,8 @@ public class AuthorizationServiceTests extends ESTestCase {
     }
 
     public void testSameUserPermissionDoesNotAllowNonMatchingUsername() {
-        final User user = new User("joe");
+        final User authUser = new User("admin", new String[] { "bar" });
+        final User user = new User("joe", null, authUser);
         final boolean changePasswordRequest = randomBoolean();
         final String username = randomFrom("", "joe" + randomAlphaOfLengthBetween(1, 5), randomAlphaOfLengthBetween(3, 10));
         final TransportRequest request = changePasswordRequest ?
@@ -877,7 +877,6 @@ public class AuthorizationServiceTests extends ESTestCase {
         final Authentication authentication = mock(Authentication.class);
         final RealmRef authenticatedBy = mock(RealmRef.class);
         when(authentication.getUser()).thenReturn(user);
-        when(authentication.getRunAsUser()).thenReturn(user);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType())
                 .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAlphaOfLengthBetween(4, 12));
@@ -885,9 +884,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         assertThat(request, instanceOf(UserRequest.class));
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
 
-        final User user2 = new User("admin", new String[] { "bar" }, user);
-        when(authentication.getUser()).thenReturn(user2);
-        when(authentication.getRunAsUser()).thenReturn(user);
+        when(authentication.getUser()).thenReturn(user);
         final RealmRef lookedUpBy = mock(RealmRef.class);
         when(authentication.getLookedUpBy()).thenReturn(lookedUpBy);
         when(lookedUpBy.getType())
@@ -910,8 +907,10 @@ public class AuthorizationServiceTests extends ESTestCase {
                 ClusterStatsAction.NAME, GetLicenseAction.NAME);
         final Authentication authentication = mock(Authentication.class);
         final RealmRef authenticatedBy = mock(RealmRef.class);
+        final boolean runAs = randomBoolean();
         when(authentication.getUser()).thenReturn(user);
-        when(authentication.getRunAsUser()).thenReturn(randomBoolean() ? user : new User("runAs"));
+        when(user.authenticatedUser()).thenReturn(runAs ? new User("authUser") : user);
+        when(user.isRunAs()).thenReturn(runAs);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType())
                 .thenReturn(randomAlphaOfLengthBetween(4, 12));
@@ -921,9 +920,9 @@ public class AuthorizationServiceTests extends ESTestCase {
     }
 
     public void testSameUserPermissionRunAsChecksAuthenticatedBy() {
+        final User authUser = new User("admin", new String[] { "bar" });
         final String username = "joe";
-        final User runAs = new User(username);
-        final User user = new User("admin", new String[] { "bar" }, runAs);
+        final User user = new User(username, null, authUser);
         final boolean changePasswordRequest = randomBoolean();
         final TransportRequest request = changePasswordRequest ?
                 new ChangePasswordRequestBuilder(mock(Client.class)).username(username).request() :
@@ -933,15 +932,13 @@ public class AuthorizationServiceTests extends ESTestCase {
         final RealmRef authenticatedBy = mock(RealmRef.class);
         final RealmRef lookedUpBy = mock(RealmRef.class);
         when(authentication.getUser()).thenReturn(user);
-        when(authentication.getRunAsUser()).thenReturn(runAs);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authentication.getLookedUpBy()).thenReturn(lookedUpBy);
-        when(authentication.isRunAs()).thenReturn(true);
         when(lookedUpBy.getType())
                 .thenReturn(changePasswordRequest ? randomFrom(ReservedRealm.TYPE, NativeRealm.TYPE) : randomAlphaOfLengthBetween(4, 12));
         assertTrue(AuthorizationService.checkSameUserPermissions(action, request, authentication));
 
-        when(authentication.getRunAsUser()).thenReturn(user);
+        when(authentication.getUser()).thenReturn(authUser);
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
     }
 
@@ -952,8 +949,6 @@ public class AuthorizationServiceTests extends ESTestCase {
         final Authentication authentication = mock(Authentication.class);
         final RealmRef authenticatedBy = mock(RealmRef.class);
         when(authentication.getUser()).thenReturn(user);
-        when(authentication.getRunAsUser()).thenReturn(user);
-        when(authentication.isRunAs()).thenReturn(false);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authenticatedBy.getType()).thenReturn(randomFrom(LdapRealm.LDAP_TYPE, FileRealm.TYPE, LdapRealm.AD_TYPE, PkiRealm.TYPE,
                 randomAlphaOfLengthBetween(4, 12)));
@@ -961,23 +956,20 @@ public class AuthorizationServiceTests extends ESTestCase {
         assertThat(request, instanceOf(UserRequest.class));
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
         verify(authenticatedBy).getType();
-        verify(authentication).getRunAsUser();
         verify(authentication).getAuthenticatedBy();
-        verify(authentication).isRunAs();
+        verify(authentication, times(2)).getUser();
         verifyNoMoreInteractions(authenticatedBy, authentication);
     }
 
     public void testSameUserPermissionDoesNotAllowChangePasswordForLookedUpByOtherRealms() {
-        final User runAs = new User("joe");
-        final User user = new User("admin", new String[] { "bar" }, runAs);
-        final ChangePasswordRequest request = new ChangePasswordRequestBuilder(mock(Client.class)).username(runAs.principal()).request();
+        final User authUser = new User("admin", new String[] { "bar" });
+        final User user = new User("joe", null, authUser);
+        final ChangePasswordRequest request = new ChangePasswordRequestBuilder(mock(Client.class)).username(user.principal()).request();
         final String action = ChangePasswordAction.NAME;
         final Authentication authentication = mock(Authentication.class);
         final RealmRef authenticatedBy = mock(RealmRef.class);
         final RealmRef lookedUpBy = mock(RealmRef.class);
         when(authentication.getUser()).thenReturn(user);
-        when(authentication.getRunAsUser()).thenReturn(runAs);
-        when(authentication.isRunAs()).thenReturn(true);
         when(authentication.getAuthenticatedBy()).thenReturn(authenticatedBy);
         when(authentication.getLookedUpBy()).thenReturn(lookedUpBy);
         when(lookedUpBy.getType()).thenReturn(randomFrom(LdapRealm.LDAP_TYPE, FileRealm.TYPE, LdapRealm.AD_TYPE, PkiRealm.TYPE,
@@ -986,8 +978,7 @@ public class AuthorizationServiceTests extends ESTestCase {
         assertThat(request, instanceOf(UserRequest.class));
         assertFalse(AuthorizationService.checkSameUserPermissions(action, request, authentication));
         verify(authentication).getLookedUpBy();
-        verify(authentication).getRunAsUser();
-        verify(authentication).isRunAs();
+        verify(authentication, times(2)).getUser();
         verify(lookedUpBy).getType();
         verifyNoMoreInteractions(authentication, lookedUpBy, authenticatedBy);
     }
@@ -1033,7 +1024,7 @@ public class AuthorizationServiceTests extends ESTestCase {
     }
 
     private static Authentication createAuthentication(User user) {
-        RealmRef lookedUpBy = user.runAs() == null ? null : new RealmRef("looked", "up", "by");
+        RealmRef lookedUpBy = user.authenticatedUser() == user ? null : new RealmRef("looked", "up", "by");
         return new Authentication(user, new RealmRef("test", "test", "foo"), lookedUpBy);
     }
 

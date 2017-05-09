@@ -358,13 +358,7 @@ public class AuthenticationService extends AbstractComponent {
 
             Runnable action;
             if (authentication != null) {
-                try {
-                    authentication.writeToContext(threadContext, cryptoService, settings, Version.CURRENT, signingEnabled);
-                    request.authenticationSuccess(authentication.getAuthenticatedBy().getName(), authentication.getUser());
-                    action = () -> listener.onResponse(authentication);
-                } catch (Exception e) {
-                    action = () -> listener.onFailure(request.exceptionProcessingRequest(e, authenticationToken));
-                }
+                action = () -> writeAuthToContext(authentication);
             } else {
                 action = () -> listener.onFailure(request.anonymousAccessDenied());
             }
@@ -399,8 +393,7 @@ public class AuthenticationService extends AbstractComponent {
                     } else {
                         assert runAsUsername.isEmpty() : "the run as username may not be empty";
                         logger.debug("user [{}] attempted to runAs with an empty username", user.principal());
-                        listener.onFailure(request.runAsDenied(new User(user.principal(), user.roles(),
-                            new User(runAsUsername, Strings.EMPTY_ARRAY)), authenticationToken));
+                        listener.onFailure(request.runAsDenied(new User(runAsUsername, null, user), authenticationToken));
                     }
                 } else {
                     finishAuthentication(user);
@@ -431,7 +424,14 @@ public class AuthenticationService extends AbstractComponent {
             };
 
             final IteratingActionListener<User, Realm> userLookupListener =
-                    new IteratingActionListener<>(ActionListener.wrap((lookupUser) -> userConsumer.accept(new User(user, lookupUser)),
+                    new IteratingActionListener<>(ActionListener.wrap((lookupUser) -> {
+                                if (lookupUser == null) {
+                                    // the user does not exist, but we still create a User object, which will later be rejected by authz
+                                    userConsumer.accept(new User(runAsUsername, null, user));
+                                } else {
+                                    userConsumer.accept(new User(lookupUser, user));
+                                }
+                            },
                             (e) -> listener.onFailure(request.exceptionProcessingRequest(e, authenticationToken))),
                             realmLookupConsumer, realmsList, threadContext);
             try {
@@ -446,7 +446,8 @@ public class AuthenticationService extends AbstractComponent {
          * one. If authentication is successful, this method also ensures that the authentication is written to the ThreadContext
          */
         void finishAuthentication(User finalUser) {
-            if (finalUser.enabled() == false || (finalUser.runAs() != null && finalUser.runAs().enabled() == false)) {
+            if (finalUser.enabled() == false || finalUser.authenticatedUser().enabled() == false) {
+                // TODO: these should be different log messages if the runas vs auth user is disabled?
                 logger.debug("user [{}] is disabled. failing authentication", finalUser);
                 listener.onFailure(request.authenticationFailed(authenticationToken));
             } else {

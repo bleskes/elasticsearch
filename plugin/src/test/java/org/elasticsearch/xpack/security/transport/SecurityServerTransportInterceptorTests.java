@@ -215,7 +215,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         assertEquals(user, sendingUser.get());
         assertEquals(user, securityContext.getUser());
         verify(xPackLicenseState).isAuthAllowed();
-        verify(securityContext).executeAsUser(eq(user), any(Consumer.class), eq(remoteVersion));
+        verify(securityContext).executeAfterRewritingAuthentication(any(Consumer.class), eq(remoteVersion));
         verifyNoMoreInteractions(xPackLicenseState);
     }
 
@@ -300,7 +300,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         assertEquals(user, sendingUser.get());
 
         verify(xPackLicenseState, times(3)).isAuthAllowed();
-        verify(securityContext, times(3)).executeAsUser(any(User.class), any(Consumer.class), any(Version.class));
+        verify(securityContext, times(1)).executeAsUser(any(User.class), any(Consumer.class), any(Version.class));
         verifyNoMoreInteractions(xPackLicenseState);
     }
 
