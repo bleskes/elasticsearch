@@ -52,6 +52,7 @@ import org.elasticsearch.threadpool.FixedExecutorBuilder;
 import org.elasticsearch.threadpool.TestThreadPool;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportMessage;
+import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.SecurityLifecycleService;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
@@ -66,6 +67,8 @@ import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
 import org.junit.After;
 import org.junit.Before;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import static org.elasticsearch.test.SecurityTestsUtils.assertAuthenticationException;
 import static org.elasticsearch.xpack.security.support.Exceptions.authenticationError;
@@ -94,6 +97,7 @@ import static org.mockito.Mockito.when;
  */
 public class AuthenticationServiceTests extends ESTestCase {
 
+    public static final String SIGNING_PREFIX = "signed$";
     private AuthenticationService service;
     private TransportMessage message;
     private RestRequest restRequest;
@@ -108,6 +112,7 @@ public class AuthenticationServiceTests extends ESTestCase {
     private TokenService tokenService;
     private SecurityLifecycleService lifecycleService;
     private Client client;
+    private boolean useSsl;
 
     @Before
     public void init() throws Exception {
@@ -115,6 +120,8 @@ public class AuthenticationServiceTests extends ESTestCase {
         message = new InternalMessage();
         restRequest = new FakeRestRequest();
         threadContext = new ThreadContext(Settings.EMPTY);
+
+        useSsl = randomBoolean();
 
         firstRealm = mock(Realm.class);
         when(firstRealm.type()).thenReturn("file");
@@ -125,6 +132,7 @@ public class AuthenticationServiceTests extends ESTestCase {
         Settings settings = Settings.builder()
                 .put("path.home", createTempDir())
                 .put("node.name", "authc_test")
+                .put(XPackSettings.TRANSPORT_SSL_ENABLED.getKey(), useSsl)
                 .build();
         XPackLicenseState licenseState = mock(XPackLicenseState.class);
         when(licenseState.allowedRealmType()).thenReturn(XPackLicenseState.AllowedRealmType.ALL);
@@ -138,7 +146,20 @@ public class AuthenticationServiceTests extends ESTestCase {
         threadPool = new ThreadPool(settings,
                 new FixedExecutorBuilder(settings, TokenService.THREAD_POOL_NAME, 1, 1000, "xpack.security.authc.token.thread_pool"));
         threadContext = threadPool.getThreadContext();
-        when(cryptoService.sign(any(String.class), any(Version.class))).thenReturn("_signed_auth");
+        when(cryptoService.sign(any(String.class), any(Version.class))).thenAnswer(invocation -> {
+            assert invocation.getArguments().length == 2;
+            String toSign = (String) invocation.getArguments()[0];
+            return SIGNING_PREFIX + toSign;
+        });
+        when(cryptoService.unsignAndVerify(any(String.class), any(Version.class))).thenAnswer(invocation -> {
+            assert invocation.getArguments().length == 2;
+            String signed = (String) invocation.getArguments()[0];
+            if (signed.startsWith(SIGNING_PREFIX)) {
+                return signed.substring(SIGNING_PREFIX.length());
+            } else {
+                return signed;
+            }
+        });
         InternalClient internalClient = new InternalClient(Settings.EMPTY, threadPool, client, cryptoService);
         lifecycleService = mock(SecurityLifecycleService.class);
         tokenService = new TokenService(settings, Clock.systemUTC(), internalClient, lifecycleService);
@@ -493,7 +514,7 @@ public class AuthenticationServiceTests extends ESTestCase {
         assertThat(authentication.getAuthenticatedBy().getName(), is("__attach"));
         assertThat(authentication.getAuthenticatedBy().getType(), is("__attach"));
         assertThat(authentication.getAuthenticatedBy().getNodeName(), is("authc_test"));
-        assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo((Object) authentication.encode()));
+        assertThreadContextContainsAuthentication(authentication);
     }
 
     public void testAttachIfMissingExists() throws Exception {
@@ -501,13 +522,14 @@ public class AuthenticationServiceTests extends ESTestCase {
         threadContext.putTransient(Authentication.AUTHENTICATION_KEY, authentication);
         threadContext.putHeader(Authentication.AUTHENTICATION_KEY, authentication.encode());
         service.attachUserIfMissing(new User("username2", "r3", "r4"), Version.CURRENT);
-        assertThreadContextContainsAuthentication(authentication);
+        assertThreadContextContainsAuthentication(authentication, false);
     }
 
     public void testAnonymousUserRest() throws Exception {
         String username = randomBoolean() ? AnonymousUser.DEFAULT_ANONYMOUS_USERNAME : "user1";
         Settings.Builder builder = Settings.builder()
-                .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3");
+                .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3")
+                .put(XPackSettings.TRANSPORT_SSL_ENABLED.getKey(), useSsl);
         if (username.equals(AnonymousUser.DEFAULT_ANONYMOUS_USERNAME) == false) {
             builder.put(AnonymousUser.USERNAME_SETTING.getKey(), username);
         }
@@ -529,6 +551,7 @@ public class AuthenticationServiceTests extends ESTestCase {
     public void testAnonymousUserTransportNoDefaultUser() throws Exception {
         Settings settings = Settings.builder()
                 .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3")
+                .put(XPackSettings.TRANSPORT_SSL_ENABLED.getKey(), useSsl)
                 .build();
         final AnonymousUser anonymousUser = new AnonymousUser(settings);
         service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
@@ -544,6 +567,7 @@ public class AuthenticationServiceTests extends ESTestCase {
     public void testAnonymousUserTransportWithDefaultUser() throws Exception {
         Settings settings = Settings.builder()
                 .putArray(AnonymousUser.ROLES_SETTING.getKey(), "r1", "r2", "r3")
+                .put(XPackSettings.TRANSPORT_SSL_ENABLED.getKey(), useSsl)
                 .build();
         final AnonymousUser anonymousUser = new AnonymousUser(settings);
         service = new AuthenticationService(settings, realms, auditTrail, cryptoService,
@@ -907,10 +931,20 @@ public class AuthenticationServiceTests extends ESTestCase {
     }
 
     void assertThreadContextContainsAuthentication(Authentication authentication) throws IOException {
+        assertThreadContextContainsAuthentication(authentication, this.useSsl == false);
+    }
+
+    private void assertThreadContextContainsAuthentication(Authentication authentication, boolean expectSignedHeaders) throws IOException {
         Authentication contextAuth = threadContext.getTransient(Authentication.AUTHENTICATION_KEY);
         assertThat(contextAuth, notNullValue());
         assertThat(contextAuth, is(authentication));
-        assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo((Object) authentication.encode()));
+        final Object expectedHeader ;
+        if (expectSignedHeaders) {
+            expectedHeader = SIGNING_PREFIX + authentication.encode();
+        } else {
+            expectedHeader = authentication.encode();
+        }
+        assertThat(threadContext.getHeader(Authentication.AUTHENTICATION_KEY), equalTo(expectedHeader));
     }
 
     private void mockAuthenticate(Realm realm, AuthenticationToken token, User user) {

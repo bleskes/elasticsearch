@@ -77,7 +77,10 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        settings = Settings.builder().put("path.home", createTempDir()).build();
+        settings = Settings.builder()
+                .put("path.home", createTempDir())
+                .put(XPackSettings.TRANSPORT_SSL_ENABLED.getKey(), true)
+                .build();
         threadPool = mock(ThreadPool.class);
         threadContext = new ThreadContext(settings);
         when(threadPool.getThreadContext()).thenReturn(threadContext);
