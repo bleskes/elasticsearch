@@ -28,6 +28,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.test.SecuritySettingsSource;
+import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.security.action.token.CreateTokenResponse;
 import org.elasticsearch.xpack.security.action.token.InvalidateTokenResponse;
 import org.elasticsearch.xpack.security.client.SecurityClient;
@@ -46,6 +47,7 @@ public class TokenAuthIntegTests extends SecurityIntegTestCase {
     public Settings nodeSettings(int nodeOrdinal) {
         return Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
+                .put(XPackSettings.TOKEN_SERVICE_ENABLED_SETTING.getKey(), true)
                 // turn down token expiration interval and crank up the deletion interval
                 .put(TokenService.TOKEN_EXPIRATION.getKey(), TimeValue.timeValueSeconds(1L))
                 .put(TokenService.DELETE_INTERVAL.getKey(), TimeValue.timeValueSeconds(1L))

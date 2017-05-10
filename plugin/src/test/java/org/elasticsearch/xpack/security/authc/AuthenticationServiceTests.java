@@ -67,8 +67,6 @@ import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
 import org.junit.After;
 import org.junit.Before;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import static org.elasticsearch.test.SecurityTestsUtils.assertAuthenticationException;
 import static org.elasticsearch.xpack.security.support.Exceptions.authenticationError;
@@ -132,6 +130,7 @@ public class AuthenticationServiceTests extends ESTestCase {
         Settings settings = Settings.builder()
                 .put("path.home", createTempDir())
                 .put("node.name", "authc_test")
+                .put(XPackSettings.TOKEN_SERVICE_ENABLED_SETTING.getKey(), true)
                 .put(XPackSettings.TRANSPORT_SSL_ENABLED.getKey(), useSsl)
                 .build();
         XPackLicenseState licenseState = mock(XPackLicenseState.class);

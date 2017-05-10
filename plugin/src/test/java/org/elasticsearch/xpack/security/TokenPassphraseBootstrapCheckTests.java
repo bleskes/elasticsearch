@@ -21,7 +21,6 @@ import org.elasticsearch.common.settings.MockSecureSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.XPackSettings;
-import org.elasticsearch.xpack.security.TokenPassphraseBootstrapCheck;
 import org.elasticsearch.xpack.security.authc.TokenService;
 
 import static org.elasticsearch.xpack.security.TokenPassphraseBootstrapCheck.MINIMUM_PASSPHRASE_LENGTH;
@@ -29,9 +28,11 @@ import static org.elasticsearch.xpack.security.TokenPassphraseBootstrapCheck.MIN
 public class TokenPassphraseBootstrapCheckTests extends ESTestCase {
 
     public void testTokenPassphraseCheck() throws Exception {
-        assertTrue(new TokenPassphraseBootstrapCheck(Settings.EMPTY).check());
+        assertFalse(new TokenPassphraseBootstrapCheck(Settings.EMPTY).check());
         MockSecureSettings secureSettings = new MockSecureSettings();
-        Settings settings = Settings.builder().setSecureSettings(secureSettings).build();
+        Settings settings = Settings.builder()
+                .put(XPackSettings.TOKEN_SERVICE_ENABLED_SETTING.getKey(), true)
+                .setSecureSettings(secureSettings).build();
         assertTrue(new TokenPassphraseBootstrapCheck(settings).check());
 
         secureSettings.setString(TokenService.TOKEN_PASSPHRASE.getKey(), randomAlphaOfLengthBetween(MINIMUM_PASSPHRASE_LENGTH, 30));
@@ -45,7 +46,7 @@ public class TokenPassphraseBootstrapCheckTests extends ESTestCase {
     }
 
     public void testTokenPassphraseCheckServiceDisabled() throws Exception {
-        Settings settings = Settings.builder().put(XPackSettings.TOKEN_SERVICE_ENABLED_SETTING.getKey(), false).build();
+        Settings settings = Settings.EMPTY;
         assertFalse(new TokenPassphraseBootstrapCheck(settings).check());
         MockSecureSettings secureSettings = new MockSecureSettings();
         settings = Settings.builder().put(settings).setSecureSettings(secureSettings).build();

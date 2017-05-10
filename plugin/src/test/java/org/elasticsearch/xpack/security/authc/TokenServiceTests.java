@@ -65,11 +65,15 @@ public class TokenServiceTests extends ESTestCase {
     private ThreadPool threadPool;
     private Client client;
     private SecurityLifecycleService lifecycleService;
+    private Settings settings;
 
     @Before
     public void setupClient() {
         client = mock(Client.class);
-        Settings settings = Settings.builder().put(Node.NODE_NAME_SETTING.getKey(), "TokenServiceTests").build();
+        settings = Settings.builder()
+                .put(XPackSettings.TOKEN_SERVICE_ENABLED_SETTING.getKey(), true)
+                .put(Node.NODE_NAME_SETTING.getKey(), "TokenServiceTests")
+                .build();
         threadPool = new ThreadPool(settings,
                 new FixedExecutorBuilder(settings, TokenService.THREAD_POOL_NAME, 1, 1000, "xpack.security.authc.token.thread_pool"));
         internalClient = new InternalClient(settings, threadPool, client, mock(CryptoService.class));
@@ -91,12 +95,12 @@ public class TokenServiceTests extends ESTestCase {
     }
 
     public void testAttachAndGetToken() throws Exception {
-        TokenService tokenService = new TokenService(Settings.EMPTY, Clock.systemUTC(), internalClient, lifecycleService);
+        TokenService tokenService = new TokenService(settings, Clock.systemUTC(), internalClient, lifecycleService);
         Authentication authentication = new Authentication(new User("joe", "admin"), new RealmRef("native_realm", "native", "node1"), null);
         final UserToken token = tokenService.createUserToken(authentication);
         assertNotNull(token);
 
-        ThreadContext requestContext = new ThreadContext(Settings.EMPTY);
+        ThreadContext requestContext = new ThreadContext(settings);
         requestContext.putHeader("Authorization", "Bearer " + tokenService.getUserTokenString(token));
 
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {
@@ -108,7 +112,7 @@ public class TokenServiceTests extends ESTestCase {
 
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {
             // verify a second separate token service with its own salt can also verify
-            TokenService anotherService = new TokenService(Settings.EMPTY, Clock.systemUTC(), internalClient, lifecycleService);
+            TokenService anotherService = new TokenService(settings, Clock.systemUTC(), internalClient, lifecycleService);
             PlainActionFuture<UserToken> future = new PlainActionFuture<>();
             anotherService.getAndValidateToken(requestContext, future);
             UserToken fromOtherService = future.get();
@@ -117,12 +121,12 @@ public class TokenServiceTests extends ESTestCase {
     }
 
     public void testPassphraseWorks() throws Exception {
-        TokenService tokenService = new TokenService(Settings.EMPTY, Clock.systemUTC(), internalClient, lifecycleService);
+        TokenService tokenService = new TokenService(settings, Clock.systemUTC(), internalClient, lifecycleService);
         Authentication authentication = new Authentication(new User("joe", "admin"), new RealmRef("native_realm", "native", "node1"), null);
         final UserToken token = tokenService.createUserToken(authentication);
         assertNotNull(token);
 
-        ThreadContext requestContext = new ThreadContext(Settings.EMPTY);
+        ThreadContext requestContext = new ThreadContext(settings);
         requestContext.putHeader("Authorization", "Bearer " + tokenService.getUserTokenString(token));
 
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {
@@ -146,7 +150,7 @@ public class TokenServiceTests extends ESTestCase {
 
     public void testInvalidatedToken() throws Exception {
         when(lifecycleService.isSecurityIndexAvailable()).thenReturn(true);
-        TokenService tokenService = new TokenService(Settings.EMPTY, Clock.systemUTC(), internalClient, lifecycleService);
+        TokenService tokenService = new TokenService(settings, Clock.systemUTC(), internalClient, lifecycleService);
         Authentication authentication = new Authentication(new User("joe", "admin"), new RealmRef("native_realm", "native", "node1"), null);
         final UserToken token = tokenService.createUserToken(authentication);
         assertNotNull(token);
@@ -160,7 +164,7 @@ public class TokenServiceTests extends ESTestCase {
             return Void.TYPE;
         }).when(client).execute(eq(GetAction.INSTANCE), any(GetRequest.class), any(ActionListener.class));
 
-        ThreadContext requestContext = new ThreadContext(Settings.EMPTY);
+        ThreadContext requestContext = new ThreadContext(settings);
         requestContext.putHeader("Authorization", "Bearer " + tokenService.getUserTokenString(token));
 
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {
@@ -202,11 +206,11 @@ public class TokenServiceTests extends ESTestCase {
                 return Instant.ofEpochMilli(xpackMockClock.nowUTC().getMillis());
             }
         };
-        TokenService tokenService = new TokenService(Settings.EMPTY, clock, internalClient, lifecycleService);
+        TokenService tokenService = new TokenService(settings, clock, internalClient, lifecycleService);
         Authentication authentication = new Authentication(new User("joe", "admin"), new RealmRef("native_realm", "native", "node1"), null);
         final UserToken token = tokenService.createUserToken(authentication);
 
-        ThreadContext requestContext = new ThreadContext(Settings.EMPTY);
+        ThreadContext requestContext = new ThreadContext(settings);
         requestContext.putHeader("Authorization", "Bearer " + tokenService.getUserTokenString(token));
 
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {
@@ -216,7 +220,7 @@ public class TokenServiceTests extends ESTestCase {
             assertEquals(authentication, future.get().getAuthentication());
         }
 
-        final TimeValue defaultExpiration = TokenService.TOKEN_EXPIRATION.get(Settings.EMPTY);
+        final TimeValue defaultExpiration = TokenService.TOKEN_EXPIRATION.get(settings);
         final int fastForwardAmount = randomIntBetween(1, Math.toIntExact(defaultExpiration.getSeconds()));
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {
             // move the clock forward but don't go to expiry
@@ -292,9 +296,9 @@ public class TokenServiceTests extends ESTestCase {
         final int numBytes = randomIntBetween(1, TokenService.MINIMUM_BYTES + 32);
         final byte[] randomBytes = new byte[numBytes];
         random().nextBytes(randomBytes);
-        TokenService tokenService = new TokenService(Settings.EMPTY, Clock.systemUTC(), internalClient, lifecycleService);
+        TokenService tokenService = new TokenService(settings, Clock.systemUTC(), internalClient, lifecycleService);
 
-        ThreadContext requestContext = new ThreadContext(Settings.EMPTY);
+        ThreadContext requestContext = new ThreadContext(settings);
         requestContext.putHeader("Authorization", "Bearer " + Base64.getEncoder().encodeToString(randomBytes));
 
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {
@@ -305,12 +309,12 @@ public class TokenServiceTests extends ESTestCase {
     }
 
     public void testIndexNotAvailable() throws Exception {
-        TokenService tokenService = new TokenService(Settings.EMPTY, Clock.systemUTC(), internalClient, lifecycleService);
+        TokenService tokenService = new TokenService(settings, Clock.systemUTC(), internalClient, lifecycleService);
         Authentication authentication = new Authentication(new User("joe", "admin"), new RealmRef("native_realm", "native", "node1"), null);
         final UserToken token = tokenService.createUserToken(authentication);
         assertNotNull(token);
 
-        ThreadContext requestContext = new ThreadContext(Settings.EMPTY);
+        ThreadContext requestContext = new ThreadContext(settings);
         requestContext.putHeader("Authorization", "Bearer " + tokenService.getUserTokenString(token));
 
         try (ThreadContext.StoredContext ignore = requestContext.newStoredContext(true)) {

@@ -358,6 +358,7 @@ integTestCluster {
   setting 'xpack.monitoring.exporters._local.type', 'local'
   setting 'xpack.monitoring.exporters._local.enabled', 'false'
   setting 'xpack.monitoring.collection.interval', '-1'
+  setting 'xpack.security.authc.token.enabled', 'true'
 
   waitCondition = { NodeInfo node, AntBuilder ant ->
       File tmpFile = new File(node.cwd, 'wait.success')
