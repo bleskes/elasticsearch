@@ -132,7 +132,7 @@ public class SecurityNetty4Transport extends Netty4Transport {
 
         SecurityServerChannelInitializer(String name, Settings profileSettings) {
             super(name, profileSettings);
-            this.sslEnabled = PROFILE_SSL_SETTING.exists(profileSettings) ? PROFILE_SSL_SETTING.get(profileSettings) : ssl;
+            this.sslEnabled = isProfileSSLEnabled(profileSettings, ssl);
             this.securityProfileSettings = profileSettings.getByPrefix(setting("ssl."));
             if (sslEnabled && sslService.isConfigurationValidForServerUsage(securityProfileSettings, transportSSLSettings) == false) {
                 if (TransportSettings.DEFAULT_PROFILE.equals(name)) {
@@ -157,6 +157,10 @@ public class SecurityNetty4Transport extends Netty4Transport {
                 ch.pipeline().addFirst(new IpFilterRemoteAddressFilter(authenticator, name));
             }
         }
+    }
+
+    public static boolean isProfileSSLEnabled(Settings profileSettings, boolean defaultTransportSSL) {
+        return PROFILE_SSL_SETTING.exists(profileSettings) ? PROFILE_SSL_SETTING.get(profileSettings) : defaultTransportSSL;
     }
 
     private class SecurityClientChannelInitializer extends ClientChannelInitializer {

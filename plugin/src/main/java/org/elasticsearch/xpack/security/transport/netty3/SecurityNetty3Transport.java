@@ -126,7 +126,7 @@ public class SecurityNetty3Transport extends Netty3Transport {
 
         SslServerChannelPipelineFactory(Netty3Transport nettyTransport, String name, Settings settings, Settings profileSettings) {
             super(nettyTransport, name, settings);
-            this.profileSsl = PROFILE_SSL_SETTING.exists(profileSettings) ? PROFILE_SSL_SETTING.get(profileSettings) : ssl;
+            this.profileSsl = isProfileSSLEnabled(profileSettings, ssl);
             this.profileSslSettings = profileSslSettings(profileSettings);
             if (profileSsl && sslService.isConfigurationValidForServerUsage(profileSslSettings, transportSSLSettings) == false) {
                 if (TransportSettings.DEFAULT_PROFILE.equals(name)) {
@@ -198,5 +198,9 @@ public class SecurityNetty3Transport extends Netty3Transport {
                 ctx.sendDownstream(e);
             }
         }
+    }
+
+    private static boolean isProfileSSLEnabled(Settings profileSettings, boolean defaultTransportSSL) {
+        return PROFILE_SSL_SETTING.exists(profileSettings) ? PROFILE_SSL_SETTING.get(profileSettings) : defaultTransportSSL;
     }
 }

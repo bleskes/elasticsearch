@@ -38,6 +38,7 @@ import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.SecurityIntegTestCase;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.xpack.TestXPackTransportClient;
+import org.junit.BeforeClass;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -61,13 +62,20 @@ import static org.hamcrest.Matchers.is;
 @ClusterScope(numClientNodes = 0, supportsDedicatedMasters = false, numDataNodes = 1)
 public class PkiAuthenticationTests extends SecurityIntegTestCase {
 
+    private static String randomClientPortRange;
+
+    @BeforeClass
+    public static void getRandomPort() {
+        final int basePort = randomIntBetween(49000, 65500); // ephemeral port
+        randomClientPortRange = basePort + "-" + (basePort + 100);
+    }
+
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         SSLClientAuth sslClientAuth = randomBoolean() ? SSLClientAuth.REQUIRED : SSLClientAuth.OPTIONAL;
-        return Settings.builder()
+        Settings.Builder builder = Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal))
                 .put(NetworkModule.HTTP_ENABLED.getKey(), true)
-
                 .put("xpack.security.http.ssl.enabled", true)
                 .put("xpack.security.http.ssl.client_authentication", sslClientAuth)
                 .put("xpack.security.authc.realms.file.type", FileRealm.TYPE)
@@ -78,7 +86,15 @@ public class PkiAuthenticationTests extends SecurityIntegTestCase {
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/truststore-testnode-only.jks"))
                 .put("xpack.security.authc.realms.pki1.truststore.password", "truststore-testnode-only")
                 .put("xpack.security.authc.realms.pki1.files.role_mapping", getDataPath("role_mapping.yml"))
-                .build();
+                .put("transport.profiles.client.port", randomClientPortRange)
+                // make sure this is "localhost", no matter if ipv4 or ipv6, but be consistent
+                .put("transport.profiles.client.bind_host", "localhost")
+                .put("transport.profiles.client.xpack.security.type", "client");
+
+        if (randomBoolean()) {
+            builder.put("transport.profiles.client.xpack.security.ssl.enabled", true);
+        }
+        return builder.build();
     }
 
     @Override
@@ -90,6 +106,17 @@ public class PkiAuthenticationTests extends SecurityIntegTestCase {
         Settings settings = getSSLSettingsForStore("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks", "testnode");
         try (TransportClient client = createTransportClient(settings)) {
             client.addTransportAddress(randomFrom(internalCluster().getInstance(Transport.class).boundAddress().boundAddresses()));
+            IndexResponse response = client.prepareIndex("foo", "bar").setSource("pki", "auth").get();
+            assertEquals(DocWriteResponse.Result.CREATED, response.getResult());
+        }
+    }
+
+    public void testTransportClientCanAuthenticateViaPkiOnTransportProfile() {
+        Settings settings = getSSLSettingsForStore("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks", "testnode");
+        try (TransportClient client = createTransportClient(settings)) {
+            TransportAddress address =
+                    randomFrom(internalCluster().getInstance(Transport.class).profileBoundAddresses().get("client").boundAddresses());
+            client.addTransportAddress(address);
             IndexResponse response = client.prepareIndex("foo", "bar").setSource("pki", "auth").get();
             assertEquals(DocWriteResponse.Result.CREATED, response.getResult());
         }

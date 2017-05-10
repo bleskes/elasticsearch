@@ -29,7 +29,6 @@ import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.elasticsearch.xpack.security.Security;
-import org.elasticsearch.xpack.security.authc.Realms;
 import org.elasticsearch.xpack.security.authc.support.UserRoleMapper;
 import org.elasticsearch.xpack.security.authc.support.mapper.CompositeRoleMapper;
 import org.elasticsearch.xpack.security.authc.support.mapper.NativeRoleMappingStore;
@@ -257,7 +256,7 @@ public class PkiRealm extends Realm {
         Map<String, Settings> groupedSettings = settings.getGroups("transport.profiles.");
         for (Map.Entry<String, Settings> entry : groupedSettings.entrySet()) {
             Settings profileSettings = entry.getValue().getByPrefix(Security.settingPrefix());
-            if (SecurityNetty3Transport.PROFILE_SSL_SETTING.get(profileSettings)
+            if (SecurityNetty4Transport.isProfileSSLEnabled(profileSettings, ssl)
                     && sslService.isSSLClientAuthEnabled(
                             SecurityNetty3Transport.profileSslSettings(profileSettings), transportSSLSettings)) {
                 return;

@@ -47,6 +47,7 @@ import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authz.AuthorizationService;
 import org.elasticsearch.xpack.security.authz.AuthorizationUtils;
 import org.elasticsearch.xpack.security.transport.netty3.SecurityNetty3Transport;
+import org.elasticsearch.xpack.security.transport.netty4.SecurityNetty4Transport;
 import org.elasticsearch.xpack.security.user.KibanaUser;
 import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
@@ -157,14 +158,15 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
                 licenseState, threadPool);
     }
 
-    protected Map<String, ServerTransportFilter> initializeProfileFilters(DestructiveOperations destructiveOperations) {
+    private Map<String, ServerTransportFilter> initializeProfileFilters(DestructiveOperations destructiveOperations) {
         Map<String, Settings> profileSettingsMap = settings.getGroups("transport.profiles.", true);
         Map<String, ServerTransportFilter> profileFilters = new HashMap<>(profileSettingsMap.size() + 1);
 
         final Settings transportSSLSettings = settings.getByPrefix(setting("transport.ssl."));
+        final boolean defaultTransportSSLEnabled = TRANSPORT_SSL_ENABLED.get(settings);
         for (Map.Entry<String, Settings> entry : profileSettingsMap.entrySet()) {
             Settings profileSettings = entry.getValue();
-            final boolean profileSsl = SecurityNetty3Transport.PROFILE_SSL_SETTING.get(profileSettings);
+            final boolean profileSsl = SecurityNetty4Transport.isProfileSSLEnabled(profileSettings, defaultTransportSSLEnabled);
             final Settings profileSslSettings = SecurityNetty3Transport.profileSslSettings(profileSettings);
             final boolean clientAuth = sslService.isSSLClientAuthEnabled(profileSslSettings, transportSSLSettings);
             final boolean extractClientCert = profileSsl && clientAuth;
