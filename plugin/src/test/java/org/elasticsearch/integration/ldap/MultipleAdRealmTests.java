@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.settings.Settings;
@@ -40,18 +41,19 @@ public class MultipleAdRealmTests extends AbstractAdLdapRealmTestCase {
 
     @BeforeClass
     public static void setupSecondaryRealm() {
-        // It's easier to test 2 realms when using file based role mapping, and for the purposes of
-        // this test, there's no need to test native mappings.
-        AbstractAdLdapRealmTestCase.roleMappings = realmConfig.selectRoleMappings(() -> true);
-
         // Pick a secondary realm that has the inverse value for 'loginWithCommonName' compare with the primary realm
         final List<RealmConfig> configs = Arrays.stream(RealmConfig.values())
                 .filter(config -> config.loginWithCommonName != AbstractAdLdapRealmTestCase.realmConfig.loginWithCommonName)
+                .filter(config -> config.name().startsWith("AD"))
                 .collect(Collectors.toList());
         secondaryRealmConfig = randomFrom(configs);
         ESLoggerFactory.getLogger("test")
                 .info("running test with secondary realm configuration [{}], with direct group to role mapping [{}]. Settings [{}]",
                         secondaryRealmConfig, secondaryRealmConfig.mapGroupsAsRoles, secondaryRealmConfig.settings.getAsMap());
+
+        // It's easier to test 2 realms when using file based role mapping, and for the purposes of
+        // this test, there's no need to test native mappings.
+        AbstractAdLdapRealmTestCase.roleMappings = realmConfig.selectRoleMappings(() -> true);
     }
 
     @Override
@@ -60,7 +62,8 @@ public class MultipleAdRealmTests extends AbstractAdLdapRealmTestCase {
         builder.put(super.nodeSettings(nodeOrdinal));
 
         Path store = getDataPath(TESTNODE_KEYSTORE);
-        final Settings secondarySettings = super.buildRealmSettings(secondaryRealmConfig, store);
+        final List<RoleMappingEntry> secondaryRoleMappings = secondaryRealmConfig.selectRoleMappings(() -> true);
+        final Settings secondarySettings = super.buildRealmSettings(secondaryRealmConfig, secondaryRoleMappings, store);
         secondarySettings.getAsMap().forEach((name, value) -> {
             name = name.replace(XPACK_SECURITY_AUTHC_REALMS_EXTERNAL, XPACK_SECURITY_AUTHC_REALMS_EXTERNAL + "2");
             builder.put(name, value);

@@ -153,17 +153,17 @@ public abstract class AbstractAdLdapRealmTestCase extends SecurityIntegTestCase 
         Path store = getDataPath(TESTNODE_KEYSTORE);
         Settings.Builder builder = Settings.builder()
                 .put(super.nodeSettings(nodeOrdinal));
-        builder.put(buildRealmSettings(realm, store));
+        builder.put(buildRealmSettings(realm, roleMappings, store));
         if (sslEnabled == false && useGlobalSSL) {
             builder.put(sslSettingsForStore(store, "testnode"));
         }
         return builder.build();
     }
 
-    protected Settings buildRealmSettings(RealmConfig realm, Path store) {
+    protected Settings buildRealmSettings(RealmConfig realm, List<RoleMappingEntry> roleMappingEntries, Path store) {
         Settings.Builder builder = Settings.builder();
         builder.put(realm.buildSettings(store, "testnode"));
-        configureRoleMappings(builder);
+        configureFileRoleMappings(builder, roleMappingEntries);
         return builder.build();
     }
 
@@ -196,7 +196,11 @@ public abstract class AbstractAdLdapRealmTestCase extends SecurityIntegTestCase 
     }
 
     private List<String> getRoleMappingContent(Function<RoleMappingEntry, String> contentFunction) {
-        return roleMappings.stream()
+        return getRoleMappingContent(contentFunction, AbstractAdLdapRealmTestCase.roleMappings);
+    }
+
+    private List<String> getRoleMappingContent(Function<RoleMappingEntry, String> contentFunction, List<RoleMappingEntry> mappings) {
+        return mappings.stream()
                 .map(contentFunction)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -207,8 +211,8 @@ public abstract class AbstractAdLdapRealmTestCase extends SecurityIntegTestCase 
         return sslEnabled;
     }
 
-    protected final void configureRoleMappings(Settings.Builder builder) {
-        String content = getRoleMappingContent(RoleMappingEntry::getFileContent).stream().collect(Collectors.joining("\n"));
+    protected final void configureFileRoleMappings(Settings.Builder builder, List<RoleMappingEntry> mappings) {
+        String content = getRoleMappingContent(RoleMappingEntry::getFileContent, mappings).stream().collect(Collectors.joining("\n"));
         Path nodeFiles = createTempDir();
         String file = writeFile(nodeFiles, "role_mapping.yml", content);
         builder.put(XPACK_SECURITY_AUTHC_REALMS_EXTERNAL + ".files.role_mapping", file);
@@ -322,6 +326,26 @@ public abstract class AbstractAdLdapRealmTestCase extends SecurityIntegTestCase 
             }
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            final RoleMappingEntry that = (RoleMappingEntry) o;
+            return Objects.equals(this.fileContent, that.fileContent)
+                    && Objects.equals(this.nativeContent, that.nativeContent);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hashCode(fileContent);
+            result = 31 * result + Objects.hashCode(nativeContent);
+            return result;
+        }
     }
 
     /**
