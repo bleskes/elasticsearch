@@ -32,10 +32,13 @@ import org.junit.Before;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -52,7 +55,7 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
 
     public void testSettings() throws Exception {
         String hashAlgo = randomFrom("bcrypt", "bcrypt4", "bcrypt5", "bcrypt6", "bcrypt7", "bcrypt8", "bcrypt9",
-                                     "sha1", "ssha256", "md5", "clear_text", "noop");
+                "sha1", "ssha256", "md5", "clear_text", "noop");
         int maxUsers = randomIntBetween(10, 100);
         TimeValue ttl = TimeValue.timeValueMinutes(randomIntBetween(10, 20));
         Settings settings = Settings.builder()
@@ -173,7 +176,7 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(user, sameInstance(lookedUp));
     }
 
-    public void testCacheChangePassword(){
+    public void testCacheChangePassword() {
         AlwaysAuthenticateCachingRealm realm = new AlwaysAuthenticateCachingRealm(globalSettings);
 
         String user = "testUser";
@@ -199,18 +202,86 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         assertThat(realm.authInvocationCounter.intValue(), is(2));
     }
 
+    public void testCacheWithVeryLowTtlExpiresBetweenAuthenticateCalls() throws InterruptedException {
+        TimeValue ttl = TimeValue.timeValueNanos(randomIntBetween(10, 100));
+        Settings settings = Settings.builder()
+                .put(CachingUsernamePasswordRealm.CACHE_TTL_SETTING.getKey(), ttl)
+                .build();
+        RealmConfig config = new RealmConfig("test_cache_ttl", settings, globalSettings, new ThreadContext(Settings.EMPTY));
+        AlwaysAuthenticateCachingRealm realm = new AlwaysAuthenticateCachingRealm(config);
+
+        final UsernamePasswordToken authToken = new UsernamePasswordToken("the-user", new SecureString("the-password"));
+
+        // authenticate
+        PlainActionFuture<User> future = new PlainActionFuture<>();
+        realm.authenticate(authToken, future);
+        final User user1 = future.actionGet();
+        assertThat(user1.roles(), arrayContaining("testRole1", "testRole2"));
+        assertThat(realm.authInvocationCounter.intValue(), is(1));
+
+        Thread.sleep(2);
+
+        // authenticate
+        future = new PlainActionFuture<>();
+        realm.authenticate(authToken, future);
+        final User user2 = future.actionGet();
+        assertThat(user2.roles(), arrayContaining("testRole1", "testRole2"));
+        assertThat(user2, not(sameInstance(user1)));
+        assertThat(realm.authInvocationCounter.intValue(), is(2));
+    }
+
+    public void testReadsDoNotPreventCacheExpiry() throws InterruptedException {
+        TimeValue ttl = TimeValue.timeValueMillis(250);
+        Settings settings = Settings.builder()
+                .put(CachingUsernamePasswordRealm.CACHE_TTL_SETTING.getKey(), ttl)
+                .build();
+        RealmConfig config = new RealmConfig("test_cache_ttl", settings, globalSettings, new ThreadContext(Settings.EMPTY));
+        AlwaysAuthenticateCachingRealm realm = new AlwaysAuthenticateCachingRealm(config);
+
+        final UsernamePasswordToken authToken = new UsernamePasswordToken("the-user", new SecureString("the-password"));
+        PlainActionFuture<User> future = new PlainActionFuture<>();
+
+        // authenticate
+        realm.authenticate(authToken, future);
+        final long start = System.currentTimeMillis();
+        final User user1 = future.actionGet();
+        assertThat(realm.authInvocationCounter.intValue(), is(1));
+
+        // After 100 ms (from the original start time), authenticate (read from cache). We don't care about the result
+        Thread.sleep(start + 100 - System.currentTimeMillis());
+        future = new PlainActionFuture<>();
+        realm.authenticate(authToken, future);
+        future.actionGet();
+
+        // After 200 ms (from the original start time), authenticate (read from cache). We don't care about the result
+        Thread.sleep(start + 200 - System.currentTimeMillis());
+        future = new PlainActionFuture<>();
+        realm.authenticate(authToken, future);
+        future.actionGet();
+
+        // After 300 ms (from the original start time), authenticate again. The cache entry should have expired (despite the previous reads)
+        Thread.sleep(start + 300 - System.currentTimeMillis());
+        future = new PlainActionFuture<>();
+        realm.authenticate(authToken, future);
+        final User user2 = future.actionGet();
+        assertThat(user2, not(sameInstance(user1)));
+        // Due to slow VMs etc, the cache might have expired more than once during the test, but we can accept that.
+        // We have other tests that verify caching works - this test just checks that it expires even when there are repeated reads.
+        assertThat(realm.authInvocationCounter.intValue(), greaterThan(1));
+    }
+
     public void testAuthenticateContract() throws Exception {
         Realm realm = new FailingAuthenticationRealm(Settings.EMPTY, globalSettings);
         PlainActionFuture<User> future = new PlainActionFuture<>();
         realm.authenticate(new UsernamePasswordToken("user", new SecureString("pass")), future);
         User user = future.actionGet();
-        assertThat(user , nullValue());
+        assertThat(user, nullValue());
 
         realm = new ThrowingAuthenticationRealm(Settings.EMPTY, globalSettings);
         future = new PlainActionFuture<>();
         realm.authenticate(new UsernamePasswordToken("user", new SecureString("pass")), future);
         RuntimeException e = expectThrows(RuntimeException.class, future::actionGet);
-        assertThat(e.getMessage() , containsString("whatever exception"));
+        assertThat(e.getMessage(), containsString("whatever exception"));
     }
 
     public void testLookupContract() throws Exception {
@@ -218,13 +289,13 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         PlainActionFuture<User> future = new PlainActionFuture<>();
         realm.lookupUser("user", future);
         User user = future.actionGet();
-        assertThat(user , nullValue());
+        assertThat(user, nullValue());
 
         realm = new ThrowingAuthenticationRealm(Settings.EMPTY, globalSettings);
         future = new PlainActionFuture<>();
         realm.lookupUser("user", future);
         RuntimeException e = expectThrows(RuntimeException.class, future::actionGet);
-        assertThat(e.getMessage() , containsString("lookup exception"));
+        assertThat(e.getMessage(), containsString("lookup exception"));
     }
 
     public void testThatLookupIsNotCalledIfNotSupported() throws Exception {
@@ -259,7 +330,7 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
             protected void doAuthenticate(UsernamePasswordToken token, ActionListener<User> listener) {
                 // do something slow
                 if (BCrypt.checkpw(token.credentials(), passwordHash)) {
-                    listener.onResponse(new User(username, new String[]{"r1", "r2", "r3"}));
+                    listener.onResponse(new User(username, new String[] { "r1", "r2", "r3" }));
                 } else {
                     listener.onResponse(null);
                 }
@@ -303,7 +374,8 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
                             }));
                         }
 
-                    } catch (InterruptedException e) {}
+                    } catch (InterruptedException e) {
+                    }
                 }
             });
         }
@@ -329,7 +401,7 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
 
             @Override
             protected void doLookupUser(String username, ActionListener<User> listener) {
-                listener.onResponse(new User(username, new String[]{"r1", "r2", "r3"}));
+                listener.onResponse(new User(username, new String[] { "r1", "r2", "r3" }));
             }
 
             @Override
@@ -360,7 +432,8 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
                             }));
                         }
 
-                    } catch (InterruptedException e) {}
+                    } catch (InterruptedException e) {
+                    }
                 }
             });
         }
@@ -424,7 +497,11 @@ public class CachingUsernamePasswordRealmTests extends ESTestCase {
         public final AtomicInteger lookupInvocationCounter = new AtomicInteger(0);
 
         AlwaysAuthenticateCachingRealm(Settings globalSettings) {
-            super("always", new RealmConfig("always-test", Settings.EMPTY, globalSettings, new ThreadContext(Settings.EMPTY)));
+            this(new RealmConfig("always-test", Settings.EMPTY, globalSettings, new ThreadContext(Settings.EMPTY)));
+        }
+
+        AlwaysAuthenticateCachingRealm(RealmConfig config) {
+            super("always", config);
         }
 
         @Override
