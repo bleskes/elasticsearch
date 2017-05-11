@@ -24,6 +24,7 @@ import org.elasticsearch.common.settings.SecureString;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.env.Environment;
+import org.elasticsearch.index.reindex.ReindexPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.elasticsearch.test.discovery.ClusterDiscoveryConfiguration;
@@ -166,7 +167,7 @@ public class SecuritySettingsSource extends ClusterDiscoveryConfiguration.Unicas
 
     @Override
     public Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(xpackPluginClass(), Netty3Plugin.class, Netty4Plugin.class);
+        return Arrays.asList(xpackPluginClass(), Netty3Plugin.class, Netty4Plugin.class, ReindexPlugin.class);
     }
 
     @Override
