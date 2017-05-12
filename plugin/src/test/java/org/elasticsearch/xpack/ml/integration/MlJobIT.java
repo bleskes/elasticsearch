@@ -234,6 +234,7 @@ public class MlJobIT extends ESRestTestCase {
                 "  \"analysis_config\" : {\n" +
                 "        \"detectors\" :[{\"function\":\"metric\",\"field_name\":\"responsetime\"}]\n" +
                 "    },\n" +
+                "  \"data_description\": {},\n" +
                 "  \"results_index_name\" : \"%s\"}";
 
         String jobConfig = String.format(Locale.ROOT, jobTemplate, "index-1");
@@ -258,6 +259,7 @@ public class MlJobIT extends ESRestTestCase {
                 "  \"analysis_config\" : {\n" +
                 "        \"detectors\" :[{\"function\":\"metric\",\"field_name\":\"responsetime\"}]\n" +
                 "    },\n" +
+                "  \"data_description\": {},\n" +
                 "  \"results_index_name\" : \"%s\"}";
 
         String jobId1 = "create-jobs-with-index-name-option-job-1";
@@ -346,7 +348,8 @@ public class MlJobIT extends ESRestTestCase {
         String jobTemplate = "{\n" +
                 "  \"analysis_config\" : {\n" +
                 "        \"detectors\" :[{\"function\":\"metric\",\"field_name\":\"metric\", \"by_field_name\":\"%s\"}]\n" +
-                "    }\n" +
+                "    },\n" +
+                "  \"data_description\": {}\n" +
                 "}";
 
         String jobId1 = "create-job-in-shared-index-updates-mapping-job-1";
@@ -385,7 +388,8 @@ public class MlJobIT extends ESRestTestCase {
         String jobTemplate = "{\n" +
                 "  \"analysis_config\" : {\n" +
                 "        \"detectors\" :[{\"function\":\"metric\",\"field_name\":\"metric\", \"by_field_name\":\"%s\"}]\n" +
-                "    },\n" +
+                "  },\n" +
+                "  \"data_description\": {},\n" +
                 "  \"results_index_name\" : \"shared-index\"}";
 
         String jobId1 = "create-job-in-custom-shared-index-updates-mapping-job-1";
@@ -422,7 +426,8 @@ public class MlJobIT extends ESRestTestCase {
         String jobTemplate = "{\n" +
                 "  \"analysis_config\" : {\n" +
                 "        \"detectors\" :[{\"function\":\"metric\",\"field_name\":\"metric\", \"by_field_name\":\"%s\"}]\n" +
-                "    }" +
+                "    },\n" +
+                "  \"data_description\": {}\n" +
                 "}";
 
         String jobId1 = "job-with-response-field";

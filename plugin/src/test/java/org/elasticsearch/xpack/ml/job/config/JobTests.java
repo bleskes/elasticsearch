@@ -92,10 +92,12 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testEquals_GivenDifferentRenormalizationWindowDays() {
         Date date = new Date();
         Job.Builder jobDetails1 = new Job.Builder("foo");
+        jobDetails1.setDataDescription(new DataDescription.Builder());
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setRenormalizationWindowDays(3L);
         jobDetails1.setCreateTime(date);
         Job.Builder jobDetails2 = new Job.Builder("foo");
+        jobDetails2.setDataDescription(new DataDescription.Builder());
         jobDetails2.setRenormalizationWindowDays(4L);
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         jobDetails2.setCreateTime(date);
@@ -105,10 +107,12 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testEquals_GivenDifferentBackgroundPersistInterval() {
         Date date = new Date();
         Job.Builder jobDetails1 = new Job.Builder("foo");
+        jobDetails1.setDataDescription(new DataDescription.Builder());
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setBackgroundPersistInterval(TimeValue.timeValueSeconds(10000L));
         jobDetails1.setCreateTime(date);
         Job.Builder jobDetails2 = new Job.Builder("foo");
+        jobDetails2.setDataDescription(new DataDescription.Builder());
         jobDetails2.setBackgroundPersistInterval(TimeValue.timeValueSeconds(8000L));
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         jobDetails2.setCreateTime(date);
@@ -118,10 +122,12 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testEquals_GivenDifferentModelSnapshotRetentionDays() {
         Date date = new Date();
         Job.Builder jobDetails1 = new Job.Builder("foo");
+        jobDetails1.setDataDescription(new DataDescription.Builder());
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setModelSnapshotRetentionDays(10L);
         jobDetails1.setCreateTime(date);
         Job.Builder jobDetails2 = new Job.Builder("foo");
+        jobDetails2.setDataDescription(new DataDescription.Builder());
         jobDetails2.setModelSnapshotRetentionDays(8L);
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         jobDetails2.setCreateTime(date);
@@ -131,10 +137,12 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testEquals_GivenDifferentResultsRetentionDays() {
         Date date = new Date();
         Job.Builder jobDetails1 = new Job.Builder("foo");
+        jobDetails1.setDataDescription(new DataDescription.Builder());
         jobDetails1.setAnalysisConfig(createAnalysisConfig());
         jobDetails1.setCreateTime(date);
         jobDetails1.setResultsRetentionDays(30L);
         Job.Builder jobDetails2 = new Job.Builder("foo");
+        jobDetails2.setDataDescription(new DataDescription.Builder());
         jobDetails2.setResultsRetentionDays(4L);
         jobDetails2.setAnalysisConfig(createAnalysisConfig());
         jobDetails2.setCreateTime(date);
@@ -360,6 +368,14 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         assertEquals(now, job.getCreateTime());
     }
 
+    public void testBuilder_buildRequiresDataDescription() {
+        Job.Builder builder = new Job.Builder("no-data-description");
+        builder.setAnalysisConfig(createAnalysisConfig());
+
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
+        assertThat(e.getMessage(), equalTo("A data_description must be set"));
+    }
+
     public static Job.Builder buildJobBuilder(String id, Date date) {
         Job.Builder builder = new Job.Builder(id);
         builder.setCreateTime(date);
@@ -402,11 +418,11 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         }
         builder.setAnalysisConfig(AnalysisConfigTests.createRandomized());
         builder.setAnalysisLimits(new AnalysisLimits(randomNonNegativeLong(), randomNonNegativeLong()));
-        if (randomBoolean()) {
-            DataDescription.Builder dataDescription = new DataDescription.Builder();
-            dataDescription.setFormat(randomFrom(DataDescription.DataFormat.values()));
-            builder.setDataDescription(dataDescription);
-        }
+
+        DataDescription.Builder dataDescription = new DataDescription.Builder();
+        dataDescription.setFormat(randomFrom(DataDescription.DataFormat.values()));
+        builder.setDataDescription(dataDescription);
+
         if (randomBoolean()) {
             builder.setModelPlotConfig(new ModelPlotConfig(randomBoolean(), randomAlphaOfLength(10)));
         }
