@@ -31,7 +31,7 @@ import java.util.Locale;
  */
 public enum JobState implements ToXContent, Writeable {
 
-    CLOSING, CLOSED, OPENED, FAILED;
+    CLOSING, CLOSED, OPENING, OPENED, FAILED;
 
     public static JobState fromString(String name) {
         return valueOf(name.trim().toUpperCase(Locale.ROOT));
