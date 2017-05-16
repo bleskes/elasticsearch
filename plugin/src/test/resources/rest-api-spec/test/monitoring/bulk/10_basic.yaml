@@ -111,3 +111,50 @@
         body:
           - '{"index": {}}'
           - '{"field_1": "value_1"}'
+
+---
+"Bulk indexing of monitoring data on closed indices should throw an export exception":
+
+  - do:
+      xpack.monitoring.bulk:
+        system_id:          "logstash"
+        system_api_version: "2"
+        interval:           "5s"
+        body:
+          - index:
+              _type:  metric_ls
+          - modules:
+              nginx:  true
+              mysql:  false
+          - index:
+              _type:  stats
+          - file:
+              path:   /var/log/dmesg
+              size:   31kb
+
+  - is_false: errors
+
+  - do:
+      indices.refresh: {}
+
+  - do:
+      search:
+        index: .monitoring-logstash-*
+  - match: { hits.total: 2 }
+
+  - do:
+      indices.close:
+        index: .monitoring-logstash-*
+
+  - do:
+      catch: /export_exception/
+      xpack.monitoring.bulk:
+        system_id:          "logstash"
+        system_api_version: "2"
+        interval:           "5s"
+        body:
+          - index:
+              _type:  stats
+          - file:
+              path:   /var/log/auth.log
+              size:   5kb
