@@ -48,6 +48,8 @@ import org.elasticsearch.xpack.ml.action.StopDatafeedAction;
 import org.elasticsearch.xpack.ml.action.UpdateDatafeedAction;
 import org.elasticsearch.xpack.ml.action.UpdateJobAction;
 import org.elasticsearch.xpack.ml.action.UpdateModelSnapshotAction;
+import org.elasticsearch.xpack.ml.action.ValidateDetectorAction;
+import org.elasticsearch.xpack.ml.action.ValidateJobConfigAction;
 
 public class MachineLearningClient {
 
@@ -392,6 +394,32 @@ public class MachineLearningClient {
         PlainListenableActionFuture<UpdateModelSnapshotAction.Response> listener = 
                 new PlainListenableActionFuture<>(client.threadPool());
         client.execute(UpdateModelSnapshotAction.INSTANCE, request, listener);
+        return listener;
+    }
+
+    public void validateDetector(ValidateDetectorAction.Request request,
+                                    ActionListener<ValidateDetectorAction.Response> listener) {
+        client.execute(ValidateDetectorAction.INSTANCE, request, listener);
+    }
+
+    public ActionFuture<ValidateDetectorAction.Response> validateDetector(
+            ValidateDetectorAction.Request request) {
+        PlainListenableActionFuture<ValidateDetectorAction.Response> listener =
+                new PlainListenableActionFuture<>(client.threadPool());
+        client.execute(ValidateDetectorAction.INSTANCE, request, listener);
+        return listener;
+    }
+
+    public void validateJobConfig(ValidateJobConfigAction.Request request,
+                                 ActionListener<ValidateJobConfigAction.Response> listener) {
+        client.execute(ValidateJobConfigAction.INSTANCE, request, listener);
+    }
+
+    public ActionFuture<ValidateJobConfigAction.Response> validateJobConfig(
+            ValidateJobConfigAction.Request request) {
+        PlainListenableActionFuture<ValidateJobConfigAction.Response> listener =
+                new PlainListenableActionFuture<>(client.threadPool());
+        client.execute(ValidateJobConfigAction.INSTANCE, request, listener);
         return listener;
     }
 }
