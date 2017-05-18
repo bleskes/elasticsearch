@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.action;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
@@ -78,6 +79,8 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         public static final ParseField END = new ParseField("end");
         public static final ParseField ANOMALY_SCORE = new ParseField("anomaly_score");
         public static final ParseField TIMESTAMP = new ParseField("timestamp");
+        public static final ParseField SORT = new ParseField("sort");
+        public static final ParseField DESCENDING = new ParseField("desc");
 
         private static final ObjectParser<Request, Void> PARSER = new ObjectParser<>(NAME, Request::new);
 
@@ -90,6 +93,8 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             PARSER.declareStringOrNull(Request::setEnd, END);
             PARSER.declareObject(Request::setPageParams, PageParams.PARSER, PageParams.PAGE);
             PARSER.declareDouble(Request::setAnomalyScore, ANOMALY_SCORE);
+            PARSER.declareString(Request::setSort, SORT);
+            PARSER.declareBoolean(Request::setDescending, DESCENDING);
         }
 
         public static Request parseRequest(String jobId, XContentParser parser) {
@@ -108,6 +113,8 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
         private String end;
         private PageParams pageParams;
         private Double anomalyScore;
+        private String sort = Result.TIMESTAMP.getPreferredName();
+        private boolean descending = false;
 
         Request() {
         }
@@ -188,7 +195,7 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             this.pageParams = ExceptionsHelper.requireNonNull(pageParams, PageParams.PAGE.getPreferredName());
         }
 
-        public double getAnomalyScore() {
+        public Double getAnomalyScore() {
             return anomalyScore;
         }
 
@@ -198,6 +205,22 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                         + TIMESTAMP.getPreferredName() + "].");
             }
             this.anomalyScore = anomalyScore;
+        }
+
+        public String getSort() {
+            return sort;
+        }
+
+        public void setSort(String sort) {
+            this.sort = sort;
+        }
+
+        public boolean isDescending() {
+            return descending;
+        }
+
+        public void setDescending(boolean descending) {
+            this.descending = descending;
         }
 
         @Override
@@ -216,6 +239,10 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             end = in.readOptionalString();
             anomalyScore = in.readOptionalDouble();
             pageParams = in.readOptionalWriteable(PageParams::new);
+            if (in.getVersion().after(Version.V_5_4_0)) {
+                sort = in.readString();
+                descending = in.readBoolean();
+            }
         }
 
         @Override
@@ -229,6 +256,10 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             out.writeOptionalString(end);
             out.writeOptionalDouble(anomalyScore);
             out.writeOptionalWriteable(pageParams);
+            if (out.getVersion().after(Version.V_5_4_0)) {
+                out.writeString(sort);
+                out.writeBoolean(descending);
+            }
         }
 
         @Override
@@ -252,13 +283,15 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
             if (anomalyScore != null) {
                 builder.field(ANOMALY_SCORE.getPreferredName(), anomalyScore);
             }
+            builder.field(SORT.getPreferredName(), sort);
+            builder.field(DESCENDING.getPreferredName(), descending);
             builder.endObject();
             return builder;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(jobId, timestamp, expand, excludeInterim, anomalyScore, pageParams, start, end);
+            return Objects.hash(jobId, timestamp, expand, excludeInterim, anomalyScore, pageParams, start, end, sort, descending);
         }
 
         @Override
@@ -277,7 +310,9 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                     Objects.equals(anomalyScore, other.anomalyScore) &&
                     Objects.equals(pageParams, other.pageParams) &&
                     Objects.equals(start, other.start) &&
-                    Objects.equals(end, other.end);
+                    Objects.equals(end, other.end) &&
+                    Objects.equals(sort, other.sort) &&
+                    Objects.equals(descending, other.descending);
         }
     }
 
@@ -371,7 +406,9 @@ public class GetBucketsAction extends Action<GetBucketsAction.Request, GetBucket
                             .includeInterim(request.excludeInterim == false)
                             .start(request.start)
                             .end(request.end)
-                            .anomalyScoreThreshold(request.anomalyScore);
+                            .anomalyScoreThreshold(request.anomalyScore)
+                            .sortField(request.sort)
+                            .sortDescending(request.descending);
 
             if (request.pageParams != null) {
                 query.from(request.pageParams.getFrom())

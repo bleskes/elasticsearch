@@ -46,6 +46,10 @@ public class GetBucketActionRequestTests extends AbstractStreamableXContentTestC
                 int size = randomInt(maxSize);
                 request.setPageParams(new PageParams(from, size));
             }
+            if (randomBoolean()) {
+                request.setSort("anomaly_score");
+            }
+            request.setDescending(randomBoolean());
         }
         if (randomBoolean()) {
             request.setExpand(randomBoolean());
