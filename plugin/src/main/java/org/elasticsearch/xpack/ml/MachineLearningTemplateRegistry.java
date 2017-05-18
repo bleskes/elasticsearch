@@ -49,7 +49,6 @@ import org.elasticsearch.xpack.ml.notifications.AuditMessage;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
@@ -62,7 +61,7 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
     private final Client client;
     private final ThreadPool threadPool;
 
-    public static String [] TEMPLATE_NAMES = new String [] {Auditor.NOTIFICATIONS_INDEX, AnomalyDetectorsIndex.ML_META_INDEX,
+    public static String [] TEMPLATE_NAMES = new String [] {Auditor.NOTIFICATIONS_INDEX, MlMetaIndex.INDEX_NAME,
             AnomalyDetectorsIndex.jobStateIndexName(), AnomalyDetectorsIndex.jobResultsIndexPrefix()};
 
     final AtomicBoolean putMlNotificationsIndexTemplateCheck = new AtomicBoolean(false);
@@ -144,15 +143,14 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
 
     private void addMlMetaIndexTemplate(MetaData metaData) {
         if (putMlMetaIndexTemplateCheck.compareAndSet(false, true)) {
-            if (templateIsPresentAndUpToDate(AnomalyDetectorsIndex.ML_META_INDEX, metaData) == false) {
+            if (templateIsPresentAndUpToDate(MlMetaIndex.INDEX_NAME, metaData) == false) {
                 threadPool.executor(ThreadPool.Names.GENERIC).execute(() -> {
                     putMetaIndexTemplate((result, error) -> {
                         putMlMetaIndexTemplateCheck.set(false);
                         if (result) {
-                            logger.info("successfully created {} index template", AnomalyDetectorsIndex.ML_META_INDEX);
+                            logger.info("successfully created {} index template", MlMetaIndex.INDEX_NAME);
                         } else {
-                            logger.error(new ParameterizedMessage(
-                                    "not able to create {} index template", AnomalyDetectorsIndex.ML_META_INDEX), error);
+                            logger.error(new ParameterizedMessage("not able to create {} index template", MlMetaIndex.INDEX_NAME), error);
                         }
                     });
                 });
@@ -226,10 +224,17 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
      * Index template for meta data
      */
     void putMetaIndexTemplate(BiConsumer<Boolean, Exception> listener) {
-        PutIndexTemplateRequest templateRequest = new PutIndexTemplateRequest(AnomalyDetectorsIndex.ML_META_INDEX);
-        templateRequest.template(AnomalyDetectorsIndex.ML_META_INDEX);
+        PutIndexTemplateRequest templateRequest = new PutIndexTemplateRequest(MlMetaIndex.INDEX_NAME);
+        templateRequest.template(MlMetaIndex.INDEX_NAME);
         templateRequest.settings(mlNotificationIndexSettings());
         templateRequest.version(Version.CURRENT.id);
+        try (XContentBuilder defaultMapping = ElasticsearchMappings.defaultMapping()) {
+            templateRequest.mapping(MapperService.DEFAULT_MAPPING, defaultMapping);
+        } catch (IOException e) {
+            String msg = "Error creating template mappings for the " + MlMetaIndex.INDEX_NAME + " index";
+            logger.error(msg, e);
+            listener.accept(false, new ElasticsearchException(msg, e));
+        }
 
         client.admin().indices().putTemplate(templateRequest,
                 ActionListener.wrap(r -> listener.accept(true, null), e -> listener.accept(false, e)));

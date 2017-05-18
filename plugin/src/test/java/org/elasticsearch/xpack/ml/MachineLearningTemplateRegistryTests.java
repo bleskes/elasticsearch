@@ -51,7 +51,6 @@ import java.util.concurrent.ExecutorService;
 
 import static org.elasticsearch.mock.orig.Mockito.doAnswer;
 import static org.elasticsearch.mock.orig.Mockito.times;
-import static org.elasticsearch.xpack.ml.job.persistence.AnomalyDetectorsIndex.ML_META_INDEX;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.any;
@@ -132,7 +131,7 @@ public class MachineLearningTemplateRegistryTests extends ESTestCase {
                                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
                                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
                         ))
-                        .put(IndexMetaData.builder(AnomalyDetectorsIndex.ML_META_INDEX).settings(Settings.builder()
+                        .put(IndexMetaData.builder(MlMetaIndex.INDEX_NAME).settings(Settings.builder()
                                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
                                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
@@ -143,7 +142,7 @@ public class MachineLearningTemplateRegistryTests extends ESTestCase {
                                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
                         ))
                         .put(IndexTemplateMetaData.builder(Auditor.NOTIFICATIONS_INDEX).version(Version.CURRENT.id).build())
-                        .put(IndexTemplateMetaData.builder(AnomalyDetectorsIndex.ML_META_INDEX).version(Version.CURRENT.id).build())
+                        .put(IndexTemplateMetaData.builder(MlMetaIndex.INDEX_NAME).version(Version.CURRENT.id).build())
                         .put(IndexTemplateMetaData.builder(AnomalyDetectorsIndex.jobStateIndexName()).version(Version.CURRENT.id).build())
                         .put(IndexTemplateMetaData.builder(
                                 AnomalyDetectorsIndex.jobResultsIndexPrefix()).version(Version.CURRENT.id).build())
@@ -228,8 +227,9 @@ public class MachineLearningTemplateRegistryTests extends ESTestCase {
             PutIndexTemplateRequest request = captor.getValue();
             assertNotNull(request);
             assertEquals(templateRegistry.mlNotificationIndexSettings().build(), request.settings());
-            assertEquals(0, request.mappings().size());
-            assertEquals(ML_META_INDEX, request.template());
+            assertEquals(1, request.mappings().size());
+            assertThat(request.mappings().containsKey(MapperService.DEFAULT_MAPPING), is(true));
+            assertEquals(MlMetaIndex.INDEX_NAME, request.template());
             assertEquals(new Integer(Version.CURRENT.id), request.version());
         });
     }
@@ -301,7 +301,7 @@ public class MachineLearningTemplateRegistryTests extends ESTestCase {
     public void testAllTemplatesInstalled() {
         MetaData metaData = MetaData.builder()
                 .put(IndexTemplateMetaData.builder(Auditor.NOTIFICATIONS_INDEX).version(Version.CURRENT.id).build())
-                .put(IndexTemplateMetaData.builder(AnomalyDetectorsIndex.ML_META_INDEX).version(Version.CURRENT.id).build())
+                .put(IndexTemplateMetaData.builder(MlMetaIndex.INDEX_NAME).version(Version.CURRENT.id).build())
                 .put(IndexTemplateMetaData.builder(AnomalyDetectorsIndex.jobStateIndexName()).version(Version.CURRENT.id).build())
                 .put(IndexTemplateMetaData.builder(
                         AnomalyDetectorsIndex.jobResultsIndexPrefix()).version(Version.CURRENT.id).build()).build();
