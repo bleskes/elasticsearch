@@ -15,7 +15,6 @@
 package org.elasticsearch.xpack.ml.job.config;
 
 import org.elasticsearch.Version;
-import org.elasticsearch.common.io.stream.BytesStreamOutput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.test.ESTestCase;
 import org.mockito.ArgumentCaptor;
@@ -73,7 +72,7 @@ public class JobStateTests extends ESTestCase {
     @SuppressWarnings("unchecked")
     public void testStreaming_v54BackwardsCompatibility() throws IOException {
         StreamOutput out = mock(StreamOutput.class);
-        when(out.getVersion()).thenReturn(Version.V_5_4_0_UNRELEASED);
+        when(out.getVersion()).thenReturn(Version.V_5_4_0);
         ArgumentCaptor<Enum> enumCaptor = ArgumentCaptor.forClass(Enum.class);
 
         doAnswer(new Answer<Void>() {

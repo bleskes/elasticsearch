@@ -168,7 +168,7 @@ public class NativeRealmMigratorTests extends ESTestCase {
     }
 
     public void testNoChangeOnUpgradeAfterV5_3() throws Exception {
-        verifyUpgrade(randomFrom(Version.V_5_4_0_UNRELEASED), false, false);
+        verifyUpgrade(randomFrom(Version.V_5_4_0), false, false);
     }
 
     public void testDisableLogstashAndConvertPasswordsOnUpgradeFromVersionPriorToV5_2() throws Exception {
@@ -179,7 +179,7 @@ public class NativeRealmMigratorTests extends ESTestCase {
                         .put(User.Fields.ENABLED.getPreferredName(), false)
                         .immutableMap()
         );
-        verifyUpgrade(randomFrom(Version.V_5_1_1_UNRELEASED, Version.V_5_0_2, Version.V_5_0_0), true, true);
+        verifyUpgrade(randomFrom(Version.V_5_1_1, Version.V_5_0_2, Version.V_5_0_0), true, true);
     }
 
     public void testConvertPasswordsOnUpgradeFromVersions_5_2_and_5_3() throws Exception {
@@ -191,7 +191,7 @@ public class NativeRealmMigratorTests extends ESTestCase {
                                 .put(User.Fields.ENABLED.getPreferredName(), randomBoolean())
                                 .immutableMap()
                 ));
-        verifyUpgrade(randomFrom(Version.V_5_2_0_UNRELEASED, Version.V_5_2_1_UNRELEASED, Version.V_5_3_0_UNRELEASED), false, true);
+        verifyUpgrade(randomFrom(Version.V_5_2_0, Version.V_5_2_1, Version.V_5_3_0), false, true);
     }
 
     private void verifyUpgrade(Version fromVersion, boolean disableLogstashUser, boolean convertDefaultPasswords) throws Exception {

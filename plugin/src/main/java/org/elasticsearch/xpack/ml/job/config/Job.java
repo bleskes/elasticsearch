@@ -36,7 +36,6 @@ import org.elasticsearch.xpack.ml.utils.time.TimeUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -562,7 +561,7 @@ public class Job extends AbstractDiffable<Job> implements Writeable, ToXContent 
      */
     public static Set<String> getCompatibleJobTypes(Version nodeVersion) {
         Set<String> compatibleTypes = new HashSet<>();
-        if (nodeVersion.onOrAfter(Version.V_5_4_0_UNRELEASED)) {
+        if (nodeVersion.onOrAfter(Version.V_5_4_0)) {
             compatibleTypes.add(ANOMALY_DETECTOR_JOB_TYPE);
         }
         return compatibleTypes;

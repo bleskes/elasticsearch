@@ -249,7 +249,7 @@ public class XPackInfoResponse extends ActionResponse {
 
             public FeatureSet(StreamInput in) throws IOException {
                 this(in.readString(), in.readOptionalString(), in.readBoolean(), in.readBoolean(),
-                        in.getVersion().onOrAfter(Version.V_5_4_0_UNRELEASED) ? in.readMap() : null);
+                        in.getVersion().onOrAfter(Version.V_5_4_0) ? in.readMap() : null);
             }
 
             public FeatureSet(String name, @Nullable String description, boolean available, boolean enabled,
@@ -301,7 +301,7 @@ public class XPackInfoResponse extends ActionResponse {
                 out.writeOptionalString(description);
                 out.writeBoolean(available);
                 out.writeBoolean(enabled);
-                if (out.getVersion().onOrAfter(Version.V_5_4_0_UNRELEASED)) {
+                if (out.getVersion().onOrAfter(Version.V_5_4_0)) {
                     out.writeMap(nativeCodeInfo);
                 }
             }

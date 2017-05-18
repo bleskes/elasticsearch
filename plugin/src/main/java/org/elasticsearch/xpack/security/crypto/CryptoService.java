@@ -176,7 +176,7 @@ public class CryptoService extends AbstractComponent {
      */
     public String sign(String text, Version version) throws IOException {
         final String sigStr;
-        if (version.before(Version.V_5_4_0_UNRELEASED)) {
+        if (version.before(Version.V_5_4_0)) {
             sigStr = signInternal(text, signingKey);
             return "$$" + sigStr.length() + "$$" + (systemKey == signingKey ? "" : randomKeyBase64) + "$$" + sigStr + text;
         } else if (systemKey != null) {
@@ -202,7 +202,7 @@ public class CryptoService extends AbstractComponent {
                 // this implies the use of a randomKey, so we assume the version is before 5.4
                 return unsignAndVerifyLegacy(signedText);
             }
-        } else if (version.before(Version.V_5_4_0_UNRELEASED)) {
+        } else if (version.before(Version.V_5_4_0)) {
             return unsignAndVerifyLegacy(signedText);
         }
 

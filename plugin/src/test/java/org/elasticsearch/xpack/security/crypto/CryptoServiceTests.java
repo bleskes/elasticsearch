@@ -74,10 +74,10 @@ public class CryptoServiceTests extends ESTestCase {
         String text2 = service.unsignAndVerify(signed, Version.CURRENT);
         assertThat(text, equalTo(text2));
 
-        String signedOld = service.sign(text, Version.V_5_2_0_UNRELEASED);
+        String signedOld = service.sign(text, Version.V_5_2_0);
         assertNotEquals(text, signedOld);
         assertEquals(signed, signedOld);
-        String unsigned = service.unsignAndVerify(signedOld, Version.V_5_2_0_UNRELEASED);
+        String unsigned = service.unsignAndVerify(signedOld, Version.V_5_2_0);
         assertEquals(text, unsigned);
     }
 
@@ -90,9 +90,9 @@ public class CryptoServiceTests extends ESTestCase {
         String unsigned = service.unsignAndVerify(signed, Version.CURRENT);
         assertEquals(text, unsigned);
 
-        signed = service.sign(text, Version.V_5_2_0_UNRELEASED);
+        signed = service.sign(text, Version.V_5_2_0);
         assertNotEquals(text, signed);
-        unsigned = service.unsignAndVerify(signed, Version.V_5_2_0_UNRELEASED);
+        unsigned = service.unsignAndVerify(signed, Version.V_5_2_0);
         assertEquals(text, unsigned);
     }
 

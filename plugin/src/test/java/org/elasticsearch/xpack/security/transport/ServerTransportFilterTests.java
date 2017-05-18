@@ -242,7 +242,7 @@ public class ServerTransportFilterTests extends ESTestCase {
         User user = new User("kibana", "kibana");
         Authentication authentication = mock(Authentication.class);
         when(authentication.getVersion())
-                .thenReturn(Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_2_0_ID_UNRELEASED - 100)));
+                .thenReturn(Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_2_0_ID - 100)));
         when(authentication.getUser()).thenReturn(user);
         doAnswer((i) -> {
             ActionListener callback =
@@ -270,7 +270,7 @@ public class ServerTransportFilterTests extends ESTestCase {
         rolesRef.set(null);
         user = new KibanaUser(true);
         when(authentication.getUser()).thenReturn(user);
-        when(authentication.getVersion()).thenReturn(Version.V_5_2_0_UNRELEASED);
+        when(authentication.getVersion()).thenReturn(Version.V_5_2_0);
         future = new PlainActionFuture<>();
         filter.inbound("_action", request, channel, future);
         assertNotNull(rolesRef.get());

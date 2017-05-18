@@ -150,7 +150,7 @@ public class Authentication {
     }
 
     public static boolean shouldSign(Settings settings, Version version, boolean signingEnabled) {
-        return signingEnabled && (XPackSettings.TRANSPORT_SSL_ENABLED.get(settings) == false || version.before(Version.V_5_4_0_UNRELEASED));
+        return signingEnabled && (XPackSettings.TRANSPORT_SSL_ENABLED.get(settings) == false || version.before(Version.V_5_4_0));
     }
 
     /**

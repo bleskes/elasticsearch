@@ -206,7 +206,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
             }
         });
         Connection connection = mock(Connection.class);
-        final Version remoteVersion = Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_4_0_ID_UNRELEASED - 100));
+        final Version remoteVersion = Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_4_0_ID - 100));
         when(connection.getVersion()).thenReturn(remoteVersion);
         // sanity check that remote node requires signing
         assertTrue(Authentication.shouldSign(settings, remoteVersion, true));
@@ -269,7 +269,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         };
         AsyncSender sender = interceptor.interceptSender(intercepted);
         Transport.Connection connection = mock(Transport.Connection.class);
-        when(connection.getVersion()).thenReturn(Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_2_0_ID_UNRELEASED - 100)));
+        when(connection.getVersion()).thenReturn(Version.fromId(randomIntBetween(Version.V_5_0_0_ID, Version.V_5_2_0_ID - 100)));
         sender.sendRequest(connection, "indices:foo[s]", null, null, null);
         assertTrue(calledWrappedSender.get());
         assertNotEquals(user, sendingUser.get());
@@ -280,7 +280,7 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         // reset and test with version that was changed
         calledWrappedSender.set(false);
         sendingUser.set(null);
-        when(connection.getVersion()).thenReturn(Version.V_5_2_0_UNRELEASED);
+        when(connection.getVersion()).thenReturn(Version.V_5_2_0);
         sender.sendRequest(connection, "indices:foo[s]", null, null, null);
         assertTrue(calledWrappedSender.get());
         assertEquals(user, sendingUser.get());

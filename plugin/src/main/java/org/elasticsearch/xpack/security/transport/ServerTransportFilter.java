@@ -143,7 +143,7 @@ public interface ServerTransportFilter {
 
             authcService.authenticate(securityAction, request, null, transportChannel.getVersion(),
                 ActionListener.wrap((authentication) -> {
-                    if (reservedRealmEnabled && authentication.getVersion().before(Version.V_5_2_0_UNRELEASED) &&
+                    if (reservedRealmEnabled && authentication.getVersion().before(Version.V_5_2_0) &&
                         KibanaUser.NAME.equals(authentication.getUser().authenticatedUser().principal())) {
                         executeAsCurrentVersionKibanaUser(securityAction, request, transportChannel, listener, authentication);
                     } else if (securityAction.equals(TransportService.HANDSHAKE_ACTION_NAME) &&
