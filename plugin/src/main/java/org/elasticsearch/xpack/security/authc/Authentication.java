@@ -179,6 +179,7 @@ public class Authentication {
 
     String encode() throws IOException {
         BytesStreamOutput output = new BytesStreamOutput();
+        output.setVersion(version);
         Version.writeVersion(version, output);
         writeTo(output);
         return Base64.getEncoder().encodeToString(BytesReference.toBytes(output.bytes()));

@@ -141,7 +141,9 @@ public interface ServerTransportFilter {
                 }
             }
 
-            authcService.authenticate(securityAction, request, null, transportChannel.getVersion(),
+            // a bug in 5.4.0 meant that it would always send a version matching the remote nodes' so we need to account for this
+            final Version version = transportChannel.getVersion().equals(Version.V_5_4_0) ? Version.CURRENT : transportChannel.getVersion();
+            authcService.authenticate(securityAction, request, null, version,
                 ActionListener.wrap((authentication) -> {
                     if (reservedRealmEnabled && authentication.getVersion().before(Version.V_5_2_0) &&
                         KibanaUser.NAME.equals(authentication.getUser().authenticatedUser().principal())) {
@@ -156,7 +158,7 @@ public interface ServerTransportFilter {
                                         listener.onResponse(null);
                                     });
                             asyncAuthorizer.authorize(authzService);
-                        }, Version.CURRENT);
+                        }, version);
                     } else {
                         authorizeAsync(authentication, listener, securityAction, request);
                     }
