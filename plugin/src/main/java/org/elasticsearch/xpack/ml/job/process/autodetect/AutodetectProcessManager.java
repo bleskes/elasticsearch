@@ -367,6 +367,7 @@ public class AutodetectProcessManager extends AbstractComponent {
             communicator.close(restart, reason);
         } catch (Exception e) {
             logger.warn("Exception closing stopped process input stream", e);
+            setJobState(jobTask, JobState.FAILED);
             throw ExceptionsHelper.serverError("Exception closing stopped process input stream", e);
         }
     }
@@ -387,7 +388,7 @@ public class AutodetectProcessManager extends AbstractComponent {
         return Optional.of(Duration.between(communicator.getProcessStartTime(), ZonedDateTime.now()));
     }
 
-    private void setJobState(JobTask jobTask, JobState state) {
+    void setJobState(JobTask jobTask, JobState state) {
         JobTaskStatus taskStatus = new JobTaskStatus(state, jobTask.getAllocationId());
         jobTask.updatePersistentStatus(taskStatus, new ActionListener<PersistentTask<?>>() {
             @Override
