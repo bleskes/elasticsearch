@@ -35,17 +35,9 @@ import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
 import org.elasticsearch.xpack.security.authc.esnative.NativeRealmMigrator;
 import org.elasticsearch.xpack.security.support.IndexLifecycleManager;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 /**

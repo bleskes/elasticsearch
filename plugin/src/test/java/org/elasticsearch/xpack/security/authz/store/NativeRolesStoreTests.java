@@ -24,6 +24,7 @@ import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.cluster.ClusterChangedEvent;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.IndexTemplateMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
@@ -54,6 +55,7 @@ import org.elasticsearch.xpack.security.action.role.PutRoleRequest;
 import org.elasticsearch.xpack.security.audit.index.IndexAuditTrail;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor;
 import org.elasticsearch.xpack.security.authz.RoleDescriptor.IndicesPrivileges;
+import org.elasticsearch.xpack.security.test.SecurityTestUtils;
 import org.junit.After;
 import org.junit.Before;
 
@@ -61,12 +63,12 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.elasticsearch.cluster.routing.RecoverySource.StoreRecoverySource.EXISTING_STORE_INSTANCE;
+import static org.elasticsearch.xpack.security.SecurityLifecycleService.SECURITY_INDEX_NAME;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
@@ -254,18 +256,33 @@ public class NativeRolesStoreTests extends ESTestCase {
     }
 
     private ClusterState getClusterStateWithSecurityIndex() {
+        final boolean withAlias = randomBoolean();
+        final String securityIndexName = SECURITY_INDEX_NAME + (withAlias ? "-" + randomAlphaOfLength(5) : "");
+
         Settings settings = Settings.builder()
                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
                 .put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1)
                 .put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0)
                 .build();
+        final ImmutableOpenMap<String, AliasMetaData> aliasMap;
+        if (withAlias) {
+            ImmutableOpenMap.Builder<String, AliasMetaData> builder = ImmutableOpenMap.builder();
+            builder.put(securityIndexName, new AliasMetaData.Builder(SECURITY_INDEX_NAME).build());
+            aliasMap = builder.build();
+        } else {
+            aliasMap = ImmutableOpenMap.of();
+        }
         MetaData metaData = MetaData.builder()
-                .put(IndexMetaData.builder(SecurityLifecycleService.SECURITY_INDEX_NAME).settings(settings))
+                .put(IndexMetaData.builder(securityIndexName).settings(settings))
                 .put(new IndexTemplateMetaData(SecurityLifecycleService.SECURITY_TEMPLATE_NAME, 0, 0,
-                        "", Settings.EMPTY, ImmutableOpenMap.of(),
-                        ImmutableOpenMap.of(), ImmutableOpenMap.of()))
+                        "", Settings.EMPTY, ImmutableOpenMap.of(), aliasMap, ImmutableOpenMap.of()))
                 .build();
-        Index index = new Index(SecurityLifecycleService.SECURITY_INDEX_NAME, UUID.randomUUID().toString());
+
+        if (withAlias) {
+            metaData = SecurityTestUtils.addAliasToMetaData(metaData, securityIndexName);
+        }
+
+        Index index = new Index(securityIndexName, UUID.randomUUID().toString());
         ShardRouting shardRouting = ShardRouting.newUnassigned(new ShardId(index, 0), true, EXISTING_STORE_INSTANCE,
                 new UnassignedInfo(Reason.INDEX_CREATED, ""));
         IndexShardRoutingTable table = new IndexShardRoutingTable.Builder(new ShardId(index, 0))
@@ -278,10 +295,12 @@ public class NativeRolesStoreTests extends ESTestCase {
                         .build())
                 .build();
 
-        return ClusterState.builder(new ClusterName(NativeRolesStoreTests.class.getName()))
+        ClusterState clusterState = ClusterState.builder(new ClusterName(NativeRolesStoreTests.class.getName()))
                 .metaData(metaData)
                 .routingTable(routingTable)
                 .build();
+
+        return clusterState;
     }
 
     private ClusterState getEmptyClusterState() {
