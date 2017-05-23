@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.is;
  *
  */
 public class SlackMessageDefaultsTests extends ESTestCase {
+
     public void testConstructor() throws Exception {
         Settings settings = randomSettings();
         SlackMessageDefaults defaults = new SlackMessageDefaults(settings);
@@ -47,6 +48,7 @@ public class SlackMessageDefaultsTests extends ESTestCase {
         assertThat(defaults.attachment.field.title, is(settings.get("attachment.field.title", null)));
         assertThat(defaults.attachment.field.value, is(settings.get("attachment.field.value", null)));
         assertThat(defaults.attachment.field.isShort, is(settings.getAsBoolean("attachment.field.short", null)));
+        assertThat(defaults.attachment.markdownSupportedFields, is(settings.getAsArray("attachment.mrkdwn_in", null)));
     }
 
     public static Settings randomSettings() {
@@ -108,6 +110,13 @@ public class SlackMessageDefaultsTests extends ESTestCase {
         }
         if (randomBoolean()) {
             settings.put("attachment.field.short", randomBoolean());
+        }
+        if (randomBoolean()) {
+            if (randomBoolean()) {
+                settings.putArray("attachment.mrkdwn_in", "foo", "bar");
+            } else {
+                settings.put("attachment.mrkdwn_in", "foo,bar");
+            }
         }
         return settings.build();
     }
