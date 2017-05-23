@@ -46,6 +46,8 @@ import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.transport.actions.delete.DeleteWatchResponse;
 import org.elasticsearch.xpack.watcher.transport.actions.stats.WatcherStatsResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
@@ -149,8 +151,11 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTestCase {
     public void testDedicatedMasterNodeLayout() throws Exception {
         // Only the master nodes are in the unicast nodes list:
         config = new ClusterDiscoveryConfiguration.UnicastZen(11, 3, Settings.EMPTY);
-        internalCluster().startMasterOnlyNodes(3);
-        internalCluster().startDataOnlyNodes(7);
+        List<String> nodes = new ArrayList<>(internalCluster().startMasterOnlyNodes(3));
+        nodes.addAll(internalCluster().startDataOnlyNodes(7));
+        for (String node : nodes) {
+            ensureStableCluster(10, TimeValue.timeValueSeconds(10), true, node);
+        }
         ensureWatcherStarted(false);
         ensureLicenseEnabled();
 
