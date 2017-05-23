@@ -16,6 +16,7 @@ package org.elasticsearch.xpack.ml.job.process.autodetect;
 
 import org.elasticsearch.xpack.ml.job.config.DetectionRule;
 import org.elasticsearch.xpack.ml.job.config.ModelPlotConfig;
+import org.elasticsearch.xpack.ml.job.process.NativeController;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.DataLoadParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.InterimResultsParams;
 import org.elasticsearch.xpack.ml.job.results.AutodetectResult;
@@ -82,6 +83,11 @@ public interface AutodetectProcess extends Closeable {
      * Flush the output data stream
      */
     void flushStream() throws IOException;
+
+    /**
+     * Kill the process.  Do not wait for it to stop gracefully.
+     */
+    void kill() throws IOException;
 
     /**
      * @return stream of autodetect results.

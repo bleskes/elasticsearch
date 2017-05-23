@@ -30,4 +30,8 @@ public class NoOpRenormalizer implements Renormalizer {
     @Override
     public void waitUntilIdle() {
     }
+
+    @Override
+    public void shutdown() {
+    }
 }

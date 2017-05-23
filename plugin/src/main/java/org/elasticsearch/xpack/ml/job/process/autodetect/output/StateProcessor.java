@@ -66,7 +66,6 @@ public class StateProcessor extends AbstractComponent {
             }
             readBuf = new byte[READ_BUF_SIZE];
         }
-        logger.info("[{}] State output finished", jobId);
     }
 
     /**

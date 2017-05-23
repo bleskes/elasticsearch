@@ -87,6 +87,11 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess {
     }
 
     @Override
+    public void kill() throws IOException {
+        open = false;
+    }
+
+    @Override
     public Iterator<AutodetectResult> readAutodetectResults() {
         // Create a custom iterator here, because LinkedBlockingDeque iterator and stream are not blocking when empty:
         return new Iterator<AutodetectResult>() {
@@ -123,7 +128,7 @@ public class BlackHoleAutodetectProcess implements AutodetectProcess {
 
     @Override
     public boolean isProcessAlive() {
-        return true;
+        return open;
     }
 
     @Override
