@@ -70,6 +70,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
         return true;
     }
 
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/1545")
     public void testTimeThrottle() throws Exception {
         indexTestDoc();
 
