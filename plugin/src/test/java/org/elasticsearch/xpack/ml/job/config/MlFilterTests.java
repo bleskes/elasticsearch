@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.Matchers.equalTo;
+
 public class MlFilterTests extends AbstractSerializingTestCase<MlFilter> {
 
     @Override
@@ -55,4 +57,7 @@ public class MlFilterTests extends AbstractSerializingTestCase<MlFilter> {
         assertEquals(MlFilter.ITEMS.getPreferredName() + " must not be null", ex.getMessage());
     }
 
+    public void testDocumentId() {
+        assertThat(MlFilter.documentId("foo"), equalTo("filter_foo"));
+    }
 }

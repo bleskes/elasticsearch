@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.xpack.ml.job.persistence.ElasticsearchMappings.DOC_TYPE;
 
 /**
  * Persists result types, Quantiles etc to Elasticsearch<br>
@@ -68,7 +69,6 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 public class JobResultsPersister extends AbstractComponent {
 
     private final Client client;
-
 
     public JobResultsPersister(Settings settings, Client client) {
         super(settings);
@@ -109,8 +109,7 @@ public class JobResultsPersister extends AbstractComponent {
                 logger.trace("[{}] ES API CALL: index result type {} to index {} at epoch {}",
                         jobId, Bucket.RESULT_TYPE_VALUE, indexName, bucketWithoutRecords.getEpoch());
 
-                bulkRequest.add(new IndexRequest(indexName, Result.TYPE.getPreferredName(),
-                        bucketWithoutRecords.getId()).source(content));
+                bulkRequest.add(new IndexRequest(indexName, DOC_TYPE, bucketWithoutRecords.getId()).source(content));
 
                 persistBucketInfluencersStandalone(jobId, bucketWithoutRecords.getBucketInfluencers());
             } catch (IOException e) {
@@ -129,7 +128,7 @@ public class JobResultsPersister extends AbstractComponent {
                         String id = bucketInfluencer.getId();
                         logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
                                 jobId, BucketInfluencer.RESULT_TYPE_VALUE, indexName, id);
-                        bulkRequest.add(new IndexRequest(indexName, Result.TYPE.getPreferredName(), id).source(content));
+                        bulkRequest.add(new IndexRequest(indexName, DOC_TYPE, id).source(content));
                     }
                 }
             }
@@ -148,7 +147,7 @@ public class JobResultsPersister extends AbstractComponent {
                     try (XContentBuilder content = toXContentBuilder(record)) {
                         logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
                                 jobId, AnomalyRecord.RESULT_TYPE_VALUE, indexName, record.getId());
-                        bulkRequest.add(new IndexRequest(indexName, Result.TYPE.getPreferredName(), record.getId()).source(content));
+                        bulkRequest.add(new IndexRequest(indexName, DOC_TYPE, record.getId()).source(content));
                     }
                 }
             } catch (IOException e) {
@@ -171,7 +170,7 @@ public class JobResultsPersister extends AbstractComponent {
                     try (XContentBuilder content = toXContentBuilder(influencer)) {
                         logger.trace("[{}] ES BULK ACTION: index result type {} to index {} with ID {}",
                                 jobId, Influencer.RESULT_TYPE_VALUE, indexName, influencer.getId());
-                        bulkRequest.add(new IndexRequest(indexName, Result.TYPE.getPreferredName(), influencer.getId()).source(content));
+                        bulkRequest.add(new IndexRequest(indexName, DOC_TYPE, influencer.getId()).source(content));
                     }
                 }
             } catch (IOException e) {
@@ -193,7 +192,7 @@ public class JobResultsPersister extends AbstractComponent {
                         jobId, PerPartitionMaxProbabilities.RESULT_TYPE_VALUE, indexName, partitionProbabilities.getTimestamp(),
                         partitionProbabilities.getId());
                 bulkRequest.add(
-                        new IndexRequest(indexName, Result.TYPE.getPreferredName(), partitionProbabilities.getId()).source(builder));
+                        new IndexRequest(indexName, DOC_TYPE, partitionProbabilities.getId()).source(builder));
 
             } catch (IOException e) {
                 logger.error(new ParameterizedMessage("[{}] error serialising bucket per partition max normalized scores",
@@ -358,14 +357,14 @@ public class JobResultsPersister extends AbstractComponent {
 
         private final String jobId;
         private final ToXContent object;
-        private final String type;
+        private final String description;
         private final String id;
         private WriteRequest.RefreshPolicy refreshPolicy;
 
-        Persistable(String jobId, ToXContent object, String type, String id) {
+        Persistable(String jobId, ToXContent object, String description, String id) {
             this.jobId = jobId;
             this.object = object;
-            this.type = type;
+            this.description = description;
             this.id = id;
             this.refreshPolicy = WriteRequest.RefreshPolicy.NONE;
         }
@@ -382,12 +381,15 @@ public class JobResultsPersister extends AbstractComponent {
 
         void persist(String indexName, ActionListener<IndexResponse> listener) {
             logCall(indexName);
+            // TODO no_release: this is a temporary hack until we also switch state index to have doc type in which case
+            // we can remove this line and use DOC_TYPE directly in the index request
+            String type = AnomalyDetectorsIndex.jobStateIndexName().equals(indexName) ? description : DOC_TYPE;
 
             try (XContentBuilder content = toXContentBuilder(object)) {
                 IndexRequest indexRequest = new IndexRequest(indexName, type, id).source(content).setRefreshPolicy(refreshPolicy);
                 client.index(indexRequest, listener);
             } catch (IOException e) {
-                logger.error(new ParameterizedMessage("[{}] Error writing {}", new Object[]{jobId, type}), e);
+                logger.error(new ParameterizedMessage("[{}] Error writing {}", new Object[]{jobId, description}), e);
                 IndexResponse.Builder notCreatedResponse = new IndexResponse.Builder();
                 notCreatedResponse.setCreated(false);
                 listener.onResponse(notCreatedResponse.build());
@@ -396,9 +398,9 @@ public class JobResultsPersister extends AbstractComponent {
 
         private void logCall(String indexName) {
             if (id != null) {
-                logger.trace("[{}] ES API CALL: index type {} to index {} with ID {}", jobId, type, indexName, id);
+                logger.trace("[{}] ES API CALL: index {} to index {} with ID {}", jobId, description, indexName, id);
             } else {
-                logger.trace("[{}] ES API CALL: index type {} to index {} with auto-generated ID", jobId, type, indexName);
+                logger.trace("[{}] ES API CALL: index {} to index {} with auto-generated ID", jobId, description, indexName);
             }
         }
     }

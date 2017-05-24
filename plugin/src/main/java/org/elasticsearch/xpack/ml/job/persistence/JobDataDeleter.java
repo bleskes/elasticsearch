@@ -19,9 +19,6 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.index.reindex.BulkByScrollResponse;
-import org.elasticsearch.index.reindex.DeleteByQueryAction;
-import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.action.support.WriteRequest;
@@ -30,7 +27,9 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelState;
@@ -70,7 +69,7 @@ public class JobDataDeleter {
             }
 
             bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobResultsAliasedName(modelSnapshot.getJobId()),
-                    ModelSnapshot.TYPE.getPreferredName(), ModelSnapshot.documentId(modelSnapshot)));
+                    ElasticsearchMappings.DOC_TYPE, ModelSnapshot.documentId(modelSnapshot)));
         }
 
         bulkRequestBuilder.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
@@ -91,11 +90,11 @@ public class JobDataDeleter {
         DeleteByQueryHolder deleteByQueryHolder = new DeleteByQueryHolder(AnomalyDetectorsIndex.jobResultsAliasedName(jobId));
         deleteByQueryHolder.dbqRequest.setRefresh(true);
 
-        RangeQueryBuilder timeRange = QueryBuilders.rangeQuery(Result.TIMESTAMP.getPreferredName());
-        timeRange.gte(cutoffEpochMs);
+        QueryBuilder query = QueryBuilders.boolQuery()
+                .filter(QueryBuilders.existsQuery(Result.RESULT_TYPE.getPreferredName()))
+                .filter(QueryBuilders.rangeQuery(Result.TIMESTAMP.getPreferredName()).gte(cutoffEpochMs));
         deleteByQueryHolder.searchRequest.indicesOptions(IndicesOptions.lenientExpandOpen());
-        deleteByQueryHolder.searchRequest.types(Result.TYPE.getPreferredName());
-        deleteByQueryHolder.searchRequest.source(new SearchSourceBuilder().query(timeRange));
+        deleteByQueryHolder.searchRequest.source(new SearchSourceBuilder().query(query));
         client.execute(DeleteByQueryAction.INSTANCE, deleteByQueryHolder.dbqRequest, new ActionListener<BulkByScrollResponse>() {
                 @Override
                 public void onResponse(BulkByScrollResponse bulkByScrollResponse) {
@@ -117,7 +116,6 @@ public class JobDataDeleter {
         deleteByQueryHolder.dbqRequest.setRefresh(false);
 
         deleteByQueryHolder.searchRequest.indicesOptions(IndicesOptions.lenientExpandOpen());
-        deleteByQueryHolder.searchRequest.types(Result.TYPE.getPreferredName());
         QueryBuilder qb = QueryBuilders.termQuery(Result.IS_INTERIM.getPreferredName(), true);
         deleteByQueryHolder.searchRequest.source(new SearchSourceBuilder().query(new ConstantScoreQueryBuilder(qb)));
 

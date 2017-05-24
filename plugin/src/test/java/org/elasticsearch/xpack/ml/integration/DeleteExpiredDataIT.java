@@ -122,7 +122,7 @@ public class DeleteExpiredDataIT extends MlNativeAutodetectIntegTestCase {
 
             // Update snapshot timestamp to force it out of snapshot retention window
             String snapshotUpdate = "{ \"timestamp\": " + oneDayAgo + "}";
-            UpdateRequest updateSnapshotRequest = new UpdateRequest(".ml-anomalies-" + job.getId(), "model_snapshot", snapshotDocId);
+            UpdateRequest updateSnapshotRequest = new UpdateRequest(".ml-anomalies-" + job.getId(), "doc", snapshotDocId);
             updateSnapshotRequest.doc(snapshotUpdate.getBytes(StandardCharsets.UTF_8), XContentType.JSON);
             client().execute(UpdateAction.INSTANCE, updateSnapshotRequest).get();
         }
@@ -145,7 +145,7 @@ public class DeleteExpiredDataIT extends MlNativeAutodetectIntegTestCase {
 
         retainAllSnapshots("snapshots-retention-with-retain");
 
-        long totalModelSizeStatsBeforeDelete = client().prepareSearch("*").setTypes("result")
+        long totalModelSizeStatsBeforeDelete = client().prepareSearch("*")
                 .setQuery(QueryBuilders.termQuery("result_type", "model_size_stats"))
                 .get().getHits().totalHits;
         long totalNotificationsCountBeforeDelete = client().prepareSearch(".ml-notifications").get().getHits().totalHits;
@@ -184,7 +184,7 @@ public class DeleteExpiredDataIT extends MlNativeAutodetectIntegTestCase {
         assertThat(getRecords("results-and-snapshots-retention").size(), equalTo(0));
         assertThat(getModelSnapshots("results-and-snapshots-retention").size(), equalTo(1));
 
-        long totalModelSizeStatsAfterDelete = client().prepareSearch("*").setTypes("result")
+        long totalModelSizeStatsAfterDelete = client().prepareSearch("*")
                 .setQuery(QueryBuilders.termQuery("result_type", "model_size_stats"))
                 .get().getHits().totalHits;
         long totalNotificationsCountAfterDelete = client().prepareSearch(".ml-notifications").get().getHits().totalHits;
@@ -208,8 +208,7 @@ public class DeleteExpiredDataIT extends MlNativeAutodetectIntegTestCase {
     private void retainAllSnapshots(String jobId) throws Exception {
         List<ModelSnapshot> modelSnapshots = getModelSnapshots(jobId);
         for (ModelSnapshot modelSnapshot : modelSnapshots) {
-            UpdateModelSnapshotAction.Request request = new UpdateModelSnapshotAction.Request(
-                    jobId, modelSnapshot.getSnapshotId());
+            UpdateModelSnapshotAction.Request request = new UpdateModelSnapshotAction.Request(jobId, modelSnapshot.getSnapshotId());
             request.setRetain(true);
             client().execute(UpdateModelSnapshotAction.INSTANCE, request).get();
         }
