@@ -269,8 +269,12 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
                 && this.retain == that.retain;
     }
 
+    private String stateDocumentPrefix() {
+        return jobId + "-" + snapshotId;
+    }
+
     public List<String> stateDocumentIds() {
-        String prefix = documentId(this);
+        String prefix = stateDocumentPrefix();
         List<String> stateDocumentIds = new ArrayList<>(snapshotDocCount);
         // The state documents count suffices are 1-based
         for (int i = 1; i <= snapshotDocCount; i++) {
@@ -284,7 +288,7 @@ public class ModelSnapshot extends ToXContentToBytes implements Writeable {
     }
 
     public static String documentId(String jobId, String snapshotId) {
-        return jobId + "-" + snapshotId;
+        return jobId + "_model_snapshot_" + snapshotId;
     }
 
     public static ModelSnapshot fromJson(BytesReference bytesReference) {

@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
@@ -104,7 +105,7 @@ public class JobStorageDeletionTask extends Task {
                 failureHandler);
 
         // Step 3. Delete quantiles done, delete the categorizer state
-        ActionListener<DeleteResponse> deleteQuantilesHandler = ActionListener.wrap(
+        ActionListener<BulkResponse> deleteQuantilesHandler = ActionListener.wrap(
                 response -> deleteCategorizerState(jobId, client, deleteCategorizerStateHandler),
                 failureHandler);
 
@@ -117,9 +118,14 @@ public class JobStorageDeletionTask extends Task {
         deleteModelState(jobId, client, deleteStateHandler);
     }
 
-    private void deleteQuantiles(String jobId, Client client, ActionListener<DeleteResponse> finishedHandler) {
-        client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), Quantiles.TYPE.getPreferredName(), Quantiles.documentId(jobId))
-                .execute(finishedHandler);
+    private void deleteQuantiles(String jobId, Client client, ActionListener<BulkResponse> finishedHandler) {
+        // The quantiles doc Id changed in v5.5 so delete both the old and new format
+        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), Quantiles.TYPE.getPreferredName(),
+                Quantiles.documentId(jobId)));
+        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), Quantiles.TYPE.getPreferredName(),
+                jobId + "-" + Quantiles.TYPE.getPreferredName()));
+        bulkRequestBuilder.execute(finishedHandler);
     }
 
     private void deleteModelState(String jobId, Client client, ActionListener<BulkResponse> listener) {

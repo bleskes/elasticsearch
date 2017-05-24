@@ -54,7 +54,7 @@ public class Quantiles extends ToXContentToBytes implements Writeable {
     }
 
     public static String documentId(String jobId) {
-        return jobId + "-" + TYPE.getPreferredName();
+        return jobId + "_" + TYPE.getPreferredName();
     }
 
     private final String jobId;
