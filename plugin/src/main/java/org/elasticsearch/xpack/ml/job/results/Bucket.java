@@ -190,7 +190,7 @@ public class Bucket extends ToXContentToBytes implements Writeable {
     }
 
     public String getId() {
-        return jobId + "_" + timestamp.getTime() + "_" + bucketSpan;
+        return jobId + "_bucket_" + timestamp.getTime() + "_" + bucketSpan;
     }
 
     /**

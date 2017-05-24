@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.job.results;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -56,7 +57,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
 
     public static final ConstructingObjectParser<BucketInfluencer, Void> PARSER =
             new ConstructingObjectParser<>(RESULT_TYPE_FIELD.getPreferredName(), a -> new BucketInfluencer((String) a[0],
-                    (Date) a[1], (long) a[2], (int) a[3]));
+                    (Date) a[1], (long) a[2]));
 
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), Job.ID);
@@ -70,7 +71,6 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
                     + Result.TIMESTAMP.getPreferredName() + "]");
         }, Result.TIMESTAMP, ValueType.VALUE);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), BUCKET_SPAN);
-        PARSER.declareInt(ConstructingObjectParser.constructorArg(), SEQUENCE_NUM);
         PARSER.declareString((bucketInfluencer, s) -> {}, Result.RESULT_TYPE);
         PARSER.declareString(BucketInfluencer::setInfluencerFieldName, INFLUENCER_FIELD_NAME);
         PARSER.declareDouble(BucketInfluencer::setInitialAnomalyScore, INITIAL_ANOMALY_SCORE);
@@ -78,6 +78,8 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         PARSER.declareDouble(BucketInfluencer::setRawAnomalyScore, RAW_ANOMALY_SCORE);
         PARSER.declareDouble(BucketInfluencer::setProbability, PROBABILITY);
         PARSER.declareBoolean(BucketInfluencer::setIsInterim, Result.IS_INTERIM);
+        // For bwc with 5.4
+        PARSER.declareInt((bucketInfluencer, sequenceNum) -> {}, SEQUENCE_NUM);
     }
 
     private final String jobId;
@@ -89,13 +91,11 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
     private boolean isInterim;
     private final Date timestamp;
     private final long bucketSpan;
-    private final int sequenceNum;
 
-    public BucketInfluencer(String jobId, Date timestamp, long bucketSpan, int sequenceNum) {
+    public BucketInfluencer(String jobId, Date timestamp, long bucketSpan) {
         this.jobId = jobId;
         this.timestamp = ExceptionsHelper.requireNonNull(timestamp, Result.TIMESTAMP.getPreferredName());
         this.bucketSpan = bucketSpan;
-        this.sequenceNum = sequenceNum;
     }
 
     public BucketInfluencer(StreamInput in) throws IOException {
@@ -108,7 +108,10 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         isInterim = in.readBoolean();
         timestamp = new Date(in.readLong());
         bucketSpan = in.readLong();
-        sequenceNum = in.readInt();
+        // bwc for removed sequenceNum field
+        if (in.getVersion().before(Version.V_5_5_0_UNRELEASED)) {
+            in.readInt();
+        }
     }
 
     @Override
@@ -122,12 +125,21 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         out.writeBoolean(isInterim);
         out.writeLong(timestamp.getTime());
         out.writeLong(bucketSpan);
-        out.writeInt(sequenceNum);
+        // bwc for removed sequenceNum field
+        if (out.getVersion().before(Version.V_5_5_0_UNRELEASED)) {
+            out.writeInt(0);
+        }
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        innerToXContent(builder, params);
+        builder.endObject();
+        return builder;
+    }
+
+    XContentBuilder innerToXContent(XContentBuilder builder, Params params) throws IOException {
         builder.field(Job.ID.getPreferredName(), jobId);
         builder.field(Result.RESULT_TYPE.getPreferredName(), RESULT_TYPE_VALUE);
         if (influenceField != null) {
@@ -139,9 +151,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         builder.field(PROBABILITY.getPreferredName(), probability);
         builder.dateField(Result.TIMESTAMP.getPreferredName(), Result.TIMESTAMP.getPreferredName() + "_string", timestamp.getTime());
         builder.field(BUCKET_SPAN.getPreferredName(), bucketSpan);
-        builder.field(SEQUENCE_NUM.getPreferredName(), sequenceNum);
         builder.field(Result.IS_INTERIM.getPreferredName(), isInterim);
-        builder.endObject();
         return builder;
     }
 
@@ -149,7 +159,8 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
      * Data store ID of this bucket influencer.
      */
     public String getId() {
-        return jobId + "_" + timestamp.getTime() + "_" + bucketSpan + "_" + sequenceNum;
+        return jobId + "_bucket_influencer_" + timestamp.getTime() + "_" + bucketSpan
+                + (influenceField == null ? "" :  "_" + influenceField);
     }
 
     public String getJobId() {
@@ -211,7 +222,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
     @Override
     public int hashCode() {
         return Objects.hash(influenceField, initialAnomalyScore, anomalyScore, rawAnomalyScore, probability, isInterim, timestamp, jobId,
-                bucketSpan, sequenceNum);
+                bucketSpan);
     }
 
     @Override
@@ -233,7 +244,7 @@ public class BucketInfluencer extends ToXContentToBytes implements Writeable {
         return Objects.equals(influenceField, other.influenceField) && Double.compare(initialAnomalyScore, other.initialAnomalyScore) == 0
                 && Double.compare(anomalyScore, other.anomalyScore) == 0 && Double.compare(rawAnomalyScore, other.rawAnomalyScore) == 0
                 && Double.compare(probability, other.probability) == 0 && Objects.equals(isInterim, other.isInterim)
-                && Objects.equals(timestamp, other.timestamp) && Objects.equals(jobId, other.jobId) && bucketSpan == other.bucketSpan
-                && sequenceNum == other.sequenceNum;
+                && Objects.equals(timestamp, other.timestamp) && Objects.equals(jobId, other.jobId) && bucketSpan == other.bucketSpan;
+
     }
 }

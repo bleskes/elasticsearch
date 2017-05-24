@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.job.results;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.action.support.ToXContentToBytes;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -54,7 +55,7 @@ public class Influencer extends ToXContentToBytes implements Writeable {
 
     public static final ConstructingObjectParser<Influencer, Void> PARSER = new ConstructingObjectParser<>(
             RESULT_TYPE_FIELD.getPreferredName(), true, a -> new Influencer((String) a[0], (String) a[1], (String) a[2],
-            (Date) a[3], (long) a[4], (int) a[5]));
+            (Date) a[3], (long) a[4]));
 
     static {
         PARSER.declareString(ConstructingObjectParser.constructorArg(), Job.ID);
@@ -70,18 +71,18 @@ public class Influencer extends ToXContentToBytes implements Writeable {
                     + Result.TIMESTAMP.getPreferredName() + "]");
         }, Result.TIMESTAMP, ValueType.VALUE);
         PARSER.declareLong(ConstructingObjectParser.constructorArg(), BUCKET_SPAN);
-        PARSER.declareInt(ConstructingObjectParser.constructorArg(), SEQUENCE_NUM);
         PARSER.declareString((influencer, s) -> {}, Result.RESULT_TYPE);
         PARSER.declareDouble(Influencer::setProbability, PROBABILITY);
         PARSER.declareDouble(Influencer::setInfluencerScore, INFLUENCER_SCORE);
         PARSER.declareDouble(Influencer::setInitialInfluencerScore, INITIAL_INFLUENCER_SCORE);
         PARSER.declareBoolean(Influencer::setInterim, Result.IS_INTERIM);
+        // For bwc with 5.4
+        PARSER.declareInt((influencer, sequenceNum) -> {}, SEQUENCE_NUM);
     }
 
     private final String jobId;
     private final Date timestamp;
     private final long bucketSpan;
-    private final int sequenceNum;
     private String influenceField;
     private String influenceValue;
     private double probability;
@@ -89,13 +90,12 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     private double influencerScore;
     private boolean isInterim;
 
-    public Influencer(String jobId, String fieldName, String fieldValue, Date timestamp, long bucketSpan, int sequenceNum) {
+    public Influencer(String jobId, String fieldName, String fieldValue, Date timestamp, long bucketSpan) {
         this.jobId = jobId;
         influenceField = fieldName;
         influenceValue = fieldValue;
         this.timestamp = ExceptionsHelper.requireNonNull(timestamp, Result.TIMESTAMP.getPreferredName());
         this.bucketSpan = bucketSpan;
-        this.sequenceNum = sequenceNum;
     }
 
     public Influencer(StreamInput in) throws IOException {
@@ -108,7 +108,10 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         influencerScore = in.readDouble();
         isInterim = in.readBoolean();
         bucketSpan = in.readLong();
-        sequenceNum = in.readInt();
+        // bwc for removed sequenceNum field
+        if (in.getVersion().before(Version.V_5_5_0_UNRELEASED)) {
+            in.readInt();
+        }
     }
 
     @Override
@@ -122,12 +125,21 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         out.writeDouble(influencerScore);
         out.writeBoolean(isInterim);
         out.writeLong(bucketSpan);
-        out.writeInt(sequenceNum);
+        // bwc for removed sequenceNum field
+        if (out.getVersion().before(Version.V_5_5_0_UNRELEASED)) {
+            out.writeInt(0);
+        }
     }
 
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
+        innerToXContent(builder, params);
+        builder.endObject();
+        return builder;
+    }
+
+    XContentBuilder innerToXContent(XContentBuilder builder, Params params) throws IOException {
         builder.field(Job.ID.getPreferredName(), jobId);
         builder.field(Result.RESULT_TYPE.getPreferredName(), RESULT_TYPE_VALUE);
         builder.field(INFLUENCER_FIELD_NAME.getPreferredName(), influenceField);
@@ -138,11 +150,9 @@ public class Influencer extends ToXContentToBytes implements Writeable {
         builder.field(INFLUENCER_SCORE.getPreferredName(), influencerScore);
         builder.field(INITIAL_INFLUENCER_SCORE.getPreferredName(), initialInfluencerScore);
         builder.field(PROBABILITY.getPreferredName(), probability);
-        builder.field(SEQUENCE_NUM.getPreferredName(), sequenceNum);
         builder.field(BUCKET_SPAN.getPreferredName(), bucketSpan);
         builder.field(Result.IS_INTERIM.getPreferredName(), isInterim);
         builder.dateField(Result.TIMESTAMP.getPreferredName(), Result.TIMESTAMP.getPreferredName() + "_string", timestamp.getTime());
-        builder.endObject();
         return builder;
     }
 
@@ -151,7 +161,8 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     }
 
     public String getId() {
-        return jobId + "_" + timestamp.getTime() + "_" + bucketSpan + "_" + sequenceNum;
+        return jobId + "_influencer_" + timestamp.getTime() + "_" + bucketSpan + "_" +
+                influenceField + "_" + influenceValue.hashCode() + "_" + influenceValue.length();
     }
 
     public double getProbability() {
@@ -201,7 +212,7 @@ public class Influencer extends ToXContentToBytes implements Writeable {
     @Override
     public int hashCode() {
         return Objects.hash(jobId, timestamp, influenceField, influenceValue, initialInfluencerScore,
-                influencerScore, probability, isInterim, bucketSpan, sequenceNum);
+                influencerScore, probability, isInterim, bucketSpan);
     }
 
     @Override
@@ -224,6 +235,6 @@ public class Influencer extends ToXContentToBytes implements Writeable {
                 && Objects.equals(influenceValue, other.influenceValue)
                 && Double.compare(initialInfluencerScore, other.initialInfluencerScore) == 0
                 && Double.compare(influencerScore, other.influencerScore) == 0 && Double.compare(probability, other.probability) == 0
-                && (isInterim == other.isInterim) && (bucketSpan == other.bucketSpan) && (sequenceNum == other.sequenceNum);
+                && (isInterim == other.isInterim) && (bucketSpan == other.bucketSpan);
     }
 }

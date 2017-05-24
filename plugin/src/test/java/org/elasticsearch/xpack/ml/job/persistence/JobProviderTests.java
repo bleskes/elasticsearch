@@ -425,7 +425,6 @@ public class JobProviderTests extends ESTestCase {
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
         recordMap1.put("bucket_span", 22);
-        recordMap1.put("sequence_num", 1);
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("job_id", "foo");
         recordMap2.put("typical", 1122.4);
@@ -433,7 +432,6 @@ public class JobProviderTests extends ESTestCase {
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
         recordMap2.put("bucket_span", 22);
-        recordMap2.put("sequence_num", 2);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -475,7 +473,6 @@ public class JobProviderTests extends ESTestCase {
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
         recordMap1.put("bucket_span", 22);
-        recordMap1.put("sequence_num", 1);
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("job_id", "foo");
         recordMap2.put("typical", 1122.4);
@@ -483,7 +480,6 @@ public class JobProviderTests extends ESTestCase {
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
         recordMap2.put("bucket_span", 22);
-        recordMap2.put("sequence_num", 2);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -532,7 +528,6 @@ public class JobProviderTests extends ESTestCase {
         recordMap1.put("timestamp", now.getTime());
         recordMap1.put("function", "irritable");
         recordMap1.put("bucket_span", 22);
-        recordMap1.put("sequence_num", 1);
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("job_id", "foo");
         recordMap2.put("typical", 1122.4);
@@ -540,7 +535,6 @@ public class JobProviderTests extends ESTestCase {
         recordMap2.put("timestamp", now.getTime());
         recordMap2.put("function", "irrascible");
         recordMap2.put("bucket_span", 22);
-        recordMap2.put("sequence_num", 2);
         source.add(recordMap1);
         source.add(recordMap2);
 
@@ -581,7 +575,6 @@ public class JobProviderTests extends ESTestCase {
             recordMap.put("timestamp", now.getTime());
             recordMap.put("function", "irritable");
             recordMap.put("bucket_span", 22);
-            recordMap.put("sequence_num", i + 1);
             source.add(recordMap);
         }
 
@@ -661,7 +654,6 @@ public class JobProviderTests extends ESTestCase {
         influencerMap1.put("initial_influencer_score", 22.2);
         influencerMap1.put("influencer_score", 22.6);
         influencerMap1.put("bucket_span", 123);
-        influencerMap1.put("sequence_num", 1);
         Map<String, Object> recordMap2 = new HashMap<>();
         recordMap2.put("job_id", "foo");
         recordMap2.put("probability", 0.99);
@@ -671,7 +663,6 @@ public class JobProviderTests extends ESTestCase {
         recordMap2.put("initial_influencer_score", 5.0);
         recordMap2.put("influencer_score", 5.0);
         recordMap2.put("bucket_span", 123);
-        recordMap2.put("sequence_num", 2);
         source.add(influencerMap1);
         source.add(recordMap2);
 
@@ -723,7 +714,6 @@ public class JobProviderTests extends ESTestCase {
         influencerMap1.put("initial_influencer_score", 22.2);
         influencerMap1.put("influencer_score", 22.6);
         influencerMap1.put("bucket_span", 123);
-        influencerMap1.put("sequence_num", 1);
         Map<String, Object> influencerMap2 = new HashMap<>();
         influencerMap2.put("job_id", "foo");
         influencerMap2.put("probability", 0.99);
@@ -733,7 +723,6 @@ public class JobProviderTests extends ESTestCase {
         influencerMap2.put("initial_influencer_score", 5.0);
         influencerMap2.put("influencer_score", 5.0);
         influencerMap2.put("bucket_span", 123);
-        influencerMap2.put("sequence_num", 2);
         source.add(influencerMap1);
         source.add(influencerMap2);
 

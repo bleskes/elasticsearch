@@ -202,7 +202,7 @@ public class ScoresUpdaterTests extends ESTestCase {
         List<Result<AnomalyRecord>> records = new ArrayList<>();
         Date date = new Date();
         for (int i=0; i<100000; i++) {
-            records.add(new Result<>("foo", new AnomalyRecord("foo", date, 1, i)));
+            records.add(new Result<>("foo", new AnomalyRecord("foo", date, 1)));
         }
 
         Bucket bucket2 = generateBucket(new Date(10000 * 1000));
@@ -228,7 +228,7 @@ public class ScoresUpdaterTests extends ESTestCase {
     }
 
     public void testUpdate_GivenInfluencerWithBigChange() throws IOException {
-        Influencer influencer = new Influencer(JOB_ID, "n", "v", new Date(DEFAULT_START_TIME), 600, 1);
+        Influencer influencer = new Influencer(JOB_ID, "n", "v", new Date(DEFAULT_START_TIME), 600);
 
         Deque<Influencer> influencers = new ArrayDeque<>();
         influencers.add(influencer);
@@ -242,7 +242,7 @@ public class ScoresUpdaterTests extends ESTestCase {
     }
 
     public void testUpdate_GivenShutdown() throws IOException {
-        Influencer influencer = new Influencer(JOB_ID, "n", "v", new Date(DEFAULT_START_TIME), 600, 1);
+        Influencer influencer = new Influencer(JOB_ID, "n", "v", new Date(DEFAULT_START_TIME), 600);
 
         Deque<Influencer> influencers = new ArrayDeque<>();
         influencers.add(influencer);
@@ -324,7 +324,7 @@ public class ScoresUpdaterTests extends ESTestCase {
     }
 
     private BucketInfluencer createTimeBucketInfluencer(Date timestamp, double probability, double anomalyScore) {
-        BucketInfluencer influencer = new BucketInfluencer(JOB_ID, timestamp, DEFAULT_BUCKET_SPAN, 1);
+        BucketInfluencer influencer = new BucketInfluencer(JOB_ID, timestamp, DEFAULT_BUCKET_SPAN);
         influencer.setProbability(probability);
         influencer.setAnomalyScore(anomalyScore);
         influencer.setInfluencerFieldName(BucketInfluencer.BUCKET_TIME);
