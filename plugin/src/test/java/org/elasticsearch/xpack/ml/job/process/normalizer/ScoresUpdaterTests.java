@@ -218,8 +218,8 @@ public class ScoresUpdaterTests extends ESTestCase {
 
         List<Deque<Result<AnomalyRecord>>> recordBatches = new ArrayList<>();
         recordBatches.add(new ArrayDeque<>(records));
-        MockBatchedDocumentsIterator<Result<AnomalyRecord>> recordIter =
-                new MockBatchedDocumentsIterator<>(recordBatches);
+        MockBatchedDocumentsIterator<AnomalyRecord> recordIter = new MockBatchedDocumentsIterator<>(
+                recordBatches, AnomalyRecord.RESULT_TYPE_VALUE);
         recordIter.requireIncludeInterim(false);
         when(jobProvider.newBatchedRecordsIterator(JOB_ID)).thenReturn(recordIter);
 
@@ -385,8 +385,7 @@ public class ScoresUpdaterTests extends ESTestCase {
             batchesWithIndex.add(queueWithIndex);
         }
 
-        MockBatchedDocumentsIterator<Result<Bucket>> bucketIter =
-                new MockBatchedDocumentsIterator<>(batchesWithIndex);
+        MockBatchedDocumentsIterator<Bucket> bucketIter = new MockBatchedDocumentsIterator<>(batchesWithIndex, Bucket.RESULT_TYPE_VALUE);
         bucketIter.requireIncludeInterim(false);
         when(jobProvider.newBatchedBucketsIterator(JOB_ID)).thenReturn(bucketIter);
     }
@@ -403,8 +402,8 @@ public class ScoresUpdaterTests extends ESTestCase {
         }
         batches.add(batch);
 
-        MockBatchedDocumentsIterator<Result<AnomalyRecord>> recordIter =
-                new MockBatchedDocumentsIterator<>(batches);
+        MockBatchedDocumentsIterator<AnomalyRecord> recordIter = new MockBatchedDocumentsIterator<>(
+                batches, AnomalyRecord.RESULT_TYPE_VALUE);
         recordIter.requireIncludeInterim(false);
         when(jobProvider.newBatchedRecordsIterator(JOB_ID)).thenReturn(recordIter);
     }
@@ -420,7 +419,7 @@ public class ScoresUpdaterTests extends ESTestCase {
             queue.add(new Result<>("foo", inf));
         }
         batches.add(queue);
-        MockBatchedDocumentsIterator<Result<Influencer>> iterator = new MockBatchedDocumentsIterator<>(batches);
+        MockBatchedDocumentsIterator<Influencer> iterator = new MockBatchedDocumentsIterator<>(batches, Influencer.RESULT_TYPE_VALUE);
         iterator.requireIncludeInterim(false);
         when(jobProvider.newBatchedInfluencersIterator(JOB_ID)).thenReturn(iterator);
     }

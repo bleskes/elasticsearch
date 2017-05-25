@@ -16,6 +16,8 @@ package org.elasticsearch.xpack.ml.datafeed.extractor.scroll;
 
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.ml.test.SearchHitBuilder;
+import org.joda.time.DateTime;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,7 +58,7 @@ public class ExtractedFieldsTests extends ESTestCase {
     }
 
     public void testTimeFieldValue() {
-        SearchHit hit = new ExtractedFieldTests.SearchHitBuilder(1).addField("time", 1000L).build();
+        SearchHit hit = new SearchHitBuilder(1).addField("time", 1000L).build();
 
         ExtractedFields extractedFields = new ExtractedFields(timeField, Arrays.asList(timeField));
 
@@ -64,7 +66,7 @@ public class ExtractedFieldsTests extends ESTestCase {
     }
 
     public void testTimeFieldValueGivenEmptyArray() {
-        SearchHit hit = new ExtractedFieldTests.SearchHitBuilder(1).addField("time", Collections.emptyList()).build();
+        SearchHit hit = new SearchHitBuilder(1).addField("time", Collections.emptyList()).build();
 
         ExtractedFields extractedFields = new ExtractedFields(timeField, Arrays.asList(timeField));
 
@@ -72,7 +74,7 @@ public class ExtractedFieldsTests extends ESTestCase {
     }
 
     public void testTimeFieldValueGivenValueHasTwoElements() {
-        SearchHit hit = new ExtractedFieldTests.SearchHitBuilder(1).addField("time", Arrays.asList(1L, 2L)).build();
+        SearchHit hit = new SearchHitBuilder(1).addField("time", Arrays.asList(1L, 2L)).build();
 
         ExtractedFields extractedFields = new ExtractedFields(timeField, Arrays.asList(timeField));
 
@@ -80,7 +82,7 @@ public class ExtractedFieldsTests extends ESTestCase {
     }
 
     public void testTimeFieldValueGivenValueIsString() {
-        SearchHit hit = new ExtractedFieldTests.SearchHitBuilder(1).addField("time", "a string").build();
+        SearchHit hit = new SearchHitBuilder(1).addField("time", "a string").build();
 
         ExtractedFields extractedFields = new ExtractedFields(timeField, Arrays.asList(timeField));
 

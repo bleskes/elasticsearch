@@ -14,15 +14,11 @@
  */
 package org.elasticsearch.xpack.ml.datafeed.extractor.scroll;
 
-import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.ml.test.SearchHitBuilder;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -101,37 +97,5 @@ public class ExtractedFieldTests extends ESTestCase {
 
         ExtractedField sourceField = ExtractedField.newField("b", ExtractedField.ExtractionMethod.DOC_VALUE);
         assertThat(sourceField.value(hit), equalTo(new Object[0]));
-    }
-
-    static class SearchHitBuilder {
-
-        private final SearchHit hit;
-        private final Map<String, SearchHitField> fields;
-
-        SearchHitBuilder(int docId) {
-            hit = new SearchHit(docId);
-            fields = new HashMap<>();
-        }
-
-        SearchHitBuilder addField(String name, Object value) {
-            return addField(name, Arrays.asList(value));
-        }
-
-        SearchHitBuilder addField(String name, List<Object> values) {
-            fields.put(name, new SearchHitField(name, values));
-            return this;
-        }
-
-        SearchHitBuilder setSource(String sourceJson) {
-            hit.sourceRef(new BytesArray(sourceJson));
-            return this;
-        }
-
-        SearchHit build() {
-            if (!fields.isEmpty()) {
-                hit.fields(fields);
-            }
-            return hit;
-        }
     }
 }
