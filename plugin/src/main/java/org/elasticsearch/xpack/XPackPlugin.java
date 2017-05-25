@@ -110,7 +110,6 @@ import org.elasticsearch.xpack.ssl.SSLService;
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.upgrade.Upgrade;
-import org.elasticsearch.xpack.upgrade.InternalIndexUpgradeCheck;
 import org.elasticsearch.xpack.watcher.Watcher;
 import org.elasticsearch.xpack.watcher.WatcherFeatureSet;
 
@@ -222,7 +221,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         this.graph = new Graph(settings);
         this.machineLearning = new MachineLearning(settings, env, licenseState);
         this.deprecation = new Deprecation();
-        this.upgrade = new Upgrade(settings, Collections.singletonList(new InternalIndexUpgradeCheck()));
+        this.upgrade = new Upgrade(settings);
         // Check if the node is a transport client.
         if (transportClientMode == false) {
             this.extensionsService = new XPackExtensionsService(settings, resolveXPackExtensionsFile(env), getExtensions());
@@ -268,7 +267,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         components.add(internalClient);
 
         LicenseService licenseService = new LicenseService(settings, clusterService, getClock(),
-            env, resourceWatcherService, licenseState);
+                env, resourceWatcherService, licenseState);
         components.add(licenseService);
         components.add(licenseState);
 
