@@ -49,7 +49,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -187,13 +186,14 @@ public class AutodetectCommunicator implements Closeable {
         }, handler);
     }
 
-    private void waitFlushToCompletion(String flushId) {
+    void waitFlushToCompletion(String flushId) {
         LOGGER.debug("[{}] waiting for flush", job.getId());
 
         try {
             boolean isFlushComplete = autoDetectResultProcessor.waitForFlushAcknowledgement(flushId, FLUSH_PROCESS_CHECK_FREQUENCY);
             while (isFlushComplete == false) {
                 checkProcessIsAlive();
+                checkResultsProcessorIsAlive();
                 isFlushComplete = autoDetectResultProcessor.waitForFlushAcknowledgement(flushId, FLUSH_PROCESS_CHECK_FREQUENCY);
             }
         } finally {
@@ -216,6 +216,15 @@ public class AutodetectCommunicator implements Closeable {
         if (!autodetectProcess.isProcessAlive()) {
             ParameterizedMessage message =
                     new ParameterizedMessage("[{}] Unexpected death of autodetect: {}", job.getId(), autodetectProcess.readError());
+            LOGGER.error(message);
+            throw new ElasticsearchException(message.getFormattedMessage());
+        }
+    }
+
+    private void checkResultsProcessorIsAlive() {
+        if (autoDetectResultProcessor.isFailed()) {
+            ParameterizedMessage message =
+                    new ParameterizedMessage("[{}] Unexpected death of the result processor", job.getId());
             LOGGER.error(message);
             throw new ElasticsearchException(message.getFormattedMessage());
         }
