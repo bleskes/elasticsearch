@@ -72,7 +72,7 @@ public class ExpiredModelSnapshotsRemover extends AbstractExpiredJobDataRemover 
             onFinish.run();
             return;
         }
-        LOGGER.info("Removing model snapshots of job [{}] that have a timestamp before [{}]", job.getId(), cutoffEpochMs);
+        LOGGER.debug("Removing model snapshots of job [{}] that have a timestamp before [{}]", job.getId(), cutoffEpochMs);
 
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.indices(AnomalyDetectorsIndex.jobResultsAliasedName(job.getId()));
@@ -120,7 +120,6 @@ public class ExpiredModelSnapshotsRemover extends AbstractExpiredJobDataRemover 
         client.execute(DeleteModelSnapshotAction.INSTANCE, deleteSnapshotRequest, new ActionListener<DeleteModelSnapshotAction.Response>() {
                 @Override
                 public void onResponse(DeleteModelSnapshotAction.Response response) {
-                    LOGGER.trace("[{}] Deleted expired snapshot [{}]", modelSnapshot.getJobId(), modelSnapshot.getSnapshotId());
                     try {
                         deleteModelSnapshots(modelSnapshotIterator, onFinish);
                     } catch (Exception e) {
