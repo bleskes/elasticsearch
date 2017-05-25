@@ -526,7 +526,8 @@ public class Security implements ActionPlugin, IngestPlugin, NetworkPlugin {
         if (enabled) {
             return Arrays.asList(
                 new TokenPassphraseBootstrapCheck(settings),
-                new TokenSSLBootstrapCheck(settings)
+                new TokenSSLBootstrapCheck(settings),
+                new PkiRealmBootstrapCheck(settings, sslService)
             );
         } else {
             return Collections.emptyList();
