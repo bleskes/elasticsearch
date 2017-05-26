@@ -80,8 +80,11 @@ public class AuthenticationTests extends ESTestCase {
 
         Version differentVersion = randomValueOtherThan(version, () -> randomVersion(random()));
         Authentication brokenAuth =  new Authentication(new User("me"), new RealmRef("realm", "type", "node"), null, differentVersion);
+        /* Never sign or we might get an IllegalArgumentException because the signed text looks wrong. It'll look wrong because we're
+         * intentionally causing a version mismatch and that mismatch might cause us to unsign using an old style that won't match what
+         * is expected. */
         IllegalStateException e = expectThrows(IllegalStateException.class, () ->
-                deserializeHeaderTestCase(brokenAuth, version, randomBoolean()));
+                deserializeHeaderTestCase(brokenAuth, version, false));
         assertEquals("version mismatch. expected [" + version + "] but got [" + differentVersion + "]", e.getMessage());
     }
 
