@@ -188,11 +188,7 @@ public class JobProvider {
                 throw new RuntimeException(e);
             }
         }
-        if (numFields + additionalFieldCount > fieldCountLimit) {
-            return true;
-        } else {
-            return false;
-        }
+        return numFields + additionalFieldCount > fieldCountLimit;
     }
 
     @SuppressWarnings("unchecked")
@@ -430,7 +426,7 @@ public class JobProvider {
 
             if (query.isExpand()) {
                 Iterator<Bucket> bucketsToExpand = buckets.results().stream()
-                        .filter(bucket -> bucket.getRecordCount() > 0).iterator();
+                        .filter(bucket -> bucket.getBucketInfluencers().size() > 0).iterator();
                 expandBuckets(jobId, query, buckets, bucketsToExpand, handler, errorHandler, client);
             } else {
                 handler.accept(buckets);
