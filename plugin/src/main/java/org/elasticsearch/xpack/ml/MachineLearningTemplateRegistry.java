@@ -289,8 +289,7 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                 .put(MapperService.INDEX_MAPPER_DYNAMIC_SETTING.getKey(), true)
                 // set the default all search field
                 .put(IndexSettings.DEFAULT_FIELD_SETTING.getKey(), ElasticsearchMappings.ALL_FIELD_VALUES)
-                // TODO: fix the template to use a single type
-                .put("index.mapping.single_type", false);
+                .put("index.mapping.single_type", true);
     }
 
     /**
@@ -306,7 +305,8 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                 .put(UnassignedInfo.INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.getKey(), delayedNodeTimeOutSetting)
                 // We need to allow fields not mentioned in the mappings to
                 // pick up default mappings and be used in queries
-                .put(MapperService.INDEX_MAPPER_DYNAMIC_SETTING.getKey(), true);
+                .put(MapperService.INDEX_MAPPER_DYNAMIC_SETTING.getKey(), true)
+                .put("index.mapping.single_type", true);
     }
 
      /**
@@ -322,8 +322,7 @@ public class MachineLearningTemplateRegistry  extends AbstractComponent implemen
                 // failure we can lose the last 5 seconds of changes, but it's
                 // much faster
                 .put(IndexSettings.INDEX_TRANSLOG_DURABILITY_SETTING.getKey(), ASYNC)
-                // TODO: do not create multiple types
-                .put("index.mapping.single_type", false);
+                .put("index.mapping.single_type", true);
     }
 
     public static boolean allTemplatesInstalled(MetaData metaData) {
