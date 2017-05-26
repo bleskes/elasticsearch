@@ -24,7 +24,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Client;
@@ -33,11 +32,9 @@ import org.elasticsearch.common.CheckedConsumer;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexNotFoundException;
-import org.elasticsearch.index.mapper.Uid;
-import org.elasticsearch.index.mapper.UidFieldMapper;
 import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.index.query.WildcardQueryBuilder;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.action.admin.indices.AliasesNotFoundException;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.tasks.Task;
@@ -105,8 +102,8 @@ public class JobStorageDeletionTask extends Task {
                 failureHandler);
 
         // Step 3. Delete quantiles done, delete the categorizer state
-        ActionListener<BulkResponse> deleteQuantilesHandler = ActionListener.wrap(
-                response -> deleteCategorizerState(jobId, client, deleteCategorizerStateHandler),
+        ActionListener<Boolean> deleteQuantilesHandler = ActionListener.wrap(
+                response -> deleteCategorizerState(jobId, client, 1, deleteCategorizerStateHandler),
                 failureHandler);
 
         // Step 2. Delete state done, delete the quantiles
@@ -118,14 +115,23 @@ public class JobStorageDeletionTask extends Task {
         deleteModelState(jobId, client, deleteStateHandler);
     }
 
-    private void deleteQuantiles(String jobId, Client client, ActionListener<BulkResponse> finishedHandler) {
-        // The quantiles doc Id changed in v5.5 so delete both the old and new format
+    private void deleteQuantiles(String jobId, Client client, ActionListener<Boolean> finishedHandler) {
+        // The quantiles type and doc Id changed in v5.5 so delete both the old and new format
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
-        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), Quantiles.TYPE.getPreferredName(),
+        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), ElasticsearchMappings.DOC_TYPE,
                 Quantiles.documentId(jobId)));
         bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), Quantiles.TYPE.getPreferredName(),
-                jobId + "-" + Quantiles.TYPE.getPreferredName()));
-        bulkRequestBuilder.execute(finishedHandler);
+                Quantiles.legacyDocumentId(jobId)));
+        bulkRequestBuilder.execute(ActionListener.wrap(
+                        response -> finishedHandler.onResponse(true),
+                        e -> {
+                            // It's not a problem for us if the index wasn't found - it's equivalent to document not found
+                            if (e instanceof IndexNotFoundException) {
+                                finishedHandler.onResponse(true);
+                            } else {
+                                finishedHandler.onFailure(e);
+                            }
+                        }));
     }
 
     private void deleteModelState(String jobId, Client client, ActionListener<BulkResponse> listener) {
@@ -139,26 +145,35 @@ public class JobStorageDeletionTask extends Task {
                 listener::onFailure);
     }
 
-    private void deleteCategorizerState(String jobId, Client client, ActionListener<Boolean> finishedHandler) {
-        SearchRequest searchRequest = new SearchRequest(AnomalyDetectorsIndex.jobStateIndexName());
-        DeleteByQueryRequest request = new DeleteByQueryRequest(searchRequest);
-        request.setSlices(5);
-
-        searchRequest.indicesOptions(IndicesOptions.lenientExpandOpen());
-        WildcardQueryBuilder query = new WildcardQueryBuilder(UidFieldMapper.NAME, Uid.createUid(CategorizerState.TYPE, jobId + "#*"));
-        searchRequest.source(new SearchSourceBuilder().query(query));
-        client.execute(DeleteByQueryAction.INSTANCE, request, new ActionListener<BulkByScrollResponse>() {
-            @Override
-            public void onResponse(BulkByScrollResponse bulkByScrollResponse) {
-                finishedHandler.onResponse(true);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                logger.error("[" + jobId + "] Failed to delete categorizer state for job.", e);
-                finishedHandler.onFailure(e);
-            }
-        });
+    private void deleteCategorizerState(String jobId, Client client, int docNum, ActionListener<Boolean> finishedHandler) {
+        // The categorizer state type and doc Id changed in v5.5 so delete both the old and new format
+        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
+        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), ElasticsearchMappings.DOC_TYPE,
+                CategorizerState.documentId(jobId, docNum)));
+        // TODO: remove in 7.0
+        bulkRequestBuilder.add(client.prepareDelete(AnomalyDetectorsIndex.jobStateIndexName(), CategorizerState.TYPE,
+                CategorizerState.legacyDocumentId(jobId, docNum)));
+        bulkRequestBuilder.execute(ActionListener.wrap(
+                response -> {
+                    // If we successfully deleted either document try the next one; if not we're done
+                    for (BulkItemResponse item : response.getItems()) {
+                        if (item.status() == RestStatus.OK) {
+                            // There's an assumption here that there won't be very many categorizer
+                            // state documents, so the recursion won't go more than, say, 5 levels deep
+                            deleteCategorizerState(jobId, client, docNum + 1, finishedHandler);
+                            return;
+                        }
+                    }
+                    finishedHandler.onResponse(true);
+                },
+                e -> {
+                    // It's not a problem for us if the index wasn't found - it's equivalent to document not found
+                    if (e instanceof IndexNotFoundException) {
+                        finishedHandler.onResponse(true);
+                    } else {
+                        finishedHandler.onFailure(e);
+                    }
+                }));
     }
 
     private void deleteAlias(String jobId, String aliasName, String indexName, Client client, ActionListener<Boolean> finishedHandler ) {

@@ -40,7 +40,7 @@ public class Quantiles extends ToXContentToBytes implements Writeable {
     public static final ParseField QUANTILE_STATE = new ParseField("quantile_state");
 
     /**
-     * Elasticsearch type
+     * Legacy type, now used only as a discriminant in the document ID
      */
     public static final ParseField TYPE = new ParseField("quantiles");
 
@@ -54,7 +54,14 @@ public class Quantiles extends ToXContentToBytes implements Writeable {
     }
 
     public static String documentId(String jobId) {
-        return jobId + "_" + TYPE.getPreferredName();
+        return jobId + "_" + TYPE;
+    }
+
+    /**
+     * This is how the IDs were formed in v5.4
+     */
+    public static String legacyDocumentId(String jobId) {
+        return jobId + "-" + TYPE;
     }
 
     private final String jobId;
