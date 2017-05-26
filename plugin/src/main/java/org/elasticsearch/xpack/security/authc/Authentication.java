@@ -105,31 +105,40 @@ public class Authentication {
     }
 
     /**
-     * Reads the Authentication object from the header and places the deserialized object in the ThreadContext. The header may be signed if
-     * the message is sent from a node without ssl or a version before 5.4.0. The version is used by the CryptoService to properly read
-     * the signed string.
-     *
-     * While we serialize the version out in the bytes of this object, we do not have this information prior to verifying the data so we
-     * need the version passed in.
+     * Reads the Authentication object from the header and places the deserialized object in the ThreadContext.
      */
     private static Authentication deserializeHeaderAndPutInContext(String header, ThreadContext ctx, CryptoService cryptoService,
-                                                                   boolean sign, Version version)
-                                                                   throws IOException, IllegalArgumentException {
+                                                           boolean signed, Version version) throws IOException {
         assert ctx.getTransient(AUTHENTICATION_KEY) == null;
-        if (sign) {
+        Authentication authentication = deserializeHeader(header, cryptoService, signed, version);
+        ctx.putTransient(AUTHENTICATION_KEY, authentication);
+        return authentication;
+    }
+
+    /**
+     * Deserialize the Authentication header. Package private for testing. The header
+     * may be signed if the message is sent from a node without ssl or a version before
+     * 5.4.0. The version is used by the CryptoService to properly read the signed string.
+     *
+     * While we serialize the version out in the bytes of this object, we do not have this
+     * information prior to verifying the data so we need the version passed in. Also, in
+     * 5.4.0 the version is incorrect.
+     */
+    static Authentication deserializeHeader(String header, CryptoService cryptoService, boolean signed, Version version)
+            throws IOException {
+        if (signed) {
             header = cryptoService.unsignAndVerify(header, version);
         }
 
         byte[] bytes = Base64.getDecoder().decode(header);
         StreamInput input = StreamInput.wrap(bytes);
         final Version streamVersion = Version.readVersion(input);
-        if (streamVersion.equals(version) == false) {
+        // a bug in 5.4.0 meant that it would always send a version matching the remote nodes' so we need to account for this
+        if (streamVersion.equals(version) == false && version.equals(Version.V_5_4_0) == false) {
             throw new IllegalStateException("version mismatch. expected [" + version + "] but got [" + streamVersion + "]");
         }
         input.setVersion(version);
-        Authentication authentication = new Authentication(input);
-        ctx.putTransient(AUTHENTICATION_KEY, authentication);
-        return authentication;
+        return new Authentication(input);
     }
 
     void writeToContextIfMissing(ThreadContext context, CryptoService cryptoService, Settings settings, Version version,
@@ -150,6 +159,14 @@ public class Authentication {
     }
 
     public static boolean shouldSign(Settings settings, Version version, boolean signingEnabled) {
+        if (version.equals(Version.V_5_4_0)) {
+            /* 5.4.0 used different (worse) logic to enable of disable signing. It is super important that we match it or else we won't
+             * be wire compatible with 5.4.0. 5.4.0 looks like the line below, but that amounts never signing:
+             *
+             * return signingEnabled && XPackSettings.TRANSPORT_SSL_ENABLED.get(settings) == false && version.before(Version.V_5_4_0);
+             */
+            return false;
+        }
         return signingEnabled && (XPackSettings.TRANSPORT_SSL_ENABLED.get(settings) == false || version.before(Version.V_5_4_0));
     }
 

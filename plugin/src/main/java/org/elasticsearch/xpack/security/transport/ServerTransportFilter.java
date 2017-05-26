@@ -41,17 +41,18 @@ import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authc.pki.PkiRealm;
 import org.elasticsearch.xpack.security.authz.AuthorizationService;
 import org.elasticsearch.xpack.security.authz.AuthorizationUtils;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.elasticsearch.xpack.security.user.KibanaUser;
 import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.handler.ssl.SslHandler;
 
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLPeerUnverifiedException;
 
 import static org.elasticsearch.xpack.security.support.Exceptions.authenticationError;
 
@@ -141,9 +142,7 @@ public interface ServerTransportFilter {
                 }
             }
 
-            // a bug in 5.4.0 meant that it would always send a version matching the remote nodes' so we need to account for this
-            final Version version = transportChannel.getVersion().equals(Version.V_5_4_0) ? Version.CURRENT : transportChannel.getVersion();
-            authcService.authenticate(securityAction, request, null, version,
+            authcService.authenticate(securityAction, request, null, transportChannel.getVersion(),
                 ActionListener.wrap((authentication) -> {
                     if (reservedRealmEnabled && authentication.getVersion().before(Version.V_5_2_0) &&
                         KibanaUser.NAME.equals(authentication.getUser().authenticatedUser().principal())) {
@@ -158,7 +157,7 @@ public interface ServerTransportFilter {
                                         listener.onResponse(null);
                                     });
                             asyncAuthorizer.authorize(authzService);
-                        }, version);
+                        }, transportChannel.getVersion());
                     } else {
                         authorizeAsync(authentication, listener, securityAction, request);
                     }
